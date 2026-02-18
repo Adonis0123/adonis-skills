@@ -1,0 +1,18 @@
+node_modules
+.pnpm-store
+.turbo
+.DS_Store
+
+apps/web/.next
+apps/web/node_modules
+apps/web/.vercel
+
+coverage
+*.log
+
+# START Ruler Generated Files
+/.codex/config.toml
+/AGENTS.md
+/CLAUDE.md
+# END Ruler Generated Files
+/.claude/skills

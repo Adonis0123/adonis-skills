@@ -1,0 +1,29 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "tasks": {
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "build": {
+      "dependsOn": ["^build", "skills:validate", "skills:index"],
+      "inputs": ["$TURBO_DEFAULT$", "../../skills/**", "../../scripts/**"],
+      "outputs": [".next/**", "!.next/cache/**"]
+    },
+    "lint": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "outputs": []
+    },
+    "skills:index": {
+      "inputs": ["../../skills/**", "../../scripts/generate-skills-index.mjs"],
+      "outputs": ["src/generated/skills-index.json"]
+    },
+    "skills:validate": {
+      "inputs": ["../../skills/**", "../../scripts/validate-skills.mjs"],
+      "outputs": []
+    }
+  }
+}

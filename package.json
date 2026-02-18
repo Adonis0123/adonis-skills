@@ -1,0 +1,25 @@
+{
+  "name": "adonis-skills",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "dev": "turbo run dev --filter=@adonis-skills/web",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "skills:index": "turbo run skills:index --filter=@adonis-skills/web",
+    "skills:validate": "turbo run skills:validate --filter=@adonis-skills/web",
+    "skills:install:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
+    "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm",
+    "ruler:apply": "pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup",
+    "postinstall": "is-ci && echo 'Skipping ruler:apply in CI environment' || pnpm run ruler:apply && (is-ci && echo 'Skipping skills:sync:llm in CI environment' || pnpm run skills:sync:llm)",
+    "skills:sync:llm": "node --experimental-strip-types ./scripts/sync-llm-skills.ts"
+  },
+  "devDependencies": {
+    "@inquirer/prompts": "^7.9.0",
+    "is-ci": "^4.1.0",
+    "turbo": "^2.7.6",
+    "yaml": "^2.8.1"
+  }
+}

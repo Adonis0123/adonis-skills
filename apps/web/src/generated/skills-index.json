@@ -1,0 +1,16 @@
+[
+  {
+    "slug": "weekly-report",
+    "name": "weekly-report",
+    "description": "自动读取 Git 提交记录生成周报。用于生成工作周报、项目总结、团队协作汇报。支持多仓库汇总。",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill weekly-report",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": true
+    }
+  }
+]

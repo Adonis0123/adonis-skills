@@ -1,0 +1,11 @@
+# Ruler configuration for this repository
+
+default_agents = ["codex", "claude"]
+
+[agents.codex]
+enabled = true
+output_path = "AGENTS.md"
+
+[agents.claude]
+enabled = true
+output_path = "CLAUDE.md"
