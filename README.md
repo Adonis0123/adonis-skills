@@ -56,18 +56,40 @@ npx skills add adonis0123/adonis-skills --skill weekly-report
 1. 设置环境变量 `SKILLS_REPO=<new-owner>/adonis-skills`
 2. 重新运行 `pnpm skills:index`
 
-## 新增 Skill 流程
+## 核心命令说明
 
-1. 在 `skills/<skill-slug>/` 放置 `SKILL.md`
-2. 可选增加 `references/`、`src/`
-3. 运行：
+- `pnpm skills:validate`：校验 `skills/*/SKILL.md` 结构和 frontmatter 必填字段（`name`、`description`），只做校验不生成产物。
+- `pnpm skills:index`：扫描 `skills/*` 并生成 `apps/web/src/generated/skills-index.json`，用于 Web 展示与安装命令展示。
+
+## 新增 Skill 标准流程（SOP）
+
+推荐使用一条命令快速创建：
 
 ```bash
+pnpm skills:new
+```
+
+默认会交互收集 `name`、`description`、可选资源目录，并自动执行：
+
+1. 初始化 skill 目录（默认到 `skills/`）
+2. 单 skill 快速校验（`skills:quick-validate`）
+3. 全仓库校验（`skills:validate`）
+4. 更新索引（`skills:index`）
+
+非交互创建示例：
+
+```bash
+pnpm skills:new -- --name demo-skill --description "用于演示新增 skill 流程" --resources scripts,references --non-interactive
+```
+
+底层命令（按需手动执行）：
+
+```bash
+pnpm skills:init <skill-name> --path skills --resources scripts,references
+pnpm skills:quick-validate skills/<skill-name>
 pnpm skills:validate
 pnpm skills:index
 ```
-
-4. 提交后页面会自动展示新技能
 
 ## 本地交互安装与测试
 
