@@ -16,3 +16,4 @@ coverage
 /CLAUDE.md
 # END Ruler Generated Files
 /.claude/skills
+/.claude/settings.local.json

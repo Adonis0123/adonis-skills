@@ -1,5 +1,25 @@
 [
   {
+    "slug": "commit",
+    "name": "commit",
+    "description": "This skill should be used when the user asks to \"commit\", \"generate commit message\", \"create commit\", \"提交代码\", \"生成提交信息\", or needs help writing git commit messages following conventional commit format with emoji prefixes.",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill commit",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
+    "slug": "staged-review-validator",
+    "name": "staged-review-validator",
+    "description": "用于复核 staged-changes-review 的分析结果，逐条判断问题是否成立、是否需要修改，并给出证据与最小改动建议。",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill staged-review-validator",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "weekly-report",
     "name": "weekly-report",
     "description": "自动读取 Git 提交记录生成周报。用于生成工作周报、项目总结、团队协作汇报。支持多仓库汇总。",
