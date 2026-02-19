@@ -10,7 +10,7 @@
 
 ## 当前状态
 
-- 首批技能：`weekly-report`
+- 当前公开技能：`commit`、`staged-review-validator`、`tailwindcss-next-init`、`weekly-report`
 - 展示站：`apps/web`（Next.js 16）
 - 技能目录：`skills/*`
 - 技能索引自动生成：`scripts/generate-skills-index.mjs`
@@ -23,6 +23,9 @@
 ├── apps/
 │   └── web/
 ├── skills/
+│   ├── commit/
+│   ├── staged-review-validator/
+│   ├── tailwindcss-next-init/
 │   └── weekly-report/
 ├── scripts/
 │   ├── generate-skills-index.mjs
@@ -49,6 +52,7 @@ pnpm dev
 
 ```bash
 npx skills add adonis0123/adonis-skills --skill weekly-report
+npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 ```
 
 如果仓库 owner 改变：

@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# adonis-skills Web
 
-## Getting Started
+技能目录 Web UI，基于 Next.js 构建。提供技能浏览、详情查看与一键安装命令复制功能。
 
-First, run the development server:
+本应用是 [adonis-skills](../../) monorepo 的一部分。
+
+## 技术栈
+
+- **框架**：Next.js 16 (App Router)
+- **语言**：TypeScript 5
+- **UI 库**：React 19
+- **样式**：Tailwind CSS 4
+- **字体**：Space Grotesk + IBM Plex Mono
+
+## 本地开发
+
+在 **monorepo 根目录**运行（推荐，通过 Turborepo 管理依赖任务）：
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+或在本目录单独启动：
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+打开 [http://localhost:3000](http://localhost:3000) 查看。
 
-## Learn More
+## 构建
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# 在 monorepo 根目录
+pnpm build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+> `build` 任务依赖 `skills:validate` 和 `skills:index` 先完成，Turborepo 会自动处理顺序。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 目录结构
 
-## Deploy on Vercel
+```
+apps/web/
+├── src/
+│   ├── app/
+│   │   ├── page.tsx              # 首页：技能列表
+│   │   ├── layout.tsx            # 根布局（元数据、字体）
+│   │   ├── globals.css           # 全局样式（CSS 变量）
+│   │   ├── not-found.tsx         # 404 页面
+│   │   └── skills/[slug]/
+│   │       └── page.tsx          # 技能详情页（动态路由）
+│   ├── components/
+│   │   ├── skill-card.tsx        # 技能卡片组件
+│   │   └── copy-install-command.tsx  # 复制安装命令按钮
+│   ├── lib/
+│   │   └── skills.ts             # 技能数据加载工具函数
+│   └── generated/
+│       └── skills-index.json     # 由脚本生成，勿手动编辑
+└── public/                       # 静态资源
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 技能索引
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`src/generated/skills-index.json` 由根目录脚本自动生成，不要手动编辑。
+
+更新技能后，在 monorepo 根目录运行：
+
+```bash
+pnpm skills:index
+```
+

@@ -20,6 +20,16 @@
     }
   },
   {
+    "slug": "tailwindcss-next-init",
+    "name": "tailwindcss-next-init",
+    "description": "为 Next.js App Router 项目快速初始化 Tailwind CSS v4（CSS-first）并配置 Iconify（lucide/mdi/tabler）与常用插件。用于新项目搭建、现有项目 Tailwind v4 迁移、重构样式入口（tailwind-core/globals/custom）、补齐 @source/@reference 实践时触发。",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "weekly-report",
     "name": "weekly-report",
     "description": "自动读取 Git 提交记录生成周报。用于生成工作周报、项目总结、团队协作汇报。支持多仓库汇总。",
