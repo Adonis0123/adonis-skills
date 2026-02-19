@@ -10,6 +10,16 @@
     }
   },
   {
+    "slug": "lingui-next-init",
+    "name": "lingui-next-init",
+    "description": "Scaffold Lingui i18n for Next.js App Router projects with script + .tpl templates. Use when you need to initialize or standardize multilingual setup (extract, compile, manifest, runtime provider, locale routing), especially in monorepos that may optionally use a shared packages/i18n package.",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill lingui-next-init",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "staged-review-validator",
     "name": "staged-review-validator",
     "description": "用于复核 staged-changes-review 的分析结果，逐条判断问题是否成立、是否需要修改，并给出证据与最小改动建议。",
