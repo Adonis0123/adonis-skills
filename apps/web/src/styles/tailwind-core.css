@@ -1,0 +1,19 @@
+@layer theme, base, antd, components, utilities;
+
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@import "./shadcn-theme.css";
+
+@plugin "tailwind-scrollbar";
+@plugin "@iconify/tailwind4";
+
+@source "../app";
+@source "../components";
+@source "../lib";
+
+/*
+ * For future extraction to @adonis-kit/ui, enable source scanning on package files.
+ * Example path when switching to shared UI package:
+ * ../../node_modules/@adonis-kit/ui/dist
+ */

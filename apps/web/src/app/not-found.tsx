@@ -1,14 +1,35 @@
 import Link from 'next/link'
+import { exampleSkillHref } from '@/config/site-layout'
+import { SectionReveal } from '@/components/motion/section-reveal'
+import { ClayBadge, ClayButton, ClaySurface } from '@/components/ui'
 
 export default function NotFoundPage() {
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center justify-center px-6 text-center">
-      <p className="mb-2 font-mono text-xs uppercase tracking-[0.2em] text-[var(--ink-soft)]">404</p>
-      <h1 className="mb-4 text-3xl font-semibold">Skill 未找到</h1>
-      <p className="mb-6 text-sm text-[var(--ink-soft)]">请确认 slug 是否正确，或返回首页查看当前可用技能列表。</p>
-      <Link href="/" className="rounded-xl border border-black/15 px-4 py-2 text-sm transition hover:bg-black/5">
-        返回首页
-      </Link>
+    <main className="site-page-shell site-frame site-frame--narrow flex min-h-[52vh] w-full items-center">
+      <SectionReveal className="w-full" delay={20}>
+        <ClaySurface tone="peach" elevation="floating" className="w-full rounded-[1.6rem] p-8 text-center md:p-12">
+          <ClayBadge tone="neutral" className="mb-4 font-mono">404</ClayBadge>
+          <h1 className="text-4xl md:text-5xl">Skill 未找到</h1>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-clay-muted md:text-base">
+            请确认 slug 是否正确，或返回首页查看当前可用技能列表。
+          </p>
+
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+            <ClayButton asChild>
+              <Link href="/">
+                <span className="icon-[lucide--house] size-4" aria-hidden />
+                返回首页
+              </Link>
+            </ClayButton>
+            <ClayButton asChild variant="ghost">
+              <Link href={exampleSkillHref}>
+                <span className="icon-[lucide--eye] size-4" aria-hidden />
+                查看示例 Skill
+              </Link>
+            </ClayButton>
+          </div>
+        </ClaySurface>
+      </SectionReveal>
     </main>
   )
 }

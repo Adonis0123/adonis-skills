@@ -1,25 +1,58 @@
 import Link from 'next/link'
-import type { SkillIndexItem } from '@/lib/skills'
+import {
+  ClayBadge,
+  ClayCard,
+  ClayCardContent,
+  ClayCardDescription,
+  ClayCardFooter,
+  ClayCardHeader,
+  ClayCardTitle,
+} from '@/components/ui'
+import { skillsRepo, type SkillIndexItem } from '@/lib/skills'
 
 interface SkillCardProps {
   skill: SkillIndexItem
 }
 
+const toneCycle = ['peach', 'blue', 'cream'] as const
+
 export function SkillCard({ skill }: SkillCardProps) {
+  const tone = toneCycle[skill.slug.charCodeAt(0) % toneCycle.length]
+
   return (
     <Link
       href={`/skills/${skill.slug}`}
-      className="group rounded-2xl border border-black/10 bg-[var(--card)] p-5 shadow-[0_8px_24px_rgba(0,0,0,0.05)] transition hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(0,0,0,0.12)]"
+      className="clay-focus-ring block h-full rounded-[var(--radius-xl)]"
     >
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-[var(--ink)]">{skill.name}</h2>
-        <span className="rounded-full border border-black/15 px-2 py-1 font-mono text-[11px] text-[var(--ink-soft)]">{skill.slug}</span>
-      </div>
-      <p className="mb-4 line-clamp-3 text-sm leading-6 text-[var(--ink-soft)]">{skill.description}</p>
-      <div className="flex items-center gap-2 text-[11px]">
-        <span className="rounded-full border border-black/15 px-2 py-1">{skill.files.hasReferences ? '含 references' : '无 references'}</span>
-        <span className="rounded-full border border-black/15 px-2 py-1">{skill.files.hasSrc ? '含 src' : '无 src'}</span>
-      </div>
+      <ClayCard tone={tone} interactive className="h-full">
+        <ClayCardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <ClayCardTitle className="text-[1.2rem] md:text-[1.3rem]">{skill.name}</ClayCardTitle>
+            <span className="icon-[lucide--sparkles] size-4 shrink-0 text-foreground/70" aria-hidden />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <ClayBadge tone="neutral" className="font-mono">
+              {skill.slug}
+            </ClayBadge>
+          </div>
+          <ClayCardDescription className="line-clamp-3">{skill.description}</ClayCardDescription>
+        </ClayCardHeader>
+
+        <ClayCardContent className="pt-1">
+          <div className="clay-surface clay-tone-base clay-elevation-inset rounded-2xl p-3">
+            <p className="font-mono text-[11px] text-clay-muted">npx skills add {skillsRepo} --skill {skill.slug}</p>
+          </div>
+        </ClayCardContent>
+
+        <ClayCardFooter className="flex-wrap">
+          <ClayBadge tone={skill.files.hasReferences ? 'success' : 'neutral'}>
+            {skill.files.hasReferences ? 'references: yes' : 'references: no'}
+          </ClayBadge>
+          <ClayBadge tone={skill.files.hasSrc ? 'blue' : 'neutral'}>
+            {skill.files.hasSrc ? 'src: yes' : 'src: no'}
+          </ClayBadge>
+        </ClayCardFooter>
+      </ClayCard>
     </Link>
   )
 }

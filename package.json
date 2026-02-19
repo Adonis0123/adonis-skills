@@ -24,7 +24,6 @@
   "devDependencies": {
     "@inquirer/prompts": "^7.9.0",
     "is-ci": "^4.1.0",
-    "react-motion": "^0.5.2",
     "turbo": "^2.7.6",
     "yaml": "^2.8.1"
   }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ClayButton } from '@/components/ui'
 
 interface CopyInstallCommandButtonProps {
   command: string
@@ -21,12 +22,16 @@ export function CopyInstallCommandButton({ command }: CopyInstallCommandButtonPr
   }
 
   return (
-    <button
+    <ClayButton
       type="button"
+      variant={copied ? 'secondary' : 'primary'}
+      size="sm"
       onClick={onCopy}
-      className="inline-flex items-center rounded-xl border border-black/15 bg-black px-4 py-2 font-mono text-xs text-amber-100 transition hover:bg-black/85"
+      className="font-mono"
+      aria-live="polite"
     >
+      <span className={copied ? 'icon-[lucide--check] size-3.5' : 'icon-[lucide--copy] size-3.5'} aria-hidden />
       {copied ? '已复制' : '复制命令'}
-    </button>
+    </ClayButton>
   )
 }

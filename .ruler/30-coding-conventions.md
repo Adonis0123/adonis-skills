@@ -39,3 +39,6 @@ Only `name` and `description` are validated by CI. Skills in `skills/` are publi
 - Keep imports and naming consistent with repository conventions.
 - Keep tests close to changed modules when practical.
 - Document non-obvious tradeoffs in PR descriptions.
+- For localStorage persistence in `apps/web`, prefer `ahooks` `useLocalStorageState` over direct `window.localStorage` access.
+- If direct localStorage access is required (e.g., non-React utility or special serialization flow), document the reason in code comments.
+- Reference: https://ahooks.js.org/hooks/use-local-storage-state

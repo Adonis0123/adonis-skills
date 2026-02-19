@@ -1,7 +1,9 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { SectionReveal } from '@/components/motion/section-reveal'
 import { CopyInstallCommandButton } from '@/components/copy-install-command'
+import { ClayBadge, ClayButton, ClayCard, ClayCardContent, ClayCardHeader, ClaySurface } from '@/components/ui'
 import { getAllSkills, getSkillBySlug, getSkillSourceUrl } from '@/lib/skills'
 
 interface SkillPageProps {
@@ -35,48 +37,70 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
   const sourceUrl = getSkillSourceUrl(skill.slug)
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-4xl px-6 py-10 md:px-10">
-      <Link href="/" className="mb-5 inline-flex text-sm text-[var(--ink-soft)] transition hover:text-[var(--ink)]">
-        ← 返回列表
-      </Link>
+    <main className="site-page-shell site-frame site-frame--detail w-full">
+      <SectionReveal delay={20}>
+        <div className="mb-5 flex items-center justify-between gap-3">
+          <ClayButton asChild variant="ghost" size="sm">
+            <Link href="/">
+              <span className="icon-[lucide--arrow-left] size-4" aria-hidden />
+              返回列表
+            </Link>
+          </ClayButton>
 
-      <section className="rounded-3xl border border-black/10 bg-[var(--card)] p-7 shadow-[0_16px_40px_rgba(0,0,0,0.07)] md:p-10">
-        <div className="mb-5 flex flex-wrap items-center gap-3">
-          <span className="rounded-full border border-black/15 px-3 py-1 font-mono text-xs">{skill.slug}</span>
-          {skill.metadata?.version && <span className="rounded-full border border-black/15 px-3 py-1 text-xs">版本 {skill.metadata.version}</span>}
-          {skill.metadata?.author && <span className="rounded-full border border-black/15 px-3 py-1 text-xs">作者 {skill.metadata.author}</span>}
+          <ClayBadge tone="neutral" className="font-mono">
+            /skills/{skill.slug}
+          </ClayBadge>
         </div>
+      </SectionReveal>
 
-        <h1 className="mb-4 text-3xl font-semibold leading-tight md:text-4xl">{skill.name}</h1>
-        <p className="mb-6 text-sm leading-7 text-[var(--ink-soft)] md:text-base">{skill.description}</p>
+      <SectionReveal delay={110}>
+        <ClayCard tone="base" elevation="floating" className="gap-6 rounded-[1.6rem] p-6 md:p-9">
+          <ClayCardHeader className="gap-4">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <ClayBadge tone="peach" className="font-mono">{skill.slug}</ClayBadge>
+              {skill.metadata?.version && <ClayBadge tone="blue">版本 {skill.metadata.version}</ClayBadge>}
+              {skill.metadata?.author && <ClayBadge tone="cream">作者 {skill.metadata.author}</ClayBadge>}
+            </div>
 
-        <div className="mb-6 rounded-2xl border border-black/10 bg-black p-4 text-amber-100">
-          <p className="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-amber-200">Install</p>
-          <code className="block overflow-x-auto font-mono text-sm">{skill.installCommand}</code>
-          <div className="mt-4">
-            <CopyInstallCommandButton command={skill.installCommand} />
-          </div>
-        </div>
+            <h1 className="font-heading text-4xl leading-tight text-foreground md:text-5xl">{skill.name}</h1>
+            <p className="max-w-4xl text-sm leading-7 text-clay-muted md:text-base">{skill.description}</p>
+          </ClayCardHeader>
 
-        <div className="grid gap-3 text-sm md:grid-cols-2">
-          <div className="rounded-xl border border-black/10 p-4">
-            <p className="mb-1 font-medium">目录结构</p>
-            <p className="text-[var(--ink-soft)]">references: {skill.files.hasReferences ? '有' : '无'}</p>
-            <p className="text-[var(--ink-soft)]">src: {skill.files.hasSrc ? '有' : '无'}</p>
-          </div>
-          <div className="rounded-xl border border-black/10 p-4">
-            <p className="mb-1 font-medium">源码位置</p>
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[var(--ink-soft)] underline underline-offset-3 transition hover:text-[var(--ink)]"
-            >
-              {sourceUrl}
-            </a>
-          </div>
-        </div>
-      </section>
+          <ClayCardContent className="grid gap-4">
+            <ClaySurface tone="blue" elevation="inset" className="rounded-[1.1rem] p-5 md:p-6">
+              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.16em] text-clay-muted">Install</p>
+              <code className="block overflow-x-auto rounded-xl border border-border/60 bg-background/55 px-3 py-3 text-xs leading-6 text-foreground md:text-sm">
+                {skill.installCommand}
+              </code>
+
+              <div className="mt-4">
+                <CopyInstallCommandButton command={skill.installCommand} />
+              </div>
+            </ClaySurface>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <ClaySurface tone="base" elevation="inset" className="rounded-[1rem] p-4">
+                <p className="mb-1.5 font-medium">目录结构</p>
+                <p className="text-sm text-clay-muted">references: {skill.files.hasReferences ? '有' : '无'}</p>
+                <p className="text-sm text-clay-muted">src: {skill.files.hasSrc ? '有' : '无'}</p>
+              </ClaySurface>
+
+              <ClaySurface tone="base" elevation="inset" className="rounded-[1rem] p-4">
+                <p className="mb-1.5 font-medium">源码位置</p>
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 text-sm text-clay-muted underline underline-offset-4 transition hover:text-foreground"
+                >
+                  {sourceUrl}
+                  <span className="icon-[lucide--external-link] size-3.5" aria-hidden />
+                </a>
+              </ClaySurface>
+            </div>
+          </ClayCardContent>
+        </ClayCard>
+      </SectionReveal>
     </main>
   )
 }
