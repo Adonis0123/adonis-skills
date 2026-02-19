@@ -202,18 +202,18 @@ async function loadAvailableSkills(repoRoot: string): Promise<string[]> {
 
 async function runInteractiveSelection(skills: string[]): Promise<SelectionResult> {
   const action = await select({
-    message: '选择安装方式',
+    message: 'Select installation method',
     choices: [
       {
-        name: '安装选中的 skills',
+        name: 'Install selected skills',
         value: 'selected',
       },
       {
-        name: '安装全部 skills',
+        name: 'Install all skills',
         value: 'all',
       },
       {
-        name: '退出',
+        name: 'Exit',
         value: 'exit',
       },
     ],
@@ -225,7 +225,7 @@ async function runInteractiveSelection(skills: string[]): Promise<SelectionResul
 
   if (action === 'all') {
     const accepted = await confirm({
-      message: `确认安装全部 skills（共 ${skills.length} 个）？`,
+      message: `Confirm installing all skills (${skills.length} total)?`,
       default: true,
     })
 
@@ -241,7 +241,7 @@ async function runInteractiveSelection(skills: string[]): Promise<SelectionResul
   }
 
   const selected = await checkbox({
-    message: '选择要安装的 skills（空格勾选，回车确认）',
+    message: 'Select skills to install (space to toggle, enter to confirm)',
     choices: skills.map((slug) => ({
       name: slug,
       value: slug,
@@ -251,7 +251,7 @@ async function runInteractiveSelection(skills: string[]): Promise<SelectionResul
   })
 
   const accepted = await confirm({
-    message: `确认安装 ${selected.length} 个 skill？`,
+    message: `Confirm installing ${selected.length} skill(s)?`,
     default: true,
   })
 
