@@ -1,5 +1,15 @@
 [
   {
+    "slug": "code-inspector-init",
+    "name": "code-inspector-init",
+    "description": "标准化接入与迁移 code-inspector-plugin（codeInspectorPlugin）到 Next.js、Vite、Webpack、Rspack、Rsbuild、Esbuild、Mako、Umi、Nuxt、Astro。Use when user asks 接入/迁移/配置 inspector、DOM 点击跳转 IDE 定位、hotKeys、自定义 options、或排查 code inspector 不生效问题。",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill code-inspector-init",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "commit",
     "name": "commit",
     "description": "This skill should be used when the user asks to \"commit\", \"generate commit message\", \"create commit\", \"提交代码\", \"生成提交信息\", or needs help writing git commit messages following conventional commit format with emoji prefixes.",

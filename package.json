@@ -9,6 +9,7 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "skills:new": "node --experimental-strip-types ./scripts/create-skill.ts",
+    "skills:finalize": "node --experimental-strip-types ./scripts/finalize-skill.ts",
     "skills:init": "python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py",
     "skills:quick-validate": "python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py",
     "skills:openai-yaml": "python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py",

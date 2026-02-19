@@ -71,6 +71,7 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 | `pnpm lint` | `turbo run lint` | 执行代码规范检查。改了 TS/JS 代码后用。 |
 | `pnpm typecheck` | `turbo run typecheck` | 执行 TypeScript 类型检查。改类型或 API 后用。 |
 | `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | 交互式创建新 skill（推荐入口）。会自动做：初始化目录 -> 快速校验 -> 全量校验 -> 刷新索引。 |
+| `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | 对已创建/已复制到 `skills/*` 的 skill 执行标准收尾流程：`quick-validate` -> `validate` -> `index`。支持相对或绝对路径。 |
 | `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | 只初始化 skill 目录和模板内容（手动模式）。当你不想走完整自动流程时用。 |
 | `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | 只校验单个 skill（尤其是 frontmatter 合法性）。改完某个 skill 后先快速自检。 |
 | `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要补 interface 展示信息时用。 |
@@ -85,7 +86,7 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 补充：
 
 - 日常新增 skill 最常用顺序：`skills:new` -> `skills:validate` -> `skills:index`
-- 手动模式最常用顺序：`skills:init` -> `skills:quick-validate` -> `skills:validate` -> `skills:index`
+- 手动模式最常用顺序：`skills:init`（或手工复制）-> `skills:finalize -- <skill-path>`
 
 ## 新增 Skill 标准流程（SOP）
 
@@ -108,13 +109,24 @@ pnpm skills:new
 pnpm skills:new -- --name demo-skill --description "用于演示新增 skill 流程" --resources scripts,references --non-interactive
 ```
 
-底层命令（按需手动执行）：
+手动模式（已复制或已初始化 skill 后直接收尾）：
 
 ```bash
 pnpm skills:init <skill-name> --path skills --resources scripts,references
-pnpm skills:quick-validate skills/<skill-name>
-pnpm skills:validate
-pnpm skills:index
+pnpm skills:finalize -- skills/<skill-name>
+```
+
+仅收尾（无需重新初始化）：
+
+```bash
+# 相对路径
+pnpm skills:finalize -- skills/code-inspector-init
+
+# 绝对路径（末尾 / 会自动处理）
+pnpm skills:finalize -- /Users/adonis/coding/adonis-skills2/skills/code-inspector-init/
+
+# 预览将执行的命令，不实际执行
+pnpm skills:finalize -- --dry-run skills/code-inspector-init
 ```
 
 ## 本地交互安装与测试
