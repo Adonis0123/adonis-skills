@@ -1,12 +1,13 @@
 import * as React from 'react'
 import { cx } from './utils'
 
-export type ClayButtonVariant = 'primary' | 'secondary' | 'ghost' | 'outline'
+export type ClayButtonVariant = 'primary' | 'secondary' | 'blue' | 'ghost' | 'outline'
 export type ClayButtonSize = 'sm' | 'md' | 'lg' | 'icon'
 
 const variantClassMap: Record<ClayButtonVariant, string> = {
   primary: 'clay-button--primary',
   secondary: 'clay-button--secondary',
+  blue: 'clay-button--blue',
   ghost: 'clay-button--ghost',
   outline: 'clay-button--outline',
 }

@@ -38,8 +38,8 @@ export function SiteHeader() {
                 href={item.href}
                 aria-label={item.ariaLabel}
                 className={cx(
-                  'clay-focus-ring inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-card/68 px-3 py-1.5 text-xs font-medium text-clay-muted transition hover:text-foreground md:text-sm',
-                  item.external && 'pr-2.5'
+                  'clay-focus-ring clay-button clay-button--secondary clay-button--sm gap-1.5 px-3.5 text-xs md:text-sm',
+                  item.external && 'pr-3'
                 )}
                 {...getLinkProps(item.external)}
               >

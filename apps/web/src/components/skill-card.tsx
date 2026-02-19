@@ -14,7 +14,7 @@ interface SkillCardProps {
   skill: SkillIndexItem
 }
 
-const toneCycle = ['peach', 'blue', 'cream'] as const
+const toneCycle = ['peach', 'cream', 'peach'] as const
 
 export function SkillCard({ skill }: SkillCardProps) {
   const tone = toneCycle[skill.slug.charCodeAt(0) % toneCycle.length]
@@ -48,7 +48,7 @@ export function SkillCard({ skill }: SkillCardProps) {
           <ClayBadge tone={skill.files.hasReferences ? 'success' : 'neutral'}>
             {skill.files.hasReferences ? 'references: yes' : 'references: no'}
           </ClayBadge>
-          <ClayBadge tone={skill.files.hasSrc ? 'blue' : 'neutral'}>
+          <ClayBadge tone={skill.files.hasSrc ? 'peach' : 'neutral'}>
             {skill.files.hasSrc ? 'src: yes' : 'src: no'}
           </ClayBadge>
         </ClayCardFooter>

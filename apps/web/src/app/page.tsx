@@ -34,7 +34,7 @@ export default function HomePage() {
                 <ClayBadge tone="peach" withDot>
                   仓库: {skillsRepo}
                 </ClayBadge>
-                <ClayBadge tone="blue" withDot>
+                <ClayBadge tone="cream" withDot>
                   技能数: {skills.length}
                 </ClayBadge>
               </div>

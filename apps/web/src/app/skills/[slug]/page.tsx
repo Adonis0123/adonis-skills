@@ -58,7 +58,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
           <ClayCardHeader className="gap-4">
             <div className="flex flex-wrap items-center gap-2.5">
               <ClayBadge tone="peach" className="font-mono">{skill.slug}</ClayBadge>
-              {skill.metadata?.version && <ClayBadge tone="blue">版本 {skill.metadata.version}</ClayBadge>}
+              {skill.metadata?.version && <ClayBadge tone="peach">版本 {skill.metadata.version}</ClayBadge>}
               {skill.metadata?.author && <ClayBadge tone="cream">作者 {skill.metadata.author}</ClayBadge>}
             </div>
 
@@ -67,7 +67,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
           </ClayCardHeader>
 
           <ClayCardContent className="grid gap-4">
-            <ClaySurface tone="blue" elevation="inset" className="rounded-[1.1rem] p-5 md:p-6">
+            <ClaySurface tone="base" elevation="inset" className="rounded-[1.1rem] p-5 md:p-6">
               <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.16em] text-clay-muted">Install</p>
               <code className="block overflow-x-auto rounded-xl border border-border/60 bg-background/55 px-3 py-3 text-xs leading-6 text-foreground md:text-sm">
                 {skill.installCommand}
