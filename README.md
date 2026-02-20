@@ -1,22 +1,24 @@
+English | [中文](./README.zh-CN.md)
+
 # adonis-skills
 
-`adonis-skills` 是一个面向 Agent 的技能仓库，采用 `pnpm + Turborepo + Next.js 16` 的 monorepo 结构。
+`adonis-skills` is an agent-oriented skills repository built with a `pnpm + Turborepo + Next.js 16` monorepo architecture.
 
-目标：
+Goals:
 
-- 技能可通过 `npx skills add` 直接安装
-- 提供 Web 页面展示 skills 元数据与安装方式
-- 保持后续扩展（新增 skills、接入 npm 发布）的演进空间
+- Make skills directly installable via `npx skills add`
+- Provide a web UI that presents skill metadata and install commands
+- Keep room for future evolution (more skills, optional npm publishing)
 
-## 当前状态
+## Current Status
 
-- 当前公开技能：`commit`、`staged-review-validator`、`tailwindcss-next-init`、`weekly-report`
-- 展示站：`apps/web`（Next.js 16）
-- 技能目录：`skills/*`
-- 技能索引自动生成：`scripts/generate-skills-index.mjs`
-- 技能结构校验：`scripts/validate-skills.mjs`
+- Public skills: `commit`, `staged-review-validator`, `tailwindcss-next-init`, `weekly-report`
+- Web site: `apps/web` (Next.js 16)
+- Skills directory: `skills/*`
+- Skills index generation: `scripts/generate-skills-index.mjs`
+- Skills structure validation: `scripts/validate-skills.mjs`
 
-## 仓库结构
+## Repository Structure
 
 ```txt
 .
@@ -35,7 +37,7 @@
 └── .github/workflows/ci.yml
 ```
 
-## 快速开始
+## Quick Start
 
 ```bash
 pnpm install
@@ -44,148 +46,174 @@ pnpm skills:index
 pnpm dev
 ```
 
-打开 `http://localhost:3000` 查看页面。
+Open `http://localhost:3000` in your browser.
 
-## 安装技能
+## Install Skills
 
-默认仓库标识：`adonis0123/adonis-skills`
+Default repository identifier: `adonis0123/adonis-skills`
 
 ```bash
 npx skills add adonis0123/adonis-skills --skill weekly-report
 npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 ```
 
-如果仓库 owner 改变：
+If the repository owner changes:
 
-1. 设置环境变量 `SKILLS_REPO=<new-owner>/adonis-skills`
-2. 重新运行 `pnpm skills:index`
+1. Set `SKILLS_REPO=<new-owner>/adonis-skills`
+2. Run `pnpm skills:index` again
 
-## 命令速查（每条命令是做什么的）
+## Command Cheatsheet (What Each Command Does)
 
-下面按 `package.json` 中的 scripts 逐条说明，便于直接对照回忆。
+The table below explains each script in `package.json`.
 
-| 命令 | 实际执行 | 含义 / 何时使用 |
+| Command | Actual Execution | Meaning / When to Use |
 | --- | --- | --- |
-| `pnpm dev` | `turbo run dev --filter=@adonis-skills/web` | 启动 Web 站点开发模式（只跑 `apps/web`）。日常本地调试页面时用。 |
-| `pnpm build` | `turbo run build` | 执行 monorepo 构建任务。提交前想确认可构建时用。 |
-| `pnpm lint` | `turbo run lint` | 执行代码规范检查。改了 TS/JS 代码后用。 |
-| `pnpm typecheck` | `turbo run typecheck` | 执行 TypeScript 类型检查。改类型或 API 后用。 |
-| `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | 交互式创建新 skill（推荐入口）。会自动做：初始化目录 -> 快速校验 -> 全量校验 -> 刷新索引。 |
-| `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | 对已创建/已复制到 `skills/*` 的 skill 执行标准收尾流程：`quick-validate` -> `validate` -> `index`。支持相对或绝对路径。 |
-| `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | 只初始化 skill 目录和模板内容（手动模式）。当你不想走完整自动流程时用。 |
-| `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | 只校验单个 skill（尤其是 frontmatter 合法性）。改完某个 skill 后先快速自检。 |
-| `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要补 interface 展示信息时用。 |
-| `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | 仓库级 skills 校验。提交前、CI 前必须跑。 |
-| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | 重新生成 `apps/web/src/generated/skills-index.json`。新增/修改 skill 后用于刷新站点展示数据。 |
-| `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | 把 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。本地联调 agent 时用。 |
-| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再自动同步到 `.claude/skills`。需要在本机 Claude/Codex 场景一起验证时用。 |
-| `pnpm skills:sync:llm` | `node --experimental-strip-types ./scripts/sync-llm-skills.ts` | 将 `.agents/skills` 原子同步到 `.claude/skills`。当你只想重做同步，不想重新安装时用。 |
-| `pnpm ruler:apply` | `pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup` | 根据 `.ruler/*` 规则生成/更新根目录 `AGENTS.md`、`CLAUDE.md` 等。修改规则后用。 |
-| `pnpm postinstall` | 条件执行安装后钩子（CI 跳过，本地执行 `ruler:apply` 与 `skills:sync:llm`） | `pnpm install` 后自动触发：本地环境会执行 `ruler:apply` 和 `skills:sync:llm`，CI 环境会跳过。 |
+| `pnpm dev` | `turbo run dev --filter=@adonis-skills/web` | Starts web site development mode (`apps/web` only). Use for daily local UI debugging. |
+| `pnpm build` | `turbo run build` | Runs monorepo build tasks. Use before submitting changes when you want to ensure the repo builds. |
+| `pnpm lint` | `turbo run lint` | Runs code style/lint checks. Use after TS/JS changes. |
+| `pnpm typecheck` | `turbo run typecheck` | Runs TypeScript type checks. Use after type/API changes. |
+| `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | Interactive entrypoint to create a new skill. Automatically does: init -> quick validate -> full validate -> index refresh. |
+| `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | Standard finalize flow for an existing/copied skill under `skills/*`: `quick-validate` -> `validate` -> `index`. Supports relative and absolute paths. |
+| `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | Initializes only skill directory/template content (manual mode). Use when you do not want the full automated flow. |
+| `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | Validates a single skill (especially frontmatter validity). Use as fast local check after editing one skill. |
+| `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | Generates `agents/openai.yaml` for a skill (OpenAI skill interface metadata). Use when interface metadata is needed. |
+| `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | Repository-wide skills validation. Required before commit/CI. |
+| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | Regenerates `apps/web/src/generated/skills-index.json`. Run after adding/updating skills so web data stays fresh. |
+| `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | Installs skills from `skills/` into local `.agents/skills` (supports interactive selection, `--all`, `--skill`). Use for local agent testing. |
+| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then syncs to `.claude/skills`. Use when testing in local Claude/Codex runtime too. |
+| `pnpm skills:sync:llm` | `node --experimental-strip-types ./scripts/sync-llm-skills.ts` | Atomically syncs `.agents/skills` to `.claude/skills`. Use when you only want to rerun sync. |
+| `pnpm ruler:apply` | `pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup` | Generates/updates root outputs like `AGENTS.md` and `CLAUDE.md` from `.ruler/*`. Run after rule changes. |
+| `pnpm postinstall` | Conditional postinstall hook (`ruler:apply` and `skills:sync:llm` locally; skipped in CI) | Triggered by `pnpm install`: local runs perform `ruler:apply` and `skills:sync:llm`; CI skips them. |
 
-补充：
+Notes:
 
-- 日常新增 skill 最常用顺序：`skills:new` -> `skills:validate` -> `skills:index`
-- 手动模式最常用顺序：`skills:init`（或手工复制）-> `skills:finalize -- <skill-path>`
+- Most common flow for new skills: `skills:new` -> `skills:validate` -> `skills:index`
+- Most common manual flow: `skills:init` (or copy manually) -> `skills:finalize -- <skill-path>`
 
-## 新增 Skill 标准流程（SOP）
+## New Skill Standard Flow (SOP)
 
-推荐使用一条命令快速创建：
+Recommended quick path:
 
 ```bash
 pnpm skills:new
 ```
 
-默认会交互收集 `name`、`description`、可选资源目录，并自动执行：
+By default it interactively collects `name`, `description`, optional resource directories, then runs:
 
-1. 初始化 skill 目录（默认到 `skills/`）
-2. 单 skill 快速校验（`skills:quick-validate`）
-3. 全仓库校验（`skills:validate`）
-4. 更新索引（`skills:index`）
+1. Initialize skill directory (default path: `skills/`)
+2. Single-skill quick validation (`skills:quick-validate`)
+3. Repository-wide validation (`skills:validate`)
+4. Index regeneration (`skills:index`)
 
-非交互创建示例：
+Non-interactive creation example:
 
 ```bash
-pnpm skills:new -- --name demo-skill --description "用于演示新增 skill 流程" --resources scripts,references --non-interactive
+pnpm skills:new -- --name demo-skill --description "Used to demonstrate the new skill workflow" --resources scripts,references --non-interactive
 ```
 
-手动模式（已复制或已初始化 skill 后直接收尾）：
+Manual mode (initialize or copy first, then finalize):
 
 ```bash
 pnpm skills:init <skill-name> --path skills --resources scripts,references
 pnpm skills:finalize -- skills/<skill-name>
 ```
 
-仅收尾（无需重新初始化）：
+Finalize only (no re-initialization needed):
 
 ```bash
-# 相对路径
+# Relative path
 pnpm skills:finalize -- skills/code-inspector-init
 
-# 绝对路径（末尾 / 会自动处理）
+# Absolute path (trailing / is handled automatically)
 pnpm skills:finalize -- /Users/adonis/coding/adonis-skills2/skills/code-inspector-init/
 
-# 预览将执行的命令，不实际执行
+# Preview commands only; do not execute
 pnpm skills:finalize -- --dry-run skills/code-inspector-init
 ```
 
-## 本地交互安装与测试
+## Local Interactive Install and Testing
 
-本仓库支持将 `skills/` 目录内的技能先安装到 `.agents/skills`，再按需同步到 `.claude/skills`。
+This repository supports installing skills from `skills/` into `.agents/skills`, then optionally syncing to `.claude/skills`.
 
 ```bash
-# 默认进入交互下拉菜单（select + checkbox）
+# Default: enter interactive menu (select + checkbox)
 pnpm skills:install:local
 
-# 先交互安装，再一键同步到 .claude/skills
+# Interactive install, then one-step sync to .claude/skills
 pnpm skills:test:local
 ```
 
-交互菜单流程：
+Interactive menu flow:
 
-1. 先选择 `安装选中的 skills` / `安装全部 skills` / `退出`
-2. 如果选择“安装选中的 skills”，进入多选列表（空格勾选）
-3. 确认后执行安装
+1. Choose `Install selected skills` / `Install all skills` / `Exit`
+2. If choosing selected install, go into multi-select list (space to check)
+3. Confirm and execute install
 
-非交互模式同样可用：
+Non-interactive mode is also supported:
 
 ```bash
-# 安装单个（可重复 --skill）
+# Install one skill (repeat --skill if needed)
 pnpm skills:install:local -- --no-interactive --skill weekly-report
 
-# 安装全部
+# Install all
 pnpm skills:install:local -- --no-interactive --all
 
-# 非交互安装后同步
+# Install then sync in non-interactive mode
 pnpm skills:test:local -- --no-interactive --skill weekly-report
 ```
 
-说明：
+Notes:
 
-- 安装命令底层使用 `npx skills add ./skills -a codex ...`，目标目录是 `.agents/skills`
-- `skills:test:local` 会在安装完成后执行 `skills:sync:llm`，把 `.agents/skills` 镜像到 `.claude/skills`
+- Install command uses `npx skills add ./skills -a codex ...` under the hood, target directory is `.agents/skills`
+- `skills:test:local` runs `skills:sync:llm` after install and mirrors `.agents/skills` into `.claude/skills`
 
 ## CI
 
-GitHub Actions 会执行：
+GitHub Actions runs:
 
 - `pnpm install --frozen-lockfile`
 - `pnpm skills:validate`
 - `pnpm skills:index`
+- `pnpm --filter @adonis-skills/web run i18n -- --compile --strict`
 - `pnpm turbo run lint typecheck build --filter=@adonis-skills/web`
 
-失败会阻断合并，保证主分支可部署。
+What each step validates:
 
-## Vercel 部署（自动）
+- `install`: lockfile-consistent dependency install
+- `skills:validate`: frontmatter/schema validity for `skills/*`
+- `skills:index`: regenerates `apps/web/src/generated/skills-index.json`
+- `Prepare i18n Catalogs`: compiles `src/locales/**/*.po` into `*.mjs` and regenerates `src/i18n/catalog-manifest.ts`
+- `lint/typecheck/build`: code quality, TS correctness, and production buildability
 
-推荐在 Vercel 里连接本仓库并使用以下命令：
+Why the i18n step is required:
+
+- compiled Lingui catalogs (`src/locales/**/*.mjs`) are intentionally ignored by git.
+- `src/i18n/catalog-manifest.ts` imports those `.mjs` files.
+- without pre-compiling catalogs in CI, `typecheck` can fail with `TS2307` ("Cannot find module .../src/locales/.../*.mjs").
+
+Common failure categories:
+
+- dependency/install issue (`pnpm install`)
+- skills validation failure (`pnpm skills:validate`)
+- i18n compile/translation strict check failure (`Prepare i18n Catalogs`)
+- TypeScript module/type errors (`typecheck`)
+
+Troubleshooting rule:
+
+- if you see `TS2307` paths pointing to `src/locales/**/*.mjs`, run `pnpm --filter @adonis-skills/web run i18n -- --compile` first, then rerun typecheck.
+
+Failures block merge to keep the main branch deployable.
+
+## Vercel Deployment (Automatic)
+
+Recommended Vercel settings for this repository:
 
 - Install Command: `pnpm install --frozen-lockfile`
 - Build Command: `pnpm turbo run build --filter=@adonis-skills/web`
-- Output: Next.js 默认输出（不手动指定）
+- Output: default Next.js output (no manual override)
 
-当主分支更新时，Vercel 会自动部署；若版本异常，直接在 GitHub revert 到上一个绿色提交即可回滚。
+After main branch updates, Vercel deploys automatically. If a bad release appears, revert to the previous green commit on GitHub.
 
-## 未来计划
+## Future Plan
 
-V1 仅支持 GitHub 安装链路。后续可追加 npm 发布（含 GitHub Action 发包与回滚策略）。
+V1 supports GitHub installation flow only. Later we can add npm publishing (including GitHub Action release and rollback strategy).

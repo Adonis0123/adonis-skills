@@ -9,6 +9,15 @@ applyTo: '**'
 - When changing generated artifacts, update the source script and regenerate outputs.
 - Prefer passing script arguments explicitly via `--` when invoking pnpm scripts in docs/CI to avoid ambiguity.
 
+## Documentation Conventions
+
+- Every directory with README documentation must include both `README.md` and `README.zh-CN.md`.
+- `README.md` is the default and canonical English version.
+- `README.zh-CN.md` is the Chinese mirror of `README.md`.
+- Both README files must keep structural and semantic parity (same sections, same command examples, same meaning).
+- Both README files should include reciprocal language switch links at the top.
+- Any README update must modify both language files in the same change.
+
 ## Skill Authoring Conventions
 
 - Use lowercase hyphen-case for skill directory names and frontmatter `name`.

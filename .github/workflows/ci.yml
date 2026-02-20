@@ -34,5 +34,8 @@ jobs:
       - name: Generate Skills Index
         run: pnpm skills:index
 
+      - name: Prepare i18n Catalogs
+        run: pnpm --filter @adonis-skills/web run i18n -- --compile --strict
+
       - name: Lint, Typecheck, Build
         run: pnpm turbo run lint typecheck build --filter=@adonis-skills/web
