@@ -38,19 +38,19 @@
     line-height: 1.62;
     overscroll-behavior-y: none;
     background:
-      radial-gradient(900px 420px at 8% -12%, rgba(255, 159, 67, 0.18), transparent 62%),
-      radial-gradient(860px 420px at 88% -6%, rgba(255, 159, 67, 0.06), transparent 62%),
-      radial-gradient(760px 380px at 58% 110%, rgba(255, 159, 67, 0.10), transparent 68%),
-      linear-gradient(160deg, #fffaf3 0%, var(--background) 58%, #fff2e6 100%);
+      radial-gradient(900px 420px at 8% -12%, rgba(146, 167, 210, 0.14), transparent 62%),
+      radial-gradient(860px 420px at 88% -6%, rgba(146, 167, 210, 0.08), transparent 62%),
+      radial-gradient(760px 380px at 58% 110%, rgba(146, 167, 210, 0.06), transparent 68%),
+      linear-gradient(160deg, #f4f7fc 0%, var(--background) 58%, #eef2f9 100%);
     color: var(--foreground);
   }
 
   .dark body,
   :root[data-theme="dark"] body {
     background:
-      radial-gradient(980px 460px at 10% -14%, rgba(255, 107, 53, 0.20), transparent 64%),
-      radial-gradient(920px 430px at 88% -8%, rgba(255, 107, 53, 0.08), transparent 64%),
-      radial-gradient(760px 360px at 56% 110%, rgba(255, 107, 53, 0.10), transparent 68%),
+      radial-gradient(980px 460px at 10% -14%, rgba(146, 167, 210, 0.12), transparent 64%),
+      radial-gradient(920px 430px at 88% -8%, rgba(146, 167, 210, 0.06), transparent 64%),
+      radial-gradient(760px 360px at 56% 110%, rgba(146, 167, 210, 0.06), transparent 68%),
       linear-gradient(160deg, #161617 0%, var(--background) 56%, #0f0f10 100%);
   }
 
@@ -104,7 +104,7 @@
   }
 
   ::selection {
-    background: rgba(255, 159, 67, 0.28);
+    background: rgba(146, 167, 210, 0.28);
     color: var(--foreground);
   }
 }
@@ -143,7 +143,7 @@
     z-index: 0;
     content: "";
     border-radius: inherit;
-    box-shadow: var(--clay-highlight-top), inset 0 -1px 0 rgba(240, 200, 136, 0.5);
+    box-shadow: var(--clay-highlight-top), inset 0 -1px 0 rgba(146, 167, 210, 0.4);
     pointer-events: none;
   }
 
@@ -178,7 +178,7 @@
   }
 
   .clay-elevation-inset {
-    box-shadow: var(--shadow-clay-inset), 0 2px 0 rgba(240, 200, 136, 0.44);
+    box-shadow: var(--shadow-clay-inset), 0 2px 0 rgba(146, 167, 210, 0.32);
   }
 
   .clay-elevation-floating {
@@ -187,7 +187,7 @@
 
   .dark .clay-surface,
   :root[data-theme="dark"] .clay-surface {
-    border-color: rgba(255, 107, 53, 0.28);
+    border-color: rgba(146, 167, 210, 0.28);
     box-shadow: var(--clay-shadow-card);
   }
 
@@ -202,8 +202,8 @@
   :root[data-theme="dark"] .clay-surface::after {
     box-shadow:
       var(--clay-highlight-top),
-      inset 0 -1px 0 rgba(255, 107, 53, 0.62),
-      inset 0 0 0 1px rgba(255, 107, 53, 0.22);
+      inset 0 -1px 0 rgba(146, 167, 210, 0.48),
+      inset 0 0 0 1px rgba(146, 167, 210, 0.14);
   }
 
   .clay-button {
@@ -230,8 +230,8 @@
   }
 
   .clay-button--primary {
-    background: #ff9f43;
-    border-color: #ff9f43;
+    background: #92a7d2;
+    border-color: #92a7d2;
     color: #ffffff;
     box-shadow: var(--clay-shadow-btn-primary);
   }
@@ -245,8 +245,8 @@
   .clay-button--ghost,
   .clay-button--outline {
     background: transparent;
-    border-color: #ff9f43;
-    color: #ff9f43;
+    border-color: #92a7d2;
+    color: #7b94c2;
     box-shadow: var(--clay-shadow-btn-secondary);
   }
 
@@ -254,13 +254,13 @@
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
     transform: translate3d(0, 2px, 0);
-    background: rgba(255, 159, 67, 0.1);
+    background: rgba(146, 167, 210, 0.1);
     box-shadow: var(--clay-shadow-btn-secondary-hover);
   }
 
   .clay-button--blue {
-    background: #87ceeb;
-    border-color: #87ceeb;
+    background: #b4c4e0;
+    border-color: #b4c4e0;
     color: #ffffff;
     box-shadow: var(--clay-shadow-btn-blue);
   }
@@ -292,27 +292,27 @@
     @apply inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold;
     border-radius: 50px;
     border: 0;
-    background: #ff9f43;
+    background: #92a7d2;
     color: #ffffff;
-    box-shadow: 0 4px 0 #e07b1a;
+    box-shadow: 0 4px 0 #6e87b8;
   }
 
   .clay-badge--peach {
-    background: #ff9f43;
+    background: #92a7d2;
     color: #ffffff;
-    box-shadow: 0 4px 0 #e07b1a;
+    box-shadow: 0 4px 0 #6e87b8;
   }
 
   .clay-badge--neutral {
-    background: #f3e4d2;
-    color: #8b6940;
-    box-shadow: 0 4px 0 #e0c9a6;
+    background: #dce4f0;
+    color: #5a73a0;
+    box-shadow: 0 4px 0 #c5d0e2;
   }
 
   .clay-badge--cream {
-    background: #ffe5c8;
-    color: #c06a1f;
-    box-shadow: 0 4px 0 #eac49c;
+    background: #c8d5ea;
+    color: #4a6390;
+    box-shadow: 0 4px 0 #b0bfd8;
   }
 
   .clay-badge--success {
@@ -322,9 +322,9 @@
   }
 
   .clay-badge--blue {
-    background: #f5a623;
+    background: #7b94c2;
     color: #ffffff;
-    box-shadow: 0 4px 0 #d48c10;
+    box-shadow: 0 4px 0 #5a73a0;
   }
 
   .dark .clay-button--secondary,
@@ -333,9 +333,9 @@
   :root[data-theme="dark"] .clay-button--secondary,
   :root[data-theme="dark"] .clay-button--ghost,
   :root[data-theme="dark"] .clay-button--outline {
-    border-color: #ff6b35;
-    color: #ff956f;
-    background: rgba(255, 107, 53, 0.14);
+    border-color: #92a7d2;
+    color: #b4c4e0;
+    background: rgba(146, 167, 210, 0.12);
     box-shadow: var(--clay-shadow-btn-secondary);
   }
 
@@ -345,43 +345,43 @@
   :root[data-theme="dark"] .clay-button--secondary:hover,
   :root[data-theme="dark"] .clay-button--ghost:hover,
   :root[data-theme="dark"] .clay-button--outline:hover {
-    background: rgba(255, 107, 53, 0.24);
-    color: #ffc1ad;
+    background: rgba(146, 167, 210, 0.22);
+    color: #d4ddef;
     box-shadow: var(--clay-shadow-btn-secondary-hover);
   }
 
   .dark .clay-button--blue,
   :root[data-theme="dark"] .clay-button--blue {
-    background: #ff6b35;
-    border-color: #ff6b35;
-    box-shadow: var(--clay-shadow-btn-primary);
+    background: #b4c4e0;
+    border-color: #b4c4e0;
+    box-shadow: var(--clay-shadow-btn-blue);
   }
 
   .dark .clay-button--blue:hover,
   :root[data-theme="dark"] .clay-button--blue:hover {
-    background: #ff8255;
-    box-shadow: var(--clay-shadow-btn-primary-hover);
+    background: #c5d2ea;
+    box-shadow: var(--clay-shadow-btn-blue-hover);
   }
 
   .dark .clay-badge,
   :root[data-theme="dark"] .clay-badge {
-    background: #ff6b35;
+    background: #92a7d2;
     color: #ffffff;
-    box-shadow: 0 4px 0 #d95526;
+    box-shadow: 0 4px 0 #5a73a0;
   }
 
   .dark .clay-badge--neutral,
   :root[data-theme="dark"] .clay-badge--neutral {
-    background: rgba(255, 107, 53, 0.18);
-    color: #ff956f;
-    box-shadow: 0 4px 0 rgba(217, 85, 38, 0.3);
+    background: rgba(146, 167, 210, 0.16);
+    color: #b4c4e0;
+    box-shadow: 0 4px 0 rgba(90, 115, 160, 0.3);
   }
 
   .dark .clay-badge--cream,
   :root[data-theme="dark"] .clay-badge--cream {
-    background: rgba(255, 107, 53, 0.28);
-    color: #ffc1ad;
-    box-shadow: 0 4px 0 rgba(217, 85, 38, 0.35);
+    background: rgba(146, 167, 210, 0.26);
+    color: #d4ddef;
+    box-shadow: 0 4px 0 rgba(90, 115, 160, 0.35);
   }
 
   .dark .clay-badge--success,
@@ -453,17 +453,17 @@
 
   .clay-hero-mesh {
     background-image:
-      radial-gradient(circle at 14% 10%, rgba(255, 159, 67, 0.04) 0%, transparent 52%),
-      radial-gradient(circle at 84% 12%, rgba(255, 159, 67, 0.02) 0%, transparent 52%),
+      radial-gradient(circle at 14% 10%, rgba(146, 167, 210, 0.06) 0%, transparent 52%),
+      radial-gradient(circle at 84% 12%, rgba(146, 167, 210, 0.04) 0%, transparent 52%),
       radial-gradient(circle at 72% 82%, rgba(255, 255, 255, 0.5) 0%, transparent 58%);
   }
 
   .dark .clay-hero-mesh,
   :root[data-theme="dark"] .clay-hero-mesh {
     background-image:
-      radial-gradient(circle at 14% 10%, rgba(255, 107, 53, 0.06) 0%, transparent 54%),
-      radial-gradient(circle at 84% 12%, rgba(255, 107, 53, 0.03) 0%, transparent 54%),
-      radial-gradient(circle at 72% 82%, rgba(255, 107, 53, 0.04) 0%, transparent 60%);
+      radial-gradient(circle at 14% 10%, rgba(146, 167, 210, 0.06) 0%, transparent 54%),
+      radial-gradient(circle at 84% 12%, rgba(146, 167, 210, 0.03) 0%, transparent 54%),
+      radial-gradient(circle at 72% 82%, rgba(146, 167, 210, 0.04) 0%, transparent 60%);
   }
 
   .clay-hover-lift {
@@ -501,7 +501,7 @@
   }
 
   .text-clay-muted {
-    color: #888888;
+    color: #8890a0;
   }
 
   .dark .text-clay-muted,

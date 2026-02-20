@@ -1,61 +1,61 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #fff8f0;
-  --foreground: #2d2d2d;
+  --background: #f0f4f9;
+  --foreground: #2a2d35;
   --card: #ffffff;
-  --card-foreground: #2d2d2d;
+  --card-foreground: #2a2d35;
   --popover: #ffffff;
-  --popover-foreground: #2d2d2d;
-  --primary: #ff9f43;
+  --popover-foreground: #2a2d35;
+  --primary: #92a7d2;
   --primary-foreground: #ffffff;
-  --secondary: #87ceeb;
+  --secondary: #b4c4e0;
   --secondary-foreground: #ffffff;
-  --muted: #f7ecdf;
-  --muted-foreground: #888888;
-  --accent: #ffd7ad;
-  --accent-foreground: #2d2d2d;
+  --muted: #e6ebf3;
+  --muted-foreground: #8890a0;
+  --accent: #d4ddef;
+  --accent-foreground: #2a2d35;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 159, 67, 0.15);
-  --input: rgba(255, 159, 67, 0.24);
-  --ring: #ff9f43;
-  --chart-1: #ff9f43;
-  --chart-2: #87ceeb;
-  --chart-3: #ffc37d;
-  --chart-4: #ff7a59;
+  --border: rgba(146, 167, 210, 0.18);
+  --input: rgba(146, 167, 210, 0.26);
+  --ring: #92a7d2;
+  --chart-1: #92a7d2;
+  --chart-2: #b4c4e0;
+  --chart-3: #a8bbd8;
+  --chart-4: #7b94c2;
   --chart-5: #63c9a7;
   --radius: 1rem;
 
-  --clay-warm-ivory: #fff8f0;
-  --clay-warm-peach: #ffba7f;
-  --clay-warm-amber: #ff9f43;
-  --clay-sky: #87ceeb;
+  --clay-warm-ivory: #f0f4f9;
+  --clay-warm-peach: #b4c4e0;
+  --clay-warm-amber: #92a7d2;
+  --clay-sky: #b4c4e0;
   --clay-emerald: #63c9a7;
 
-  --clay-peach: #ff9f43;
-  --clay-blue: #87ceeb;
-  --clay-cream: #fff8f0;
+  --clay-peach: #92a7d2;
+  --clay-blue: #b4c4e0;
+  --clay-cream: #f0f4f9;
 
   --clay-surface-bg: #ffffff;
   --clay-radius-card: 24px;
   --clay-radius-card-lg: 32px;
   --clay-radius-button: 50px;
 
-  --clay-shadow-card: 0 8px 24px rgba(255, 159, 67, 0.18), 0 3px 0 #f0c888;
-  --clay-shadow-card-hover: 0 14px 30px rgba(255, 159, 67, 0.24), 0 4px 0 #f0c888;
+  --clay-shadow-card: 0 8px 24px rgba(146, 167, 210, 0.20), 0 3px 0 #b8c8e2;
+  --clay-shadow-card-hover: 0 14px 30px rgba(146, 167, 210, 0.28), 0 4px 0 #b8c8e2;
 
-  --clay-shadow-btn-primary: 0 6px 0 #e07b1a;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #e07b1a;
-  --clay-shadow-btn-blue: 0 6px 0 #5bafd6;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #5bafd6;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(224, 123, 26, 0.28);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(224, 123, 26, 0.28);
+  --clay-shadow-btn-primary: 0 6px 0 #6e87b8;
+  --clay-shadow-btn-primary-hover: 0 4px 0 #6e87b8;
+  --clay-shadow-btn-blue: 0 6px 0 #8da0cc;
+  --clay-shadow-btn-blue-hover: 0 4px 0 #8da0cc;
+  --clay-shadow-btn-secondary: 0 6px 0 rgba(110, 135, 184, 0.28);
+  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(110, 135, 184, 0.28);
 
   --clay-highlight-top: inset 0 2px 0 rgba(255, 255, 255, 0.74);
 
   --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(240, 200, 136, 0.62);
+  --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(146, 167, 210, 0.45);
   --shadow-clay-floating: var(--clay-shadow-card-hover);
 
   --font-app-sans: var(--font-noto-sans-sc);
@@ -65,113 +65,113 @@
 
 .dark,
 :root[data-theme="dark"] {
-  --background: #121212;
-  --foreground: #f5f7fa;
-  --card: #1b1b1d;
-  --card-foreground: #f5f7fa;
-  --popover: #1f2023;
-  --popover-foreground: #f5f7fa;
-  --primary: #ff6b35;
+  --background: #12141a;
+  --foreground: #f0f2f7;
+  --card: #1a1d26;
+  --card-foreground: #f0f2f7;
+  --popover: #1e2130;
+  --popover-foreground: #f0f2f7;
+  --primary: #92a7d2;
   --primary-foreground: #ffffff;
-  --secondary: #ff8d69;
+  --secondary: #b4c4e0;
   --secondary-foreground: #ffffff;
-  --muted: #212327;
-  --muted-foreground: #a9b0ba;
-  --accent: #1f242b;
-  --accent-foreground: #f5f7fa;
+  --muted: #21252e;
+  --muted-foreground: #a0a8b8;
+  --accent: #1e2130;
+  --accent-foreground: #f0f2f7;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: rgba(255, 107, 53, 0.28);
-  --input: rgba(255, 107, 53, 0.28);
-  --ring: #ff6b35;
-  --chart-1: #ff6b35;
-  --chart-2: #ff8d69;
-  --chart-3: #ff8e61;
-  --chart-4: #ffc1ad;
+  --border: rgba(146, 167, 210, 0.28);
+  --input: rgba(146, 167, 210, 0.28);
+  --ring: #92a7d2;
+  --chart-1: #92a7d2;
+  --chart-2: #b4c4e0;
+  --chart-3: #a8bbd8;
+  --chart-4: #c5d2ea;
   --chart-5: #63c9a7;
 
-  --clay-warm-ivory: #1b1b1d;
-  --clay-warm-peach: #ff8d69;
-  --clay-warm-amber: #ff6b35;
-  --clay-sky: #ff8d69;
+  --clay-warm-ivory: #1a1d26;
+  --clay-warm-peach: #b4c4e0;
+  --clay-warm-amber: #92a7d2;
+  --clay-sky: #b4c4e0;
   --clay-emerald: #63c9a7;
 
-  --clay-peach: #ff6b35;
-  --clay-blue: #ff8d69;
-  --clay-cream: #1b1b1d;
+  --clay-peach: #92a7d2;
+  --clay-blue: #b4c4e0;
+  --clay-cream: #1a1d26;
 
-  --clay-surface-bg: #1b1b1d;
+  --clay-surface-bg: #1a1d26;
 
-  --clay-shadow-card: 0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(255, 107, 53, 0.52);
-  --clay-shadow-card-hover: 0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(255, 107, 53, 0.6);
+  --clay-shadow-card: 0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(146, 167, 210, 0.48);
+  --clay-shadow-card-hover: 0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(146, 167, 210, 0.56);
 
-  --clay-shadow-btn-primary: 0 6px 0 #d95526;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #d95526;
-  --clay-shadow-btn-blue: 0 6px 0 #d95526;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #d95526;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(217, 85, 38, 0.45);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(217, 85, 38, 0.45);
+  --clay-shadow-btn-primary: 0 6px 0 #5a73a0;
+  --clay-shadow-btn-primary-hover: 0 4px 0 #5a73a0;
+  --clay-shadow-btn-blue: 0 6px 0 #5a73a0;
+  --clay-shadow-btn-blue-hover: 0 4px 0 #5a73a0;
+  --clay-shadow-btn-secondary: 0 6px 0 rgba(90, 115, 160, 0.45);
+  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(90, 115, 160, 0.45);
 
   --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 
   --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(255, 107, 53, 0.42);
+  --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(146, 167, 210, 0.42);
   --shadow-clay-floating: var(--clay-shadow-card-hover);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not(.light):not([data-theme="light"]) {
-    --background: #121212;
-    --foreground: #f5f7fa;
-    --card: #1b1b1d;
-    --card-foreground: #f5f7fa;
-    --popover: #1f2023;
-    --popover-foreground: #f5f7fa;
-    --primary: #ff6b35;
+    --background: #12141a;
+    --foreground: #f0f2f7;
+    --card: #1a1d26;
+    --card-foreground: #f0f2f7;
+    --popover: #1e2130;
+    --popover-foreground: #f0f2f7;
+    --primary: #92a7d2;
     --primary-foreground: #ffffff;
-    --secondary: #ff8d69;
+    --secondary: #b4c4e0;
     --secondary-foreground: #ffffff;
-    --muted: #212327;
-    --muted-foreground: #a9b0ba;
-    --accent: #1f242b;
-    --accent-foreground: #f5f7fa;
+    --muted: #21252e;
+    --muted-foreground: #a0a8b8;
+    --accent: #1e2130;
+    --accent-foreground: #f0f2f7;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: rgba(255, 107, 53, 0.28);
-    --input: rgba(255, 107, 53, 0.28);
-    --ring: #ff6b35;
-    --chart-1: #ff6b35;
-    --chart-2: #ff8d69;
-    --chart-3: #ff8e61;
-    --chart-4: #ffc1ad;
+    --border: rgba(146, 167, 210, 0.28);
+    --input: rgba(146, 167, 210, 0.28);
+    --ring: #92a7d2;
+    --chart-1: #92a7d2;
+    --chart-2: #b4c4e0;
+    --chart-3: #a8bbd8;
+    --chart-4: #c5d2ea;
     --chart-5: #63c9a7;
 
-    --clay-warm-ivory: #1b1b1d;
-    --clay-warm-peach: #ff8d69;
-    --clay-warm-amber: #ff6b35;
-    --clay-sky: #ff8d69;
+    --clay-warm-ivory: #1a1d26;
+    --clay-warm-peach: #b4c4e0;
+    --clay-warm-amber: #92a7d2;
+    --clay-sky: #b4c4e0;
     --clay-emerald: #63c9a7;
 
-    --clay-peach: #ff6b35;
-    --clay-blue: #ff8d69;
-    --clay-cream: #1b1b1d;
+    --clay-peach: #92a7d2;
+    --clay-blue: #b4c4e0;
+    --clay-cream: #1a1d26;
 
-    --clay-surface-bg: #1b1b1d;
+    --clay-surface-bg: #1a1d26;
 
-    --clay-shadow-card: 0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(255, 107, 53, 0.52);
-    --clay-shadow-card-hover: 0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(255, 107, 53, 0.6);
+    --clay-shadow-card: 0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(146, 167, 210, 0.48);
+    --clay-shadow-card-hover: 0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(146, 167, 210, 0.56);
 
-    --clay-shadow-btn-primary: 0 6px 0 #d95526;
-    --clay-shadow-btn-primary-hover: 0 4px 0 #d95526;
-    --clay-shadow-btn-blue: 0 6px 0 #d95526;
-    --clay-shadow-btn-blue-hover: 0 4px 0 #d95526;
-    --clay-shadow-btn-secondary: 0 6px 0 rgba(217, 85, 38, 0.45);
-    --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(217, 85, 38, 0.45);
+    --clay-shadow-btn-primary: 0 6px 0 #5a73a0;
+    --clay-shadow-btn-primary-hover: 0 4px 0 #5a73a0;
+    --clay-shadow-btn-blue: 0 6px 0 #5a73a0;
+    --clay-shadow-btn-blue-hover: 0 4px 0 #5a73a0;
+    --clay-shadow-btn-secondary: 0 6px 0 rgba(90, 115, 160, 0.45);
+    --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(90, 115, 160, 0.45);
 
     --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 
     --shadow-clay-raised: var(--clay-shadow-card);
-    --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(255, 107, 53, 0.42);
+    --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(146, 167, 210, 0.42);
     --shadow-clay-floating: var(--clay-shadow-card-hover);
   }
 }
