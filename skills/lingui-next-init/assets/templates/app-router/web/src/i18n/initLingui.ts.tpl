@@ -18,6 +18,7 @@ export function resolveAppLocale(lang: string | undefined): AppLocale {
 
 export function initLingui(locale: AppLocale): I18n {
 	const i18n = getI18nInstance(locale);
+	i18n.activate(locale);
 	setI18n(i18n);
 	return i18n;
 }

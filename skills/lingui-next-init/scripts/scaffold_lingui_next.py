@@ -11,6 +11,14 @@ from typing import Any
 
 PLACEHOLDER_RE = re.compile(r"\{\{([A-Z0-9_]+)\}\}")
 VALID_MODES = ("app-only", "shared-auto", "shared-force")
+DEFAULT_SERVER_LAYOUTS_PACKAGE = "@adonis-kit/react-layouts"
+DEFAULT_SERVER_LAYOUTS_VERSION = "latest"
+GITIGNORE_LINGUI_COMPILED_PATTERNS = (
+    "web/src/locales/**/*.js",
+    "web/src/locales/**/*.mjs",
+    "web/locale/**/*.js",
+    "web/locale/**/*.mjs",
+)
 
 LANGUAGE_PRESETS: dict[str, dict[str, str]] = {
     "en": {
@@ -136,6 +144,21 @@ def parse_args() -> argparse.Namespace:
         "--i18n-package-name",
         default="@your-org/i18n",
         help="Package name to use for shared packages/i18n mode.",
+    )
+    parser.add_argument(
+        "--with-server-layouts",
+        action="store_true",
+        help="Enable optional withServerLayouts templates and dependency merge.",
+    )
+    parser.add_argument(
+        "--server-layouts-package",
+        default=DEFAULT_SERVER_LAYOUTS_PACKAGE,
+        help="Package name that exports withServerLayouts under /server.",
+    )
+    parser.add_argument(
+        "--server-layouts-version",
+        default=DEFAULT_SERVER_LAYOUTS_VERSION,
+        help="Version string used when adding server-layouts dependency.",
     )
     parser.add_argument(
         "--dry-run",
@@ -288,6 +311,7 @@ def build_replacements(
     source_locale: str,
     package_manager: str,
     i18n_package_name: str,
+    server_layouts_package: str,
     use_shared_package: bool,
 ) -> dict[str, str]:
     locales_json = json.dumps(locales, ensure_ascii=False)
@@ -297,6 +321,7 @@ def build_replacements(
         "SOURCE_LOCALE": source_locale,
         "PACKAGE_MANAGER": package_manager,
         "I18N_PACKAGE_NAME": i18n_package_name,
+        "SERVER_LAYOUTS_IMPORT_PATH": f"{server_layouts_package}/server",
         "ALL_LANGUAGES_ENTRIES": build_languages_entries(locales),
     }
 
@@ -355,6 +380,7 @@ def merge_package_json(
     project_root: Path,
     snippet_template_path: Path,
     replacements: dict[str, str],
+    extra_dependencies: dict[str, str],
     report: Report,
     dry_run: bool,
 ) -> None:
@@ -383,6 +409,8 @@ def merge_package_json(
         section_payload = snippet.get(section, {})
         if not isinstance(section_payload, dict):
             continue
+        if section == "dependencies" and extra_dependencies:
+            section_payload = {**section_payload, **extra_dependencies}
 
         current = target.get(section)
         if current is None:
@@ -407,6 +435,46 @@ def merge_package_json(
     write_json(target_path, target, dry_run)
     report.add_updated(target_path, dry_run)
     report.add_note(f"package.json additions: {', '.join(added)}")
+
+
+def merge_gitignore(project_root: Path, report: Report, dry_run: bool) -> None:
+    target_path = project_root / ".gitignore"
+    file_exists = target_path.exists()
+
+    if file_exists:
+        lines = target_path.read_text(encoding="utf-8").splitlines()
+    else:
+        lines = []
+
+    existing_lines = set(lines)
+    missing = [
+        pattern
+        for pattern in GITIGNORE_LINGUI_COMPILED_PATTERNS
+        if pattern not in existing_lines
+    ]
+    if not missing:
+        report.add_note(f".gitignore unchanged: {target_path.as_posix()}")
+        return
+
+    output_lines = list(lines)
+    if output_lines and output_lines[-1] != "":
+        output_lines.append("")
+
+    header = "# lingui-next-init compiled catalogs"
+    if header not in existing_lines:
+        output_lines.append(header)
+
+    output_lines.extend(missing)
+    new_content = "\n".join(output_lines).rstrip("\n") + "\n"
+
+    if not dry_run:
+        target_path.write_text(new_content, encoding="utf-8")
+
+    if file_exists:
+        report.add_updated(target_path, dry_run)
+    else:
+        report.add_created(target_path, dry_run)
+    report.add_note(f".gitignore additions: {', '.join(missing)}")
 
 
 def write_rendered_file(
@@ -522,14 +590,42 @@ def main() -> int:
         else:
             report.add_note("shared-auto: workspace not detected, fallback to app-only.")
 
+    merge_gitignore(project_root=project_root, report=report, dry_run=args.dry_run)
+
     replacements = build_replacements(
         locales=locales,
         default_locale=args.default_locale,
         source_locale=args.source_locale,
         package_manager=args.package_manager,
         i18n_package_name=args.i18n_package_name,
+        server_layouts_package=args.server_layouts_package,
         use_shared_package=use_shared_package,
     )
+    optional_server_layout_templates = {
+        "web/src/i18n/layout-factory.tsx.tpl",
+        "web/src/app/[lang]/(home)/layout.tsx.tpl",
+    }
+    if args.with_server_layouts:
+        extra_dependencies = {
+            args.server_layouts_package: args.server_layouts_version
+        }
+        report.add_note(
+            "server-layouts enabled: "
+            f"merge dependency {args.server_layouts_package}@{args.server_layouts_version}"
+        )
+    else:
+        extra_dependencies = {}
+        report.add_note(
+            "server-layouts disabled: skip optional templates and dependency merge."
+        )
+        if (
+            args.server_layouts_package != DEFAULT_SERVER_LAYOUTS_PACKAGE
+            or args.server_layouts_version != DEFAULT_SERVER_LAYOUTS_VERSION
+        ):
+            report.add_note(
+                "--server-layouts-package/--server-layouts-version ignored "
+                "because --with-server-layouts is not enabled."
+            )
 
     stop_on_error = not args.dry_run
     template_files = sorted(app_router_templates.rglob("*.tpl"))
@@ -542,6 +638,7 @@ def main() -> int:
                     project_root=project_root,
                     snippet_template_path=template_path,
                     replacements=replacements,
+                    extra_dependencies=extra_dependencies,
                     report=report,
                     dry_run=args.dry_run,
                 )
@@ -558,6 +655,12 @@ def main() -> int:
         if rel.startswith("packages/i18n/") and not should_render_shared_templates:
             report.add_skipped(
                 f"skip by mode ({args.mode}): {rel}"
+            )
+            continue
+        if rel in optional_server_layout_templates and not args.with_server_layouts:
+            report.add_skipped(
+                "skip optional server-layout template "
+                f"(--with-server-layouts disabled): {rel}"
             )
             continue
 

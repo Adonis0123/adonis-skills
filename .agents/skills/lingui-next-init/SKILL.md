@@ -1,6 +1,6 @@
 ---
 name: lingui-next-init
-description: Scaffold Lingui i18n for Next.js App Router projects with script + .tpl templates. Use when you need to initialize or standardize multilingual setup (extract, compile, manifest, runtime provider, locale routing), especially in monorepos that may optionally use a shared packages/i18n package.
+description: Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.
 ---
 
 # Lingui Next Init
@@ -40,6 +40,28 @@ python3 "${SKILL_ROOT}/scripts/scaffold_lingui_next.py" \
 
 `--package-manager` is restricted to: `pnpm`, `npm`, `yarn`, `bun`.
 
+Optional server-layout composition:
+
+```bash
+python3 "${SKILL_ROOT}/scripts/scaffold_lingui_next.py" \
+  --project-root /abs/path/to/project \
+  --mode app-only \
+  --locales en,zh \
+  --default-locale en \
+  --source-locale en \
+  --package-manager pnpm \
+  --with-server-layouts \
+  --server-layouts-package @adonis-kit/react-layouts \
+  --server-layouts-version latest \
+  --dry-run
+```
+
+When `--with-server-layouts` is enabled:
+- Render optional templates: `web/src/i18n/layout-factory.tsx` and `web/src/app/[lang]/(home)/layout.tsx`.
+- Merge `--server-layouts-package` and `--server-layouts-version` into `web/package.json` `dependencies` when missing.
+- Preserve the default `web/src/app/[lang]/layout.tsx` `initLingui` flow.
+- Keep server initialization explicit: call `initPageLingui(params)` in server layouts and server pages before using Lingui `t`/metadata.
+
 ## Mode Decision
 
 Choose one mode:
@@ -62,12 +84,14 @@ The script renders templates from:
 
 1. `assets/templates/app-router/web/**.tpl`
 2. `assets/templates/app-router/packages/i18n/**.tpl` (mode-dependent)
-3. `assets/templates/pages-router/_reserved.tpl` (reserved for future extension, not scaffolded)
+3. `assets/templates/app-router/web/src/i18n/layout-factory.tsx.tpl` and `assets/templates/app-router/web/src/app/[lang]/(home)/layout.tsx.tpl` (only when `--with-server-layouts` is enabled)
+4. `assets/templates/pages-router/_reserved.tpl` (reserved for future extension, not scaffolded)
 
 `web/package.scripts.json.tpl` is merged into `web/package.json` incrementally:
 - Add missing `scripts`
 - Add missing `dependencies`
 - Add missing `devDependencies`
+- If `--with-server-layouts` is enabled, add missing `dependencies.<server-layouts-package>` with `<server-layouts-version>`
 - Never overwrite existing keys
 
 ## Validation Workflow
@@ -103,10 +127,19 @@ Verify `web/src/proxy.ts` default-locale rewrite and non-default prefix redirect
 3. No translated text at runtime:
 Check `web/src/i18n/catalog-manifest.ts` and `web/src/i18n/appRouterI18n.ts` loader paths.
 
-4. `shared-auto` with existing `packages/i18n`:
+4. Error: `Attempted to call a translation function without setting a locale`:
+Confirm `web/src/i18n/initLingui.ts` activates locale before `setI18n`.
+Then ensure both server `layout.tsx` and server `page.tsx` call `initPageLingui(params)` (or equivalent) before `t`/metadata usage.
+Prefer `useLingui`/`Trans` in shared server components.
+
+5. `shared-auto` with existing `packages/i18n`:
 `shared-auto` will reuse the existing shared package and skip rendering `packages/i18n/**` templates.
 Ensure your package exports `<i18n-package-name>/next-config` and `<i18n-package-name>/lingui-config`.
 If not, use `--mode shared-force` to scaffold shared templates or switch to `--mode app-only`.
+
+6. `withServerLayouts` setup issues:
+Confirm `--with-server-layouts` is enabled and your package exports `<server-layouts-package>/server`.
+If you use a custom package, pass `--server-layouts-package` explicitly.
 
 ## References
 
