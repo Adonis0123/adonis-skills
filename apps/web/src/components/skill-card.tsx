@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { CopyInstallCommandButton } from '@/components/copy-install-command'
 import {
   ClayBadge,
   ClayCard,
@@ -18,6 +19,7 @@ const toneCycle = ['peach', 'cream', 'peach'] as const
 
 export function SkillCard({ skill }: SkillCardProps) {
   const tone = toneCycle[skill.slug.charCodeAt(0) % toneCycle.length]
+  const installCommand = `npx skills add ${skillsRepo} --skill ${skill.slug}`
 
   return (
     <Link
@@ -40,7 +42,20 @@ export function SkillCard({ skill }: SkillCardProps) {
 
         <ClayCardContent className="pt-1">
           <div className="clay-surface clay-tone-base clay-elevation-inset rounded-2xl p-3">
-            <p className="font-mono text-[11px] text-clay-muted">npx skills add {skillsRepo} --skill {skill.slug}</p>
+            <div className="flex items-center justify-between gap-2.5">
+              <code
+                className="block min-w-0 flex-1 truncate pr-1 font-mono text-[11px] text-clay-muted"
+                title={installCommand}
+              >
+                {installCommand}
+              </code>
+              <CopyInstallCommandButton
+                command={installCommand}
+                compact
+                preventLinkNavigation
+                className="shrink-0"
+              />
+            </div>
           </div>
         </ClayCardContent>
 
