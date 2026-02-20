@@ -2,7 +2,7 @@
   {
     "slug": "code-inspector-init",
     "name": "code-inspector-init",
-    "description": "标准化接入与迁移 code-inspector-plugin（codeInspectorPlugin）到 Next.js、Vite、Webpack、Rspack、Rsbuild、Esbuild、Mako、Umi、Nuxt、Astro。Use when user asks 接入/迁移/配置 inspector、DOM 点击跳转 IDE 定位、hotKeys、自定义 options、或排查 code inspector 不生效问题。",
+    "description": "Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.",
     "installCommand": "npx skills add adonis0123/adonis-skills --skill code-inspector-init",
     "files": {
       "hasReferences": true,
@@ -12,7 +12,7 @@
   {
     "slug": "commit",
     "name": "commit",
-    "description": "This skill should be used when the user asks to \"commit\", \"generate commit message\", \"create commit\", \"提交代码\", \"生成提交信息\", or needs help writing git commit messages following conventional commit format with emoji prefixes.",
+    "description": "Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.",
     "installCommand": "npx skills add adonis0123/adonis-skills --skill commit",
     "files": {
       "hasReferences": true,
@@ -22,7 +22,7 @@
   {
     "slug": "lingui-next-init",
     "name": "lingui-next-init",
-    "description": "Scaffold Lingui i18n for Next.js App Router projects with script + .tpl templates. Use when you need to initialize or standardize multilingual setup (extract, compile, manifest, runtime provider, locale routing), especially in monorepos that may optionally use a shared packages/i18n package.",
+    "description": "Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.",
     "installCommand": "npx skills add adonis0123/adonis-skills --skill lingui-next-init",
     "files": {
       "hasReferences": true,
@@ -32,7 +32,7 @@
   {
     "slug": "staged-review-validator",
     "name": "staged-review-validator",
-    "description": "用于复核 staged-changes-review 的分析结果，逐条判断问题是否成立、是否需要修改，并给出证据与最小改动建议。",
+    "description": "Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.",
     "installCommand": "npx skills add adonis0123/adonis-skills --skill staged-review-validator",
     "files": {
       "hasReferences": true,
@@ -42,7 +42,7 @@
   {
     "slug": "tailwindcss-next-init",
     "name": "tailwindcss-next-init",
-    "description": "为 Next.js App Router 项目快速初始化 Tailwind CSS v4（CSS-first）并配置 Iconify（lucide/mdi/tabler）与常用插件。用于新项目搭建、现有项目 Tailwind v4 迁移、重构样式入口（tailwind-core/globals/custom）、补齐 @source/@reference 实践时触发。",
+    "description": "Initialize Tailwind CSS v4 and Iconify for Next.js App Router projects with script-driven templates. Use when you need a fast setup or migration with consistent style-entry conventions.",
     "installCommand": "npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init",
     "files": {
       "hasReferences": true,
@@ -52,7 +52,7 @@
   {
     "slug": "weekly-report",
     "name": "weekly-report",
-    "description": "自动读取 Git 提交记录生成周报。用于生成工作周报、项目总结、团队协作汇报。支持多仓库汇总。",
+    "description": "Generate structured weekly reports from Git commit history across one or multiple repositories. Use when you need concise, project-grouped progress summaries for status reporting.",
     "metadata": {
       "author": "adonis",
       "version": "1.0.0"

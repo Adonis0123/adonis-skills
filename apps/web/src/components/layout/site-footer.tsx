@@ -55,7 +55,7 @@ export function SiteFooter() {
 
           <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-border/72 pt-4 text-xs text-clay-muted md:text-sm">
             <p>© {year} {brand.name}. All rights reserved.</p>
-            <p>Built with Next.js and Soft 3D Claymorphism.</p>
+            <p>Built for discovering and installing agent skills.</p>
           </div>
         </ClaySurface>
       </div>

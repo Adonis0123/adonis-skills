@@ -73,8 +73,8 @@ export function ThemeToggle() {
   }
 
   const nextTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark'
-  const label = theme === 'dark' ? '深色' : '浅色'
-  const nextLabel = nextTheme === 'dark' ? '深色' : '浅色'
+  const label = theme === 'dark' ? 'Dark' : 'Light'
+  const nextLabel = nextTheme === 'dark' ? 'Dark' : 'Light'
 
   return (
     <ClayButton
@@ -82,8 +82,8 @@ export function ThemeToggle() {
       variant="ghost"
       size="sm"
       onClick={handleToggle}
-      aria-label={`切换到${nextLabel}主题`}
-      title={`当前: ${label}主题`}
+      aria-label={`Switch to ${nextLabel} theme`}
+      title={`Current: ${label} theme`}
       className="rounded-full px-3.5 text-xs md:text-sm"
     >
       <span

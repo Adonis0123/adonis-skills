@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     default: 'adonis-skills',
     template: '%s | adonis-skills',
   },
-  description: '我的技能仓库，支持 npx skills add 快速安装。',
+  description: 'A practical skill library for AI agent developers, installable with npx skills add.',
 }
 
 const themeInitScript = `
@@ -54,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>

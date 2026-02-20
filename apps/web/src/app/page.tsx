@@ -23,19 +23,20 @@ export default function HomePage() {
               </p>
 
               <h1 className="max-w-3xl text-4xl leading-[1.14] text-balance md:text-6xl">
-                Soft 3D Claymorphism 技能目录
+                Install production-ready skills for your AI agents.
               </h1>
 
               <p className="mt-5 max-w-4xl text-sm leading-7 text-clay-muted md:text-base">
-                这个仓库采用 monorepo 组织：`skills/` 存放技能定义，`apps/web` 提供展示站。目标是让技能可以被 `npx skills add` 直接安装，并通过更清晰的视觉层级展示技能能力。
+                Browse practical skills, pick a slug, and install with one command. Each skill is reusable in real
+                workflows.
               </p>
 
               <div className="mt-6 flex flex-wrap items-center gap-2.5">
                 <ClayBadge tone="peach" withDot>
-                  仓库: {skillsRepo}
+                  Repo: {skillsRepo}
                 </ClayBadge>
                 <ClayBadge tone="cream" withDot>
-                  技能数: {skills.length}
+                  Skills: {skills.length}
                 </ClayBadge>
               </div>
 
@@ -43,14 +44,14 @@ export default function HomePage() {
                 <ClayButton asChild>
                   <Link href={`https://github.com/${skillsRepo}`} target="_blank" rel="noreferrer">
                     <span className="icon-[lucide--github] size-4" aria-hidden />
-                    打开 GitHub
+                    Open GitHub
                   </Link>
                 </ClayButton>
 
                 <ClayButton asChild variant="ghost">
                   <Link href={exampleSkillHref}>
                     <span className="icon-[lucide--arrow-up-right] size-4" aria-hidden />
-                    查看示例 Skill
+                    View Example Skill
                   </Link>
                 </ClayButton>
               </div>
@@ -63,9 +64,9 @@ export default function HomePage() {
               </code>
 
               <div className="mt-4 space-y-2 text-xs leading-6 text-clay-muted md:text-sm">
-                <p>1. 选择一个 skill slug。</p>
-                <p>2. 运行安装命令。</p>
-                <p>3. 在你的 Agent 项目中调用技能。</p>
+                <p>1. Choose a skill slug.</p>
+                <p>2. Run the install command.</p>
+                <p>3. Use the skill in your agent workflow.</p>
               </div>
             </ClaySurface>
           </div>
@@ -77,7 +78,7 @@ export default function HomePage() {
           <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.16em] text-clay-muted">Library</p>
-              <h2 className="text-3xl md:text-4xl">Skills</h2>
+              <h2 className="text-3xl md:text-4xl">Skill Library</h2>
             </div>
 
             <ClaySurface tone="base" elevation="inset" className="rounded-[1rem] px-4 py-2.5">

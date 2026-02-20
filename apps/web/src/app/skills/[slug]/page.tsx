@@ -43,7 +43,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
           <ClayButton asChild variant="ghost" size="sm">
             <Link href="/">
               <span className="icon-[lucide--arrow-left] size-4" aria-hidden />
-              返回列表
+              Back to Skills
             </Link>
           </ClayButton>
 
@@ -58,8 +58,8 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
           <ClayCardHeader className="gap-4">
             <div className="flex flex-wrap items-center gap-2.5">
               <ClayBadge tone="peach" className="font-mono">{skill.slug}</ClayBadge>
-              {skill.metadata?.version && <ClayBadge tone="peach">版本 {skill.metadata.version}</ClayBadge>}
-              {skill.metadata?.author && <ClayBadge tone="cream">作者 {skill.metadata.author}</ClayBadge>}
+              {skill.metadata?.version && <ClayBadge tone="peach">Version {skill.metadata.version}</ClayBadge>}
+              {skill.metadata?.author && <ClayBadge tone="cream">Author {skill.metadata.author}</ClayBadge>}
             </div>
 
             <h1 className="font-heading text-4xl leading-tight text-foreground md:text-5xl">{skill.name}</h1>
@@ -80,13 +80,13 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
 
             <div className="grid gap-4 md:grid-cols-2">
               <ClaySurface tone="base" elevation="inset" className="rounded-[1rem] p-4">
-                <p className="mb-1.5 font-medium">目录结构</p>
-                <p className="text-sm text-clay-muted">references: {skill.files.hasReferences ? '有' : '无'}</p>
-                <p className="text-sm text-clay-muted">src: {skill.files.hasSrc ? '有' : '无'}</p>
+                <p className="mb-1.5 font-medium">Package Structure</p>
+                <p className="text-sm text-clay-muted">references: {skill.files.hasReferences ? 'yes' : 'no'}</p>
+                <p className="text-sm text-clay-muted">src: {skill.files.hasSrc ? 'yes' : 'no'}</p>
               </ClaySurface>
 
               <ClaySurface tone="base" elevation="inset" className="rounded-[1rem] p-4">
-                <p className="mb-1.5 font-medium">源码位置</p>
+                <p className="mb-1.5 font-medium">Source</p>
                 <a
                   href={sourceUrl}
                   target="_blank"

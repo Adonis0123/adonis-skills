@@ -29,9 +29,9 @@ export function SiteHeader() {
         className="site-header-surface rounded-none border-x-0 border-t-0 border-white/40 bg-background/80 py-3.5 supports-[backdrop-filter]:bg-background/62 supports-[backdrop-filter]:backdrop-blur-sm"
       >
         <div className="site-frame site-frame--wide flex flex-wrap items-center justify-between gap-3 md:gap-4">
-          <SiteBrand variant="header" brand={brand} subtitle="skills catalog" priority />
+          <SiteBrand variant="header" brand={brand} subtitle="skill library" priority />
 
-          <nav aria-label="主导航" className="flex flex-wrap items-center justify-end gap-2">
+          <nav aria-label="Main navigation" className="flex flex-wrap items-center justify-end gap-2">
             {headerNav.map(item => (
               <Link
                 key={item.label}

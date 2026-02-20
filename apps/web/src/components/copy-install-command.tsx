@@ -31,7 +31,7 @@ export function CopyInstallCommandButton({ command }: CopyInstallCommandButtonPr
       aria-live="polite"
     >
       <span className={copied ? 'icon-[lucide--check] size-3.5' : 'icon-[lucide--copy] size-3.5'} aria-hidden />
-      {copied ? '已复制' : '复制命令'}
+      {copied ? 'Copied' : 'Copy Command'}
     </ClayButton>
   )
 }

@@ -39,9 +39,9 @@ export const exampleSkillHref = '/skills/weekly-report'
 export const siteLayoutConfig: SiteLayoutConfig = {
   brand: {
     name: 'adonis-skills',
-    tagline: '可安装、可复用的 Agent Skills 目录与实践仓库。',
+    tagline: 'Discover practical agent skills and install them in seconds.',
     logoSrc: '/logo_medium_64x64.png',
-    logoAlt: 'adonis-skills 品牌 Logo',
+    logoAlt: 'adonis-skills logo',
   },
   repo: skillsRepo,
   repoUrl,
@@ -50,28 +50,28 @@ export const siteLayoutConfig: SiteLayoutConfig = {
       label: 'GitHub',
       href: repoUrl,
       external: true,
-      ariaLabel: '在 GitHub 打开 adonis-skills 仓库',
+      ariaLabel: 'Open the adonis-skills repository on GitHub',
     },
   ],
   footerGroups: [
     {
-      title: '快速访问',
+      title: 'Quick Links',
       links: [
         {
-          label: '技能目录',
+          label: 'Skill Library',
           href: '/',
         },
         {
-          label: '示例 Skill',
+          label: 'Example Skill',
           href: exampleSkillHref,
         },
       ],
     },
     {
-      title: '资源',
+      title: 'Resources',
       links: [
         {
-          label: 'GitHub 仓库',
+          label: 'GitHub Repository',
           href: repoUrl,
           external: true,
         },

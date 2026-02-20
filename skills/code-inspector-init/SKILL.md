@@ -1,6 +1,6 @@
 ---
 name: code-inspector-init
-description: 标准化接入与迁移 code-inspector-plugin（codeInspectorPlugin）到 Next.js、Vite、Webpack、Rspack、Rsbuild、Esbuild、Mako、Umi、Nuxt、Astro。Use when user asks 接入/迁移/配置 inspector、DOM 点击跳转 IDE 定位、hotKeys、自定义 options、或排查 code inspector 不生效问题。
+description: Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.
 ---
 
 # Code Inspector Init

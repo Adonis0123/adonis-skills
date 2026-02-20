@@ -9,22 +9,22 @@ export default function NotFoundPage() {
       <SectionReveal className="w-full" delay={20}>
         <ClaySurface tone="peach" elevation="floating" className="w-full rounded-[1.6rem] p-8 text-center md:p-12">
           <ClayBadge tone="neutral" className="mb-4 font-mono">404</ClayBadge>
-          <h1 className="text-4xl md:text-5xl">Skill 未找到</h1>
+          <h1 className="text-4xl md:text-5xl">Skill Not Found</h1>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-7 text-clay-muted md:text-base">
-            请确认 slug 是否正确，或返回首页查看当前可用技能列表。
+            Check the slug and browse available skills from the library.
           </p>
 
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             <ClayButton asChild>
               <Link href="/">
                 <span className="icon-[lucide--house] size-4" aria-hidden />
-                返回首页
+                Back to Home
               </Link>
             </ClayButton>
             <ClayButton asChild variant="ghost">
               <Link href={exampleSkillHref}>
                 <span className="icon-[lucide--eye] size-4" aria-hidden />
-                查看示例 Skill
+                View Example Skill
               </Link>
             </ClayButton>
           </div>

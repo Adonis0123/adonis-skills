@@ -1,6 +1,6 @@
 ---
 name: commit
-description: This skill should be used when the user asks to "commit", "generate commit message", "create commit", "提交代码", "生成提交信息", or needs help writing git commit messages following conventional commit format with emoji prefixes.
+description: Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.
 ---
 
 # Commit Message Generator

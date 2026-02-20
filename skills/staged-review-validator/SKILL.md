@@ -1,6 +1,6 @@
 ---
 name: staged-review-validator
-description: 用于复核 staged-changes-review 的分析结果，逐条判断问题是否成立、是否需要修改，并给出证据与最小改动建议。
+description: Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.
 ---
 
 # Staged Review Validator
