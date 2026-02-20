@@ -10,6 +10,8 @@ Goals:
 - Provide a web UI that presents skill metadata and install commands
 - Keep room for future evolution (more skills, optional npm publishing)
 
+**Live site**: <https://adonis-skills.vercel.app/>
+
 ## Current Status
 
 - Public skills: `commit`, `staged-review-validator`, `tailwindcss-next-init`, `weekly-report`

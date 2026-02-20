@@ -10,6 +10,8 @@
 - 提供展示技能元数据与安装命令的 Web 页面
 - 为后续演进预留空间（新增技能、可选 npm 发布）
 
+**在线地址**：<https://adonis-skills.vercel.app/>
+
 ## 当前状态
 
 - 公开技能：`commit`、`staged-review-validator`、`tailwindcss-next-init`、`weekly-report`
