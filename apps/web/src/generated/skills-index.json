@@ -30,6 +30,19 @@
     }
   },
   {
+    "slug": "staged-changes-review",
+    "name": "staged-changes-review",
+    "description": "Comprehensive review of staged Git changes for risk assessment, error detection, and impact analysis. Use when the user wants to review staged changes, check for errors before commit, analyze risks in git staged files, validate code changes before committing, or needs suggestions on staged modifications.",
+    "metadata": {
+      "version": "1.0.0"
+    },
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill staged-changes-review",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "staged-review-validator",
     "name": "staged-review-validator",
     "description": "Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.",
