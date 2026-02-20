@@ -30,6 +30,16 @@
     }
   },
   {
+    "slug": "lingui-workflow",
+    "name": "lingui-workflow",
+    "description": "Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill lingui-workflow",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "staged-changes-review",
     "name": "staged-changes-review",
     "description": "Comprehensive review of staged Git changes for risk assessment, error detection, and impact analysis. Use when the user wants to review staged changes, check for errors before commit, analyze risks in git staged files, validate code changes before committing, or needs suggestions on staged modifications.",

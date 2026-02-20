@@ -1,12 +1,13 @@
 import Image from 'next/image'
-import Link from 'next/link'
+import { useLingui } from '@lingui/react/macro'
 import type { SiteBrand as SiteBrandConfig } from '@/config/site-layout'
 import { cx } from '@/components/ui/utils'
+import { LocaleLink } from '@/i18n/locale-link'
 
 export interface SiteBrandProps {
   brand: SiteBrandConfig
   variant: 'header' | 'footer'
-  subtitle?: string
+  subtitle?: React.ReactNode
   priority?: boolean
   className?: string
 }
@@ -18,11 +19,12 @@ export function SiteBrand({
   priority = false,
   className,
 }: SiteBrandProps) {
+  const { t } = useLingui()
   const isHeader = variant === 'header'
   const logoSize = isHeader ? 32 : 24
 
   return (
-    <Link
+    <LocaleLink
       href="/"
       className={cx(
         'group clay-focus-ring inline-flex items-center rounded-xl transition-opacity hover:opacity-90',
@@ -32,7 +34,10 @@ export function SiteBrand({
     >
       <Image
         src={brand.logoSrc}
-        alt={brand.logoAlt}
+        alt={t({
+          id: 'siteBrand.logoAlt',
+          message: 'adonis-skills logo',
+        })}
         width={logoSize}
         height={logoSize}
         priority={priority}
@@ -54,6 +59,6 @@ export function SiteBrand({
       ) : (
         <span className="text-lg leading-none">{brand.name}</span>
       )}
-    </Link>
+    </LocaleLink>
   )
 }

@@ -5,6 +5,28 @@ export { ClayButton } from './clay-button'
 export type { ClayButtonProps, ClayButtonSize, ClayButtonVariant } from './clay-button'
 
 export {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItemIndicator,
+  DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from './dropdown-menu'
+
+export {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetOverlay,
+  SheetPortal,
+  SheetTitle,
+  SheetTrigger,
+} from './sheet'
+
+export {
   ClayCard,
   ClayCardContent,
   ClayCardDescription,

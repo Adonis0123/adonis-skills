@@ -1,28 +1,25 @@
 import { skillsRepo } from '@/lib/skills'
 
 export interface SiteNavItem {
-  label: string
+  id: 'github'
   href: string
   external?: boolean
-  ariaLabel?: string
 }
 
 export interface FooterLinkItem {
-  label: string
+  id: 'skill-library' | 'example-skill' | 'github-repository' | 'readme'
   href: string
   external?: boolean
 }
 
 export interface FooterLinkGroup {
-  title: string
+  id: 'quick-links' | 'resources'
   links: FooterLinkItem[]
 }
 
 export interface SiteBrand {
   name: string
-  tagline: string
   logoSrc: string
-  logoAlt: string
 }
 
 export interface SiteLayoutConfig {
@@ -39,44 +36,41 @@ export const exampleSkillHref = '/skills/weekly-report'
 export const siteLayoutConfig: SiteLayoutConfig = {
   brand: {
     name: 'adonis-skills',
-    tagline: 'Discover practical agent skills and install them in seconds.',
     logoSrc: '/logo_medium_64x64.png',
-    logoAlt: 'adonis-skills logo',
   },
   repo: skillsRepo,
   repoUrl,
   headerNav: [
     {
-      label: 'GitHub',
+      id: 'github',
       href: repoUrl,
       external: true,
-      ariaLabel: 'Open the adonis-skills repository on GitHub',
     },
   ],
   footerGroups: [
     {
-      title: 'Quick Links',
+      id: 'quick-links',
       links: [
         {
-          label: 'Skill Library',
+          id: 'skill-library',
           href: '/',
         },
         {
-          label: 'Example Skill',
+          id: 'example-skill',
           href: exampleSkillHref,
         },
       ],
     },
     {
-      title: 'Resources',
+      id: 'resources',
       links: [
         {
-          label: 'GitHub Repository',
+          id: 'github-repository',
           href: repoUrl,
           external: true,
         },
         {
-          label: 'README',
+          id: 'readme',
           href: `${repoUrl}#readme`,
           external: true,
         },

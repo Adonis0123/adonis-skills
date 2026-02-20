@@ -1,54 +1,21 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useLocalStorageState } from 'ahooks'
+import { useLingui } from '@lingui/react/macro'
+import { useTheme } from 'next-themes'
 import { ClayButton } from '@/components/ui'
+import { cx } from '@/components/ui/utils'
 
 type ThemeMode = 'light' | 'dark'
 
-const STORAGE_KEY = 'adonis-skills-theme'
-
-function resolveSystemTheme(): ThemeMode {
-  if (typeof window === 'undefined') {
-    return 'light'
-  }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+interface ThemeToggleProps {
+  buttonClassName?: string
 }
 
-function parseStoredTheme(value: string): ThemeMode {
-  if (value === 'dark' || value === 'light') {
-    return value
-  }
-
-  try {
-    const parsed = JSON.parse(value)
-    if (parsed === 'dark' || parsed === 'light') {
-      return parsed
-    }
-  } catch {
-    // Ignore invalid JSON and fallback to system preference.
-  }
-
-  return resolveSystemTheme()
-}
-
-function applyTheme(theme: ThemeMode) {
-  const root = document.documentElement
-
-  root.dataset.theme = theme
-  root.style.colorScheme = theme
-  root.classList.toggle('dark', theme === 'dark')
-  root.classList.toggle('light', theme === 'light')
-}
-
-export function ThemeToggle() {
+export function ThemeToggle({ buttonClassName }: ThemeToggleProps) {
+  const { t, i18n } = useLingui()
+  const { resolvedTheme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
-  const [theme, setTheme] = useLocalStorageState<ThemeMode>(STORAGE_KEY, {
-    defaultValue: resolveSystemTheme,
-    serializer: value => value,
-    deserializer: parseStoredTheme,
-  })
 
   useEffect(() => {
     // We intentionally flip mounted after hydration to avoid SSR/client icon-label mismatch.
@@ -56,35 +23,28 @@ export function ThemeToggle() {
     setMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (!mounted) {
-      return
-    }
-
-    applyTheme(theme)
-  }, [mounted, theme])
-
   if (!mounted) {
     return <div className="h-8 w-[88px]" aria-hidden />
   }
 
-  const handleToggle = () => {
-    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'))
-  }
-
+  const theme: ThemeMode = resolvedTheme === 'dark' ? 'dark' : 'light'
   const nextTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark'
-  const label = theme === 'dark' ? 'Dark' : 'Light'
-  const nextLabel = nextTheme === 'dark' ? 'Dark' : 'Light'
+  const modeLabel: Record<ThemeMode, string> = {
+    dark: t({ id: 'themeToggle.mode.dark', message: 'Dark' }),
+    light: t({ id: 'themeToggle.mode.light', message: 'Light' }),
+  }
+  const label = modeLabel[theme]
+  const nextLabel = modeLabel[nextTheme]
 
   return (
     <ClayButton
       type="button"
       variant="ghost"
       size="sm"
-      onClick={handleToggle}
-      aria-label={`Switch to ${nextLabel} theme`}
-      title={`Current: ${label} theme`}
-      className="rounded-full px-3.5 text-xs md:text-sm"
+      onClick={() => setTheme(nextTheme)}
+      aria-label={i18n._('themeToggle.switchTo', { nextLabel })}
+      title={i18n._('themeToggle.current', { label })}
+      className={cx('rounded-full px-3.5 text-xs md:text-sm', buttonClassName)}
     >
       <span
         className={theme === 'dark' ? 'icon-[lucide--moon-star] size-4' : 'icon-[lucide--sun-medium] size-4'}

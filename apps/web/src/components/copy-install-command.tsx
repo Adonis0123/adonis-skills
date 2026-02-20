@@ -1,6 +1,7 @@
 'use client'
 
 import { type MouseEvent, useState } from 'react'
+import { useLingui } from '@lingui/react/macro'
 import { ClayButton } from '@/components/ui'
 import { cx } from '@/components/ui/utils'
 
@@ -17,6 +18,7 @@ export function CopyInstallCommandButton({
   preventLinkNavigation = false,
   className,
 }: CopyInstallCommandButtonProps) {
+  const { t } = useLingui()
   const [copied, setCopied] = useState(false)
 
   const onCopy = async (event: MouseEvent<HTMLButtonElement>) => {
@@ -53,8 +55,12 @@ export function CopyInstallCommandButton({
           className,
         )}
         aria-live="polite"
-        aria-label={copied ? 'Copied command' : 'Copy command'}
-        title={copied ? 'Copied' : 'Copy command'}
+        aria-label={copied
+          ? t({ id: 'copyCommand.aria.copied', message: 'Copied command' })
+          : t({ id: 'copyCommand.aria.copy', message: 'Copy command' })}
+        title={copied
+          ? t({ id: 'copyCommand.title.copied', message: 'Copied' })
+          : t({ id: 'copyCommand.title.copy', message: 'Copy command' })}
       >
         <span className={compactIconClass} aria-hidden />
       </ClayButton>
@@ -71,7 +77,9 @@ export function CopyInstallCommandButton({
       aria-live="polite"
     >
       <span className={copied ? 'icon-[lucide--check] size-3.5' : 'icon-[lucide--copy] size-3.5'} aria-hidden />
-      {copied ? 'Copied' : 'Copy Command'}
+      {copied
+        ? t({ id: 'copyCommand.button.copied', message: 'Copied' })
+        : t({ id: 'copyCommand.button.copy', message: 'Copy Command' })}
     </ClayButton>
   )
 }

@@ -7,9 +7,9 @@
   --card-foreground: #2a2d35;
   --popover: #ffffff;
   --popover-foreground: #2a2d35;
-  --primary: #92a7d2;
+  --primary: #93abd7;
   --primary-foreground: #ffffff;
-  --secondary: #b4c4e0;
+  --secondary: #b3c7ea;
   --secondary-foreground: #ffffff;
   --muted: #e6ebf3;
   --muted-foreground: #8890a0;
@@ -17,24 +17,24 @@
   --accent-foreground: #2a2d35;
   --destructive: #dc2626;
   --destructive-foreground: #ffffff;
-  --border: rgba(146, 167, 210, 0.18);
-  --input: rgba(146, 167, 210, 0.26);
-  --ring: #92a7d2;
-  --chart-1: #92a7d2;
-  --chart-2: #b4c4e0;
-  --chart-3: #a8bbd8;
-  --chart-4: #7b94c2;
+  --border: rgba(147, 171, 215, 0.18);
+  --input: rgba(147, 171, 215, 0.26);
+  --ring: #93abd7;
+  --chart-1: #93abd7;
+  --chart-2: #b3c7ea;
+  --chart-3: #a6bde3;
+  --chart-4: #7695ca;
   --chart-5: #63c9a7;
   --radius: 1rem;
 
   --clay-warm-ivory: #f0f4f9;
-  --clay-warm-peach: #b4c4e0;
-  --clay-warm-amber: #92a7d2;
-  --clay-sky: #b4c4e0;
+  --clay-warm-peach: #b3c7ea;
+  --clay-warm-amber: #93abd7;
+  --clay-sky: #b3c7ea;
   --clay-emerald: #63c9a7;
 
-  --clay-peach: #92a7d2;
-  --clay-blue: #b4c4e0;
+  --clay-peach: #93abd7;
+  --clay-blue: #b3c7ea;
   --clay-cream: #f0f4f9;
 
   --clay-surface-bg: #ffffff;
@@ -42,20 +42,22 @@
   --clay-radius-card-lg: 32px;
   --clay-radius-button: 50px;
 
-  --clay-shadow-card: 0 8px 24px rgba(146, 167, 210, 0.20), 0 3px 0 #b8c8e2;
-  --clay-shadow-card-hover: 0 14px 30px rgba(146, 167, 210, 0.28), 0 4px 0 #b8c8e2;
+  --clay-shadow-card: 0 8px 24px rgba(147, 171, 215, 0.2), 0 3px 0 #b6cdee;
+  --clay-shadow-card-hover:
+    0 14px 30px rgba(147, 171, 215, 0.28), 0 4px 0 #b6cdee;
 
-  --clay-shadow-btn-primary: 0 6px 0 #6e87b8;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #6e87b8;
-  --clay-shadow-btn-blue: 0 6px 0 #8da0cc;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #8da0cc;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(110, 135, 184, 0.28);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(110, 135, 184, 0.28);
+  --clay-shadow-btn-primary: 0 6px 0 #7d97c5;
+  --clay-shadow-btn-primary-hover: 0 4px 0 #7d97c5;
+  --clay-shadow-btn-blue: 0 6px 0 #90a8d3;
+  --clay-shadow-btn-blue-hover: 0 4px 0 #90a8d3;
+  --clay-shadow-btn-secondary: 0 6px 0 rgba(126, 150, 196, 0.28);
+  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(126, 150, 196, 0.28);
 
   --clay-highlight-top: inset 0 2px 0 rgba(255, 255, 255, 0.74);
 
   --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(146, 167, 210, 0.45);
+  --shadow-clay-inset:
+    var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.45);
   --shadow-clay-floating: var(--clay-shadow-card-hover);
 
   --font-app-sans: var(--font-noto-sans-sc);
@@ -71,9 +73,9 @@
   --card-foreground: #f0f2f7;
   --popover: #1e2130;
   --popover-foreground: #f0f2f7;
-  --primary: #92a7d2;
+  --primary: #93abd7;
   --primary-foreground: #ffffff;
-  --secondary: #b4c4e0;
+  --secondary: #b3c7ea;
   --secondary-foreground: #ffffff;
   --muted: #21252e;
   --muted-foreground: #a0a8b8;
@@ -81,41 +83,44 @@
   --accent-foreground: #f0f2f7;
   --destructive: #ef4444;
   --destructive-foreground: #ffffff;
-  --border: rgba(146, 167, 210, 0.28);
-  --input: rgba(146, 167, 210, 0.28);
-  --ring: #92a7d2;
-  --chart-1: #92a7d2;
-  --chart-2: #b4c4e0;
-  --chart-3: #a8bbd8;
-  --chart-4: #c5d2ea;
+  --border: rgba(147, 171, 215, 0.28);
+  --input: rgba(147, 171, 215, 0.28);
+  --ring: #93abd7;
+  --chart-1: #93abd7;
+  --chart-2: #b3c7ea;
+  --chart-3: #a6bde3;
+  --chart-4: #b3c4e2;
   --chart-5: #63c9a7;
 
   --clay-warm-ivory: #1a1d26;
-  --clay-warm-peach: #b4c4e0;
-  --clay-warm-amber: #92a7d2;
-  --clay-sky: #b4c4e0;
+  --clay-warm-peach: #b3c7ea;
+  --clay-warm-amber: #93abd7;
+  --clay-sky: #b3c7ea;
   --clay-emerald: #63c9a7;
 
-  --clay-peach: #92a7d2;
-  --clay-blue: #b4c4e0;
+  --clay-peach: #93abd7;
+  --clay-blue: #b3c7ea;
   --clay-cream: #1a1d26;
 
   --clay-surface-bg: #1a1d26;
 
-  --clay-shadow-card: 0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(146, 167, 210, 0.48);
-  --clay-shadow-card-hover: 0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(146, 167, 210, 0.56);
+  --clay-shadow-card:
+    0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(147, 171, 215, 0.48);
+  --clay-shadow-card-hover:
+    0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(147, 171, 215, 0.56);
 
-  --clay-shadow-btn-primary: 0 6px 0 #5a73a0;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #5a73a0;
-  --clay-shadow-btn-blue: 0 6px 0 #5a73a0;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #5a73a0;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(90, 115, 160, 0.45);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(90, 115, 160, 0.45);
+  --clay-shadow-btn-primary: 0 6px 0 #678bc0;
+  --clay-shadow-btn-primary-hover: 0 4px 0 #678bc0;
+  --clay-shadow-btn-blue: 0 6px 0 #678bc0;
+  --clay-shadow-btn-blue-hover: 0 4px 0 #678bc0;
+  --clay-shadow-btn-secondary: 0 6px 0 rgba(103, 138, 189, 0.45);
+  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(103, 138, 189, 0.45);
 
   --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 
   --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(146, 167, 210, 0.42);
+  --shadow-clay-inset:
+    var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.42);
   --shadow-clay-floating: var(--clay-shadow-card-hover);
 }
 
@@ -127,9 +132,9 @@
     --card-foreground: #f0f2f7;
     --popover: #1e2130;
     --popover-foreground: #f0f2f7;
-    --primary: #92a7d2;
+    --primary: #93abd7;
     --primary-foreground: #ffffff;
-    --secondary: #b4c4e0;
+    --secondary: #b3c7ea;
     --secondary-foreground: #ffffff;
     --muted: #21252e;
     --muted-foreground: #a0a8b8;
@@ -137,41 +142,44 @@
     --accent-foreground: #f0f2f7;
     --destructive: #ef4444;
     --destructive-foreground: #ffffff;
-    --border: rgba(146, 167, 210, 0.28);
-    --input: rgba(146, 167, 210, 0.28);
-    --ring: #92a7d2;
-    --chart-1: #92a7d2;
-    --chart-2: #b4c4e0;
-    --chart-3: #a8bbd8;
-    --chart-4: #c5d2ea;
+    --border: rgba(147, 171, 215, 0.28);
+    --input: rgba(147, 171, 215, 0.28);
+    --ring: #93abd7;
+    --chart-1: #93abd7;
+    --chart-2: #b3c7ea;
+    --chart-3: #a6bde3;
+    --chart-4: #b3c4e2;
     --chart-5: #63c9a7;
 
     --clay-warm-ivory: #1a1d26;
-    --clay-warm-peach: #b4c4e0;
-    --clay-warm-amber: #92a7d2;
-    --clay-sky: #b4c4e0;
+    --clay-warm-peach: #b3c7ea;
+    --clay-warm-amber: #93abd7;
+    --clay-sky: #b3c7ea;
     --clay-emerald: #63c9a7;
 
-    --clay-peach: #92a7d2;
-    --clay-blue: #b4c4e0;
+    --clay-peach: #93abd7;
+    --clay-blue: #b3c7ea;
     --clay-cream: #1a1d26;
 
     --clay-surface-bg: #1a1d26;
 
-    --clay-shadow-card: 0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(146, 167, 210, 0.48);
-    --clay-shadow-card-hover: 0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(146, 167, 210, 0.56);
+    --clay-shadow-card:
+      0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(147, 171, 215, 0.48);
+    --clay-shadow-card-hover:
+      0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(147, 171, 215, 0.56);
 
-    --clay-shadow-btn-primary: 0 6px 0 #5a73a0;
-    --clay-shadow-btn-primary-hover: 0 4px 0 #5a73a0;
-    --clay-shadow-btn-blue: 0 6px 0 #5a73a0;
-    --clay-shadow-btn-blue-hover: 0 4px 0 #5a73a0;
-    --clay-shadow-btn-secondary: 0 6px 0 rgba(90, 115, 160, 0.45);
-    --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(90, 115, 160, 0.45);
+    --clay-shadow-btn-primary: 0 6px 0 #678bc0;
+    --clay-shadow-btn-primary-hover: 0 4px 0 #678bc0;
+    --clay-shadow-btn-blue: 0 6px 0 #678bc0;
+    --clay-shadow-btn-blue-hover: 0 4px 0 #678bc0;
+    --clay-shadow-btn-secondary: 0 6px 0 rgba(103, 138, 189, 0.45);
+    --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(103, 138, 189, 0.45);
 
     --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 
     --shadow-clay-raised: var(--clay-shadow-card);
-    --shadow-clay-inset: var(--clay-highlight-top), inset 0 -2px 0 rgba(146, 167, 210, 0.42);
+    --shadow-clay-inset:
+      var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.42);
     --shadow-clay-floating: var(--clay-shadow-card-hover);
   }
 }

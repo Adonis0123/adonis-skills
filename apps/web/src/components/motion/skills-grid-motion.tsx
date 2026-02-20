@@ -38,7 +38,7 @@ export function SkillsGridMotion({
     return (
       <div className={className}>
         {items.map((item, index) => (
-          <div key={getItemKey(item, index)}>{item}</div>
+          <div key={getItemKey(item, index)} className="min-w-0">{item}</div>
         ))}
       </div>
     )
@@ -61,6 +61,7 @@ export function SkillsGridMotion({
       {items.map((item, index) => (
         <motion.div
           key={getItemKey(item, index)}
+          className="min-w-0"
           variants={{
             hidden: { opacity: 0, y: 20, scale: 0.975 },
             show: {
