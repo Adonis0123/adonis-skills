@@ -1,0 +1,74 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: zh\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:89
+msgid "home.install.step1"
+msgstr "1. 选择一个技能标识符。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:90
+msgid "home.install.step2"
+msgstr "2. 运行安装命令。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:91
+msgid "home.install.step3"
+msgstr "3. 在您的 agent 工作流中使用该技能。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:39
+msgid "home.hero.description"
+msgstr "浏览实用技能，选择标识符，一条命令即可安装。每个技能都可在真实工作流中复用。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:82
+msgid "home.install.title"
+msgstr "安装方式"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:35
+msgid "home.hero.title"
+msgstr "为您的 AI agent 安装生产级技能。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:103
+msgid "home.library.kicker"
+msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:67
+msgid "home.cta.github"
+msgstr "打开 GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:51
+msgid "home.badge.repo"
+msgstr "仓库：{skillsRepo}"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:105
+msgid "home.library.title"
+msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:54
+msgid "home.badge.skills"
+msgstr "技能数：{skillsCount}"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:74
+msgid "home.cta.example"
+msgstr "查看示例技能"

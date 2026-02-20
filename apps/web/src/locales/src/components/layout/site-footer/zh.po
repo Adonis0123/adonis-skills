@@ -1,0 +1,59 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-02-20 12:28+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: zh\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:98
+msgid "siteFooter.copyright"
+msgstr "© {year} {brandName}. 保留所有权利。"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:102
+msgid "siteFooter.builtFor"
+msgstr "为发现和安装 agent 技能而构建。"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:55
+msgid "siteFooter.brand.tagline"
+msgstr "发现实用的 agent 技能，数秒内完成安装。"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:36
+msgid "siteFooter.link.exampleSkill"
+msgstr "示例技能"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:38
+msgid "siteFooter.link.githubRepository"
+msgstr "GitHub 仓库"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:26
+msgid "siteFooter.group.quickLinks"
+msgstr "快速链接"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:40
+msgid "siteFooter.link.readme"
+msgstr "README"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:28
+msgid "siteFooter.group.resources"
+msgstr "资源"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:34
+msgid "siteFooter.link.skillLibrary"
+msgstr "技能库"

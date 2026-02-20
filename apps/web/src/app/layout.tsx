@@ -1,8 +1,8 @@
-import type { Metadata } from 'next'
-import { IBM_Plex_Mono, Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google'
-import { SiteShell } from '@/components/layout/site-shell'
 import '@/styles/globals.css'
 import '@/styles/custom.css'
+import { IBM_Plex_Mono, Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { resolveLocaleValue } from '@/i18n/config'
 
 const notoSansSC = Noto_Sans_SC({
   variable: '--font-noto-sans-sc',
@@ -22,44 +22,22 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ['400', '500'],
 })
 
-export const metadata: Metadata = {
-  title: {
-    default: 'adonis-skills',
-    template: '%s | adonis-skills',
-  },
-  description: 'A practical skill library for AI agent developers, installable with npx skills add.',
-}
-
-const themeInitScript = `
-(() => {
-  try {
-    const key = 'adonis-skills-theme'
-    const stored = window.localStorage.getItem(key)
-    const theme = stored === 'dark' || stored === 'light'
-      ? stored
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-    const root = document.documentElement
-    root.dataset.theme = theme
-    root.style.colorScheme = theme
-    root.classList.toggle('dark', theme === 'dark')
-    root.classList.toggle('light', theme === 'light')
-  }
-  catch {}
-})()
-`
-
-export default function RootLayout({
-  children,
-}: Readonly<{
+type RootLayoutProps = Readonly<{
   children: React.ReactNode
-}>) {
+  params: Promise<{ lang?: string } | undefined>
+}>
+
+export default async function RootLayout({
+  children,
+  params,
+}: RootLayoutProps) {
+  const resolvedParams = await params
+  const locale = resolveLocaleValue(resolvedParams?.lang)
+
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-      </head>
+    <html lang={locale} suppressHydrationWarning>
       <body className={`${notoSansSC.variable} ${notoSerifSC.variable} ${ibmPlexMono.variable} antialiased`}>
-        <SiteShell>{children}</SiteShell>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   )

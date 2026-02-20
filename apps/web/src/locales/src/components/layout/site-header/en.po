@@ -1,0 +1,62 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-02-20 12:28+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:85
+#~ msgid "siteHeader.menu.open"
+#~ msgstr "Open menu"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:79
+#: ../../src/components/layout/mobile-header-menu.tsx:95
+#: ../../src/components/layout/mobile-header-menu.tsx:138
+#~ msgid "siteHeader.menu.close"
+#~ msgstr "Close menu"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:129
+#~ msgid "siteHeader.menu.aria"
+#~ msgstr "Site menu"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:69
+#: ../../src/components/layout/site-header.tsx:86
+#~ msgid "siteHeader.nav.github.aria"
+#~ msgstr "Open the adonis-skills repository on GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:27
+msgid "siteHeader.nav.github.label"
+msgstr "GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:116
+msgid "siteHeader.locale.title"
+msgstr "Language"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:70
+msgid "siteHeader.nav.aria"
+msgstr "Main navigation"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:61
+msgid "siteHeader.brand.subtitle"
+msgstr "skill library"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:112
+msgid "siteHeader.locale.aria"
+msgstr "Switch site language"
