@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# lingui compiled catalogs
+src/locales/**/*.js
+src/locales/**/*.mjs
+locale/**/*.js
+locale/**/*.mjs
