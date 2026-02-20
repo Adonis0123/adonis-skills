@@ -6,6 +6,7 @@ import { checkbox, confirm, input } from '@inquirer/prompts'
 
 const DEFAULT_OUTPUT_PATH = 'skills'
 const ALLOWED_RESOURCES = new Set(['scripts', 'references', 'assets'])
+const NON_ASCII_REGEX = /[^\x20-\x7E]/u
 
 type CliOptions = {
   description?: string
@@ -23,7 +24,7 @@ function printHelp() {
   console.log('')
   console.log('Options:')
   console.log('  --name <slug>              Skill name (hyphen-case)')
-  console.log('  --description <text>       Skill description for frontmatter')
+  console.log('  --description <text>       English skill description for frontmatter')
   console.log('  --resources <list>         Comma-separated: scripts,references,assets')
   console.log('  --examples                 Create example files for selected resources')
   console.log(`  --path <dir>               Output directory (default: ${DEFAULT_OUTPUT_PATH})`)
@@ -166,6 +167,10 @@ function parseArgs(argv: string[]): CliOptions {
   return options
 }
 
+function hasNonAsciiChars(value: string): boolean {
+  return NON_ASCII_REGEX.test(value)
+}
+
 async function runCommand(options: {
   args: string[]
   command: string
@@ -240,7 +245,7 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
 
     if (!description) {
       description = await input({
-        message: 'Skill description (frontmatter.description)',
+        message: 'Skill description in English (ASCII only, frontmatter.description)',
         required: true,
       })
     }
@@ -270,8 +275,14 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
     throw new Error('Skill name must contain at least one letter or digit')
   }
 
-  if (!description.trim()) {
+  const normalizedDescription = description.trim()
+
+  if (!normalizedDescription) {
     throw new Error('Description cannot be empty')
+  }
+
+  if (hasNonAsciiChars(normalizedDescription)) {
+    throw new Error('Description must be English-only (ASCII characters only)')
   }
 
   if (resources.length === 0) {
@@ -279,7 +290,7 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
   }
 
   return {
-    description: description.trim(),
+    description: normalizedDescription,
     examples,
     name: normalizedName,
     resources,

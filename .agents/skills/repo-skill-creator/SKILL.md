@@ -65,5 +65,6 @@ When executing this skill, always return:
 
 1. Use lowercase hyphen-case skill names.
 2. Keep `SKILL.md` frontmatter valid with non-empty `name` and `description`.
-3. Add optional directories (`scripts/`, `references/`, `assets/`) only when needed.
-4. Re-run validation and index generation after updates and before commit.
+3. `frontmatter.description` must be English-only (ASCII characters only), and should clearly include when to use the skill.
+4. Add optional directories (`scripts/`, `references/`, `assets/`) only when needed.
+5. Re-run validation and index generation after updates and before commit.

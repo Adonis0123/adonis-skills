@@ -27,7 +27,7 @@ DEFAULT_OUTPUT_PATH = "skills"
 
 SKILL_TEMPLATE = """---
 name: {skill_name}
-description: [TODO: Complete and informative explanation of what the skill does and when to use it. Include WHEN to use this skill - specific scenarios, file types, or tasks that trigger it.]
+description: [TODO: Write this description in English using ASCII characters only. Explain what the skill does and WHEN to use it, with concrete triggers such as scenarios, file types, or tasks.]
 ---
 
 # {skill_title}

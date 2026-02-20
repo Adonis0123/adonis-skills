@@ -10,6 +10,7 @@ from pathlib import Path
 import yaml
 
 MAX_SKILL_NAME_LENGTH = 64
+NON_ASCII_REGEX = re.compile(r"[^\x20-\x7E]")
 
 
 def validate_skill(skill_path):
@@ -82,6 +83,8 @@ def validate_skill(skill_path):
     if description:
         if "<" in description or ">" in description:
             return False, "Description cannot contain angle brackets (< or >)"
+        if NON_ASCII_REGEX.search(description):
+            return False, "Description must be English-only (ASCII characters only)"
         if len(description) > 1024:
             return (
                 False,
