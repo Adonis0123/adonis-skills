@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "lingui-next-init": {
+      "source": "adonis0123/adonis-skills",
+      "sourceType": "local",
+      "computedHash": "e4e4544df010e744c61a4bfe96902b7ad657dd8beff90a6e5df8aa6fd408b081"
+    },
+    "lingui-workflow": {
+      "source": "adonis0123/adonis-skills",
+      "sourceType": "local",
+      "computedHash": "9d66caced4324b91354b142e74499cf1f03520e1af832c324c52e9b8872ca711"
+    }
+  }
+}

@@ -10,6 +10,8 @@ const linguiConfig: LinguiConfig = {
 		extractor: {
 			entries: [
 				"<rootDir>/src/app/[[]lang[]]/**/{page,layout,loading,error,not-found,template,default}.tsx",
+				"<rootDir>/src/components/*.tsx",
+				"<rootDir>/src/components/layout/*.tsx",
 			],
 			output: "<rootDir>/src/locales/{entryDir}/{entryName}/{locale}",
 		},

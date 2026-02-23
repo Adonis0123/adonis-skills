@@ -38,7 +38,7 @@
 
 | 命令 | 实际执行 | 主要输入 | 主要输出 | 副作用 | 典型场景 |
 | --- | --- | --- | --- | --- | --- |
-| `i18n:extract` | `lingui extract-experimental` | 源码中的 `<Trans>` / `t` 文案 | `src/locales/**/*.po` 更新 | 会改写 `po` 文件 | 文案新增或改动后第一步 |
+| `i18n:extract` | `lingui extract-experimental` + `cleanOrphanedCatalogs()` | 源码中的 `<Trans>` / `t` 文案 | `src/locales/**/*.po` 更新（必要时刷新 `src/i18n/catalog-manifest.ts`） | 会改写 `po` 文件；自动删除不拥有自身消息的 entry 文件（`.po/.mjs`）并清理空目录（`I18N_DRY_RUN=1` 时仅打印待删除文件/目录）；非 dry-run 且发生清理时自动重建 manifest | 文案新增或改动后第一步 |
 | `i18n:translate` | 统计目标语言缺失；`--fill-source` 时回填 `msgstr`；`--strict` 时缺失即报错 | `src/locales/**/*.po` | 控制台缺失统计 | `--fill-source` 会写回目标语言 `po` | 翻译前检查缺失项；占位回填 |
 | `i18n:check` | `translate.ts --strict`；调用 `translateI18n({ strict: true })`，缺失 `msgstr` 时抛出 Error 并非零退出 | `src/locales/**/*.po` | 控制台缺失统计；缺失时非零退出 | 只读，不修改文件 | CI 管线中的翻译完整性门禁 |
 | `i18n:compile` | `lingui compile` 后自动执行 `i18n:manifest` | `src/locales/**/*.po` | `src/locales/**/*.mjs` + `src/i18n/catalog-manifest.ts` | 会生成/覆盖编译产物与 manifest | 翻译完成后用于运行与构建 |
@@ -78,7 +78,7 @@ web/locale/**/*.mjs
 
 ## 变更后校验清单（命令语义有改动时）
 
-当 `apps/web/scripts/i18n/index.ts`、`cli.ts`、`manifest.ts` 任一语义变化后，至少执行：
+当 `apps/web/scripts/i18n/index.ts`、`cli.ts`、`manifest.ts`、`packages/i18n/src/lingui-config.ts` 任一语义变化后，至少执行：
 
 1. 文档同步：
 - 更新本文件命令矩阵与参数组合。
@@ -95,6 +95,10 @@ pnpm --filter @your/web run typecheck
 3. 结果核对：
 - `src/i18n/catalog-manifest.ts` 有预期 entry。
 - `src/locales/**/*.mjs` 与 `po` 输入一致更新。
+- `lingui-config.ts` 中 entries 使用精确两层 glob 自动发现（`src/components/*.tsx` + `src/components/layout/*.tsx`），在覆盖的两个层级内新增可翻译组件无需手动添加路径。
+- `manifest.ts` 与 `index.ts` 均通过 `resolveSourceLocale()` 读取 `lingui.config.ts` 的 `sourceLocale`；若配置缺失/非法，按 `DEFAULT_LOCALE -> en` 兼容回退并打印 warning。
+- manifest 生成阶段自动跳过不拥有自身消息的 entry（空 catalog 及纯包装组件），无需手动维护排除列表。跳过判据：entry 的 `.po` 中无任何 `#:` 源引用指向 entry 自身源文件（支持后缀：`.ts/.tsx/.js/.jsx/.mts/.cts/.mjs/.cjs/.md/.mdx`）。
+- `extractI18n()` 在 `lingui extract-experimental` 之后自动调用 `cleanOrphanedCatalogs(sourceLocale)`；默认删除空 catalog 和纯包装组件 entry 的 `.po/.mjs` 文件并清理空目录。设置 `I18N_DRY_RUN=1` 时只打印待删除文件与空目录用于安全检查；非 dry-run 且发生清理时自动调用 `manifestI18n()`，避免 manifest 仍引用已删除 `.mjs`。
 
 ## 对应实现位置（便于核对）
 

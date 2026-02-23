@@ -1,5 +1,8 @@
 # App Router Workflow
 
+`lingui-next-init` focuses on initialization and architecture setup.  
+For day-to-day command usage, see `skills/lingui-workflow`.
+
 ## Target Architecture
 
 1. Locale routing in `web/src/proxy.ts`.
@@ -10,20 +13,36 @@
 6. Optional server-layout composition in `web/src/i18n/layout-factory.tsx` and `web/src/app/[lang]/(home)/layout.tsx`.
 7. Extract/compile/manifest scripts in `web/scripts/i18n/*`.
 
-## Commands
-
-1. Extract:
-`pnpm run i18n:extract`
-2. Translate status:
-`pnpm run i18n:translate`
-3. Compile:
-`pnpm run i18n:compile`
-4. Regenerate manifest only:
-`pnpm run i18n:manifest`
-
 ## Build Gate
 
 `web/scripts/build.ts` should run `i18n:compile` before `next build` so production builds cannot skip Lingui compilation.
+
+## Post-Scaffold Smoke Check
+
+Run a minimal check immediately after initialization changes:
+
+```bash
+pnpm --filter @your/web run i18n:extract
+pnpm --filter @your/web run i18n:compile
+pnpm --filter @your/web run typecheck
+```
+
+Then verify:
+
+1. `web/src/i18n/catalog-manifest.ts` has non-empty entries for expected route groups/locales.
+2. Server locale initialization is explicit in both server `layout.tsx` and server `page.tsx` before Lingui `t`/metadata usage.
+3. If runtime still reports locale-not-activated, re-check `initLingui(locale)` activation order and `initPageLingui(params)` coverage.
+
+## Gitignore Rules
+
+Keep compiled locale catalogs out of VCS:
+
+```gitignore
+web/src/locales/**/*.js
+web/src/locales/**/*.mjs
+web/locale/**/*.js
+web/locale/**/*.mjs
+```
 
 ## Route Rules
 
@@ -55,4 +74,4 @@ Keep translation flow deterministic:
 
 Use source fallback when needed:
 
-`pnpm run i18n:translate -- --fill-source`
+`pnpm --filter @your/web run i18n:translate -- --fill-source`

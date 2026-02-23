@@ -74,6 +74,7 @@ Trigger files:
 1. `apps/web/scripts/i18n/index.ts`
 2. `apps/web/scripts/i18n/manifest.ts`
 3. `apps/web/scripts/i18n/cli.ts`
+4. `packages/i18n/src/lingui-config.ts`
 
 Required doc sync:
 1. `references/i18n-commands.md`

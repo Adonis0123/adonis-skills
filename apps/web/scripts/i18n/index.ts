@@ -8,9 +8,10 @@ import {
 } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { cleanOrphanedCatalogs } from "./catalog-cleanup";
+import { resolveSourceLocale } from "./source-locale";
 
 const LOCALES_DIR = path.join(process.cwd(), "src/locales");
-const SOURCE_LOCALE = "en";
 
 interface LocalePoFile {
 	locale: string;
@@ -29,7 +30,22 @@ interface BuildI18nOptions {
 	strictTranslate?: boolean;
 }
 
-function listPoFiles(dir: string): string[] {
+interface ExtractI18nOptions {
+	linguiArgs?: readonly string[];
+}
+
+interface SyncI18nOptions {
+	extractArgs?: readonly string[];
+}
+
+function isI18nDryRun(): boolean {
+	return ["1", "true"].includes((process.env.I18N_DRY_RUN ?? "").toLowerCase());
+}
+
+function listFilesByExtensions(
+	dir: string,
+	extensions: ReadonlySet<string>,
+): string[] {
 	if (!existsSync(dir)) return [];
 
 	const entries = readdirSync(dir).sort((a, b) => a.localeCompare(b));
@@ -39,10 +55,13 @@ function listPoFiles(dir: string): string[] {
 		const full = path.join(dir, entry);
 		const stats = statSync(full);
 		if (stats.isDirectory()) {
-			files.push(...listPoFiles(full));
+			files.push(...listFilesByExtensions(full, extensions));
 			continue;
 		}
-		if (stats.isFile() && entry.endsWith(".po")) {
+		if (
+			stats.isFile() &&
+			extensions.has(path.extname(entry).toLowerCase())
+		) {
 			files.push(full);
 		}
 	}
@@ -50,9 +69,13 @@ function listPoFiles(dir: string): string[] {
 	return files;
 }
 
-function getTargetPoFiles(): LocalePoFile[] {
+function listPoFiles(dir: string): string[] {
+	return listFilesByExtensions(dir, new Set([".po"]));
+}
+
+function getTargetPoFiles(sourceLocale: string): LocalePoFile[] {
 	return listPoFiles(LOCALES_DIR)
-		.filter((filePath) => path.basename(filePath) !== `${SOURCE_LOCALE}.po`)
+		.filter((filePath) => path.basename(filePath) !== `${sourceLocale}.po`)
 		.map((filePath) => ({
 			locale: path.basename(filePath, ".po"),
 			path: filePath,
@@ -142,12 +165,40 @@ function fillMissingWithSource(content: string): {
 	};
 }
 
-export function extractI18n(): void {
+function resolveSourceLocaleWithLogs(): string {
+	const result = resolveSourceLocale();
+	for (const warning of result.warnings) {
+		console.warn(warning);
+	}
+	return result.sourceLocale;
+}
+
+export function extractI18n({
+	linguiArgs = [],
+}: ExtractI18nOptions = {}): void {
+	const sourceLocale = resolveSourceLocaleWithLogs();
+	const dryRun = isI18nDryRun();
 	run("extract catalogs", "pnpm", [
 		"exec",
 		"lingui",
 		"extract-experimental",
+		...linguiArgs,
 	]);
+
+	const cleanupResult = cleanOrphanedCatalogs({
+		localesDir: LOCALES_DIR,
+		sourceLocale,
+		dryRun,
+		log: (message) => console.log(message),
+		cwd: process.cwd(),
+	});
+
+	if (!dryRun && cleanupResult.removedFiles > 0) {
+		console.log(
+			"[i18n] catalog files changed during cleanup, regenerating catalog manifest.",
+		);
+		manifestI18n();
+	}
 }
 
 export function manifestI18n(): void {
@@ -163,15 +214,18 @@ export function compileI18n(): void {
 	manifestI18n();
 }
 
-export function syncI18n(): void {
-	extractI18n();
+export function syncI18n({
+	extractArgs = [],
+}: SyncI18nOptions = {}): void {
+	extractI18n({ linguiArgs: extractArgs });
 }
 
 export function translateI18n({
 	fillSource = false,
 	strict = false,
 }: TranslateI18nOptions = {}): void {
-	const targetFiles = getTargetPoFiles();
+	const sourceLocale = resolveSourceLocaleWithLogs();
+	const targetFiles = getTargetPoFiles(sourceLocale);
 
 	if (targetFiles.length === 0) {
 		console.log(
@@ -207,7 +261,7 @@ export function translateI18n({
 			`[i18n] translation is still incomplete: ${totalMissing} empty msgstr in target locales.`,
 		);
 		console.log(
-			`[i18n] edit target locale files under src/locales/**/*.po (except **/${SOURCE_LOCALE}.po), then run i18n:compile if needed.`,
+			`[i18n] edit target locale files under src/locales/**/*.po (except **/${sourceLocale}.po), then run i18n:compile if needed.`,
 		);
 		if (strict) {
 			throw new Error(

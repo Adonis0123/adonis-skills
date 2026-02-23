@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"i18n:extract": "lingui extract-experimental",
+		"i18n:extract": "node --import tsx ./scripts/i18n/sync.ts",
 		"i18n:compile": "lingui compile",
 		"i18n:manifest": "node --import tsx ./scripts/i18n/manifest.ts",
 		"i18n:sync": "node --import tsx ./scripts/i18n/sync.ts",

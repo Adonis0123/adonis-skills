@@ -80,9 +80,10 @@ rg -n "\"slug\": \"<skill-slug>\"" apps/web/src/generated/skills-index.json
 ## 命令语义漂移同步规则
 
 当以下文件有语义变化时：
-1. `apps/web/scripts/i18n/index.ts`
+1. `apps/web/scripts/i18n/index.ts`（含 `cleanOrphanedCatalogs` 文件级清理逻辑（`.po/.mjs`）、`I18N_DRY_RUN` 试运行开关，以及非 dry-run 清理后触发 `manifestI18n()` 的一致性保护）
 2. `apps/web/scripts/i18n/cli.ts`
-3. `apps/web/scripts/i18n/manifest.ts`
+3. `apps/web/scripts/i18n/manifest.ts`（含 `resolveSourceLocale` 回退链、ownership 判据、多后缀匹配规则与 manifest 统计逻辑）
+4. `packages/i18n/src/lingui-config.ts`
 
 必须同步：
 1. `skills/lingui-workflow/references/i18n-commands.md`

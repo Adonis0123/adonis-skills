@@ -94,6 +94,14 @@ The script renders templates from:
 - If `--with-server-layouts` is enabled, add missing `dependencies.<server-layouts-package>` with `<server-layouts-version>`
 - Never overwrite existing keys
 
+Project-root `.gitignore` is merged incrementally:
+- Add missing compiled-catalog ignore patterns:
+  - `web/src/locales/**/*.js`
+  - `web/src/locales/**/*.mjs`
+  - `web/locale/**/*.js`
+  - `web/locale/**/*.mjs`
+- Never remove existing rules
+
 ## Validation Workflow
 
 After scaffolding a target project:
@@ -115,6 +123,26 @@ Use `--fill-source` when placeholder translation is acceptable:
 ```bash
 pnpm --filter @your/web run i18n:translate -- --fill-source
 ```
+
+Daily command execution and troubleshooting are maintained in `lingui-workflow`.
+Use `skills/lingui-workflow` for the day-to-day extract/translate/compile workflow.
+
+## Experience Notes
+
+Use this checklist to avoid common maintenance mistakes when updating Lingui skills:
+
+1. Handoff timing:
+After scaffold/setup is done, hand over immediately to `skills/lingui-workflow` for day-to-day command guidance.
+
+2. Documentation migration order:
+Migrate content to the target new doc first, then delete old duplicate docs, and run finalize pipeline last.
+
+3. `skills:init` side effect:
+`pnpm skills:init` creates `agents/openai.yaml` automatically.
+If this file is not needed for the new public skill, remove it before finalize.
+
+4. Large workspace safety:
+Run `git status` before `skills:finalize` so `AD`/`MM` states are understood and not misinterpreted as current-task failures.
 
 ## Troubleshooting
 
@@ -148,3 +176,4 @@ Read these files only when needed:
 1. `references/workflow-app-router.md`
 2. `references/official-notes.md`
 3. `references/pages-router-roadmap.md`
+4. Daily workflow skill: `skills/lingui-workflow`

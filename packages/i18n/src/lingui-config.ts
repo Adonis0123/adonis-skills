@@ -11,14 +11,8 @@ const linguiConfig: LinguiConfig = {
     extractor: {
       entries: [
         '<rootDir>/src/app/[[]lang[]]/**/{page,layout,loading,error,not-found,template,default}.tsx',
-        '<rootDir>/src/components/layout/site-header.tsx',
-        '<rootDir>/src/components/layout/mobile-header-menu.tsx',
-        '<rootDir>/src/components/layout/site-footer.tsx',
-        '<rootDir>/src/components/layout/site-brand.tsx',
-        '<rootDir>/src/components/skill-card.tsx',
-        '<rootDir>/src/components/copy-install-command.tsx',
-        '<rootDir>/src/components/skills-library-section.tsx',
-        '<rootDir>/src/components/layout/theme-toggle.tsx',
+        '<rootDir>/src/components/*.tsx',
+        '<rootDir>/src/components/layout/*.tsx',
       ],
       output: '<rootDir>/src/locales/{entryDir}/{entryName}/{locale}',
     },

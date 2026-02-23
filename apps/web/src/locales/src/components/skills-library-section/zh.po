@@ -14,31 +14,31 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:23
-msgid "home.library.kicker"
-msgstr "技能库"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:78
-msgid "home.search.empty"
-msgstr "未找到与 \"{query}\" 匹配的技能"
-
-#. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:60
 msgid "home.search.clear"
 msgstr "清空搜索"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:47
+#: ../src/components/skills-library-section.tsx:24
+msgid "home.library.kicker"
+msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:92
+msgid "home.search.empty"
+msgstr "未找到与 \"{query}\" 匹配的技能"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:44
 msgid "home.search.input.aria"
 msgstr "搜索技能"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:43
+#: ../src/components/skills-library-section.tsx:48
 msgid "home.search.placeholder"
 msgstr "搜索技能..."
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:26
+#: ../src/components/skills-library-section.tsx:27
 msgid "home.library.title"
 msgstr "技能库"

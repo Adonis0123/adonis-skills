@@ -13,6 +13,12 @@ PLACEHOLDER_RE = re.compile(r"\{\{([A-Z0-9_]+)\}\}")
 VALID_MODES = ("app-only", "shared-auto", "shared-force")
 DEFAULT_SERVER_LAYOUTS_PACKAGE = "@adonis-kit/react-layouts"
 DEFAULT_SERVER_LAYOUTS_VERSION = "latest"
+GITIGNORE_LINGUI_COMPILED_PATTERNS = (
+    "web/src/locales/**/*.js",
+    "web/src/locales/**/*.mjs",
+    "web/locale/**/*.js",
+    "web/locale/**/*.mjs",
+)
 
 LANGUAGE_PRESETS: dict[str, dict[str, str]] = {
     "en": {
@@ -431,6 +437,46 @@ def merge_package_json(
     report.add_note(f"package.json additions: {', '.join(added)}")
 
 
+def merge_gitignore(project_root: Path, report: Report, dry_run: bool) -> None:
+    target_path = project_root / ".gitignore"
+    file_exists = target_path.exists()
+
+    if file_exists:
+        lines = target_path.read_text(encoding="utf-8").splitlines()
+    else:
+        lines = []
+
+    existing_lines = set(lines)
+    missing = [
+        pattern
+        for pattern in GITIGNORE_LINGUI_COMPILED_PATTERNS
+        if pattern not in existing_lines
+    ]
+    if not missing:
+        report.add_note(f".gitignore unchanged: {target_path.as_posix()}")
+        return
+
+    output_lines = list(lines)
+    if output_lines and output_lines[-1] != "":
+        output_lines.append("")
+
+    header = "# lingui-next-init compiled catalogs"
+    if header not in existing_lines:
+        output_lines.append(header)
+
+    output_lines.extend(missing)
+    new_content = "\n".join(output_lines).rstrip("\n") + "\n"
+
+    if not dry_run:
+        target_path.write_text(new_content, encoding="utf-8")
+
+    if file_exists:
+        report.add_updated(target_path, dry_run)
+    else:
+        report.add_created(target_path, dry_run)
+    report.add_note(f".gitignore additions: {', '.join(missing)}")
+
+
 def write_rendered_file(
     output_path: Path,
     content: str,
@@ -543,6 +589,8 @@ def main() -> int:
             report.add_note("shared-auto: workspace detected, render package templates.")
         else:
             report.add_note("shared-auto: workspace not detected, fallback to app-only.")
+
+    merge_gitignore(project_root=project_root, report=report, dry_run=args.dry_run)
 
     replacements = build_replacements(
         locales=locales,

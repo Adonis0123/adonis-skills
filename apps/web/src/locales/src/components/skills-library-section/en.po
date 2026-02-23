@@ -14,31 +14,31 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:23
-msgid "home.library.kicker"
-msgstr "Library"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:78
-msgid "home.search.empty"
-msgstr "No skills found for \"{query}\""
-
-#. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:60
 msgid "home.search.clear"
 msgstr "Clear search"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:47
+#: ../src/components/skills-library-section.tsx:24
+msgid "home.library.kicker"
+msgstr "Library"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:92
+msgid "home.search.empty"
+msgstr "No skills found for \"{query}\""
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:44
 msgid "home.search.input.aria"
 msgstr "Search skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:43
+#: ../src/components/skills-library-section.tsx:48
 msgid "home.search.placeholder"
 msgstr "Search skills..."
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:26
+#: ../src/components/skills-library-section.tsx:27
 msgid "home.library.title"
 msgstr "Skill Library"

@@ -1,39 +1,44 @@
 import {
 	existsSync,
 	mkdirSync,
+	readFileSync,
 	readdirSync,
 	statSync,
 	writeFileSync,
 } from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 import { SUPPORTED_LOCALES } from "../../src/i18n/config";
+import {
+	CATALOG_FILE_EXTENSIONS,
+	entryOwnsCatalogContent,
+	normalizePath,
+} from "./catalog-ownership";
+import { resolveSourceLocale } from "./source-locale";
 
 const LOCALES_DIR = path.join(process.cwd(), "src/locales");
 const OUTPUT_FILE = path.join(process.cwd(), "src/i18n/catalog-manifest.ts");
 const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
-const INCLUDED_ENTRY_PREFIXES = ["src/app/[lang]/"];
-const INCLUDED_ENTRY_PATHS = new Set<string>([
-	"src/components/layout/site-header",
-	"src/components/layout/mobile-header-menu",
-	"src/components/layout/site-footer",
-	"src/components/layout/site-brand",
-	"src/components/layout/theme-toggle",
-	"src/components/copy-install-command",
-	"src/components/skill-card",
-	"src/components/skills-library-section",
-]);
+const INCLUDED_ENTRY_PREFIXES = ["src/app/[lang]/", "src/components/"];
 
-function shouldIncludeEntry(entry: string): boolean {
-	if (INCLUDED_ENTRY_PATHS.has(entry)) {
-		return true;
-	}
-
-	return INCLUDED_ENTRY_PREFIXES.some((prefix) => entry.startsWith(prefix));
+export interface BuildManifestOptions {
+	localesDir?: string;
+	sourceLocale: string;
+	supportedLocales?: ReadonlySet<string>;
+	includedEntryPrefixes?: readonly string[];
 }
 
-function normalizePath(input: string): string {
-	return input.split(path.sep).join("/");
+export interface BuildManifestResult {
+	manifest: Record<string, Record<string, string>>;
+	candidateEntries: number;
+}
+
+function shouldIncludeEntry(
+	entry: string,
+	includedEntryPrefixes: readonly string[],
+): boolean {
+	return includedEntryPrefixes.some((prefix) => entry.startsWith(prefix));
 }
 
 function listFiles(dir: string): string[] {
@@ -54,33 +59,71 @@ function listFiles(dir: string): string[] {
 	return files;
 }
 
-function buildManifest(): Record<string, Record<string, string>> {
+function listCatalogFiles(dir: string): string[] {
+	return listFiles(dir).filter((filePath) =>
+		CATALOG_FILE_EXTENSIONS.has(path.extname(filePath).toLowerCase()),
+	);
+}
+
+function entryOwnsCatalog(
+	localesDir: string,
+	entry: string,
+	sourceLocale: string,
+): boolean {
+	const poPath = path.join(localesDir, entry, `${sourceLocale}.po`);
+	if (!existsSync(poPath)) return false;
+
+	const content = readFileSync(poPath, "utf8");
+	return entryOwnsCatalogContent(entry, content);
+}
+
+export function buildManifest({
+	localesDir = LOCALES_DIR,
+	sourceLocale,
+	supportedLocales = SUPPORTED_LOCALE_SET,
+	includedEntryPrefixes = INCLUDED_ENTRY_PREFIXES,
+}: BuildManifestOptions): BuildManifestResult {
 	const fileMap: Record<string, Record<string, string>> = {};
-	const files = listFiles(LOCALES_DIR).filter((file) => file.endsWith(".mjs"));
+	const files = listFiles(localesDir).filter((file) => file.endsWith(".mjs"));
+	const ownershipCache = new Map<string, boolean>();
+	const candidateEntries = new Set<string>();
+
+	for (const file of listCatalogFiles(localesDir)) {
+		const rel = normalizePath(path.relative(localesDir, file));
+		const entry = normalizePath(path.dirname(rel));
+		if (entry === ".") continue;
+		if (!shouldIncludeEntry(entry, includedEntryPrefixes)) continue;
+		candidateEntries.add(entry);
+	}
 
 	for (const file of files) {
-		const rel = normalizePath(path.relative(LOCALES_DIR, file));
+		const rel = normalizePath(path.relative(localesDir, file));
 		const locale = path.basename(rel, ".mjs");
 		const entry = normalizePath(path.dirname(rel));
 
-		if (entry === ".") {
-			continue;
+		if (entry === ".") continue;
+		if (!shouldIncludeEntry(entry, includedEntryPrefixes)) continue;
+		if (!supportedLocales.has(locale)) continue;
+
+		if (!ownershipCache.has(entry)) {
+			ownershipCache.set(
+				entry,
+				entryOwnsCatalog(localesDir, entry, sourceLocale),
+			);
 		}
-		if (!shouldIncludeEntry(entry)) {
-			continue;
-		}
-		if (!SUPPORTED_LOCALE_SET.has(locale)) {
-			continue;
-		}
+		if (!ownershipCache.get(entry)) continue;
 
 		fileMap[entry] ??= {};
 		fileMap[entry][locale] = `../locales/${entry}/${locale}.mjs`;
 	}
 
-	return fileMap;
+	return {
+		manifest: fileMap,
+		candidateEntries: candidateEntries.size,
+	};
 }
 
-function renderManifest(
+export function renderManifest(
 	manifest: Record<string, Record<string, string>>,
 ): string {
 	const entries = Object.keys(manifest).sort();
@@ -122,17 +165,32 @@ function renderManifest(
 	return lines.join("\n");
 }
 
-function main(): void {
-	const manifest = buildManifest();
+export function runManifestScript(): void {
+	const { sourceLocale, warnings } = resolveSourceLocale();
+	for (const warning of warnings) {
+		console.warn(warning);
+	}
+
+	const { manifest, candidateEntries } = buildManifest({ sourceLocale });
 	const content = renderManifest(manifest);
 
 	mkdirSync(path.dirname(OUTPUT_FILE), { recursive: true });
 	writeFileSync(OUTPUT_FILE, content, "utf8");
 
+	const kept = Object.keys(manifest).length;
+	const skipped = candidateEntries - kept;
+
 	console.log(
 		`[i18n] wrote catalog manifest: ${path.relative(process.cwd(), OUTPUT_FILE)}`,
 	);
-	console.log(`[i18n] entries: ${Object.keys(manifest).length}`);
+	console.log(
+		`[i18n] entries: ${kept}${skipped > 0 ? ` (skipped ${skipped} without own messages)` : ""}`,
+	);
 }
 
-main();
+if (
+	typeof process.argv[1] === "string" &&
+	pathToFileURL(process.argv[1]).href === import.meta.url
+) {
+	runManifestScript();
+}
