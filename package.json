@@ -8,6 +8,7 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "docs:clean": "node --experimental-strip-types ./scripts/clean-docs.ts",
     "precommit:typecheck": "pnpm typecheck",
     "prepare": "simple-git-hooks",
     "skills:new": "node --experimental-strip-types ./scripts/create-skill.ts",
