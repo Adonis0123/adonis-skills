@@ -53,4 +53,8 @@ export const catalogManifest: CatalogManifest = {
 		en: () => import("../locales/src/components/skill-card/en.mjs"),
 		zh: () => import("../locales/src/components/skill-card/zh.mjs"),
 	},
+	"src/components/skills-library-section": {
+		en: () => import("../locales/src/components/skills-library-section/en.mjs"),
+		zh: () => import("../locales/src/components/skills-library-section/zh.mjs"),
+	},
 };

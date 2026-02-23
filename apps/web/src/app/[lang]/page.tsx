@@ -2,8 +2,7 @@ import Link from 'next/link'
 import { Trans } from '@lingui/react/macro'
 import { exampleSkillHref } from '@/config/site-layout'
 import { SectionReveal } from '@/components/motion/section-reveal'
-import { SkillsGridMotion } from '@/components/motion/skills-grid-motion'
-import { SkillCard } from '@/components/skill-card'
+import { SkillsLibrarySection } from '@/components/skills-library-section'
 import { ClayBadge, ClayButton, ClaySurface } from '@/components/ui'
 import { initPageLingui } from '@/i18n/initLingui'
 import { LocaleLink } from '@/i18n/locale-link'
@@ -96,26 +95,7 @@ export default async function HomePage({ params }: HomePageProps) {
       </SectionReveal>
 
       <SectionReveal delay={130} className="mt-8 md:mt-10">
-        <section>
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.16em] text-clay-muted">
-                <Trans id="home.library.kicker">Library</Trans>
-              </p>
-              <h2 className="text-3xl md:text-4xl"><Trans id="home.library.title">Skill Library</Trans></h2>
-            </div>
-
-            <ClaySurface tone="base" elevation="inset" className="rounded-[1rem] px-4 py-2.5">
-              <p className="font-mono text-[11px] text-clay-muted md:text-xs">npx skills add {skillsRepo} --skill &lt;slug&gt;</p>
-            </ClaySurface>
-          </div>
-
-          <SkillsGridMotion>
-            {skills.map(skill => (
-              <SkillCard key={skill.slug} skill={skill} />
-            ))}
-          </SkillsGridMotion>
-        </section>
+        <SkillsLibrarySection skills={skills} />
       </SectionReveal>
     </main>
   )

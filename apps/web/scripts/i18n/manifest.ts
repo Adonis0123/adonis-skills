@@ -21,6 +21,7 @@ const INCLUDED_ENTRY_PATHS = new Set<string>([
 	"src/components/layout/theme-toggle",
 	"src/components/copy-install-command",
 	"src/components/skill-card",
+	"src/components/skills-library-section",
 ]);
 
 function shouldIncludeEntry(entry: string): boolean {

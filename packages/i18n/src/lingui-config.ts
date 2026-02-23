@@ -17,6 +17,7 @@ const linguiConfig: LinguiConfig = {
         '<rootDir>/src/components/layout/site-brand.tsx',
         '<rootDir>/src/components/skill-card.tsx',
         '<rootDir>/src/components/copy-install-command.tsx',
+        '<rootDir>/src/components/skills-library-section.tsx',
         '<rootDir>/src/components/layout/theme-toggle.tsx',
       ],
       output: '<rootDir>/src/locales/{entryDir}/{entryName}/{locale}',

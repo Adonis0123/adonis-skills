@@ -14,61 +14,61 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:89
+#: ../../src/app/%5Blang%5D/page.tsx:103
+#~ msgid "home.library.kicker"
+#~ msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:105
+#~ msgid "home.library.title"
+#~ msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:88
 msgid "home.install.step1"
 msgstr "1. 选择一个技能标识符。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:90
+#: ../../src/app/%5Blang%5D/page.tsx:89
 msgid "home.install.step2"
 msgstr "2. 运行安装命令。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:91
+#: ../../src/app/%5Blang%5D/page.tsx:90
 msgid "home.install.step3"
 msgstr "3. 在您的 agent 工作流中使用该技能。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:39
+#: ../../src/app/%5Blang%5D/page.tsx:38
 msgid "home.hero.description"
 msgstr "浏览实用技能，选择标识符，一条命令即可安装。每个技能都可在真实工作流中复用。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:82
+#: ../../src/app/%5Blang%5D/page.tsx:81
 msgid "home.install.title"
 msgstr "安装方式"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:35
+#: ../../src/app/%5Blang%5D/page.tsx:34
 msgid "home.hero.title"
 msgstr "为您的 AI agent 安装生产级技能。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:103
-msgid "home.library.kicker"
-msgstr "技能库"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:67
+#: ../../src/app/%5Blang%5D/page.tsx:66
 msgid "home.cta.github"
 msgstr "打开 GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:51
+#: ../../src/app/%5Blang%5D/page.tsx:50
 msgid "home.badge.repo"
 msgstr "仓库：{skillsRepo}"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:105
-msgid "home.library.title"
-msgstr "技能库"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:54
+#: ../../src/app/%5Blang%5D/page.tsx:53
 msgid "home.badge.skills"
 msgstr "技能数：{skillsCount}"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:74
+#: ../../src/app/%5Blang%5D/page.tsx:73
 msgid "home.cta.example"
 msgstr "查看示例技能"

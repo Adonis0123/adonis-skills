@@ -14,61 +14,61 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:89
+#: ../../src/app/%5Blang%5D/page.tsx:103
+#~ msgid "home.library.kicker"
+#~ msgstr "Library"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:105
+#~ msgid "home.library.title"
+#~ msgstr "Skill Library"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:88
 msgid "home.install.step1"
 msgstr "1. Choose a skill slug."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:90
+#: ../../src/app/%5Blang%5D/page.tsx:89
 msgid "home.install.step2"
 msgstr "2. Run the install command."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:91
+#: ../../src/app/%5Blang%5D/page.tsx:90
 msgid "home.install.step3"
 msgstr "3. Use the skill in your agent workflow."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:39
+#: ../../src/app/%5Blang%5D/page.tsx:38
 msgid "home.hero.description"
 msgstr "Browse practical skills, pick a slug, and install with one command. Each skill is reusable in real workflows."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:82
+#: ../../src/app/%5Blang%5D/page.tsx:81
 msgid "home.install.title"
 msgstr "Install Pattern"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:35
+#: ../../src/app/%5Blang%5D/page.tsx:34
 msgid "home.hero.title"
 msgstr "Install production-ready skills for your AI agents."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:103
-msgid "home.library.kicker"
-msgstr "Library"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:67
+#: ../../src/app/%5Blang%5D/page.tsx:66
 msgid "home.cta.github"
 msgstr "Open GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:51
+#: ../../src/app/%5Blang%5D/page.tsx:50
 msgid "home.badge.repo"
 msgstr "Repo: {skillsRepo}"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:105
-msgid "home.library.title"
-msgstr "Skill Library"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:54
+#: ../../src/app/%5Blang%5D/page.tsx:53
 msgid "home.badge.skills"
 msgstr "Skills: {skillsCount}"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:74
+#: ../../src/app/%5Blang%5D/page.tsx:73
 msgid "home.cta.example"
 msgstr "View Example Skill"
