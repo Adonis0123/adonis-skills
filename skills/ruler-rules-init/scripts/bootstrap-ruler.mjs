@@ -5,6 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ALLOWED_MODES = new Set(['audit', 'apply'])
+const ALLOWED_PRESETS = new Set(['auto', 'base', 'nextjs', 'monorepo', 'node-lib'])
 const RULER_APPLY_COMMAND =
   'pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup'
 const SKILLS_SYNC_COMMAND =
@@ -25,6 +26,7 @@ function parseArgs(argv) {
   const options = {
     target: process.cwd(),
     mode: 'audit',
+    preset: 'auto',
     withOptionalSync: false,
     force: false
   }
@@ -52,6 +54,16 @@ function parseArgs(argv) {
       continue
     }
 
+    if (arg === '--preset') {
+      const value = argv[index + 1]
+      if (!value) {
+        throw new Error('Missing value for --preset')
+      }
+      options.preset = value
+      index += 1
+      continue
+    }
+
     if (arg === '--with-optional-sync') {
       options.withOptionalSync = true
       continue
@@ -74,6 +86,12 @@ function parseArgs(argv) {
     throw new Error(`Invalid --mode value: ${options.mode}. Allowed: audit, apply`)
   }
 
+  if (!ALLOWED_PRESETS.has(options.preset)) {
+    throw new Error(
+      `Invalid --preset value: ${options.preset}. Allowed: ${[...ALLOWED_PRESETS].join(', ')}`
+    )
+  }
+
   return options
 }
 
@@ -82,16 +100,75 @@ function printHelp() {
   console.log('')
   console.log('Usage:')
   console.log(
-    '  node ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode audit|apply [--with-optional-sync] [--force]'
+    '  node ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode audit|apply [--preset auto|base|nextjs|monorepo|node-lib] [--with-optional-sync] [--force]'
   )
+  console.log('')
+  console.log('Options:')
+  console.log('  --target <path>    Target repository root (default: cwd)')
+  console.log('  --mode <mode>      audit or apply (default: audit)')
+  console.log('  --preset <name>    Template preset (default: auto)')
+  console.log('                     auto      - detect from target repo')
+  console.log('                     base      - generic placeholders')
+  console.log('                     nextjs    - Next.js App Router project')
+  console.log('                     monorepo  - Turborepo / pnpm workspace')
+  console.log('                     node-lib  - Node.js library')
+  console.log('  --with-optional-sync  Include skills:sync:claude integration')
+  console.log('  --force            Overwrite differing files')
   console.log('')
   console.log('Examples:')
   console.log(
     '  node ./scripts/bootstrap-ruler.mjs --target /repo --mode audit'
   )
   console.log(
+    '  node ./scripts/bootstrap-ruler.mjs --target /repo --mode apply --preset nextjs'
+  )
+  console.log(
     '  node ./scripts/bootstrap-ruler.mjs --target /repo --mode apply --with-optional-sync'
   )
+}
+
+async function detectPreset(targetRoot) {
+  const turboJsonExists = await pathExists(path.join(targetRoot, 'turbo.json'))
+  if (turboJsonExists) {
+    return 'monorepo'
+  }
+
+  const pnpmWorkspaceExists = await pathExists(
+    path.join(targetRoot, 'pnpm-workspace.yaml')
+  )
+  if (pnpmWorkspaceExists) {
+    return 'monorepo'
+  }
+
+  const nextConfigPatterns = ['next.config.js', 'next.config.mjs', 'next.config.ts']
+  for (const pattern of nextConfigPatterns) {
+    if (await pathExists(path.join(targetRoot, pattern))) {
+      return 'nextjs'
+    }
+  }
+
+  const packageJsonPath = path.join(targetRoot, 'package.json')
+  if (await pathExists(packageJsonPath)) {
+    try {
+      const raw = await readFile(packageJsonPath, 'utf8')
+      const pkg = JSON.parse(raw)
+      if (pkg.main || pkg.exports) {
+        return 'node-lib'
+      }
+    } catch {
+      // ignore parse errors, fall through to base
+    }
+  }
+
+  return 'base'
+}
+
+function resolveTemplatePath(templatesRoot, preset, relativePath) {
+  if (preset !== 'base') {
+    const presetPath = path.join(templatesRoot, 'presets', preset, relativePath)
+    return { presetPath, basePath: path.join(templatesRoot, 'base', relativePath) }
+  }
+  return { presetPath: null, basePath: path.join(templatesRoot, 'base', relativePath) }
 }
 
 function normalizeContent(value) {
@@ -164,12 +241,22 @@ async function syncTemplateFile({
   relativePath,
   targetRoot,
   templatesRoot,
+  preset,
   mode,
   force,
   reporter
 }) {
-  const sourcePath = path.join(templatesRoot, relativePath)
-  const targetPath = path.join(targetRoot, relativePath)
+  const { presetPath, basePath } = resolveTemplatePath(
+    templatesRoot,
+    preset,
+    relativePath
+  )
+
+  // Check preset path first, then fall back to base
+  let sourcePath = basePath
+  if (presetPath && (await pathExists(presetPath))) {
+    sourcePath = presetPath
+  }
 
   const sourceExists = await pathExists(sourcePath)
   if (!sourceExists) {
@@ -178,6 +265,7 @@ async function syncTemplateFile({
   }
 
   const sourceText = await readFile(sourcePath, 'utf8')
+  const targetPath = path.join(targetRoot, relativePath)
   const targetExists = await pathExists(targetPath)
 
   if (!targetExists) {
@@ -443,6 +531,15 @@ async function run() {
   const templatesRoot = path.resolve(scriptDir, '../assets/templates')
   const reporter = createReporter()
 
+  // Resolve preset
+  let preset = options.preset
+  if (preset === 'auto') {
+    preset = await detectPreset(options.target)
+    console.log(`Preset: ${preset} (auto-detected)`)
+  } else {
+    console.log(`Preset: ${preset}`)
+  }
+
   console.log(`Mode: ${options.mode}`)
   console.log(`Target: ${options.target}`)
   console.log(`Optional sync: ${options.withOptionalSync ? 'enabled' : 'disabled'}`)
@@ -453,6 +550,7 @@ async function run() {
       relativePath,
       targetRoot: options.target,
       templatesRoot,
+      preset,
       mode: options.mode,
       force: options.force,
       reporter

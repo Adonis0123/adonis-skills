@@ -40,6 +40,16 @@
     }
   },
   {
+    "slug": "ruler-rules-init",
+    "name": "ruler-rules-init",
+    "description": "Migrate and bootstrap Ruler-based AI rules across repositories with English-first templates, preset-based project detection, and safe, idempotent setup. Use when creating or standardizing `.ruler/*` files, generating `AGENTS.md`/`CLAUDE.md`, wiring `ruler:apply` into `package.json`, adding generated-file ignores in `.gitignore`, and designing `applyTo` scoping patterns such as `**` and `web/**`.",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill ruler-rules-init",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "staged-changes-review",
     "name": "staged-changes-review",
     "description": "Comprehensive review of staged Git changes for risk assessment, error detection, and impact analysis. Use when the user wants to review staged changes, check for errors before commit, analyze risks in git staged files, validate code changes before committing, or needs suggestions on staged modifications.",
