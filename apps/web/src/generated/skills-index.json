@@ -85,5 +85,18 @@
       "hasReferences": true,
       "hasSrc": true
     }
+  },
+  {
+    "slug": "zustand-store-scaffold",
+    "name": "zustand-store-scaffold",
+    "description": "Scaffold Zustand stores quickly using this repo's patterns. Use when creating or updating Zustand stores, contexts, providers, or slice-based core stores (createStore + immer, createCoreSlice), especially under web/src/pages/_components/**/store and packages/ag-ui-view/**/store.",
+    "metadata": {
+      "version": "0.1.0"
+    },
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill zustand-store-scaffold",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   }
 ]

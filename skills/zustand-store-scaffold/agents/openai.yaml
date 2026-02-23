@@ -1,0 +1,4 @@
+interface:
+  display_name: "Zustand Store Scaffold"
+  short_description: "Scaffold Zustand stores for this repo's patterns"
+  default_prompt: "Scaffold a Zustand store following the repo's web or core store patterns."
