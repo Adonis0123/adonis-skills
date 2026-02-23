@@ -89,7 +89,7 @@
   {
     "slug": "zustand-store-scaffold",
     "name": "zustand-store-scaffold",
-    "description": "Scaffold Zustand stores quickly using this repo's patterns. Use when creating or updating Zustand stores, contexts, providers, or slice-based core stores (createStore + immer, createCoreSlice), especially under web/src/pages/_components/**/store and packages/ag-ui-view/**/store.",
+    "description": "Scaffold type-safe Zustand stores with two patterns: web (component-level store + Context + Provider) and core (slice-based store with immer). Use when creating or updating Zustand stores, contexts, providers, or composing multiple feature slices.",
     "metadata": {
       "version": "0.1.0"
     },
