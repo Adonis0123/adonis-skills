@@ -1,5 +1,15 @@
 [
   {
+    "slug": "claude-skills-sync-init",
+    "name": "claude-skills-sync-init",
+    "description": "Bootstrap Claude skill-sync automation in any repository. Use when users ask to set up `.agents/skills` to `.claude/skills` syncing, generate `skills:sync:*` scripts, inject package.json scripts/postinstall hooks, or initialize this sync workflow in a new or existing project.",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill claude-skills-sync-init",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "code-inspector-init",
     "name": "code-inspector-init",
     "description": "Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.",
