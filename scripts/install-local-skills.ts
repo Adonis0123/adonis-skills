@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process'
-import { readdir, stat } from 'node:fs/promises'
+import { cp, readdir, stat } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { checkbox, confirm, select } from '@inquirer/prompts'
@@ -266,6 +266,33 @@ async function runInteractiveSelection(skills: string[]): Promise<SelectionResul
   }
 }
 
+async function mergeSkillFiles(options: {
+  repoRoot: string
+  slugs: string[]
+  dryRun: boolean
+}) {
+  const { repoRoot, slugs, dryRun } = options
+  const skillsDir = path.join(repoRoot, 'skills')
+  const agentsSkillsDir = path.join(repoRoot, '.agents/skills')
+
+  for (const slug of slugs) {
+    const src = path.join(skillsDir, slug)
+    const dest = path.join(agentsSkillsDir, slug)
+
+    // Only merge into directories that npx skills already installed
+    const destExists = await stat(dest).then(() => true).catch(() => false)
+    if (!destExists) continue
+
+    if (dryRun) {
+      console.log(`[skills:install:local] Dry run: merge ${src} -> ${dest}`)
+      continue
+    }
+
+    await cp(src, dest, { recursive: true, force: true })
+    console.log(`[skills:install:local] Merged skill files: ${slug}`)
+  }
+}
+
 async function installSkills(options: {
   dryRun: boolean
   installAll: boolean
@@ -273,6 +300,7 @@ async function installSkills(options: {
   skills: string[]
 }) {
   const { dryRun, installAll, repoRoot, skills } = options
+  let installedSlugs: string[]
 
   if (installAll) {
     await runCommand({
@@ -281,17 +309,22 @@ async function installSkills(options: {
       cwd: repoRoot,
       dryRun,
     })
-    return
+    installedSlugs = await loadAvailableSkills(repoRoot)
+  } else {
+    for (const skill of skills) {
+      await runCommand({
+        command: 'npx',
+        args: ['-y', 'skills', 'add', './skills', '-a', 'codex', '-y', '--skill', skill],
+        cwd: repoRoot,
+        dryRun,
+      })
+    }
+    installedSlugs = skills
   }
 
-  for (const skill of skills) {
-    await runCommand({
-      command: 'npx',
-      args: ['-y', 'skills', 'add', './skills', '-a', 'codex', '-y', '--skill', skill],
-      cwd: repoRoot,
-      dryRun,
-    })
-  }
+  // npx skills filters out certain files (e.g. _-prefixed). Merge to ensure
+  // .agents/skills/ is a complete mirror of skills/.
+  await mergeSkillFiles({ repoRoot, slugs: installedSlugs, dryRun })
 }
 
 async function syncLlmSkills(repoRoot: string, dryRun: boolean) {
