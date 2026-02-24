@@ -19,7 +19,7 @@
     },
     "skills:index": {
       "inputs": ["../../skills/**", "../../scripts/generate-skills-index.mjs"],
-      "outputs": ["src/generated/skills-index.json"]
+      "outputs": ["src/generated/skills-index-lite.json", "src/generated/skills-detail-index.json"]
     },
     "skills:validate": {
       "inputs": ["../../skills/**", "../../scripts/validate-skills.mjs"],

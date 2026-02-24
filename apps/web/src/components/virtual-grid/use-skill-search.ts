@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from 'react'
 import { useDebounceFn } from 'ahooks'
-import type { SkillIndexItem } from '@/lib/skills'
+import type { SkillListItem } from '@/lib/skills'
 
-export function useSkillSearch(skills: SkillIndexItem[]) {
+export function useSkillSearch(skills: SkillListItem[]) {
   const [query, setQuery] = useState('')
   const [debouncedQuery, setDebouncedQuery] = useState('')
 

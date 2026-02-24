@@ -1,0 +1,657 @@
+[
+  {
+    "slug": "claude-skills-sync-init",
+    "sections": [
+      {
+        "raw": "在目标项目中初始化 skills 同步能力时，使用本 Skill。",
+        "heading": "Claude Skills Sync Init",
+        "level": 1
+      },
+      {
+        "raw": "目标是在目标仓库自动落地以下能力：\n\n1. 生成 `scripts/sync-llm-skills.ts`，支持 `--source`、`--targets`、`--dry-run`。\n2. 注入 `scripts.skills:sync:llm` 命令。\n3. 自动确保 `devDependencies.is-ci` 存在（缺失时自动写入）。\n4. 以幂等方式合并 `postinstall`，默认注入 `is-ci` CI guard。\n5. 同步目标仅为 `.claude/skills`。\n6. 同步过程采用原子切换，避免复制失败时清空目标目录。\n7. 自动确保目标仓库 `.gitignore` 包含 `/.claude/skills`。",
+        "heading": "Overview",
+        "level": 2
+      },
+      {
+        "raw": "1. 收集上下文\n- 确认目标仓库根目录（存在 `package.json`）。\n- 确认源目录是否仍使用 `.agents/skills`（默认值）。\n- 确认目标目录为 `.claude/skills`（默认且唯一目标）。\n\n2. 执行自动落地脚本\n- 在目标仓库执行：\n```bash\nnode /path/to/claude-skills-sync-init/scripts/bootstrap-sync-skills.mjs --project /path/to/target-repo\n```\n- 可选参数：\n  - `--script-name`（默认 `skills:sync:llm`）\n  - `--script-path`（默认 `scripts/sync-llm-skills.ts`）\n  - `--skip-postinstall`（跳过 postinstall 注入）\n- `--script-name` 仅允许字符集 `[A-Za-z0-9:._-]+`，非法值必须失败退出。\n\n3. 运行同步命令验证\n- 默认验证：\n```bash\npnpm run skills:sync:llm -- --dry-run\n```\n- 显式指定目标（可选）：\n```bash\npnpm run skills:sync:llm -- --targets=claude\n```\n\n4. 输出变更摘要\n- 列出新增/更新文件：\n  - `scripts/sync-llm-skills.ts`\n  - `package.json`\n  - `.gitignore`\n- 说明 `is-ci` 依赖处理结果（新增或已存在）。\n- 说明 postinstall 合并结果（新建、追加、或已存在跳过），并标注 CI guard 是否生效。\n- 说明 `.gitignore` 的 `/.claude/skills` 忽略规则处理结果（新增或已存在）。\n- 附上验证命令与执行结果。",
+        "heading": "Execution Flow",
+        "level": 2
+      },
+      {
+        "raw": "- 自动落地脚本：`scripts/bootstrap-sync-skills.mjs`\n- 同步脚本模板：`assets/templates/sync-llm-skills.ts`\n- 集成检查清单：`references/integration-checklist.md`",
+        "heading": "Resources",
+        "level": 2
+      },
+      {
+        "raw": "1. 仅在目标仓库根目录执行（必须可读写 `package.json`）。\n2. 保持幂等：重复执行不得重复注入命令或 postinstall 片段。\n3. 不覆盖已有 postinstall 逻辑，只做追加合并。\n4. 源目录不存在时必须失败并返回非零退出码。\n5. postinstall 去重必须做完整命令/完整脚本调用匹配，不能使用宽松子串匹配。\n6. 同步实现必须优先复制到临时目录，再切换目标目录，并在失败时尝试回滚。\n7. 若目标仓库缺少 `is-ci`，必须自动写入 `devDependencies.is-ci`，再注入 CI guard 命令。",
+        "heading": "Guardrails",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "code-inspector-init",
+    "sections": [
+      {
+        "raw": "在开发环境为前端项目接入 `code-inspector-plugin`，实现按组合键后点击 DOM 跳转到源码位置。优先给出最小改动、可复制、可回滚的迁移方案，默认使用插件原生开关策略：`needEnvInspector: true` + `.env.local` 中设置 `CODE_INSPECTOR=true`；但 Next.js `>=15.3` 主模板默认使用 `hotKeys: [\"altKey\"]` + `needEnvInspector: false`。",
+        "heading": "Overview",
+        "level": 2
+      },
+      {
+        "raw": "- 帮我接入 `code-inspector-plugin`\n- 帮我迁移 `codeInspectorPlugin` 到新项目\n- Next.js/Vite/Webpack 怎么配 code inspector\n- 点击页面元素跳不到 IDE\n- Alt+Shift 没反应 / 快捷键怎么改",
+        "heading": "Trigger Phrases",
+        "level": 2
+      },
+      {
+        "raw": "1. 识别框架与 bundler。\n- 从 `package.json`、配置文件名、构建命令确认是 Next.js、Vite、Webpack、Rspack、Rsbuild、Esbuild、Mako、Umi、Nuxt、Astro 中哪一种。\n\n2. 如果是 Next.js，先判断版本区间。\n- `<=14.x`：使用 webpack 插件接入。\n- `15.0.x ~ 15.2.x`：使用 `experimental.turbo.rules`。\n- `>=15.3.x`（包含 16）：使用 `turbopack.rules`。\n\n3. 选择开关策略。\n- 默认：`needEnvInspector: true`（推荐，迁移一致性最好）。\n- Next.js `>=15.3` 主模板特例：默认 `needEnvInspector: false`，并使用 `hotKeys: [\"altKey\"]` 做最小接入。\n- 用户明确要求项目自定义开关时，再补充 `ENABLE_CODE_INSPECTOR` 等外层条件。\n\n4. 判断是否需要高级选项。\n- 只有用户明确提出需求才调整 `hotKeys`、`hideConsole`、`openIn`、`launchType`、`include/exclude`、`mappings`、`pathType`、`skipSnippets`。",
+        "heading": "Decision Tree",
+        "level": 2
+      },
+      {
+        "raw": "1. 识别项目环境。\n- 确认框架、bundler、配置文件路径、是否 dev-only 配置。\n\n2. 安装依赖。\n- 给出单行命令：`pnpm add -D code-inspector-plugin`（如项目使用 npm/yarn，则给对应命令）。\n\n3. 注入配置。\n- 从 `references/bundler-recipes.md` 选择对应片段。\n- 配置中必须包含正确的 `bundler` 值。\n\n4. 设置 `.env.local`。\n- 仅当模板显式使用 `needEnvInspector: true` 时，添加 `CODE_INSPECTOR=true`。\n- 对 Next.js `>=15.3` 主模板（`hotKeys: [\"altKey\"]` + `needEnvInspector: false`）不强制配置 `.env.local`。\n\n5. 本地验证。\n- 启动 dev。\n- 在页面按默认组合键（多数模板为 Mac: `Option+Shift` / Windows: `Alt+Shift`；Next.js `>=15.3` 主模板为 `Option/Alt` 单键）后悬浮并点击 DOM。\n- 观察浏览器控制台提示和 IDE 跳转结果。\n\n6. 故障排查。\n- 出现 IDE 无法打开、快捷键无效、路径错误、端口冲突时，按 `references/troubleshooting.md` 分步排查。",
+        "heading": "Execution Workflow",
+        "level": 2
+      },
+      {
+        "raw": "- 需要框架配置代码片段时：读取 `references/bundler-recipes.md`。\n- 需要定制参数与风险评估时：读取 `references/options-cheatsheet.md`。\n- 需要排障步骤时：读取 `references/troubleshooting.md`。\n- 不要一次性加载全部 references，只按当前请求场景读取对应文件。",
+        "heading": "Reference Routing",
+        "level": 2
+      },
+      {
+        "raw": "输出必须严格包含以下四部分，且顺序固定：\n\n1. 改动点清单\n- 说明要改哪些文件、每个文件做什么。\n\n2. 可复制代码块\n- 给完整可用的配置片段，不给伪代码。\n- 代码块里保留英文 API 名与配置键。\n\n3. 验证命令\n- 提供可直接执行的单行命令。\n- 给出成功判定标准。\n\n4. 回滚说明\n- 说明如何移除插件配置和环境变量。",
+        "heading": "Output Contract",
+        "level": 2
+      },
+      {
+        "raw": "- 默认只在开发环境启用，不在生产构建开启 inspector。\n- 修改保持最小化，不顺带重构无关代码。\n- 不确定框架版本时，先读取 `package.json` 与 lockfile 再下结论。\n- 涉及 `node_modules` 源码映射时，优先使用 `mappings` 且给出风险说明。",
+        "heading": "Guardrails",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "commit",
+    "sections": [
+      {
+        "raw": "根据暂存的代码变更自动生成符合 Conventional Commits 规范的提交信息，并自动添加对应的 emoji 前缀。",
+        "heading": "Commit Message Generator",
+        "level": 1
+      },
+      {
+        "raw": "- 用户执行 `/commit` 命令\n- 用户请求生成提交信息\n- 用户需要帮助编写符合规范的 commit message",
+        "heading": "使用场景",
+        "level": 2
+      },
+      {
+        "raw": "执行 `git status` 查看当前暂存的文件变更。如果没有暂存的文件，提示用户先使用 `git add` 添加文件。",
+        "heading": "1. 检查暂存状态",
+        "level": 3
+      },
+      {
+        "raw": "执行 `git diff --cached` 获取暂存的代码差异，分析变更内容：\n\n- 识别变更的文件类型和位置\n- 理解变更的目的（新功能、修复、重构等）\n- 确定影响范围（scope）",
+        "heading": "2. 分析代码变更",
+        "level": 3
+      },
+      {
+        "raw": "根据分析结果生成符合规范的提交信息。\n\n**消息格式：**\n```\ntype(scope): subject\n```\n\n**允许的类型和对应 emoji：**\n\n| 类型 | Emoji | 说明 | 示例 |\n|------|-------|------|------|\n| feat | ✨ | 新功能 | `✨ feat: add user authentication` |\n| fix | 🐛 | Bug 修复 | `🐛 fix: resolve login timeout` |\n| docs | 📝 | 文档变更 | `📝 docs: update API documentation` |\n| style | 🎨 | 代码风格 | `🎨 style: format code with prettier` |\n| refactor | ♻️ | 代码重构 | `♻️ refactor: extract common utils` |\n| perf | ⚡️ | 性能优化 | `⚡️ perf: optimize database queries` |\n| test | ✅ | 测试相关 | `✅ test: add unit tests for auth` |\n| build | 🏗️ | 构建系统 | `🏗️ build: update webpack config` |\n| ci | 👷 | CI 配置 | `👷 ci: add GitHub Actions workflow` |\n| chore | 🔧 | 其他变更 | `🔧 chore: update dependencies` |",
+        "heading": "3. 生成提交信息",
+        "level": 3
+      },
+      {
+        "raw": "使用 HEREDOC 格式执行 git commit：\n\n```bash\ngit commit -m \"$(cat <<'EOF'\n✨ feat(auth): add user login feature\nEOF\n)\"\n```",
+        "heading": "4. 执行提交",
+        "level": 3
+      },
+      {
+        "raw": "- 格式：`emoji type(scope): subject`\n- Header 最大长度：250 字符\n- type 必须是允许的类型之一\n- scope 可选，表示影响范围\n- subject 使用祈使句，首字母小写，不加句号",
+        "heading": "Header 规则",
+        "level": 3
+      },
+      {
+        "raw": "- **feat**: 添加新功能或新特性\n- **fix**: 修复 bug 或问题\n- **docs**: 仅文档变更（README、注释等）\n- **style**: 不影响代码含义的变更（格式化、空格等）\n- **refactor**: 既不是新功能也不是修复的代码变更\n- **perf**: 提升性能的代码变更\n- **test**: 添加或修改测试\n- **build**: 影响构建系统或外部依赖的变更\n- **ci**: CI 配置文件和脚本的变更\n- **chore**: 其他不修改 src 或 test 文件的变更",
+        "heading": "类型选择指南",
+        "level": 3
+      },
+      {
+        "raw": "根据项目结构选择合适的 scope：\n\n- 按模块：`auth`、`api`、`ui`、`db`\n- 按功能：`login`、`payment`、`search`\n- 按目录：`components`、`hooks`、`utils`",
+        "heading": "Scope 建议",
+        "level": 3
+      },
+      {
+        "raw": "- 不要提交包含敏感信息的文件（.env、credentials 等）\n- 提交前确保代码通过 lint 和类型检查\n- 一次提交只做一件事，保持提交的原子性\n- 提交信息要准确反映变更内容，关注\"为什么\"而非\"做了什么\"",
+        "heading": "注意事项",
+        "level": 2
+      },
+      {
+        "raw": "详细的提交规范和项目配置，参考：\n- **`references/commit-convention.md`** - 完整的提交规范文档\n- **`references/commit-examples.md`** - 提交信息示例",
+        "heading": "参考资源",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "lingui-next-init",
+    "sections": [
+      {
+        "raw": "Initialize Lingui i18n in a Next.js App Router codebase using deterministic templates and a single scaffold script.",
+        "heading": "Lingui Next Init",
+        "level": 1
+      },
+      {
+        "raw": "Run the scaffold script with an absolute project path:\n\nSet `SKILL_ROOT` to your actual skill install location first:\n- Repository development: `.agents/skills/lingui-next-init`\n- Installed runtime location: `.claude/skills/lingui-next-init`\n\n```bash\npython3 \"${SKILL_ROOT}/scripts/scaffold_lingui_next.py\" \\\n  --project-root /abs/path/to/project \\\n  --mode app-only \\\n  --locales en,zh \\\n  --default-locale en \\\n  --source-locale en \\\n  --package-manager pnpm\n```\n\nDry-run first:\n\n```bash\npython3 \"${SKILL_ROOT}/scripts/scaffold_lingui_next.py\" \\\n  --project-root /abs/path/to/project \\\n  --mode shared-auto \\\n  --locales en,zh \\\n  --default-locale en \\\n  --source-locale en \\\n  --package-manager pnpm \\\n  --dry-run\n```\n\n`--package-manager` is restricted to: `pnpm`, `npm`, `yarn`, `bun`.\n\nOptional server-layout composition:\n\n```bash\npython3 \"${SKILL_ROOT}/scripts/scaffold_lingui_next.py\" \\\n  --project-root /abs/path/to/project \\\n  --mode app-only \\\n  --locales en,zh \\\n  --default-locale en \\\n  --source-locale en \\\n  --package-manager pnpm \\\n  --with-server-layouts \\\n  --server-layouts-package @adonis-kit/react-layouts \\\n  --server-layouts-version latest \\\n  --dry-run\n```\n\nWhen `--with-server-layouts` is enabled:\n- Render optional templates: `web/src/i18n/layout-factory.tsx` and `web/src/app/[lang]/(home)/layout.tsx`.\n- Merge `--server-layouts-package` and `--server-layouts-version` into `web/package.json` `dependencies` when missing.\n- Preserve the default `web/src/app/[lang]/layout.tsx` `initLingui` flow.\n- Keep server initialization explicit: call `initPageLingui(params)` in server layouts and server pages before using Lingui `t`/metadata.",
+        "heading": "Quick Start",
+        "level": 2
+      },
+      {
+        "raw": "Choose one mode:\n\n1. `app-only`\nCreate only app-side files under `web/**`. Never create `packages/i18n`.\n\n2. `shared-auto`\nDetect workspace and existing `packages/i18n`:\n- Workspace + missing `packages/i18n`: create shared package templates.\n- Existing `packages/i18n`: skip creating package files.\n- No workspace and no package: fallback to app-only behavior.\n\n3. `shared-force`\nAlways render shared package templates under `packages/i18n`.",
+        "heading": "Mode Decision",
+        "level": 2
+      },
+      {
+        "raw": "The script renders templates from:\n\n1. `assets/templates/app-router/web/**.tpl`\n2. `assets/templates/app-router/packages/i18n/**.tpl` (mode-dependent)\n3. `assets/templates/app-router/web/src/i18n/layout-factory.tsx.tpl` and `assets/templates/app-router/web/src/app/[lang]/(home)/layout.tsx.tpl` (only when `--with-server-layouts` is enabled)\n4. `assets/templates/pages-router/_reserved.tpl` (reserved for future extension, not scaffolded)\n\n`web/package.scripts.json.tpl` is merged into `web/package.json` incrementally:\n- Add missing `scripts`\n- Add missing `dependencies`\n- Add missing `devDependencies`\n- If `--with-server-layouts` is enabled, add missing `dependencies.<server-layouts-package>` with `<server-layouts-version>`\n- Never overwrite existing keys\n\nProject-root `.gitignore` is merged incrementally:\n- Add missing compiled-catalog ignore patterns:\n  - `web/src/locales/**/*.js`\n  - `web/src/locales/**/*.mjs`\n  - `web/locale/**/*.js`\n  - `web/locale/**/*.mjs`\n- Never remove existing rules",
+        "heading": "Generated Scope",
+        "level": 2
+      },
+      {
+        "raw": "After scaffolding a target project:\n\nFirst, merge the generated SWC snippet into your Next config:\n- Merge `web/next.swc-snippet.ts` into `web/next.config.ts`.\n- Ensure `experimental.swcPlugins` contains `[\"@lingui/swc-plugin\", {}]`.\n- Without this step, Lingui extraction/compile behavior may not match expectations.\n\n```bash\npnpm --filter @your/web run i18n:extract\npnpm --filter @your/web run i18n:compile\npnpm --filter @your/web run i18n:manifest\npnpm --filter @your/web run typecheck\n```\n\nUse `--fill-source` when placeholder translation is acceptable:\n\n```bash\npnpm --filter @your/web run i18n:translate -- --fill-source\n```\n\nDaily command execution and troubleshooting are maintained in `lingui-workflow`.\nUse `skills/lingui-workflow` for the day-to-day extract/translate/compile workflow.",
+        "heading": "Validation Workflow",
+        "level": 2
+      },
+      {
+        "raw": "Use this checklist to avoid common maintenance mistakes when updating Lingui skills:\n\n1. Handoff timing:\nAfter scaffold/setup is done, hand over immediately to `skills/lingui-workflow` for day-to-day command guidance.\n\n2. Documentation migration order:\nMigrate content to the target new doc first, then delete old duplicate docs, and run finalize pipeline last.\n\n3. `skills:init` side effect:\n`pnpm skills:init` creates `agents/openai.yaml` automatically.\nIf this file is not needed for the new public skill, remove it before finalize.\n\n4. Large workspace safety:\nRun `git status` before `skills:finalize` so `AD`/`MM` states are understood and not misinterpreted as current-task failures.",
+        "heading": "Experience Notes",
+        "level": 2
+      },
+      {
+        "raw": "1. Manifest empty:\nConfirm `web/src/locales/**` contains compiled `.mjs` files, then rerun `i18n:manifest`.\n\n2. Locale route mismatch:\nVerify `web/src/proxy.ts` default-locale rewrite and non-default prefix redirect logic.\n\n3. No translated text at runtime:\nCheck `web/src/i18n/catalog-manifest.ts` and `web/src/i18n/appRouterI18n.ts` loader paths.\n\n4. Error: `Attempted to call a translation function without setting a locale`:\nConfirm `web/src/i18n/initLingui.ts` activates locale before `setI18n`.\nThen ensure both server `layout.tsx` and server `page.tsx` call `initPageLingui(params)` (or equivalent) before `t`/metadata usage.\nPrefer `useLingui`/`Trans` in shared server components.\n\n5. `shared-auto` with existing `packages/i18n`:\n`shared-auto` will reuse the existing shared package and skip rendering `packages/i18n/**` templates.\nEnsure your package exports `<i18n-package-name>/next-config` and `<i18n-package-name>/lingui-config`.\nIf not, use `--mode shared-force` to scaffold shared templates or switch to `--mode app-only`.\n\n6. `withServerLayouts` setup issues:\nConfirm `--with-server-layouts` is enabled and your package exports `<server-layouts-package>/server`.\nIf you use a custom package, pass `--server-layouts-package` explicitly.",
+        "heading": "Troubleshooting",
+        "level": 2
+      },
+      {
+        "raw": "Read these files only when needed:\n\n1. `references/workflow-app-router.md`\n2. `references/official-notes.md`\n3. `references/pages-router-roadmap.md`\n4. Daily workflow skill: `skills/lingui-workflow`",
+        "heading": "References",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "lingui-workflow",
+    "sections": [
+      {
+        "raw": "当此 skill 被激活时，**先输出以下命令速查表**，再回应用户问题：\n\n```\n| 命令              | 作用摘要                                       | 可用参数                                          |\n| ----------------- | ---------------------------------------------- | ------------------------------------------------- |\n| i18n:extract      | 提取源码文案到 po                              | —                                                 |\n| i18n:translate    | 统计缺失翻译                                   | --fill-source, --strict                           |\n| i18n:check        | 严格翻译检查，缺失即报错退出                   | —                                                 |\n| i18n:compile      | 编译 po → mjs，自动执行 i18n:manifest          | —                                                 |\n| i18n:manifest     | 基于已有 mjs 生成 catalog-manifest.ts           | —                                                 |\n| i18n:sync         | 当前仅等价 i18n:extract                        | —                                                 |\n| i18n:bootstrap    | 一次执行 extract + compile(+manifest)           | —                                                 |\n| i18n              | 组合入口；默认 extract + translate              | --compile, --fill-source, --no-translate, --strict |\n```",
+        "heading": "Agent Behavior",
+        "level": 2
+      },
+      {
+        "raw": "这个 skill 面向“已经完成 Lingui 接入后的日常使用”，帮助你稳定执行 i18n 命令链路并快速排障。  \n如果你需要的是“初始化/脚手架接入”，请使用 `lingui-next-init`，不要混用职责。",
+        "heading": "Overview",
+        "level": 2
+      },
+      {
+        "raw": "Before using this skill, confirm your project already has Lingui runtime setup:\n\n1. `scripts/i18n/*` exists (at least `index.ts`, `cli.ts`, `manifest.ts`).\n2. Next.js SWC plugin contains `[\"@lingui/swc-plugin\", {}]`.\n3. `src/locales/**` catalogs and `src/i18n/catalog-manifest.ts` flow are already wired.",
+        "heading": "Prerequisites",
+        "level": 2
+      },
+      {
+        "raw": "推荐最短日常流程（新增/修改文案）：\n\n```bash\npnpm --filter @your/web run i18n:extract\npnpm --filter @your/web run i18n:translate\npnpm --filter @your/web run i18n:compile\n```\n\n高频补充命令：\n- 首次初始化：`pnpm --filter @your/web run i18n:bootstrap`\n- 仅重建 manifest：`pnpm --filter @your/web run i18n:manifest`\n- 一条命令串联：`pnpm --filter @your/web run i18n -- --compile`\n- CI / 发布前翻译检查：`pnpm --filter @your/web run i18n:check`",
+        "heading": "Quick Start",
+        "level": 2
+      },
+      {
+        "raw": "| 命令 | 作用摘要 | 可用参数 |\n| --- | --- | --- |\n| `i18n:extract` | 提取源码文案到 `po` | — |\n| `i18n:translate` | 统计缺失翻译 | `--fill-source`, `--strict` |\n| `i18n:check` | 严格翻译检查，缺失即报错退出 | — |\n| `i18n:compile` | 编译 `po` 到 `mjs`，并自动执行 `i18n:manifest` | — |\n| `i18n:manifest` | 基于现有 `mjs` 生成 `catalog-manifest.ts` | — |\n| `i18n:sync` | 当前仅等价 `i18n:extract` | — |\n| `i18n:bootstrap` | 一次执行 `extract + compile(+manifest)` | — |\n| `i18n` | 组合入口；默认 `extract + translate`，加 `--compile` 才会编译 | `--compile`, `--fill-source`, `--no-translate`, `--strict` |\n\n详细输入/输出/副作用请看 `references/i18n-commands.md`。",
+        "heading": "Command Matrix",
+        "level": 2
+      },
+      {
+        "raw": "When command semantics change, docs must be updated in the same change set.\n\nTrigger files:\n1. `apps/web/scripts/i18n/index.ts`\n2. `apps/web/scripts/i18n/manifest.ts`\n3. `apps/web/scripts/i18n/cli.ts`\n4. `packages/i18n/src/lingui-config.ts`\n\nRequired doc sync:\n1. `references/i18n-commands.md`\n2. `references/workflow-daily.md` (if execution sequence changed)\n3. `references/maintenance-playbook.md` (if maintenance workflow changed)",
+        "heading": "Doc Drift Guard",
+        "level": 2
+      },
+      {
+        "raw": "1. `i18n` 默认会 compile。  \n实际：默认不会，必须显式传 `--compile`。\n\n2. `i18n:sync` 是全量同步命令。  \n实际：当前实现仅执行 extract。\n\n3. `i18n:manifest` 可替代 `i18n:compile`。  \n实际：manifest 依赖已有 `.mjs`，不会自行生成编译产物。\n\n4. 只在 `[lang]/layout.tsx` 做初始化就够了。  \n实际：在 Next App Router / RSC 下，服务端 `page.tsx` 也应在使用 `t` 或生成 metadata 前初始化 locale。",
+        "heading": "Common Misconceptions",
+        "level": 2
+      },
+      {
+        "raw": "遇到以下错误时按顺序检查：\n\n`Lingui: Attempted to call a translation function without setting a locale`\n\n1. `initLingui(locale)` 是否执行了 `i18n.activate(locale)`。\n2. 服务端 `layout.tsx` 与服务端 `page.tsx` 是否都调用了 `initPageLingui(params)`（或等价逻辑）。\n3. 共享服务端组件中的非 JSX 字符串是否优先使用 `useLingui`/`Trans`，避免依赖全局 `@lingui/core/macro` `t` 的初始化时序。\n4. `i18n:compile` 后的 manifest 是否包含对应 entry + locale loader。",
+        "heading": "Runtime Locale Error Checklist",
+        "level": 2
+      },
+      {
+        "raw": "1. 新增/修改文案后，已执行 `extract -> translate -> compile`。\n2. `translate` 输出缺失项为预期状态（已补翻或接受占位）。\n3. 构建前确认已执行 compile（或 `build` 脚本含 compile gate）。\n4. `.gitignore` 已忽略编译产物 `web/src/locales/**/*.js|*.mjs`（及兼容路径）。",
+        "heading": "Daily Checklist",
+        "level": 2
+      },
+      {
+        "raw": "1. `references/i18n-commands.md`\n2. `references/workflow-daily.md`\n3. `references/maintenance-playbook.md`\n4. Runtime implementation check: `apps/web/scripts/i18n/index.ts`\n5. Runtime implementation check: `apps/web/scripts/i18n/manifest.ts`",
+        "heading": "References",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "ruler-rules-init",
+    "sections": [
+      {
+        "raw": "Migrate a repository to a reusable Ruler rules structure with a safe audit/apply workflow.\nKeep default templates in English and avoid overwriting existing repository-specific content unless explicitly forced.\nSupport different project types through preset-based template selection.",
+        "heading": "Overview",
+        "level": 2
+      },
+      {
+        "raw": "Collect these inputs before applying changes:\n\n- Target repository root path.\n- Whether to run in `audit` or `apply` mode.\n- Template preset: `auto`, `base`, `nextjs`, `monorepo`, or `node-lib` (default: `auto`).\n- Whether to include optional `skills:sync:claude` integration.\n- Whether overwrite is allowed for differing files (`--force`).",
+        "heading": "Inputs",
+        "level": 2
+      },
+      {
+        "raw": "Presets control the content of project-specific template files (`10-project-context.md`, `20-dev-commands.md`, `30-coding-conventions.md`). Universal files (`ruler.toml`, `AGENTS.md`, `00-core-principles.md`) are always sourced from the base directory.\n\n| Preset | Auto-detect Signal | Use Case |\n|--------|-------------------|----------|\n| `base` | Fallback | Any project, minimal with placeholders |\n| `nextjs` | `next.config.*` exists | Next.js App Router projects |\n| `monorepo` | `turbo.json` or `pnpm-workspace.yaml` exists | Turborepo / pnpm workspace |\n| `node-lib` | `package.json` has `main` or `exports`, no `next.config.*` | Node.js libraries |",
+        "heading": "Presets",
+        "level": 2
+      },
+      {
+        "raw": "1. Explicit `--preset <name>` flag (highest priority).\n2. Auto-detection from target repo files (when `--preset auto` or omitted).\n3. Falls back to `base` if no signals match.",
+        "heading": "Preset Selection Priority",
+        "level": 3
+      },
+      {
+        "raw": "1. Run the bootstrap script in `audit` mode.\n2. Review missing files, differences, and manual actions.\n3. Run in `apply` mode to create missing files and safe defaults.\n4. Re-run `apply` to confirm idempotency.\n5. Run `ruler:apply` in the target repo to generate root rule outputs.",
+        "heading": "Workflow",
+        "level": 2
+      },
+      {
+        "raw": "1. Need only Ruler integration:\nUse default behavior (do not pass `--with-optional-sync`).\n\n2. Need optional Claude skills sync as well:\nPass `--with-optional-sync` to include `skills:sync:claude` suggestions.\n\n3. Targeting a specific project type:\nPass `--preset nextjs`, `--preset monorepo`, or `--preset node-lib`.\nOr let auto-detection choose the right preset.\n\n4. Existing files differ from templates:\n- Keep defaults safe: do not override without `--force`.\n- Use `--force` only when intentional template replacement is required.",
+        "heading": "Decision Tree",
+        "level": 2
+      },
+      {
+        "raw": "Use these commands from this skill directory:\n\n```bash",
+        "heading": "Commands",
+        "level": 2
+      },
+      {
+        "raw": "node ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode audit",
+        "heading": "Audit (default preset auto-detection)",
+        "level": 1
+      },
+      {
+        "raw": "node ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply",
+        "heading": "Apply with auto-detected preset",
+        "level": 1
+      },
+      {
+        "raw": "node ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply --preset nextjs\nnode ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply --preset monorepo\nnode ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply --preset node-lib\nnode ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply --preset base",
+        "heading": "Apply with explicit preset",
+        "level": 1
+      },
+      {
+        "raw": "node ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply --preset nextjs --with-optional-sync\nnode ./scripts/bootstrap-ruler.mjs --target /path/to/repo --mode apply --force\n```",
+        "heading": "With optional sync and force",
+        "level": 1
+      },
+      {
+        "raw": "After applying, verify:\n\n1. `.ruler/ruler.toml` exists and defines `codex` + `claude` outputs.\n2. Required `.ruler/*.md` templates exist.\n3. `.gitignore` contains the Ruler generated-files block.\n4. `package.json` contains `ruler:apply`.\n5. If `is-ci` style guard is used, `is-ci` is installed (`pnpm add -D is-ci`).\n6. `postinstall` follows the CI-skip recommendation or an explicit local alternative (preserve existing setup commands by chaining with `&& (...)`).\n7. Running `ruler:apply` succeeds in the target repository.",
+        "heading": "Validation Checklist",
+        "level": 2
+      },
+      {
+        "raw": "- Script:\n`scripts/bootstrap-ruler.mjs`\n\n- References:\n`references/migration-playbook.md`\n`references/applyto-patterns.md`\n\n- Templates:\n`assets/templates/base/.ruler/` (universal + fallback)\n`assets/templates/presets/nextjs/.ruler/` (Next.js overlay)\n`assets/templates/presets/monorepo/.ruler/` (monorepo overlay)\n`assets/templates/presets/node-lib/.ruler/` (Node.js library overlay)",
+        "heading": "Resources",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "staged-changes-review",
+    "sections": [
+      {
+        "raw": "This skill provides comprehensive analysis of Git staged changes to identify risks, errors, and potential issues before committing code.",
+        "heading": "Staged Changes Review",
+        "level": 1
+      },
+      {
+        "raw": "**重要：本技能必须使用中文输出所有分析结果和建议。**\n\n- **语言 (Language)**: 始终使用中文回复\n- **编码 (Encoding)**: 使用 UTF-8 编码\n- **风格 (Style)**: 专业、详细、实用，提供具体的代码示例和修改建议",
+        "heading": "输出要求 / Output Requirements",
+        "level": 2
+      },
+      {
+        "raw": "When invoked, follow this systematic review process:",
+        "heading": "Core Workflow",
+        "level": 2
+      },
+      {
+        "raw": "```bash",
+        "heading": "Step 1: Retrieve Staged Changes",
+        "level": 3
+      },
+      {
+        "raw": "git diff --cached",
+        "heading": "Get the diff of staged changes",
+        "level": 1
+      },
+      {
+        "raw": "git status --short | grep \"^[MARC]\"\n```",
+        "heading": "Get list of staged files",
+        "level": 1
+      },
+      {
+        "raw": "Analyze the staged changes from four critical perspectives:\n\n#### 2.1 Syntax and Compilation Errors\n\n- Missing imports or undefined references\n- Type errors and incorrect type annotations\n- Syntax errors (missing semicolons, brackets, quotes)\n- Invalid API usage or method signatures\n- Malformed JSON/YAML/configuration files\n\n#### 2.2 Logic and Runtime Errors\n\n- Null pointer / undefined access risks\n- Off-by-one errors in loops and array access\n- Incorrect error handling (missing try-catch, unhandled promises)\n- Memory leaks (unclosed resources, event listeners)\n- Race conditions in async code\n\n#### 2.3 Breaking Changes and Side Effects\n\n- API signature changes affecting consumers\n- Database schema modifications\n- Environment variable changes\n- Dependency version updates with breaking changes\n- Removed or renamed public functions/classes\n\nWhen potential breaking changes are detected:\n```bash",
+        "heading": "Step 2: Multi-Perspective Analysis",
+        "level": 3
+      },
+      {
+        "raw": "git grep -n \"functionName\" -- \"*.js\" \"*.ts\"",
+        "heading": "Search for usages of modified functions/classes",
+        "level": 1
+      },
+      {
+        "raw": "find . -name \"*migration*\" -mtime -1",
+        "heading": "Check if migrations are included for schema changes",
+        "level": 1
+      },
+      {
+        "raw": "git diff --cached --name-only | grep test\n```\n\n#### 2.4 Security Vulnerabilities\n\n- Hardcoded credentials, API keys, or secrets\n- SQL injection vulnerabilities\n- XSS (Cross-Site Scripting) risks\n- Insecure data handling (unencrypted PII)\n- Authentication/authorization bypasses",
+        "heading": "Review related test files",
+        "level": 1
+      },
+      {
+        "raw": "When issues are found, examine related code:\n\n```bash",
+        "heading": "Step 3: Contextual Code Inspection",
+        "level": 3
+      },
+      {
+        "raw": "git show HEAD:<filename>",
+        "heading": "View full file context",
+        "level": 1
+      },
+      {
+        "raw": "git grep -n \"relatedPattern\" -- \"*.ext\"\n```",
+        "heading": "Search related code patterns",
+        "level": 1
+      },
+      {
+        "raw": "| Level | Score | Examples |\n|-------|-------|----------|\n| HIGH | 90-100 | Syntax errors, type mismatches, clear security issues |\n| MEDIUM | 60-89 | Potential logic errors, suspicious patterns |\n| LOW | 20-59 | Code smells, style concerns |",
+        "heading": "Step 4: Confidence Scoring",
+        "level": 3
+      },
+      {
+        "raw": "Present findings in this format:\n\n```markdown",
+        "heading": "Step 5: Generate Review Report",
+        "level": 3
+      },
+      {
+        "raw": "- **Files Changed**: <count>\n- **High Risk Issues**: <count>\n- **Medium Risk Issues**: <count>\n- **Security Concerns**: <count>",
+        "heading": "Summary",
+        "level": 3
+      },
+      {
+        "raw": "#### 1. [Category] Issue Title\n**File**: `path/to/file.ext:line`\n**Severity**: CRITICAL | HIGH | MEDIUM\n**Confidence**: <score>/100\n\n**Problem**: [Description]\n**Impact**: [What happens if committed]\n**Recommendation**: [Specific fix]",
+        "heading": "Critical Issues (Confidence >= 80)",
+        "level": 3
+      },
+      {
+        "raw": "| File | Status | Issues | Risk Level |\n|------|--------|--------|-----------|\n| path/to/file1 | Clean | 0 | Low |\n| path/to/file2 | Warning | 2 | Medium |\n| path/to/file3 | Critical | 1 | High |\n```",
+        "heading": "Files Review Summary",
+        "level": 3
+      },
+      {
+        "raw": "| Perspective | Key Checks |\n|-------------|------------|\n| Syntax | Imports, types, brackets, API usage |\n| Logic | Null access, loops, error handling, async |\n| Breaking | API changes, schema, dependencies |\n| Security | Secrets, injection, XSS, auth |",
+        "heading": "Quick Reference",
+        "level": 2
+      },
+      {
+        "raw": "For language-specific patterns and edge cases, see:\n- `references/language-patterns.md` - Language-specific validation rules\n- `references/edge-cases.md` - Special scenarios and optimizations",
+        "heading": "Additional Resources",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "staged-review-validator",
+    "sections": [
+      {
+        "raw": "用于对已有审查报告做二次验证，不负责重新发起完整扫描。",
+        "heading": "Staged Review Validator",
+        "level": 1
+      },
+      {
+        "raw": "- 用户已经有一份 `staged-changes-review` 结果，想确认每条问题是否真实成立\n- 用户问“这个问题到底要不要改”\n- 用户希望获得“逐条裁决 + 证据 + 修改建议”",
+        "heading": "何时使用",
+        "level": 2
+      },
+      {
+        "raw": "- 用户提供一段 `staged-changes-review` 文本（至少包含问题描述）",
+        "heading": "必需输入",
+        "level": 3
+      },
+      {
+        "raw": "- 文件路径\n- 行号\n- 风险级别\n- 置信度\n- 原始建议",
+        "heading": "推荐输入",
+        "level": 3
+      },
+      {
+        "raw": "如果用户没有粘贴审查结果：\n\n1. 明确提示“请先粘贴 staged-changes-review 结果”\n2. 提供一个最小输入模板（见 `references/output-template.md`）\n3. 不自动改为扫描 `git diff --cached`",
+        "heading": "缺失输入处理",
+        "level": 3
+      },
+      {
+        "raw": "从用户提供的报告提取每条问题：\n\n- 标题\n- 文件与行号\n- 原风险级别\n- 原置信度\n- 原建议",
+        "heading": "1. 解析问题清单",
+        "level": 3
+      },
+      {
+        "raw": "对每条问题进行核验：\n\n- 文件/行号是否存在\n- 代码上下文是否匹配问题描述\n- 该问题是否已经在当前变更中修复\n- 是否存在上下文导致“看似问题但实际合理”\n\n可使用但不限于以下命令：\n\n```bash\ngit diff --cached\nrg -n \"关键符号\" <path>\nsed -n '<start>,<end>p' <path>\ngit show HEAD:<path>\n```",
+        "heading": "2. 逐条证据核验",
+        "level": 3
+      },
+      {
+        "raw": "每条问题只能输出以下三种之一：\n\n- `成立`：证据直接支持问题描述\n- `不成立`：证据与描述冲突，或问题已修复\n- `待确认`：证据不足（路径/行号缺失、上下文不完整等）",
+        "heading": "3. 给出裁决",
+        "level": 3
+      },
+      {
+        "raw": "- `成立` 且风险为中/高：`需要修改`\n- `成立` 且风险低：`建议修改`\n- `不成立`：`不需要修改`\n- `待确认`：`暂不修改，先补充信息`",
+        "heading": "4. 推导“是否需要修改”",
+        "level": 3
+      },
+      {
+        "raw": "先给总览，再给逐条裁决。",
+        "heading": "输出要求（固定）",
+        "level": 2
+      },
+      {
+        "raw": "- 问题总数\n- 成立数\n- 不成立数\n- 待确认数\n- 建议修改数",
+        "heading": "总览",
+        "level": 3
+      },
+      {
+        "raw": "- 问题标题\n- 文件位置\n- 风险级别\n- 置信度\n- 裁决（成立/不成立/待确认）\n- 是否需要修改（是/否/待补充）\n- 证据（命令结果或代码定位）\n- 最小改动建议\n\n结尾给出编号式“可执行下一步”。",
+        "heading": "逐条裁决块（每条必含）",
+        "level": 3
+      },
+      {
+        "raw": "- `staged-changes-review`：发现候选问题\n- `staged-review-validator`：验证候选问题是否真实成立\n\n串联时，后者不重复完整扫描逻辑，重点做证据核验与裁决。",
+        "heading": "与 staged-changes-review 的关系",
+        "level": 2
+      },
+      {
+        "raw": "- `references/verification-rubric.md`：裁决标准、证据优先级、置信度映射\n- `references/output-template.md`：固定输出模板与示例",
+        "heading": "参考文档",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "tailwindcss-next-init",
+    "sections": [
+      {
+        "raw": "用本 skill 为目标仓库生成 Tailwind v4 初始化骨架，并给出可复制的依赖安装命令、布局导入检查结果、`@source` 与 `@reference` 使用建议。\n优先运行脚本完成标准化输出，避免手工遗漏。",
+        "heading": "概览",
+        "level": 2
+      },
+      {
+        "raw": "1. 识别目标项目结构。\n- 检查 `<project-root>/package.json` 是否存在。\n- 检查 `src/app/layout.tsx` 或 `app/layout.tsx` 是否存在。\n- 检查 `src/styles/` 与 `styles/` 目录状态。\n\n2. 先做 dry-run 预览。\n- 运行：\n```bash\npython3 scripts/init_tailwind_v4.py --project-root /abs/path/to/project --dry-run\n```\n- 先确认将创建/覆盖的文件，再决定是否执行真实写入。\n\n3. 执行初始化写入。\n- 默认最小模板：\n```bash\npython3 scripts/init_tailwind_v4.py --project-root /abs/path/to/project\n```\n- 贴近本仓库模板：\n```bash\npython3 scripts/init_tailwind_v4.py --project-root /abs/path/to/project --preset project-like\n```\n- 已有文件需覆盖时显式加 `--force`。\n\n4. 处理依赖安装。\n- 按脚本输出的包管理器命令安装依赖（脚本只生成命令，不直接执行安装）。\n- 默认图标策略是 `--icons all`，安装 `lucide/mdi/tabler` 三套图标集。\n\n5. 检查导入与扫描边界。\n- 若脚本提示缺少全局样式导入，在目标 `layout.tsx` 增加：\n```ts\nimport \"@/styles/globals.css\";\nimport \"@/styles/custom.css\";\n```\n- 若类名来自 `node_modules` 或扫描盲区，按提示在 `tailwind-core.css` 增加 `@source`。\n\n6. 进行项目验证。\n- 至少执行一次构建链路检查（如 `pnpm typecheck`、`pnpm dev`）。\n- 确认页面样式生效、Iconify 图标类可渲染。",
+        "heading": "标准流程",
+        "level": 2
+      },
+      {
+        "raw": "`scripts/init_tailwind_v4.py` 支持以下参数：\n- `--project-root <path>`：目标项目根目录（必填）\n- `--preset minimal|project-like`：模板风格，默认 `minimal`\n- `--icons all|lucide|none`：图标策略，默认 `all`\n- `--package-manager auto|pnpm|npm|yarn|bun`：包管理器，默认 `auto`\n- `--dry-run`：仅预览，不写文件\n- `--force`：覆盖已存在文件",
+        "heading": "脚本参数契约",
+        "level": 2
+      },
+      {
+        "raw": "- `references/repo-tailwind-audit.md`\n  - 记录当前仓库 Tailwind 链路与历史演进，供“项目同款”策略参考。\n- `references/tailwind-v4-best-practices.md`\n  - 记录 Tailwind v4 / Next.js / Iconify 的最佳实践与官方链接。\n- `assets/templates/minimal/*`\n  - 通用最小模板，适合跨项目快速落地。模板源文件使用 `.tpl` 后缀。\n- `assets/templates/project-like/*`\n  - 贴近本仓库风格，包含 safe-area、reduced-motion、theme token bridge。模板源文件使用 `.tpl` 后缀。\n  - `project-like` 模板中的 `@layer ... antd ...` 为仓库同款特化项；非 Ant Design 项目可按需移除该 layer。\n\n模板后缀约定：\n- 模板源：`*.tpl`\n- 目标产物：`src/styles/*.css` 或 `styles/*.css`（脚本自动判定）\n- `init_tailwind_v4.py` 严格读取 `.tpl`，不会回退读取 `.css` 模板。",
+        "heading": "资源说明",
+        "level": 2
+      },
+      {
+        "raw": "执行本 skill 时，始终输出：\n1. 目标项目识别结果（layout、styles、package manager）\n2. 将写入/已写入文件列表\n3. 依赖安装命令（按所选包管理器）\n4. `@source` 与 `@reference` 的建议片段\n5. 验证清单（至少 3 条可执行检查项）",
+        "heading": "输出约束",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "weekly-report",
+    "sections": [
+      {
+        "raw": "自动读取 Git 提交记录，按项目分组生成结构化周报。",
+        "heading": "周报生成技能",
+        "level": 1
+      },
+      {
+        "raw": "- 自动读取 Git 提交记录\n- 支持多仓库汇总\n- 自动识别当前用户 (`git config user.name`)\n- 按项目分组，生成结构化周报\n- 过滤琐碎提交（typo、merge、format 等）\n- 支持添加补充说明\n- 周报统一存储在 `~/.weekly-reports/` 目录",
+        "heading": "功能特性",
+        "level": 2
+      },
+      {
+        "raw": "在任意 Git 项目目录中执行：\n\n```\n/weekly-report\n```",
+        "heading": "基本用法",
+        "level": 3
+      },
+      {
+        "raw": "1. **选择时间范围**\n   - 本周 (显示具体日期，如 2026-01-06 ~ 2026-01-12)\n   - 上周 (显示具体日期，如 2025-12-30 ~ 2026-01-05)\n   - 前半年 (显示具体日期，如 2025-07-13 ~ 2026-01-13)\n   - 自定义周报（输入周一日期）\n   - 自定义时间段（输入起始日期，截止到今天）\n\n   **重要**：选择时必须显示具体的日期范围，让用户确认是否正确\n\n2. **选择仓库**（如已配置多仓库）\n   - 显示已配置的仓库列表\n   - 可多选要包含的仓库\n   - 可添加当前目录为新仓库\n\n3. **添加补充内容**（可选）\n   - 输入额外的工作内容\n   - 如：参与会议、技术分享等\n\n4. **生成周报**\n   - 读取选定仓库的 Git 提交（必须覆盖所有分支/远端跟踪分支，避免漏提交）\n   - 按项目分组\n   - 过滤琐碎提交\n   - 生成 Markdown 格式周报\n   - 周报保存到 `~/.weekly-reports/{year}/week-{week}.md`\n   - 时间段报告保存到 `~/.weekly-reports/periods/{start_date}_to_{end_date}.md`",
+        "heading": "执行流程",
+        "level": 3
+      },
+      {
+        "raw": "为避免“只读取当前分支而漏掉其它分支（例如 `credits-lite*`）”的问题，读取提交时必须使用 `--all`（覆盖本地分支 + 远端跟踪分支），并确保截止时间包含结束日当天：\n\n```bash",
+        "heading": "Git 提交读取（重要）",
+        "level": 2
+      },
+      {
+        "raw": "AUTHOR_PATTERN=\"(your-name|your@email.com)\"  # 或仅用你的 name/email\ngit log --all \\\n  --author=\"$AUTHOR_PATTERN\" \\\n  --since=\"$START_DATE 00:00:00\" \\\n  --until=\"$END_DATE 23:59:59\" \\\n  --pretty=format:\"%H|%s|%an|%ad\" \\\n  --date=short\n```\n\n如果 `git branch -a` 看不到目标远端分支（说明本地没有对应的远端跟踪引用），需要先 `git fetch --all --prune`（在用户同意且网络可用时执行），否则无法读取到“本地不存在的分支”的提交。",
+        "heading": "- --author 建议用 name + email 联合匹配，避免不同身份写法漏掉本人提交",
+        "level": 1
+      },
+      {
+        "raw": "周报采用层级列表结构，**必须包含日期范围标题**，按项目分组：",
+        "heading": "输出格式",
+        "level": 2
+      },
+      {
+        "raw": "```markdown",
+        "heading": "周报格式",
+        "level": 3
+      },
+      {
+        "raw": "项目名称\n  - 主要工作点（10字以内）\n    - 补充说明（可选）\n  - 另一个工作点\n\n其他\n  - 不属于特定项目的工作内容\n```",
+        "heading": "周报 (2026-01-06 ~ 2026-01-12)",
+        "level": 1
+      },
+      {
+        "raw": "```markdown",
+        "heading": "时间段报告格式",
+        "level": 3
+      },
+      {
+        "raw": "项目名称\n  - 主要工作点（10字以内）\n    - 补充说明（可选）\n  - 另一个工作点\n\n其他\n  - 不属于特定项目的工作内容\n```",
+        "heading": "工作总结 (2025-07-13 ~ 2026-01-13)",
+        "level": 1
+      },
+      {
+        "raw": "```markdown",
+        "heading": "示例输出",
+        "level": 3
+      },
+      {
+        "raw": "project-frontend\n  - 构建工具升级改造\n  - 核心功能开发流程跟进\n    - 方案合理性优化\n  - 脚本国际化优化\n\nproject-backend\n  - 自定义类型化消息渲染\n  - 断线重连流程梳理\n\n其他\n  - 新版国际化方案讨论\n```",
+        "heading": "周报 (2026-01-06 ~ 2026-01-12)",
+        "level": 1
+      },
+      {
+        "raw": "配置文件位于 `~/.weekly-reports/config.json`：\n\n```json\n{\n  \"repos\": [\n    {\n      \"name\": \"project-a\",\n      \"path\": \"/home/user/projects/project-a\"\n    },\n    {\n      \"name\": \"project-b\",\n      \"path\": \"/home/user/projects/project-b\"\n    }\n  ],\n  \"default_author\": \"auto\",\n  \"output_format\": \"markdown\"\n}\n```",
+        "heading": "配置文件",
+        "level": 2
+      },
+      {
+        "raw": "- **事实导向**：只总结实际完成的工作\n- **简洁精炼**：主要工作点控制在 10 字以内\n- **重点突出**：过滤琐碎修改\n- **按项目分组**：相同项目的工作归类\n- **层级清晰**：用缩进表示从属关系",
+        "heading": "必须遵守",
+        "level": 3
+      },
+      {
+        "raw": "以下提交不会单独列出：\n- 纯格式化/代码风格调整\n- 简单的 typo 修复\n- 依赖版本小幅更新\n- Merge 提交\n- 重复性的相似提交\n\n详细格式规范见 [周报格式规范](references/WEEKLY_REPORT_FORMAT.md)",
+        "heading": "过滤规则",
+        "level": 3
+      }
+    ]
+  },
+  {
+    "slug": "zustand-store-scaffold",
+    "sections": [
+      {
+        "raw": "Quickly generate type-safe Zustand stores following your repository's established patterns.",
+        "heading": "Zustand Store Scaffold",
+        "level": 1
+      },
+      {
+        "raw": "```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern web \\\n  --name ToolList \\\n  --path web/src/pages/_components/ToolList/store\n```\n\nGenerates:\n- `index.ts` - Store definition with createStore + immer\n- `context.ts` - React Context and useContext hook\n- `provider.tsx` - Provider component with memo",
+        "heading": "Web Pattern (Component-level Store)",
+        "level": 3
+      },
+      {
+        "raw": "**Single Slice:**\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name CoreAgent \\\n  --path packages/ag-ui-view/src/core/helpers/isomorphic/store\n```\n\n**Multiple Slices (Interactive):**\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store",
+        "heading": "Core Pattern (Slice-based Store)",
+        "level": 3
+      },
+      {
+        "raw": "```\n\n**Multiple Slices (Direct):**\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store \\\n  --slices auth,user,ui\n```\n\nGenerates:\n- `index.ts` - Store factory with automatic slice composition\n- `slices/[name].ts` - Individual slice files with StateCreator typing",
+        "heading": "Example input: auth,user,ui",
+        "level": 1
+      },
+      {
+        "raw": "| Option | Required | Description | Example |\n|--------|----------|-------------|---------|\n| `--pattern` | ✅ | Store pattern (`web` or `core`) | `--pattern web` |\n| `--name` | ✅ | Store name in PascalCase | `--name ToolList` |\n| `--path` | ✅ | Target directory path | `--path src/store` |\n| `--slices` | ❌ | Comma-separated slice names (core pattern only) | `--slices auth,user,ui` |\n| `--force` | ❌ | Overwrite existing files | `--force` |\n\n**Note:** For `core` pattern without `--slices`, the script will interactively ask you to specify slice names.",
+        "heading": "Options",
+        "level": 2
+      },
+      {
+        "raw": "| Pattern | Use When | Location Pattern | Slices |\n|---------|----------|------------------|--------|\n| **web** | Component-level state with Provider | `web/src/pages/_components/**/store` | N/A |\n| **core** | Isomorphic/shared state with slices | `packages/**/store` | Single or multiple |",
+        "heading": "Choose the Right Pattern",
+        "level": 2
+      },
+      {
+        "raw": "Use multiple slices to organize complex state by feature domains:\n\n| Scenario | Recommended Slices |\n|----------|-------------------|\n| Authentication app | `auth, user, session` |\n| E-commerce store | `cart, products, user, ui` |\n| Dashboard | `data, filters, ui, settings` |\n| Chat application | `messages, contacts, ui, notifications` |",
+        "heading": "When to Use Multiple Slices (Core Pattern)",
+        "level": 3
+      },
+      {
+        "raw": "After scaffolding, customize the generated files:\n\n1. **Define State**: Update interface properties\n   ```ts\n   export interface ToolListStoreState {\n     toolList: Tool[]  // Add your state fields\n     isLoading: boolean\n   }\n   ```\n\n2. **Add Actions**: Implement state mutations\n   ```ts\n   export interface ToolListStoreActions {\n     setToolList: (list: Tool[]) => void  // Add your actions\n     addTool: (tool: Tool) => void\n   }\n   ```\n\n3. **Set Initial State**: Populate default values\n   ```ts\n   const initialState: ToolListStoreState = {\n     toolList: [],\n     isLoading: false,\n   }\n   ```\n\n4. **Implement Actions** (in the store creator):\n   ```ts\n   return createStore()(immer((set) => ({\n     ...initialState,\n     setToolList: (toolList) => set({ toolList }),\n     addTool: (tool) => set((state) => {\n       state.toolList.push(tool)\n     }),\n   })))\n   ```",
+        "heading": "Post-Generation Steps",
+        "level": 2
+      },
+      {
+        "raw": "```tsx\n// In your component file\nimport Provider from './store/provider'\nimport { useToolListContext } from './store/context'\n\nfunction ToolListPage() {\n  return (\n    <Provider initialProp=\"value\">\n      <ToolListContent />\n    </Provider>\n  )\n}\n\nfunction ToolListContent() {\n  const toolList = useToolListContext(s => s.toolList)\n  const setToolList = useToolListContext(s => s.setToolList)\n  // ...\n}\n```",
+        "heading": "Web Store Usage",
+        "level": 3
+      },
+      {
+        "raw": "```ts\n// Create store instance\nimport { createCoreAgentStore } from './store'\n\nconst store = createCoreAgentStore({\n  initialState: { /* ... */ }\n})\n\n// Use with vanilla JS or React\nconst state = store.getState()\nstore.setState({ /* ... */ })\n```",
+        "heading": "Core Store Usage",
+        "level": 3
+      },
+      {
+        "raw": "- See `references/store-patterns.md` for real repository examples\n- Check existing stores in your codebase for pattern consistency",
+        "heading": "References",
+        "level": 2
+      }
+    ]
+  }
+]

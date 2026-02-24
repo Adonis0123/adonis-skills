@@ -61,8 +61,8 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 
 If the repository owner changes:
 
-1. Set `SKILLS_REPO=<new-owner>/adonis-skills`
-2. Run `pnpm skills:index` again
+1. Set `NEXT_PUBLIC_SKILLS_REPO=<new-owner>/adonis-skills` (for example in `.env.local`)
+2. Restart `pnpm dev` (or redeploy) to apply the new value
 
 ## Command Cheatsheet (What Each Command Does)
 
@@ -81,7 +81,7 @@ The table below explains each script in `package.json`.
 | `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | Validates a single skill (especially frontmatter validity). Use as fast local check after editing one skill. |
 | `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | Generates `agents/openai.yaml` for a skill (OpenAI skill interface metadata). Use when interface metadata is needed. |
 | `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | Repository-wide skills validation. Required before commit/CI. |
-| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | Regenerates `apps/web/src/generated/skills-index.json`. Run after adding/updating skills so web data stays fresh. |
+| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | Regenerates `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json`. Run after adding/updating skills so web data stays fresh. |
 | `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | Installs skills from `skills/` into local `.agents/skills` (supports interactive selection, `--all`, `--skill`). Use for local agent testing. |
 | `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then syncs to `.claude/skills`. Use when testing in local Claude/Codex runtime too. |
 | `pnpm skills:sync:llm` | `node --experimental-strip-types ./scripts/sync-llm-skills.ts` | Atomically syncs `.agents/skills` to `.claude/skills`. Use when you only want to rerun sync. |

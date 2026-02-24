@@ -61,8 +61,8 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 
 如果仓库 owner 发生变化：
 
-1. 设置 `SKILLS_REPO=<new-owner>/adonis-skills`
-2. 重新运行 `pnpm skills:index`
+1. 设置 `NEXT_PUBLIC_SKILLS_REPO=<new-owner>/adonis-skills`（例如写入 `.env.local`）
+2. 重启 `pnpm dev`（或重新部署）使新值生效
 
 ## 命令速查（每条命令的作用）
 
@@ -81,7 +81,7 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 | `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | 校验单个 skill（尤其是 frontmatter 合法性）。用于修改单个 skill 后的快速自检。 |
 | `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要 interface 元数据时使用。 |
 | `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | 仓库级 skills 校验。提交前/CI 前必跑。 |
-| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | 重新生成 `apps/web/src/generated/skills-index.json`。新增或修改 skill 后用于刷新 Web 数据。 |
+| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | 重新生成 `apps/web/src/generated/skills-index-lite.json` 与 `apps/web/src/generated/skills-detail-index.json`。新增或修改 skill 后用于刷新 Web 数据。 |
 | `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | 将 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。用于本地 agent 联调。 |
 | `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再同步到 `.claude/skills`。用于同时验证本机 Claude/Codex 运行场景。 |
 | `pnpm skills:sync:llm` | `node --experimental-strip-types ./scripts/sync-llm-skills.ts` | 将 `.agents/skills` 原子同步到 `.claude/skills`。仅想重跑同步时使用。 |

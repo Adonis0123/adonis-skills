@@ -14,60 +14,94 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:51
+#~ msgid "common.no"
+#~ msgstr "no"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:116
+#~ msgid "skillDetail.package.title"
+#~ msgstr "Package Structure"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
+#~ msgid "skillDetail.package.references"
+#~ msgstr "references: {0}"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:123
+#~ msgid "skillDetail.package.src"
+#~ msgstr "src: {0}"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:47
+#~ msgid "common.yes"
+#~ msgstr "yes"
+
+#. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.author
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:91
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
 msgid "skillDetail.badge.author"
 msgstr "Author {0}"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:70
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:96
 msgid "skillDetail.cta.back"
 msgstr "Back to Skills"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:103
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:164
+msgid "skillDetail.complexity.basic"
+msgstr "Basic"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:159
+msgid "skillDetail.complexity.title"
+msgstr "Complexity"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:203
+msgid "skillDetail.docs.title"
+msgstr "Documentation"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:162
+msgid "skillDetail.complexity.fullToolkit"
+msgstr "Full Toolkit"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:145
 msgid "skillDetail.install.title"
 msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:51
-msgid "common.no"
-msgstr "no"
+#. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:136
+msgid "skillDetail.updatedAt"
+msgstr "Last updated: {0}"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:116
-msgid "skillDetail.package.title"
-msgstr "Package Structure"
-
-#. js-lingui-explicit-id
-#. placeholder {0}: skill.files.hasReferences ? yesText : noText
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
-msgid "skillDetail.package.references"
-msgstr "references: {0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:30
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:38
 msgid "skillDetail.meta.notFoundTitle"
 msgstr "Skill Not Found"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:130
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:185
 msgid "skillDetail.source.title"
 msgstr "Source"
 
 #. js-lingui-explicit-id
-#. placeholder {0}: skill.files.hasSrc ? yesText : noText
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:123
-msgid "skillDetail.package.src"
-msgstr "src: {0}"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:163
+msgid "skillDetail.complexity.standard"
+msgstr "Standard"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:170
+msgid "skillDetail.tools.title"
+msgstr "Tools Used"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.version
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:86
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:113
 msgid "skillDetail.badge.version"
 msgstr "Version {0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:47
-msgid "common.yes"
-msgstr "yes"

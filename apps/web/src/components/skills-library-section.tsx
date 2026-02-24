@@ -6,10 +6,10 @@ import { ClaySurface } from '@/components/ui'
 import { SkillCard } from '@/components/skill-card'
 import { VirtualGrid } from '@/components/virtual-grid/virtual-grid'
 import { useSkillSearch } from '@/components/virtual-grid/use-skill-search'
-import type { SkillIndexItem } from '@/lib/skills'
+import type { SkillListItem } from '@/lib/skills'
 
 interface SkillsLibrarySectionProps {
-  skills: SkillIndexItem[]
+  skills: SkillListItem[]
 }
 
 export function SkillsLibrarySection({ skills }: SkillsLibrarySectionProps) {

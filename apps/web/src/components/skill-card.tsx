@@ -10,10 +10,10 @@ import {
   ClayCardTitle,
 } from '@/components/ui'
 import { LocaleLink } from '@/i18n/locale-link'
-import { skillsRepo, type SkillIndexItem } from '@/lib/skills'
+import { skillsRepo, type SkillListItem } from '@/lib/skills'
 
 interface SkillCardProps {
-  skill: SkillIndexItem
+  skill: SkillListItem
 }
 
 const toneCycle = ['peach', 'cream', 'peach'] as const

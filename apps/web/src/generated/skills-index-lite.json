@@ -3,31 +3,31 @@
     "slug": "claude-skills-sync-init",
     "name": "claude-skills-sync-init",
     "description": "Bootstrap Claude skill-sync automation in any repository. Use when users ask to set up `.agents/skills` to `.claude/skills` syncing, generate `skills:sync:*` scripts, inject package.json scripts/postinstall hooks, or initialize this sync workflow in a new or existing project.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill claude-skills-sync-init",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T09:21:58.000Z"
   },
   {
     "slug": "code-inspector-init",
     "name": "code-inspector-init",
     "description": "Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill code-inspector-init",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "commit",
     "name": "commit",
     "description": "Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill commit",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "css-tailwind-styling",
@@ -43,31 +43,31 @@
     "slug": "lingui-next-init",
     "name": "lingui-next-init",
     "description": "Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill lingui-next-init",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T17:37:12.000Z"
   },
   {
     "slug": "lingui-workflow",
     "name": "lingui-workflow",
     "description": "Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill lingui-workflow",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T17:37:12.000Z"
   },
   {
     "slug": "ruler-rules-init",
     "name": "ruler-rules-init",
     "description": "Migrate and bootstrap Ruler-based AI rules across repositories with English-first templates, preset-based project detection, and safe, idempotent setup. Use when creating or standardizing `.ruler/*` files, generating `AGENTS.md`/`CLAUDE.md`, wiring `ruler:apply` into `package.json`, adding generated-file ignores in `.gitignore`, and designing `applyTo` scoping patterns such as `**` and `web/**`.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill ruler-rules-init",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T09:01:57.000Z"
   },
   {
     "slug": "staged-changes-review",
@@ -76,31 +76,37 @@
     "metadata": {
       "version": "2.1.0"
     },
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill staged-changes-review",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T03:26:48.000Z",
+    "allowedTools": [
+      "Bash",
+      "Read",
+      "Grep",
+      "Glob"
+    ]
   },
   {
     "slug": "staged-review-validator",
     "name": "staged-review-validator",
     "description": "Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill staged-review-validator",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "tailwindcss-next-init",
     "name": "tailwindcss-next-init",
     "description": "Initialize Tailwind CSS v4 and Iconify for Next.js App Router projects with script-driven templates. Use when you need a fast setup or migration with consistent style-entry conventions.",
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "weekly-report",
@@ -110,11 +116,17 @@
       "author": "adonis",
       "version": "1.0.0"
     },
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill weekly-report",
     "files": {
       "hasReferences": true,
       "hasSrc": true
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z",
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Bash(git:*)",
+      "Bash(python:*)"
+    ]
   },
   {
     "slug": "zustand-store-scaffold",
@@ -123,10 +135,10 @@
     "metadata": {
       "version": "0.1.0"
     },
-    "installCommand": "npx skills add adonis0123/adonis-skills --skill zustand-store-scaffold",
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T08:02:24.000Z"
   }
 ]
