@@ -76,6 +76,7 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 | `pnpm typecheck` | `turbo run typecheck` | 执行 TypeScript 类型检查。修改类型或 API 后使用。 |
 | `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | 交互式创建新 skill 的推荐入口。自动执行：初始化 -> 快速校验 -> 全量校验 -> 刷新索引。 |
 | `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | 对已创建/已复制到 `skills/*` 的 skill 执行标准收尾：`quick-validate` -> `validate` -> `index`。支持相对与绝对路径。 |
+| `pnpm skills:finalize:new [-- --dry-run]` | `node --experimental-strip-types ./scripts/finalize-new-skills.ts` | 自动模式：仅当 `skills/<slug>/SKILL.md` 处于新增状态（`A` 或 `??`）时识别为新 skill，逐个执行 finalize，并自动暂存相关文件（`skills/<slug>` 与已变更的 skills 索引）。若未发现新增 skill，会自动回退到 `skills:new` 创建后再重扫。 |
 | `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | 仅初始化 skill 目录与模板内容（手动模式）。当你不想走全自动流程时使用。 |
 | `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | 校验单个 skill（尤其是 frontmatter 合法性）。用于修改单个 skill 后的快速自检。 |
 | `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要 interface 元数据时使用。 |
@@ -89,10 +90,23 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 
 补充：
 
+- 默认直达流程（不传路径）：`skills:finalize:new`
 - 新增 skill 的常用顺序：`skills:new` -> `skills:validate` -> `skills:index`
 - 手动模式常用顺序：`skills:init`（或手工复制）-> `skills:finalize -- <skill-path>`
 
 ## 新增 Skill 标准流程（SOP）
+
+自动模式（当你已在 `skills/*` 下新增/复制 skill 时推荐）：
+
+```bash
+pnpm skills:finalize:new
+```
+
+仅预览将执行内容（dry-run）：
+
+```bash
+pnpm skills:finalize:new -- --dry-run
+```
 
 推荐快速路径：
 

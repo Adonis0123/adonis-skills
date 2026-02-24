@@ -76,6 +76,7 @@ The table below explains each script in `package.json`.
 | `pnpm typecheck` | `turbo run typecheck` | Runs TypeScript type checks. Use after type/API changes. |
 | `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | Interactive entrypoint to create a new skill. Automatically does: init -> quick validate -> full validate -> index refresh. |
 | `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | Standard finalize flow for an existing/copied skill under `skills/*`: `quick-validate` -> `validate` -> `index`. Supports relative and absolute paths. |
+| `pnpm skills:finalize:new [-- --dry-run]` | `node --experimental-strip-types ./scripts/finalize-new-skills.ts` | Auto mode: detects newly added skills only when `skills/<slug>/SKILL.md` is `A` or `??`, runs finalize per slug, then stages related files (`skills/<slug>` and changed skills index). If nothing new is found, it falls back to `skills:new` and rescans. |
 | `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | Initializes only skill directory/template content (manual mode). Use when you do not want the full automated flow. |
 | `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | Validates a single skill (especially frontmatter validity). Use as fast local check after editing one skill. |
 | `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | Generates `agents/openai.yaml` for a skill (OpenAI skill interface metadata). Use when interface metadata is needed. |
@@ -89,10 +90,23 @@ The table below explains each script in `package.json`.
 
 Notes:
 
+- Default direct flow (no path): `skills:finalize:new`
 - Most common flow for new skills: `skills:new` -> `skills:validate` -> `skills:index`
 - Most common manual flow: `skills:init` (or copy manually) -> `skills:finalize -- <skill-path>`
 
 ## New Skill Standard Flow (SOP)
+
+Automatic mode (recommended when you already added/copied a skill under `skills/*`):
+
+```bash
+pnpm skills:finalize:new
+```
+
+Dry-run preview:
+
+```bash
+pnpm skills:finalize:new -- --dry-run
+```
 
 Recommended quick path:
 

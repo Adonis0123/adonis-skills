@@ -13,6 +13,8 @@
     "prepare": "simple-git-hooks",
     "skills:new": "node --experimental-strip-types ./scripts/create-skill.ts",
     "skills:finalize": "node --experimental-strip-types ./scripts/finalize-skill.ts",
+    "skills:finalize:new": "node --experimental-strip-types ./scripts/finalize-new-skills.ts",
+    "skills:finalize:new:test": "node --experimental-strip-types --test ./scripts/__tests__/finalize-new-skills.test.ts",
     "skills:init": "python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py",
     "skills:quick-validate": "python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py",
     "skills:openai-yaml": "python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py",

@@ -30,6 +30,16 @@
     }
   },
   {
+    "slug": "css-tailwind-styling",
+    "name": "css-tailwind-styling",
+    "description": "Expert guidance for writing clean, performant CSS and Tailwind CSS. Use when creating styles, designing components, optimizing performance, or establishing styling conventions. Covers modern CSS features, Tailwind utility patterns, responsive design, accessibility, and team collaboration standards.",
+    "installCommand": "npx skills add adonis0123/adonis-skills --skill css-tailwind-styling",
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "lingui-next-init",
     "name": "lingui-next-init",
     "description": "Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.",
