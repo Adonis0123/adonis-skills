@@ -1,6 +1,6 @@
 ---
 name: tailwindcss-next-init
-description: 为 Next.js App Router 项目快速初始化 Tailwind CSS v4（CSS-first）并配置 Iconify（lucide/mdi/tabler）与常用插件。用于新项目搭建、现有项目 Tailwind v4 迁移、重构样式入口（tailwind-core/globals/custom）、补齐 @source/@reference 实践时触发。
+description: Initialize Tailwind CSS v4 and Iconify for Next.js App Router projects with script-driven templates. Use when you need a fast setup or migration with consistent style-entry conventions.
 ---
 
 # Tailwindcss Next Init

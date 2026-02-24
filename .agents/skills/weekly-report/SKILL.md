@@ -1,6 +1,6 @@
 ---
 name: weekly-report
-description: 自动读取 Git 提交记录生成周报。用于生成工作周报、项目总结、团队协作汇报。支持多仓库汇总。
+description: Generate structured weekly reports from Git commit history across one or multiple repositories. Use when you need concise, project-grouped progress summaries for status reporting.
 allowed-tools: Read, Write, Bash(git:*), Bash(python:*)
 metadata:
   author: adonis

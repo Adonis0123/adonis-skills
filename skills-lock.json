@@ -1,15 +1,65 @@
 {
   "version": 1,
   "skills": {
+    "claude-skills-sync-init": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "fe4df8ef0d2544ff0ba0c6c556e30f5ca51945e1ad9b895f7cc9173192513fe0"
+    },
+    "code-inspector-init": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "343d385768a450e0d3bc45e985d0e7cb132fcea23e652f09c680864156cf2693"
+    },
+    "commit": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "f7803140a7aa9658cf02c08715ad0e9a6b403774196191939bf86cfb8cb298da"
+    },
+    "css-tailwind-styling": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "c1ec9be7ef18117bc27cad350beaa5bcc8deb8a8b93f60d1fc700d33a85868d9"
+    },
     "lingui-next-init": {
-      "source": "adonis0123/adonis-skills",
+      "source": "adonis0123/skills",
       "sourceType": "local",
       "computedHash": "e4e4544df010e744c61a4bfe96902b7ad657dd8beff90a6e5df8aa6fd408b081"
     },
     "lingui-workflow": {
-      "source": "adonis0123/adonis-skills",
+      "source": "adonis0123/skills",
       "sourceType": "local",
       "computedHash": "9d66caced4324b91354b142e74499cf1f03520e1af832c324c52e9b8872ca711"
+    },
+    "ruler-rules-init": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "b696b668aaf610acaa07b611d19e6e3efb70fa2e18ce520a0dcbcc974ce36c52"
+    },
+    "staged-changes-review": {
+      "source": "/Users/adonis/coding/adonis-skills/skills",
+      "sourceType": "local",
+      "computedHash": "8a4f1dac929efcd458a3dcbd9165df1b0621329f4639839f1939ae84e7da7e3b"
+    },
+    "staged-review-validator": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "56a79d8c690b7648e0ce67e84423b70acf6a18c379ded07addf9d046f904e730"
+    },
+    "tailwindcss-next-init": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "2fd6e63ac0ac119ef010ab7f0f9c9ae5c8254002915070fb4cbb257272f759d1"
+    },
+    "weekly-report": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "13c46d46c0f2c440b824da9e0bd7e3753b54158b1ba7c7276d950c9008de7676"
+    },
+    "zustand-store-scaffold": {
+      "source": "adonis0123/skills",
+      "sourceType": "local",
+      "computedHash": "c14091e138238f40104f7ab0024fa34393f5325c77db7eb83150a92676101937"
     }
   }
 }
