@@ -173,3 +173,117 @@ grep -nE "\\bawait\\b" -- "*.ts" "*.js" "*.tsx" "*.jsx"
 grep -nE "\\.then\\s*\\(" -- "*.ts" "*.js" "*.tsx" "*.jsx"
 # Cross-reference: check if .catch() exists on the same chain via Read tool
 ```
+
+## REPO-001: Direct edit of generated root files
+
+```bash
+# Check if CLAUDE.md or AGENTS.md is modified without .ruler/*.md changes
+STAGED=$(git diff --cached --name-status)
+HAS_GENERATED=$(echo "$STAGED" | grep -E "^M\t(CLAUDE|AGENTS)\.md$")
+HAS_RULER=$(echo "$STAGED" | grep -E "^[AM]\t\.ruler/")
+if [ -n "$HAS_GENERATED" ] && [ -z "$HAS_RULER" ]; then
+  echo "REPO-001: Generated root file edited directly without .ruler/ source change"
+  echo "$HAS_GENERATED"
+fi
+```
+
+## REPO-002: README language pair missing (new file)
+
+```bash
+# Check for newly added README without its language counterpart
+STAGED=$(git diff --cached --name-status)
+echo "$STAGED" | grep -E "^A\t.*README(\.zh-CN)?\.md$" | while read -r status path; do
+  dir=$(dirname "$path")
+  if echo "$path" | grep -q "README\.zh-CN\.md$"; then
+    PAIR="$dir/README.md"
+  else
+    PAIR="$dir/README.zh-CN.md"
+  fi
+  # Check both staged files and existing files on disk
+  if ! echo "$STAGED" | grep -qF "$PAIR" && [ ! -f "$PAIR" ]; then
+    echo "REPO-002: $path added without counterpart $PAIR"
+  fi
+done
+```
+
+## REPO-003: README language pair not synced (modification)
+
+```bash
+# Check for modified README without its counterpart also being modified
+STAGED=$(git diff --cached --name-status)
+echo "$STAGED" | grep -E "^M\t.*README(\.zh-CN)?\.md$" | while read -r status path; do
+  dir=$(dirname "$path")
+  if echo "$path" | grep -q "README\.zh-CN\.md$"; then
+    PAIR="$dir/README.md"
+  else
+    PAIR="$dir/README.zh-CN.md"
+  fi
+  # Only flag if the pair file exists but is not staged
+  if [ -f "$PAIR" ] && ! echo "$STAGED" | grep -qE "^[AM]\t$(echo "$PAIR" | sed 's/[.[\*^$()+?{|]/\\&/g')$"; then
+    echo "REPO-003: $path modified but counterpart $PAIR not staged"
+  fi
+done
+```
+
+## REPO-004: Generated artifact without source change
+
+```bash
+# Check if skills-index.json is modified without SKILL.md source changes
+STAGED=$(git diff --cached --name-status)
+HAS_INDEX=$(echo "$STAGED" | grep -E "^M\t.*apps/web/src/generated/skills-index\.json$")
+HAS_SKILL=$(echo "$STAGED" | grep -E "^[AM]\t.*skills/[^/]+/SKILL\.md$")
+if [ -n "$HAS_INDEX" ] && [ -z "$HAS_SKILL" ]; then
+  echo "REPO-004: skills-index.json modified without any skills/*/SKILL.md change"
+fi
+```
+
+## REPO-005: Skill frontmatter naming format violation
+
+```bash
+# Extract name: field from staged SKILL.md files and validate format
+git diff --cached --name-only | grep -E "^skills/[^/]+/SKILL\.md$" | while read -r f; do
+  NAME=$(git diff --cached -- "$f" | grep -E "^\+name:" | head -1 | sed 's/^+name:\s*//' | tr -d '[:space:]')
+  if [ -n "$NAME" ] && ! echo "$NAME" | grep -qE "^[a-z0-9]+(-[a-z0-9]+)*$"; then
+    echo "REPO-005: $f has invalid name format: '$NAME' (expected lowercase hyphen-case)"
+  fi
+done
+```
+
+## REPO-006: Skill change without index update
+
+```bash
+# Check if any skills/*/SKILL.md changed without skills-index.json being staged
+STAGED=$(git diff --cached --name-status)
+HAS_SKILL=$(echo "$STAGED" | grep -E "^[AM]\t.*skills/[^/]+/SKILL\.md$")
+HAS_INDEX=$(echo "$STAGED" | grep -E "apps/web/src/generated/skills-index\.json")
+if [ -n "$HAS_SKILL" ] && [ -z "$HAS_INDEX" ]; then
+  echo "REPO-006: skills/*/SKILL.md changed but skills-index.json not updated"
+  echo "$HAS_SKILL"
+fi
+```
+
+## REPO-007: Web direct localStorage usage
+
+_Profile: react-nextjs, react-app only._
+
+```bash
+# Check for direct localStorage access in web app source (new lines only)
+git diff --cached -- "apps/web/src/**/*.ts" "apps/web/src/**/*.tsx" | \
+  grep -E "^\+" | grep -nE "(localStorage\.|window\.localStorage)" | \
+  grep -v "useLocalStorageState"
+```
+
+If matched, report as MEDIUM finding. Recommend using `useLocalStorageState` from ahooks.
+
+## REPO-008: Web non-token shadow usage
+
+_Profile: react-nextjs only._
+
+```bash
+# Check for raw box-shadow values that don't use clay tokens (new lines only)
+git diff --cached -- "apps/web/src/**/*.css" "apps/web/src/**/*.tsx" "apps/web/src/**/*.ts" | \
+  grep -E "^\+" | grep -E "box-shadow:" | \
+  grep -v "var(--shadow-clay"
+```
+
+If matched, report as LOW finding. Recommend using clay shadow tokens: `--shadow-clay-raised`, `--shadow-clay-inset`, or `--shadow-clay-floating`.

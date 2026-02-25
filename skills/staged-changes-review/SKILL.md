@@ -3,7 +3,7 @@ name: staged-changes-review
 description: Checklist-driven review of staged Git changes with deterministic rule scanning and semantic analysis. Use when the user wants to review staged changes, check for errors before commit, or validate code quality before committing.
 allowed-tools: Bash, Read, Grep, Glob
 metadata:
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Staged Changes Review
@@ -63,12 +63,12 @@ Record the detected **profile** — it determines active rule categories:
 
 | Profile | Condition | Active Rule Categories |
 |---------|-----------|----------------------|
-| **react-nextjs** | `next` in dependencies | SEC + REACT + PERF + ASYNC + STR + LOGIC/BREAK |
-| **react-app** | `react` but no `next` | SEC + REACT + ASYNC + STR + LOGIC/BREAK |
-| **python-generic** | Python files majority, no package.json | SEC + STR + LOGIC/BREAK |
-| **generic** | No package.json or detection failed | SEC + STR + LOGIC/BREAK |
+| **react-nextjs** | `next` in dependencies | SEC + REACT + PERF + ASYNC + STR + LOGIC/BREAK + REPO |
+| **react-app** | `react` but no `next` | SEC + REACT + ASYNC + STR + LOGIC/BREAK + REPO (001-007) |
+| **python-generic** | Python files majority, no package.json | SEC + STR + LOGIC/BREAK + REPO (001-006) |
+| **generic** | No package.json or detection failed | SEC + STR + LOGIC/BREAK + REPO (001-006) |
 
-**REACT-\*** and **PERF-\*** rules are **skipped entirely** for `python-generic` or `generic` profiles. If detection fails, default to `generic`.
+**REACT-\*** and **PERF-\*** rules are **skipped entirely** for `python-generic` or `generic` profiles. **REPO-007** requires react-nextjs or react-app; **REPO-008** requires react-nextjs only. If detection fails, default to `generic`.
 
 ### Step 1: Classify Files
 

@@ -41,7 +41,7 @@ For semantic rules (LOGIC/BREAK), also include the closed-question answer:
 ### 审查范围
 - 文件总数: N / 审查文件: M (P4 files excluded)
 - 项目 Profile: react-nextjs | react-app | python-generic | generic
-- 确定性规则: 11 条 (+ 5 条 React/Next.js，按 profile 激活) / 语义规则: 9 条 (+ 1 条 React，按 profile 激活)
+- 确定性规则: 11 条 (+ 5 条 React/Next.js + 8 条 REPO，按 profile 激活) / 语义规则: 9 条 (+ 1 条 React，按 profile 激活)
 
 ### 影响范围
 | 项目 | 详情 |
