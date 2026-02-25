@@ -1,17 +1,18 @@
 ---
 name: zustand-store-scaffold
-description: "Scaffold type-safe Zustand stores with two patterns: web (component-level store + Context + Provider) and core (slice-based store with immer). Use when creating or updating Zustand stores, contexts, providers, or composing multiple feature slices."
+description: "Scaffold class-based Zustand stores with flattenActions: web (component-level store + Context + Provider) and core (slice-based store with immer). Class-based actions provide Go-to-Definition DX, #private field encapsulation, and prototype-safe slice composition."
 metadata:
-  version: "0.1.0"
+  version: "1.0.0"
 ---
 
 # Zustand Store Scaffold
 
-Quickly generate type-safe Zustand stores following your repository's established patterns.
+Generate type-safe class-based Zustand stores with `flattenActions` for prototype-safe slice composition.
 
 ## Quick Start
 
 ### Web Pattern (Component-level Store)
+
 ```bash
 python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \
   --pattern web \
@@ -20,13 +21,16 @@ python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.p
 ```
 
 Generates:
-- `index.ts` - Store definition with createStore + immer
-- `context.ts` - React Context and useContext hook
-- `provider.tsx` - Provider component with memo
+- `types.ts` — `StoreSetter<T>` type definition
+- `utils/flattenActions.ts` — Prototype-safe action flattener
+- `index.ts` — Class-based store with `ActionImpl` + `flattenActions`
+- `context.ts` — React Context and typed `useContext` hook
+- `provider.tsx` — Memo-wrapped Provider component
 
 ### Core Pattern (Slice-based Store)
 
 **Single Slice:**
+
 ```bash
 python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \
   --pattern core \
@@ -35,6 +39,7 @@ python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.p
 ```
 
 **Multiple Slices (Interactive):**
+
 ```bash
 python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \
   --pattern core \
@@ -45,6 +50,7 @@ python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.p
 ```
 
 **Multiple Slices (Direct):**
+
 ```bash
 python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \
   --pattern core \
@@ -54,20 +60,22 @@ python3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.p
 ```
 
 Generates:
-- `index.ts` - Store factory with automatic slice composition
-- `slices/[name].ts` - Individual slice files with StateCreator typing
+- `types.ts` — `StoreSetter<T>` type definition
+- `utils/flattenActions.ts` — Prototype-safe action flattener
+- `index.ts` — Store factory with `flattenActions` slice composition
+- `slices/[name].ts` — Class-based slice with `ActionImpl` + `#private` fields
 
 ## Options
 
 | Option | Required | Description | Example |
 |--------|----------|-------------|---------|
-| `--pattern` | ✅ | Store pattern (`web` or `core`) | `--pattern web` |
-| `--name` | ✅ | Store name in PascalCase | `--name ToolList` |
-| `--path` | ✅ | Target directory path | `--path src/store` |
-| `--slices` | ❌ | Comma-separated slice names (core pattern only) | `--slices auth,user,ui` |
-| `--force` | ❌ | Overwrite existing files | `--force` |
+| `--pattern` | Yes | Store pattern (`web` or `core`) | `--pattern web` |
+| `--name` | Yes | Store name in PascalCase | `--name ToolList` |
+| `--path` | Yes | Target directory path | `--path src/store` |
+| `--slices` | No | Comma-separated slice names (core only) | `--slices auth,user,ui` |
+| `--force` | No | Overwrite existing files | `--force` |
 
-**Note:** For `core` pattern without `--slices`, the script will interactively ask you to specify slice names.
+**Note:** For `core` pattern without `--slices`, the script interactively asks for slice names. Shared files (`types.ts`, `utils/flattenActions.ts`) are skipped if they already exist (unless `--force`).
 
 ## Choose the Right Pattern
 
@@ -87,82 +95,99 @@ Use multiple slices to organize complex state by feature domains:
 | Dashboard | `data, filters, ui, settings` |
 | Chat application | `messages, contacts, ui, notifications` |
 
+## Generated Files
+
+| File | Purpose |
+|------|---------|
+| `types.ts` | `StoreSetter<T>` — type-safe overloaded setter matching Zustand internals |
+| `utils/flattenActions.ts` | `flattenActions<T>` — walks prototype chain, binds methods, merges class instances |
+| `index.ts` | Store factory combining initial state + `flattenActions` composition |
+| `slices/*.ts` (core) | `*ActionImpl` class with `#set`/`#get`, exported via `create*Slice` |
+| `context.ts` (web) | React Context + typed selector hook |
+| `provider.tsx` (web) | Memo-wrapped Provider with ref-stable store creation |
+
 ## Post-Generation Steps
 
-After scaffolding, customize the generated files:
-
-1. **Define State**: Update interface properties
+1. **Define state** in `*SliceState` interface (core) or `*StoreState` interface (web):
    ```ts
-   export interface ToolListStoreState {
-     toolList: Tool[]  // Add your state fields
-     isLoading: boolean
+   export interface CoreSliceState {
+     agents: Agent[]
+     selectedId: string | null
    }
    ```
 
-2. **Add Actions**: Implement state mutations
+2. **Add action methods** as arrow functions in `*ActionImpl` class:
    ```ts
-   export interface ToolListStoreActions {
-     setToolList: (list: Tool[]) => void  // Add your actions
-     addTool: (tool: Tool) => void
+   export class CoreActionImpl {
+     readonly #set: StoreSetter<CoreSlice>
+     readonly #get: () => CoreSlice
+     // ...constructor
+
+     selectAgent = (id: string): void => {
+       this.#set({ selectedId: id })
+     }
+
+     getSelectedAgent = (): Agent | undefined => {
+       const { agents, selectedId } = this.#get()
+       return agents.find((a) => a.id === selectedId)
+     }
    }
    ```
 
-3. **Set Initial State**: Populate default values
+3. **Set initial state** in the store factory or config:
    ```ts
-   const initialState: ToolListStoreState = {
-     toolList: [],
-     isLoading: false,
-   }
-   ```
-
-4. **Implement Actions** (in the store creator):
-   ```ts
-   return createStore()(immer((set) => ({
-     ...initialState,
-     setToolList: (toolList) => set({ toolList }),
-     addTool: (tool) => set((state) => {
-       state.toolList.push(tool)
-     }),
-   })))
+   const store = createCoreAgentStore({
+     initialState: { agents: [], selectedId: null }
+   })
    ```
 
 ## Usage Examples
 
 ### Web Store Usage
+
 ```tsx
-// In your component file
 import Provider from './store/provider'
 import { useToolListContext } from './store/context'
 
 function ToolListPage() {
   return (
-    <Provider initialProp="value">
+    <Provider>
       <ToolListContent />
     </Provider>
   )
 }
 
 function ToolListContent() {
-  const toolList = useToolListContext(s => s.toolList)
-  const setToolList = useToolListContext(s => s.setToolList)
-  // ...
+  const toolList = useToolListContext((s) => s.toolList)
+  const setToolList = useToolListContext((s) => s.setToolList)
+  // Go to Definition on setToolList → lands directly on ActionImpl method
 }
 ```
 
 ### Core Store Usage
+
 ```ts
-// Create store instance
 import { createCoreAgentStore } from './store'
 
 const store = createCoreAgentStore({
-  initialState: { /* ... */ }
+  initialState: { agents: [], selectedId: null }
 })
 
-// Use with vanilla JS or React
+// Vanilla JS
 const state = store.getState()
-store.setState({ /* ... */ })
+state.selectAgent('agent-1')
+
+// React (with useStore)
+import { useStore } from 'zustand'
+
+function AgentList() {
+  const agents = useStore(store, (s) => s.agents)
+  const selectAgent = useStore(store, (s) => s.selectAgent)
+}
 ```
 
 ## References
-- See `references/store-patterns.md` for real repository examples
-- Check existing stores in your codebase for pattern consistency
+
+- See `references/class-based-pattern.md` for detailed pattern documentation
+- See `references/store-patterns.md` for complete code examples
+- Reference PR: [lobehub#12081](https://github.com/lobehub/lobehub/pull/12081)

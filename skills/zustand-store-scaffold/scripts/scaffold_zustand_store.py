@@ -31,62 +31,60 @@ def render_template(template: str, values: dict[str, str]) -> str:
 
 
 def generate_multi_slice_index(store_name: str, slices: list[str]) -> str:
-    """Generate index.ts for core pattern with multiple slices.
-
-    Callers must provide at least one valid slice name.
-    """
+    """Generate index.ts for core pattern with multiple class-based slices."""
     if not slices:
         raise ValueError("slices must not be empty")
 
     slice_imports = []
-    slice_type_imports_list = []
-    slice_creator_calls = []
+    slice_type_imports = []
+    slice_type_exports = []
+    slice_action_types = []
     slice_type_union = []
-    slice_export_list = []
-    slice_type_export_list = []
+    slice_creator_calls = []
+    slice_config_fields = []
 
-    for i, slice_name in enumerate(slices):
-        slice_pascal = slice_name[:1].upper() + slice_name[1:]
-        slice_imports.append(f"import {{ create{slice_pascal}Slice }} from './slices/{slice_name}'")
-        slice_type_imports_list.append(
-            f"import type {{ {slice_pascal}Slice, {slice_pascal}SliceConfig }} from './slices/{slice_name}'"
+    for slice_name in slices:
+        sp = slice_name[:1].upper() + slice_name[1:]
+        slice_imports.append(f"import {{ create{sp}Slice }} from './slices/{slice_name}'")
+        slice_type_imports.append(
+            f"import type {{ {sp}Slice, {sp}SliceAction, {sp}SliceConfig }} from './slices/{slice_name}'"
         )
-        slice_creator_calls.append(f"      const {slice_name}Slice = create{slice_pascal}Slice(config?.{slice_name})(...args)")
-        # First slice doesn't need '&' prefix
-        if i == 0:
-            slice_type_union.append(f"{slice_pascal}Slice")
-        else:
-            slice_type_union.append(f" & {slice_pascal}Slice")
-        slice_export_list.append(f"export {{ create{slice_pascal}Slice }}")
-        slice_type_export_list.append(f"export type * from './slices/{slice_name}'")
+        slice_type_exports.append(f"export type * from './slices/{slice_name}'")
+        slice_action_types.append(f"{sp}SliceAction")
+        slice_type_union.append(f"{sp}Slice")
+        slice_creator_calls.append(f"create{sp}Slice(...args)")
+        slice_config_fields.append(f"  {slice_name}?: {sp}SliceConfig")
 
-    slice_returns = "\n".join([f"        ...{s}Slice," for s in slices])
+    # Build initial state spread lines
+    initial_state_lines = "\n".join(
+        [f"      ...config?.{s}?.initialState," for s in slices]
+    )
+    flatten_args = ", ".join(slice_creator_calls)
+    action_union = " & ".join(slice_action_types)
+    type_union = " & ".join(slice_type_union)
 
     return f"""import {{ createStore }} from 'zustand'
 import {{ immer }} from 'zustand/middleware/immer'
 
+import {{ flattenActions }} from './utils/flattenActions'
 {chr(10).join(slice_imports)}
 
-{chr(10).join(slice_type_imports_list)}
+{chr(10).join(slice_type_imports)}
 
-{chr(10).join(slice_export_list)}
-{chr(10).join(slice_type_export_list)}
+{chr(10).join(slice_type_exports)}
 
-export type {store_name}Slice = {''.join(slice_type_union)}
+export type {store_name}Slice = {type_union}
 
 export interface {store_name}SliceConfig {{
-{chr(10).join([f'  {s}?: {s[:1].upper() + s[1:]}SliceConfig' for s in slices])}
+{chr(10).join(slice_config_fields)}
 }}
 
 export function create{store_name}Store(config?: {store_name}SliceConfig) {{
   return createStore<{store_name}Slice>()(
-    immer((...args) => {{
-{chr(10).join(slice_creator_calls)}
-
-      return {{
-{slice_returns}
-      }}
-    }}),
+    immer((...args) => ({{
+{initial_state_lines}
+      ...flattenActions<{action_union}>([{flatten_args}]),
+    }})),
   )
 }}
 
@@ -107,7 +105,7 @@ def validate_slice_names(slices: list[str]) -> list[str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Scaffold Zustand stores following repo patterns.",
+        description="Scaffold class-based Zustand stores with flattenActions.",
         epilog="""
 Examples:
   Web pattern:
@@ -161,6 +159,7 @@ Examples:
 
     skill_root = Path(__file__).resolve().parents[1]
     template_root = skill_root / "assets" / "templates" / args.pattern
+    shared_template_root = skill_root / "assets" / "templates" / "shared"
 
     # Parse slices for core pattern
     slices = []
@@ -211,7 +210,7 @@ Examples:
             ScaffoldFile("provider.tsx", template_root / "provider.tsx.tpl"),
         ]
     else:
-        # Core pattern with multiple slices
+        # Core pattern with class-based slices
         files_to_create: list[ScaffoldFile] = []
 
         # Generate slice files
@@ -242,14 +241,43 @@ Examples:
                 )
             )
 
+    # Shared utility files: types.ts and utils/flattenActions.ts
+    shared_files = [
+        ScaffoldFile("types.ts", shared_template_root / "types.ts.tpl"),
+        ScaffoldFile("utils/flattenActions.ts", shared_template_root / "flatten-actions.ts.tpl"),
+    ]
+
     target_root = Path(args.path).expanduser()
 
-    print(f"\n🏗️  Scaffolding {args.pattern} store: {store_name}")
+    print(f"\n🏗️  Scaffolding {args.pattern} store: {store_name} (class-based)")
     if args.pattern == "core" and slices:
         print(f"📦 Slices: {', '.join(slices)}")
     print(f"📁 Target: {target_root}\n")
 
     created_files = []
+    skipped_files = []
+
+    # Write shared utilities first (skip if exists and not --force)
+    for file_spec in shared_files:
+        output_path = target_root / file_spec.rel_path
+        if output_path.exists() and not args.force:
+            skipped_files.append(file_spec.rel_path)
+            print(f"  ⊘ Skipped {file_spec.rel_path} (already exists)")
+            continue
+        template_path = file_spec.template_path
+        if template_path is None or not template_path.exists():
+            print(f"❌ Missing template: {template_path}", file=sys.stderr)
+            return 3
+        content = template_path.read_text(encoding="utf-8")
+        try:
+            write_file(output_path, content, args.force)
+        except FileExistsError:
+            print(f"❌ File exists (use --force to overwrite): {output_path}", file=sys.stderr)
+            return 4
+        created_files.append(output_path)
+        print(f"  ✓ Created {file_spec.rel_path}")
+
+    # Write pattern-specific files
     for file_spec in files_to_create:
         if file_spec.dynamic_slices is not None:
             content = generate_multi_slice_index(store_name, file_spec.dynamic_slices)
@@ -274,11 +302,13 @@ Examples:
         created_files.append(output_path)
         print(f"  ✓ Created {file_spec.rel_path}")
 
-    print(f"\n✅ Successfully created {len(created_files)} file(s)\n")
+    total = len(created_files)
+    skip_msg = f" ({len(skipped_files)} skipped)" if skipped_files else ""
+    print(f"\n✅ Successfully created {total} file(s){skip_msg}\n")
     print("📝 Next steps:")
-    print("  1. Define state properties in interfaces")
-    print("  2. Add action methods")
-    print("  3. Set initial state values")
+    print("  1. Define state properties in *SliceState interface")
+    print("  2. Add action methods as arrow functions in *ActionImpl class")
+    print("  3. Use this.#set() for state updates, this.#get() for reading state")
     if args.pattern == "web":
         print("  4. Import Provider in your component")
         print("  5. Use the context hook to access state\n")
