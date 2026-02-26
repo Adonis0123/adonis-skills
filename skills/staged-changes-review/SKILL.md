@@ -3,7 +3,7 @@ name: staged-changes-review
 description: Checklist-driven review of staged Git changes with deterministic rule scanning and semantic analysis. Use when the user wants to review staged changes, check for errors before commit, or validate code quality before committing.
 allowed-tools: Bash, Read, Grep, Glob
 metadata:
-  version: "2.2.0"
+  version: "2.3.0"
 ---
 
 # Staged Changes Review
@@ -63,10 +63,10 @@ Record the detected **profile** — it determines active rule categories:
 
 | Profile | Condition | Active Rule Categories |
 |---------|-----------|----------------------|
-| **react-nextjs** | `next` in dependencies | SEC + REACT + PERF + ASYNC + STR + LOGIC/BREAK + REPO |
-| **react-app** | `react` but no `next` | SEC + REACT + ASYNC + STR + LOGIC/BREAK + REPO (001-007) |
-| **python-generic** | Python files majority, no package.json | SEC + STR + LOGIC/BREAK + REPO (001-006) |
-| **generic** | No package.json or detection failed | SEC + STR + LOGIC/BREAK + REPO (001-006) |
+| **react-nextjs** | `next` in dependencies | SEC + REACT + PERF + ASYNC + STR + LOGIC/BREAK + BIZ + REPO |
+| **react-app** | `react` but no `next` | SEC + REACT + ASYNC + STR + LOGIC/BREAK + BIZ + REPO (001-007) |
+| **python-generic** | Python files majority, no package.json | SEC + STR + LOGIC/BREAK + BIZ + REPO (001-006) |
+| **generic** | No package.json or detection failed | SEC + STR + LOGIC/BREAK + BIZ + REPO (001-006) |
 
 **REACT-\*** and **PERF-\*** rules are **skipped entirely** for `python-generic` or `generic` profiles. **REPO-007** requires react-nextjs or react-app; **REPO-008** requires react-nextjs only. If detection fails, default to `generic`.
 
@@ -120,7 +120,7 @@ If no impact scope items are detected, note "无显著影响范围变更" in the
 
 ### Step 3: Semantic Review
 
-For each file (P0 → P3 order), answer **every applicable** semantic question from `references/review-rules.md` §3.
+For each file (P0 → P3 order), answer **every applicable** semantic question from `references/review-rules.md` §3 and §3b.
 
 **Execution method:**
 1. Read the file's staged diff and surrounding context (use `Read` tool for full file when needed).
@@ -129,6 +129,12 @@ For each file (P0 → P3 order), answer **every applicable** semantic question f
    - **NO** — reviewed, no issue found.
    - **N/A** — rule does not apply to this file type or change.
 3. Only YES answers produce findings. Use the severity from §4.
+
+**BIZ 规则执行说明:**
+1. 对 P1 文件，使用 `git show HEAD:<path>` 获取变更前版本，与暂存版本对比进行 before/after 行为分析。
+2. BIZ findings 必须包含"变更前行为"、"变更后行为"和"影响场景"字段。
+3. 纯重构（逻辑等价变换）不应报为行为变更。
+4. **采样限制**: P1 文件超过 10 个时，BIZ 规则仅分析前 5 个文件，并注明"剩余 N 个文件未进行 BIZ 分析（采样限制）"。
 
 **MANDATORY**: Answer every question. Do not skip questions because context seems insufficient — answer N/A with a brief reason instead.
 
@@ -145,10 +151,12 @@ For each file (P0 → P3 order), answer **every applicable** semantic question f
 Output the report using the exact structure from `references/report-template.md` §2.
 
 1. **审查范围**: file counts and rule counts.
-2. **发现总览**: severity summary table.
-3. **结论**: auto-select from `references/review-rules.md` §5 based on highest severity found.
-4. **分级发现**: findings in `references/report-template.md` §1 format, grouped by severity.
-5. **文件审查矩阵**: per-file summary table.
+2. **影响范围**: impact scope analysis results.
+3. **业务影响分析**: BIZ findings 的摘要表格（变更文件 / BIZ 规则 / 行为变更摘要）。若无 BIZ 发现，输出"未检测到用户可感知的业务行为变更"。
+4. **发现总览**: severity summary table.
+5. **结论**: auto-select from `references/review-rules.md` §5 based on highest severity found.
+6. **分级发现**: findings in `references/report-template.md` §1 format, grouped by severity. BIZ findings 按 severity 归入对应级别。
+7. **文件审查矩阵**: per-file summary table.
 
 ## Execution Constraints (MANDATORY)
 
@@ -182,6 +190,7 @@ This skill's output is consumed by `staged-review-validator`. The following fiel
 - Each finding must include a `指纹` (Fingerprint) field
 - Severity uses 4 levels: CRITICAL / HIGH / MEDIUM / LOW
 - Report structure follows `references/report-template.md` §2
+- `BIZ-*` findings 使用 before/after 格式（含"变更前行为"、"变更后行为"、"影响场景"字段），详见 `references/report-template.md` §1
 
 ## References
 

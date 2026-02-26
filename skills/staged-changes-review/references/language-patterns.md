@@ -3,6 +3,8 @@
 Patterns are organized by rule ID. Use `git diff --cached` output as primary input;
 fall back to `grep -nE` on staged files when line-level scanning is needed.
 
+> **Note**: BIZ-* 规则为纯语义规则，无 grep 模式。BIZ 规则通过 `git show HEAD:<path>` 对比变更前后版本进行语义分析，不依赖模式匹配。
+
 ## SEC-001: Hardcoded secrets
 
 ```bash
@@ -228,12 +230,12 @@ done
 ## REPO-004: Generated artifact without source change
 
 ```bash
-# Check if skills-index.json is modified without SKILL.md source changes
+# Check if generated index files are modified without SKILL.md source changes
 STAGED=$(git diff --cached --name-status)
-HAS_INDEX=$(echo "$STAGED" | grep -E "^M\t.*apps/web/src/generated/skills-index\.json$")
+HAS_INDEX=$(echo "$STAGED" | grep -E "^M\t.*apps/web/src/generated/(skills-index-lite|skills-detail-index)\.json$")
 HAS_SKILL=$(echo "$STAGED" | grep -E "^[AM]\t.*skills/[^/]+/SKILL\.md$")
 if [ -n "$HAS_INDEX" ] && [ -z "$HAS_SKILL" ]; then
-  echo "REPO-004: skills-index.json modified without any skills/*/SKILL.md change"
+  echo "REPO-004: generated index files modified without any skills/*/SKILL.md change"
 fi
 ```
 
@@ -252,12 +254,12 @@ done
 ## REPO-006: Skill change without index update
 
 ```bash
-# Check if any skills/*/SKILL.md changed without skills-index.json being staged
+# Check if any skills/*/SKILL.md changed without generated index files being staged
 STAGED=$(git diff --cached --name-status)
 HAS_SKILL=$(echo "$STAGED" | grep -E "^[AM]\t.*skills/[^/]+/SKILL\.md$")
-HAS_INDEX=$(echo "$STAGED" | grep -E "apps/web/src/generated/skills-index\.json")
+HAS_INDEX=$(echo "$STAGED" | grep -E "apps/web/src/generated/(skills-index-lite|skills-detail-index)\.json")
 if [ -n "$HAS_SKILL" ] && [ -z "$HAS_INDEX" ]; then
-  echo "REPO-006: skills/*/SKILL.md changed but skills-index.json not updated"
+  echo "REPO-006: skills/*/SKILL.md changed but generated index files not updated"
   echo "$HAS_SKILL"
 fi
 ```

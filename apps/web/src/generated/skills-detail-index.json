@@ -638,7 +638,7 @@
         "level": 1
       },
       {
-        "raw": "git diff --cached --name-only | grep -cE '\\.(tsx|jsx)$' || echo 0\ngit diff --cached --name-only | grep -cE '\\.py$' || echo 0\n```\n\nRecord the detected **profile** — it determines active rule categories:\n\n| Profile | Condition | Active Rule Categories |\n|---------|-----------|----------------------|\n| **react-nextjs** | `next` in dependencies | SEC + REACT + PERF + ASYNC + STR + LOGIC/BREAK + REPO |\n| **react-app** | `react` but no `next` | SEC + REACT + ASYNC + STR + LOGIC/BREAK + REPO (001-007) |\n| **python-generic** | Python files majority, no package.json | SEC + STR + LOGIC/BREAK + REPO (001-006) |\n| **generic** | No package.json or detection failed | SEC + STR + LOGIC/BREAK + REPO (001-006) |\n\n**REACT-\\*** and **PERF-\\*** rules are **skipped entirely** for `python-generic` or `generic` profiles. **REPO-007** requires react-nextjs or react-app; **REPO-008** requires react-nextjs only. If detection fails, default to `generic`.",
+        "raw": "git diff --cached --name-only | grep -cE '\\.(tsx|jsx)$' || echo 0\ngit diff --cached --name-only | grep -cE '\\.py$' || echo 0\n```\n\nRecord the detected **profile** — it determines active rule categories:\n\n| Profile | Condition | Active Rule Categories |\n|---------|-----------|----------------------|\n| **react-nextjs** | `next` in dependencies | SEC + REACT + PERF + ASYNC + STR + LOGIC/BREAK + BIZ + REPO |\n| **react-app** | `react` but no `next` | SEC + REACT + ASYNC + STR + LOGIC/BREAK + BIZ + REPO (001-007) |\n| **python-generic** | Python files majority, no package.json | SEC + STR + LOGIC/BREAK + BIZ + REPO (001-006) |\n| **generic** | No package.json or detection failed | SEC + STR + LOGIC/BREAK + BIZ + REPO (001-006) |\n\n**REACT-\\*** and **PERF-\\*** rules are **skipped entirely** for `python-generic` or `generic` profiles. **REPO-007** requires react-nextjs or react-app; **REPO-008** requires react-nextjs only. If detection fails, default to `generic`.",
         "heading": "Count staged file types",
         "level": 1
       },
@@ -683,7 +683,7 @@
         "level": 1
       },
       {
-        "raw": "For each file (P0 → P3 order), answer **every applicable** semantic question from `references/review-rules.md` §3.\n\n**Execution method:**\n1. Read the file's staged diff and surrounding context (use `Read` tool for full file when needed).\n2. For each semantic rule, answer the closed question with exactly one of:\n   - **YES** — issue found. MUST provide: file:line + evidence snippet.\n   - **NO** — reviewed, no issue found.\n   - **N/A** — rule does not apply to this file type or change.\n3. Only YES answers produce findings. Use the severity from §4.\n\n**MANDATORY**: Answer every question. Do not skip questions because context seems insufficient — answer N/A with a brief reason instead.",
+        "raw": "For each file (P0 → P3 order), answer **every applicable** semantic question from `references/review-rules.md` §3 and §3b.\n\n**Execution method:**\n1. Read the file's staged diff and surrounding context (use `Read` tool for full file when needed).\n2. For each semantic rule, answer the closed question with exactly one of:\n   - **YES** — issue found. MUST provide: file:line + evidence snippet.\n   - **NO** — reviewed, no issue found.\n   - **N/A** — rule does not apply to this file type or change.\n3. Only YES answers produce findings. Use the severity from §4.\n\n**BIZ 规则执行说明:**\n1. 对 P1 文件，使用 `git show HEAD:<path>` 获取变更前版本，与暂存版本对比进行 before/after 行为分析。\n2. BIZ findings 必须包含\"变更前行为\"、\"变更后行为\"和\"影响场景\"字段。\n3. 纯重构（逻辑等价变换）不应报为行为变更。\n4. **采样限制**: P1 文件超过 10 个时，BIZ 规则仅分析前 5 个文件，并注明\"剩余 N 个文件未进行 BIZ 分析（采样限制）\"。\n\n**MANDATORY**: Answer every question. Do not skip questions because context seems insufficient — answer N/A with a brief reason instead.",
         "heading": "Step 3: Semantic Review",
         "level": 3
       },
@@ -693,7 +693,7 @@
         "level": 3
       },
       {
-        "raw": "Output the report using the exact structure from `references/report-template.md` §2.\n\n1. **审查范围**: file counts and rule counts.\n2. **发现总览**: severity summary table.\n3. **结论**: auto-select from `references/review-rules.md` §5 based on highest severity found.\n4. **分级发现**: findings in `references/report-template.md` §1 format, grouped by severity.\n5. **文件审查矩阵**: per-file summary table.",
+        "raw": "Output the report using the exact structure from `references/report-template.md` §2.\n\n1. **审查范围**: file counts and rule counts.\n2. **影响范围**: impact scope analysis results.\n3. **业务影响分析**: BIZ findings 的摘要表格（变更文件 / BIZ 规则 / 行为变更摘要）。若无 BIZ 发现，输出\"未检测到用户可感知的业务行为变更\"。\n4. **发现总览**: severity summary table.\n5. **结论**: auto-select from `references/review-rules.md` §5 based on highest severity found.\n6. **分级发现**: findings in `references/report-template.md` §1 format, grouped by severity. BIZ findings 按 severity 归入对应级别。\n7. **文件审查矩阵**: per-file summary table.",
         "heading": "Step 5: Generate Report",
         "level": 3
       },
@@ -708,7 +708,7 @@
         "level": 2
       },
       {
-        "raw": "This skill's output is consumed by `staged-review-validator`. The following fields are required for compatibility:\n\n- Finding title must include `[ruleId]` prefix (e.g., `[SEC-003] SQL 拼接风险`)\n- Each finding must include a `指纹` (Fingerprint) field\n- Severity uses 4 levels: CRITICAL / HIGH / MEDIUM / LOW\n- Report structure follows `references/report-template.md` §2",
+        "raw": "This skill's output is consumed by `staged-review-validator`. The following fields are required for compatibility:\n\n- Finding title must include `[ruleId]` prefix (e.g., `[SEC-003] SQL 拼接风险`)\n- Each finding must include a `指纹` (Fingerprint) field\n- Severity uses 4 levels: CRITICAL / HIGH / MEDIUM / LOW\n- Report structure follows `references/report-template.md` §2\n- `BIZ-*` findings 使用 before/after 格式（含\"变更前行为\"、\"变更后行为\"、\"影响场景\"字段），详见 `references/report-template.md` §1",
         "heading": "Validator Interface Contract",
         "level": 2
       },

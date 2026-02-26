@@ -4,12 +4,12 @@
 
 Rule categories active per project profile (detected in Step 0.5):
 
-| Profile | SEC | REACT | PERF | ASYNC | STR | LOGIC/BREAK | REPO |
-|---------|-----|-------|------|-------|-----|-------------|------|
-| react-nextjs | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| react-app | ✓ | ✓ | — | ✓ | ✓ | ✓ | ✓ (001-007) |
-| python-generic | ✓ | — | — | — | ✓ | ✓ | ✓ (001-006) |
-| generic | ✓ | — | — | — | ✓ | ✓ | ✓ (001-006) |
+| Profile | SEC | REACT | PERF | ASYNC | STR | LOGIC/BREAK | BIZ | REPO |
+|---------|-----|-------|------|-------|-----|-------------|-----|------|
+| react-nextjs | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| react-app | ✓ | ✓ | — | ✓ | ✓ | ✓ | ✓ | ✓ (001-007) |
+| python-generic | ✓ | — | — | — | ✓ | ✓ | ✓ | ✓ (001-006) |
+| generic | ✓ | — | — | — | ✓ | ✓ | ✓ | ✓ (001-006) |
 
 REACT-* and PERF-* rules must be **skipped** (marked N/A) for python-generic and generic profiles. REPO-007 requires react-nextjs or react-app; REPO-008 requires react-nextjs only.
 
@@ -184,8 +184,8 @@ Rules that enforce repository-level conventions defined in `.ruler/*.md`. All ru
 
 - **Description**: A generated output file was modified without its source also being changed — likely a manual edit that will be overwritten
 - **Severity**: HIGH
-- **Applies to**: `apps/web/src/generated/skills-index.json`
-- **Logic**: Check `git diff --cached --name-status` for modification of `apps/web/src/generated/skills-index.json` without any `skills/*/SKILL.md` file also being modified
+- **Applies to**: `apps/web/src/generated/skills-index-lite.json`, `apps/web/src/generated/skills-detail-index.json`
+- **Logic**: Check `git diff --cached --name-status` for modification of either generated index file without any `skills/*/SKILL.md` file also being modified
 - **See**: `language-patterns.md` REPO-004
 
 ### REPO-005: Skill frontmatter naming format violation
@@ -198,10 +198,10 @@ Rules that enforce repository-level conventions defined in `.ruler/*.md`. All ru
 
 ### REPO-006: Skill change without index update
 
-- **Description**: A `skills/*/SKILL.md` file was added or modified but `apps/web/src/generated/skills-index.json` was not regenerated
+- **Description**: A `skills/*/SKILL.md` file was added or modified but generated index files were not regenerated
 - **Severity**: HIGH
 - **Applies to**: `skills/*/SKILL.md`
-- **Logic**: Check `git diff --cached --name-status` for any `skills/*/SKILL.md` change (A or M) without `apps/web/src/generated/skills-index.json` also being staged
+- **Logic**: Check `git diff --cached --name-status` for any `skills/*/SKILL.md` change (A or M) without either `apps/web/src/generated/skills-index-lite.json` or `apps/web/src/generated/skills-detail-index.json` being staged
 - **See**: `language-patterns.md` REPO-006
 
 ### REPO-007: Web direct localStorage usage
@@ -289,13 +289,47 @@ Answer each question per file with: **YES** (issue found + evidence), **NO**, or
 - **Applies only if**: The diff includes `.env*` or `config.*` files, or source files that reference `process.env`. Mark N/A if no environment variable files are in the staged diff.
 - **Answer format**: YES/NO/N/A + variable name + file:line
 
+## 3b. Business Impact Rules (BIZ)
+
+BIZ 规则检查**用户可感知的行为变更**，与 LOGIC（代码正确性）和 BREAK（兼容性）互补。BIZ 规则为纯语义规则，需通过 `git show HEAD:<path>` 获取变更前版本，对比暂存版本进行 before/after 行为分析。
+
+Answer each question per file with: **YES** (issue found + before/after behavior), **NO**, or **N/A** (rule not applicable).
+
+### BIZ-001: 默认值/初始状态变更
+
+- **Question**: 此变更是否修改了用户可见的默认值、初始状态或预设配置？
+- **Severity**: HIGH
+- **适用启发**: 涉及 `default`、`initial`、`fallback`、硬编码数字赋值给 state/config
+- **Answer format**: YES/NO/N/A + file:line + 变更前行为 + 变更后行为 + 影响场景
+
+### BIZ-002: 条件分支行为路径变更
+
+- **Question**: 此变更是否修改了业务条件判断，导致特定用户群体的执行路径发生变化？
+- **Severity**: HIGH
+- **适用启发**: diff 中条件表达式修改，且条件涉及用户属性（plan、role、subscription 等）
+- **Answer format**: YES/NO/N/A + file:line + 变更前行为 + 变更后行为 + 影响场景
+
+### BIZ-003: 金额/计费/配额计算逻辑变更
+
+- **Question**: 此变更是否修改了与金额、价格、计费、配额、次数限制相关的计算逻辑或常量？
+- **Severity**: HIGH
+- **适用启发**: 涉及 `price`、`cost`、`quota`、`limit`、`credit`、`usage`、`billing` 等变量
+- **Answer format**: YES/NO/N/A + file:line + 变更前行为 + 变更后行为 + 影响场景
+
+### BIZ-004: 用户可见文案/提示变更
+
+- **Question**: 此变更是否修改了用户可见的文案内容（错误提示、按钮文本、引导文案），且非纯 i18n key 重命名？
+- **Severity**: MEDIUM
+- **适用启发**: diff 中字符串字面量变更、`<Trans>` 内容变更、错误消息修改
+- **Answer format**: YES/NO/N/A + file:line + 变更前行为 + 变更后行为 + 影响场景
+
 ## 4. Severity Mapping
 
 | Severity | Rule IDs | Action |
 |----------|----------|--------|
 | CRITICAL | SEC-001, SEC-002 | Block commit |
-| HIGH | SEC-003, SEC-004, SEC-005, SEC-006, SEC-007, REACT-001, LOGIC-001, BREAK-001~004, REPO-001, REPO-002, REPO-004, REPO-006 | Strongly recommend fix |
-| MEDIUM | ASYNC-001, ASYNC-002, REACT-002, REACT-003, PERF-001, LOGIC-002~005, REPO-003, REPO-005, REPO-007 | Recommend fix |
+| HIGH | SEC-003, SEC-004, SEC-005, SEC-006, SEC-007, REACT-001, LOGIC-001, BREAK-001~004, BIZ-001, BIZ-002, BIZ-003, REPO-001, REPO-002, REPO-004, REPO-006 | Strongly recommend fix |
+| MEDIUM | ASYNC-001, ASYNC-002, REACT-002, REACT-003, PERF-001, LOGIC-002~005, BIZ-004, REPO-003, REPO-005, REPO-007 | Recommend fix |
 | LOW | STR-001~004, REPO-008 | Informational |
 
 ## 5. Conclusion Rules

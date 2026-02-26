@@ -74,13 +74,13 @@
     "name": "staged-changes-review",
     "description": "Checklist-driven review of staged Git changes with deterministic rule scanning and semantic analysis. Use when the user wants to review staged changes, check for errors before commit, or validate code quality before committing.",
     "metadata": {
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-02-24T14:56:02.000Z",
+    "updatedAt": "2026-02-25T09:42:16.000Z",
     "allowedTools": [
       "Bash",
       "Read",

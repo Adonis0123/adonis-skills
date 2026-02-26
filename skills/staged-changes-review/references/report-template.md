@@ -33,6 +33,21 @@ For semantic rules (LOGIC/BREAK), also include the closed-question answer:
 - **Fingerprint**: `LOGIC-001:src/config.ts:42`
 ```
 
+For BIZ rules, use before/after behavior comparison format:
+
+```markdown
+#### [BIZ-xxx] <发现标题>
+- **Rule**: BIZ-xxx — <规则描述>
+- **File**: `path/to/file.ext:line`
+- **Severity**: CRITICAL | HIGH | MEDIUM | LOW
+- **Answer**: YES | NO
+- **变更前行为**: <旧版行为的具体描述>
+- **变更后行为**: <新版行为的具体描述>
+- **影响场景**: <哪些用户在什么场景下会感知差异>
+- **Suggestion**: <确认是否为预期行为，或建议修复>
+- **Fingerprint**: `{BIZ-xxx}:{file}:{line}`
+```
+
 ## 2. Full Report Structure
 
 ```markdown
@@ -41,7 +56,7 @@ For semantic rules (LOGIC/BREAK), also include the closed-question answer:
 ### 审查范围
 - 文件总数: N / 审查文件: M (P4 files excluded)
 - 项目 Profile: react-nextjs | react-app | python-generic | generic
-- 确定性规则: 11 条 (+ 5 条 React/Next.js + 8 条 REPO，按 profile 激活) / 语义规则: 9 条 (+ 1 条 React，按 profile 激活)
+- 确定性规则: 11 条 (+ 5 条 React/Next.js + 8 条 REPO，按 profile 激活) / 语义规则: 13 条 (+ 1 条 React，按 profile 激活)
 
 ### 影响范围
 | 项目 | 详情 |
@@ -53,6 +68,13 @@ For semantic rules (LOGIC/BREAK), also include the closed-question answer:
 | 影响范围评估 | 中等（2 个导出符号变更，无 API 路由破坏）|
 
 _若无显著影响范围变更，此 section 输出"无显著影响范围变更"。_
+
+### 业务影响分析
+| 变更文件 | BIZ 规则 | 行为变更摘要 |
+|----------|---------|-------------|
+| `path/to/file.ext` | BIZ-xxx | <行为变更的简要描述> |
+
+_若无业务行为变更，输出"未检测到用户可感知的业务行为变更"。_
 
 ### 发现总览
 | 严重度 | 数量 | 涉及规则 |
