@@ -131,9 +131,9 @@
   {
     "slug": "zustand-store-scaffold",
     "name": "zustand-store-scaffold",
-    "description": "Scaffold type-safe Zustand stores with two patterns: web (component-level store + Context + Provider) and core (slice-based store with immer). Use when creating or updating Zustand stores, contexts, providers, or composing multiple feature slices.",
+    "description": "Scaffold class-based Zustand stores with flattenActions: web (component-level store + Context + Provider) and core (slice-based store with immer). Class-based actions provide Go-to-Definition DX, #private field encapsulation, and prototype-safe slice composition.",
     "metadata": {
-      "version": "0.1.0"
+      "version": "1.0.0"
     },
     "files": {
       "hasReferences": true,

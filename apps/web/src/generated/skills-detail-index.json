@@ -913,27 +913,27 @@
     "slug": "zustand-store-scaffold",
     "sections": [
       {
-        "raw": "Quickly generate type-safe Zustand stores following your repository's established patterns.",
+        "raw": "Generate type-safe class-based Zustand stores with `flattenActions` for prototype-safe slice composition.",
         "heading": "Zustand Store Scaffold",
         "level": 1
       },
       {
-        "raw": "```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern web \\\n  --name ToolList \\\n  --path web/src/pages/_components/ToolList/store\n```\n\nGenerates:\n- `index.ts` - Store definition with createStore + immer\n- `context.ts` - React Context and useContext hook\n- `provider.tsx` - Provider component with memo",
+        "raw": "```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern web \\\n  --name ToolList \\\n  --path web/src/pages/_components/ToolList/store\n```\n\nGenerates:\n- `types.ts` — `StoreSetter<T>` type definition\n- `utils/flattenActions.ts` — Prototype-safe action flattener\n- `index.ts` — Class-based store with `ActionImpl` + `flattenActions`\n- `context.ts` — React Context and typed `useContext` hook\n- `provider.tsx` — Memo-wrapped Provider component",
         "heading": "Web Pattern (Component-level Store)",
         "level": 3
       },
       {
-        "raw": "**Single Slice:**\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name CoreAgent \\\n  --path packages/ag-ui-view/src/core/helpers/isomorphic/store\n```\n\n**Multiple Slices (Interactive):**\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store",
+        "raw": "**Single Slice:**\n\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name CoreAgent \\\n  --path packages/ag-ui-view/src/core/helpers/isomorphic/store\n```\n\n**Multiple Slices (Interactive):**\n\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store",
         "heading": "Core Pattern (Slice-based Store)",
         "level": 3
       },
       {
-        "raw": "```\n\n**Multiple Slices (Direct):**\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store \\\n  --slices auth,user,ui\n```\n\nGenerates:\n- `index.ts` - Store factory with automatic slice composition\n- `slices/[name].ts` - Individual slice files with StateCreator typing",
+        "raw": "```\n\n**Multiple Slices (Direct):**\n\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store \\\n  --slices auth,user,ui\n```\n\nGenerates:\n- `types.ts` — `StoreSetter<T>` type definition\n- `utils/flattenActions.ts` — Prototype-safe action flattener\n- `index.ts` — Store factory with `flattenActions` slice composition\n- `slices/[name].ts` — Class-based slice with `ActionImpl` + `#private` fields",
         "heading": "Example input: auth,user,ui",
         "level": 1
       },
       {
-        "raw": "| Option | Required | Description | Example |\n|--------|----------|-------------|---------|\n| `--pattern` | ✅ | Store pattern (`web` or `core`) | `--pattern web` |\n| `--name` | ✅ | Store name in PascalCase | `--name ToolList` |\n| `--path` | ✅ | Target directory path | `--path src/store` |\n| `--slices` | ❌ | Comma-separated slice names (core pattern only) | `--slices auth,user,ui` |\n| `--force` | ❌ | Overwrite existing files | `--force` |\n\n**Note:** For `core` pattern without `--slices`, the script will interactively ask you to specify slice names.",
+        "raw": "| Option | Required | Description | Example |\n|--------|----------|-------------|---------|\n| `--pattern` | Yes | Store pattern (`web` or `core`) | `--pattern web` |\n| `--name` | Yes | Store name in PascalCase | `--name ToolList` |\n| `--path` | Yes | Target directory path | `--path src/store` |\n| `--slices` | No | Comma-separated slice names (core only) | `--slices auth,user,ui` |\n| `--force` | No | Overwrite existing files | `--force` |\n\n**Note:** For `core` pattern without `--slices`, the script interactively asks for slice names. Shared files (`types.ts`, `utils/flattenActions.ts`) are skipped if they already exist (unless `--force`).",
         "heading": "Options",
         "level": 2
       },
@@ -948,22 +948,27 @@
         "level": 3
       },
       {
-        "raw": "After scaffolding, customize the generated files:\n\n1. **Define State**: Update interface properties\n   ```ts\n   export interface ToolListStoreState {\n     toolList: Tool[]  // Add your state fields\n     isLoading: boolean\n   }\n   ```\n\n2. **Add Actions**: Implement state mutations\n   ```ts\n   export interface ToolListStoreActions {\n     setToolList: (list: Tool[]) => void  // Add your actions\n     addTool: (tool: Tool) => void\n   }\n   ```\n\n3. **Set Initial State**: Populate default values\n   ```ts\n   const initialState: ToolListStoreState = {\n     toolList: [],\n     isLoading: false,\n   }\n   ```\n\n4. **Implement Actions** (in the store creator):\n   ```ts\n   return createStore()(immer((set) => ({\n     ...initialState,\n     setToolList: (toolList) => set({ toolList }),\n     addTool: (tool) => set((state) => {\n       state.toolList.push(tool)\n     }),\n   })))\n   ```",
+        "raw": "| File | Purpose |\n|------|---------|\n| `types.ts` | `StoreSetter<T>` — type-safe overloaded setter matching Zustand internals |\n| `utils/flattenActions.ts` | `flattenActions<T>` — walks prototype chain, binds methods, merges class instances |\n| `index.ts` | Store factory combining initial state + `flattenActions` composition |\n| `slices/*.ts` (core) | `*ActionImpl` class with `#set`/`#get`, exported via `create*Slice` |\n| `context.ts` (web) | React Context + typed selector hook |\n| `provider.tsx` (web) | Memo-wrapped Provider with ref-stable store creation |",
+        "heading": "Generated Files",
+        "level": 2
+      },
+      {
+        "raw": "1. **Define state** in `*SliceState` interface (core) or `*StoreState` interface (web):\n   ```ts\n   export interface CoreSliceState {\n     agents: Agent[]\n     selectedId: string | null\n   }\n   ```\n\n2. **Add action methods** as arrow functions in `*ActionImpl` class:\n   ```ts\n   export class CoreActionImpl {\n     readonly #set: StoreSetter<CoreSlice>\n     readonly #get: () => CoreSlice\n     // ...constructor\n\n     selectAgent = (id: string): void => {\n       this.#set({ selectedId: id })\n     }\n\n     getSelectedAgent = (): Agent | undefined => {\n       const { agents, selectedId } = this.#get()\n       return agents.find((a) => a.id === selectedId)\n     }\n   }\n   ```\n\n3. **Set initial state** in the store factory or config:\n   ```ts\n   const store = createCoreAgentStore({\n     initialState: { agents: [], selectedId: null }\n   })\n   ```",
         "heading": "Post-Generation Steps",
         "level": 2
       },
       {
-        "raw": "```tsx\n// In your component file\nimport Provider from './store/provider'\nimport { useToolListContext } from './store/context'\n\nfunction ToolListPage() {\n  return (\n    <Provider initialProp=\"value\">\n      <ToolListContent />\n    </Provider>\n  )\n}\n\nfunction ToolListContent() {\n  const toolList = useToolListContext(s => s.toolList)\n  const setToolList = useToolListContext(s => s.setToolList)\n  // ...\n}\n```",
+        "raw": "```tsx\nimport Provider from './store/provider'\nimport { useToolListContext } from './store/context'\n\nfunction ToolListPage() {\n  return (\n    <Provider>\n      <ToolListContent />\n    </Provider>\n  )\n}\n\nfunction ToolListContent() {\n  const toolList = useToolListContext((s) => s.toolList)\n  const setToolList = useToolListContext((s) => s.setToolList)\n  // Go to Definition on setToolList → lands directly on ActionImpl method\n}\n```",
         "heading": "Web Store Usage",
         "level": 3
       },
       {
-        "raw": "```ts\n// Create store instance\nimport { createCoreAgentStore } from './store'\n\nconst store = createCoreAgentStore({\n  initialState: { /* ... */ }\n})\n\n// Use with vanilla JS or React\nconst state = store.getState()\nstore.setState({ /* ... */ })\n```",
+        "raw": "```ts\nimport { createCoreAgentStore } from './store'\n\nconst store = createCoreAgentStore({\n  initialState: { agents: [], selectedId: null }\n})\n\n// Vanilla JS\nconst state = store.getState()\nstate.selectAgent('agent-1')\n\n// React (with useStore)\nimport { useStore } from 'zustand'\n\nfunction AgentList() {\n  const agents = useStore(store, (s) => s.agents)\n  const selectAgent = useStore(store, (s) => s.selectAgent)\n}\n```",
         "heading": "Core Store Usage",
         "level": 3
       },
       {
-        "raw": "- See `references/store-patterns.md` for real repository examples\n- Check existing stores in your codebase for pattern consistency",
+        "raw": "- See `references/class-based-pattern.md` for detailed pattern documentation\n- See `references/store-patterns.md` for complete code examples\n- Reference PR: [lobehub#12081](https://github.com/lobehub/lobehub/pull/12081)",
         "heading": "References",
         "level": 2
       }
