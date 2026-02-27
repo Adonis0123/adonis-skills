@@ -435,6 +435,66 @@
     ]
   },
   {
+    "slug": "global-modal-scaffold",
+    "sections": [
+      {
+        "raw": "插件化全局弹窗系统：基于 Zustand 状态管理 + 扩展注册表 + 懒加载 + 完整类型安全。",
+        "heading": "Global Modal Scaffold",
+        "level": 1
+      },
+      {
+        "raw": "该系统将全局弹窗抽象为**扩展（Extension）**，每个扩展包含：\n- **key** — 唯一标识符（字符串字面量，自动推导为联合类型）\n- **modal** — 懒加载的弹窗组件\n- **useMountCallbacks?** — 可选的挂载回调（用于全局事件桥接）\n\n核心能力：\n- Zustand store slice 管理 `openedGlobalModals` 数组，支持多弹窗并发\n- `useGlobalModalState<T>(key)` 泛型 hook 提供 `{ open, data, openModal, closeModal }`\n- `onOpen(isFirstOpen)` / `onClose()` 生命周期回调\n- `ExtensionKey` 从扩展数组自动推导，新增扩展时类型自动更新\n- BaseModal 接口与 UI 库解耦，可适配任意组件库",
+        "heading": "概述",
+        "level": 2
+      },
+      {
+        "raw": "当项目中尚无全局弹窗系统时使用。读取 `templates/infrastructure/` 下所有 `.tpl` 模板，根据项目技术栈适配后生成基础设施文件。\n\n**步骤：**\n\n1. **询问用户技术栈** — UI 库（Ant Design / Material UI / Headless UI / shadcn 等）、状态管理（Zustand / Redux / Context）、懒加载方式（next/dynamic / React.lazy）、函数记忆化（ahooks useMemoizedFn / useCallback）\n2. **确定目标目录** — 建议 `src/pages/_blocks/global-modals/` 或用户指定路径\n3. **生成基础设施文件**：\n   - 从 `store-slice.ts.tpl` 生成 store slice（需集成到用户的全局 store）\n   - 从 `store-hooks.ts.tpl` 生成通用 hooks\n   - 从 `helpers.ts.tpl` 生成 `defineGlobalModalExtension` + 类型\n   - 从 `orchestrator.tsx.tpl` 生成 GlobalModals 编排器\n   - 从 `base-modal.tsx.tpl` 生成 BaseModal 组件（适配用户选择的 UI 库）\n4. **创建 extensions 注册表** — 空的 `extensions` 数组 + `ExtensionKey` 类型导出\n5. **在布局组件中挂载** — 指导用户将 `<GlobalModals />` 放置在全局 Layout 底部\n\n**生成的目录结构：**\n```\nglobal-modals/\n├── _components/\n│   ├── GlobalBaseModal/index.tsx    # BaseModal 组件\n│   └── GlobalModals/index.tsx       # 编排器\n└── _extensions/\n    ├── _helpers/index.ts            # defineGlobalModalExtension + types\n    └── index.ts                     # extensions 数组 + ExtensionKey\n```",
+        "heading": "流程一：初始化基础设施（首次搭建）",
+        "level": 3
+      },
+      {
+        "raw": "当项目已有全局弹窗基础设施，需要新增一个弹窗时使用。\n\n**步骤：**\n\n1. **确认扩展模式** — 询问用户需要 basic / enriched / with-callbacks\n2. **获取弹窗名称** — 如 `confirm-delete`，自动派生 `ConfirmDelete`（PascalCase）和 `confirmDelete`（camelCase）\n3. **创建扩展目录** — `_extensions/{{KEBAB_NAME}}/`\n4. **从对应模式模板生成文件** — 替换所有占位符\n5. **注册扩展** — 在 `_extensions/index.ts` 的 extensions 数组中导入并添加新扩展\n6. **实现具体 UI** — 在 modal-component 中填充业务 UI",
+        "heading": "流程二：新增弹窗扩展（已有基础设施）",
+        "level": 3
+      },
+      {
+        "raw": "| 模式 | 适用场景 | 文件数 | 特有能力 |\n|------|---------|--------|---------|\n| **basic** | 简单展示弹窗（确认框、信息展示） | 3 | 无 |\n| **enriched** | 需要 onOpen/onClose 副作用（analytics、URL 重写） | 3 | openModal 包装注入生命周期 |\n| **with-callbacks** | 需要从非 React 代码触发弹窗（tRPC 错误拦截等） | 4 | useMountCallbacks + 全局事件桥 |",
+        "heading": "三种扩展模式",
+        "level": 2
+      },
+      {
+        "raw": "所有 `.tpl` 模板使用以下占位符，生成时按规则替换：\n\n| 占位符 | 规则 | 示例（输入 `confirm-delete`） |\n|--------|------|------|\n| `{{PASCAL_NAME}}` | PascalCase | `ConfirmDelete` |\n| `{{KEBAB_NAME}}` | kebab-case | `confirm-delete` |\n| `{{CAMEL_NAME}}` | camelCase | `confirmDelete` |\n\n基础设施模板额外占位符：\n\n| 占位符 | 说明 |\n|--------|------|\n| `{{STORE_TYPE}}` | 全局 store 类型名（如 `GlobalStore`） |\n| `{{EXTENSION_KEY_TYPE}}` | ExtensionKey 类型的导入路径 |\n| `{{EXTENSIONS_IMPORT_PATH}}` | extensions 数组的导入路径 |\n| `{{BASE_MODAL_IMPORT}}` | BaseModal 组件的导入路径 |\n| `{{MODAL_STATE_HOOK_IMPORT}}` | useGlobalModalState 的导入路径 |",
+        "heading": "模板占位符说明",
+        "level": 2
+      },
+      {
+        "raw": "- **扩展目录**: `kebab-case`（如 `confirm-delete/`）\n- **extension 变量**: `camelCase` + `GlobalModalExtension` 后缀（如 `confirmDeleteGlobalModalExtension`）\n- **hook 函数**: `use` + `PascalCase` + `GlobalModalState`（如 `useConfirmDeleteGlobalModalState`）\n- **Modal 组件**: `PascalCase` + `Modal`（如 `ConfirmDeleteModal`）\n- **key 字符串**: `kebab-case`（如 `'confirm-delete'`）",
+        "heading": "命名约定",
+        "level": 2
+      },
+      {
+        "raw": "1. **懒加载** — 所有 modal 组件必须使用 dynamic import 包装，避免主包体积膨胀\n2. **GlobalModalCoreData** — 所有弹窗数据接口都应继承 `GlobalModalCoreData`（包含 `onClose`、`onOpen` 回调）\n3. **destroyOnClose** — BaseModal 建议默认开启销毁模式，确保每次打开时状态干净\n4. **isFirstOpen** — `onOpen(isFirstOpen)` 区分首次打开和重复打开，用于控制只触发一次的副作用（如 analytics）\n5. **useMountCallbacks 无条件调用** — 编排器中必须无条件遍历所有扩展调用 `useMountCallbacks`，确保 React Hooks 调用顺序稳定\n6. **稳定函数引用** — enriched 模式的 hook 包装应使用 `useMemoizedFn`（ahooks）或 `useCallback` 确保引用地址稳定",
+        "heading": "关键设计约定",
+        "level": 2
+      },
+      {
+        "raw": "本 skill 设计为 UI 库无关、状态管理方案无关。BaseModal 模板仅定义接口，需适配到用户实际使用的组件库。详见 `references/portability.md`。",
+        "heading": "适配说明",
+        "level": 2
+      },
+      {
+        "raw": "```\ntemplates/\n├── infrastructure/          # 基础设施模板（流程一使用）\n│   ├── store-slice.ts.tpl\n│   ├── store-hooks.ts.tpl\n│   ├── orchestrator.tsx.tpl\n│   ├── base-modal.tsx.tpl\n│   └── helpers.ts.tpl\n└── extensions/              # 扩展模板（流程二使用）\n    ├── basic/\n    │   ├── extension.ts.tpl\n    │   ├── hooks.ts.tpl\n    │   └── modal-component.tsx.tpl\n    ├── enriched/\n    │   ├── extension.ts.tpl\n    │   ├── hooks.ts.tpl\n    │   └── modal-component.tsx.tpl\n    └── with-callbacks/\n        ├── extension.tsx.tpl\n        ├── hooks.ts.tpl\n        ├── callbacks.ts.tpl\n        └── modal-component.tsx.tpl\n```",
+        "heading": "模板文件位置",
+        "level": 2
+      },
+      {
+        "raw": "- `references/architecture.md` — 深度架构解析（store 设计、编排器原理、类型系统、生命周期）\n- `references/portability.md` — 不同技术栈适配指南（UI 库、状态管理、框架、代码风格）",
+        "heading": "参考文档",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "lingui-next-init",
     "sections": [
       {
