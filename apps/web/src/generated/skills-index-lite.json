@@ -6,7 +6,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T09:21:58.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -15,7 +16,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "commit",
@@ -24,7 +26,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "css-tailwind-styling",
@@ -32,6 +35,20 @@
     "description": "Expert guidance for writing clean, performant CSS and Tailwind CSS. Use when creating styles, designing components, optimizing performance, or establishing styling conventions. Covers modern CSS features, Tailwind utility patterns, responsive design, accessibility, and team collaboration standards.",
     "files": {
       "hasReferences": true,
+      "hasSrc": false
+    },
+    "updatedAt": "2026-02-24T13:03:08.000Z"
+  },
+  {
+    "slug": "discuss-before-plan",
+    "name": "discuss-before-plan",
+    "description": "Structured pre-planning discussion workflow that separates decision-making from planning. Use when starting complex tasks, architecture changes, multi-file modifications, or any work requiring alignment on approach before entering Plan Mode.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": false,
       "hasSrc": false
     }
   },
@@ -45,7 +62,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-27T15:58:06.000Z"
   },
   {
     "slug": "lingui-next-init",
@@ -54,7 +72,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T17:37:12.000Z"
   },
   {
     "slug": "lingui-workflow",
@@ -63,7 +82,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T17:37:12.000Z"
   },
   {
     "slug": "ruler-rules-init",
@@ -72,7 +92,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-23T09:01:57.000Z"
   },
   {
     "slug": "staged-changes-review",
@@ -85,6 +106,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
+    "updatedAt": "2026-02-26T10:21:14.000Z",
     "allowedTools": [
       "Bash",
       "Read",
@@ -99,7 +121,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-26T10:21:14.000Z"
   },
   {
     "slug": "tailwindcss-next-init",
@@ -108,7 +131,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-20T02:59:15.000Z"
   },
   {
     "slug": "weekly-report",
@@ -122,6 +146,7 @@
       "hasReferences": true,
       "hasSrc": true
     },
+    "updatedAt": "2026-03-02T07:25:38.000Z",
     "allowedTools": [
       "Read",
       "Write",
@@ -139,6 +164,7 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-02-25T16:16:19.000Z"
   }
 ]
