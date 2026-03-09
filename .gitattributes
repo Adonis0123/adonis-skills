@@ -1,3 +1,6 @@
+# Force LF line endings for all text files
+* text=auto eol=lf
+
 *.py linguist-detectable=false
 *.smhtml linguist-detectable=false
 *.tpl linguist-detectable=false

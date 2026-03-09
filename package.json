@@ -30,11 +30,16 @@
   "devDependencies": {
     "@inquirer/prompts": "^7.9.0",
     "is-ci": "^4.1.0",
+    "lint-staged": "^16.3.2",
+    "prettier": "^3.8.1",
     "simple-git-hooks": "^2.13.1",
     "turbo": "^2.7.6",
     "yaml": "^2.8.1"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm precommit:typecheck"
+    "pre-commit": "pnpm lint-staged && pnpm precommit:typecheck"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,mjs,jsx,json,css,md}": "prettier --write --end-of-line lf"
   }
 }
