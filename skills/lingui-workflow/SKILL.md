@@ -1,6 +1,8 @@
 ---
 name: lingui-workflow
 description: Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.
+metadata:
+  author: adonis
 ---
 
 # Lingui Workflow

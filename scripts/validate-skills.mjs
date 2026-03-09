@@ -58,6 +58,11 @@ async function main() {
     if (typeof frontmatter.description !== 'string' || !frontmatter.description.trim())
       errors.push(`[${entry.name}] frontmatter.description 不能为空`)
 
+    if (typeof frontmatter.metadata !== 'object' || frontmatter.metadata === null || Array.isArray(frontmatter.metadata))
+      errors.push(`[${entry.name}] frontmatter.metadata 必须是一个对象`)
+    else if (typeof frontmatter.metadata.author !== 'string' || !frontmatter.metadata.author.trim())
+      errors.push(`[${entry.name}] frontmatter.metadata.author 不能为空`)
+
     // Mirror guard scope is intentionally narrow:
     // only enforce the reserved pages-router placeholder that is required by SKILL.md.
     // This is not a full directory diff between skills/ and .agents/skills.

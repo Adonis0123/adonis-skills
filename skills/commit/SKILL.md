@@ -1,6 +1,8 @@
 ---
 name: commit
 description: Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.
+metadata:
+  author: adonis
 ---
 
 # Commit Message Generator

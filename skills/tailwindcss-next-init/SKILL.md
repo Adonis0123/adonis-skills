@@ -1,6 +1,8 @@
 ---
 name: tailwindcss-next-init
 description: Initialize Tailwind CSS v4 and Iconify for Next.js App Router projects with script-driven templates. Use when you need a fast setup or migration with consistent style-entry conventions.
+metadata:
+  author: adonis
 ---
 
 # Tailwindcss Next Init

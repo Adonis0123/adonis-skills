@@ -86,6 +86,12 @@ export function SkillCard({ skill }: SkillCardProps) {
           <ClayBadge tone={skill.files.hasSrc ? 'peach' : 'neutral'}>
             {srcLabel}
           </ClayBadge>
+          {skill.metadata?.author && (
+            <span className="ml-auto inline-flex items-center gap-1 text-[11px] tracking-wide text-clay-muted/70">
+              <span className="icon-[lucide--pen-tool] size-3 opacity-60" aria-hidden />
+              {skill.metadata.author}
+            </span>
+          )}
         </ClayCardFooter>
       </ClayCard>
     </LocaleLink>

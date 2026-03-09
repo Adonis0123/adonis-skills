@@ -1,6 +1,8 @@
 ---
 name: ruler-rules-init
 description: Migrate and bootstrap Ruler-based AI rules across repositories with English-first templates, preset-based project detection, and safe, idempotent setup. Use when creating or standardizing `.ruler/*` files, generating `AGENTS.md`/`CLAUDE.md`, wiring `ruler:apply` into `package.json`, adding generated-file ignores in `.gitignore`, and designing `applyTo` scoping patterns such as `**` and `web/**`.
+metadata:
+  author: adonis
 ---
 
 # Ruler Rules Migration

@@ -3,6 +3,9 @@
     "slug": "claude-skills-sync-init",
     "name": "claude-skills-sync-init",
     "description": "Bootstrap Claude skill-sync automation in any repository. Use when users ask to set up `.agents/skills` to `.claude/skills` syncing, generate `skills:sync:*` scripts, inject package.json scripts/postinstall hooks, or initialize this sync workflow in a new or existing project.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -13,6 +16,9 @@
     "slug": "code-inspector-init",
     "name": "code-inspector-init",
     "description": "Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -23,6 +29,9 @@
     "slug": "commit",
     "name": "commit",
     "description": "Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -33,6 +42,9 @@
     "slug": "css-tailwind-styling",
     "name": "css-tailwind-styling",
     "description": "Expert guidance for writing clean, performant CSS and Tailwind CSS. Use when creating styles, designing components, optimizing performance, or establishing styling conventions. Covers modern CSS features, Tailwind utility patterns, responsive design, accessibility, and team collaboration standards.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -51,13 +63,14 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-02T16:11:47.000Z"
+    "updatedAt": "2026-03-09T14:53:29.000Z"
   },
   {
     "slug": "global-modal-scaffold",
     "name": "global-modal-scaffold",
     "description": "This skill should be used when the user asks to \"create a global modal\", \"add a new modal extension\", \"scaffold a modal plugin\", \"add a global dialog\", \"create a modal with callbacks\", \"set up a global modal system\", or mentions the global-modals extension system.",
     "metadata": {
+      "author": "adonis",
       "version": "0.1.0"
     },
     "files": {
@@ -70,6 +83,9 @@
     "slug": "lingui-next-init",
     "name": "lingui-next-init",
     "description": "Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -80,6 +96,9 @@
     "slug": "lingui-workflow",
     "name": "lingui-workflow",
     "description": "Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -90,6 +109,9 @@
     "slug": "ruler-rules-init",
     "name": "ruler-rules-init",
     "description": "Migrate and bootstrap Ruler-based AI rules across repositories with English-first templates, preset-based project detection, and safe, idempotent setup. Use when creating or standardizing `.ruler/*` files, generating `AGENTS.md`/`CLAUDE.md`, wiring `ruler:apply` into `package.json`, adding generated-file ignores in `.gitignore`, and designing `applyTo` scoping patterns such as `**` and `web/**`.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -101,6 +123,7 @@
     "name": "staged-changes-review",
     "description": "Checklist-driven review of staged Git changes with deterministic rule scanning and semantic analysis. Use when the user wants to review staged changes, check for errors before commit, or validate code quality before committing.",
     "metadata": {
+      "author": "adonis",
       "version": "2.3.0"
     },
     "files": {
@@ -119,6 +142,9 @@
     "slug": "staged-review-validator",
     "name": "staged-review-validator",
     "description": "Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -129,6 +155,9 @@
     "slug": "tailwindcss-next-init",
     "name": "tailwindcss-next-init",
     "description": "Initialize Tailwind CSS v4 and Iconify for Next.js App Router projects with script-driven templates. Use when you need a fast setup or migration with consistent style-entry conventions.",
+    "metadata": {
+      "author": "adonis"
+    },
     "files": {
       "hasReferences": true,
       "hasSrc": false
@@ -160,6 +189,7 @@
     "name": "zustand-store-scaffold",
     "description": "Scaffold class-based Zustand stores with flattenActions: web (component-level store + Context + Provider) and core (slice-based store with immer). Class-based actions provide Go-to-Definition DX, #private field encapsulation, and prototype-safe slice composition.",
     "metadata": {
+      "author": "adonis",
       "version": "1.0.0"
     },
     "files": {

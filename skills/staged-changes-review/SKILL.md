@@ -3,6 +3,7 @@ name: staged-changes-review
 description: Checklist-driven review of staged Git changes with deterministic rule scanning and semantic analysis. Use when the user wants to review staged changes, check for errors before commit, or validate code quality before committing.
 allowed-tools: Bash, Read, Grep, Glob
 metadata:
+  author: adonis
   version: "2.3.0"
 ---
 

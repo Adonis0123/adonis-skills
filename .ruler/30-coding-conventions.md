@@ -35,12 +35,12 @@ name: skill-name          # required, lowercase hyphen-case
 description: "..."        # required, non-empty; shown in web UI and tool selectors
 allowed-tools: Read, Bash # optional; restrict which tools Claude may use
 metadata:
-  author: your-name       # optional
+  author: your-name       # required
   version: "1.0.0"        # optional
 ---
 ```
 
-Only `name` and `description` are validated by CI. Skills in `skills/` are public and appear in the web UI; skills in `.agents/skills/` are internal and not indexed.
+`name`, `description`, and `metadata.author` are validated by CI. Skills in `skills/` are public and appear in the web UI; skills in `.agents/skills/` are internal and not indexed.
 
 ## Web Coding Conventions (`apps/web/**`)
 

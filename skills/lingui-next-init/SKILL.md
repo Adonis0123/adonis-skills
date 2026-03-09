@@ -1,6 +1,8 @@
 ---
 name: lingui-next-init
 description: Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.
+metadata:
+  author: adonis
 ---
 
 # Lingui Next Init

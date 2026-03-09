@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process'
+import { execSync, spawn } from 'node:child_process'
 import { readFile, stat, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -9,6 +9,7 @@ const ALLOWED_RESOURCES = new Set(['scripts', 'references', 'assets'])
 const NON_ASCII_REGEX = /[^\x20-\x7E]/u
 
 type CliOptions = {
+  author?: string
   description?: string
   examples: boolean
   examplesSpecified: boolean
@@ -28,6 +29,7 @@ function printHelp() {
   console.log('  --resources <list>         Comma-separated: scripts,references,assets')
   console.log('  --examples                 Create example files for selected resources')
   console.log(`  --path <dir>               Output directory (default: ${DEFAULT_OUTPUT_PATH})`)
+  console.log('  --author <name>            Author name for metadata.author')
   console.log('  --non-interactive          Disable prompts; require --name and --description')
   console.log('  --skip-index               Skip running skills:index after creation')
   console.log('  --help                     Show help')
@@ -121,6 +123,17 @@ function parseArgs(argv: string[]): CliOptions {
       continue
     }
 
+    if (arg.startsWith('--author=')) {
+      options.author = arg.slice('--author='.length).trim()
+      continue
+    }
+
+    if (arg === '--author') {
+      options.author = getOptionValue(argv, index, '--author').trim()
+      index += 1
+      continue
+    }
+
     if (arg.startsWith('--resources=')) {
       options.resources = parseResources(arg.slice('--resources='.length))
       continue
@@ -198,6 +211,14 @@ function escapeYamlSingleQuoted(value: string): string {
   return value.replace(/'/g, "''")
 }
 
+function getGitUserName(): string {
+  try {
+    return execSync('git config user.name', { encoding: 'utf8' }).trim()
+  } catch {
+    return ''
+  }
+}
+
 async function ensureSkillDoesNotExist(skillDir: string) {
   const existing = await stat(skillDir).catch(() => null)
   if (existing) {
@@ -225,6 +246,7 @@ async function updateFrontmatterDescription(skillFilePath: string, description: 
 }
 
 async function resolveInputs(cliOptions: CliOptions): Promise<{
+  author: string
   description: string
   examples: boolean
   name: string
@@ -232,8 +254,11 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
 }> {
   let name = cliOptions.name ?? ''
   let description = cliOptions.description ?? ''
+  let author = cliOptions.author ?? ''
   let resources = [...cliOptions.resources]
   let examples = cliOptions.examples
+
+  const gitUserName = getGitUserName()
 
   if (!cliOptions.nonInteractive) {
     if (!name) {
@@ -246,6 +271,14 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
     if (!description) {
       description = await input({
         message: 'Skill description in English (ASCII only, frontmatter.description)',
+        required: true,
+      })
+    }
+
+    if (!author) {
+      author = await input({
+        message: 'Author name (metadata.author)',
+        default: gitUserName || undefined,
         required: true,
       })
     }
@@ -268,6 +301,11 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
         default: false,
       })
     }
+  } else if (!author) {
+    author = gitUserName
+    if (!author) {
+      throw new Error('--author is required when using --non-interactive and git user.name is not set')
+    }
   }
 
   const normalizedName = normalizeSkillName(name)
@@ -285,11 +323,17 @@ async function resolveInputs(cliOptions: CliOptions): Promise<{
     throw new Error('Description must be English-only (ASCII characters only)')
   }
 
+  const normalizedAuthor = author.trim()
+  if (!normalizedAuthor) {
+    throw new Error('Author cannot be empty')
+  }
+
   if (resources.length === 0) {
     examples = false
   }
 
   return {
+    author: normalizedAuthor,
     description: normalizedDescription,
     examples,
     name: normalizedName,
@@ -329,7 +373,7 @@ async function main() {
 
   await ensureSkillDoesNotExist(skillDir)
 
-  const initArgs = [initScriptPath, inputs.name, '--path', outputPath]
+  const initArgs = [initScriptPath, inputs.name, '--path', outputPath, '--author', inputs.author]
   if (inputs.resources.length > 0) {
     initArgs.push('--resources', inputs.resources.join(','))
   }

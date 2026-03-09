@@ -113,11 +113,6 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
                   <Trans id="skillDetail.badge.version">Version {skill.metadata.version}</Trans>
                 </ClayBadge>
               )}
-              {skill.metadata?.author && (
-                <ClayBadge tone="cream">
-                  <Trans id="skillDetail.badge.author">Author {skill.metadata.author}</Trans>
-                </ClayBadge>
-              )}
               {visibleTools.map(tool => (
                 <ClayBadge key={tool} tone="blue" className="font-mono text-[11px]">{tool}</ClayBadge>
               ))}
@@ -129,11 +124,21 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
             <h1 className="font-heading text-4xl leading-tight text-foreground md:text-5xl">{skill.name}</h1>
             <p className="max-w-4xl text-sm leading-7 text-clay-muted md:text-base">{skill.description}</p>
 
-            {/* Last updated */}
-            {skill.updatedAt && (
-              <div className="flex items-center gap-1.5 text-xs text-clay-muted">
-                <span className="icon-[lucide--calendar] size-3.5" aria-hidden />
-                <Trans id="skillDetail.updatedAt">Last updated: {formatUpdatedAt(skill.updatedAt, lang)}</Trans>
+            {/* Meta line: author & last updated */}
+            {(skill.metadata?.author || skill.updatedAt) && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-clay-muted">
+                {skill.metadata?.author && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="icon-[lucide--pen-tool] size-3.5 opacity-60" aria-hidden />
+                    <Trans id="skillDetail.meta.author">{skill.metadata.author}</Trans>
+                  </span>
+                )}
+                {skill.updatedAt && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="icon-[lucide--calendar] size-3.5" aria-hidden />
+                    <Trans id="skillDetail.updatedAt">Last updated: {formatUpdatedAt(skill.updatedAt, lang)}</Trans>
+                  </span>
+                )}
               </div>
             )}
           </ClayCardHeader>

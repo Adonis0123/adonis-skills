@@ -1,6 +1,8 @@
 ---
 name: staged-review-validator
 description: Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.
+metadata:
+  author: adonis
 ---
 
 # Staged Review Validator

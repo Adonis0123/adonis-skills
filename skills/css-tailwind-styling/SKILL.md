@@ -1,6 +1,8 @@
 ---
 name: css-tailwind-styling
 description: Expert guidance for writing clean, performant CSS and Tailwind CSS. Use when creating styles, designing components, optimizing performance, or establishing styling conventions. Covers modern CSS features, Tailwind utility patterns, responsive design, accessibility, and team collaboration standards.
+metadata:
+  author: adonis
 ---
 
 # CSS and Tailwind CSS Styling Expert

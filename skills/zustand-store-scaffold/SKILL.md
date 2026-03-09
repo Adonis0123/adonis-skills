@@ -2,6 +2,7 @@
 name: zustand-store-scaffold
 description: "Scaffold class-based Zustand stores with flattenActions: web (component-level store + Context + Provider) and core (slice-based store with immer). Class-based actions provide Go-to-Definition DX, #private field encapsulation, and prototype-safe slice composition."
 metadata:
+  author: adonis
   version: "1.0.0"
 ---
 

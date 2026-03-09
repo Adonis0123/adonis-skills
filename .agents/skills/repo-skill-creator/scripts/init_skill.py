@@ -28,6 +28,8 @@ DEFAULT_OUTPUT_PATH = "skills"
 SKILL_TEMPLATE = """---
 name: {skill_name}
 description: [TODO: Write this description in English using ASCII characters only. Explain what the skill does and WHEN to use it, with concrete triggers such as scenarios, file types, or tasks.]
+metadata:
+  author: {author}
 ---
 
 # {skill_title}
@@ -257,7 +259,7 @@ def create_resource_dirs(skill_dir, skill_name, skill_title, resources, include_
                 print("[OK] Created assets/")
 
 
-def init_skill(skill_name, path, resources, include_examples, interface_overrides):
+def init_skill(skill_name, path, resources, include_examples, interface_overrides, author=""):
     """
     Initialize a new skill directory with template SKILL.md.
 
@@ -288,7 +290,7 @@ def init_skill(skill_name, path, resources, include_examples, interface_override
 
     # Create SKILL.md from template
     skill_title = title_case_skill_name(skill_name)
-    skill_content = SKILL_TEMPLATE.format(skill_name=skill_name, skill_title=skill_title)
+    skill_content = SKILL_TEMPLATE.format(skill_name=skill_name, skill_title=skill_title, author=author)
 
     skill_md_path = skill_dir / "SKILL.md"
     try:
@@ -361,6 +363,11 @@ def main():
         default=[],
         help="Interface override in key=value format (repeatable)",
     )
+    parser.add_argument(
+        "--author",
+        default="",
+        help="Author name for metadata.author in frontmatter",
+    )
     args = parser.parse_args()
 
     raw_skill_name = args.skill_name
@@ -382,6 +389,11 @@ def main():
         print("[ERROR] --examples requires --resources to be set.")
         sys.exit(1)
 
+    author = args.author.strip()
+    if not author:
+        print("[ERROR] --author is required and cannot be empty.")
+        sys.exit(1)
+
     path = args.path
 
     print(f"Initializing skill: {skill_name}")
@@ -394,7 +406,7 @@ def main():
         print("   Resources: none (create as needed)")
     print()
 
-    result = init_skill(skill_name, path, resources, args.examples, args.interface)
+    result = init_skill(skill_name, path, resources, args.examples, args.interface, author)
 
     if result:
         sys.exit(0)

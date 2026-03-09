@@ -91,6 +91,13 @@ def validate_skill(skill_path):
                 f"Description is too long ({len(description)} characters). Maximum is 1024 characters.",
             )
 
+    metadata = frontmatter.get("metadata")
+    if not isinstance(metadata, dict):
+        return False, "Missing 'metadata' in frontmatter (must be a dict with at least 'author')"
+    author = metadata.get("author", "")
+    if not isinstance(author, str) or not author.strip():
+        return False, "metadata.author must be a non-empty string"
+
     return True, "Skill is valid!"
 
 

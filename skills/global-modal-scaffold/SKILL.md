@@ -6,6 +6,7 @@ description: >-
   "create a modal with callbacks", "set up a global modal system",
   or mentions the global-modals extension system.
 metadata:
+  author: adonis
   version: "0.1.0"
 ---
 

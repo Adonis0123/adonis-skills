@@ -1,6 +1,8 @@
 ---
 name: code-inspector-init
 description: Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.
+metadata:
+  author: adonis
 ---
 
 # Code Inspector Init
