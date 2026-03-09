@@ -42,15 +42,16 @@
   {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
-    "description": "Structured pre-planning discussion workflow that separates decision-making from planning. Use when starting complex tasks, architecture changes, multi-file modifications, or any work requiring alignment on approach before entering Plan Mode.",
+    "description": "Structured pre-planning discussion workflow that separates decision-making from execution planning. Use this skill whenever the user wants to discuss approach, compare options, reduce ambiguity, or jump straight into a plan for a complex change involving architecture tradeoffs, unclear requirements, multiple modules, public interfaces, or roughly 5+ files. Use it even if the user asks for a plan directly when key decisions are still unresolved. Triggers on phrases like '先讨论', '分析选型', '对比方案', '聊聊思路', '别急着做先想清楚', '方案评审', '架构讨论'.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.2.0"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-03-02T16:11:47.000Z"
   },
   {
     "slug": "global-modal-scaffold",
