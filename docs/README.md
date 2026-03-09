@@ -38,4 +38,4 @@ Examples:
 
 ## Quick start
 
-Copy `.docs/plan-template.md` and fill in the sections for your change.
+Copy `docs/plan-template.md` and fill in the sections for your change.
