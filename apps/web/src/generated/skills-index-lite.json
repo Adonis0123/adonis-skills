@@ -66,6 +66,19 @@
     "updatedAt": "2026-03-09T14:53:29.000Z"
   },
   {
+    "slug": "enforce-lf",
+    "name": "enforce-lf",
+    "description": "Enforce consistent LF line endings across platforms with a four-layer guard: .gitattributes, .editorconfig, Prettier endOfLine, and lint-staged pre-commit formatting. Targets pnpm + Prettier + simple-git-hooks projects.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "global-modal-scaffold",
     "name": "global-modal-scaffold",
     "description": "This skill should be used when the user asks to \"create a global modal\", \"add a new modal extension\", \"scaffold a modal plugin\", \"add a global dialog\", \"create a modal with callbacks\", \"set up a global modal system\", or mentions the global-modals extension system.",
