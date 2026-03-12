@@ -1,9 +1,9 @@
 ---
 name: discuss-before-plan
-description: "Structured pre-planning discussion workflow that separates decision-making from execution planning. Use this skill whenever the user wants to discuss approach, compare options, reduce ambiguity, or jump straight into a plan for a complex change involving architecture tradeoffs, unclear requirements, multiple modules, public interfaces, or roughly 5+ files. Use it even if the user asks for a plan directly when key decisions are still unresolved. Triggers on phrases like '先讨论', '分析选型', '对比方案', '聊聊思路', '别急着做先想清楚', '方案评审', '架构讨论'."
+description: "Structured pre-planning discussion workflow that separates decision-making from execution planning. Use this skill whenever the user wants to discuss approach, compare options, reduce ambiguity, or jump straight into a plan for a complex change involving architecture tradeoffs, unclear requirements, multiple modules, public interfaces, or roughly 5+ files. Use it even if the user asks for a plan directly when key decisions are still unresolved. Triggers on phrases like 'let us discuss first', 'compare options', 'analyze tradeoffs', 'think it through before coding', 'review the approach', 'architecture discussion', or their Chinese equivalents."
 metadata:
   author: adonis
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Discuss Before Plan
@@ -220,7 +220,7 @@ metadata:
 2. 如果待定事项会阻塞计划，明确指出“暂不建议进入 Plan”。
 3. 如果待定事项不阻塞计划，明确说明哪些部分可先推进。
 4. 用普通对话询问用户是否进入 Plan；只有用户确认后再进入。
-5. 只有在用户要求或仓库规范要求时，才把摘要落盘为文档。路径优先遵循仓库已有约定（如 `.docs/`、`docs/plans/`），无约定时询问用户。
+5. **主动询问是否落盘**：决策摘要输出后，询问用户是否要把摘要保存为文档。复杂讨论（标准模式）默认建议保存；轻量模式可以跳过但仍应提一句。路径优先遵循仓库已有约定（如 `.docs/`、`docs/plans/`），无约定时询问用户偏好的路径。
 
 **决策摘要格式**:
 
@@ -245,7 +245,9 @@ metadata:
 - [如有未决定的事项列在这里]
 
 ---
-> 决策已基本完备。是否进入 Plan 阶段，把这些已确认决策拆成执行步骤？
+> 决策已基本完备。
+> 1. 是否需要把这份决策摘要保存为文档？（方便后续回顾和团队对齐）
+> 2. 是否进入 Plan 阶段，把这些已确认决策拆成执行步骤？
 ```
 
 ## 决策完备性信号
@@ -299,4 +301,5 @@ metadata:
 ### 转入阶段
 
 - "决策摘要如下。若你确认无误，我再把它拆成执行步骤。"
+- "这次讨论涉及的决策比较多，建议把摘要存一份文档，方便后续回顾。需要吗？"
 - "还有一个待定项会影响实现路径：[事项]。如果现在不定，后面的 plan 只能先写到一半。"
