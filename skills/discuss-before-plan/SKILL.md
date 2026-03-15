@@ -1,9 +1,9 @@
 ---
 name: discuss-before-plan
-description: "Structured pre-planning discussion workflow that separates decision-making from execution planning. Use this skill whenever the user wants to discuss approach, compare options, reduce ambiguity, or jump straight into a plan for a complex change involving architecture tradeoffs, unclear requirements, multiple modules, public interfaces, or roughly 5+ files. Use it even if the user asks for a plan directly when key decisions are still unresolved. Triggers on phrases like 'let us discuss first', 'compare options', 'analyze tradeoffs', 'think it through before coding', 'review the approach', 'architecture discussion', or their Chinese equivalents."
+description: "Structured pre-planning discussion workflow for resolving approach, tradeoffs, and scope before writing an implementation plan. Use when the user wants to discuss first, compare options, review architecture, reduce ambiguity, or asks for a plan while key decisions across architecture tradeoffs, data flow, public interfaces, unclear requirements, multiple modules, or roughly 5+ files are still unresolved. Triggers on phrases like 'discuss first', 'let us discuss first', 'compare options', 'analyze tradeoffs', 'think it through before coding', 'review the approach', 'architecture discussion', or similar Chinese wording."
 metadata:
   author: adonis
-  version: "1.3.0"
+  version: "1.5.0"
 ---
 
 # Discuss Before Plan
@@ -14,6 +14,7 @@ metadata:
 - 在关键决策未确认前，不进入 Plan Mode，不输出执行步骤，不开始实现。
 - 小型任务可走轻量模式，但仍须先完成最小决策确认。
 - 如果用户明确要求跳过讨论，先用一轮最小澄清指出剩余决策与风险；只有用户仍坚持时，才直接进入计划或执行。
+- 在输出执行步骤前，必须先输出决策摘要，并显式询问用户是否要保存这份记录；除非用户明确回答“不保存，直接继续”，否则不要默认跳过。
 - 如果当前运行环境没有显式 Plan Mode，就把“进入 Plan”理解为“开始输出执行步骤”。
 </HARD-GATE>
 
@@ -58,7 +59,8 @@ metadata:
 1. [ ] **摸底** — 读代码/文档，输出「我的理解」+ 待决策问题清单，等用户确认
 2. [ ] **讨论** — 逐个推荐方案、比较取舍、暴露风险
 3. [ ] **决策** — 形成决策记录，只记录已确认内容
-4. [ ] **转入 Plan** — 输出决策摘要，用户确认后进入 Plan 或执行步骤拆解
+4. [ ] **落盘** — 输出决策摘要，用显式问句询问用户是否保存为文档；未收到明确回复前不继续
+5. [ ] **转入 Plan** — 用户确认后进入 Plan 或执行步骤拆解
 
 ## 核心规则
 
@@ -82,7 +84,7 @@ metadata:
 
 ### 标准模式
 
-适用于复杂任务。按 Phase 1-4 顺序推进，每一轮只收敛一个决策点。
+适用于复杂任务。按 Phase 1-5 顺序推进，每一轮只收敛一个决策点。
 
 ### 轻量模式
 
@@ -110,7 +112,7 @@ metadata:
 
 ## 讨论工作流 (SOP)
 
-按 Phase 1 → 2 → 3 → 4 顺序推进。不要跳 Phase，也不要在尚未确认决策时提前写计划。
+按 Phase 1 → 2 → 3 → 4 → 5 顺序推进。不要跳 Phase，也不要在尚未确认决策时提前写计划。
 
 ### Phase 1: 摸底 (Understand)
 
@@ -206,9 +208,9 @@ metadata:
 - [仍需确认的内容]
 ```
 
-### Phase 4: 转入 Plan (Transition)
+### Phase 4: 落盘 (Persist)
 
-**目标**: 生成一份 plan-ready 的决策摘要，作为后续 Plan 或执行拆解的输入。
+**目标**: 输出决策摘要，并稳定触发一次明确的“是否保存记录”问询。**必须在本轮完成后，再进入 Phase 5。**
 
 **做什么**:
 1. 输出完整的决策摘要，包含：
@@ -219,8 +221,9 @@ metadata:
    - 仍待定的事项（如有）
 2. 如果待定事项会阻塞计划，明确指出“暂不建议进入 Plan”。
 3. 如果待定事项不阻塞计划，明确说明哪些部分可先推进。
-4. 用普通对话询问用户是否进入 Plan；只有用户确认后再进入。
-5. **主动询问是否落盘**：决策摘要输出后，询问用户是否要把摘要保存为文档。复杂讨论（标准模式）默认建议保存；轻量模式可以跳过但仍应提一句。路径优先遵循仓库已有约定（如 `.docs/`、`docs/plans/`），无约定时询问用户偏好的路径。
+4. **询问是否保存为文档**：标准模式下默认建议保存；轻量模式也必须显式问一句，不要只用建议语气带过。优先使用用户能直接回答“要 / 不要”的问句。路径优先遵循仓库已有约定（如 `.docs/`、`docs/plans/`），无约定时给出建议路径。
+5. **等用户对保存与否给出明确回复**后再进入 Phase 5。不要把落盘和转入 Plan 合并到同一轮输出。
+6. 如果用户没有回答“是否保存”，而是只回复其他信息，先追问一次保存选择，再继续。
 
 **决策摘要格式**:
 
@@ -245,10 +248,19 @@ metadata:
 - [如有未决定的事项列在这里]
 
 ---
-> 决策已基本完备。
-> 1. 是否需要把这份决策摘要保存为文档？（方便后续回顾和团队对齐）
-> 2. 是否进入 Plan 阶段，把这些已确认决策拆成执行步骤？
+> 我已经把本次已确认决策整理成可直接继续 plan 的摘要了。要不要我顺手把它保存成文档？
+> - 如果要，我建议保存到 [建议路径]。
+> - 如果不要，我就直接基于这份摘要继续拆 plan。
 ```
+
+### Phase 5: 转入 Plan (Transition)
+
+**目标**: 用户对“是否落盘”给出明确选择后，询问是否进入 Plan 或执行步骤拆解。
+
+**做什么**:
+1. 如果用户选择保存，执行保存并确认保存路径。
+2. 如果用户选择不保存，明确记录为“未落盘，按当前摘要继续”。
+3. 询问用户是否进入 Plan 阶段；只有用户确认后再进入。
 
 ## 决策完备性信号
 
@@ -265,6 +277,16 @@ metadata:
 4. **用户主动表示**: "可以了" / "就这样吧" / "开始 plan"
 
 不需要所有信号同时满足。用户主动表示时可以转入，但若仍有关键风险，应先简短提醒再继续。
+
+## 常见合理化与应对
+
+| 你可能的想法 | 现实 |
+|-------------|------|
+| "这个需求很清楚，不需要讨论" | 你认为清楚 ≠ 用户认为清楚。摸底只需 2 分钟，返工要 2 小时。 |
+| "用户说要 plan，我应该直接给 plan" | 未收敛的 plan 质量很差，做到一半发现方向不对更浪费。 |
+| "先做一版出来再迭代" | 关键决策没对齐的实现是赌博，不是迭代。 |
+| "问题太多了，我一起问效率更高" | 一次多个问题 = 用户挑最简单的回答，剩下的被忽略。逐个推进更快收敛。 |
+| "讨论差不多了，落盘这步跳过吧" | 不落盘的决策 = 没有决策。下次对话再问一遍，双方都浪费时间。 |
 
 ## 反模式 (Anti-Patterns)
 
@@ -298,8 +320,14 @@ metadata:
 - "我先把已经确认的决策整理出来，未确认的我会单独列为待定。"
 - "下面这些是已确认项；如果其中有哪条还没拍板，你直接指出。"
 
+### 落盘阶段
+
+- "我已经把本次已确认决策整理成摘要了。要不要我顺手落一份文档，方便后续继续 plan 或团队回看？"
+- "如果要保存，我建议放到 [路径]；如果不保存，我就直接基于这份摘要继续。"
+- "还有一个待定项会影响实现路径：[事项]。如果现在不定，后面的 plan 只能先写到一半。"
+
 ### 转入阶段
 
-- "决策摘要如下。若你确认无误，我再把它拆成执行步骤。"
-- "这次讨论涉及的决策比较多，建议把摘要存一份文档，方便后续回顾。需要吗？"
-- "还有一个待定项会影响实现路径：[事项]。如果现在不定，后面的 plan 只能先写到一半。"
+- "决策已保存到 [路径]。是否进入 Plan 阶段，拆成执行步骤？"
+- "我先不落盘，直接基于当前摘要继续。是否进入 Plan 阶段？"
+- "若你确认无误，我开始把这些决策拆成执行步骤。"

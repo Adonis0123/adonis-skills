@@ -1,3 +1,4 @@
 interface:
   display_name: "Discuss Before Plan"
-  short_description: "Help with Discuss Before Plan tasks"
+  short_description: "Discuss tradeoffs and resolve key decisions before writing an implementation plan."
+  default_prompt: "Help me discuss approach options and unresolved decisions before we turn them into a concrete implementation plan."
