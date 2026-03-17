@@ -22,10 +22,7 @@
     "skills:index": "turbo run skills:index --filter=@adonis-skills/web",
     "skills:validate": "turbo run skills:validate --filter=@adonis-skills/web",
     "skills:install:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
-    "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm",
-    "ruler:apply": "pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup",
-    "postinstall": "is-ci && echo 'Skipping ruler:apply in CI environment' || pnpm run ruler:apply && (is-ci && echo 'Skipping skills:sync:llm in CI environment' || pnpm run skills:sync:llm)",
-    "skills:sync:llm": "node --experimental-strip-types ./scripts/sync-llm-skills.ts"
+    "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.9.0",
