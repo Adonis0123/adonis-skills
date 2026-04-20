@@ -3,7 +3,7 @@ name: discuss-before-plan
 description: "Structured pre-planning discussion workflow for resolving approach, tradeoffs, and scope before writing an implementation plan. Use when the user wants to discuss first, compare options, review architecture, reduce ambiguity, or asks for a plan while key decisions across architecture tradeoffs, data flow, public interfaces, unclear requirements, multiple modules, or roughly 5+ files are still unresolved. Triggers on phrases like 'discuss first', 'let us discuss first', 'compare options', 'analyze tradeoffs', 'think it through before coding', 'review the approach', 'architecture discussion', or similar Chinese wording."
 metadata:
   author: adonis
-  version: "1.5.0"
+  version: "1.5.1"
 ---
 
 # Discuss Before Plan
@@ -221,7 +221,7 @@ metadata:
    - 仍待定的事项（如有）
 2. 如果待定事项会阻塞计划，明确指出“暂不建议进入 Plan”。
 3. 如果待定事项不阻塞计划，明确说明哪些部分可先推进。
-4. **询问是否保存为文档**：标准模式下默认建议保存；轻量模式也必须显式问一句，不要只用建议语气带过。优先使用用户能直接回答“要 / 不要”的问句。路径优先遵循仓库已有约定（如 `.docs/`、`docs/plans/`），无约定时给出建议路径。
+4. **询问是否保存为文档**：标准模式下默认建议保存；轻量模式也必须显式问一句，不要只用建议语气带过。优先使用用户能直接回答“要 / 不要”的问句。默认保存到 `docs/` 目录（如 `docs/`、`docs/plans/`），若仓库已有其他约定目录可沿用，但不要再使用隐藏目录如 `.docs/`。
 5. **等用户对保存与否给出明确回复**后再进入 Phase 5。不要把落盘和转入 Plan 合并到同一轮输出。
 6. 如果用户没有回答“是否保存”，而是只回复其他信息，先追问一次保存选择，再继续。
 

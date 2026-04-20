@@ -1,30 +1,50 @@
 [
   {
-    "slug": "claude-skills-sync-init",
+    "slug": "agent-symlink-init",
     "sections": [
       {
-        "raw": "在目标项目中初始化 skills 同步能力时，使用本 Skill。",
-        "heading": "Claude Skills Sync Init",
+        "raw": "Set up or migrate a repository to the symlink-based agent-skill layout.",
+        "heading": "Agent Symlink Init",
         "level": 1
       },
       {
-        "raw": "目标是在目标仓库自动落地以下能力：\n\n1. 生成 `scripts/sync-llm-skills.ts`，支持 `--source`、`--targets`、`--dry-run`。\n2. 注入 `scripts.skills:sync:llm` 命令。\n3. 自动确保 `devDependencies.is-ci` 存在（缺失时自动写入）。\n4. 以幂等方式合并 `postinstall`，默认注入 `is-ci` CI guard。\n5. 同步目标仅为 `.claude/skills`。\n6. 同步过程采用原子切换，避免复制失败时清空目标目录。\n7. 自动确保目标仓库 `.gitignore` 包含 `/.claude/skills`。",
-        "heading": "Overview",
+        "raw": "- Make `.agents/skills` the source of truth.\n- Ensure `.claude/skills` points at the repository's `.agents/skills` directory.\n- Ensure `AGENTS.md` is a symlink to `CLAUDE.md` when `CLAUDE.md` exists.\n- Remove obsolete ruler or sync automation only when it is actually present.\n- Keep the migration idempotent and non-destructive.",
+        "heading": "Outcomes",
         "level": 2
       },
       {
-        "raw": "1. 收集上下文\n- 确认目标仓库根目录（存在 `package.json`）。\n- 确认源目录是否仍使用 `.agents/skills`（默认值）。\n- 确认目标目录为 `.claude/skills`（默认且唯一目标）。\n\n2. 执行自动落地脚本\n- 在目标仓库执行：\n```bash\nnode /path/to/claude-skills-sync-init/scripts/bootstrap-sync-skills.mjs --project /path/to/target-repo\n```\n- 可选参数：\n  - `--script-name`（默认 `skills:sync:llm`）\n  - `--script-path`（默认 `scripts/sync-llm-skills.ts`）\n  - `--skip-postinstall`（跳过 postinstall 注入）\n- `--script-name` 仅允许字符集 `[A-Za-z0-9:._-]+`，非法值必须失败退出。\n\n3. 运行同步命令验证\n- 默认验证：\n```bash\npnpm run skills:sync:llm -- --dry-run\n```\n- 显式指定目标（可选）：\n```bash\npnpm run skills:sync:llm -- --targets=claude\n```\n\n4. 输出变更摘要\n- 列出新增/更新文件：\n  - `scripts/sync-llm-skills.ts`\n  - `package.json`\n  - `.gitignore`\n- 说明 `is-ci` 依赖处理结果（新增或已存在）。\n- 说明 postinstall 合并结果（新建、追加、或已存在跳过），并标注 CI guard 是否生效。\n- 说明 `.gitignore` 的 `/.claude/skills` 忽略规则处理结果（新增或已存在）。\n- 附上验证命令与执行结果。",
-        "heading": "Execution Flow",
+        "raw": "Work only from the repository root. Require either `.git/` or `package.json`.\n\nInspect these paths first:\n\n- `.agents/skills`\n- `.claude/skills`\n- `CLAUDE.md`\n- `AGENTS.md`\n- the .ruler directory\n- the sync-llm-skills.ts script under the scripts directory\n- `package.json`\n- `.gitignore`\n\nClassify the work into these modules:\n\n1. `symlink-init`\n   Run when `.claude/skills` is missing or does not point at the repository's `.agents/skills` directory, or when `AGENTS.md` should point to `CLAUDE.md` but does not.\n2. `migrate-from-ruler`\n   Run when a .ruler directory exists or `package.json` still contains ruler-related scripts or `postinstall` fragments.\n3. `migrate-from-sync`\n   Run when a sync-llm-skills.ts file exists under `scripts/` or `package.json` still contains `skills:sync:llm` or `--sync-llm`.\n\nSummarize the detected modules before making destructive changes. If the migration will delete the .ruler directory or sync scripts, tell the user exactly what will be removed.",
+        "heading": "Detect Before Editing",
         "level": 2
       },
       {
-        "raw": "- 自动落地脚本：`scripts/bootstrap-sync-skills.mjs`\n- 同步脚本模板：`assets/templates/sync-llm-skills.ts`\n- 集成检查清单：`references/integration-checklist.md`",
-        "heading": "Resources",
+        "raw": "1. Ensure `.agents/skills` exists:\n\n```bash\nmkdir -p .agents/skills\n```\n\n2. Ensure `.claude` exists:\n\n```bash\nmkdir -p .claude\n```\n\n3. If `.claude/skills` is a regular directory or file instead of a symlink, preserve it before replacing it:\n   - Prefer a backup named **.claude/skills.bak**\n   - If that backup path already exists, choose a timestamped backup name\n4. Create or refresh the symlink:\n\n```bash\nln -sfn ../.agents/skills .claude/skills\n```\n\n5. If `CLAUDE.md` exists, ensure `AGENTS.md` points to it:\n   - If `AGENTS.md` is a regular file, back it up before replacing it\n\n```bash\nln -sfn CLAUDE.md AGENTS.md\n```\n\n6. Update `.gitignore`:\n   - **Remove** any .claude/skills and AGENTS.md ignore entries if they exist. These symlinks must be tracked by git so that collaborators get them on clone.\n   - Remove any associated comments (e.g. `# Agent skills (symlinked)`, `# START Ruler Generated Files`).\n   - Do not add new ignore entries for the symlinks.",
+        "heading": "Execute `symlink-init`",
         "level": 2
       },
       {
-        "raw": "1. 仅在目标仓库根目录执行（必须可读写 `package.json`）。\n2. 保持幂等：重复执行不得重复注入命令或 postinstall 片段。\n3. 不覆盖已有 postinstall 逻辑，只做追加合并。\n4. 源目录不存在时必须失败并返回非零退出码。\n5. postinstall 去重必须做完整命令/完整脚本调用匹配，不能使用宽松子串匹配。\n6. 同步实现必须优先复制到临时目录，再切换目标目录，并在失败时尝试回滚。\n7. 若目标仓库缺少 `is-ci`，必须自动写入 `devDependencies.is-ci`，再注入 CI guard 命令。",
-        "heading": "Guardrails",
+        "raw": "Run this module only when ruler artifacts still exist.\n\n1. Remove the .ruler directory.\n2. Edit `package.json`:\n   - Remove scripts whose keys clearly belong to ruler automation, such as `ruler:apply` or `ruler:check`\n   - Remove only the ruler-related fragment from `postinstall`\n   - Remove `postinstall` entirely if nothing remains\n3. Edit `.gitignore`:\n   - Remove ruler-specific ignore entries (e.g. ruler block comments, `/CLAUDE.md`, `/AGENTS.md` if they were ruler-generated ignores)\n   - Do not re-add `/AGENTS.md` to `.gitignore` — the symlink must be tracked by git\n4. Do not delete `CLAUDE.md` unless the user explicitly asks. The goal is to replace the automation mechanism, not to discard the current source-of-truth document.",
+        "heading": "Execute `migrate-from-ruler`",
+        "level": 2
+      },
+      {
+        "raw": "Run this module only when legacy copy/sync automation is present.\n\n1. Remove the sync-llm-skills.ts file under `scripts/` if it exists.\n2. Edit `package.json`:\n   - Remove `scripts[\"skills:sync:llm\"]`\n   - Remove only the `--sync-llm` flag from `skills:test:local` if the rest of the command is still valid\n   - Remove sync-related fragments from `postinstall`\n   - Remove `postinstall` entirely if nothing remains\n3. Edit `.gitignore`:\n   - Remove the .claude/skills ignore entry and any associated comments — the symlink must be tracked by git, not ignored\n   - The old ignore was for copy-based sync artifacts; symlinks should be committed\n4. Leave `.agents/skills` contents in place. Migrate the linkage model, not the skill payload itself.",
+        "heading": "Execute `migrate-from-sync`",
+        "level": 2
+      },
+      {
+        "raw": "- Make the smallest safe change set.\n- Preserve unrelated `package.json` scripts.\n- When cleaning `postinstall`, remove only the obsolete command fragment and keep remaining commands in order.\n- Skip modules whose signals are absent.\n- If the repository already matches the target layout, report that no migration is needed instead of rewriting files.",
+        "heading": "Editing Rules",
+        "level": 2
+      },
+      {
+        "raw": "Run lightweight checks after editing:\n\n```bash\ntest -L .claude/skills && readlink .claude/skills\ntest -f CLAUDE.md && test -L AGENTS.md && readlink AGENTS.md\n```\n\nAlso inspect:\n\n- `package.json` for stale ruler or sync commands\n- `.gitignore` for duplicate or contradictory entries\n- `git diff --stat` or equivalent to summarize the migration",
+        "heading": "Verify",
+        "level": 2
+      },
+      {
+        "raw": "Return:\n\n1. Which modules ran\n2. Which files were created, updated, backed up, or removed\n3. Verification results\n4. Any follow-up action the user should consider, such as reinstalling dependencies if `postinstall` behavior changed",
+        "heading": "Report Back",
         "level": 2
       }
     ]
@@ -523,7 +543,7 @@
         "level": 3
       },
       {
-        "raw": "**目标**: 输出决策摘要，并稳定触发一次明确的“是否保存记录”问询。**必须在本轮完成后，再进入 Phase 5。**\n\n**做什么**:\n1. 输出完整的决策摘要，包含：\n   - 已确认决策\n   - 实施范围（预计影响的文件/模块）\n   - 非目标\n   - 已识别的风险及对策\n   - 仍待定的事项（如有）\n2. 如果待定事项会阻塞计划，明确指出“暂不建议进入 Plan”。\n3. 如果待定事项不阻塞计划，明确说明哪些部分可先推进。\n4. **询问是否保存为文档**：标准模式下默认建议保存；轻量模式也必须显式问一句，不要只用建议语气带过。优先使用用户能直接回答“要 / 不要”的问句。路径优先遵循仓库已有约定（如 `.docs/`、`docs/plans/`），无约定时给出建议路径。\n5. **等用户对保存与否给出明确回复**后再进入 Phase 5。不要把落盘和转入 Plan 合并到同一轮输出。\n6. 如果用户没有回答“是否保存”，而是只回复其他信息，先追问一次保存选择，再继续。\n\n**决策摘要格式**:\n\n```md\n决策摘要\n\n已确认决策\n- [编号 + 决策内容]\n\n实施范围\n- [预计影响的文件/模块列表]\n\n非目标\n- [当前不做的事项]\n\n风险与对策\n| 风险 | 对策 |\n|------|------|\n| [风险描述] | [应对方案] |\n\n待定事项\n- [如有未决定的事项列在这里]\n\n---\n> 我已经把本次已确认决策整理成可直接继续 plan 的摘要了。要不要我顺手把它保存成文档？\n> - 如果要，我建议保存到 [建议路径]。\n> - 如果不要，我就直接基于这份摘要继续拆 plan。\n```",
+        "raw": "**目标**: 输出决策摘要，并稳定触发一次明确的“是否保存记录”问询。**必须在本轮完成后，再进入 Phase 5。**\n\n**做什么**:\n1. 输出完整的决策摘要，包含：\n   - 已确认决策\n   - 实施范围（预计影响的文件/模块）\n   - 非目标\n   - 已识别的风险及对策\n   - 仍待定的事项（如有）\n2. 如果待定事项会阻塞计划，明确指出“暂不建议进入 Plan”。\n3. 如果待定事项不阻塞计划，明确说明哪些部分可先推进。\n4. **询问是否保存为文档**：标准模式下默认建议保存；轻量模式也必须显式问一句，不要只用建议语气带过。优先使用用户能直接回答“要 / 不要”的问句。默认保存到 `docs/` 目录（如 `docs/`、`docs/plans/`），若仓库已有其他约定目录可沿用，但不要再使用隐藏目录如 `.docs/`。\n5. **等用户对保存与否给出明确回复**后再进入 Phase 5。不要把落盘和转入 Plan 合并到同一轮输出。\n6. 如果用户没有回答“是否保存”，而是只回复其他信息，先追问一次保存选择，再继续。\n\n**决策摘要格式**:\n\n```md\n决策摘要\n\n已确认决策\n- [编号 + 决策内容]\n\n实施范围\n- [预计影响的文件/模块列表]\n\n非目标\n- [当前不做的事项]\n\n风险与对策\n| 风险 | 对策 |\n|------|------|\n| [风险描述] | [应对方案] |\n\n待定事项\n- [如有未决定的事项列在这里]\n\n---\n> 我已经把本次已确认决策整理成可直接继续 plan 的摘要了。要不要我顺手把它保存成文档？\n> - 如果要，我建议保存到 [建议路径]。\n> - 如果不要，我就直接基于这份摘要继续拆 plan。\n```",
         "heading": "Phase 4: 落盘 (Persist)",
         "level": 3
       },

@@ -1,16 +1,16 @@
 [
   {
-    "slug": "claude-skills-sync-init",
-    "name": "claude-skills-sync-init",
-    "description": "Bootstrap Claude skill-sync automation in any repository. Use when users ask to set up `.agents/skills` to `.claude/skills` syncing, generate `skills:sync:*` scripts, inject package.json scripts/postinstall hooks, or initialize this sync workflow in a new or existing project.",
+    "slug": "agent-symlink-init",
+    "name": "agent-symlink-init",
+    "description": "Initialize or migrate agent-skill symlinks in any repository. Use when a project needs `.claude/skills` linked to `.agents/skills`, `AGENTS.md` linked to `CLAUDE.md`, migration away from `.ruler`-based AI rules, or removal of legacy `sync-llm-skills` copy/sync setups. Trigger on requests about Claude/Codex skill symlinks, AGENTS/CLAUDE symlinks, `.claude/skills` setup, replacing copied skill folders with symlinks, or cleaning old ruler/sync automation.",
     "metadata": {
-      "author": "adonis"
+      "author": "Adonis"
     },
     "files": {
-      "hasReferences": true,
+      "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-03-17T06:35:01.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -57,13 +57,13 @@
     "description": "Structured pre-planning discussion workflow for resolving approach, tradeoffs, and scope before writing an implementation plan. Use when the user wants to discuss first, compare options, review architecture, reduce ambiguity, or asks for a plan while key decisions across architecture tradeoffs, data flow, public interfaces, unclear requirements, multiple modules, or roughly 5+ files are still unresolved. Triggers on phrases like 'discuss first', 'let us discuss first', 'compare options', 'analyze tradeoffs', 'think it through before coding', 'review the approach', 'architecture discussion', or similar Chinese wording.",
     "metadata": {
       "author": "adonis",
-      "version": "1.5.0"
+      "version": "1.5.1"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-12T08:19:52.000Z"
+    "updatedAt": "2026-03-15T10:39:56.000Z"
   },
   {
     "slug": "enforce-lf",
