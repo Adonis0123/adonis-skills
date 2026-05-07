@@ -1,4 +1,4 @@
 interface:
   display_name: "Discuss Before Plan"
-  short_description: "Discuss tradeoffs and resolve key decisions before writing an implementation plan."
-  default_prompt: "Help me discuss approach options and unresolved decisions before we turn them into a concrete implementation plan."
+  short_description: "Discuss, decide, then plan."
+  default_prompt: "Use $discuss-before-plan to resolve decisions, save the spec if needed, and only then write an implementation plan."

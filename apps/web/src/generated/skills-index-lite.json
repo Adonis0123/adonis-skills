@@ -54,16 +54,16 @@
   {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
-    "description": "Structured pre-planning discussion workflow for resolving approach, tradeoffs, and scope before writing an implementation plan. Use when the user wants to discuss first, compare options, review architecture, reduce ambiguity, or asks for a plan while key decisions across architecture tradeoffs, data flow, public interfaces, unclear requirements, multiple modules, or roughly 5+ files are still unresolved. Triggers on phrases like 'discuss first', 'let us discuss first', 'compare options', 'analyze tradeoffs', 'think it through before coding', 'review the approach', 'architecture discussion', or similar Chinese wording.",
+    "description": "Enforces 'decide then plan' discipline - the pre-planning decision gate. Use when the user asks for a plan or starts a change while key decisions are unresolved: architecture tradeoffs, data flow, public interfaces, unclear requirements, multi-module scope, or roughly 5+ files affected. Also triggers when the user explicitly wants to discuss, compare options, or review architecture before committing. Core job: reduce incorrect-execution cost by confirming decisions before producing executable plans.",
     "metadata": {
       "author": "adonis",
-      "version": "1.5.1"
+      "version": "2.1.0"
     },
     "files": {
-      "hasReferences": false,
+      "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-15T10:39:56.000Z"
+    "updatedAt": "2026-04-20T05:49:58.000Z"
   },
   {
     "slug": "enforce-lf",
