@@ -68,7 +68,7 @@ Use after implementing fixes so a different reviewer can re-review without inher
 
 Copied verbatim from the Fix Handoff Packet. The fixer MUST NOT summarize, paraphrase, or rewrite these — the re-reviewer evaluates the fix against this snapshot, not against the fixer's claimed status. Without the snapshot, an isolated re-reviewer would have to trust the fixer for what each finding even meant; that breaks the protocol's portability claim.
 
-| ID | Severity | Original finding | Original evidence | Required fix | Acceptance check | Non-goals (per packet) |
+| ID | Severity | Original finding | Original evidence | Required fix | Acceptance check | Relevant constraints / non-goals |
 |---|---|---|---|---|---|---|
 | F1 | ... | ... | ... | ... | ... | ... |
 

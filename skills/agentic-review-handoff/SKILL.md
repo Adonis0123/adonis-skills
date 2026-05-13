@@ -27,7 +27,7 @@ metadata:
 
 5. Handle review-fix-review loops.
 
-   - Review stage: verify team/reviewer feedback as defect reports, not ground truth. Use first principles by default: goal, constraints, invariants, evidence, assumptions, and concrete failure modes. Apply DDD / high-cohesion / low-coupling checks when architecture, domain rules, or module boundaries are involved. Use official or primary sources only when the claim depends on external API, framework, browser, security, payment, legal, or platform behavior.
+   - Review stage: verify team/reviewer feedback as defect reports, not ground truth. Use a lightweight first-principles frame by default: goal, constraints, invariants, evidence, assumptions, and concrete failure modes. Escalate to the deeper DDD / high-cohesion / low-coupling lens only when architecture, domain rules, or module boundaries are involved. Use official or primary sources only when the claim depends on external API, framework, browser, security, payment, legal, or platform behavior.
    - Fix handoff stage: when the user wants to send the review result to the original implementer or another agent, output a Fix Handoff Packet. See `references/review-loop-packets.md`.
    - Fix stage: only fix findings already marked valid or partially valid. Do not broaden scope. After fixing, output a Fix Completion Packet for the next reviewer. See `references/review-loop-packets.md`.
    - Re-review stage: after fixes, review the changed fix scope and nearby regression surface.
@@ -97,7 +97,7 @@ If you find yourself adding a P2 or P3 to the out-of-scope section, delete it â€
 
 ### Deep Review
 
-Enable only when the user explicitly asks for first principles, DDD, high cohesion/low coupling, industry comparison, source-backed research, or when the change is architectural, cross-module, or domain-rule heavy.
+Enable the full deep-review lens only when the user explicitly asks for DDD, high cohesion/low coupling, industry comparison, source-backed research, or when the change is architectural, cross-module, or domain-rule heavy. A lightweight first-principles frame is allowed in normal review; do not turn every ordinary review into a full architecture review.
 
 Do not use these labels as slogans. Convert them into evidence-backed checks:
 
