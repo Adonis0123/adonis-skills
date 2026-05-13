@@ -29,7 +29,7 @@ metadata:
 
    - Review stage: verify team/reviewer feedback as defect reports, not ground truth. Use a lightweight first-principles frame by default: goal, constraints, invariants, evidence, assumptions, and concrete failure modes. Escalate to the deeper DDD / high-cohesion / low-coupling lens only when architecture, domain rules, or module boundaries are involved. Use official or primary sources only when the claim depends on external API, framework, browser, security, payment, legal, or platform behavior.
    - Fix handoff stage: when the user wants to send the review result to the original implementer or another agent, output a Fix Handoff Packet. See `references/review-loop-packets.md`.
-   - Fix stage: only fix findings already marked valid or partially valid. Do not broaden scope. After fixing, output a Fix Completion Packet for the next reviewer. See `references/review-loop-packets.md`.
+   - Fix stage: only fix findings already marked valid or partially valid. Do not broaden scope. Always end with a Fix Completion Packet for the next reviewer; do not replace it with a prose-only summary. If the user asks for a "fix conclusion", "修改结论", "修复结论", or "给出结论", satisfy that request in the packet's `Fix Conclusion` section while following the active system, developer, repository, and user language instructions. See `references/review-loop-packets.md`.
    - Re-review stage: after fixes, review the changed fix scope and nearby regression surface.
    - Do not restart a full review unless the user asks or the fix changes the architecture/scope.
    - If a prior reviewer claim is wrong, explain why with evidence instead of defending the implementation by default.
@@ -48,7 +48,7 @@ If the user does not name the stage, infer it from the request:
 |---|---|---|
 | "review", "second pair of eyes", "audit this diff", or pasted team feedback | review / feedback validation | Findings or feedback validation, optionally followed by a Fix Handoff Packet |
 | "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief | fix handoff | Fix Handoff Packet |
-| "fix according to this packet" or "apply only these validated findings" | fix | Code/doc changes plus Fix Completion Packet |
+| "fix according to this packet", "apply only these validated findings", "fix it", "apply the valid feedback", "修改吧", "改吧", "修一下", "按这个改", "按 review 意见修", "修改之后给出结论", "修完给结论", or "改完给我结论" | fix | Code/doc changes plus Fix Completion Packet with `Fix Conclusion` |
 | "fixed, review again", "改好了再看", or provides a Fix Completion Packet | re-review | Prior findings reassessment, new fix-induced findings, regression surface, verdict |
 
 ### Mixed-stage requests

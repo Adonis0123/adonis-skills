@@ -47,7 +47,7 @@ Each finding must be self-contained: a fixer who has only this packet and repo a
 
 ## Required Fix Agent Output
 
-After fixing, output a Fix Completion Packet with changed files, finding status, verification results, and remaining risk.
+After fixing, always output a Fix Completion Packet. The first section must be `Fix Conclusion`, so the user gets a stable modification conclusion even for small fixes.
 ```
 
 ## Fix Completion Packet
@@ -56,6 +56,14 @@ Use after implementing fixes so a different reviewer can re-review without inher
 
 ```md
 # Fix Completion Packet
+
+## Fix Conclusion
+
+- Overall status: all validated findings fixed / partially fixed / blocked / not fixed
+- Scope changed: files changed, one line
+- Not changed: invalid, out-of-scope, blocked, or intentionally deferred findings and why
+- Verification: passed / failed / not run, with the command or reason
+- Re-review focus: the exact finding IDs or nearby regression surface the next reviewer should check
 
 ## Fix Scope
 
@@ -76,7 +84,7 @@ Copied verbatim from the Fix Handoff Packet. The fixer MUST NOT summarize, parap
 
 | Finding ID | Claimed status | Files changed | Verification |
 |---|---|---|---|
-| F1 | resolved / partially resolved / not fixed | path list | command/result or not run + why |
+| F1 | resolved / partially resolved / not resolved / not changed (invalid or out of scope) / blocked | path list | command/result or not run + why |
 
 ## Changes Made
 
