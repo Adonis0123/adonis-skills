@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentic Review Handoff"
+  short_description: "Prepare and run evidence-first agent reviews."
+  default_prompt: "Use $agentic-review-handoff to prepare a review handoff packet and run an evidence-first read-only review."

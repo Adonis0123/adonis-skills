@@ -11,3 +11,6 @@ coverage
 *.log
 
 /.claude/settings.local.json
+
+# Local skill-creator iteration workspaces (snapshots, benchmark runs, eval outputs)
+/.skill-creator-workspaces/

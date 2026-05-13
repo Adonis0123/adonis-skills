@@ -13,6 +13,18 @@
     "updatedAt": "2026-03-17T06:35:01.000Z"
   },
   {
+    "slug": "agentic-review-handoff",
+    "name": "agentic-review-handoff",
+    "description": "Cross-agent code review handoff. Use when the user asks for an independent, read-only 'second pair of eyes' pass on a diff/branch/PR another agent (Codex, Cursor) or a teammate just implemented. Covers four modes: reviewing a staged/working-tree/pasted diff as second/independent/final reviewer; validating another reviewer's findings claim-by-claim against the code; scoped review-fix-review loop after a fix; cross-module deep review using first-principles, DDD, or cohesion-coupling reasoning. Do NOT use for refactoring or writing code yourself, polishing review-comment wording, generic perf/SQL/style questions unrelated to a recent implementation, or when the user names a different review skill (e.g. staged-changes-review, code-review-business).",
+    "metadata": {
+      "author": "adonis"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "code-inspector-init",
     "name": "code-inspector-init",
     "description": "Set up or migrate code-inspector-plugin across modern frontend frameworks. Use when you need click-to-source IDE navigation, hotkey customization, or inspector troubleshooting.",
@@ -39,19 +51,6 @@
     "updatedAt": "2026-03-09T16:14:12.000Z"
   },
   {
-    "slug": "css-tailwind-styling",
-    "name": "css-tailwind-styling",
-    "description": "Expert guidance for writing clean, performant CSS and Tailwind CSS. Use when creating styles, designing components, optimizing performance, or establishing styling conventions. Covers modern CSS features, Tailwind utility patterns, responsive design, accessibility, and team collaboration standards.",
-    "metadata": {
-      "author": "adonis"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
-  },
-  {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
     "description": "Enforces 'decide then plan' discipline - the pre-planning decision gate. Use when the user asks for a plan or starts a change while key decisions are unresolved: architecture tradeoffs, data flow, public interfaces, unclear requirements, multi-module scope, or roughly 5+ files affected. Also triggers when the user explicitly wants to discuss, compare options, or review architecture before committing. Core job: reduce incorrect-execution cost by confirming decisions before producing executable plans.",
@@ -63,7 +62,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-04-20T05:49:58.000Z"
+    "updatedAt": "2026-05-07T09:02:19.000Z"
   },
   {
     "slug": "enforce-lf",
@@ -110,52 +109,6 @@
     "slug": "lingui-workflow",
     "name": "lingui-workflow",
     "description": "Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.",
-    "metadata": {
-      "author": "adonis"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
-  },
-  {
-    "slug": "ruler-rules-init",
-    "name": "ruler-rules-init",
-    "description": "Migrate and bootstrap Ruler-based AI rules across repositories with English-first templates, preset-based project detection, and safe, idempotent setup. Use when creating or standardizing `.ruler/*` files, generating `AGENTS.md`/`CLAUDE.md`, wiring `ruler:apply` into `package.json`, adding generated-file ignores in `.gitignore`, and designing `applyTo` scoping patterns such as `**` and `web/**`.",
-    "metadata": {
-      "author": "adonis"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
-  },
-  {
-    "slug": "staged-changes-review",
-    "name": "staged-changes-review",
-    "description": "Checklist-driven review of staged Git changes with deterministic rule scanning and semantic analysis. Use when the user wants to review staged changes, check for errors before commit, or validate code quality before committing.",
-    "metadata": {
-      "author": "adonis",
-      "version": "2.3.0"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z",
-    "allowedTools": [
-      "Bash",
-      "Read",
-      "Grep",
-      "Glob"
-    ]
-  },
-  {
-    "slug": "staged-review-validator",
-    "name": "staged-review-validator",
-    "description": "Validate staged-changes-review findings with evidence-based verdicts and minimal-fix guidance. Use when you need to confirm whether each reported issue is valid and actionable.",
     "metadata": {
       "author": "adonis"
     },
