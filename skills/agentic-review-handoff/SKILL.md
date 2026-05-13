@@ -1,6 +1,6 @@
 ---
 name: agentic-review-handoff
-description: "Cross-agent code review handoff. Use when the user asks for an independent, read-only 'second pair of eyes' pass on a diff/branch/PR another agent (Codex, Cursor) or a teammate just implemented. Covers four modes: reviewing a staged/working-tree/pasted diff as second/independent/final reviewer; validating another reviewer's findings claim-by-claim against the code; scoped review-fix-review loop after a fix; cross-module deep review using first-principles, DDD, or cohesion-coupling reasoning. Do NOT use for refactoring or writing code yourself, polishing review-comment wording, generic perf/SQL/style questions unrelated to a recent implementation, or when the user names a different review skill (e.g. staged-changes-review, code-review-business)."
+description: "Cross-agent code review handoff and review-fix-re-review loop. Use when the user asks for an independent, read-only 'second pair of eyes' pass on a diff/branch/PR another agent (Codex, Cursor) or a teammate implemented; asks to verify team/reviewer feedback before fixing; asks to hand verified findings to a fixer; says a fix is done and wants scoped re-review; or asks for first-principles, DDD, high-cohesion/low-coupling review. Do NOT use for ordinary implementation, generic staged-change review, polishing review-comment wording, generic perf/SQL/style questions unrelated to a recent implementation, or when the user names a different review skill."
 metadata:
   author: adonis
 ---
@@ -9,20 +9,28 @@ metadata:
 
 ## Workflow
 
-1. State the scope, then proceed.
+1. State the stage and scope, then proceed.
 
+   - Stage is one of: review, feedback validation, fix handoff, fix, or re-review.
    - Name the exact scope: staged diff, working tree diff, full branch diff, generated artifacts, docs-only, or specific files.
    - If scope is missing, reconstruct the minimum scope from the diff / file paths / prior findings the user gave you and proceed with explicit assumption labels. Asking a clarifying question is a last resort, only when no defensible scoped output is possible.
 
-2. Use a handoff packet when the change is medium/large or the user asks for final review. See `references/handoff-packet.md`. For tiny reviews, skip the packet but still state the scope.
+2. Use the right packet.
 
-3. Review is read-only by default. Do not edit files, commit, push, or rebase unless the user explicitly switches to fix mode. Prefer code-level evidence over intent summaries. If verification is blocked, name what was not verified and why.
+   - Use `references/handoff-packet.md` when preparing a reviewer to inspect a medium/large change.
+   - Use `references/review-loop-packets.md` when handing validated findings to a fixer, or when handing a completed fix to a re-reviewer.
+   - For tiny reviews, skip packet templates but still state the stage and scope.
+
+3. Review and re-review are read-only by default. Do not edit files, commit, push, or rebase unless the user explicitly switches to fix stage. In fix stage, change only validated findings and still avoid commit/push/rebase unless explicitly requested. Prefer code-level evidence over intent summaries. If verification is blocked, name what was not verified and why.
 
 4. Output findings using the review contract in `references/review-contract.md` — findings first, severity + file:line + Source tag + impact + fix per finding. If no issues, write `No findings` plus checks run and residual risk.
 
 5. Handle review-fix-review loops.
 
-   - After fixes, review the changed fix scope and nearby regression surface.
+   - Review stage: verify team/reviewer feedback as defect reports, not ground truth. Use first principles by default: goal, constraints, invariants, evidence, assumptions, and concrete failure modes. Apply DDD / high-cohesion / low-coupling checks when architecture, domain rules, or module boundaries are involved. Use official or primary sources only when the claim depends on external API, framework, browser, security, payment, legal, or platform behavior.
+   - Fix handoff stage: when the user wants to send the review result to the original implementer or another agent, output a Fix Handoff Packet. See `references/review-loop-packets.md`.
+   - Fix stage: only fix findings already marked valid or partially valid. Do not broaden scope. After fixing, output a Fix Completion Packet for the next reviewer. See `references/review-loop-packets.md`.
+   - Re-review stage: after fixes, review the changed fix scope and nearby regression surface.
    - Do not restart a full review unless the user asks or the fix changes the architecture/scope.
    - If a prior reviewer claim is wrong, explain why with evidence instead of defending the implementation by default.
    - Output order is fixed so the user can scan it the same way every loop:
@@ -31,6 +39,26 @@ metadata:
      3. New findings introduced by the fix or surfaced by adjacency.
      4. Regression surface list — call sites or behaviors not changed but at risk because of the fix.
      5. Single verdict.
+
+## Stage Defaults
+
+If the user does not name the stage, infer it from the request:
+
+| User signal | Stage | Required output |
+|---|---|---|
+| "review", "second pair of eyes", "audit this diff", or pasted team feedback | review / feedback validation | Findings or feedback validation, optionally followed by a Fix Handoff Packet |
+| "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief | fix handoff | Fix Handoff Packet |
+| "fix according to this packet" or "apply only these validated findings" | fix | Code/doc changes plus Fix Completion Packet |
+| "fixed, review again", "改好了再看", or provides a Fix Completion Packet | re-review | Prior findings reassessment, new fix-induced findings, regression surface, verdict |
+
+### Mixed-stage requests
+
+When one user message combines review/validation with a fix request (e.g. "review this then fix it", "validate this feedback and apply the valid parts"), execute stages sequentially in this order:
+
+1. Finish review or feedback validation with findings, verdict, and a Fix Handoff Packet.
+2. Only then enter fix stage for validated findings, and emit a Fix Completion Packet.
+
+Do not merge review evidence and fix changes into one unstructured response. Merging stages destroys the portability the packet design depends on — a later re-reviewer cannot independently re-attest findings if there is no Fix Handoff Packet to anchor them. If the user pushes back on the sequencing, name the cost ("merging stages means a later re-reviewer can't independently re-attest findings") and let them decide. Free-form "rewrite this function" requests not tied to a validated finding are not a stage switch — defer them as a separate implementation task.
 
 ## Review Modes
 
