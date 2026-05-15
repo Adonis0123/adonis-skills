@@ -6,7 +6,7 @@
       "id": 1,
       "name": "scenario-A-reviewer-initiated-full-loop",
       "prompt": "我刚改了 apps/api/cart-handler.ts，给 /api/cart 加了 PATCH 端点和 3 条单测，目前已经 git add 但没 commit。你帮我 review 一下当前 staged diff。仓库根是 ${MOCK_REPO}，分支 feat/cart-patch。review 完顺手把要修的 finding 整理成一个能直接给 codex 的 fix handoff 包。diff 摘要：新增 PATCH /api/cart 路由处理 quantity 字段更新，含基本输入校验，但没有处理 quantity=0 应该删除条目的边界情况，单测也没覆盖该 case。",
-      "expected_output": "一个 packet 文件创建在 ${MOCK_REPO}/.review-handoff/active/feat-cart-patch__<utc_stamp>__<scope_slug>.md，包含 # Review Intake → # Review Findings → # Fix Handoff 三个 H1 段（不应包含 # Review Handoff，因为 reviewer 没有 implementer 上下文）。Findings 至少应识别 quantity=0 边界。frontmatter 含 last_anchor=fix_handoff、lifecycle_state=in_progress、round=1。",
+      "expected_output": "一个 packet 文件创建在 ${MOCK_REPO}/.review-handoff/active/feat-cart-patch/<local_minute>-<scope_slug>.md，其中文件名时间格式为 YYYY-MM-DD_HH-mm（例如 2026-05-15_08-30，精确到分钟，本地时间），包含 # Review Intake → # Review Findings → # Fix Handoff 三个 H1 段（不应包含 # Review Handoff，因为 reviewer 没有 implementer 上下文）。Findings 至少应识别 quantity=0 边界。frontmatter 含 last_anchor=fix_handoff、lifecycle_state=in_progress、round=1。",
       "files": []
     },
     {
@@ -20,14 +20,14 @@
       "id": 3,
       "name": "scenario-D-implementer-initiated-handoff",
       "prompt": "我（codex 角色）刚写完 PaymentValidator 类，三个公开方法 validateCard / validateCVV / validateExpiry，每个都有单测。代码 diff 已经 staged 在 ${MOCK_REPO}（分支 feat/payment-validator）。请创建 review handoff packet，让 reviewer 接手。Goal：把信用卡基本字段校验从 checkout-form 中独立出来形成可测试单元；非 goals：不引入第三方依赖；verification 是 vitest run packages/payment 全绿。",
-      "expected_output": "创建 ${MOCK_REPO}/.review-handoff/active/feat-payment-validator__<utc_stamp>__<scope_slug>.md，首段是 # Review Handoff（含 Goal / Review Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions 6 个子节）。不包含 # Review Findings 或 # Review Intake。frontmatter last_anchor=review_handoff、lifecycle_state=in_progress、round=1。",
+      "expected_output": "创建 ${MOCK_REPO}/.review-handoff/active/feat-payment-validator/<local_minute>-<scope_slug>.md，其中文件名时间格式为 YYYY-MM-DD_HH-mm（精确到分钟，本地时间）；首段是 # Review Handoff（含 Goal / Review Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions 6 个子节）。不包含 # Review Findings 或 # Review Intake。frontmatter last_anchor=review_handoff、lifecycle_state=in_progress、round=1。",
       "files": []
     },
     {
       "id": 4,
       "name": "scenario-E-subdir-cwd-still-hits-root-inbox",
       "prompt": "我的 cwd 是 ${MOCK_REPO}/apps/web/src/components/auth/，现在对当前 staged diff 做 review，diff 改的是 RegisterForm.tsx 的密码强度校验逻辑（之前要求 8 字符以上，现改成 12 字符且必须含数字+特殊字符）。仓库根本身在 ${MOCK_REPO}（不是 apps/web/），我已经 git add 了改动。",
-      "expected_output": "Skill 必须先用 git rev-parse --show-toplevel 解析到 ${MOCK_REPO}，packet 文件创建路径必须是 ${MOCK_REPO}/.review-handoff/active/，**不**在 ${MOCK_REPO}/apps/web/.review-handoff/ 或任何其他位置。Packet 内容应是 reviewer-initiated 路径（# Review Intake → # Review Findings → # Fix Handoff，不写 # Review Handoff）。",
+      "expected_output": "Skill 必须先用 git rev-parse --show-toplevel 解析到 ${MOCK_REPO}，packet 文件创建路径必须是 ${MOCK_REPO}/.review-handoff/active/<branch_slug>/，**不**在 ${MOCK_REPO}/apps/web/.review-handoff/ 或任何其他位置。Packet 内容应是 reviewer-initiated 路径（# Review Intake → # Review Findings → # Fix Handoff，不写 # Review Handoff）。",
       "files": []
     },
     {

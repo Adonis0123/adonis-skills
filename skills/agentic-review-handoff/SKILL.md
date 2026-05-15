@@ -10,6 +10,15 @@ metadata:
 
 Persistent packet protocol that lets two agents (typically Claude Code as reviewer + Codex as implementer/fixer) hand a review loop back and forth via a file artifact instead of manual copy-paste. Each review→fix→re-review loop is one append-only markdown file under `$repo_root/.review-handoff/active/`.
 
+## Fast Path
+
+For ordinary review / fix / re-review turns, use this `SKILL.md` only. Do not preload all references. Open a reference only when the current turn needs its details:
+
+- packet shape or template uncertainty → `references/packet-anatomy.md`
+- lifecycle, naming, archive, branch, or concurrency edge case → `references/packet-addressing.md`
+- severity / source / verdict / feedback-validation / deep-review details → `references/review-contract.md`
+- example diffing or exact table shape uncertainty → `references/example-packet.md`
+
 ## Read-only Boundary (Important)
 
 This skill historically said "review/re-review are read-only by default; do not edit files." That rule still holds for the **subject of review** (source / docs / product / tests / configs being reviewed) but is **explicitly overridden** for one path: writing to the packet artifact itself.
@@ -36,8 +45,9 @@ Before writing any output, run packet addressing exactly in this order. These st
      like apps/web/, and a relative path would create a second inbox or miss the root one.
 1. branch=$(git rev-parse --abbrev-ref HEAD)
    branch_slug = lowercase(branch with "/" and "\" replaced by "-")
-2. List $repo_root/.review-handoff/active/${branch_slug}__*.md, sort ascending by filename.
-   The utc-stamp in the filename guarantees lexical sort = chronological sort.
+2. List $repo_root/.review-handoff/active/${branch_slug}/*.md, sort ascending by filename.
+   File names use local minute time plus scope: `YYYY-MM-DD_HH-mm-<scope_slug>.md`.
+   The fixed-width local minute prefix guarantees lexical sort = chronological sort within the branch folder.
 3. Take the last (newest) one:
    - Exists → read the whole file; the last H1 anchor + frontmatter tells you which
      section to append next (see Stage transitions below).
@@ -62,7 +72,7 @@ Before writing any output, run packet addressing exactly in this order. These st
    but still verify it lives under $repo_root/.review-handoff/.
 ```
 
-If `$repo_root/.review-handoff/active/` does not exist yet, create it (and `archive/` alongside) before writing the first packet. Also ensure the `.git/info/exclude` line described above is in place.
+Before writing the first packet for a branch, create `$repo_root/.review-handoff/active/${branch_slug}/` and `$repo_root/.review-handoff/archive/${branch_slug}/` if needed. Also ensure the `.git/info/exclude` line described above is in place.
 
 ### 3. Append the stage's required H1 section group, then atomically rewrite frontmatter
 
@@ -76,12 +86,9 @@ Two write rules govern every packet edit:
   Do **not** stop after a single H1 if the stage requires more — partial groups break the auto-resume chain (e.g. reviewer stopping after `# Review Intake` leaves the fixer nothing to act on).
 - **Frontmatter is metadata; rewrite it atomically once per stage entry.** After appending the stage's H1 group, rewrite the entire YAML frontmatter to update `updated`, `last_anchor` (= the **last** H1 you just wrote), `lifecycle_state`, and (when entering a new round) `round`. Rewriting frontmatter is **not** a violation of append-only.
 
-### 4. Use the right reference
+### 4. Use references only on demand
 
-- `references/packet-anatomy.md` — full template of one packet file from `# Review Handoff` (or `# Review Intake`) through the final `# Re-review`. Use this when authoring or extending a packet.
-- `references/packet-addressing.md` — frontmatter field reference, naming format, lifecycle_state derivation table, archive triggers, common edge cases. Use when you need to confirm which `lifecycle_state` value a verdict implies, or to handle multi-round / branch-switch / subdirectory cwd cases.
-- `references/review-contract.md` — the unchanged protocol layer: severity ladder (P0–P3 + Preference), Source tag taxonomy, Verdict vocabulary, Feedback Validation Format, Deep Review lens. Findings inside a packet always follow this contract.
-- `references/example-packet.md` — fully-worked canonical example showing one BLOCKED → PASS round-2 cycle, including the exact 8-column unified-table verbatim copy and the optional 9th `Notes` column. Diff your own packet against it when you're unsure of the format.
+Use the Fast Path map above. Loading references is optional and should be tied to a concrete uncertainty; routine turns should not read all reference files.
 
 ### 5. Run the loop
 
@@ -107,14 +114,14 @@ When the very first review finds nothing or only `Preference`-level items, the r
 
 | Verdict in `# Review Findings` | Action | `last_anchor` | `lifecycle_state` | File location |
 |---|---|---|---|---|
-| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<file> $repo_root/.review-handoff/archive/<file>` | `review_findings` | `archived` | `archive/` |
+| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>` | `review_findings` | `archived` | `archive/` |
 | `PASS_WITH_CONCERNS` / `BLOCKED` | Continue to `# Fix Handoff` — there are findings to fix. | `review_findings` | `in_progress` | `active/` |
 
 ### Trigger 2: After every `# Re-review` (or `# Re-review (round N)`)
 
 | Re-review Verdict | Action | `last_anchor` | `lifecycle_state` | File location |
 |---|---|---|---|---|
-| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<file> $repo_root/.review-handoff/archive/<file>` | `re_review` | `archived` | `archive/` |
+| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>` | `re_review` | `archived` | `archive/` |
 | `PASS_WITH_CONCERNS` | **Do not archive.** Stay in `active/`. Tell the user the packet is parked and any "fix it" / "修一下" / "改吧" will auto-continue to round N+1; manual `mv` to archive only on the user's explicit "drop the concerns" decision. | `re_review` | `awaiting_user_decision` | `active/` |
 | `BLOCKED` | Do not archive. Wait for fixer to start the next round. | `re_review` | `blocked` | `active/` |
 
@@ -144,41 +151,9 @@ Do not merge review evidence and fix changes into one unstructured response. Mer
 
 ## Review Modes
 
-### Standard Review
-
-Use for normal staged, working-tree, or final implementation review. Check:
-
-- Scope correctness: reviewer is looking at the intended diff.
-- Functional correctness: behavior matches the request/spec.
-- Regression risk: unchanged contracts remain true.
-- Error handling and boundary cases.
-- Test coverage and verification evidence.
-- Security/privacy concerns when data, auth, payment, file, or network boundaries are touched.
-
-### Feedback Validation
-
-Use when the user pastes feedback from another reviewer or team. Treat the feedback as a defect report, not ground truth. For each claim:
-
-- Verify against code, docs, diff, tests, or runtime evidence.
-- Classify as `valid`, `partially valid`, `invalid`, or `hypothesis`.
-- Explain the minimum fix only for valid or partially valid issues.
-- If the claim confuses final file state with execution timeline, call that out explicitly.
-
-Scope discipline: do not add new findings beyond the claims the user pasted. Two exceptions are allowed:
-
-- Safety-critical issues you happened to see in the same snippet — meaning P0 or P1 severity in the domains of security, data loss, payment, auth, or privacy. Maintainability, style, missing returns on dead code paths, and "while we're here" P2/P3 ideas do NOT qualify. Surface real safety-critical findings in a clearly separated section labelled "Out-of-scope findings".
-- The user explicitly asked to "also look for other issues" or equivalent.
-
-If you find yourself adding a P2 or P3 to the out-of-scope section, delete it — that is the exact failure mode this rule exists to prevent.
-
-### Deep Review
-
-Enable the full deep-review lens only when the user explicitly asks for DDD, high cohesion/low coupling, industry comparison, source-backed research, or when the change is architectural, cross-module, or domain-rule heavy. A lightweight first-principles frame is allowed in normal review. Convert these labels into evidence-backed checks (see `references/review-contract.md`):
-
-- First principles: goal, constraints, invariants, evidence, assumptions, concrete failure modes.
-- DDD: core domain, ubiquitous language, bounded context, rule ownership, explicit cross-context mapping.
-- Cohesion/coupling: change locality, dependency direction, duplicated rules, hidden coupling, interface size.
-- Source-driven check: official or primary sources only, with `Source:` tag set to `verified from docs` only when you actually loaded the doc this session.
+- Standard review checks scope, correctness, regression risk, boundaries, verification, and security/privacy when relevant.
+- Feedback validation treats pasted feedback as a defect report, not ground truth; verify each claim and fix only valid / partially valid items.
+- Deep review is opt-in for DDD, high cohesion / low coupling, industry comparison, source-backed research, or architectural / cross-module risk. Use `references/review-contract.md` for the full rubric only when these details are needed.
 
 ## Guardrails
 

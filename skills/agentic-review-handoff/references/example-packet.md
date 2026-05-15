@@ -13,7 +13,7 @@ This file is purely documentation. It is **not** loaded into runtime context for
 
 ```md
 ---
-packet_id: feat-cart-patch__20260514T080000Z__cart-quantity
+packet_id: feat-cart-patch/2026-05-14_08-00-cart-quantity
 branch: feat/cart-patch
 scope: cart-quantity
 created: 2026-05-14T08:00:00Z

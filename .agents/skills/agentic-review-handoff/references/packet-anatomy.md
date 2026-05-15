@@ -3,13 +3,13 @@
 Full template of a single review→fix→re-review packet. One packet file per loop, lives at:
 
 ```
-$repo_root/.review-handoff/active/<branch_slug>__<utc_stamp>__<scope_slug>.md
+$repo_root/.review-handoff/active/<branch_slug>/<local_minute>-<scope_slug>.md
 ```
 
 After PASS / NO_FINDINGS, it is moved (by the reviewer) to:
 
 ```
-$repo_root/.review-handoff/archive/<branch_slug>__<utc_stamp>__<scope_slug>.md
+$repo_root/.review-handoff/archive/<branch_slug>/<local_minute>-<scope_slug>.md
 ```
 
 This file replaces the old `handoff-packet.md` and `review-loop-packets.md`. The packet is one linear narrative — read top to bottom and you see the entire loop.
@@ -18,7 +18,7 @@ This file replaces the old `handoff-packet.md` and `review-loop-packets.md`. The
 
 ```yaml
 ---
-packet_id: feat-payment__20260515T143012Z__refactor-checkout
+packet_id: feat-payment/2026-05-15_14-30-refactor-checkout
 branch: feat/payment
 scope: refactor-checkout
 created: 2026-05-15T14:30:12Z
@@ -330,7 +330,7 @@ For a one-file, one-finding review where a full packet is overkill, the minimum 
 
 ```md
 ---
-packet_id: <branch>__<stamp>__tiny-<thing>
+packet_id: <branch_slug>/<local_minute>-tiny-<thing>
 branch: <branch>
 scope: tiny-<thing>
 created: <ts>
