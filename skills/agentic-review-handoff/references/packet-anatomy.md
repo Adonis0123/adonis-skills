@@ -196,7 +196,7 @@ After fixing, append `# Fix Completion`. The first subsection must be `Fix Concl
 
 ## Section: `# Fix Completion`
 
-Written by the fixer (typically Codex) after applying changes. The `Original Findings Snapshot` MUST be copied verbatim from the Fix Handoff `Validated Findings To Fix` table — re-reviewer evaluates fixes against this snapshot, not against the fixer's narrative.
+Written by the fixer (typically Codex) after applying changes. The `Original Findings Snapshot` MUST be copied **strictly verbatim** from the Fix Handoff `Validated Findings To Fix` table — character-by-character, no rewording, no expansion, no clarification edits, no severity changes. If the fixer feels additional context is needed, add it to a separate `Notes` column or to `Fix Conclusion`, never to the original-finding columns. A re-reviewer must be able to `diff` the snapshot row against the original Fix Handoff row and get zero changes; this is what makes independent re-attestation possible.
 
 ```md
 # Fix Completion
@@ -216,7 +216,7 @@ Written by the fixer (typically Codex) after applying changes. The `Original Fin
 
 ## Original Findings Snapshot
 
-(Verbatim copy of the Fix Handoff `Validated Findings To Fix` table. Do not summarize, paraphrase, or rewrite. The re-reviewer needs the original wording to attest fixes independently.)
+(**Strictly verbatim** copy of the Fix Handoff `Validated Findings To Fix` table — no summarizing, no paraphrasing, no rewording, no severity changes, no edits of any kind. The columns below must match the Fix Handoff row character-for-character. Any additional context the fixer wants to provide goes in `Fix Conclusion` or in a separate optional `Notes` column appended to the right — never inside these columns. Re-reviewer evaluates fixes by `diff`-ing the snapshot row against the original Fix Handoff row.)
 
 | ID | Severity | Original finding | Original evidence | Required fix | Acceptance check | Relevant constraints / non-goals |
 |---|---|---|---|---|---|---|

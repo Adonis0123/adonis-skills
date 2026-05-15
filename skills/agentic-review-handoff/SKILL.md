@@ -16,7 +16,7 @@ This skill historically said "review/re-review are read-only by default; do not 
 
 - **Read-only still means**: do not modify the code, docs, tests, or configs being reviewed; do not commit / push / rebase.
 - **Packet artifact writes are part of the protocol, not a violation**: creating, appending to, renaming, and `mv`-ing files under `$repo_root/.review-handoff/**` is exactly what makes the cross-agent loop work. Treat these writes the same way you treat printing findings to the terminal.
-- **Before writing the first packet in a repo**, ensure `$repo_root/.git/info/exclude` already contains a line `.review-handoff/`. If absent, append it. This isolates the artifact per-repo without modifying anyone's `.gitignore` (important when reviewing in a repo that isn't yours).
+- **Before writing the first packet in a repo**, ensure `$repo_root/.git/info/exclude` already contains a line `/.review-handoff/` (leading slash anchors to repo root, the canonical form). If neither `/.review-handoff/` nor the unanchored `.review-handoff/` is already present, append the canonical form. See `references/packet-addressing.md` § ".git/info/exclude bootstrapping" for the exact idempotent snippet. This isolates the artifact per-repo without modifying anyone's `.gitignore` (important when reviewing in a repo that isn't yours).
 
 ## Workflow
 
@@ -89,7 +89,18 @@ After writing `# Re-review`, look at the Verdict and apply the lifecycle / archi
 
 ## Lifecycle and Archive
 
-After every `# Re-review` (or `# Re-review (round N)`):
+There are **two archive triggers** depending on which review section the Verdict was written in:
+
+### Trigger 1: First-pass `# Review Findings` with no fix needed (golden path)
+
+When the very first review finds nothing or only `Preference`-level items, the reviewer writes the Verdict in `# Review Findings` itself, **does not** write a `# Fix Handoff` (there's nothing to hand off), and acts on the verdict immediately:
+
+| Verdict in `# Review Findings` | Action | `last_anchor` | `lifecycle_state` | File location |
+|---|---|---|---|---|
+| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<file> $repo_root/.review-handoff/archive/<file>` | `review_findings` | `archived` | `archive/` |
+| `PASS_WITH_CONCERNS` / `BLOCKED` | Continue to `# Fix Handoff` — there are findings to fix. | `review_findings` | `in_progress` | `active/` |
+
+### Trigger 2: After every `# Re-review` (or `# Re-review (round N)`)
 
 | Re-review Verdict | Action | `last_anchor` | `lifecycle_state` | File location |
 |---|---|---|---|---|

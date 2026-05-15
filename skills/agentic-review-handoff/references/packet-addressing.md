@@ -91,20 +91,25 @@ Direct normalization of H1 anchor text: strip `# `, strip ` (round N)` suffix, s
 
 `lifecycle_state` is **not** simply the snake_case of the last H1. It must satisfy this table — both the validator and eval assertions should compute the expected `lifecycle_state` from this table, not from the H1 anchor alone.
 
-| `last_anchor` | Re-review Verdict | File location | Expected `lifecycle_state` |
+| `last_anchor` | Verdict (in `# Review Findings` for first-pass, in `# Re-review` for subsequent rounds) | File location | Expected `lifecycle_state` |
 |---|---|---|---|
-| `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` | (n/a — no Re-review yet) | `active/` | `in_progress` |
-| `re_review` | `PASS` | `archive/` | `archived` |
-| `re_review` | `NO_FINDINGS` | `archive/` | `archived` |
+| `review_handoff` / `review_intake` | (no Verdict yet — review not done) | `active/` | `in_progress` |
+| `review_findings` | (no Verdict written yet, or Verdict ∈ `BLOCKED` / `PASS_WITH_CONCERNS` — fix needed) | `active/` | `in_progress` |
+| `review_findings` | `PASS` / `NO_FINDINGS` (first-pass terminal — no fix needed, no Fix Handoff written) | `archive/` | `archived` |
+| `fix_handoff` / `fix_completion` | (n/a — Re-review hasn't run yet) | `active/` | `in_progress` |
+| `re_review` | `PASS` / `NO_FINDINGS` | `archive/` | `archived` |
 | `re_review` | `PASS_WITH_CONCERNS` | `active/` | `awaiting_user_decision` |
 | `re_review` | `BLOCKED` | `active/` | `blocked` |
 
+The first-pass `review_findings` → `archived` row is the **golden-path terminal**: when reviewer finds no issues at all, no Fix Handoff is needed — the reviewer writes Verdict in `# Review Findings`, immediately archives the packet. No fixer involvement, no Re-review.
+
 Any other combination is illegal:
 
-- `last_anchor != re_review` with `lifecycle_state in {awaiting_user_decision, blocked, archived}` → invalid (lifecycle moved without a Re-review writing the verdict).
+- `last_anchor != re_review` with `lifecycle_state in {awaiting_user_decision, blocked}` → invalid (these states are exclusively post-Re-review).
 - `last_anchor == re_review` with `lifecycle_state == in_progress` → invalid (Re-review wrote a verdict but lifecycle wasn't updated).
 - `lifecycle_state == archived` while file is in `active/` → invalid (archive action skipped).
 - `lifecycle_state != archived` while file is in `archive/` → invalid (file moved without lifecycle update, or vice versa).
+- `last_anchor in {review_handoff, review_intake}` with `lifecycle_state == archived` → invalid (review never produced findings; no terminal verdict to archive on).
 
 ## `.git/info/exclude` bootstrapping
 
@@ -114,7 +119,10 @@ Before creating the first packet in any repo:
 exclude_file="$repo_root/.git/info/exclude"
 mkdir -p "$repo_root/.git/info"
 touch "$exclude_file"
-grep -qxF '/.review-handoff/' "$exclude_file" || echo '/.review-handoff/' >> "$exclude_file"
+# Canonical form is /.review-handoff/ (leading slash anchors to repo root).
+# Tolerate the unanchored form .review-handoff/ from earlier versions of this
+# skill so re-running bootstrap doesn't append a duplicate line.
+grep -qE '^/?\.review-handoff/$' "$exclude_file" || echo '/.review-handoff/' >> "$exclude_file"
 ```
 
 This is repo-local, never enters git history, never modifies `.gitignore` (which would dirty the working tree of a repo that isn't yours). Verify with `git status --short` that `.review-handoff/` does not appear after a packet write.
