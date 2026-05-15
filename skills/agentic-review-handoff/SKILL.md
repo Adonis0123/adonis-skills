@@ -130,8 +130,10 @@ Infer the stage from the user's signal:
 
 When one user message combines review/validation with a fix request (e.g. "review this then fix it", "validate this feedback and apply the valid parts"), execute stages sequentially in this order:
 
-1. Finish review or feedback validation: append `# Review Findings` + `# Fix Handoff` to the packet, with verdict.
-2. Only then enter fix stage for validated findings, and append `# Fix Completion`.
+1. Finish review or feedback validation: append `# Review Findings` with verdict. Then branch:
+   - Verdict in `BLOCKED` / `PASS_WITH_CONCERNS` → append `# Fix Handoff` with validated findings, then proceed to step 2.
+   - Verdict in `PASS` / `NO_FINDINGS` → **do not** write `# Fix Handoff` (nothing to fix). Archive immediately per Lifecycle Trigger 1 and **skip step 2** — the user's "fix it" request becomes a no-op because there are no findings to fix. Say so explicitly in the terminal output.
+2. Only enter fix stage when step 1 produced a `# Fix Handoff`. Apply only the validated findings, then append `# Fix Completion`.
 
 Do not merge review evidence and fix changes into one unstructured response. Merging stages destroys the portability the packet design depends on — a later re-reviewer cannot independently re-attest findings if there is no `# Fix Handoff` section to anchor them. If the user pushes back on the sequencing, name the cost ("merging stages means a later re-reviewer can't independently re-attest findings") and let them decide. Free-form "rewrite this function" requests not tied to a validated finding are not a stage switch — defer them as a separate implementation task.
 
