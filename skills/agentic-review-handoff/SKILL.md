@@ -76,6 +76,7 @@ Two write rules govern every packet edit:
 - `references/packet-anatomy.md` — full template of one packet file from `# Review Handoff` (or `# Review Intake`) through the final `# Re-review`. Use this when authoring or extending a packet. **This replaces the old `handoff-packet.md` and `review-loop-packets.md` files** (those are kept as transitional stubs).
 - `references/packet-addressing.md` — frontmatter field reference, naming format, lifecycle_state derivation table, archive triggers, common edge cases. Use when you need to confirm which `lifecycle_state` value a verdict implies, or to handle multi-round / branch-switch / subdirectory cwd cases.
 - `references/review-contract.md` — the unchanged protocol layer: severity ladder (P0–P3 + Preference), Source tag taxonomy, Verdict vocabulary, Feedback Validation Format, Deep Review lens. Findings inside a packet always follow this contract.
+- `references/example-packet.md` — fully-worked canonical example showing one BLOCKED → PASS round-2 cycle, including the exact 8-column unified-table verbatim copy and the optional 9th `Notes` column. Diff your own packet against it when you're unsure of the format.
 
 ### 5. Run the loop
 
