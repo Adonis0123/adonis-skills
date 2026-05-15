@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agentic Review Handoff"
+  short_description: "Persist review-fix-re-review handoffs."
+  default_prompt: "Use $agentic-review-handoff to continue the current review, fix, or re-review stage through the persistent packet under $repo_root/.review-handoff/."
