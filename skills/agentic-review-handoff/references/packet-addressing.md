@@ -47,8 +47,12 @@ Re-stated from `SKILL.md` for completeness. Run this every time before writing o
      · lifecycle_state == archived → the user is engaging a finished packet; copy it back
        to active/ with a new utc_stamp and a new round before continuing.
    - Does not exist → creation path:
-     · implementer-initiated → start with # Review Handoff
-     · reviewer-initiated → start with # Review Intake → # Review Findings → # Fix Handoff
+     · implementer-initiated → start with # Review Handoff (reviewer will append the rest)
+     · reviewer-initiated → start with # Review Intake → # Review Findings, then branch on Verdict:
+       - Verdict in {BLOCKED, PASS_WITH_CONCERNS} → append # Fix Handoff (continues to fix)
+       - Verdict in {PASS, NO_FINDINGS}            → DO NOT write # Fix Handoff; archive immediately
+         (mv packet from active/ to archive/, set lifecycle_state = archived). See SKILL.md
+         Lifecycle and Archive Trigger 1.
 4. --packet=<path> override: prefer it, but verify the path is under $repo_root/.review-handoff/.
 ```
 
@@ -85,7 +89,7 @@ Direct normalization of H1 anchor text: strip `# `, strip ` (round N)` suffix, s
 | `in_progress` | Loop still running. Default state from creation through `# Re-review` write. |
 | `awaiting_user_decision` | Re-review verdict was `PASS_WITH_CONCERNS`. Packet stays in `active/` waiting for user to either say "fix it" (auto-resumes to round N+1) or manually `mv` to archive (drop the concerns). |
 | `blocked` | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round. |
-| `archived` | Re-review verdict was `PASS` or `NO_FINDINGS`. File has been moved to `archive/`. Terminal state. |
+| `archived` | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`. |
 
 ## Lifecycle derivation table (validator / eval source of truth)
 
