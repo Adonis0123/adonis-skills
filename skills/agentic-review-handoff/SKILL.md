@@ -50,10 +50,14 @@ Before writing any output, run packet addressing exactly in this order. This is 
      · reviewer-initiated (the user is directly asking the reviewer to look at a
        staged/working-tree diff with no implementer handoff in hand) → start with
        # Review Intake (reviewer records only what it can verify itself: scope,
-       verification, inferred goal labelled inferred from diff). Then # Review
-       Findings → # Fix Handoff. Do NOT fabricate # Review Handoff — that section
-       is implementer-only and writing it without implementer context breaks the
-       evidence-first trust boundary.
+       verification, inferred goal labelled inferred from diff), then # Review
+       Findings. **Whether to write # Fix Handoff after # Review Findings depends
+       on the Verdict**: if Verdict is PASS / NO_FINDINGS, skip # Fix Handoff and
+       immediately archive (see "Lifecycle and Archive" Trigger 1 below). If
+       Verdict is BLOCKED / PASS_WITH_CONCERNS, append # Fix Handoff with the
+       validated findings to fix. Do NOT fabricate # Review Handoff — that
+       section is implementer-only and writing it without implementer context
+       breaks the evidence-first trust boundary.
 4. If the user explicitly passed --packet=<path> or named a packet file, prefer that,
    but still verify it lives under $repo_root/.review-handoff/.
 ```

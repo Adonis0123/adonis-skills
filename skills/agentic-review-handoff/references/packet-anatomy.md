@@ -32,7 +32,7 @@ round: 1
 Field semantics: see `packet-addressing.md`. The two key invariants:
 
 - `last_anchor` strictly equals the file's last H1 anchor, normalized (strip `# `, strip ` (round N)`, snake_case).
-- `lifecycle_state` must be derivable from `last_anchor` + Re-review Verdict + file location per the lifecycle derivation table in `packet-addressing.md`.
+- `lifecycle_state` must be derivable from `last_anchor` + Verdict (read from `# Review Findings` when the packet hasn't reached `# Re-review` yet — i.e. the first-pass terminal path; or from `# Re-review` / `# Re-review (round N)` once a fix round has run) + file location per the lifecycle derivation table in `packet-addressing.md`.
 
 ## Body — one H1 anchor per stage, append-only
 
@@ -196,7 +196,7 @@ After fixing, append `# Fix Completion`. The first subsection must be `Fix Concl
 
 ## Section: `# Fix Completion`
 
-Written by the fixer (typically Codex) after applying changes. The `Original Findings Snapshot` MUST be copied **strictly verbatim** from the Fix Handoff `Validated Findings To Fix` table — character-by-character, no rewording, no expansion, no clarification edits, no severity changes. If the fixer feels additional context is needed, add it to a separate `Notes` column or to `Fix Conclusion`, never to the original-finding columns. A re-reviewer must be able to `diff` the snapshot row against the original Fix Handoff row and get zero changes; this is what makes independent re-attestation possible.
+Written by the fixer (typically Codex) after applying changes. The `Original Findings Snapshot` MUST be copied **strictly verbatim** from the Fix Handoff `Validated Findings To Fix` table — same 8 columns, same order, character-by-character cell contents. No rewording, no expansion, no clarification edits, no severity changes inside the original columns. If the fixer feels additional context is needed, either put it in `Fix Conclusion` (preferred) or append an optional **9th column** named `Notes` on the right — never modify the first 8 columns. A re-reviewer must be able to `diff` the first 8 columns of the snapshot row against the Fix Handoff row and get zero changes; this is what makes independent re-attestation possible.
 
 ```md
 # Fix Completion
