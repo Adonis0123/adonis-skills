@@ -34,7 +34,14 @@
       "id": 5,
       "name": "scenario-G-pass-with-concerns-auto-continue",
       "prompt": "${MOCK_REPO}/.review-handoff/active/ 下有一个 packet 文件，最末段是 # Re-review，verdict=PASS_WITH_CONCERNS，lifecycle_state=awaiting_user_decision，round=1，列出了两个 P3 命名建议未处理。我现在决定继续修这两个 concerns，请按 review 修一下。仓库根 ${MOCK_REPO}，分支 feat/cart-patch。",
-      "expected_output": "Skill 必须找到该 packet（不创建新文件、不让用户手动 mv），进入 fix 阶段，追加 # Fix Completion (round 2) 段（首子节是 Fix Conclusion，含 Original Findings Snapshot 引用上一轮的 P3 findings）。frontmatter 更新：round=2、last_anchor=fix_completion、lifecycle_state=in_progress（从 awaiting_user_decision 迁出）、updated 字段刷新。文件仍在 active/，不归档（fixer 永不归档）。",
+      "expected_output": "Skill 必须找到该 packet（不创建新文件、不让用户手动 mv），进入 fix 阶段，追加 # Fix Completion (round 2) 段（首子节是 Fix Conclusion，含 Original Findings Snapshot 引用上一轮的 P3 findings）。frontmatter 更新：round=2、last_anchor=fix_completion、lifecycle_state=in_progress（从 awaiting_user_decision 迁出）、updated 字段刷新。文件仍在 active/，不归档（fixer 永不归档）。Original Findings Snapshot 表的列结构必须与原 Fix Handoff `Validated Findings To Fix` 表完全一致（ID/Severity/Verdict/Original finding/Evidence/Target files/lines/Required fix/Acceptance check 8 列同序），且 F2/F3 行字符级 verbatim 复制。",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "scenario-H-first-pass-no-findings-archive",
+      "prompt": "我刚改了 packages/utils/format-date.ts，只是把一个 const string 重命名得更清楚（DATE_FMT_ISO → DATE_FORMAT_ISO_8601），所有引用同步更新，TypeScript 编译过。你帮 review 一下，看看有没有问题。仓库根 ${MOCK_REPO}，分支 feat/rename-const。",
+      "expected_output": "Skill 走 reviewer-initiated 路径：创建 packet，写 # Review Intake → # Review Findings（Findings 空或仅 Preference，Verdict=PASS 或 NO_FINDINGS），**不**写 # Fix Handoff（无需 fix），随后自动归档：mv 到 archive/，frontmatter last_anchor=review_findings、lifecycle_state=archived、round=1。这是 spec/SKILL.md 里定义的 'golden path first-pass terminal'。",
       "files": []
     }
   ]

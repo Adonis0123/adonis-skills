@@ -216,10 +216,12 @@ Written by the fixer (typically Codex) after applying changes. The `Original Fin
 
 ## Original Findings Snapshot
 
-(**Strictly verbatim** copy of the Fix Handoff `Validated Findings To Fix` table — no summarizing, no paraphrasing, no rewording, no severity changes, no edits of any kind. The columns below must match the Fix Handoff row character-for-character. Any additional context the fixer wants to provide goes in `Fix Conclusion` or in a separate optional `Notes` column appended to the right — never inside these columns. Re-reviewer evaluates fixes by `diff`-ing the snapshot row against the original Fix Handoff row.)
+(**Strictly verbatim** copy of the Fix Handoff `Validated Findings To Fix` table. The column structure **must match the Fix Handoff table identically** — same columns, same order — so that the fixer can `cp` rows wholesale without restructuring. Re-reviewer evaluates fixes by `diff`-ing the snapshot row against the original Fix Handoff row and expecting zero changes.
 
-| ID | Severity | Original finding | Original evidence | Required fix | Acceptance check | Relevant constraints / non-goals |
-|---|---|---|---|---|---|---|
+If the fixer wants to surface additional context (constraints, non-goals, fixer notes), append an optional `Notes` column to the right of the original columns. Never modify the original columns or remove any of them.)
+
+| ID | Severity | Verdict | Original finding | Evidence | Target files/lines | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|---|
 
 ## Finding Status
 
