@@ -87,7 +87,7 @@ Packet 本质是一个 **Review Aggregate（DDD 聚合根）**：有身份（pac
 
 - **本地、不进 git**：用户场景就是同机器同仓库 CC + Codex 串行，不需要跨机器；不污染仓库 history
 - **`active/` + `archive/` 两段**：日常视野里只看到进行中的，PASS 的自动归档；清理责任明确（archive 是用户的，active 是 AI 的）
-- **不引入 `_index.json`**：状态全在文件里，AI 读最末 H1 + frontmatter `current_stage` 即可；不维护并行索引避免脱节
+- **不引入 `_index.json`**：状态全在文件里，AI 读最末 H1 + frontmatter `last_anchor` / `lifecycle_state` 即可；不维护并行索引避免脱节
 
 ### 命名规则
 
@@ -113,7 +113,7 @@ Packet 本质是一个 **Review Aggregate（DDD 聚合根）**：有身份（pac
 2. 列 $repo_root/.review-handoff/active/<branch-slug>__*.md，按文件名升序排序
 3. 取最新一个（tail -1）：
    - 存在 → 读完整文件，找最后一个 H1 anchor 判断当前阶段，决定输出哪个新段。
-     · current_stage = awaiting_user_decision 时，用户"修一下"/"改吧" 类指令进入下一轮 fix（追加 # Fix Completion (round N+1)）。
+     · lifecycle_state = awaiting_user_decision 时，用户"修一下"/"改吧" 类指令进入下一轮 fix（追加 # Fix Completion (round N+1)）。
    - 不存在 → 进入"创建新 packet"路径，按谁触发分流：
      · implementer-initiated（用户/agent 写完代码主动请求 review）→ 从 # Review Handoff 段开始写
      · reviewer-initiated（用户直接让 reviewer 看 staged/working-tree diff，无 implementer handoff）→ 从 # Review Intake 段开始写，再 # Review Findings → # Fix Handoff
@@ -129,7 +129,7 @@ Packet 本质是一个 **Review Aggregate（DDD 聚合根）**：有身份（pac
 一条闭环始终对应一个文件，按以下两条规则写入：
 
 - **Body 的 H1 段是 append-only**：AI 一旦写下某个 `# Anchor` 段就不再修改、删除或重排该段；后续阶段只在文件末尾追加新的 H1 段。
-- **Frontmatter 是元数据头，可被原子重写**：每次写入新 H1 段后，当次写入者必须重写整个 frontmatter，更新 `updated`、`current_stage`，必要时递增 `round`。frontmatter 的重写**不视为**破坏 append-only。
+- **Frontmatter 是元数据头，可被原子重写**：每次写入新 H1 段后，当次写入者必须重写整个 frontmatter，更新 `updated` / `last_anchor` / `lifecycle_state`，必要时递增 `round`。frontmatter 的重写**不视为**破坏 append-only。
 
 **文件骨架**（以下示例是 implementer-initiated 路径；reviewer-initiated 路径用 `# Review Intake` 替代首段 `# Review Handoff`）：
 
@@ -140,7 +140,8 @@ branch: feat/payment
 scope: refactor-checkout
 created: 2026-05-15T14:30:12Z
 updated: 2026-05-15T14:30:12Z
-current_stage: review_handoff
+last_anchor: review_handoff
+lifecycle_state: in_progress
 round: 1
 ---
 
@@ -173,8 +174,22 @@ round: 1
 | `scope` | string | 创建者 | 用户给的 scope 描述 |
 | `created` | ISO datetime | 创建者 | 创建时间 |
 | `updated` | ISO datetime | 任何写入者 | 每次追加段后更新 |
-| `current_stage` | enum | 任何写入者 | `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` / `re_review` / `awaiting_user_decision` / `archived` |
+| `last_anchor` | enum | 任何写入者 | **结构事实**：最末一个 H1 anchor 规范化（去 `# ` 前缀、去 `(round N)` 后缀、转 snake_case）。取值 `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` / `re_review` |
+| `lifecycle_state` | enum | 任何写入者 | **业务状态**：packet 在 review 闭环领域的生命周期态。取值 `in_progress` / `awaiting_user_decision` / `blocked` / `archived` |
 | `round` | int | 写入 fix_completion / re_review 时 | 默认 1，每开新轮 +1 |
+
+**字段拆分理由（DDD 正交）**：`last_anchor` 描述 packet body 的物理结构（"最末段是什么"），`lifecycle_state` 描述这条 review 闭环在领域内的状态（"还在跑/等用户/卡住/归档"）。两者属不同维度，硬塞进一个字段会出现"PASS_WITH_CONCERNS 后最末 H1 仍是 `# Re-review` 但状态已迁到 `awaiting_user_decision`"这类合法但被旧"必须等于最末 H1"规则误判的情况。
+
+**`lifecycle_state` 合法推导表**（validator / eval 必须按此判定，而不是简单"等于最末 H1"）：
+
+| `last_anchor` | Re-review Verdict | 文件位置 | 合法 `lifecycle_state` |
+|---|---|---|---|
+| `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` | — | `active/` | `in_progress` |
+| `re_review` | `PASS` / `NO_FINDINGS` | `archive/` | `archived` |
+| `re_review` | `PASS_WITH_CONCERNS` | `active/` | `awaiting_user_decision` |
+| `re_review` | `BLOCKED` | `active/` | `blocked` |
+
+任何其他组合（例如 `last_anchor=re_review` + Verdict=`PASS` 但文件还在 `active/`，或 `last_anchor=fix_completion` + `lifecycle_state=archived`）都是非法 packet。
 
 ### 段落语义契约（每段 self-contained）
 
@@ -197,11 +212,11 @@ round: 1
 
 | Verdict | 行为 |
 |---|---|
-| `PASS` / `NO_FINDINGS` | AI 立刻 `mv` 到 archive/，frontmatter `current_stage` 置为 `archived` |
-| `PASS_WITH_CONCERNS` | **不归档**，留在 active/。frontmatter `current_stage` 置为 `awaiting_user_decision`。AI 在终端提示用户：「含 P2/P3 issues 未处理，packet 仍在 active/。下一句『按 review 修一下』/『改吧』将自动进入 round N+1 处理这些 concerns；如确认放弃，可手动 `mv` 到 archive/」 |
-| `BLOCKED` | 不归档，等待 fixer 启动下一轮 fix → re-review |
+| `PASS` / `NO_FINDINGS` | AI 立刻 `mv` 到 archive/，frontmatter `lifecycle_state` 置为 `archived`（`last_anchor` 保持 `re_review`） |
+| `PASS_WITH_CONCERNS` | **不归档**，留在 active/。frontmatter `lifecycle_state` 置为 `awaiting_user_decision`（`last_anchor` 保持 `re_review`）。AI 在终端提示用户：「含 P2/P3 issues 未处理，packet 仍在 active/。下一句『按 review 修一下』/『改吧』将自动进入 round N+1 处理这些 concerns；如确认放弃，可手动 `mv` 到 archive/」 |
+| `BLOCKED` | 不归档，frontmatter `lifecycle_state` 置为 `blocked`，等待 fixer 启动下一轮 fix → re-review |
 
-`awaiting_user_decision` 是 PASS_WITH_CONCERNS 后的中间态：等用户表达继续修或放弃。任何"修一下"/"改吧" 类指令都会把它带入 fix 阶段、追加 `# Fix Completion (round N+1)`，状态自动迁出。
+`awaiting_user_decision` 是 PASS_WITH_CONCERNS 后的中间态：等用户表达继续修或放弃。任何"修一下"/"改吧" 类指令都会把它带入 fix 阶段、追加 `# Fix Completion (round N+1)`，`lifecycle_state` 迁回 `in_progress`。
 
 **单点归档原则**：只有 reviewer 在 Re-review 之后（Verdict 为 PASS / NO_FINDINGS 时）才能自动归档；fixer 不归档；PASS_WITH_CONCERNS / BLOCKED 留 active 等待续 round；用户可以手动归档/反归档（mv 即可，AI 应尊重）。
 
@@ -226,7 +241,8 @@ Codex 端：通过 `skills/agentic-review-handoff/agents/openai.yaml` 的 `defau
 - frontmatter 必填字段齐全且 enum 合法
 - H1 anchor 在白名单内、按预期顺序出现
 - 同一段没被重复追加（防止 AI 漏读最末段就 append 新的 review 段）
-- `current_stage` 与最末 H1 段一致
+- `last_anchor` **严格等于**最末 H1 段规范化值（结构事实校验）
+- `lifecycle_state` **必须可由 `last_anchor` + Re-review Verdict + 文件位置（active/ vs archive/）合法推导**——按 frontmatter 字段表的「合法推导表」判定，而不是简单等于最末 H1 段
 
 退出码非 0 时打印问题。AI 在写完 packet 后**可选**调用一次自校验；用户也能手动跑。
 
@@ -254,7 +270,7 @@ Codex 端：通过 `skills/agentic-review-handoff/agents/openai.yaml` 的 `defau
    - **场景 D：implementer-initiated 全闭环**。Codex 写完代码后主动请求 review，创建 packet 写入 `# Review Handoff`（含 Implementation Summary 等 implementer-only 子节）；用户切到 CC 说"review"——CC 自动找到该文件，追加 `# Review Findings` + `# Fix Handoff`；后续 fix / re-review / 归档与场景 A 一致。
    - **场景 E：子目录 cwd 仍命中 root packet**。AI 在 `$repo_root/apps/web/` 等深层子目录作为 cwd 启动，寻址第 0 步 `git rev-parse --show-toplevel` 仍解析到 repo 根；packet 读、写、mv 都命中 `$repo_root/.review-handoff/`，**不**新建第二个 inbox。
    - **场景 F：跨仓库不污染**。在一个非 adonis-skills 的目标仓库（其 `.gitignore` 不含 `.review-handoff/`）跑完一次完整闭环后，`git status --short` 不出现 `.review-handoff/` 任何文件——通过 `$repo_root/.git/info/exclude` 自动追加实现。
-   - **场景 G：PASS_WITH_CONCERNS 自动续轮**。Re-review verdict = PASS_WITH_CONCERNS 后，packet 留在 active/、`current_stage = awaiting_user_decision`；用户下一句"修一下"AI 自动接力进入 round N+1 fix，无需用户手动 mv。
+   - **场景 G：PASS_WITH_CONCERNS 自动续轮**。Re-review verdict = PASS_WITH_CONCERNS 后，packet 留在 active/、`last_anchor = re_review` 且 `lifecycle_state = awaiting_user_decision`；用户下一句"修一下"AI 自动接力进入 round N+1 fix（追加 `# Fix Completion (round 2)`，`last_anchor` 迁到 `fix_completion`，`lifecycle_state` 迁回 `in_progress`），无需用户手动 mv。
 
 2. **协议验收**
    - 现有 severity ladder（P0~P3 + Preference）、Source tag 词表、Verdict 词表（BLOCKED/PASS_WITH_CONCERNS/PASS/NO_FINDINGS）、Original Findings Snapshot 不可改写规则**全部保留且生效**——通过对比新旧 SKILL.md 的协议章节确认
@@ -262,7 +278,7 @@ Codex 端：通过 `skills/agentic-review-handoff/agents/openai.yaml` 的 `defau
 
 3. **skill-creator evals 验收**
    - 至少 5 条 eval 用例，覆盖：场景 A（reviewer-initiated 全闭环）、场景 B（多轮）、场景 D（implementer-initiated 全闭环）、场景 E（子目录 cwd）、场景 G（PASS_WITH_CONCERNS 续轮）。场景 C 寻址鲁棒性可作为额外一条；场景 F 跨仓库不污染建议手测，evals subagent 难复现非 adonis-skills 仓库的环境
-   - 量化断言：每条 eval 在 `with-skill`（新版）至少不劣于 baseline（旧版）；目标项是"packet 文件被自动定位/创建在 `$repo_root/.review-handoff/active/` 下"、"段落 anchor 完整且 anchor 表合规"、"frontmatter `current_stage` 与最末 H1 段一致"、"reviewer-initiated 路径**不**写 `# Review Handoff`"
+   - 量化断言：每条 eval 在 `with-skill`（新版）至少不劣于 baseline（旧版）；目标项是"packet 文件被自动定位/创建在 `$repo_root/.review-handoff/active/` 下"、"段落 anchor 完整且 anchor 表合规"、"frontmatter `last_anchor` 严格等于最末 H1 规范化值"、"frontmatter `lifecycle_state` 可由 `last_anchor` + Verdict + 文件位置合法推导"、"reviewer-initiated 路径**不**写 `# Review Handoff`"
    - 主观部分（review 质量、findings 准确度）走 eval viewer 人工 review
 
 4. **文档与 ruler 同步**
