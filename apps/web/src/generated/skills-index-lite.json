@@ -15,15 +15,16 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Cross-agent code review handoff and review-fix-re-review loop. Use when the user asks for an independent, read-only 'second pair of eyes' pass on a diff/branch/PR another agent (Codex, Cursor) or a teammate implemented; asks to verify team/reviewer feedback before fixing; asks to hand verified findings to a fixer; says a fix is done and wants scoped re-review; or asks for first-principles, DDD, high-cohesion/low-coupling review. Do NOT use for ordinary implementation, generic staged-change review, polishing review-comment wording, generic perf/SQL/style questions unrelated to a recent implementation, or when the user names a different review skill.",
+    "description": "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Use when the user asks for an independent, read-only 'second pair of eyes' pass on a diff/branch/PR another agent (Codex, Cursor) or a teammate implemented; asks to verify team/reviewer feedback before fixing; says a fix is done and wants scoped re-review; asks to continue the most recent review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each review→fix→re-review loop as a single artifact file under <repo_root>/.review-handoff/active/ so CC and Codex auto-resume without manual copy-paste. Do NOT use for ordinary implementation, generic staged-change review, polishing review-comment wording, or when the user names a different review skill.",
     "metadata": {
-      "author": "adonis"
+      "author": "adonis",
+      "version": "2.0.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-05-13T05:47:42.000Z"
+    "updatedAt": "2026-05-13T07:19:51.000Z"
   },
   {
     "slug": "code-inspector-init",

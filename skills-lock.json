@@ -1,6 +1,11 @@
 {
   "version": 1,
   "skills": {
+    "agentic-review-handoff": {
+      "source": "/Users/adonis/coding/adonis-skills/skills",
+      "sourceType": "local",
+      "computedHash": "48ea1568a77e96d956f88aaba415699685233266e3954c1b85164a111c71d312"
+    },
     "brainstorming": {
       "source": "obra/superpowers",
       "sourceType": "github",

@@ -14,3 +14,7 @@ coverage
 
 # Local skill-creator iteration workspaces (snapshots, benchmark runs, eval outputs)
 /.skill-creator-workspaces/
+
+# agentic-review-handoff persistent packet inbox (per-repo, never synced).
+# Other repos rely on .git/info/exclude; this entry is for adonis-skills self-dogfooding.
+/.review-handoff/

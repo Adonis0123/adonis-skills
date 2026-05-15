@@ -1,71 +1,11 @@
-# Handoff Packet
+# Handoff Packet (deprecated — see `packet-anatomy.md`)
 
-Use this packet when an implementation agent hands work to a reviewer agent. Keep it factual and short. The reviewer should be able to verify the work without trusting the implementer's conclusion.
+This file used to hold the standalone Review Handoff template that an implementer would fill out for a reviewer. As of v2.0.0 of this skill, packets are persistent single-file artifacts where the implementer-handoff section is just one of several H1 anchors in a longer file.
 
-## Template
+For the current template:
 
-```md
-# Review Handoff
+- `# Review Handoff` section schema — see `packet-anatomy.md` § "Section: # Review Handoff (implementer path only)"
+- Where the file lives, how it's named, addressed, and archived — see `packet-addressing.md`
+- The unchanged severity / Source / Verdict protocol — see `review-contract.md`
 
-## Goal
-
-- User request:
-- Intended behavior:
-- Non-goals:
-
-## Review Scope
-
-- Scope type: staged diff / working tree diff / full branch diff / docs only / task files
-- Repository:
-- Branch:
-- Files changed:
-
-## Implementation Summary
-
-- What changed:
-- Main code paths:
-- Data or API contracts affected:
-- Feature flags, experiments, or environment assumptions:
-
-## Verification
-
-- Commands run:
-- Passing results:
-- Failing results:
-- Pre-existing failures:
-- Checks not run and why:
-
-## Reviewer Focus
-
-- Highest-risk areas:
-- Boundary cases to inspect:
-- Security/privacy/payment/data concerns:
-- Compatibility or migration concerns:
-
-## Open Questions
-
-- Confirmed assumptions:
-- Unverified assumptions:
-- Decisions still needing human judgment:
-```
-
-## Packet Rules
-
-- Do not paste full diffs unless the reviewer cannot access the repo.
-- Prefer file paths, command names, and concise outcomes over narrative.
-- Include failed checks. Failed checks are useful review context.
-- Separate pre-existing failures from failures introduced by the change.
-- If the review depends on docs/specs, include the exact paths.
-- If the user asked for a narrow scope, write the excluded areas explicitly.
-
-## Tiny Review Shortcut
-
-For a tiny single-file review, this minimum packet is enough:
-
-```md
-Scope: working tree diff for path/to/file.ts
-Goal: ...
-Changed: ...
-Verification: ...
-Reviewer focus: ...
-```
+Do not author packets against this stub; it exists only so old links don't 404.
