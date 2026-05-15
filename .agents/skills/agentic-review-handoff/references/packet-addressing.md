@@ -47,10 +47,12 @@ Re-stated from `SKILL.md` for completeness. Run this every time before writing o
      · lifecycle_state == archived → the user is engaging a finished packet; copy it back
        to active/ with a new utc_stamp and a new round before continuing.
    - Does not exist → creation path:
-     · implementer-initiated → start with # Review Handoff
-     · reviewer-initiated → start with # Review Intake → # Review Findings;
-       append # Fix Handoff only when there are valid / partially valid findings
-       to fix or an explicit repair-brief request
+     · implementer-initiated → start with # Review Handoff (reviewer will append the rest)
+     · reviewer-initiated → start with # Review Intake → # Review Findings, then branch on Verdict:
+       - Verdict in {BLOCKED, PASS_WITH_CONCERNS} → append # Fix Handoff (continues to fix)
+       - Verdict in {PASS, NO_FINDINGS}            → DO NOT write # Fix Handoff; archive immediately
+         (mv packet from active/ to archive/, set lifecycle_state = archived). See SKILL.md
+         Lifecycle and Archive Trigger 1.
 4. --packet=<path> override: prefer it, but verify the path is under $repo_root/.review-handoff/.
 ```
 
@@ -87,30 +89,31 @@ Direct normalization of H1 anchor text: strip `# `, strip ` (round N)` suffix, s
 | `in_progress` | Loop still running. Default state from creation through `# Re-review` write. |
 | `awaiting_user_decision` | Re-review verdict was `PASS_WITH_CONCERNS`. Packet stays in `active/` waiting for user to either say "fix it" (auto-resumes to round N+1) or manually `mv` to archive (drop the concerns). |
 | `blocked` | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round. |
-| `archived` | Terminal Review Findings or Re-review verdict was `PASS` or `NO_FINDINGS`. File has been moved to `archive/`. Terminal state. |
+| `archived` | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`. |
 
 ## Lifecycle derivation table (validator / eval source of truth)
 
 `lifecycle_state` is **not** simply the snake_case of the last H1. It must satisfy this table — both the validator and eval assertions should compute the expected `lifecycle_state` from this table, not from the H1 anchor alone.
 
-| `last_anchor` | Terminal Verdict | File location | Expected `lifecycle_state` |
+| `last_anchor` | Verdict (in `# Review Findings` for first-pass, in `# Re-review` for subsequent rounds) | File location | Expected `lifecycle_state` |
 |---|---|---|---|
-| `review_handoff` / `review_intake` / `fix_handoff` / `fix_completion` | (n/a — no terminal review yet) | `active/` | `in_progress` |
-| `review_findings` | `PASS` | `archive/` | `archived` |
-| `review_findings` | `NO_FINDINGS` | `archive/` | `archived` |
-| `review_findings` | `PASS_WITH_CONCERNS` / `BLOCKED` or followed by `# Fix Handoff` | `active/` | `in_progress` |
-| `re_review` | `PASS` | `archive/` | `archived` |
-| `re_review` | `NO_FINDINGS` | `archive/` | `archived` |
+| `review_handoff` / `review_intake` | (no Verdict yet — review not done) | `active/` | `in_progress` |
+| `review_findings` | (no Verdict written yet, or Verdict ∈ `BLOCKED` / `PASS_WITH_CONCERNS` — fix needed) | `active/` | `in_progress` |
+| `review_findings` | `PASS` / `NO_FINDINGS` (first-pass terminal — no fix needed, no Fix Handoff written) | `archive/` | `archived` |
+| `fix_handoff` / `fix_completion` | (n/a — Re-review hasn't run yet) | `active/` | `in_progress` |
+| `re_review` | `PASS` / `NO_FINDINGS` | `archive/` | `archived` |
 | `re_review` | `PASS_WITH_CONCERNS` | `active/` | `awaiting_user_decision` |
 | `re_review` | `BLOCKED` | `active/` | `blocked` |
 
+The first-pass `review_findings` → `archived` row is the **golden-path terminal**: when reviewer finds no issues at all, no Fix Handoff is needed — the reviewer writes Verdict in `# Review Findings`, immediately archives the packet. No fixer involvement, no Re-review.
+
 Any other combination is illegal:
 
-- `last_anchor not in {review_findings, re_review}` with `lifecycle_state in {awaiting_user_decision, blocked, archived}` → invalid (lifecycle moved without a terminal review section).
-- `last_anchor == review_findings` with `lifecycle_state == archived` is valid only when the Review Findings verdict is `PASS` / `NO_FINDINGS` and there is no `# Fix Handoff`.
+- `last_anchor != re_review` with `lifecycle_state in {awaiting_user_decision, blocked}` → invalid (these states are exclusively post-Re-review).
 - `last_anchor == re_review` with `lifecycle_state == in_progress` → invalid (Re-review wrote a verdict but lifecycle wasn't updated).
 - `lifecycle_state == archived` while file is in `active/` → invalid (archive action skipped).
 - `lifecycle_state != archived` while file is in `archive/` → invalid (file moved without lifecycle update, or vice versa).
+- `last_anchor in {review_handoff, review_intake}` with `lifecycle_state == archived` → invalid (review never produced findings; no terminal verdict to archive on).
 
 ## `.git/info/exclude` bootstrapping
 
@@ -120,7 +123,10 @@ Before creating the first packet in any repo:
 exclude_file="$repo_root/.git/info/exclude"
 mkdir -p "$repo_root/.git/info"
 touch "$exclude_file"
-grep -qxF '/.review-handoff/' "$exclude_file" || echo '/.review-handoff/' >> "$exclude_file"
+# Canonical form is /.review-handoff/ (leading slash anchors to repo root).
+# Tolerate the unanchored form .review-handoff/ from earlier versions of this
+# skill so re-running bootstrap doesn't append a duplicate line.
+grep -qE '^/?\.review-handoff/$' "$exclude_file" || echo '/.review-handoff/' >> "$exclude_file"
 ```
 
 This is repo-local, never enters git history, never modifies `.gitignore` (which would dirty the working tree of a repo that isn't yours). Verify with `git status --short` that `.review-handoff/` does not appear after a packet write.
@@ -153,6 +159,6 @@ Not supported. The protocol assumes serial handoff (CC writes → user switches 
 
 Allowed. The user is the source of truth. The agent should re-read the entire file before its next write and accept the user's edits. Do not lecture about append-only — the user is not the agent.
 
-### Review or re-review wrote a terminal Verdict but the agent forgot to apply lifecycle action
+### Terminal Verdict written but the agent forgot to apply lifecycle action
 
-Self-heal: on next addressing call, if `last_anchor in {review_findings, re_review}` and the file's verdict + location don't match `lifecycle_state`, the agent should silently update `lifecycle_state` to the derived value and (if needed) `mv` the file. Treat this as a post-condition repair, not a finding to report.
+Self-heal: on next addressing call, if `last_anchor in {review_findings, re_review}` and the section's terminal verdict + file location don't match `lifecycle_state`, the agent should silently update `lifecycle_state` to the derived value and (if needed) `mv` the file. Treat this as a post-condition repair, not a finding to report.

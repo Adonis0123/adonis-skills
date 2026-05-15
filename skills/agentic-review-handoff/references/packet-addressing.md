@@ -159,6 +159,6 @@ Not supported. The protocol assumes serial handoff (CC writes → user switches 
 
 Allowed. The user is the source of truth. The agent should re-read the entire file before its next write and accept the user's edits. Do not lecture about append-only — the user is not the agent.
 
-### Re-review wrote a Verdict but the agent forgot to apply lifecycle action
+### Terminal Verdict written but the agent forgot to apply lifecycle action
 
-Self-heal: on next addressing call, if `last_anchor == re_review` and the file's verdict + location don't match `lifecycle_state`, the agent should silently update `lifecycle_state` to the derived value and (if needed) `mv` the file. Treat this as a post-condition repair, not a finding to report.
+Self-heal: on next addressing call, if `last_anchor in {review_findings, re_review}` and the section's terminal verdict + file location don't match `lifecycle_state`, the agent should silently update `lifecycle_state` to the derived value and (if needed) `mv` the file. Treat this as a post-condition repair, not a finding to report.

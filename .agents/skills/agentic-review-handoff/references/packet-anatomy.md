@@ -6,7 +6,7 @@ Full template of a single review→fix→re-review packet. One packet file per l
 $repo_root/.review-handoff/active/<branch_slug>__<utc_stamp>__<scope_slug>.md
 ```
 
-After terminal PASS / NO_FINDINGS, it is moved (by the reviewer) to:
+After PASS / NO_FINDINGS, it is moved (by the reviewer) to:
 
 ```
 $repo_root/.review-handoff/archive/<branch_slug>__<utc_stamp>__<scope_slug>.md
@@ -32,7 +32,7 @@ round: 1
 Field semantics: see `packet-addressing.md`. The two key invariants:
 
 - `last_anchor` strictly equals the file's last H1 anchor, normalized (strip `# `, strip ` (round N)`, snake_case).
-- `lifecycle_state` must be derivable from `last_anchor` + terminal Review Findings / Re-review Verdict + file location per the lifecycle derivation table in `packet-addressing.md`.
+- `lifecycle_state` must be derivable from `last_anchor` + Verdict (read from `# Review Findings` when the packet hasn't reached `# Re-review` yet — i.e. the first-pass terminal path; or from `# Re-review` / `# Re-review (round N)` once a fix round has run) + file location per the lifecycle derivation table in `packet-addressing.md`.
 
 ## Body — one H1 anchor per stage, append-only
 
@@ -40,7 +40,7 @@ Anchors must appear in this order (any may be skipped if the stage didn't happen
 
 1. `# Review Handoff` (implementer-initiated path) **OR** `# Review Intake` (reviewer-initiated path) — exactly one of these as the first H1.
 2. `# Review Findings`
-3. `# Fix Handoff` — only when there are valid / partially valid findings to fix, or an explicit repair-brief request.
+3. `# Fix Handoff`
 4. `# Fix Completion`
 5. `# Re-review`
 6. (Multi-round) `# Fix Completion (round 2)`, `# Re-review (round 2)`, `# Fix Completion (round 3)`, ... — append round suffixes; never edit prior round content.
@@ -137,7 +137,7 @@ Written by the reviewer after inspecting the diff. Follows `references/review-co
   Impact: concrete failure mode
   Suggested fix: smallest safe change
 
-(If no issues, write "No findings" plus checks run and residual risk. With verdict `PASS` / `NO_FINDINGS` and no `# Fix Handoff`, archive the packet after writing this section.)
+(If no issues, write "No findings" plus checks run and residual risk.)
 
 ## Verdict
 BLOCKED | PASS_WITH_CONCERNS | PASS | NO_FINDINGS
@@ -147,7 +147,7 @@ BLOCKED | PASS_WITH_CONCERNS | PASS | NO_FINDINGS
 
 ## Section: `# Fix Handoff`
 
-Written by the reviewer after `# Review Findings` (same writer, same session) when there are valid / partially valid findings to fix, or when the user explicitly asks for a repair brief. If the verdict is `PASS` or `NO_FINDINGS` and there are no validated fixes, omit this section.
+Written by the reviewer immediately after `# Review Findings` (same writer, same session) to give the next agent (often Codex) a self-contained repair brief.
 
 ```md
 # Fix Handoff
@@ -196,7 +196,7 @@ After fixing, append `# Fix Completion`. The first subsection must be `Fix Concl
 
 ## Section: `# Fix Completion`
 
-Written by the fixer (typically Codex) after applying changes. The `Original Findings Snapshot` MUST be copied verbatim from the Fix Handoff `Validated Findings To Fix` table — re-reviewer evaluates fixes against this snapshot, not against the fixer's narrative.
+Written by the fixer (typically Codex) after applying changes. The `Original Findings Snapshot` MUST be copied **strictly verbatim** from the Fix Handoff `Validated Findings To Fix` table — same 8 columns, same order, character-by-character cell contents. No rewording, no expansion, no clarification edits, no severity changes inside the original columns. If the fixer feels additional context is needed, either put it in `Fix Conclusion` (preferred) or append an optional **9th column** named `Notes` on the right — never modify the first 8 columns. A re-reviewer must be able to `diff` the first 8 columns of the snapshot row against the Fix Handoff row and get zero changes; this is what makes independent re-attestation possible.
 
 ```md
 # Fix Completion
@@ -216,10 +216,12 @@ Written by the fixer (typically Codex) after applying changes. The `Original Fin
 
 ## Original Findings Snapshot
 
-(Verbatim copy of the Fix Handoff `Validated Findings To Fix` table. Do not summarize, paraphrase, or rewrite. The re-reviewer needs the original wording to attest fixes independently.)
+(**Strictly verbatim** copy of the Fix Handoff `Validated Findings To Fix` table. The column structure **must match the Fix Handoff table identically** — same columns, same order — so that the fixer can `cp` rows wholesale without restructuring. Re-reviewer evaluates fixes by `diff`-ing the snapshot row against the original Fix Handoff row and expecting zero changes.
 
-| ID | Severity | Original finding | Original evidence | Required fix | Acceptance check | Relevant constraints / non-goals |
-|---|---|---|---|---|---|---|
+If the fixer wants to surface additional context (constraints, non-goals, fixer notes), append an optional `Notes` column to the right of the original columns. Never modify the original columns or remove any of them.)
+
+| ID | Severity | Verdict | Original finding | Evidence | Target files/lines | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|---|
 
 ## Finding Status
 

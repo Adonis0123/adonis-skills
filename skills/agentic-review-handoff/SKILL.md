@@ -1,6 +1,6 @@
 ---
 name: agentic-review-handoff
-description: "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires the work to live in a git repository (packet addressing uses git rev-parse --show-toplevel). Use when the user asks for an independent, read-only 'second pair of eyes' pass on a diff/branch/PR another agent (Codex, Cursor) or a teammate implemented; asks to verify team/reviewer feedback before fixing; says a fix is done and wants scoped re-review; asks to continue the most recent review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each review→fix→re-review loop as a single artifact file under <repo_root>/.review-handoff/active/ so CC and Codex auto-resume without manual copy-paste. Do NOT use for ordinary implementation, generic staged-change review, polishing review-comment wording, when reviewing a non-git directory / zip / tarball / temp folder, or when the user names a different review skill."
+description: "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires a git repo because packet addressing uses git rev-parse --show-toplevel. Use when the user asks for an independent, read-only second pair of eyes on a diff/branch/PR another agent or teammate implemented; asks to verify reviewer feedback before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each loop under $repo_root/.review-handoff/active/ so agents can resume without copy-paste. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders/zips/tarballs/temp dirs, or when the user names a different review skill."
 metadata:
   author: adonis
   version: "2.0.0"
@@ -26,7 +26,7 @@ Stage is one of: `review`, `feedback validation`, `fix handoff`, `fix`, `re-revi
 
 ### 2. Locate or create the packet (every stage)
 
-Before writing any output, run packet addressing exactly in this order. This is the single mechanism that makes CC and Codex auto-resume the same loop.
+Before writing any output, run packet addressing exactly in this order. These steps define the packet identity and resume contract.
 
 ```
 0. repo_root=$(git rev-parse --show-toplevel)
@@ -78,7 +78,7 @@ Two write rules govern every packet edit:
 
 ### 4. Use the right reference
 
-- `references/packet-anatomy.md` — full template of one packet file from `# Review Handoff` (or `# Review Intake`) through the final `# Re-review`. Use this when authoring or extending a packet. **This replaces the old `handoff-packet.md` and `review-loop-packets.md` files** (those are kept as transitional stubs).
+- `references/packet-anatomy.md` — full template of one packet file from `# Review Handoff` (or `# Review Intake`) through the final `# Re-review`. Use this when authoring or extending a packet.
 - `references/packet-addressing.md` — frontmatter field reference, naming format, lifecycle_state derivation table, archive triggers, common edge cases. Use when you need to confirm which `lifecycle_state` value a verdict implies, or to handle multi-round / branch-switch / subdirectory cwd cases.
 - `references/review-contract.md` — the unchanged protocol layer: severity ladder (P0–P3 + Preference), Source tag taxonomy, Verdict vocabulary, Feedback Validation Format, Deep Review lens. Findings inside a packet always follow this contract.
 - `references/example-packet.md` — fully-worked canonical example showing one BLOCKED → PASS round-2 cycle, including the exact 8-column unified-table verbatim copy and the optional 9th `Notes` column. Diff your own packet against it when you're unsure of the format.
