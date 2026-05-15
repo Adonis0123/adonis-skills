@@ -64,12 +64,17 @@ Before writing any output, run packet addressing exactly in this order. This is 
 
 If `$repo_root/.review-handoff/active/` does not exist yet, create it (and `archive/` alongside) before writing the first packet. Also ensure the `.git/info/exclude` line described above is in place.
 
-### 3. Append exactly one new H1 section, then atomically rewrite frontmatter
+### 3. Append the stage's required H1 section group, then atomically rewrite frontmatter
 
 Two write rules govern every packet edit:
 
-- **Body H1 sections are append-only.** Once a `# Anchor` section has been written, never modify, delete, or reorder it. New stages only append to the end of the file.
-- **Frontmatter is metadata; rewrite it atomically every time you append.** After appending the new H1 section, rewrite the entire YAML frontmatter to update `updated`, `last_anchor`, `lifecycle_state`, and (when entering a new round) `round`. Rewriting frontmatter is **not** a violation of append-only.
+- **Body H1 sections are append-only.** Once a `# Anchor` section has been written, never modify, delete, or reorder it. New writes only append to the end of the file.
+- **A single stage entry may append more than one H1 section.** Specifically:
+  - **review / feedback-validation stage** typically writes a group of H1 sections in one atomic packet update: `# Review Intake` (or `# Review Handoff` for implementer-initiated) → `# Review Findings` → (conditional) `# Fix Handoff`. The Fix Handoff is appended only when Verdict is `BLOCKED` or `PASS_WITH_CONCERNS`; on `PASS` / `NO_FINDINGS` the group ends after `# Review Findings` and the packet is archived.
+  - **fix stage** appends exactly one `# Fix Completion` (or `# Fix Completion (round N)`).
+  - **re-review stage** appends exactly one `# Re-review` (or `# Re-review (round N)`).
+  Do **not** stop after a single H1 if the stage requires more — partial groups break the auto-resume chain (e.g. reviewer stopping after `# Review Intake` leaves the fixer nothing to act on).
+- **Frontmatter is metadata; rewrite it atomically once per stage entry.** After appending the stage's H1 group, rewrite the entire YAML frontmatter to update `updated`, `last_anchor` (= the **last** H1 you just wrote), `lifecycle_state`, and (when entering a new round) `round`. Rewriting frontmatter is **not** a violation of append-only.
 
 ### 4. Use the right reference
 
