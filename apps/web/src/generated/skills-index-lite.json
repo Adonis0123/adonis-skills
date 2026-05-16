@@ -154,6 +154,19 @@
     ]
   },
   {
+    "slug": "workflow-gate",
+    "name": "workflow-gate",
+    "description": "Use BEFORE loading heavier workflow skills (brainstorming, discuss-before-plan, writing-plans, subagent-driven-development, agentic-review-handoff, executing-plans, finishing-a-development-branch) when the route is not already obvious. A 60-90 second advisory classifier that prevents over-escalation and under-escalation. Outputs one Route, one single-token Runtime skill to load next, one optional Fallback alias for Claude/Codex compatibility, and one Execution path. Skip the gate ONLY for single-line read-only lookups, pure-formatting edits with no behavior change, or an explicitly named downstream skill that is already safe and non-destructive.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.7.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "zustand-store-scaffold",
     "name": "zustand-store-scaffold",
     "description": "Scaffold class-based Zustand stores with flattenActions: web (component-level store + Context + Provider) and core (slice-based store with immer). Class-based actions provide Go-to-Definition DX, #private field encapsulation, and prototype-safe slice composition.",

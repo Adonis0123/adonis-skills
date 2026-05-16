@@ -1,0 +1,4 @@
+interface:
+  display_name: "Workflow Gate"
+  short_description: "Route tasks before heavy workflow skills."
+  default_prompt: "Use $workflow-gate to classify this request as Direct, Light, Brainstorm, Discuss, Plan, Full, or Review-Handoff before invoking heavy workflow skills. Spend 60-90 seconds, output one Route, one single-token Runtime skill, a Fallback alias when needed for Claude/Codex compatibility, concrete routing signals, assumptions, and the next action, then continue with the smallest safe workflow."
