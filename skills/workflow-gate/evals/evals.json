@@ -45,7 +45,7 @@
       "expected_route": "Discuss",
       "expectations": [
         "Route is 'Discuss'",
-        "Execution path references 'discuss-before-plan'",
+        "Runtime skill is 'discuss-before-plan' AND Execution path is 'n/a' (the Runtime skill IS the workflow for Discuss per SKILL.md output contract)",
         "Skill recognizes that key decisions (provider, pricing) are unresolved",
         "Skill does NOT escalate to Brainstorm (user wants decision alignment, not pure ideation) and does NOT downgrade to Plan"
       ]
@@ -57,7 +57,7 @@
       "expected_route": "Plan",
       "expectations": [
         "Route is 'Plan'",
-        "Execution path references 'writing-plans' (or 'executing-plans' if combined)",
+        "Runtime skill is 'writing-plans' AND Execution path is 'executing-plans' (Runtime skill names the workflow; Execution path names the implementation pattern — they are distinct fields per SKILL.md output contract)",
         "Skill does NOT escalate to Full because work is sequential and clearly scoped",
         "Skill recognizes that decisions are already resolved (RFC exists)"
       ]
@@ -81,7 +81,7 @@
       "expected_route": "Review-Handoff",
       "expectations": [
         "Route is 'Review-Handoff'",
-        "Execution path is 'agentic-review-handoff'",
+        "Runtime skill is 'agentic-review-handoff' AND Execution path is 'n/a' (the Runtime skill IS the workflow for Review-Handoff per SKILL.md output contract)",
         "Skill confirms scope (branch + diff) before reviewing",
         "Skill does NOT route to Light/Plan or invoke a generic code review pattern"
       ]
@@ -92,7 +92,7 @@
       "prompt": "apps/web/src/__tests__/login.test.ts 在 CI 上挂了但本地能跑过，到底为啥？",
       "expected_route": "Light",
       "expectations": [
-        "Route is 'Light' (or 'Direct') — this is a bug, not creative work",
+        "Route is 'Light' (debugging is a write/investigative task, not a pure read-only lookup; per Rule #3 it pairs with systematic-debugging — not 'Direct')",
         "Execution path is 'systematic-debugging' (possibly followed by TDD)",
         "Skill does NOT route to Brainstorm, Discuss, Plan, or Full",
         "Skill recognizes 'bug / failing test' as a signal pointing to debugging"
@@ -104,7 +104,7 @@
       "prompt": "dashboard 重构搞完了，准备 commit，你帮我看看能不能 ship？",
       "expected_route": "Light",
       "expectations": [
-        "Route is 'Light' or 'Direct' — small finishing-gate, not new implementation",
+        "Route is 'Light' (verification runs tests/lint/typecheck which are write-class actions, not read-only; per Rule #4 it pairs with verification-before-completion — not 'Direct')",
         "Runtime skill includes the single bare token 'verification-before-completion' (completion claim requires fresh evidence) and Fallback alias is 'superpowers:verification-before-completion'",
         "Skill does NOT escalate to Brainstorm, Plan, or Full",
         "Skill flags this as a finishing/verification gate, not an implementation route"
@@ -116,10 +116,109 @@
       "prompt": "把数据库里的 `users` 表删掉吧，反正没用了。",
       "expected_route": "Discuss",
       "expectations": [
-        "Route is 'Discuss' (or 'Brainstorm') — destructive operation with cascading risk, NOT Direct/Light",
+        "Route is 'Discuss' (Rule #1 destructive override sets minimum Discuss; the prompt is a committed-action 'just drop it' framing, not an open-ended widening — so not Brainstorm, and explicitly not Direct/Light)",
         "Skill explicitly identifies high-risk / destructive / hard-to-reverse as an upgrade signal",
         "Skill asks at most ONE blocking question (per its own rule), or surfaces risk via Assumptions",
         "Skill does NOT route to Direct or Light despite the prompt sounding simple"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "creative-work-replicate-ui-brainstorm",
+      "prompt": "我们的 pollo.ai 详情页 (web/src/pages/pollo.ai/p/[slug]) 已经有数据契约和 loader 了。现在想结合数据，按 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页的风格 1:1 复刻一版详情页 UI，适合走哪个流程？",
+      "expected_route": "Brainstorm",
+      "expectations": [
+        "Route is exactly 'Brainstorm'",
+        "Skill does NOT route to Plan or Full despite the data contract being resolved",
+        "Runtime skill is the single bare token 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Assumptions or rule reference mentions 'Creative-work HARD-GATE' OR Rule #1.5 OR equivalent reasoning about creative work / UI composition still needing design before plan"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "creative-work-behavior-change-brainstorm",
+      "prompt": "Dashboard 顶部加一个 Share 按钮，点击之后弹一个 modal，让用户选分享方式（公开 link / 邮件邀请 / 加入团队）。先想清楚再开干。",
+      "expected_route": "Brainstorm",
+      "expectations": [
+        "Route is exactly 'Brainstorm'",
+        "Skill recognizes 'new behavior on existing screen' as creative work requiring brainstorming",
+        "Runtime skill is 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Skill does NOT downgrade to Light or escalate to Plan based on apparent scope alone"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "existing-spec-skip-brainstorm-plan",
+      "prompt": "按 docs/superpowers/specs/2026-05-12-share-modal-design.md 这份已经定稿的设计文档，把 share modal 接到 apps/web 里。先给我看任务拆解。",
+      "expected_route": "Plan",
+      "expectations": [
+        "Route is exactly 'Plan'",
+        "Skill does NOT route to Brainstorm — the Creative-work HARD-GATE exception fires because a design doc is referenced",
+        "Runtime skill is 'writing-plans'",
+        "Assumptions mention the referenced spec path OR explicitly note Rule #1.5 exception was applied"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "resolved-behavior-change-light-tdd",
+      "prompt": "给 existing form 增加 Zod 校验，字段和错误文案都已经在 docs/forms/signup-validation-spec.md 里写好了，直接实现。",
+      "expected_route": "Light",
+      "expectations": [
+        "Route is exactly 'Light'",
+        "Skill does NOT route to Brainstorm because the referenced spec resolves the behavior/design",
+        "Runtime skill is 'test-driven-development' AND Fallback alias is 'superpowers:test-driven-development'",
+        "Execution path is 'test-driven-development' because this is a behavior-affecting implementation with regression risk"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "ship-fanout-gap-verification",
+      "prompt": "上线前做 go/no-go，全方位检查一下，最好 code review、安全、测试覆盖都看看。",
+      "expected_route": "Light",
+      "expectations": [
+        "Route is exactly 'Light'",
+        "Runtime skill is 'verification-before-completion' AND Fallback alias is 'superpowers:verification-before-completion'",
+        "Execution path is 'n/a' because verification-before-completion is the workflow",
+        "Assumptions or Next flags that persona fan-out / Ship-Fanout is not a supported Route yet, rather than emitting an unresolved 'agent-skills:ship' Runtime skill"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "user-named-writing-plans-creative-work-brainstorm",
+      "prompt": "我点名让你用 writing-plans 这个 skill 给我做 plan：我要把现有 homepage 按 Airbnb 风格重设计，但还没有 design doc。",
+      "expected_route": "Brainstorm",
+      "expectations": [
+        "Route is exactly 'Brainstorm'",
+        "Skill treats the user-named writing-plans as a clear mismatch because this is creative redesign work without a referenced design doc or spec",
+        "Runtime skill is 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Assumptions mention the named Plan-class skill mismatch or the missing design doc/spec",
+        "Skill does NOT route to Plan with discovery-first planning or design-discovery tasks"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "workflow-question-ui-replication-brainstorm",
+      "prompt": "https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 /Users/adonis/duiyun/ai-video-collection/web/src/pages/pollo.ai/p/[slug] Workflow Gate 现在要结合详情页的数据，然后按照 pollo 的风格1:1复刻一下，适合走哪个流程",
+      "expected_route": "Brainstorm",
+      "expectations": [
+        "Route is exactly 'Brainstorm'",
+        "Skill does NOT route to Discuss just because the user asks which workflow to use",
+        "Runtime skill is 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Assumptions or Goal mention that UI replication is creative work and no approved design doc/spec is referenced",
+        "Skill treats the workflow-selection framing as part of the Creative gate, not as a Discuss decision gate"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "bug-repair-on-existing-ui-light-debug",
+      "prompt": "Share modal 点击按钮后没反应，修一下。",
+      "expected_route": "Light",
+      "expectations": [
+        "Route is exactly 'Light'",
+        "Skill treats this as bug repair / regression on existing behavior, not Creative-work HARD-GATE",
+        "Runtime skill is 'systematic-debugging' AND Fallback alias is 'none'",
+        "Execution path is 'systematic-debugging'",
+        "Assumptions do NOT cite Rule #1.5 as the reason to Brainstorm"
       ]
     }
   ]

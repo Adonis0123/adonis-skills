@@ -68,6 +68,24 @@ Workflow Gate
 
 `Execution path` is `n/a` because the verification skill *is* the workflow — no implementation pattern needs to fire on top of it. The same pattern applies for Brainstorm / Discuss / Review-Handoff routes.
 
+## Light + test-driven-development — referenced spec, direct few-file behavior change
+
+User: "给 existing form 增加 Zod 校验，字段和错误文案都已经在 docs/forms/signup-validation-spec.md 里写好了，直接实现。"
+
+The referenced spec means the creative/design decision has already been made. Rule #1.5's exception skips Brainstorm, but the implementation still changes behavior, so use TDD rather than plain direct local work.
+
+```
+Workflow Gate
+- Route: Light
+- Runtime skill: test-driven-development
+- Fallback alias: superpowers:test-driven-development
+- Execution path: test-driven-development
+- Goal: Add Zod validation to the existing form per the referenced signup validation spec.
+- Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=implement
+- Assumptions: docs/forms/signup-validation-spec.md is authoritative; Rule #1.5 exception skips Brainstorm, and direct few-file behavior implementation uses TDD.
+- Next: Load test-driven-development; write valid and invalid input coverage before implementing the validation.
+```
+
 ## Brainstorm — open solution space
 
 User: "Design the sharing model for dashboards — link / invite / RBAC / workspace, what are the tradeoffs?"
@@ -214,6 +232,96 @@ Workflow Gate
 - Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
 - Assumptions: User-named `brainstorming` doesn't fit a single-character fix; defaulting to Light and surfacing the mismatch before applying.
 - Next: Confirm with one sentence ("This is a one-char fix; running brainstorming on it would be over-escalation — want me to just apply it?") and then edit.
+```
+
+## Brainstorm — replicate an existing UI (Creative-work HARD-GATE positive)
+
+User: "结合 /Users/me/duiyun/.../pollo.ai/p/[slug] 的数据契约，把 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页按 Pollo 风格 1:1 复刻一下，适合走哪个流程？"
+
+Even though the data contract exists and the visual target is concrete, this is creative UI work — composing a screen from a design system, choosing information density, picking a CTA shape, mapping fields. Rule #1.5 fires: Brainstorm, not Plan.
+
+```
+Workflow Gate
+- Route: Brainstorm
+- Runtime skill: brainstorming
+- Fallback alias: superpowers:brainstorming
+- Execution path: n/a
+- Goal: Design how to map the YouMind prompt-detail information architecture into a Pollo-styled detail page before writing code.
+- Signals: scope=few-files; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
+- Assumptions: Data contract exists, but the UI composition is creative work — Rule #1.5 (Creative-work HARD-GATE) requires Brainstorm before Plan. No `docs/superpowers/specs/*-design.md` referenced.
+- Next: Load brainstorming; offer the visual companion, then converge on layout / hierarchy / CTA / empty-state decisions one question at a time.
+```
+
+## Brainstorm — intentional behavior change on existing screen (Creative-work HARD-GATE positive)
+
+User: "Dashboard 上加一个 Share 按钮，点击弹一个 modal 让用户选 link / email / team。"
+
+Adding intentional new behavior to an existing screen is creative work even though the screen already exists. Rule #1.5 fires.
+
+```
+Workflow Gate
+- Route: Brainstorm
+- Runtime skill: brainstorming
+- Fallback alias: superpowers:brainstorming
+- Execution path: n/a
+- Goal: Design the share-modal interaction (entry point, sharing channels, default state, permissions surface) before implementation.
+- Signals: scope=few-files; risk=low; destructive=no; decisions=unresolved; user-intent=ideate
+- Assumptions: Intentional new behavior on an existing screen counts as creative work under Rule #1.5; no prior design doc referenced.
+- Next: Load brainstorming; clarify which channels matter first, default audience, and permission model.
+```
+
+## Brainstorm — user named writing-plans but no design doc (Rule #1.5 mismatch)
+
+User: "Use writing-plans: redesign the existing homepage in an Airbnb style, but there is no design doc yet."
+
+Do not turn `writing-plans` into a discovery-first design workflow. The missing design doc is exactly why Rule #1.5 fires: Brainstorm first, then writing-plans after the design is approved.
+
+```
+Workflow Gate
+- Route: Brainstorm
+- Runtime skill: brainstorming
+- Fallback alias: superpowers:brainstorming
+- Execution path: n/a
+- Goal: Design the homepage redesign direction before creating an implementation plan.
+- Signals: scope=few-files; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
+- Assumptions: User named `writing-plans`, but this is creative redesign work and no design doc/spec is referenced; treating the named Plan-class skill as a mismatch under Rule #1.5.
+- Next: Load brainstorming; clarify design goals, reference boundaries, brand constraints, and success criteria before any writing-plans handoff.
+```
+
+## Plan — existing spec referenced (Rule #1.5 exception)
+
+User: "按 docs/superpowers/specs/2026-05-12-share-modal-design.md 把 share modal 接到 apps/web。"
+
+The user has explicitly pointed at an existing design doc, so brainstorming has already been paid. Rule #1.5's exception applies: route to Plan and record the spec path in `Assumptions`.
+
+```
+Workflow Gate
+- Route: Plan
+- Runtime skill: writing-plans
+- Fallback alias: none
+- Execution path: executing-plans
+- Goal: Wire the share modal into apps/web per the referenced design doc.
+- Signals: scope=few-files; risk=low; destructive=no; decisions=resolved; user-intent=plan
+- Assumptions: docs/superpowers/specs/2026-05-12-share-modal-design.md is authoritative; Rule #1.5 exception fires (existing spec referenced) → skip brainstorming.
+- Next: Load writing-plans; produce a task breakdown grounded in the design doc.
+```
+
+## Light — typo fix is not creative work (Rule #1.5 negative)
+
+User: "把 apps/web/src/App.tsx 第 42 行的 'recieve' 改成 'receive'。"
+
+A single-character typo is neither a new feature, a new component, nor a behavior change. Rule #1.5 does not fire. Stay on the existing Light row.
+
+```
+Workflow Gate
+- Route: Light
+- Runtime skill: none
+- Fallback alias: none
+- Execution path: direct local work
+- Goal: Apply the typo fix at apps/web/src/App.tsx:42.
+- Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
+- Assumptions: none
+- Next: Edit the line; re-read the diff for verification.
 ```
 
 ## Light + "don't ask me" edge case
