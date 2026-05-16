@@ -1,4 +1,0 @@
-interface:
-  display_name: "Zustand Store Scaffold"
-  short_description: "Scaffold class-based Zustand stores with flattenActions"
-  default_prompt: "Scaffold a Zustand store using class-based actions with flattenActions."
