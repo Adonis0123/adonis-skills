@@ -1,0 +1,48 @@
+{
+  "skill_name": "agentic-review-handoff",
+  "description": "Persistent packet artifact protocol for cross-agent code review (Claude Code reviewer + Codex implementer/fixer). Each eval gives the skill a realistic stage entry and verifies the packet file is created/extended correctly under the mock repo's $repo_root/.review-handoff/active/, with proper anchor sequence and frontmatter.",
+  "evals": [
+    {
+      "id": 1,
+      "name": "scenario-A-reviewer-initiated-full-loop",
+      "prompt": "我刚改了 apps/api/cart-handler.ts，给 /api/cart 加了 PATCH 端点和 3 条单测，目前已经 git add 但没 commit。你帮我 review 一下当前 staged diff。仓库根是 ${MOCK_REPO}，分支 feat/cart-patch。review 完顺手把要修的 finding 整理成一个能直接给 codex 的 fix handoff 包。diff 摘要：新增 PATCH /api/cart 路由处理 quantity 字段更新，含基本输入校验，但没有处理 quantity=0 应该删除条目的边界情况，单测也没覆盖该 case。",
+      "expected_output": "一个 packet 文件创建在 ${MOCK_REPO}/.review-handoff/active/feat-cart-patch/<local_minute>-<scope_slug>.md，其中文件名时间格式为 YYYY-MM-DD_HH-mm（例如 2026-05-15_08-30，精确到分钟，本地时间），包含 # Review Intake → # Review Findings → # Fix Handoff 三个 H1 段（不应包含 # Review Handoff，因为 reviewer 没有 implementer 上下文）。Findings 至少应识别 quantity=0 边界。frontmatter 含 last_anchor=fix_handoff、lifecycle_state=in_progress、round=1。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "scenario-B-multi-round-iteration",
+      "prompt": "${MOCK_REPO}/.review-handoff/active/ 下已经有一个 packet 文件，状态是 last_anchor=fix_completion 且写到 # Fix Completion (round 2)。Codex 刚提交了 round 2 的修复，请你对这一轮做 re-review。Round 1 的 BLOCKED 是因为缺少 quantity=0 的处理；round 2 的 Fix Completion 声称已经在 cart-handler.ts:42 加了 deleteItem 分支并补了单测。仓库根 ${MOCK_REPO}，分支 feat/cart-patch。",
+      "expected_output": "Re-reviewer 找到既有 packet（不创建新文件），追加 # Re-review (round 2) 段，包含 Prior Findings Reassessment 表（验证 round 1 BLOCKED 的 finding 是否真的被解决，引用 Original Findings Snapshot 而非 Claimed Status）+ New Findings + Regression Surface + 单一 Verdict。frontmatter round=2、last_anchor=re_review；lifecycle_state 由 verdict 推导（PASS/NO_FINDINGS→archived 并 mv 到 archive/、PASS_WITH_CONCERNS→awaiting_user_decision、BLOCKED→blocked）。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "scenario-D-implementer-initiated-handoff",
+      "prompt": "我（codex 角色）刚写完 PaymentValidator 类，三个公开方法 validateCard / validateCVV / validateExpiry，每个都有单测。代码 diff 已经 staged 在 ${MOCK_REPO}（分支 feat/payment-validator）。请创建 review handoff packet，让 reviewer 接手。Goal：把信用卡基本字段校验从 checkout-form 中独立出来形成可测试单元；非 goals：不引入第三方依赖；verification 是 vitest run packages/payment 全绿。",
+      "expected_output": "创建 ${MOCK_REPO}/.review-handoff/active/feat-payment-validator/<local_minute>-<scope_slug>.md，其中文件名时间格式为 YYYY-MM-DD_HH-mm（精确到分钟，本地时间）；首段是 # Review Handoff（含 Goal / Review Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions 6 个子节）。不包含 # Review Findings 或 # Review Intake。frontmatter last_anchor=review_handoff、lifecycle_state=in_progress、round=1。",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "scenario-E-subdir-cwd-still-hits-root-inbox",
+      "prompt": "我的 cwd 是 ${MOCK_REPO}/apps/web/src/components/auth/，现在对当前 staged diff 做 review，diff 改的是 RegisterForm.tsx 的密码强度校验逻辑（之前要求 8 字符以上，现改成 12 字符且必须含数字+特殊字符）。仓库根本身在 ${MOCK_REPO}（不是 apps/web/），我已经 git add 了改动。",
+      "expected_output": "Skill 必须先用 git rev-parse --show-toplevel 解析到 ${MOCK_REPO}，packet 文件创建路径必须是 ${MOCK_REPO}/.review-handoff/active/<branch_slug>/，**不**在 ${MOCK_REPO}/apps/web/.review-handoff/ 或任何其他位置。Packet 内容应是 reviewer-initiated 路径（# Review Intake → # Review Findings → # Fix Handoff，不写 # Review Handoff）。",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "scenario-G-pass-with-concerns-auto-continue",
+      "prompt": "${MOCK_REPO}/.review-handoff/active/ 下有一个 packet 文件，最末段是 # Re-review，verdict=PASS_WITH_CONCERNS，lifecycle_state=awaiting_user_decision，round=1，列出了两个 P3 命名建议未处理。我现在决定继续修这两个 concerns，请按 review 修一下。仓库根 ${MOCK_REPO}，分支 feat/cart-patch。",
+      "expected_output": "Skill 必须找到该 packet（不创建新文件、不让用户手动 mv），进入 fix 阶段，追加 # Fix Completion (round 2) 段（首子节是 Fix Conclusion，含 Original Findings Snapshot 引用上一轮的 P3 findings）。frontmatter 更新：round=2、last_anchor=fix_completion、lifecycle_state=in_progress（从 awaiting_user_decision 迁出）、updated 字段刷新。文件仍在 active/，不归档（fixer 永不归档）。Original Findings Snapshot 表的列结构必须与原 Fix Handoff `Validated Findings To Fix` 表完全一致（ID/Severity/Verdict/Original finding/Evidence/Target files/lines/Required fix/Acceptance check 8 列同序），且 F2/F3 行字符级 verbatim 复制。",
+      "files": []
+    },
+    {
+      "id": 6,
+      "name": "scenario-H-first-pass-no-findings-archive",
+      "prompt": "我刚改了 packages/utils/format-date.ts，只是把一个 const string 重命名得更清楚（DATE_FMT_ISO → DATE_FORMAT_ISO_8601），所有引用同步更新，TypeScript 编译过。你帮 review 一下，看看有没有问题。仓库根 ${MOCK_REPO}，分支 feat/rename-const。",
+      "expected_output": "Skill 走 reviewer-initiated 路径：创建 packet，写 # Review Intake → # Review Findings（Findings 空或仅 Preference，Verdict=PASS 或 NO_FINDINGS），**不**写 # Fix Handoff（无需 fix），随后自动归档：mv 到 archive/，frontmatter last_anchor=review_findings、lifecycle_state=archived、round=1。这是 spec/SKILL.md 里定义的 'golden path first-pass terminal'。",
+      "files": []
+    }
+  ]
+}
