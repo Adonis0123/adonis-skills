@@ -31,8 +31,4 @@ Re-gating costs ~30 sec; riding a stale Route costs hours.
 
 ## Execution-path upgrades inside Light
 
-Light's default Execution path is `direct local work`. Upgrade the Execution path (NOT the Route) when:
-
-- Regression risk on a behavior change → `Runtime skill: test-driven-development`, `Fallback alias: superpowers:test-driven-development`, `Execution path: test-driven-development`.
-- Symptom-first investigation (bug / failing test) → `Runtime skill: systematic-debugging`.
-- Claiming "done / ready to ship" → set `Runtime skill: verification-before-completion`, `Fallback alias: superpowers:verification-before-completion`, and leave `Execution path: n/a` (the verification skill is the workflow).
+This section was promoted into SKILL.md in v1.9.0 — see "Execution-path upgrades inside Light (hot path — inline here, not in references)" there. It is no longer duplicated here to avoid drift.

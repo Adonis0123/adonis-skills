@@ -1,14 +1,18 @@
 ---
 name: workflow-gate
-description: "Use BEFORE loading heavier workflow skills (brainstorming, discuss-before-plan, writing-plans, subagent-driven-development, agentic-review-handoff, executing-plans, finishing-a-development-branch) when the route is not already obvious. A 60-90 second advisory classifier that prevents over-escalation and under-escalation. Outputs one Route, one single-token Runtime skill to load next, one optional Fallback alias for Claude/Codex compatibility, and one Execution path. Creative work (new feature / UI replicate / redesign / intentional behavior change) without a referenced design doc or spec MUST route to Brainstorm, even when the user names writing-plans or asks which workflow to use. Skip the gate ONLY for single-line read-only lookups, pure-formatting edits with no behavior change, or an explicitly named downstream skill that is already safe and non-destructive."
+description: "Use BEFORE loading heavier workflow skills (brainstorming, discuss-before-plan, writing-plans, subagent-driven-development, agentic-review-handoff, executing-plans, finishing-a-development-branch) when the route is not already obvious. A 60-90 second advisory classifier that prevents over-escalation and under-escalation. Outputs one Route, one single-token Runtime skill to load next, one optional Fallback alias for Claude/Codex compatibility, and one Execution path. Creative work (new feature / UI replicate / redesign / intentional behavior change) without a referenced design doc or spec MUST route to Brainstorm, even when the user names writing-plans or asks which workflow to use. Skip the gate ONLY for single-line read-only lookups, pure-formatting edits with no behavior change, an explicitly named downstream skill that is already safe and non-destructive, or trivial one-line fixes such as a single-file debug log, a one-line type narrowing, or an isolated typo / micro-bug patch with no cross-file or public-interface impact."
 metadata:
   author: adonis
-  version: "1.8.2"
+  version: "1.9.0"
 ---
 
 # Workflow Gate
 
 A reflex-fast router. Over-escalating burns minutes on obvious work; under-escalating creates rework or outages.
+
+**Fast path (default — meet the reflex budget):** read THIS file only and emit the block. The cheat card, 9 precedence rules, tiebreakers, output contract, and skill-name resolution table below are self-contained; for the vast majority of prompts you do NOT need to open any `references/*.md`. Target wall-clock ≤ 10s.
+
+**Slow path (load references only if):** (a) you genuinely cannot pick a Route from the cheat card + precedence rules, or (b) the prompt mentions cross-ecosystem terms (superpowers vs addy/agent-skills) and you need the ecosystem boundary, or (c) you need a worked example whose closest match isn't obvious from the cheat card. Even then load at most ONE reference file. Loading all references for every prompt is the dominant speed regression — avoid it.
 
 ## Mandatory pre-routing overrides
 
@@ -33,7 +37,7 @@ For anything else, emit the block. If the user named a skill that clearly mismat
 |---|---|---|---|
 | **Direct** | read-only lookup, no write | `none` | `direct local work` |
 | **Light** | small write / debug / docs / ship-check | `none` *(or `systematic-debugging` / `test-driven-development` / `verification-before-completion` via the rules below)* | `direct local work` |
-| **Brainstorm** | creative work (new feature / new screen / new component / 复刻 / redesign / compose UI / intentional behavior change) — fires even when scope=few-files and decisions=resolved. Also "options / tradeoffs / first principles" framing. Skip only when an existing design doc / spec is referenced (see Rule #1.5 exception). | `brainstorming` | `n/a` |
+| **Brainstorm** | creative work — full trigger list in Rule #1.5; fires even when scope=few-files and decisions=resolved. Also "options / tradeoffs / first principles" framing. | `brainstorming` | `n/a` |
 | **Discuss** | "Stripe vs X / decide before plan" | `discuss-before-plan` | `n/a` |
 | **Plan** | RFC ready, ≤ 2 bounded contexts | `writing-plans` | `executing-plans` |
 | **Full** | ≥ 3 bounded contexts AND parallelizable | `writing-plans` | `subagent-driven-development` |
@@ -43,7 +47,7 @@ One row fits → emit the block. Multiple fire → use precedence below. Route a
 
 ## Precedence rules — earlier overrides later
 
-1. **`destructive=yes`** (drop table, force push, delete prod data, schema break, public API removal) → minimum **Discuss**. Overrides every rule below, including a user-named skill and Fast-skip.
+1. **`destructive=yes`** (drop table, force push, delete prod data, schema break, public API removal) → minimum **Discuss**. Overrides every rule below, including a user-named skill and Fast-skip. The literal trigger list is the *reversibility* test: if the action is hard to undo (billing mutation, irreversible external API call, broadcast send, migration that drops state), treat as destructive even if it isn't on the keyword list — set `destructive=yes` and flag the reversibility cost in `Assumptions`.
 1.5. **Creative-work HARD-GATE** — new feature / screen / component, UI replication / 复刻, redesign, composed UI, or intentional behavior change.
    - No explicit design doc / spec reference → **Brainstorm** immediately. Do not continue to Rule #2, do not respect Plan-class skill names, and do not produce a discovery-first Plan.
    - Bug repair / failing test / build error / regression on existing behavior is not creative work; let Rule #3 handle it.
@@ -52,11 +56,21 @@ One row fits → emit the block. Multiple fire → use precedence below. Route a
 2. **User named a downstream skill** (and Rules #1 / #1.5 didn't fire) → respect it; only flag a clear mismatch.
 3. **Bug / failing test / build / CI failure / unexpected behavior / perf symptom** → **Light** + `Runtime skill: systematic-debugging` + `Execution path: systematic-debugging`. Upgrade to **Discuss** if scope is multi-module OR `risk=high` (payments / auth / production data).
 4. **"Done? / ready to commit / ship this"** → **Light** + `Runtime skill: verification-before-completion` + `Fallback alias: superpowers:verification-before-completion` + `Execution path: n/a` (then `finishing-a-development-branch` if branch integration). If the user explicitly asks for persona fan-out / security + test + review coverage, still use this route for now but flag the missing fan-out bridge in `Assumptions` (see `references/workflow-systems.md`).
-5. **Cross-agent / fix-then-re-review** → **Review-Handoff**. Mutually exclusive with #3/#4/#6/#7/#9 — replaces any of them. Rule #1 (destructive) still overrides per the tiebreaker.
+5. **Cross-agent / fix-then-re-review** → **Review-Handoff**. Mutually exclusive with #1.5/#3/#4/#6/#7/#9 — replaces any of them. Rule #1 (destructive) still overrides per the tiebreaker.
 6. **"Options / tradeoffs / first principles"** → **Brainstorm**.
 7. **Decisions unresolved (provider / architecture / data model / API)** → **Discuss**.
 8. **Contradictory signals** (e.g. "quick fix" + "production payments") → higher-risk route; record contradiction in `Assumptions`.
 9. **Otherwise** → scope-based pick from the cheat card.
+
+### Execution-path upgrades inside Light (hot path — inline here, not in references)
+
+Light's default Execution path is `direct local work`. Upgrade the Execution path (not the Route) when:
+
+- **Regression risk on a behavior change** → `Runtime skill: test-driven-development`, `Fallback alias: superpowers:test-driven-development`, `Execution path: test-driven-development`.
+- **Symptom-first investigation (bug / failing test / build error)** → `Runtime skill: systematic-debugging`, `Execution path: systematic-debugging`.
+- **"Done / ready to ship" claim** → `Runtime skill: verification-before-completion`, `Fallback alias: superpowers:verification-before-completion`, `Execution path: n/a` (the verification skill is the workflow).
+
+These three live on the hot path because evals 2, 8, 9, 14, 18 all depend on them — they used to be in `references/route-adjustments.md` but were promoted in v1.9.0 after that file got flagged as cold-path-labelled hot-path content.
 
 ### Tiebreakers — only the non-obvious pairs
 
@@ -64,6 +78,7 @@ Rule #1 (destructive) is the canonical override and wins against every other rul
 
 | When both fire | Pick | Why |
 |---|---|---|
+| Rule #1 (destructive) and Rule #1.5 (creative work) | Rule #1. Route to **Discuss**; record the creative-work flag in `Assumptions` so the design conversation resumes after the destructive issue is resolved. | Outage / data loss can't be undone by a design brainstorm; pause creative scoping until reversibility is secured. |
 | Rule #3 (bug) and Rule #4 (ship) | Rule #3 first; ship re-fires after the bug closes. | Don't ship a known-failing change. |
 | Rule #6 (Brainstorm) and Rule #7 (Discuss) | Brainstorm if options unknown; Discuss if options exist and decisions are the bottleneck. | Widening vs narrowing the space. |
 | Rule #2 (user named `writing-plans`) and Rule #1.5 (creative work, no spec) | Brainstorm. Record the named skill as a mismatch in `Assumptions`. | A Plan-class skill cannot substitute for the missing design gate. |
