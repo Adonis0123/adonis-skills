@@ -92,7 +92,7 @@
       "prompt": "apps/web/src/__tests__/login.test.ts 在 CI 上挂了但本地能跑过，到底为啥？",
       "expected_route": "Light",
       "expectations": [
-        "Route is 'Light' (debugging is a write/investigative task, not a pure read-only lookup; per Rule #3 it pairs with systematic-debugging — not 'Direct')",
+        "Route is 'Light' (debugging is a write/investigative task, not a pure read-only lookup; per Rule #4 it pairs with systematic-debugging — not 'Direct')",
         "Execution path is 'systematic-debugging' (possibly followed by TDD)",
         "Skill does NOT route to Brainstorm, Discuss, Plan, or Full",
         "Skill recognizes 'bug / failing test' as a signal pointing to debugging"
@@ -104,7 +104,7 @@
       "prompt": "dashboard 重构搞完了，准备 commit，你帮我看看能不能 ship？",
       "expected_route": "Light",
       "expectations": [
-        "Route is 'Light' (verification runs tests/lint/typecheck which are write-class actions, not read-only; per Rule #4 it pairs with verification-before-completion — not 'Direct')",
+        "Route is 'Light' (verification runs tests/lint/typecheck which are write-class actions, not read-only; per Rule #5 it pairs with verification-before-completion — not 'Direct')",
         "Runtime skill includes the single bare token 'verification-before-completion' (completion claim requires fresh evidence) and Fallback alias is 'superpowers:verification-before-completion'",
         "Skill does NOT escalate to Brainstorm, Plan, or Full",
         "Skill flags this as a finishing/verification gate, not an implementation route"
@@ -131,7 +131,7 @@
         "Route is exactly 'Brainstorm'",
         "Skill does NOT route to Plan or Full despite the data contract being resolved",
         "Runtime skill is the single bare token 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
-        "Assumptions or rule reference mentions 'Creative-work HARD-GATE' OR Rule #1.5 OR equivalent reasoning about creative work / UI composition still needing design before plan"
+        "Assumptions or rule reference mentions 'Creative-work HARD-GATE' OR Rule #2 OR equivalent reasoning about creative work / UI composition still needing design before plan"
       ]
     },
     {
@@ -155,7 +155,9 @@
         "Route is exactly 'Plan'",
         "Skill does NOT route to Brainstorm — the Creative-work HARD-GATE exception fires because a design doc is referenced",
         "Runtime skill is 'writing-plans'",
-        "Assumptions mention the referenced spec path OR explicitly note Rule #1.5 exception was applied"
+        "Assumptions mention the referenced spec path OR explicitly note Rule #2 exception was applied",
+        "LATENCY: wall-clock duration_ms ≤ 12000 (fast-path: cheat-card-matchable prompt)",
+        "CONTEXT: references_loaded_count ≤ 1 (Plan row is in cheat card — SKILL.md alone is sufficient)"
       ]
     },
     {
@@ -218,7 +220,7 @@
         "Skill treats this as bug repair / regression on existing behavior, not Creative-work HARD-GATE",
         "Runtime skill is 'systematic-debugging' AND Fallback alias is 'none'",
         "Execution path is 'systematic-debugging'",
-        "Assumptions do NOT cite Rule #1.5 as the reason to Brainstorm"
+        "Assumptions do NOT cite Rule #2 as the reason to Brainstorm"
       ]
     },
     {
@@ -230,7 +232,9 @@
         "Either the gate skips emission entirely (one-line answer is allowed per Fast-skip checklist) OR emits a Direct block with Runtime skill 'none' and Execution path 'direct local work'",
         "If a block IS emitted, it must be Direct (NOT Light, NOT any heavier Route)",
         "Skill does NOT emit Brainstorm, Discuss, Plan, Full, or Review-Handoff for a pure read-only single-line lookup",
-        "Output is concise: skip OR ≤ 9 lines (Direct cap)"
+        "Output is concise: skip OR ≤ 9 lines (Direct cap)",
+        "LATENCY: wall-clock duration_ms ≤ 12000 (skip-path should be cheaper than full block emission)",
+        "CONTEXT: references_loaded_count == 0 (fast-skip MUST NOT load any references/*.md)"
       ]
     },
     {
@@ -242,7 +246,7 @@
         "Either the gate skips (user named a downstream skill that is cheaply safe and non-destructive) OR emits a Light block respecting the named skill",
         "Skill does NOT escalate to Brainstorm, Discuss, Plan, or Full",
         "If a block is emitted, it does NOT flag a mismatch (the named skill fits the request)",
-        "Output respects the user's named skill per Precedence Rule #2"
+        "Output respects the user's named skill per Precedence Rule #3"
       ]
     },
     {
@@ -260,15 +264,16 @@
     },
     {
       "id": 22,
-      "name": "rule-1-vs-1.5-destructive-creative-conflict",
+      "name": "rule-1-vs-2-destructive-creative-conflict",
       "prompt": "重新设计 account-deletion 流程的 UI，加一个 confirmation modal，让用户在删除前看到将会清空的数据列表。",
       "expected_route": "Discuss or Brainstorm",
       "expectations": [
-        "Route is either 'Discuss' (strict reading of new Tiebreaker) OR 'Brainstorm' (design phase is not yet executing the destructive action) — both are defensible under v1.9.0",
+        "Route is 'Discuss' if the design step itself touches the destructive surface (typed-confirm, irrevocable flow logic), OR 'Brainstorm' if the design phase is provably non-executing (pure UI sketching, no API/data calls planned this turn) — matches the explicit v2.0.1 Rule #1 × Rule #2 Tiebreaker row",
         "Skill does NOT route to Light or Plan (the destructive surface AND the creative redesign together rule out small direct work)",
-        "Signals: risk=high (account deletion surface) — destructive=yes is preferred but destructive=no is acceptable if Assumptions explicitly note the design phase does not yet execute the destructive action",
-        "Assumptions explicitly acknowledge the destructive surface in some form (e.g. flags 'irreversible', 'destructive surface', 'production deletion', 'will be re-gated at implementation time')",
-        "If Route is Brainstorm, the implementation step must be re-gated against Rule #1 (recorded in Assumptions or Next)"
+        "Signals: risk=high (account deletion surface)",
+        "Assumptions explicitly acknowledge the destructive surface (e.g. flags 'irreversible', 'destructive surface', 'production deletion') AND, if Route is Brainstorm, explicitly note re-gating against Rule #1 at implementation time",
+        "LATENCY: wall-clock duration_ms ≤ 15000 (conflict resolution is the slower fast-path case)",
+        "CONTEXT: references_loaded_count ≤ 1 (Tiebreaker is in SKILL.md — no references needed)"
       ]
     },
     {

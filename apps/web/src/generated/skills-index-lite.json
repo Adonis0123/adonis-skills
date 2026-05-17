@@ -156,16 +156,16 @@
   {
     "slug": "workflow-gate",
     "name": "workflow-gate",
-    "description": "Use BEFORE loading heavier workflow skills (brainstorming, discuss-before-plan, writing-plans, subagent-driven-development, agentic-review-handoff, executing-plans, finishing-a-development-branch) when the route is not already obvious. A 60-90 second advisory classifier that prevents over-escalation and under-escalation. Outputs one Route, one single-token Runtime skill to load next, one optional Fallback alias for Claude/Codex compatibility, and one Execution path. Creative work (new feature / UI replicate / redesign / intentional behavior change) without a referenced design doc or spec MUST route to Brainstorm, even when the user names writing-plans or asks which workflow to use. Skip the gate ONLY for single-line read-only lookups, pure-formatting edits with no behavior change, or an explicitly named downstream skill that is already safe and non-destructive.",
+    "description": "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Brainstorm; destructive or hard-to-reverse work to Discuss; unresolved decisions, Plan/Full fan-out, ship checks, unclear bugs, and fresh-eyes fix-then-re-review need this gate. Skip single-line read-only lookups, pure typo/formatting edits, trivial safe one-line fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, and Execution path.",
     "metadata": {
       "author": "adonis",
-      "version": "1.8.2"
+      "version": "2.0.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-05-16T13:22:18.000Z"
+    "updatedAt": "2026-05-17T01:34:23.000Z"
   },
   {
     "slug": "zustand-store-scaffold",

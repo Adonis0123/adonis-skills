@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflow Gate"
   short_description: "Route tasks before heavier workflow skills."
-  default_prompt: "Use $workflow-gate to classify this request before invoking heavier workflow skills. Treat creative work such as new features, UI replication, redesigns, composed screens, and intentional behavior changes as Brainstorm unless an existing design doc or spec is referenced; treat bug repair and regressions as debugging. Preserve the single-token Runtime skill contract, emit Fallback alias only for compatibility, and continue with the smallest safe workflow."
+  default_prompt: "Use $workflow-gate to classify this request before invoking heavier workflow skills. Treat creative work such as new features, UI replication, redesigns, composed screens, and intentional behavior changes as Brainstorm unless an existing design doc or spec is referenced; treat destructive or hard-to-reverse work as Discuss before execution; treat bug repair and regressions as debugging. Preserve the single-token Runtime skill contract, emit Fallback alias only for compatibility, and continue with the smallest safe workflow."

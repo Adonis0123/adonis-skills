@@ -12,7 +12,7 @@ Use this only when the Route picked from the cheat card doesn't fit on closer in
 
 ## Downgrade — heavier Route is ceremony
 
-- *Brainstorm → Direct/Light:* user already chose the approach. *Why:* re-exploring wastes their signal.
+- *Brainstorm → Direct/Light:* the request is not creative HARD-GATE work, or the prompt/spec already fixes the relevant design and behavior. *Why:* re-exploring wastes their signal only after the design decision has been paid.
 - *Discuss → Light:* one reasonable implementation; user supplied exact behavior. *Why:* alignment is implicit.
 - *Plan → Light:* one or two files, obvious task list. *Why:* not a plan, just overhead.
 - *Full → Plan:* sequential or context-heavy. *Why:* `subagent-driven-development` only pays off on real fan-out.
@@ -28,7 +28,3 @@ Re-run the cheat card and precedence rules when the active Route's preconditions
 - User adds "don't ask" / "discuss first".
 
 Re-gating costs ~30 sec; riding a stale Route costs hours.
-
-## Execution-path upgrades inside Light
-
-This section was promoted into SKILL.md in v1.9.0 — see "Execution-path upgrades inside Light (hot path — inline here, not in references)" there. It is no longer duplicated here to avoid drift.

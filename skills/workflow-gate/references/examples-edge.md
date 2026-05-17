@@ -1,38 +1,6 @@
-# Worked examples — workflow-gate
+# Worked examples (edge cases) — workflow-gate
 
-One full Workflow Gate block per Route. Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. The block stays grep-friendly: same field order, same separators.
-
-## Direct — read-only question
-
-User: "Read me the line count of `App.tsx`."
-
-```
-Workflow Gate
-- Route: Direct
-- Runtime skill: none
-- Fallback alias: none
-- Execution path: direct local work
-- Goal: Report the line count of apps/web/src/App.tsx.
-- Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
-- Assumptions: none
-- Next: Count the file's lines with the local runtime's native command and return the number.
-```
-
-## Light + direct local work — typo / single-line edit
-
-User: "Fix typo `recieve` → `receive` on apps/web/src/App.tsx:42."
-
-```
-Workflow Gate
-- Route: Light
-- Runtime skill: none
-- Fallback alias: none
-- Execution path: direct local work
-- Goal: Apply the typo fix at apps/web/src/App.tsx:42.
-- Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
-- Assumptions: none
-- Next: Edit the line; no further verification beyond a re-read of the diff.
-```
+These cover tiebreakers, mismatches, Rule #2 positive/negative variants, re-gating, contradictory-signal handling, and the "don't ask me" edge case. The core 7 (one per Route) live in `examples-core.md` — load this file only when the core set doesn't cover the prompt.
 
 ## Light + systematic-debugging — failing CI test
 
@@ -72,7 +40,7 @@ Workflow Gate
 
 User: "给 existing form 增加 Zod 校验，字段和错误文案都已经在 docs/forms/signup-validation-spec.md 里写好了，直接实现。"
 
-The referenced spec means the creative/design decision has already been made. Rule #1.5's exception skips Brainstorm, but the implementation still changes behavior, so use TDD rather than plain direct local work.
+The referenced spec means the creative/design decision has already been made. Rule #2's exception skips Brainstorm, but the implementation still changes behavior, so use TDD rather than plain direct local work.
 
 ```
 Workflow Gate
@@ -82,40 +50,8 @@ Workflow Gate
 - Execution path: test-driven-development
 - Goal: Add Zod validation to the existing form per the referenced signup validation spec.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=implement
-- Assumptions: docs/forms/signup-validation-spec.md is authoritative; Rule #1.5 exception skips Brainstorm, and direct few-file behavior implementation uses TDD.
+- Assumptions: docs/forms/signup-validation-spec.md is authoritative; Rule #2 exception skips Brainstorm, and direct few-file behavior implementation uses TDD.
 - Next: Load test-driven-development; write valid and invalid input coverage before implementing the validation.
-```
-
-## Brainstorm — open solution space
-
-User: "Design the sharing model for dashboards — link / invite / RBAC / workspace, what are the tradeoffs?"
-
-```
-Workflow Gate
-- Route: Brainstorm
-- Runtime skill: brainstorming
-- Fallback alias: superpowers:brainstorming
-- Execution path: n/a
-- Goal: Map the dashboard-sharing design space with tradeoffs across 4 candidate models.
-- Signals: scope=multi-module; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
-- Assumptions: none
-- Next: Load brainstorming; generate 3-5 candidate models with first-principles tradeoffs.
-```
-
-## Discuss — unresolved decisions
-
-User: "Stripe or Lemon Squeezy for billing? Pricing tiers undecided too."
-
-```
-Workflow Gate
-- Route: Discuss
-- Runtime skill: discuss-before-plan
-- Fallback alias: none
-- Execution path: n/a
-- Goal: Align on billing provider and pricing tiers before any implementation plan.
-- Signals: scope=multi-module; risk=high; destructive=no; decisions=unresolved; user-intent=decide
-- Assumptions: none
-- Next: Load discuss-before-plan; surface provider tradeoffs and tier shape for a one-pass decision.
 ```
 
 ## Discuss — destructive op disguised as Direct
@@ -132,54 +68,6 @@ Workflow Gate
 - Signals: scope=multi-module; risk=high; destructive=yes; decisions=unresolved; user-intent=ship
 - Assumptions: "Unused" is the user's unverified claim; no backup/migration plan stated.
 - Next: Load discuss-before-plan; ask once for env + disuse evidence + safe-deprecation alternative before any DROP.
-```
-
-## Plan — RFC-driven feature
-
-User: "Per RFC-024, wire Google OAuth into apps/web — 5-8 files."
-
-```
-Workflow Gate
-- Route: Plan
-- Runtime skill: writing-plans
-- Fallback alias: none
-- Execution path: executing-plans
-- Goal: Wire Google OAuth into apps/web per RFC-024.
-- Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=plan
-- Assumptions: RFC-024 is authoritative and current.
-- Next: Load writing-plans; produce a 5-8 task breakdown grounded in the RFC.
-```
-
-## Full — multi-bounded-context migration
-
-User: "Migrate auth across api+web+mobile from session cookies to JWT, 30+ files."
-
-```
-Workflow Gate
-- Route: Full
-- Runtime skill: writing-plans
-- Fallback alias: none
-- Execution path: subagent-driven-development
-- Goal: Migrate auth from session cookies to JWT across api, web, and mobile.
-- Signals: scope=multi-module; risk=high; destructive=no; decisions=resolved; user-intent=plan
-- Assumptions: JWT signing strategy already chosen; rollout phases to be detailed in the plan.
-- Next: Load writing-plans; structure per-app tasks so subagent-driven-development can fan out.
-```
-
-## Review-Handoff — fresh eyes
-
-User: "Have a fresh agent code-review `feature/billing-redesign`, with re-review after I fix."
-
-```
-Workflow Gate
-- Route: Review-Handoff
-- Runtime skill: agentic-review-handoff
-- Fallback alias: none
-- Execution path: n/a
-- Goal: Get an independent cross-agent review of feature/billing-redesign with re-review after fixes.
-- Signals: scope=multi-module; risk=medium; destructive=no; decisions=resolved; user-intent=review
-- Assumptions: Repo is a git repo (agentic-review-handoff requires it).
-- Next: Load agentic-review-handoff; create a packet scoped to main…feature/billing-redesign.
 ```
 
 ## Contradictory signals — "quick fix" on payment code
@@ -216,7 +104,7 @@ Workflow Gate (re-gate)
 - Next: Load discuss-before-plan; confirm migration vs deprecation strategy, then resume executing-plans for the remaining tasks.
 ```
 
-## Rule #2 mismatch — user named a skill that doesn't fit
+## Rule #3 mismatch — user named a skill that doesn't fit
 
 User: "Run brainstorming on this — there's a typo on line 42 of App.tsx."
 
@@ -238,7 +126,7 @@ Workflow Gate
 
 User: "结合 /Users/me/duiyun/.../pollo.ai/p/[slug] 的数据契约，把 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页按 Pollo 风格 1:1 复刻一下，适合走哪个流程？"
 
-Even though the data contract exists and the visual target is concrete, this is creative UI work — composing a screen from a design system, choosing information density, picking a CTA shape, mapping fields. Rule #1.5 fires: Brainstorm, not Plan.
+Even though the data contract exists and the visual target is concrete, this is creative UI work — composing a screen from a design system, choosing information density, picking a CTA shape, mapping fields. Rule #2 fires: Brainstorm, not Plan.
 
 ```
 Workflow Gate
@@ -248,7 +136,7 @@ Workflow Gate
 - Execution path: n/a
 - Goal: Design how to map the YouMind prompt-detail information architecture into a Pollo-styled detail page before writing code.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
-- Assumptions: Data contract exists, but the UI composition is creative work — Rule #1.5 (Creative-work HARD-GATE) requires Brainstorm before Plan. No `docs/superpowers/specs/*-design.md` referenced.
+- Assumptions: Data contract exists, but the UI composition is creative work — Rule #2 (Creative-work HARD-GATE) requires Brainstorm before Plan. No `docs/superpowers/specs/*-design.md` referenced.
 - Next: Load brainstorming; offer the visual companion, then converge on layout / hierarchy / CTA / empty-state decisions one question at a time.
 ```
 
@@ -256,7 +144,7 @@ Workflow Gate
 
 User: "Dashboard 上加一个 Share 按钮，点击弹一个 modal 让用户选 link / email / team。"
 
-Adding intentional new behavior to an existing screen is creative work even though the screen already exists. Rule #1.5 fires.
+Adding intentional new behavior to an existing screen is creative work even though the screen already exists. Rule #2 fires.
 
 ```
 Workflow Gate
@@ -266,15 +154,15 @@ Workflow Gate
 - Execution path: n/a
 - Goal: Design the share-modal interaction (entry point, sharing channels, default state, permissions surface) before implementation.
 - Signals: scope=few-files; risk=low; destructive=no; decisions=unresolved; user-intent=ideate
-- Assumptions: Intentional new behavior on an existing screen counts as creative work under Rule #1.5; no prior design doc referenced.
+- Assumptions: Intentional new behavior on an existing screen counts as creative work under Rule #2; no prior design doc referenced.
 - Next: Load brainstorming; clarify which channels matter first, default audience, and permission model.
 ```
 
-## Brainstorm — user named writing-plans but no design doc (Rule #1.5 mismatch)
+## Brainstorm — user named writing-plans but no design doc (Rule #2 mismatch)
 
 User: "Use writing-plans: redesign the existing homepage in an Airbnb style, but there is no design doc yet."
 
-Do not turn `writing-plans` into a discovery-first design workflow. The missing design doc is exactly why Rule #1.5 fires: Brainstorm first, then writing-plans after the design is approved.
+Do not turn `writing-plans` into a discovery-first design workflow. The missing design doc is exactly why Rule #2 fires: Brainstorm first, then writing-plans after the design is approved.
 
 ```
 Workflow Gate
@@ -284,15 +172,15 @@ Workflow Gate
 - Execution path: n/a
 - Goal: Design the homepage redesign direction before creating an implementation plan.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
-- Assumptions: User named `writing-plans`, but this is creative redesign work and no design doc/spec is referenced; treating the named Plan-class skill as a mismatch under Rule #1.5.
+- Assumptions: User named `writing-plans`, but this is creative redesign work and no design doc/spec is referenced; treating the named Plan-class skill as a mismatch under Rule #2.
 - Next: Load brainstorming; clarify design goals, reference boundaries, brand constraints, and success criteria before any writing-plans handoff.
 ```
 
-## Plan — existing spec referenced (Rule #1.5 exception)
+## Plan — existing spec referenced (Rule #2 exception)
 
 User: "按 docs/superpowers/specs/2026-05-12-share-modal-design.md 把 share modal 接到 apps/web。"
 
-The user has explicitly pointed at an existing design doc, so brainstorming has already been paid. Rule #1.5's exception applies: route to Plan and record the spec path in `Assumptions`.
+The user has explicitly pointed at an existing design doc, so brainstorming has already been paid. Rule #2's exception applies: route to Plan and record the spec path in `Assumptions`.
 
 ```
 Workflow Gate
@@ -302,15 +190,33 @@ Workflow Gate
 - Execution path: executing-plans
 - Goal: Wire the share modal into apps/web per the referenced design doc.
 - Signals: scope=few-files; risk=low; destructive=no; decisions=resolved; user-intent=plan
-- Assumptions: docs/superpowers/specs/2026-05-12-share-modal-design.md is authoritative; Rule #1.5 exception fires (existing spec referenced) → skip brainstorming.
+- Assumptions: docs/superpowers/specs/2026-05-12-share-modal-design.md is authoritative; Rule #2 exception fires (existing spec referenced) → skip brainstorming.
 - Next: Load writing-plans; produce a task breakdown grounded in the design doc.
 ```
 
-## Light — typo fix is not creative work (Rule #1.5 negative)
+## Light + test-driven-development — new utility function with spec-in-prompt (Rule #2 negative)
+
+User: "在 utils.ts 加一个新的 export function calculateTotalPrice(items: Item[]): number that sums item.price * item.qty"
+
+Name, signature, and behavior are all in the prompt — the design decision is paid by the spec-in-prompt, so this is NOT Rule #2 creative work. But it's a new exported function (behavior change with regression risk on future call sites), so use TDD rather than plain `direct local work`.
+
+```
+Workflow Gate
+- Route: Light
+- Runtime skill: test-driven-development
+- Fallback alias: superpowers:test-driven-development
+- Execution path: test-driven-development
+- Goal: Add calculateTotalPrice to utils.ts per the in-prompt signature and summing semantics.
+- Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
+- Assumptions: Signature + summing semantics are spec-in-prompt → not Rule #2 creative work; TDD because new exported function has regression risk on future call sites.
+- Next: Load test-driven-development; write a small table of (items, expected total) cases — empty array, single item, decimal qty, negative qty — before coding.
+```
+
+## Light — typo fix is not creative work (Rule #2 negative)
 
 User: "把 apps/web/src/App.tsx 第 42 行的 'recieve' 改成 'receive'。"
 
-A single-character typo is neither a new feature, a new component, nor a behavior change. Rule #1.5 does not fire. Stay on the existing Light row.
+A single-character typo is neither a new feature, a new component, nor a behavior change. Rule #2 does not fire. Stay on the existing Light row.
 
 ```
 Workflow Gate
