@@ -1,0 +1,152 @@
+{
+  "skill_name": "code-plugin-architecture",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "refactor-scattered-modals-to-plugin-system",
+      "prompt": "我们项目里现在有 5 个推广弹窗（NPS 调研、限时折扣、新人引导、签到提醒、邀请奖励），每个弹窗的关闭逻辑、显示条件、缓存策略都散在调用方组件里。每次产品要加一个新弹窗，我就要改 4-5 个文件，新人接手第一周一定踩坑。栈是 Next.js Pages Router + React 18 + Zustand + TypeScript。能不能帮我设计一套插件化机制，让以后加新弹窗 = 新建一个目录 + 注册表加一行？给我可以直接拿去用的目录结构 + 核心代码骨架。",
+      "expected_output": "应该给出一套清晰的 5 层结构（Identity / Contract / Registry / Runtime Core / Convention Folder），具体目录树，核心 store + factory 代码骨架，以及一个最小可用的示例插件。还应该提到延迟加载（dynamic）、占位符引导、命名推导表，最后给一个'加新弹窗的 N 步'清单。",
+      "assertions": [
+        {
+          "id": "mentions-five-pieces",
+          "text": "Output mentions the five-piece structure: Identity, Contract, Registry, Runtime Core (or Core Factory), and Convention Folder.",
+          "check_method": "grep_all",
+          "patterns": ["Identity", "Contract|契约", "Registry|注册表", "Core|内核|Factory", "Convention|约定"]
+        },
+        {
+          "id": "provides-directory-tree",
+          "text": "Output contains at least one ASCII directory tree (with `├──` or similar) showing the proposed folder structure.",
+          "check_method": "grep_any",
+          "patterns": ["├──", "└──", "│   "]
+        },
+        {
+          "id": "mentions-lazy-loading",
+          "text": "Output explicitly discusses lazy loading using dynamic() / lazy / dynamics.ts pattern.",
+          "check_method": "grep_any",
+          "patterns": ["dynamic\\(", "lazy\\(", "dynamics\\.ts", "延迟加载|懒加载"]
+        },
+        {
+          "id": "mentions-placeholder-comment",
+          "text": "Output mentions placeholder comments using the unified `// [Domain-Action]:(slot)` format (e.g. // [Popup-Config]:(add)) to guide future plugin additions. Output should NOT use the old [X-Placeholder] format.",
+          "check_method": "grep_any",
+          "patterns": ["占位符|placeholder", "\\[[A-Za-z]+-[A-Za-z]+\\]:\\("]
+        },
+        {
+          "id": "mentions-naming-table",
+          "text": "Output includes a naming derivation table (key → ComponentName → dataName → hookName) so adding a plugin becomes mechanical.",
+          "check_method": "grep_any",
+          "patterns": ["命名推导|naming derivation|naming table", "camelCase.*PascalCase|PascalCase.*camelCase", "snake_case"]
+        },
+        {
+          "id": "core-has-no-business-key-check",
+          "text": "Core code shown should NOT contain hardcoded plugin key checks like `if (key === 'xxx')`.",
+          "check_method": "grep_none",
+          "patterns": ["if\\s*\\(\\s*key\\s*===\\s*['\"]nps", "if\\s*\\(\\s*key\\s*===\\s*['\"]invite", "if\\s*\\(\\s*key\\s*===\\s*['\"]flash"]
+        },
+        {
+          "id": "provides-step-by-step",
+          "text": "Output provides a numbered or bulleted 'add new plugin in N steps' onboarding guide.",
+          "check_method": "grep_any",
+          "patterns": ["加新.*步|加一个.*步|N 步|添加.*步骤", "Step 1.*Step 2", "1\\..*2\\..*3\\."]
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "review-fake-pluginization",
+      "prompt": "团队里有同学说他做了个'插件化'的工具扩展系统，但我看了下感觉哪里怪怪的，每次加新工具还是要改 5、6 个地方。下面是核心代码，帮我看看这是不是真正的插件化，有没有反模式，要怎么改？\n\n```ts\n// extensions/index.ts\nimport { MotionExt } from './motion'\nimport { RelightExt } from './relight'\nimport { ShotsExt } from './shots'\n\nexport const extensions = {\n  motion: { component: MotionExt, priority: 1 },\n  relight: { component: RelightExt },\n  shots: { component: ShotsExt, priority: 3, customLayout: true },\n}\n\nexport function shouldShowExtension(key: string, user: User) {\n  if (key === 'motion') {\n    if (user.plan === 'free' && user.creditsLeft < 10) return false\n    return true\n  }\n  if (key === 'shots') {\n    const motionState = useStore((s) => s.motionOpen)\n    return !motionState && user.plan !== 'free'\n  }\n  return true\n}\n\nexport function getExtensionByKey(key: string) {\n  const ext = extensions[key]\n  if (key === 'shots' && ext.customLayout) {\n    return { ...ext, layout: SpecialShotsLayout }\n  }\n  return ext\n}\n```",
+      "expected_output": "应该识别出至少 5 种反模式：(1) Core 里有具体 key 的 if-else 业务逻辑（#7）；(2) 一个插件反向依赖另一个插件的 store（#4）；(3) 字段不同质——只有 shots 有 customLayout（#1）；(4) 没有 dynamic 延迟加载（#5）；(5) `customLayout: true` 这种 boolean 标记需要中心 if 解释（#1 变体）。还应该提出修法：把展示判断挪到单插件的 init、把 layout 升为 Contract 字段、加 dynamic 包装。",
+      "assertions": [
+        {
+          "id": "identifies-not-real-pluginization",
+          "text": "Output explicitly concludes this is NOT real pluginization (or is fake/伪插件化).",
+          "check_method": "grep_any",
+          "patterns": ["伪插件化|不是真.*插件化|not real plugin|fake plugin|not truly plugin", "OCP|open.*closed"]
+        },
+        {
+          "id": "identifies-core-key-check",
+          "text": "Output identifies the if (key === 'motion') / if (key === 'shots') anti-pattern (business in Core, anti-pattern #7).",
+          "check_method": "grep_any",
+          "patterns": ["业务.*漏到.*[Cc]ore|key.*===.*['\"]|god function|all.*visibility.*one place|集中.*可见性|集中.*business"]
+        },
+        {
+          "id": "identifies-cross-plugin-coupling",
+          "text": "Output identifies that shots reads motion's store (anti-pattern #4 — cross-plugin reverse dependency).",
+          "check_method": "grep_any",
+          "patterns": ["反向依赖|cross-plugin|耦合|shots.*motion|motionOpen|motion.*state"]
+        },
+        {
+          "id": "identifies-heterogeneous-fields",
+          "text": "Output identifies that fields are heterogeneous (some have priority, only shots has customLayout — anti-pattern #1).",
+          "check_method": "grep_any",
+          "patterns": ["不同质|heterogeneous|customLayout.*only|field.*inconsistent|priority.*缺|字段.*差异|结构.*不一致"]
+        },
+        {
+          "id": "identifies-no-lazy-loading",
+          "text": "Output identifies the missing dynamic / lazy loading (anti-pattern #5).",
+          "check_method": "grep_any",
+          "patterns": ["dynamic\\(\\)|lazy loading|延迟加载|懒加载|没有.*dynamic|缺.*lazy"]
+        },
+        {
+          "id": "proposes-refactor",
+          "text": "Output proposes concrete refactor steps (not just diagnosis): move visibility to init.ts, promote customLayout to Contract, add dynamic wrapper.",
+          "check_method": "grep_all",
+          "patterns": ["init", "Contract|契约|interface", "dynamic|lazy"]
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "cross-stack-rust-tauri",
+      "prompt": "我之前在 React 项目里用过你说的那套'五件套'插件化模式（Identity / Contract / Registry / Runtime Core / Convention Folder），现在公司接了个 Rust + Tauri v2 的桌面应用，UI 是 React 但很多扩展点在 Rust 后端——比如用户可以装第三方的'数据源 connector'（每个 connector 是一个 Rust crate，可能是 sqlite、postgres、csv、s3 等等）。能不能告诉我这套模式怎么映射到 Rust + Tauri 上？尤其是 Identity 和 Registry 这两层怎么落地最自然。",
+      "expected_output": "应该明确给出 Rust/Tauri 上的映射：Identity 用 crate name 或 const string（不是 trait——trait 是 Contract）；Registry 三种形态可选（编译期静态、inventory/linkme 分散、运行时 libloading）并说明各自取舍；Contract 用 trait；Runtime Core 用 host crate 持有 Box<dyn Trait>；Convention Folder 是 workspace member crate；Lazy loading 用 cargo features。还应该提到 Tauri 自带 Plugin 系统的关系：业务扩展应整体包成一个 Tauri Plugin，而不是每个 connector 独立 Tauri Plugin。",
+      "assertions": [
+        {
+          "id": "separates-identity-from-contract",
+          "text": "Output distinguishes Identity (crate name / const string) from Contract (trait) — does NOT conflate trait with Identity.",
+          "check_method": "grep_all",
+          "patterns": ["trait.*Contract|trait.*契约|trait.*接口|Contract.*trait|Identity.*crate|crate name.*Identity|const.*PLUGIN_KEY|name.*identifier"]
+        },
+        {
+          "id": "discusses-multiple-registry-forms",
+          "text": "Output discusses at least 2 forms of Registry: static (workspace builder), inventory/linkme distributed registration, or libloading dynamic.",
+          "check_method": "grep_any",
+          "patterns": ["inventory|linkme", "libloading|dlopen|dynamic.*load", "Builder.*plugin|register_all", "workspace.*member|静态注册|编译期"]
+        },
+        {
+          "id": "mentions-cargo-features-as-lazy",
+          "text": "Output mentions cargo features as the equivalent of lazy loading (compile-time feature gates).",
+          "check_method": "grep_any",
+          "patterns": ["cargo.*features|cfg\\(feature", "feature flag.*compile|编译期.*feature|features.*等价"]
+        },
+        {
+          "id": "discusses-tauri-plugin-relationship",
+          "text": "Output discusses how to relate this to Tauri's built-in Plugin system — recommend wrapping the entire connector mechanism as one Tauri Plugin, not one Tauri Plugin per connector.",
+          "check_method": "grep_any",
+          "patterns": ["Tauri.*[Pp]lugin.*关系|tauri::Builder|包成.*Tauri.*[Pp]lugin|wrap.*single.*Tauri.*plugin|不要每个.*Tauri.*[Pp]lugin"]
+        },
+        {
+          "id": "uses-five-piece-vocab",
+          "text": "Output uses the five-piece vocabulary (Identity, Contract, Registry, Runtime Core, Convention Folder).",
+          "check_method": "grep_all",
+          "patterns": ["Identity", "Contract|契约", "Registry|注册表", "Core|内核", "Convention|约定"]
+        },
+        {
+          "id": "recommends-compile-time-as-safer-default",
+          "text": "Output explicitly recommends compile-time / static registration (form A) as the safer default starting point for in-workspace plugins.",
+          "check_method": "grep_any",
+          "patterns": ["推荐.*编译期|recommend.*compile-time", "形态 A.*起步|从.*形态 A|start with.*form A", "默认.*静态注册|静态注册.*默认", "compile-time.*safer|compile-time.*default"]
+        },
+        {
+          "id": "abi-risk-flagged-when-discussing-dynamic-loading",
+          "text": "Conditional check (requires semantic review): IF the output discusses runtime dynamic loading (libloading / dlopen / dylib / .so loading), it MUST flag Rust ABI instability or recommend C ABI / abi_stable wrapping. If the output does NOT discuss dynamic loading at all, this assertion is vacuously satisfied. Grader: read the section on dynamic loading (if any) and verify ABI risk is called out.",
+          "check_method": "human_review",
+          "patterns": []
+        }
+      ],
+      "files": []
+    }
+  ]
+}

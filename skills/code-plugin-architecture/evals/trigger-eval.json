@@ -1,0 +1,82 @@
+[
+  {
+    "query": "我们现在 web 仓库里每次产品要加一个新的促销弹窗（比如这周加春节限时折扣的、下周加新功能 NPS 调研的），我都要改 5 个文件：注册表、入口、缓存表、埋点表、组件目录。新人接手第一周必踩坑。能不能帮我把这套机制重构一下，让我以后加一个新弹窗只用建一个目录？栈是 Next.js + Zustand + TS。",
+    "should_trigger": true
+  },
+  {
+    "query": "我看了 web/src/pages/_block/extensions 那个目录，每个 ai 工具一个子目录，最外面有个 index.ts 注册所有工具。这种写法是有什么名字吗，叫'插件化'吗？我想在另一个项目里复用这种模式，能跟我讲讲它的核心要点吗？",
+    "should_trigger": true
+  },
+  {
+    "query": "review 一下这段代码：我同事写了个所谓的 plugin system，但每次加新 plugin 都得在 core 里加 if (key === 'foo') 的分支。我觉得这违反了什么原则但说不出来名字。能帮我列一下他这里所有的反模式，并给出改法吗？代码 30 行左右我贴在下面。",
+    "should_trigger": true
+  },
+  {
+    "query": "我们后端有个 payment provider 模块，现在支持 Stripe、PayPal、FastSpring 三家。每次加新的支付渠道（比如这次要接 Razorpay）我都要改 webhook router、refund router、subscription router、price-mapping 表共 6 处。怎么样改造能让加新 provider 变成 'register one config'？",
+    "should_trigger": true
+  },
+  {
+    "query": "VSCode extension 的 contributes 那种机制，本质上是不是和我们项目里那个 banner 注册表一样的设计模式？我感觉是同一个东西不同栈的体现。能帮我把这个抽象一下，告诉我它在跨技术栈上长什么样吗？",
+    "should_trigger": true
+  },
+  {
+    "query": "我们要给 Tauri v2 桌面应用做一套'第三方数据源 connector'扩展机制（用户能装 sqlite/postgres/csv 等 connector，每个 connector 是一个独立 crate）。Rust 这边 Identity 用 trait 还是 newtype？Registry 用 Builder 链还是 inventory crate？想听一下 plugin architecture 的最佳实践。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个 PR 我要评审。改动里看到一个新增的 modal，加了 6 个文件、改了 4 个老文件。你帮我看看这种扩展成本是不是合理的——按你之前讲的标准，'加新东西 = 新建目录 + 注册表加一行'，他这里是不是远超了？要不要打回去？",
+    "should_trigger": true
+  },
+  {
+    "query": "team 里讨论要不要把 chat agent 的 tool registry 做成插件化的。现在所有 tool 在一个 800 行的文件里手写 switch case，每次加新 tool 都要在 5 个地方动。但有人说才 7 个 tool，YAGNI。帮我从'变种数 / 共性 / 痛点'三个角度评估下值不值得做。",
+    "should_trigger": true
+  },
+  {
+    "query": "我们的 admin 后台有十几种 'manageable resource'（用户、订单、模板、模型、优惠码、邮件……），每种资源的 CRUD 页面、权限校验、审计日志、API 路由都几乎同构但又有微小差异。现在每加一种资源代码量爆炸。能不能把这套东西 plugin 化？",
+    "should_trigger": true
+  },
+  {
+    "query": "我们的 form field 类型现在有 Input、Select、DatePicker、Upload、Color、Geolocation 等 12 种，每加一种 admin 表单字段都要改三个 switch case，分布在 renderField、validateField、serializeField 函数里。能不能让加一种字段类型变成新建一个目录就好？给一份重构方案。",
+    "should_trigger": true
+  },
+  {
+    "query": "公司想统一一套'广告位'（站头横幅、底部 CTA、侧边漂浮、In-feed card 几种位置）的注册和投放机制——位置类型由前端定义（static code plugin），但具体投什么素材让运营在后台勾选（runtime inventory）。前端这部分广告位类型的可扩展机制怎么设计？注意 expected behavior 是先回应：'位置类型可扩展（本 skill 适用）+ 运营投放是另一个层面（数据模型 + 后台 UI + 缓存策略）'，再给前端这部分的方案。",
+    "should_trigger": true
+  },
+  {
+    "query": "我刚把 NPS 弹窗的关闭逻辑加上了双击外面关闭。改完发现还要在 promotionConfig.ts 里把 cache 类型从 count 调成 interval。你帮我顺手把 cache 也改一下 commit 上吧。",
+    "should_trigger": false
+  },
+  {
+    "query": "useNpsSurveyModalInit 这个 hook 里 isSignIn 拿不到正确的初始值，第一次加载 banner 永远是关的。帮我看下是不是 useEffect 依赖项写错了。",
+    "should_trigger": false
+  },
+  {
+    "query": "Tailwind 这套 utility 命名我有点没看懂，比如 -f- 前缀是项目自定义的还是 figma-theme 标准的？能给我讲讲设计 token 的命名约定吗？",
+    "should_trigger": false
+  },
+  {
+    "query": "Webpack vs Vite vs Turbopack，对于一个 Next.js 15 + Pages Router 的项目用哪个 dev server 更快？我们项目 SSR 慢得受不了。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我把 web/src/pages/pollo.ai/_components/PromotionPopups/popups/NpsSurveyModal/index.tsx 这个文件的 Trans 文案改成简体中文版的：'感谢你的反馈' 换成 '感谢您的支持'。其他都不要动。",
+    "should_trigger": false
+  },
+  {
+    "query": "我们的 monorepo 里有 8 个 internal package。pnpm workspace 加 turbo 配置应该怎么写才能最大化缓存命中率？尤其是 typecheck:preview 这种 task 跨 package 复用问题。",
+    "should_trigger": false
+  },
+  {
+    "query": "React 19 的 useFormStatus 是不是只能配合 form action 用？我想在普通 button onClick 里也用它，是不是用 useTransition 替代会更合适？",
+    "should_trigger": false
+  },
+  {
+    "query": "代码里这一行 `const enabledConfig = filterEnabledPromotions(config)` 我看不懂在干嘛，跳进去看 filterEnabledPromotions 又跳到下一层。你帮我画一个调用链路图。",
+    "should_trigger": false
+  },
+  {
+    "query": "我刚才用了 'register' 这个词，我说的是怎么在 Mailchimp 里做用户邮件订阅注册的功能。能跟我讲讲 Mailchimp API 的 subscribe endpoint 怎么调用吗？",
+    "should_trigger": false
+  }
+]

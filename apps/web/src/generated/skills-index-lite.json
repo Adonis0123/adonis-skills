@@ -40,6 +40,19 @@
     "updatedAt": "2026-03-09T16:14:12.000Z"
   },
   {
+    "slug": "code-plugin-architecture",
+    "name": "code-plugin-architecture",
+    "description": "Use when the user's pain is \"adding/removing one more X means editing N files\" and X is a recurring kind of variant: popup, banner, modal, ad slot, payment method, AI model/tool, form field type, connector, sub-site, command, menu item, agent, VSCode-style extension, or data source. Use when they want to design, refactor, review, or name the mechanism that lets variants plug in via registry, interface/trait, runtime core, and convention folders; mention pluginize, pluggable, plugin architecture, extension point, registry pattern, or extensibility. Use when reviewing PRs where one new variant touches many files/switch cases and asking if that extension cost is acceptable. Use for cross-stack mapping to VSCode contributes, Webpack/Vite plugins, Rust/Tauri connectors, Python entry_points, or cargo features. Skip editing one variant's internals/styles/hooks/copy/bugs, and skip register/registry meaning DI container, user signup, or package registry.",
+    "metadata": {
+      "author": "adonis",
+      "version": "0.2.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "commit",
     "name": "commit",
     "description": "Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.",
@@ -165,7 +178,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-05-17T01:34:23.000Z"
+    "updatedAt": "2026-05-17T02:43:23.000Z"
   },
   {
     "slug": "zustand-store-scaffold",

@@ -79,7 +79,7 @@ async function loadSkills() {
   const detailItems = []
 
   for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith('.'))
+    if (!entry.isDirectory() || entry.name.startsWith('.') || entry.name.endsWith('-workspace'))
       continue
 
     const slug = entry.name
