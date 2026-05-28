@@ -33,8 +33,24 @@ const skillDetails = skillsDetailData as SkillDetailItem[]
 
 export const skillsRepo = process.env.NEXT_PUBLIC_SKILLS_REPO || 'adonis0123/adonis-skills'
 
+function getUpdatedAtTime(skill: SkillListItem): number {
+  if (!skill.updatedAt)
+    return Number.NEGATIVE_INFINITY
+
+  const time = Date.parse(skill.updatedAt)
+  return Number.isNaN(time) ? Number.NEGATIVE_INFINITY : time
+}
+
+function compareSkillsByUpdatedAtDesc(a: SkillListItem, b: SkillListItem): number {
+  const timeDiff = getUpdatedAtTime(b) - getUpdatedAtTime(a)
+  if (timeDiff !== 0)
+    return timeDiff
+
+  return a.slug.localeCompare(b.slug)
+}
+
 export function getAllSkills(): SkillListItem[] {
-  return [...skills].sort((a, b) => a.slug.localeCompare(b.slug))
+  return [...skills].sort(compareSkillsByUpdatedAtDesc)
 }
 
 export function getSkillBySlug(slug: string): SkillListItem | null {
