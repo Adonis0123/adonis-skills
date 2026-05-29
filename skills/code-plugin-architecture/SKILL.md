@@ -1,7 +1,7 @@
 ---
 name: code-plugin-architecture
 description: >-
-  Use when the user's pain is "adding/removing one more X means editing N files" and X is a recurring kind of variant: popup, banner, modal, ad slot, payment method, AI model/tool, form field type, connector, sub-site, command, menu item, agent, VSCode-style extension, or data source. Use when they want to design, refactor, review, or name the mechanism that lets variants plug in via registry, interface/trait, runtime core, and convention folders; mention pluginize, pluggable, plugin architecture, extension point, registry pattern, or extensibility. Use when reviewing PRs where one new variant touches many files/switch cases and asking if that extension cost is acceptable. Use for cross-stack mapping to VSCode contributes, Webpack/Vite plugins, Rust/Tauri connectors, Python entry_points, or cargo features. Skip editing one variant's internals/styles/hooks/copy/bugs, and skip register/registry meaning DI container, user signup, or package registry.
+  Use when the user's pain is "adding/removing one more X means editing N files" and X is a recurring variant kind: popup, banner, modal, ad slot, payment method, AI model/tool, form field type, connector, sub-site, command, menu item, agent, extension point, or data source. Use when they want to design, refactor, review, name, or explain a pluggable mechanism using registry, interface/trait contract, runtime core, and convention folders; mention pluginize, pluggable, plugin architecture, extension point, registry pattern, or extensibility. Use when explaining the first-principles rationale, DDD/SOLID/OCP mapping, or industry analogies behind that structure. Use for cross-stack mapping to VSCode contributes, Webpack/Vite plugins, Rust/Tauri connectors, Python entry_points, or cargo features. Skip one variant's internals/styles/hooks/copy/bugs, and skip register/registry meaning DI container, user signup, or package registry.
 metadata:
   author: adonis
   version: "0.2.0"
@@ -47,7 +47,7 @@ metadata:
 每个插件必须有一个**唯一、稳定、来自最权威层**的 key。
 
 ```
-站点：    hostKey: 'pollo.ai'  ← 来自 EHostKey 枚举（顶层）
+站点：    hostKey: 'site-a.example.com'  ← 来自 SiteKey 枚举（顶层）
 工具：    appKey: 'Motion'    ← 来自后端 Labels schema（最权威）
 弹窗：    configKey: 'npsSurveyModal' ← camelCase 自定义
 模型：    modelId: 'gpt-4o'   ← 来自供应商 ID
@@ -90,7 +90,7 @@ interface PluginContract {
 // ✅ 注册表只引用，不实现
 import { DynamicNpsSurveyModal } from './popups/dynamic'
 
-export const promotionPopupsConfig = {
+export const popupsConfig = {
   npsSurveyModal: initialPopupConfig({
     priority: 504,
     component: DynamicNpsSurveyModal,
@@ -111,8 +111,8 @@ export const promotionPopupsConfig = {
 通用、无业务的内核，**对具体插件保持完全无知**。Runtime Core 负责"机制"，不负责"内容"。
 
 ```ts
-export function createSitePromotionCoreSliceFactory<
-  T extends PromotionsCoreRegistry,
+export function createPluginCoreFactory<
+  T extends PluginRegistry,
   S extends Record<string, any>,
 >(initialState, options) {
   return (...a) => {
@@ -152,9 +152,41 @@ popups/[Name]/
 - 文件分工固定（一两种模式即可），让阅读者闭着眼也知道找什么去哪个文件。
 - 目录名 = 主键派生的 PascalCase。
 
-## 七条设计要点
+## 第一性原理：五件套不是发明，是必要推论
 
-五件套之外，还有七个让系统真的"用起来顺"的要点。
+开篇那张痛点表，业界有个正式名字叫 **Shotgun Surgery**（霰弹式修改）——"一个逻辑改动要散着改很多处"，根因是"同一个职责（管理这一类东西）被切散到了多个文件"。插件化要解决的就是它。
+
+从第一性原理看，目标只有一句话：**把"加一个新变种"的成本从 O(N)（改 N 处）降到 O(1)（新建一个自治单元 + 注册表加一行）**。一旦把目标定死成 O(1)，五件套就不是谁拍脑袋的设计，而是逻辑上**绕不开的必要条件**——少任何一件，成本就回不到 O(1)：
+
+| 要达成 | 否则会怎样 | 推出的件 | 业界可类比 |
+|---|---|---|---|
+| 所有变种共享稳定"形状" | 核心要为每种特判 | **Contract** | 可充当 Core↔Plugin 边界的 *Published Language*（DDD） |
+| 有唯一权威"身份" | 命名漂移、无法机器推导 | **Identity** | 插件的 name/id |
+| 有且仅有一处"名单" | "有哪些"这一知识被切散 | **Registry** | Fowler *Plugin*："在配置期而非编译期把实现接上"；Microkernel 的中心清单 |
+| 核心对具体变种零知识 | 核心随变种增长而改 | **Runtime Core** | *OCP*：对扩展开放、对修改封闭（用抽象/多态替代 switch） |
+| 单变种自治、无外部反向引用 | 删一个要满地找 | **Convention Folder** | 高内聚 + 单一变更点 |
+
+> 这就是"高内聚低耦合"在这里的精确落点：**高内聚** = Convention Folder（一个变种的东西聚一处）+ Registry（一类东西的名单聚一处）；**低耦合** = Contract 是唯一通道，依赖方向单向 `Plugin → Contract ← Core`（谁都不依赖对方实现，即 DIP）。
+>
+> 注意类比是"可类比"，不是等号——例如 Microkernel 的 registry 含动态发现/协议协商/版本治理，本方法论的 Registry 通常只是"中心元数据清单"那一层。完整推导、DDD 全映射与出处见 [references/first-principles.md](references/first-principles.md)。
+
+## 递归组合：插件化是分形的
+
+五件套不是只能用一次。当**单个 plugin 内部**也长出"会持续新增的变种"时，就在它内部**再套一层五件套**——一级注册表挂这个 plugin，它内部有自己的二级 Identity / Contract / Registry。这能避免把 N 个内部变种全炸成一级 key（否则一级编排的优先级/调度会爆炸）。
+
+关键洞察：**Contract 不规定"插件必须是一个组件"**。同一个 Contract 下，变种可以是不同"种类"的东西——有的渲染 UI，有的只执行一个副作用。用一个可辨识联合表达就够了：
+
+```ts
+type VariantStrategy =
+  | { mode: 'view';   render: ComponentRef }      // 渲染型：交给渲染层
+  | { mode: 'effect'; perform: (deps) => void }   // 副作用型：直接执行一个动作
+```
+
+编排层按 `mode` 分流，渲染层只认 `view`、副作用层只认 `effect`，核心依旧零业务。这其实是 **Strategy 模式与插件化的结合**，也天然对应 DDD 的"领域 / 应用 / UI"分层（详见 [references/first-principles.md](references/first-principles.md)）。
+
+## 八条设计要点
+
+五件套之外，还有八个让系统真的"用起来顺"的要点。前七条是"结构舒适度"，第八条是"运行时正确性"。
 
 ### a. 配置 / 行为分离
 
@@ -165,7 +197,7 @@ init.ts    ← 动态（订阅 store、判断登录态、调用 AB 实验、调 
 
 **同一属性只在一处写**。比如 cache 策略一律放 `config.ts`，`init.ts` 不重复传——否则双写就是双倍 bug。
 
-⚠️ **历史债的迁移建议**：真实项目里这条很容易腐烂——比如 `InviteTopBanner/init.ts` 同时在 `config.ts` 和 `init.ts` 写 `cache: { type: 'count', count: 2 }`，原因往往是早期没有 config 层、后来加上时没回收旧 init 里的 cache。这类双写应该作为技术债清理，而不是当作"规范"复制粘贴。
+⚠️ **历史债的迁移建议**：真实项目里这条很容易腐烂——比如某个 banner 的 `init.ts` 同时在 `config.ts` 和 `init.ts` 写 `cache: { type: 'count', count: 2 }`，原因往往是早期没有 config 层、后来加上时没回收旧 init 里的 cache。这类双写应该作为技术债清理，而不是当作"规范"复制粘贴。
 
 ### b. 延迟加载默认开（仅对应用场景）
 
@@ -189,9 +221,9 @@ export const DynamicNpsSurveyModal = dynamic(
 
 ```ts
 const config = {
-  [EHostKey.PolloAI]: polloAiConfig,
-  [EHostKey.ViggleDance]: viggleDanceConfig,
-  // [EHostKey-Site]:(config)   ← 占位符
+  [SiteKey.SiteA]: siteAConfig,
+  [SiteKey.SiteB]: siteBConfig,
+  // [SiteKey-Site]:(config)   ← 占位符
 }
 ```
 
@@ -221,7 +253,7 @@ const config = {
 | **跨插件编排副作用**（"A 打开后强制开 B"） | Provider/Orchestrator 层 |
 
 ```ts
-// ✅ 横切：所有 promotion 都要的曝光埋点 → core
+// ✅ 横切：所有 plugin 都要的曝光埋点 → core
 store.subscribe(
   (state) => state.openKey,
   (openKey) => openKey && tracker?.trackEvent({...}),
@@ -238,7 +270,7 @@ store.subscribe(
 实际工程里"插件"往往不只一种（弹窗、横幅、抽屉、Banner、Toast……）。把它们建在**同一个 core factory** 上，每种变种用自己的 store + Provider 注入：
 
 ```
-SitePromotionProvider/
+PluginProvider/
 ├── _factory/core.ts      ← 共享内核（缓存策略、生命周期、横切埋点）
 ├── popups/               ← 变种 A：弹窗
 │   ├── store.ts          ← createPopupsStore (cachePrefix='popups')
@@ -256,12 +288,33 @@ SitePromotionProvider/
 
 ```ts
 if (!IS_PROD) {
-  (window as any).__SITE_PROMOTION_POPUPS_STORE__ = store
-  (window as any).clearPromotionCache_popups = () => clearCacheWithPrefix('popups')
+  (window as any).__POPUPS_STORE__ = store
+  (window as any).clearPluginCache_popups = () => clearCacheWithPrefix('popups')
 }
 ```
 
 加新插件后第一次没显示——直接打开 DevTools 看 store 状态、清缓存就能定位。**省下"为啥不显示"的 30 分钟来回猜**。
+
+### h. 运行时重算 + 状态维度隔离
+
+这条是"声明式注册"在真实运行时会撞上的两个坑，框架无关。
+
+**① 重算逃生阀**。注册通常做成幂等的（同一个 key 注册第二次就短路，避免重复初始化）。但当一个插件的"要不要显示 / 要不要启用"**取决于会变化的运行时上下文**（登录态、权限、AB 实验分组、远程开关），幂等就会把后续更新吃掉——上下文从"未登录"变成"已登录"，插件状态却停在第一次注册的结果。
+
+```ts
+register({ key, enabled: deriveEnabled(ctx), force: true })
+//                                            ^ 绕过幂等短路，按新 ctx 重算
+```
+
+判断边界：注册入口要不要 `force`，取决于"注册意图是否会随上下文失效"。纯静态插件不需要；意图依赖外部可变状态的，必须留这个逃生阀，否则会出"切换账号后弹窗永不出现"这类静默 bug。
+
+**② 状态维度隔离**。Core 持有的横切状态（缓存、关闭计数、已读标记、冷却时间）如果要按**维度**隔离（按用户 / 租户 / 环境），用"主键 + 维度后缀"组合出存储键，而不是为每个维度新造一个主键：
+
+```ts
+storageKey = `${prefix}_${pluginKey}_${dimensionSuffix}`  // 如 ..._${userId}
+```
+
+否则 A 用户的"已关闭一次"会串到同设备的 B 用户身上。维度后缀让同一个插件主键在多用户/多环境下天然隔离，且不污染主键命名体系。
 
 ## 落地流程（最小步骤）
 
@@ -286,7 +339,7 @@ interface PluginContract {
   dataWidgetName: string
 
   // 可选（变种特有）
-  cache?: PromotionCache
+  cache?: PluginCache
   disabled?: boolean
   closeIconClassName?: string  // 只横幅用
 }
@@ -358,8 +411,8 @@ interface PluginContract {
 | 11 | 没有 `if (key === 'X')` 这种特例 | `grep -RE "key\s*===\s*['\"]" core/ orchestrator/` 应为空 |
 
 **关于占位符的格式约定**：本 skill 全程统一用 `// [Domain-Action]:(slot)` 形式，例如：
-- `// [Popup-Config]:(add)` — 在 PromotionPopups 注册表里加新 popup config 的位置
-- `// [EHostKey-Site]:(config)` — 在站群中央注册表里加新 hostKey config 的位置
+- `// [Popup-Config]:(add)` — 在 Popups 注册表里加新 popup config 的位置
+- `// [SiteKey-Site]:(config)` — 在站群中央注册表里加新 hostKey config 的位置
 - `// [Plugin-Placeholder]:(register)` — Rust 例子里 vec! 注册插件的位置
 
 `grep` 时用同一种 regex 即可命中所有。**不要混用 `[X-Placeholder]` 和 `[X]:(Y)` 两种格式**——选一种全项目沿用，否则 grep 总会漏。
@@ -376,6 +429,7 @@ interface PluginContract {
 
 按需读取：
 
+- [references/first-principles.md](references/first-principles.md) — 第一性原理完整推导（O(N)→O(1) 为什么逼出五件套）、DDD 全映射、业界出处（Microkernel / Fowler Plugin / OCP / Shotgun Surgery）与 SOLID 关系，**用于说服他人"这套不是编的"或对齐团队架构词汇**。
 - [references/case-studies.md](references/case-studies.md) — 4 个真实案例的对照表（多站点站群、推广横幅、推广弹窗、工具扩展 apps），每个案例都给出"五件套"映射，**用于实际操作前对齐**。
 - [references/anti-patterns.md](references/anti-patterns.md) — 八种最常见的"伪插件化"反模式（按严重程度分层：Must-fix / Smell / Context-dependent），**用于代码评审和 PR review 时挑出问题**。
 - [references/cross-stack.md](references/cross-stack.md) — 这套模式在 Webpack / VSCode / Express / Tailwind / Rust trait / Python entry_points 上的同构映射，**用于跨语言/跨框架 onboarding 时建立类比**。

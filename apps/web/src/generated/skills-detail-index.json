@@ -193,7 +193,7 @@
         "level": 2
       },
       {
-        "raw": "每个插件必须有一个**唯一、稳定、来自最权威层**的 key。\n\n```\n站点：    hostKey: 'pollo.ai'  ← 来自 EHostKey 枚举（顶层）\n工具：    appKey: 'Motion'    ← 来自后端 Labels schema（最权威）\n弹窗：    configKey: 'npsSurveyModal' ← camelCase 自定义\n模型：    modelId: 'gpt-4o'   ← 来自供应商 ID\n```\n\n**原则**：\n- 主键由**最权威的层**定义（后端 schema、外部供应商 ID、顶层枚举），**不要在调用侧重新发明**。\n- 主键派生其他所有命名：组件名、文件夹名、埋点名、route 段、CSS 变量。把推导关系列成一张表，加新插件就照表填。\n\n错误示范：弹窗的 `configKey = \"promoModal\"`，组件名 `<PromoModalV2>`，埋点名 `promo_pop`，文件夹 `PromoPopup/`——四个名字互相猜不出，半年后没人敢删。",
+        "raw": "每个插件必须有一个**唯一、稳定、来自最权威层**的 key。\n\n```\n站点：    hostKey: 'site-a.example.com'  ← 来自 SiteKey 枚举（顶层）\n工具：    appKey: 'Motion'    ← 来自后端 Labels schema（最权威）\n弹窗：    configKey: 'npsSurveyModal' ← camelCase 自定义\n模型：    modelId: 'gpt-4o'   ← 来自供应商 ID\n```\n\n**原则**：\n- 主键由**最权威的层**定义（后端 schema、外部供应商 ID、顶层枚举），**不要在调用侧重新发明**。\n- 主键派生其他所有命名：组件名、文件夹名、埋点名、route 段、CSS 变量。把推导关系列成一张表，加新插件就照表填。\n\n错误示范：弹窗的 `configKey = \"promoModal\"`，组件名 `<PromoModalV2>`，埋点名 `promo_pop`，文件夹 `PromoPopup/`——四个名字互相猜不出，半年后没人敢删。",
         "heading": "1. Identity（主键）",
         "level": 3
       },
@@ -203,12 +203,12 @@
         "level": 3
       },
       {
-        "raw": "一处显式的\"我这里有哪些插件\"清单。\n\n```ts\n// ✅ 注册表只引用，不实现\nimport { DynamicNpsSurveyModal } from './popups/dynamic'\n\nexport const promotionPopupsConfig = {\n  npsSurveyModal: initialPopupConfig({\n    priority: 504,\n    component: DynamicNpsSurveyModal,\n    cache: { type: 'interval', timeout: 1, upperLimit: 2 },\n    dataWidgetName: 'nps_survey_popup',\n  }),\n  // [Popup-Config]:(add)   ← 占位符\n}\n```\n\n**原则**：\n- **只引用，不实现**。注册表里不能出现任何插件的业务逻辑——一旦出现，下次加插件就要改注册表里的判断分支。\n- **结构同质**。每条记录的字段集合完全一致（用 `pluginConfig({...})` 工厂统一兜底默认值）。\n- **位置稳定**。所有同类插件的注册表只此一份，别因为\"分组\"拆成多个——分组的代价是丢失全局视野。",
+        "raw": "一处显式的\"我这里有哪些插件\"清单。\n\n```ts\n// ✅ 注册表只引用，不实现\nimport { DynamicNpsSurveyModal } from './popups/dynamic'\n\nexport const popupsConfig = {\n  npsSurveyModal: initialPopupConfig({\n    priority: 504,\n    component: DynamicNpsSurveyModal,\n    cache: { type: 'interval', timeout: 1, upperLimit: 2 },\n    dataWidgetName: 'nps_survey_popup',\n  }),\n  // [Popup-Config]:(add)   ← 占位符\n}\n```\n\n**原则**：\n- **只引用，不实现**。注册表里不能出现任何插件的业务逻辑——一旦出现，下次加插件就要改注册表里的判断分支。\n- **结构同质**。每条记录的字段集合完全一致（用 `pluginConfig({...})` 工厂统一兜底默认值）。\n- **位置稳定**。所有同类插件的注册表只此一份，别因为\"分组\"拆成多个——分组的代价是丢失全局视野。",
         "heading": "3. Registry（中央注册表）",
         "level": 3
       },
       {
-        "raw": "通用、无业务的内核，**对具体插件保持完全无知**。Runtime Core 负责\"机制\"，不负责\"内容\"。\n\n```ts\nexport function createSitePromotionCoreSliceFactory<\n  T extends PromotionsCoreRegistry,\n  S extends Record<string, any>,\n>(initialState, options) {\n  return (...a) => {\n    // 通用状态机\n    return {\n      init: (options) => { /* cache decision */ },\n      closeAndTerminate: () => { /* ... */ },\n      openForce: () => { /* ... */ },\n      // ...\n    }\n  }\n}\n```\n\n**原则**：\n- 内核通过**泛型** `<T extends Registry>` 接收注册表形状，自己不 import 任何具体插件。\n- 内核负责**横切同质的关注点**：状态机、缓存策略、生命周期、横切的埋点（\"插件被打开时统一埋一次曝光\"）、统一持久化。\n- 业务相关的事（\"这个弹窗要不要弹\"、\"用户登录后才显示\"）**不能写在内核里**——那是单插件 `init.ts` 的事。\n- 不要在内核里设 \"if (key === 'X') ...\" 的特殊分支——这是注册表机制失败的明确信号。\n\n> **关于 Provider Orchestration**：在 React/Vue/前端场景里，\"何时选择 openKey\"、\"渲染哪个插件\"这种**编排决策**通常落在 Provider/Orchestrator 层（订阅 Core store，按 Contract 字段做决策），不在 Core 里。Core 是状态机和切面 SDK，Orchestrator 是策略实现。两者都属于\"业务零知识\"，但职责不同。把它当 Core 的子层即可，不必单列。",
+        "raw": "通用、无业务的内核，**对具体插件保持完全无知**。Runtime Core 负责\"机制\"，不负责\"内容\"。\n\n```ts\nexport function createPluginCoreFactory<\n  T extends PluginRegistry,\n  S extends Record<string, any>,\n>(initialState, options) {\n  return (...a) => {\n    // 通用状态机\n    return {\n      init: (options) => { /* cache decision */ },\n      closeAndTerminate: () => { /* ... */ },\n      openForce: () => { /* ... */ },\n      // ...\n    }\n  }\n}\n```\n\n**原则**：\n- 内核通过**泛型** `<T extends Registry>` 接收注册表形状，自己不 import 任何具体插件。\n- 内核负责**横切同质的关注点**：状态机、缓存策略、生命周期、横切的埋点（\"插件被打开时统一埋一次曝光\"）、统一持久化。\n- 业务相关的事（\"这个弹窗要不要弹\"、\"用户登录后才显示\"）**不能写在内核里**——那是单插件 `init.ts` 的事。\n- 不要在内核里设 \"if (key === 'X') ...\" 的特殊分支——这是注册表机制失败的明确信号。\n\n> **关于 Provider Orchestration**：在 React/Vue/前端场景里，\"何时选择 openKey\"、\"渲染哪个插件\"这种**编排决策**通常落在 Provider/Orchestrator 层（订阅 Core store，按 Contract 字段做决策），不在 Core 里。Core 是状态机和切面 SDK，Orchestrator 是策略实现。两者都属于\"业务零知识\"，但职责不同。把它当 Core 的子层即可，不必单列。",
         "heading": "4. Runtime Core（运行时内核）",
         "level": 3
       },
@@ -218,12 +218,22 @@
         "level": 3
       },
       {
-        "raw": "五件套之外，还有七个让系统真的\"用起来顺\"的要点。",
-        "heading": "七条设计要点",
+        "raw": "开篇那张痛点表，业界有个正式名字叫 **Shotgun Surgery**（霰弹式修改）——\"一个逻辑改动要散着改很多处\"，根因是\"同一个职责（管理这一类东西）被切散到了多个文件\"。插件化要解决的就是它。\n\n从第一性原理看，目标只有一句话：**把\"加一个新变种\"的成本从 O(N)（改 N 处）降到 O(1)（新建一个自治单元 + 注册表加一行）**。一旦把目标定死成 O(1)，五件套就不是谁拍脑袋的设计，而是逻辑上**绕不开的必要条件**——少任何一件，成本就回不到 O(1)：\n\n| 要达成 | 否则会怎样 | 推出的件 | 业界可类比 |\n|---|---|---|---|\n| 所有变种共享稳定\"形状\" | 核心要为每种特判 | **Contract** | 可充当 Core↔Plugin 边界的 *Published Language*（DDD） |\n| 有唯一权威\"身份\" | 命名漂移、无法机器推导 | **Identity** | 插件的 name/id |\n| 有且仅有一处\"名单\" | \"有哪些\"这一知识被切散 | **Registry** | Fowler *Plugin*：\"在配置期而非编译期把实现接上\"；Microkernel 的中心清单 |\n| 核心对具体变种零知识 | 核心随变种增长而改 | **Runtime Core** | *OCP*：对扩展开放、对修改封闭（用抽象/多态替代 switch） |\n| 单变种自治、无外部反向引用 | 删一个要满地找 | **Convention Folder** | 高内聚 + 单一变更点 |\n\n> 这就是\"高内聚低耦合\"在这里的精确落点：**高内聚** = Convention Folder（一个变种的东西聚一处）+ Registry（一类东西的名单聚一处）；**低耦合** = Contract 是唯一通道，依赖方向单向 `Plugin → Contract ← Core`（谁都不依赖对方实现，即 DIP）。\n>\n> 注意类比是\"可类比\"，不是等号——例如 Microkernel 的 registry 含动态发现/协议协商/版本治理，本方法论的 Registry 通常只是\"中心元数据清单\"那一层。完整推导、DDD 全映射与出处见 [references/first-principles.md](references/first-principles.md)。",
+        "heading": "第一性原理：五件套不是发明，是必要推论",
         "level": 2
       },
       {
-        "raw": "```\nconfig.ts  ← 静态（priority、cache 策略、埋点名、默认 disabled）\ninit.ts    ← 动态（订阅 store、判断登录态、调用 AB 实验、调 init({open: true/false}))\n```\n\n**同一属性只在一处写**。比如 cache 策略一律放 `config.ts`，`init.ts` 不重复传——否则双写就是双倍 bug。\n\n⚠️ **历史债的迁移建议**：真实项目里这条很容易腐烂——比如 `InviteTopBanner/init.ts` 同时在 `config.ts` 和 `init.ts` 写 `cache: { type: 'count', count: 2 }`，原因往往是早期没有 config 层、后来加上时没回收旧 init 里的 cache。这类双写应该作为技术债清理，而不是当作\"规范\"复制粘贴。",
+        "raw": "五件套不是只能用一次。当**单个 plugin 内部**也长出\"会持续新增的变种\"时，就在它内部**再套一层五件套**——一级注册表挂这个 plugin，它内部有自己的二级 Identity / Contract / Registry。这能避免把 N 个内部变种全炸成一级 key（否则一级编排的优先级/调度会爆炸）。\n\n关键洞察：**Contract 不规定\"插件必须是一个组件\"**。同一个 Contract 下，变种可以是不同\"种类\"的东西——有的渲染 UI，有的只执行一个副作用。用一个可辨识联合表达就够了：\n\n```ts\ntype VariantStrategy =\n  | { mode: 'view';   render: ComponentRef }      // 渲染型：交给渲染层\n  | { mode: 'effect'; perform: (deps) => void }   // 副作用型：直接执行一个动作\n```\n\n编排层按 `mode` 分流，渲染层只认 `view`、副作用层只认 `effect`，核心依旧零业务。这其实是 **Strategy 模式与插件化的结合**，也天然对应 DDD 的\"领域 / 应用 / UI\"分层（详见 [references/first-principles.md](references/first-principles.md)）。",
+        "heading": "递归组合：插件化是分形的",
+        "level": 2
+      },
+      {
+        "raw": "五件套之外，还有八个让系统真的\"用起来顺\"的要点。前七条是\"结构舒适度\"，第八条是\"运行时正确性\"。",
+        "heading": "八条设计要点",
+        "level": 2
+      },
+      {
+        "raw": "```\nconfig.ts  ← 静态（priority、cache 策略、埋点名、默认 disabled）\ninit.ts    ← 动态（订阅 store、判断登录态、调用 AB 实验、调 init({open: true/false}))\n```\n\n**同一属性只在一处写**。比如 cache 策略一律放 `config.ts`，`init.ts` 不重复传——否则双写就是双倍 bug。\n\n⚠️ **历史债的迁移建议**：真实项目里这条很容易腐烂——比如某个 banner 的 `init.ts` 同时在 `config.ts` 和 `init.ts` 写 `cache: { type: 'count', count: 2 }`，原因往往是早期没有 config 层、后来加上时没回收旧 init 里的 cache。这类双写应该作为技术债清理，而不是当作\"规范\"复制粘贴。",
         "heading": "a. 配置 / 行为分离",
         "level": 3
       },
@@ -233,7 +243,7 @@
         "level": 3
       },
       {
-        "raw": "在中央注册表里留注释占位符，引导下一个加插件的人在哪一行操作：\n\n```ts\nconst config = {\n  [EHostKey.PolloAI]: polloAiConfig,\n  [EHostKey.ViggleDance]: viggleDanceConfig,\n  // [EHostKey-Site]:(config)   ← 占位符\n}\n```\n\n让\"加新插件\"成为**机械动作**而非脑力税。也是后续做 codegen / 模板插入的锚点。",
+        "raw": "在中央注册表里留注释占位符，引导下一个加插件的人在哪一行操作：\n\n```ts\nconst config = {\n  [SiteKey.SiteA]: siteAConfig,\n  [SiteKey.SiteB]: siteBConfig,\n  // [SiteKey-Site]:(config)   ← 占位符\n}\n```\n\n让\"加新插件\"成为**机械动作**而非脑力税。也是后续做 codegen / 模板插入的锚点。",
         "heading": "c. 占位符引导",
         "level": 3
       },
@@ -243,18 +253,23 @@
         "level": 3
       },
       {
-        "raw": "| 副作用类型 | 归属 |\n|---|---|\n| **横切同质副作用**（每个插件都做同样的事） | Runtime Core 一处 subscribe |\n| **插件特有副作用**（只这一个插件需要） | 该插件的 `init.ts` 或 render adapter |\n| **跨插件编排副作用**（\"A 打开后强制开 B\"） | Provider/Orchestrator 层 |\n\n```ts\n// ✅ 横切：所有 promotion 都要的曝光埋点 → core\nstore.subscribe(\n  (state) => state.openKey,\n  (openKey) => openKey && tracker?.trackEvent({...}),\n)\n\n// ✅ 特有：NPS 弹窗专属的\"提交后 closeAndTerminate\" → init.ts\n// ✅ 编排：用户登录后强制打开 onboardingExperiment → Provider\n```\n\n错误：把所有插件可能的副作用都塞进 core，导致 core 出现 `if (key === 'X')` 分支。",
+        "raw": "| 副作用类型 | 归属 |\n|---|---|\n| **横切同质副作用**（每个插件都做同样的事） | Runtime Core 一处 subscribe |\n| **插件特有副作用**（只这一个插件需要） | 该插件的 `init.ts` 或 render adapter |\n| **跨插件编排副作用**（\"A 打开后强制开 B\"） | Provider/Orchestrator 层 |\n\n```ts\n// ✅ 横切：所有 plugin 都要的曝光埋点 → core\nstore.subscribe(\n  (state) => state.openKey,\n  (openKey) => openKey && tracker?.trackEvent({...}),\n)\n\n// ✅ 特有：NPS 弹窗专属的\"提交后 closeAndTerminate\" → init.ts\n// ✅ 编排：用户登录后强制打开 onboardingExperiment → Provider\n```\n\n错误：把所有插件可能的副作用都塞进 core，导致 core 出现 `if (key === 'X')` 分支。",
         "heading": "e. 副作用边界明确",
         "level": 3
       },
       {
-        "raw": "实际工程里\"插件\"往往不只一种（弹窗、横幅、抽屉、Banner、Toast……）。把它们建在**同一个 core factory** 上，每种变种用自己的 store + Provider 注入：\n\n```\nSitePromotionProvider/\n├── _factory/core.ts      ← 共享内核（缓存策略、生命周期、横切埋点）\n├── popups/               ← 变种 A：弹窗\n│   ├── store.ts          ← createPopupsStore (cachePrefix='popups')\n│   └── Provider/         ← 弹窗 Orchestrator（按 priority 选 openKey）\n└── banners/              ← 变种 B：横幅\n    ├── store.ts          ← createBannersStore (cachePrefix='banners')\n    └── Provider/         ← 横幅 Orchestrator（按 priority 选 openKey + renderHeight）\n```\n\n复用所有共性，分隔状态隔离。变种之间的差异（横幅有 renderHeight、弹窗没有）通过 slice 扩展实现。",
+        "raw": "实际工程里\"插件\"往往不只一种（弹窗、横幅、抽屉、Banner、Toast……）。把它们建在**同一个 core factory** 上，每种变种用自己的 store + Provider 注入：\n\n```\nPluginProvider/\n├── _factory/core.ts      ← 共享内核（缓存策略、生命周期、横切埋点）\n├── popups/               ← 变种 A：弹窗\n│   ├── store.ts          ← createPopupsStore (cachePrefix='popups')\n│   └── Provider/         ← 弹窗 Orchestrator（按 priority 选 openKey）\n└── banners/              ← 变种 B：横幅\n    ├── store.ts          ← createBannersStore (cachePrefix='banners')\n    └── Provider/         ← 横幅 Orchestrator（按 priority 选 openKey + renderHeight）\n```\n\n复用所有共性，分隔状态隔离。变种之间的差异（横幅有 renderHeight、弹窗没有）通过 slice 扩展实现。",
         "heading": "f. 一份 Core，多个变种",
         "level": 3
       },
       {
-        "raw": "开发环境把 store 挂到 `window`（或等价的运行时全局）：\n\n```ts\nif (!IS_PROD) {\n  (window as any).__SITE_PROMOTION_POPUPS_STORE__ = store\n  (window as any).clearPromotionCache_popups = () => clearCacheWithPrefix('popups')\n}\n```\n\n加新插件后第一次没显示——直接打开 DevTools 看 store 状态、清缓存就能定位。**省下\"为啥不显示\"的 30 分钟来回猜**。",
+        "raw": "开发环境把 store 挂到 `window`（或等价的运行时全局）：\n\n```ts\nif (!IS_PROD) {\n  (window as any).__POPUPS_STORE__ = store\n  (window as any).clearPluginCache_popups = () => clearCacheWithPrefix('popups')\n}\n```\n\n加新插件后第一次没显示——直接打开 DevTools 看 store 状态、清缓存就能定位。**省下\"为啥不显示\"的 30 分钟来回猜**。",
         "heading": "g. 全局调试探针",
+        "level": 3
+      },
+      {
+        "raw": "这条是\"声明式注册\"在真实运行时会撞上的两个坑，框架无关。\n\n**① 重算逃生阀**。注册通常做成幂等的（同一个 key 注册第二次就短路，避免重复初始化）。但当一个插件的\"要不要显示 / 要不要启用\"**取决于会变化的运行时上下文**（登录态、权限、AB 实验分组、远程开关），幂等就会把后续更新吃掉——上下文从\"未登录\"变成\"已登录\"，插件状态却停在第一次注册的结果。\n\n```ts\nregister({ key, enabled: deriveEnabled(ctx), force: true })\n//                                            ^ 绕过幂等短路，按新 ctx 重算\n```\n\n判断边界：注册入口要不要 `force`，取决于\"注册意图是否会随上下文失效\"。纯静态插件不需要；意图依赖外部可变状态的，必须留这个逃生阀，否则会出\"切换账号后弹窗永不出现\"这类静默 bug。\n\n**② 状态维度隔离**。Core 持有的横切状态（缓存、关闭计数、已读标记、冷却时间）如果要按**维度**隔离（按用户 / 租户 / 环境），用\"主键 + 维度后缀\"组合出存储键，而不是为每个维度新造一个主键：\n\n```ts\nstorageKey = `${prefix}_${pluginKey}_${dimensionSuffix}`  // 如 ..._${userId}\n```\n\n否则 A 用户的\"已关闭一次\"会串到同设备的 B 用户身上。维度后缀让同一个插件主键在多用户/多环境下天然隔离，且不污染主键命名体系。",
+        "heading": "h. 运行时重算 + 状态维度隔离",
         "level": 3
       },
       {
@@ -268,7 +283,7 @@
         "level": 3
       },
       {
-        "raw": "写出每条插件**必须**有什么、**可以**有什么：\n\n```ts\ninterface PluginContract {\n  // 必填（结构同质）\n  priority: number\n  component: React.ComponentType<any>\n  dataWidgetName: string\n\n  // 可选（变种特有）\n  cache?: PromotionCache\n  disabled?: boolean\n  closeIconClassName?: string  // 只横幅用\n}\n```\n\n写一个 `initialPluginConfig(data) { return { open: false, ...data } }` 兜底默认值。",
+        "raw": "写出每条插件**必须**有什么、**可以**有什么：\n\n```ts\ninterface PluginContract {\n  // 必填（结构同质）\n  priority: number\n  component: React.ComponentType<any>\n  dataWidgetName: string\n\n  // 可选（变种特有）\n  cache?: PluginCache\n  disabled?: boolean\n  closeIconClassName?: string  // 只横幅用\n}\n```\n\n写一个 `initialPluginConfig(data) { return { open: false, ...data } }` 兜底默认值。",
         "heading": "Step 2: 设计 Plugin Contract",
         "level": 3
       },
@@ -303,12 +318,12 @@
         "level": 2
       },
       {
-        "raw": "落地一个插件化结构 / 评审现有插件化结构时，逐条对照。每条都标了 **Check method**——优先用机器化方法验证，能 grep 就别人眼瞅。\n\n| # | 评审项 | Check method |\n|---|---|---|\n| 1 | 加新插件 = 新建一个目录 + 注册表加一行 | 在 onboarding 文档里走一遍\"加一个 X\"的步骤，数改了几个文件 |\n| 2 | 删插件 = `rm -rf` 目录 + 注册表删一行 | 选一个最简单的插件，真的删一次（branch 上），看构建 + typecheck 报错处 |\n| 3 | 单插件目录内可以完整理解 | human review：随机抽一个插件目录，让没看过的人 10 分钟内说出它做啥 |\n| 4 | Core factory 不知道任何具体插件 | `grep -RE \"['\\\"](pluginKeyA|pluginKeyB)['\\\"]\" core/` 应为空（用真实插件 key 替换；分隔用裸 `|`，标准 ERE，不要转义） |\n| 5 | 同一属性只在一处定义（cache 不要 config + init 双写） | `grep \"cache:\" plugins/*/init.ts` 应为空 |\n| 6 | Bundle 真的按需加载 | DevTools Network panel / bundle analyzer 看每个插件是否独立 chunk（非 frontend 场景跳过） |\n| 7 | 命名遵循推导表 | 写一个脚本：从 key 推导出所有命名，对照实际文件名/常量名/埋点名 |\n| 8 | 占位符注释存在 | `grep -RE \"\\[[A-Za-z]+-[A-Za-z]+\\]:\\(\" registry.ts` 应有命中（约定格式：`// [Domain-Action]:(slot)`） |\n| 9 | 横切副作用在 Core subscribe 一处 | `grep \"subscribe\\|emit\\|trackEvent\" plugins/` ≈ 0；core/ 集中 |\n| 10 | 开发环境有调试探针 | DevTools console：`__YOUR_REGISTRY_STORE__` 应可访问；清缓存命令应存在 |\n| 11 | 没有 `if (key === 'X')` 这种特例 | `grep -RE \"key\\s*===\\s*['\\\"]\" core/ orchestrator/` 应为空 |\n\n**关于占位符的格式约定**：本 skill 全程统一用 `// [Domain-Action]:(slot)` 形式，例如：\n- `// [Popup-Config]:(add)` — 在 PromotionPopups 注册表里加新 popup config 的位置\n- `// [EHostKey-Site]:(config)` — 在站群中央注册表里加新 hostKey config 的位置\n- `// [Plugin-Placeholder]:(register)` — Rust 例子里 vec! 注册插件的位置\n\n`grep` 时用同一种 regex 即可命中所有。**不要混用 `[X-Placeholder]` 和 `[X]:(Y)` 两种格式**——选一种全项目沿用，否则 grep 总会漏。\n\n**Check method 的轻重**：\n- `grep` 类规则可以放进 lint / CI（一旦回归立即拦住）。\n- `typecheck` 类规则可以用 `satisfies Record<Identity, Contract>` 强约束。\n- `human review` 类规则只能进 PR template。\n- `Network panel` 类规则进 release 前 checklist。\n\n每条都通才算\"真的插件化\"。任意一条不通——**先回答\"为什么这条不适用于本场景\"，能解释清楚再放过**。",
+        "raw": "落地一个插件化结构 / 评审现有插件化结构时，逐条对照。每条都标了 **Check method**——优先用机器化方法验证，能 grep 就别人眼瞅。\n\n| # | 评审项 | Check method |\n|---|---|---|\n| 1 | 加新插件 = 新建一个目录 + 注册表加一行 | 在 onboarding 文档里走一遍\"加一个 X\"的步骤，数改了几个文件 |\n| 2 | 删插件 = `rm -rf` 目录 + 注册表删一行 | 选一个最简单的插件，真的删一次（branch 上），看构建 + typecheck 报错处 |\n| 3 | 单插件目录内可以完整理解 | human review：随机抽一个插件目录，让没看过的人 10 分钟内说出它做啥 |\n| 4 | Core factory 不知道任何具体插件 | `grep -RE \"['\\\"](pluginKeyA|pluginKeyB)['\\\"]\" core/` 应为空（用真实插件 key 替换；分隔用裸 `|`，标准 ERE，不要转义） |\n| 5 | 同一属性只在一处定义（cache 不要 config + init 双写） | `grep \"cache:\" plugins/*/init.ts` 应为空 |\n| 6 | Bundle 真的按需加载 | DevTools Network panel / bundle analyzer 看每个插件是否独立 chunk（非 frontend 场景跳过） |\n| 7 | 命名遵循推导表 | 写一个脚本：从 key 推导出所有命名，对照实际文件名/常量名/埋点名 |\n| 8 | 占位符注释存在 | `grep -RE \"\\[[A-Za-z]+-[A-Za-z]+\\]:\\(\" registry.ts` 应有命中（约定格式：`// [Domain-Action]:(slot)`） |\n| 9 | 横切副作用在 Core subscribe 一处 | `grep \"subscribe\\|emit\\|trackEvent\" plugins/` ≈ 0；core/ 集中 |\n| 10 | 开发环境有调试探针 | DevTools console：`__YOUR_REGISTRY_STORE__` 应可访问；清缓存命令应存在 |\n| 11 | 没有 `if (key === 'X')` 这种特例 | `grep -RE \"key\\s*===\\s*['\\\"]\" core/ orchestrator/` 应为空 |\n\n**关于占位符的格式约定**：本 skill 全程统一用 `// [Domain-Action]:(slot)` 形式，例如：\n- `// [Popup-Config]:(add)` — 在 Popups 注册表里加新 popup config 的位置\n- `// [SiteKey-Site]:(config)` — 在站群中央注册表里加新 hostKey config 的位置\n- `// [Plugin-Placeholder]:(register)` — Rust 例子里 vec! 注册插件的位置\n\n`grep` 时用同一种 regex 即可命中所有。**不要混用 `[X-Placeholder]` 和 `[X]:(Y)` 两种格式**——选一种全项目沿用，否则 grep 总会漏。\n\n**Check method 的轻重**：\n- `grep` 类规则可以放进 lint / CI（一旦回归立即拦住）。\n- `typecheck` 类规则可以用 `satisfies Record<Identity, Contract>` 强约束。\n- `human review` 类规则只能进 PR template。\n- `Network panel` 类规则进 release 前 checklist。\n\n每条都通才算\"真的插件化\"。任意一条不通——**先回答\"为什么这条不适用于本场景\"，能解释清楚再放过**。",
         "heading": "评审清单（add / review 通用）",
         "level": 2
       },
       {
-        "raw": "按需读取：\n\n- [references/case-studies.md](references/case-studies.md) — 4 个真实案例的对照表（多站点站群、推广横幅、推广弹窗、工具扩展 apps），每个案例都给出\"五件套\"映射，**用于实际操作前对齐**。\n- [references/anti-patterns.md](references/anti-patterns.md) — 八种最常见的\"伪插件化\"反模式（按严重程度分层：Must-fix / Smell / Context-dependent），**用于代码评审和 PR review 时挑出问题**。\n- [references/cross-stack.md](references/cross-stack.md) — 这套模式在 Webpack / VSCode / Express / Tailwind / Rust trait / Python entry_points 上的同构映射，**用于跨语言/跨框架 onboarding 时建立类比**。",
+        "raw": "按需读取：\n\n- [references/first-principles.md](references/first-principles.md) — 第一性原理完整推导（O(N)→O(1) 为什么逼出五件套）、DDD 全映射、业界出处（Microkernel / Fowler Plugin / OCP / Shotgun Surgery）与 SOLID 关系，**用于说服他人\"这套不是编的\"或对齐团队架构词汇**。\n- [references/case-studies.md](references/case-studies.md) — 4 个真实案例的对照表（多站点站群、推广横幅、推广弹窗、工具扩展 apps），每个案例都给出\"五件套\"映射，**用于实际操作前对齐**。\n- [references/anti-patterns.md](references/anti-patterns.md) — 八种最常见的\"伪插件化\"反模式（按严重程度分层：Must-fix / Smell / Context-dependent），**用于代码评审和 PR review 时挑出问题**。\n- [references/cross-stack.md](references/cross-stack.md) — 这套模式在 Webpack / VSCode / Express / Tailwind / Rust trait / Python entry_points 上的同构映射，**用于跨语言/跨框架 onboarding 时建立类比**。",
         "heading": "案例研究与跨技术栈应用",
         "level": 2
       },

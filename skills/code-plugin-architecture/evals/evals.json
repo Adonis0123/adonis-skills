@@ -147,6 +147,45 @@
         }
       ],
       "files": []
+    },
+    {
+      "id": 4,
+      "eval_name": "first-principles-ddd-solid-rationale",
+      "prompt": "我想把团队里那套到处 switch case 的工具系统改成插件化，但大家觉得这是我个人偏好。你能不能从第一性原理解释：为什么 Identity / Contract / Registry / Runtime Core / Convention Folder 这五件套不是拍脑袋，而是把'加一个新变种'从改 N 处降到只改一个自治单元 + 注册表一行的必要条件？顺便把它和 DDD、SOLID、OCP 的关系讲清楚，但不要把概念硬画等号。",
+      "expected_output": "应该先把根问题定义为 Shotgun Surgery / 一个逻辑变化散落多处，再把目标表述为 O(N) 扩展成本降到 O(1)。然后逐条推导五件套：Contract 让核心按稳定形状消费变种；Identity 让命名可机械推导；Registry 收敛'有哪些'；Runtime Core 对具体变种零知识；Convention Folder 让单变种自治。DDD 映射要谨慎：Contract 可以充当 Published Language，adapter 可类比 ACL，单 plugin 不默认等于 Bounded Context，Core 能力只有在标准化暴露时才类比 OHS。SOLID 关系应点出 OCP 是主轴、DIP 是依赖方向、SRP/ISP 分别解释自治目录和窄契约。",
+      "assertions": [
+        {
+          "id": "starts-from-shotgun-surgery-and-o1-goal",
+          "text": "Output frames the root problem as Shotgun Surgery / scattered edits and the goal as reducing add-one-variant cost from O(N) to O(1).",
+          "check_method": "grep_all",
+          "patterns": ["Shotgun Surgery|霰弹式修改|散.*改|多个文件", "O\\(N\\)", "O\\(1\\)"]
+        },
+        {
+          "id": "derives-five-pieces-as-necessary",
+          "text": "Output derives all five pieces as necessary conditions, not just lists them.",
+          "check_method": "grep_all",
+          "patterns": ["必要条件|推导|绕不开|否则", "Identity", "Contract|契约", "Registry|注册表", "Runtime Core|Core|内核", "Convention Folder|约定式目录|自治目录"]
+        },
+        {
+          "id": "maps-ddd-carefully-without-equating",
+          "text": "Output maps DDD concepts carefully and avoids saying plugin equals bounded context by default.",
+          "check_method": "grep_all",
+          "patterns": ["Published Language|发布语言", "Anti-Corruption Layer|ACL|防腐", "Bounded Context|边界上下文", "不.*等于|不是.*等号|类比|可充当"]
+        },
+        {
+          "id": "mentions-solid-axis",
+          "text": "Output explains the SOLID relationship, including OCP and DIP.",
+          "check_method": "grep_all",
+          "patterns": ["OCP|Open.*Closed|开闭", "DIP|Dependency Inversion|依赖倒置", "SRP|Single Responsibility|单一职责", "ISP|Interface Segregation|接口隔离"]
+        },
+        {
+          "id": "does-not-overclaim-ddd",
+          "text": "Output should not claim that every plugin is a Bounded Context or that Contract is literally DDD Published Language.",
+          "check_method": "grep_none",
+          "patterns": ["每个.*plugin.*Bounded Context", "插件.*就是.*边界上下文", "Contract.*就是.*Published Language", "契约.*就是.*发布语言"]
+        }
+      ],
+      "files": []
     }
   ]
 }

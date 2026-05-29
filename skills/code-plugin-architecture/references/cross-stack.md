@@ -97,8 +97,8 @@ VSCode 让人混淆的原因：它**既是**一个"extension as plugin"系统（
 
 两层都是合法的"插件机制"——只是颗粒度不同。**讨论 VSCode 映射时一定要先问清楚是哪一层**。
 
-类比到本项目：
-- "我们的 ai-video-collection 项目" 整体 = 一个 VSCode extension（host 视角）。
+类比到一个真实项目（前面案例研究里那个多站点 AI 视频 SaaS）：
+- 整个 web 应用整体 = 一个 VSCode extension（host 视角）。
 - 项目里的 "Extension Apps" = 这个 extension 贡献的 commands（内部扩展点）。
 
 ---

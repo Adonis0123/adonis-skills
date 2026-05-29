@@ -4,7 +4,7 @@
     "should_trigger": true
   },
   {
-    "query": "我看了 web/src/pages/_block/extensions 那个目录，每个 ai 工具一个子目录，最外面有个 index.ts 注册所有工具。这种写法是有什么名字吗，叫'插件化'吗？我想在另一个项目里复用这种模式，能跟我讲讲它的核心要点吗？",
+    "query": "我看了 src/pages/_block/extensions 那个目录，每个 ai 工具一个子目录，最外面有个 index.ts 注册所有工具。这种写法是有什么名字吗，叫'插件化'吗？我想在另一个项目里复用这种模式，能跟我讲讲它的核心要点吗？",
     "should_trigger": true
   },
   {
@@ -44,7 +44,11 @@
     "should_trigger": true
   },
   {
-    "query": "我刚把 NPS 弹窗的关闭逻辑加上了双击外面关闭。改完发现还要在 promotionConfig.ts 里把 cache 类型从 count 调成 interval。你帮我顺手把 cache 也改一下 commit 上吧。",
+    "query": "我想说服团队别再用 switch case 加新工具了。能不能从第一性原理解释为什么插件化需要 Identity / Contract / Registry / Runtime Core / Convention Folder 这五件套，并把它和 DDD、SOLID、OCP 的关系讲清楚？",
+    "should_trigger": true
+  },
+  {
+    "query": "我刚把 NPS 弹窗的关闭逻辑加上了双击外面关闭。改完发现还要在 pluginConfig.ts 里把 cache 类型从 count 调成 interval。你帮我顺手把 cache 也改一下 commit 上吧。",
     "should_trigger": false
   },
   {
@@ -60,7 +64,7 @@
     "should_trigger": false
   },
   {
-    "query": "帮我把 web/src/pages/pollo.ai/_components/PromotionPopups/popups/NpsSurveyModal/index.tsx 这个文件的 Trans 文案改成简体中文版的：'感谢你的反馈' 换成 '感谢您的支持'。其他都不要动。",
+    "query": "帮我把 src/pages/site-a.example.com/_components/Popups/popups/NpsSurveyModal/index.tsx 这个文件的 Trans 文案改成简体中文版的：'感谢你的反馈' 换成 '感谢您的支持'。其他都不要动。",
     "should_trigger": false
   },
   {
@@ -72,11 +76,15 @@
     "should_trigger": false
   },
   {
-    "query": "代码里这一行 `const enabledConfig = filterEnabledPromotions(config)` 我看不懂在干嘛，跳进去看 filterEnabledPromotions 又跳到下一层。你帮我画一个调用链路图。",
+    "query": "代码里这一行 `const enabledConfig = filterEnabledPlugins(config)` 我看不懂在干嘛，跳进去看 filterEnabledPlugins 又跳到下一层。你帮我画一个调用链路图。",
     "should_trigger": false
   },
   {
     "query": "我刚才用了 'register' 这个词，我说的是怎么在 Mailchimp 里做用户邮件订阅注册的功能。能跟我讲讲 Mailchimp API 的 subscribe endpoint 怎么调用吗？",
+    "should_trigger": false
+  },
+  {
+    "query": "我们准备做一轮 DDD 建模，核心问题是订单、发票、退款这几个聚合根怎么划边界，不涉及持续新增同类插件或 registry。能帮我做领域建模吗？",
     "should_trigger": false
   }
 ]
