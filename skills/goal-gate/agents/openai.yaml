@@ -1,0 +1,4 @@
+interface:
+  display_name: "Goal Gate"
+  short_description: "Decide when to use durable goals."
+  default_prompt: "Use $goal-gate to decide whether this task should run under a Codex or Claude Code goal, then generate the appropriate goal contract."

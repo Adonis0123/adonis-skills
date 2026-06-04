@@ -1,0 +1,104 @@
+{
+  "skill_name": "goal-gate",
+  "evals": [
+    {
+      "id": 0,
+      "name": "set-now-claude-plan",
+      "prompt": "I'm in Claude Code. Set a goal to implement everything in PLAN.md and don't stop until `pnpm test` passes and the app builds. Keep going on your own and tell me when it's actually done.",
+      "expected_output": "A Goal Gate block with Decision: set-now, Runtime: claude-code-slash, a runnable /goal prompt whose done condition is pnpm test passing + app building, and a reminder to surface verification evidence in the conversation.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block (contains a line starting with 'Goal Gate' and a '- Decision:' field)",
+        "Decision is set-now",
+        "Runtime is claude-code-slash",
+        "Provides a runnable /goal prompt (the Prompt field is a /goal command, not 'none')",
+        "Done condition references the verification signal (pnpm test passing and/or the app building)",
+        "Prompt instructs the agent to surface verification evidence in the conversation/transcript"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "suggest-migration",
+      "prompt": "We need to migrate our auth module from server sessions to JWT across the Node backend. It'll probably take a few hours. Should I set a goal for this?",
+      "expected_output": "A Goal Gate block with Decision: suggest and Goal fit: high, asking for approval rather than auto-creating a goal, with a verifiable done condition.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is suggest (not set-now)",
+        "Goal fit is high",
+        "Does not auto-create a goal: Next is 'ask approval' (or Prompt is 'none' / clearly awaiting authorization)",
+        "Done condition is verifiable (migration complete plus tests/behavior parity)"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "none-typo",
+      "prompt": "Fix the typo on line 12 of README.md — 'recieve' should be 'receive'.",
+      "expected_output": "A Goal Gate block with Decision: none and Goal fit: low, no goal prompt, because this is a single trivial edit.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block (or explicitly states no durable goal is warranted)",
+        "Decision is none",
+        "Goal fit is low",
+        "Does not provide a goal prompt (Prompt is 'none')"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "defer-needs-design",
+      "prompt": "Set a goal to build the best possible caching layer for our API — figure out the right design and then implement it end to end.",
+      "expected_output": "A Goal Gate block with Decision: defer because the architecture is unresolved, routing to a prerequisite design step (brainstorming / discuss-before-plan) rather than locking in a goal on an undefined target.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is defer",
+        "Identifies that the design/architecture is unresolved and routes to a prerequisite design step (mentions brainstorming or discuss-before-plan, or otherwise names a smallest prerequisite workflow)",
+        "Does not set or hand over an executable goal as the primary action"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "codex-slash-evalloop",
+      "prompt": "Give me a Codex /goal prompt for an eval-improvement loop: keep tweaking the prompts in prompts/ until the eval script reaches 0.9, running the eval after each change and keeping edits minimal.",
+      "expected_output": "A Goal Gate block with Runtime: codex-slash whose Prompt is a /goal command encoding one objective, the 0.9 eval target as the done condition, the run-eval-after-each-change loop, minimal edits, and surfacing scores/diffs.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Runtime is codex-slash",
+        "Decision is suggest because the user asked for a prompt to copy, not to start the goal now",
+        "Prompt field is a /goal command (the prompt text starts with /goal)",
+        "Done condition references reaching the eval target score (0.9)",
+        "Prompt encodes the validation loop: run the eval after each change, keep edits minimal, and surface scores/diffs",
+        "Next is provide prompt, not run slash prompt"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "routing-question-defer",
+      "prompt": "For this 6-file refactor, should I use the Plan workflow or just go Direct? Which route makes sense here?",
+      "expected_output": "Recognizes this is a workflow-routing question (workflow-gate territory), not a goal-setting question. Decision: defer with Next: route elsewhere, without fabricating a goal contract as the main answer.",
+      "files": [],
+      "expectations": [
+        "Recognizes the user is asking which workflow/route to use, not whether to set a goal",
+        "Decision is defer",
+        "Next is 'route elsewhere' (defers to workflow-gate / workflow selection)",
+        "Does not impose a fabricated goal contract as the primary answer"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "claude-prompt-only",
+      "prompt": "Generate a Claude Code /goal prompt for implementing docs/design.md. I want to review the prompt before running it.",
+      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: claude-code-slash. The Prompt is a /goal command, but Next is provide prompt rather than run slash prompt because the user asked to review before running.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is suggest, not set-now",
+        "Runtime is claude-code-slash",
+        "Prompt field is a /goal command for implementing docs/design.md",
+        "Next is provide prompt, not run slash prompt",
+        "Done condition and verification require surfaced evidence such as tests/build output or acceptance-criteria mapping"
+      ]
+    }
+  ]
+}

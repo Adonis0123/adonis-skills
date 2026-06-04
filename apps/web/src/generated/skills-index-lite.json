@@ -51,7 +51,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-05-28T12:41:34.000Z"
+    "updatedAt": "2026-05-29T05:45:36.000Z"
   },
   {
     "slug": "commit",
@@ -107,6 +107,18 @@
       "hasSrc": false
     },
     "updatedAt": "2026-03-09T16:14:12.000Z"
+  },
+  {
+    "slug": "goal-gate",
+    "name": "goal-gate",
+    "description": "Use this skill when the user wants to set, write, or use a goal or /goal that makes a coding agent keep working until a verifiable done condition is met. This skill configures the autonomy and stopping contract for Codex, Claude Code, or portable agent prompts; it does not perform the underlying task. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', or goal prompts for migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings.",
+    "metadata": {
+      "author": "adonis"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   },
   {
     "slug": "lingui-next-init",

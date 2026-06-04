@@ -595,6 +595,56 @@
     ]
   },
   {
+    "slug": "goal-gate",
+    "sections": [
+      {
+        "raw": "Use this skill to decide whether the current task deserves a durable goal and to write the goal prompt or contract. This skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.",
+        "heading": "Overview",
+        "level": 2
+      },
+      {
+        "raw": "1. Identify the runtime.\n2. Check whether an active goal exists if the runtime exposes goal status tools.\n3. Classify goal fit.\n4. Emit one `Goal Gate` block normally; for multiple runtimes, emit one block per selected runtime.\n5. Start or suggest the goal only when the selected runtime and user authorization allow it.",
+        "heading": "Workflow",
+        "level": 2
+      },
+      {
+        "raw": "Use explicit user intent before ambient tool availability:\n\n| Runtime | Signal | Goal action |\n|---|---|---|\n| `codex-slash` | The user is in Codex and wants a slash-command prompt, or explicitly asks for Codex `/goal`. | Output a `/goal ...` prompt. |\n| `claude-code-slash` | The user is in Claude Code, asks for Claude Code `/goal`, or asks for a Claude Code-compatible prompt. | Output a `/goal ...` prompt tuned for Claude Code evaluation. |\n| `codex-tooling` | The session exposes tools such as `get_goal`, `create_goal`, or `update_goal`, and the user did not explicitly ask for a slash-command prompt. | Call goal tools only when the user explicitly asked to set or manage a goal. |\n| `unknown` | The runtime cannot be inferred. | Output a portable contract, not an executable command. |\n\nIf multiple runtimes are requested, emit one `Goal Gate` block per runtime. Keep each block executable or copyable on its own.",
+        "heading": "Runtime Detection",
+        "level": 2
+      },
+      {
+        "raw": "Prefer a goal when all are true:\n\n- The task is larger than one normal turn.\n- The objective has one durable end state.\n- Completion can be verified from evidence the agent can surface in the transcript.\n- The agent can make useful progress without frequent human steering.\n- Stop or ask conditions can be stated before work starts.\n\nAvoid a goal for:\n\n- Single-step lookups, typo fixes, small edits, or commit-message work.\n- Open-ended exploration with no measurable stopping condition.\n- Product or architecture choices that still need `brainstorming` or `discuss-before-plan`.\n- Destructive, irreversible, billing, auth, production-data, or schema-breaking work before explicit human approval.\n- A loose backlog of unrelated tasks.",
+        "heading": "Goal Fit",
+        "level": 2
+      },
+      {
+        "raw": "| Decision | Use when | Next behavior |\n|---|---|---|\n| `none` | Goal fit is low. | Continue without a goal. |\n| `suggest` | Goal fit is medium/high, but the user has not explicitly authorized setting one. | Ask for approval or provide the prompt. |\n| `set-now` | The user explicitly asked to set/use a goal and the goal is verifiable. | Use the runtime-specific action. |\n| `defer` | The work is not ready for a goal because scope, decisions, or evidence are unclear. | Route to the smallest prerequisite workflow. |\n\nIn `codex-tooling`, never call `create_goal` from an inferred need. Use `suggest` unless the user explicitly asked to set a goal. If a goal is already active, do not call `create_goal` or `update_goal` automatically; emit `Decision: defer` or `Decision: suggest` and ask the user whether to continue, complete, block, clear, or replace the active goal.",
+        "heading": "Decision Values",
+        "level": 2
+      },
+      {
+        "raw": "Emit this block:\n\n```text\nGoal Gate\n- Decision: <none | suggest | set-now | defer>\n- Runtime: <codex-tooling | codex-slash | claude-code-slash | unknown>\n- Goal fit: <low | medium | high>\n- Objective: <one durable objective or n/a>\n- Done condition: <verifiable stopping condition or n/a>\n- Verification: <commands/artifacts/evidence the agent must surface or n/a>\n- Constraints: <scope/safety/must-not-change limits or n/a>\n- Checkpoints: <progress reporting cadence or n/a>\n- Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>\n- Prompt: <runtime-specific goal prompt or none>\n- Next: <ask approval | create goal | provide prompt | run slash prompt | continue without goal | route elsewhere>\n```\n\nKeep the block concise. Put long examples, if needed, below the block.",
+        "heading": "Output Contract",
+        "level": 2
+      },
+      {
+        "raw": "A good goal prompt states:\n\n- one objective;\n- one done condition;\n- the exact evidence or commands that prove completion;\n- constraints that must not be violated;\n- checkpoint reporting expectations;\n- when to stop or ask instead of continuing.\n\nFor Claude Code `/goal`, ensure the verification evidence will appear in the conversation, because the evaluator judges from surfaced transcript evidence rather than independently reading files or running commands.\n\nFor Codex slash `/goal`, include the same durable contract and validation loop. If goals may be disabled, tell the user to enable goals before running the prompt.\n\nFor Codex tooling, if `Decision: set-now`, call `get_goal` first when available. If no active goal exists, call `create_goal` with the `Objective`; do not set a token budget unless the user explicitly requested one. If a goal is active, do not replace it silently; ask the user what to do with the active goal before any goal mutation.",
+        "heading": "Prompt Rules",
+        "level": 2
+      },
+      {
+        "raw": "`workflow-gate` is optional. If a `Workflow Gate` block is available:\n\n- Treat `Route: Plan`, `Route: Full`, long-running `Light + systematic-debugging`, and broad `verification-before-completion` as stronger goal-fit signals.\n- Treat `Route: Direct`, small `Light`, and `Review-Handoff` as weaker goal-fit signals unless the user explicitly wants a goal.\n- Preserve `workflow-gate` as the workflow router; do not rewrite its route.\n\nIf the user is actually asking which workflow to use, emit `Decision: defer` and `Next: route elsewhere`.",
+        "heading": "Workflow-Gate Relationship",
+        "level": 2
+      },
+      {
+        "raw": "Read `references/examples.md` when you need worked examples for Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.",
+        "heading": "References",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "lingui-next-init",
     "sections": [
       {
