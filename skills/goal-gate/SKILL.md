@@ -15,9 +15,9 @@ Use this skill to decide whether the current task deserves a durable goal and to
 
 1. Identify the runtime.
 2. Check whether an active goal exists if the runtime exposes goal status tools.
-3. Classify goal fit.
-4. Emit one `Goal Gate` block normally; for multiple runtimes, emit one block per selected runtime.
-5. Start or suggest the goal only when the selected runtime and user authorization allow it.
+3. Classify goal fit, then run the safety gate.
+4. Pick the decision: `high` fit through a clear safety gate is `set-now` (auto-execute); `medium` is `suggest`; a tripped safety gate is `suggest` or `defer`; `low` is `none`.
+5. Emit one `Goal Gate` block per selected runtime, then carry out the runtime-specific action when the decision is `set-now`.
 
 ## Runtime Detection
 
@@ -50,16 +50,39 @@ Avoid a goal for:
 - Destructive, irreversible, billing, auth, production-data, or schema-breaking work before explicit human approval.
 - A loose backlog of unrelated tasks.
 
+## Safety Gate
+
+Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.
+
+- Destructive, irreversible, billing, auth, production-data, or schema-breaking work.
+- A goal is already active (for runtimes that expose goal status). Never replace or mutate it silently; ask whether to continue, complete, block, clear, or replace it, and emit `Decision: defer`.
+- The objective still needs a design or scoping decision that `brainstorming` or `discuss-before-plan` should resolve.
+- Verification cannot run, so completion could never be proven from evidence.
+
+The gate exists because an auto-started goal hands the agent a long leash. That leash is only safe when the end state is reversible-or-approved, unambiguous, and checkable. When in doubt, fall back to `suggest` — the cost of asking once is small next to a goal that runs off in the wrong direction.
+
+## Auto-Set
+
+When the safety gate is clear and goal fit is `high`, treat the goal as authorized and start it now — do not stop to ask "should I set a goal?" The high-fit bar (one durable end state, verifiable from surfaced evidence, the agent can make progress without steering) is itself the signal that autonomy will help rather than hurt, so a confirmation round-trip mostly adds latency.
+
+How `set-now` executes depends on the runtime:
+
+- `codex-tooling`: call `get_goal` first when available; if no goal is active, call `create_goal` with the `Objective`. Do not set a token budget unless the user asked for one.
+- `codex-slash` / `claude-code-slash`: there is no goal API to call, so adopt the goal contract yourself — keep working toward the done condition, reporting at the checkpoints, until it is met or a stop-or-ask condition fires. Still emit the `/goal` prompt so the user can re-run it as a durable goal in a fresh session.
+- `unknown`: capabilities are uncertain, so do not auto-execute. Emit a portable contract with `Next: ask approval` and let the user start it.
+
+Hold the auto-set for `medium` fit: stay on `suggest`, because the medium boundary is fuzzy enough that a quick nod from the user is worth more than the saved round-trip. `low` fit is `none`.
+
 ## Decision Values
 
 | Decision | Use when | Next behavior |
 |---|---|---|
 | `none` | Goal fit is low. | Continue without a goal. |
-| `suggest` | Goal fit is medium/high, but the user has not explicitly authorized setting one. | Ask for approval or provide the prompt. |
-| `set-now` | The user explicitly asked to set/use a goal and the goal is verifiable. | Use the runtime-specific action. |
-| `defer` | The work is not ready for a goal because scope, decisions, or evidence are unclear. | Route to the smallest prerequisite workflow. |
+| `suggest` | Goal fit is medium and the safety gate is clear, or the user wants to review the contract before starting. | Provide the contract/prompt and ask for a nod. |
+| `set-now` | Goal fit is high and the safety gate is clear, or the user explicitly asked and the goal is verifiable. | Auto-execute the runtime-specific action. |
+| `defer` | Scope, decisions, evidence, or an already-active goal block a clean start. | Stop and ask, or route to the smallest prerequisite workflow. |
 
-In `codex-tooling`, never call `create_goal` from an inferred need. Use `suggest` unless the user explicitly asked to set a goal. If a goal is already active, do not call `create_goal` or `update_goal` automatically; emit `Decision: defer` or `Decision: suggest` and ask the user whether to continue, complete, block, clear, or replace the active goal.
+`set-now` is reached two ways: the user explicitly asks for a goal, or the task clears the safety gate at high goal fit. Do not silently mutate an active goal in `codex-tooling`; if `get_goal` shows one, emit `Decision: defer` and ask what to do with it.
 
 ## Output Contract
 
@@ -77,7 +100,7 @@ Goal Gate
 - Checkpoints: <progress reporting cadence or n/a>
 - Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>
 - Prompt: <runtime-specific goal prompt or none>
-- Next: <ask approval | create goal | provide prompt | run slash prompt | continue without goal | route elsewhere>
+- Next: <create goal | adopt goal and continue | provide prompt | ask approval | continue without goal | route elsewhere>
 ```
 
 Keep the block concise. Put long examples, if needed, below the block.

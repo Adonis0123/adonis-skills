@@ -1,29 +1,35 @@
 # Goal Gate Examples
 
-## Codex tooling: suggest first
+These examples assume the auto-set rule: when the safety gate is clear and goal fit is high, `set-now` fires without asking. Medium fit stays on `suggest`; a tripped safety gate drops to `suggest` or `defer`.
 
-User: "This migration may take a while. Should we set a goal?"
+## Codex tooling: auto set-now (safety gate clear)
+
+User: "I'm in Codex with goal tooling. No goal is active. Work through PLAN.md and don't stop until `pnpm test` passes and `pnpm build` succeeds."
+
+High fit, no safety-gate trip, tooling available — so create the goal now instead of asking.
 
 ```text
 Goal Gate
-- Decision: suggest
+- Decision: set-now
 - Runtime: codex-tooling
 - Goal fit: high
-- Objective: Migrate the module while preserving existing behavior.
-- Done condition: Migration is complete, targeted tests pass, and no unrelated files are changed.
-- Verification: Surface git diff summary plus the exact test command and passing output.
-- Constraints: Keep scope to the migration files; do not change public API unless the user approves.
-- Checkpoints: Report after each completed migration slice.
-- Stop or ask when: Tests fail for an unclear reason, public API changes are needed, or progress blocks on missing context.
+- Objective: Implement every task in PLAN.md until the named validation commands pass.
+- Done condition: All PLAN.md tasks are implemented, `pnpm test` passes, and `pnpm build` succeeds.
+- Verification: Surface changed files, the test/build commands, and their exit status.
+- Constraints: Stay within PLAN.md scope; do not push or commit unless asked.
+- Checkpoints: Report after each PLAN.md milestone.
+- Stop or ask when: PLAN.md is ambiguous, validation needs unavailable credentials, or a destructive action is required.
 - Prompt: none
-- Next: ask approval
+- Next: create goal
 ```
 
-Do not call `create_goal` unless the user explicitly approves setting the goal.
+Call `get_goal` first when available; with no active goal, call `create_goal` with the objective. Do not add a token budget unless the user asked for one.
 
-## Codex tooling: set now
+## Codex tooling: explicit set-now
 
 User: "Set a goal to finish PLAN.md and keep going until validation passes."
+
+Same action; here the user also asked explicitly.
 
 ```text
 Goal Gate
@@ -40,9 +46,97 @@ Goal Gate
 - Next: create goal
 ```
 
-Call `get_goal` first when available. If no goal is active, call `create_goal` with the objective. Do not set a token budget unless the user requested one.
+## Codex tooling: safety gate holds (auth)
 
-## Codex slash
+User: "Migrate our auth module from server sessions to JWT across the Node backend. Set this up to run to completion."
+
+High fit and tooling is available, but auth work trips the safety gate, so do not auto-create the goal — ask first.
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: codex-tooling
+- Goal fit: high
+- Objective: Migrate auth from server sessions to JWT while preserving behavior.
+- Done condition: Migration complete, auth tests pass, and no unrelated files change.
+- Verification: Surface git diff summary plus the exact auth test command and passing output.
+- Constraints: Auth-sensitive change — keep scope tight; do not weaken token validation or session handling without review.
+- Checkpoints: Report after each migration slice.
+- Stop or ask when: Auth behavior would change in a way that needs review, or tests fail for an unclear reason.
+- Prompt: none
+- Next: ask approval
+```
+
+Auth, billing, production-data, schema, and other irreversible work stays behind explicit approval even at high fit. Do not call `create_goal` until the user approves.
+
+## Codex tooling: active goal already present
+
+User: "Set a new goal for this refactor."
+
+`get_goal` shows another goal is active.
+
+```text
+Goal Gate
+- Decision: defer
+- Runtime: codex-tooling
+- Goal fit: high
+- Objective: Refactor the requested module while preserving behavior.
+- Done condition: Refactor complete and validation passes.
+- Verification: Surface active goal status, the proposed objective, and validation output once approved.
+- Constraints: Do not replace or mutate the active goal without user approval.
+- Checkpoints: n/a
+- Stop or ask when: A goal is already active.
+- Prompt: none
+- Next: ask approval
+```
+
+Ask whether to continue, complete, block, clear, or replace the active goal before any goal mutation.
+
+## Claude Code slash: auto-adopt
+
+User: "I'm in Claude Code. Implement docs/PLAN.md and keep going until `pnpm test` passes and the app builds. I'm stepping away — finish it and show me the evidence."
+
+High fit, gate clear, but Claude Code has no goal API. So adopt the contract and keep working, and also hand back a `/goal` prompt for reuse.
+
+```text
+Goal Gate
+- Decision: set-now
+- Runtime: claude-code-slash
+- Goal fit: high
+- Objective: Implement docs/PLAN.md.
+- Done condition: All acceptance criteria hold, the app builds, and `pnpm test` passes.
+- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
+- Constraints: Follow the plan; do not broaden scope; do not push.
+- Checkpoints: Report after each acceptance-criteria group.
+- Stop or ask when: The plan conflicts with code reality, a destructive operation is needed, or verification cannot run.
+- Prompt: /goal Implement docs/PLAN.md without stopping until every acceptance criterion is satisfied, the app builds, and `pnpm test` passes. After each checkpoint, report what changed, what evidence was produced, and what remains. Stop and ask if the plan conflicts with the code, verification is blocked, or a destructive action would be required.
+- Next: adopt goal and continue
+```
+
+Claude Code goal evaluators judge from surfaced conversation evidence, so the agent must print the commands and results it wants evaluated as it works.
+
+## Claude Code slash: prompt only (user wants to review)
+
+User: "Generate a Claude Code /goal prompt for implementing docs/design.md. I want to review it before running."
+
+The user asked to review first, so hand back the prompt instead of adopting it.
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: claude-code-slash
+- Goal fit: high
+- Objective: Implement docs/design.md.
+- Done condition: All acceptance criteria hold, the app builds, and the specified tests pass.
+- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
+- Constraints: Follow the design doc; do not broaden scope; do not push.
+- Checkpoints: Report after each acceptance-criteria group.
+- Stop or ask when: The doc conflicts with code, a destructive operation is needed, or verification cannot run.
+- Prompt: /goal Implement docs/design.md without stopping until every acceptance criterion is satisfied, the app builds, and the tests pass. After each checkpoint, report what changed, what evidence was produced, what remains, and whether the done condition is met. Stop and ask if the doc conflicts with the code, verification is blocked, or a destructive action would be required.
+- Next: provide prompt
+```
+
+## Codex slash: prompt for reuse
 
 User: "Give me a Codex /goal prompt for this eval improvement loop."
 
@@ -61,26 +155,7 @@ Goal Gate
 - Next: provide prompt
 ```
 
-## Claude Code slash
-
-User: "Generate a Claude Code /goal for implementing this design doc."
-
-```text
-Goal Gate
-- Decision: suggest
-- Runtime: claude-code-slash
-- Goal fit: high
-- Objective: Implement the referenced design doc.
-- Done condition: All acceptance criteria hold, the app builds, and the specified tests pass.
-- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
-- Constraints: Follow the design doc; do not broaden scope; do not push.
-- Checkpoints: Report after each acceptance-criteria group.
-- Stop or ask when: The design doc conflicts with code reality, a destructive operation is needed, or verification cannot run.
-- Prompt: /goal Implement [design doc path] without stopping until every acceptance criterion is satisfied, the app builds, and [test commands] pass. After each checkpoint, report what changed, what evidence was produced, what remains, and whether the done condition is met. Stop and ask if the doc conflicts with the code, verification is blocked, or a destructive action would be required.
-- Next: provide prompt
-```
-
-Claude Code goal evaluators judge from surfaced conversation evidence. Instruct the agent to print the commands and results it wants evaluated.
+The user asked for a prompt to copy, so this stays `suggest` even at high fit.
 
 ## Unknown runtime
 
@@ -101,36 +176,17 @@ Goal Gate
 - Next: ask approval
 ```
 
-## Active Codex tooling goal
-
-User: "Set a new goal for this refactor."
-
-Current `get_goal` says another goal is active.
-
-```text
-Goal Gate
-- Decision: defer
-- Runtime: codex-tooling
-- Goal fit: high
-- Objective: Refactor the requested module while preserving behavior.
-- Done condition: Refactor is complete and validation passes.
-- Verification: Surface active goal status, proposed new objective, and validation command output once approved.
-- Constraints: Do not replace or mutate the active goal without user approval.
-- Checkpoints: n/a
-- Stop or ask when: A goal is already active.
-- Prompt: none
-- Next: ask approval
-```
-
-Ask whether to continue, complete, block, clear, or replace the active goal. Do not call `create_goal` or `update_goal` until the user explicitly chooses.
+Capabilities are uncertain, so do not auto-execute even if fit were high.
 
 ## Workflow gate already ran
 
-Existing block says `Route: Full`, `scope=multi-module`, and `user-intent=implement`.
+Existing block says `Route: Full`, `scope=multi-module`, `user-intent=implement`, and `get_goal` shows no active goal.
+
+`Route: Full` is a strong goal-fit signal; with the safety gate clear, auto-set.
 
 ```text
 Goal Gate
-- Decision: suggest
+- Decision: set-now
 - Runtime: codex-tooling
 - Goal fit: high
 - Objective: Complete the multi-module implementation selected by workflow-gate.
@@ -140,7 +196,7 @@ Goal Gate
 - Checkpoints: Report after each module or bounded context.
 - Stop or ask when: The plan proves wrong, modules conflict, or validation is blocked.
 - Prompt: none
-- Next: ask approval
+- Next: create goal
 ```
 
 `workflow-gate` is a signal, not a prerequisite. Do not rerun it unless the user is asking for route selection rather than goal selection.
