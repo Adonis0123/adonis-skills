@@ -130,6 +130,66 @@
     ]
   },
   {
+    "slug": "branch-creator",
+    "sections": [
+      {
+        "raw": "Create a local Git branch with a short, readable name:\n\n- `feat/<short-slug>` for normal feature work\n- `hotfix/<short-slug>` for urgent fixes or production-impacting repairs\n\nThe skill exists to prevent vague branch names, shell-hostile characters, and accidental Git state changes. Branch creation changes the local checkout, so the default workflow is propose first, create after confirmation.",
+        "heading": "Branch Creator",
+        "level": 1
+      },
+      {
+        "raw": "Use this skill when the user says things like:\n\n- \"帮我创建一个分支做支付成功页修复\"\n- \"起个 feat 分支，做 pricing table cleanup\"\n- \"new branch for login redirect fix\"\n- \"hotfix branch for failed billing confirmation\"\n- \"我要开始做这个功能，先建分支\"\n\nDo not use this skill for:\n\n- committing, pushing, opening PRs/MRs, or finishing branches\n- renaming or deleting existing branches\n- complex release branching strategy design",
+        "heading": "Trigger Examples",
+        "level": 2
+      },
+      {
+        "raw": "Pick one prefix:\n\n- Use `feat/` for new features, non-urgent product changes, refactors tied to a feature, UI improvements, and planned work.\n- Use `hotfix/` for urgent fixes, production breakages, release-blocking fixes, payment/auth/data-loss fixes, or when the user explicitly says hotfix.\n\nIf both are plausible, recommend one and ask for confirmation. Do not silently use `hotfix/` just because the task is a bug; reserve it for urgency or release pressure.",
+        "heading": "Prefix",
+        "level": 3
+      },
+      {
+        "raw": "Generate the part after the slash from the user's task:\n\n- Use lowercase English words.\n- Use hyphens between words.\n- Keep it short: usually 2-5 words.\n- Prefer domain nouns plus the specific change, for example `paid-success-timeout`, `pricing-country-gate`, `login-redirect`.\n- Drop filler words like `add`, `update`, `fix`, `new`, `page`, `feature` unless they carry useful meaning.\n- Avoid issue numbers unless the user provided one and clearly wants it included.\n\nSafe character set:\n\n- letters `a-z`\n- numbers `0-9`\n- hyphen `-`\n- one slash between prefix and slug\n\nAvoid spaces, uppercase letters, underscores, dots, quotes, emoji, shell metacharacters, consecutive slashes, trailing dots, and Git-reserved sequences such as `..` or `@{`.",
+        "heading": "Slug",
+        "level": 3
+      },
+      {
+        "raw": "Before proposing or creating a branch, verify the local Git context:\n\n```bash\ngit rev-parse --show-toplevel\ngit status --short --branch\ngit branch --show-current\n```\n\nIf the directory is not a Git repository, stop and tell the user.\n\nIf the working tree has changes, do not block by default. Explain that creating a branch keeps those changes in the checkout, then continue with the propose-first workflow.",
+        "heading": "1. Inspect Repository State",
+        "level": 3
+      },
+      {
+        "raw": "Output:\n\n```text\nRecommended branch: feat/example-slug\nCommand: git switch -c feat/example-slug\nReason: <brief reason for prefix and slug>\n```\n\nIf the user's intent is too vague to name the branch well, ask one concise question. Good branch names depend on small scope; if the task description is broad, ask the user to split or name the first slice.",
+        "heading": "2. Propose Branch Name",
+        "level": 3
+      },
+      {
+        "raw": "Before creating the branch, validate the exact candidate name:\n\n```bash\ngit check-ref-format --branch <branch-name>\ngit show-ref --verify --quiet refs/heads/<branch-name>\ngit ls-remote --exit-code --heads origin <branch-name>\n```\n\nInterpretation:\n\n- `git check-ref-format --branch` must succeed.\n- If the local branch already exists, offer to switch to it with `git switch <branch-name>` instead of creating it.\n- If the remote branch already exists, warn the user and ask whether to track or choose another name.\n- If there is no `origin` remote, skip the remote existence check and say so.",
+        "heading": "3. Validate Before Creation",
+        "level": 3
+      },
+      {
+        "raw": "Default behavior:\n\n1. Recommend the branch name and command.\n2. Ask the user to confirm.\n3. After confirmation, run:\n\n```bash\ngit switch -c <branch-name>\n```\n\nTreat an explicit user instruction like \"直接创建\" or \"create it now\" as confirmation only when the branch name is already unambiguous and all validation checks pass.\n\nNever push, commit, rebase, merge, delete branches, or create a PR/MR as part of this skill.",
+        "heading": "4. Confirm, Then Create",
+        "level": 3
+      },
+      {
+        "raw": "After successful creation, report:\n\n- created branch name\n- previous branch\n- current branch\n- whether the working tree had pre-existing changes\n\nExample:\n\n```text\nCreated branch: feat/paid-success-timeout\nPrevious branch: main\nCurrent branch: feat/paid-success-timeout\nNote: your existing working-tree changes moved with the checkout.\n```\n\nIf creation fails, quote the failing command and the relevant error line, then suggest the smallest safe next step.",
+        "heading": "5. Report Result",
+        "level": 3
+      },
+      {
+        "raw": "| User intent | Branch |\n| --- | --- |\n| \"做一个登录跳转修复\" | `feat/login-redirect` |\n| \"hotfix: paid success smoke timeout\" | `hotfix/paid-success-timeout` |\n| \"pricing 页面国家货币 gate\" | `feat/pricing-currency-gate` |\n| \"修一下 billing confirmation 线上失败\" | `hotfix/billing-confirmation` |\n| \"add local skill install docs\" | `feat/local-skill-docs` |",
+        "heading": "Examples",
+        "level": 2
+      },
+      {
+        "raw": "A good result is boring and predictable:\n\n- The branch name is short enough to type.\n- The prefix communicates urgency correctly.\n- The name passes Git's branch-name validation.\n- The user sees the command before the checkout changes.\n- No remote or history-changing command runs unless the user separately asks for it.",
+        "heading": "Quality Bar",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "code-inspector-init",
     "sections": [
       {
