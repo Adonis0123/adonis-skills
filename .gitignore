@@ -16,6 +16,8 @@ coverage
 /.skill-creator-workspaces/
 # Per-skill sibling workspaces created by skill-creator (e.g. skills/foo-workspace/)
 /skills/*-workspace/
+# Root-level skill-creator workspaces (e.g. branch-creator-workspace/)
+/*-workspace/
 
 # agentic-review-handoff persistent packet inbox (per-repo, never synced).
 # Other repos rely on .git/info/exclude; this entry is for adonis-skills self-dogfooding.

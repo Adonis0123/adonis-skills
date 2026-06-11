@@ -133,7 +133,7 @@
     "slug": "branch-creator",
     "sections": [
       {
-        "raw": "Create a local Git branch with a short, readable name:\n\n- `feat/<short-slug>` for normal feature work\n- `hotfix/<short-slug>` for urgent fixes or production-impacting repairs\n\nThe skill exists to prevent vague branch names, shell-hostile characters, and accidental Git state changes. Branch creation changes the local checkout, so the default workflow is propose first, create after confirmation.",
+        "raw": "Create a local Git branch with a short, readable name:\n\n- `feat/<slug>` for normal feature work\n- `hotfix/<slug>` for urgent fixes or production-impacting repairs\n\nThree qualities define a good run, in this order:\n\n1. **Accurate** — the prefix matches urgency, and the slug names the thing with words the team already uses.\n2. **Fast** — the whole flow takes at most two shell commands and a handful of output lines.\n3. **Short** — the slug is 1–3 words, ideally 2; short names get typed by hand, tab-completed, and scanned in PR lists, so every extra word costs more than it informs.\n\nBranch creation changes the local checkout, so the default workflow is propose first, create after confirmation.",
         "heading": "Branch Creator",
         "level": 1
       },
@@ -148,42 +148,37 @@
         "level": 3
       },
       {
-        "raw": "Generate the part after the slash from the user's task:\n\n- Use lowercase English words.\n- Use hyphens between words.\n- Keep it short: usually 2-5 words.\n- Prefer domain nouns plus the specific change, for example `paid-success-timeout`, `pricing-country-gate`, `login-redirect`.\n- Drop filler words like `add`, `update`, `fix`, `new`, `page`, `feature` unless they carry useful meaning.\n- Avoid issue numbers unless the user provided one and clearly wants it included.\n\nSafe character set:\n\n- letters `a-z`\n- numbers `0-9`\n- hyphen `-`\n- one slash between prefix and slug\n\nAvoid spaces, uppercase letters, underscores, dots, quotes, emoji, shell metacharacters, consecutive slashes, trailing dots, and Git-reserved sequences such as `..` or `@{`.",
+        "raw": "Generate the part after the slash from the user's task:\n\n- Use lowercase English words joined by hyphens.\n- **1–3 words, prefer 2. Aim for a slug under 16 characters; treat 20 as the ceiling.** If the task does not fit in 3 words, pick the first concrete slice or ask one scope question.\n- **Reuse vocabulary the project already has.** If the request or surrounding context mentions an existing script, command, module, or team term (`track:gen`, `paid-success`, `pricing-table`), derive the slug from it (`track-gen`) instead of re-describing the task in fresh English (`tracker-code-generation`). The team greps, tab-completes, and recognizes branches by the words they already use, so a shorter borrowed name is also the more accurate one. Do not go searching the repo for vocabulary — only reuse terms already visible in the request or conversation.\n- Drop filler words that carry no meaning in context: `add`, `update`, `fix`, `new`, `page`, `feature`, `code`, `logic`, `issue`, `support`.\n- Avoid issue numbers unless the user provided one and clearly wants it included.\n\nTightening examples — the \"loose\" names are what to avoid:\n\n| Task | Loose (too long) | Tight |\n| --- | --- | --- |\n| 改埋点代码的生成方式（项目里有 `track:gen`） | `feat/tracker-code-generation` | `feat/track-gen` |\n| 登录后跳转修复 | `feat/fix-login-redirect-issue` | `feat/login-redirect` |\n| 线上支付确认弹窗崩溃 | `hotfix/payment-confirmation-modal-crash` | `hotfix/pay-confirm` |\n| pricing 页面多币种支持 | `feat/pricing-multi-currency-support` | `feat/pricing-currency` |\n\nSafe character set: letters `a-z`, numbers `0-9`, hyphen `-`, one slash between prefix and slug. Avoid spaces, uppercase, underscores, dots, quotes, emoji, shell metacharacters, consecutive slashes, and Git-reserved sequences such as `..` or `@{`.",
         "heading": "Slug",
         "level": 3
       },
       {
-        "raw": "Before proposing or creating a branch, verify the local Git context:\n\n```bash\ngit rev-parse --show-toplevel\ngit status --short --branch\ngit branch --show-current\n```\n\nIf the directory is not a Git repository, stop and tell the user.\n\nIf the working tree has changes, do not block by default. Explain that creating a branch keeps those changes in the checkout, then continue with the propose-first workflow.",
-        "heading": "1. Inspect Repository State",
-        "level": 3
-      },
-      {
-        "raw": "Output:\n\n```text\nRecommended branch: feat/example-slug\nCommand: git switch -c feat/example-slug\nReason: <brief reason for prefix and slug>\n```\n\nIf the user's intent is too vague to name the branch well, ask one concise question. Good branch names depend on small scope; if the task description is broad, ask the user to split or name the first slice.",
-        "heading": "2. Propose Branch Name",
-        "level": 3
-      },
-      {
-        "raw": "Before creating the branch, validate the exact candidate name:\n\n```bash\ngit check-ref-format --branch <branch-name>\ngit show-ref --verify --quiet refs/heads/<branch-name>\ngit ls-remote --exit-code --heads origin <branch-name>\n```\n\nInterpretation:\n\n- `git check-ref-format --branch` must succeed.\n- If the local branch already exists, offer to switch to it with `git switch <branch-name>` instead of creating it.\n- If the remote branch already exists, warn the user and ask whether to track or choose another name.\n- If there is no `origin` remote, skip the remote existence check and say so.",
-        "heading": "3. Validate Before Creation",
-        "level": 3
-      },
-      {
-        "raw": "Default behavior:\n\n1. Recommend the branch name and command.\n2. Ask the user to confirm.\n3. After confirmation, run:\n\n```bash\ngit switch -c <branch-name>\n```\n\nTreat an explicit user instruction like \"直接创建\" or \"create it now\" as confirmation only when the branch name is already unambiguous and all validation checks pass.\n\nNever push, commit, rebase, merge, delete branches, or create a PR/MR as part of this skill.",
-        "heading": "4. Confirm, Then Create",
-        "level": 3
-      },
-      {
-        "raw": "After successful creation, report:\n\n- created branch name\n- previous branch\n- current branch\n- whether the working tree had pre-existing changes\n\nExample:\n\n```text\nCreated branch: feat/paid-success-timeout\nPrevious branch: main\nCurrent branch: feat/paid-success-timeout\nNote: your existing working-tree changes moved with the checkout.\n```\n\nIf creation fails, quote the failing command and the relevant error line, then suggest the smallest safe next step.",
-        "heading": "5. Report Result",
-        "level": 3
-      },
-      {
-        "raw": "| User intent | Branch |\n| --- | --- |\n| \"做一个登录跳转修复\" | `feat/login-redirect` |\n| \"hotfix: paid success smoke timeout\" | `hotfix/paid-success-timeout` |\n| \"pricing 页面国家货币 gate\" | `feat/pricing-currency-gate` |\n| \"修一下 billing confirmation 线上失败\" | `hotfix/billing-confirmation` |\n| \"add local skill install docs\" | `feat/local-skill-docs` |",
-        "heading": "Examples",
+        "raw": "Speed matters here: every extra shell command is a round trip the user waits through, and `git ls-remote` is a *network* round trip that can take seconds. The whole flow needs at most two commands — one to inspect, one to create.",
+        "heading": "Workflow",
         "level": 2
       },
       {
-        "raw": "A good result is boring and predictable:\n\n- The branch name is short enough to type.\n- The prefix communicates urgency correctly.\n- The name passes Git's branch-name validation.\n- The user sees the command before the checkout changes.\n- No remote or history-changing command runs unless the user separately asks for it.",
+        "raw": "```bash\ngit status --short --branch\n```\n\nThis single call tells you everything you need: it errors if the directory is not a Git repository (stop and tell the user), the `## ...` line shows the current branch, and any remaining lines show uncommitted changes. Do not also run `git rev-parse`, `git branch --show-current`, `git show-ref`, or any remote query during the proposal step.\n\nA dirty working tree is not a blocker — `git switch -c` carries the changes onto the new branch. Mention it in one clause and continue.",
+        "heading": "1. Inspect (one command)",
+        "level": 3
+      },
+      {
+        "raw": "Reply in the user's language, in exactly this shape:\n\n```text\n推荐分支：feat/track-gen\n命令：git switch -c feat/track-gen\n原因：<one sentence covering both prefix and slug choice>\n（当前 master，工作区干净）确认后我创建。\n```\n\nThe final line compresses the repository state into one parenthetical. Do not output a checklist that reports each individual check on its own line (格式 / 本地同名 / 远端同名 / …) — that is slower to produce and slower to read, and the checks happen at creation time anyway.\n\nIf the user's intent is too vague to name well, ask one concise question instead of proposing. Good branch names depend on small scope.",
+        "heading": "2. Propose (four lines, then stop)",
+        "level": 3
+      },
+      {
+        "raw": "If the original request already pre-authorizes creation (\"直接创建\", \"create it now\", \"不用确认\"), propose and create in the same turn — still show the name and command, just don't wait.\n\nIf the user confirms a branch you already proposed in the previous turn, use that exact branch name unless the user asks to change it. Do not regenerate the slug.\n\n```bash\ngit check-ref-format --branch <branch-name> && git switch -c <branch-name>\n```\n\nNo pre-checks needed beyond this chain: `git switch -c` itself fails cleanly if the branch already exists — handle that by offering `git switch <branch-name>` instead. If `git check-ref-format` fails, do not try shell escaping or quoting tricks; generate a simpler safe name and confirm it. Skip the remote-collision check by default: it costs a network round trip, and a collision surfaces harmlessly at push time anyway. Run `git ls-remote --heads origin <branch-name>` only if the user explicitly asks about the remote.\n\nNever push, commit, rebase, merge, delete branches, or create a PR/MR as part of this skill.",
+        "heading": "3. Create (one command, after confirmation)",
+        "level": 3
+      },
+      {
+        "raw": "```text\n已创建并切换：feat/track-gen（原 master）\n未提交的改动已随分支带过来。\n```\n\nThe parenthetical reports the previous branch only. The second line appears only when the working tree was dirty. If creation fails, quote the failing command and the relevant error line, then suggest the smallest safe next step.",
+        "heading": "4. Report (one or two lines)",
+        "level": 3
+      },
+      {
+        "raw": "A good result is boring, fast, and short:\n\n- At most two shell commands total, and no network calls.\n- Slug is 1–3 words (prefer 2), under 20 characters, reusing project vocabulary when it exists.\n- The prefix communicates urgency correctly.\n- The proposal is 4 lines; the post-creation report is 1–2 lines.\n- The checkout never changes before the user has seen the name and command.",
         "heading": "Quality Bar",
         "level": 2
       }

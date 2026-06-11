@@ -32,12 +32,13 @@
     "description": "Create safe Git feature or hotfix branches with concise names. Use this whenever the user asks to create a branch, start work on a new feature or fix, wants a `feat/...` or `hotfix/...` branch name, asks for a short branch slug from a task description, or wants help before beginning local Git work. Default to recommending the branch name and command first, then create only after user confirmation. Do not push, commit, rebase, or create PRs.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.1"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-06-11T03:15:22.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -132,7 +133,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-06-04T11:47:39.000Z"
+    "updatedAt": "2026-06-04T14:37:01.000Z"
   },
   {
     "slug": "lingui-next-init",
