@@ -2,6 +2,40 @@
 
 These examples assume the auto-set rule: when the safety gate is clear and goal fit is high, `set-now` fires without asking. Medium fit stays on `suggest`; a tripped safety gate drops to `suggest` or `defer`.
 
+## Codex slash: vague Chinese app prompt
+
+User: "帮我写一个 Codex /goal，我想做一个本地记账 App，先给能直接复制的版本。"
+
+The user wants a prompt, not immediate execution. Use conservative defaults and make the first `/goal` copy-ready.
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: codex-slash
+- Goal fit: high
+- Objective: Build a first-version local personal budgeting app MVP.
+- Done condition: The local app runs and the core add/view/edit transaction workflow is proven with runtime evidence.
+- Verification: Surface discovered project commands, local run output, screenshots or browser evidence for the workflow, and any skipped checks.
+- Constraints: No account system, paid services, production deployment, bank integration, or real financial advice.
+- Checkpoints: Report after project inspection, first runnable workflow, and final verification.
+- Stop or ask when: Credentials, bank APIs, deployment, regulated financial advice, or unclear data ownership is required.
+- Prompt: see Recommended /goal below
+- Next: provide prompt
+```
+
+```text
+推荐执行版（中文，可直接复制）
+/goal 创建第一版本地个人记账 App MVP，先读取项目已有命令和约束；如果没有现有项目，就创建最小本地 Web 应用，实现添加、查看、编辑和删除一笔收支记录的核心流程。
+验证：运行项目提供的最小相关检查，启动本地应用，在浏览器中完整走通新增、查看、编辑、删除收支记录流程，并用命令输出、日志或截图作为证据。
+约束：不接入真实银行、支付、账号系统、云同步、生产部署或金融建议；不保存真实敏感财务数据。
+边界：只写入新项目目录，或只修改现有项目中与记账核心流程直接相关的文件。
+迭代策略：先做可运行核心流程，再根据检查结果和浏览器证据做最多 3 轮聚焦改进；同一错误连续失败 2 次后换日志、控制台或文档证据来源。
+完成条件：本地核心记账流程可运行，验证证据已展示，检查通过或缺失配置已明确说明。
+暂停条件：需要真实银行接口、账号凭证、付费服务、生产部署、法律/金融判断、敏感真实数据或产品范围决策时暂停。
+
+默认选择理由：先做本地 MVP 能最快验证核心记账流程，同时避开账号、银行接口和生产数据风险。
+```
+
 ## Codex tooling: auto set-now (safety gate clear)
 
 User: "I'm in Codex with goal tooling. No goal is active. Work through PLAN.md and don't stop until `pnpm test` passes and `pnpm build` succeeds."

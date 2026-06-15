@@ -113,6 +113,41 @@
         "Next is 'route elsewhere' (defers to workflow-gate / workflow selection)",
         "Does not impose a fabricated goal contract as the primary answer"
       ]
+    },
+    {
+      "id": 8,
+      "name": "vague-chinese-copy-ready-goal",
+      "prompt": "帮我写一个 Codex /goal，我想做一个本地记账 App，先给能直接复制的版本。",
+      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: codex-slash, followed by a Chinese copy-ready /goal. The prompt keeps the executable command prefix /goal, chooses conservative local-MVP defaults, names verification evidence, constraints, write boundaries, iteration policy, completion condition, and pause conditions. It includes a short default reason and contains no placeholders.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is suggest, not set-now, because the user asked for a prompt to copy",
+        "Runtime is codex-slash",
+        "Prompt field says 'see Recommended /goal below' or otherwise points to a copy-ready prompt",
+        "Provides a Chinese heading such as '推荐执行版（中文，可直接复制）'",
+        "The executable command prefix is /goal, not /目标",
+        "The /goal chooses safe local-MVP defaults rather than asking an open-ended questionnaire",
+        "The prompt includes verification evidence, constraints, boundaries, iteration policy, completion condition, and pause condition",
+        "Includes a concise default reason",
+        "Does not leave placeholders such as TODO, TBD, [path], 待定, or 待补充"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "unknown-domain-discovery-first",
+      "prompt": "给我一个 /goal，让 Codex 做一个医疗影像标注工具，先自己把能做的都做完。",
+      "expected_output": "A Goal Gate block plus a copy-ready /goal that treats the medical-imaging domain as specialized and discovery-first. It does not invent medical claims or compliance rules. It requires inspecting authoritative project/docs/sample-data context before implementation and pauses for medical judgment, real patient data, compliance approval, production deployment, or destructive data changes.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Does not auto-start risky regulated-domain work without guardrails",
+        "The goal is discovery-first before implementation",
+        "Verification mentions inspecting project docs, sample data, existing scripts, official references, or comparable authoritative evidence",
+        "Constraints prohibit inventing medical conclusions, compliance claims, data semantics, or diagnosis/promise language",
+        "Pause conditions include medical judgment, compliance approval, real patient or production data, credentials, deployment, or destructive data changes",
+        "The copy-ready prompt includes /goal and concrete evidence requirements"
+      ]
     }
   ]
 }

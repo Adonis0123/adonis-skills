@@ -38,7 +38,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-06-11T03:15:22.000Z"
+    "updatedAt": "2026-06-11T08:18:21.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -125,7 +125,7 @@
   {
     "slug": "goal-gate",
     "name": "goal-gate",
-    "description": "Use this skill when the user wants to set, write, or use a goal or /goal that makes a coding agent keep working until a verifiable done condition is met. This skill configures the autonomy and stopping contract for Codex, Claude Code, or portable agent prompts; it does not perform the underlying task. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', or goal prompts for migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings.",
+    "description": "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt that keeps Codex, Claude Code, or another agent working until a verifiable done condition is met. It gates autonomy, handles runtime differences, and writes copy-ready goal contracts with outcome, verification, constraints, write boundaries, iteration policy, completion evidence, and pause/ask conditions. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'turn this vague app idea into a goal', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings.",
     "metadata": {
       "author": "adonis"
     },

@@ -1,6 +1,6 @@
 ---
 name: goal-gate
-description: "Use this skill when the user wants to set, write, or use a goal or /goal that makes a coding agent keep working until a verifiable done condition is met. This skill configures the autonomy and stopping contract for Codex, Claude Code, or portable agent prompts; it does not perform the underlying task. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', or goal prompts for migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings."
+description: "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt that keeps Codex, Claude Code, or another agent working until a verifiable done condition is met. It gates autonomy, handles runtime differences, and writes copy-ready goal contracts with outcome, verification, constraints, write boundaries, iteration policy, completion evidence, and pause/ask conditions. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'turn this vague app idea into a goal', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings."
 metadata:
   author: adonis
 ---
@@ -9,15 +9,21 @@ metadata:
 
 ## Overview
 
-Use this skill to decide whether the current task deserves a durable goal and to write the goal prompt or contract. This skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.
+Use this skill to decide whether the current task deserves a durable goal and to write a copy-ready goal contract when it does. Keep two jobs separate:
+
+- Gate autonomy: decide `none`, `suggest`, `set-now`, or `defer`.
+- Draft the contract: produce a concrete `/goal` or portable prompt with verification, boundaries, iteration, and pause conditions.
+
+This skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.
 
 ## Workflow
 
 1. Identify the runtime.
 2. Check whether an active goal exists if the runtime exposes goal status tools.
 3. Classify goal fit, then run the safety gate.
-4. Pick the decision: `high` fit through a clear safety gate is `set-now` (auto-execute); `medium` is `suggest`; a tripped safety gate is `suggest` or `defer`; `low` is `none`.
-5. Emit one `Goal Gate` block per selected runtime, then carry out the runtime-specific action when the decision is `set-now`.
+4. Draft the smallest useful goal contract. For low-risk vague requests, choose conservative defaults instead of asking a form-like questionnaire.
+5. Pick the decision: `high` fit through a clear safety gate is `set-now`; `medium` is `suggest`; a tripped safety gate is `suggest` or `defer`; `low` is `none`.
+6. Emit one `Goal Gate` block per selected runtime, then carry out the runtime-specific action when the decision is `set-now`.
 
 ## Runtime Detection
 
@@ -50,6 +56,8 @@ Avoid a goal for:
 - Destructive, irreversible, billing, auth, production-data, or schema-breaking work before explicit human approval.
 - A loose backlog of unrelated tasks.
 
+For vague but low-risk work, prefer a goal with safe defaults over a clarification loop. Ask only when the answer materially changes cost, risk, ownership, product direction, or write boundaries.
+
 ## Safety Gate
 
 Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.
@@ -60,6 +68,8 @@ Before any automatic action, check for conditions that must keep a human in the 
 - Verification cannot run, so completion could never be proven from evidence.
 
 The gate exists because an auto-started goal hands the agent a long leash. That leash is only safe when the end state is reversible-or-approved, unambiguous, and checkable. When in doubt, fall back to `suggest` — the cost of asking once is small next to a goal that runs off in the wrong direction.
+
+High-risk work can still receive a goal draft, but the draft must be discovery-first or approval-first. Do not present a production write, destructive migration, auth rewrite, billing change, or regulated-domain decision as an immediately executable action.
 
 ## Auto-Set
 
@@ -72,6 +82,28 @@ How `set-now` executes depends on the runtime:
 - `unknown`: capabilities are uncertain, so do not auto-execute. Emit a portable contract with `Next: ask approval` and let the user start it.
 
 Hold the auto-set for `medium` fit: stay on `suggest`, because the medium boundary is fuzzy enough that a quick nod from the user is worth more than the saved round-trip. `low` fit is `none`.
+
+## Goal Drafting
+
+For any prompt or contract that a user may copy, make the first executable draft complete. Do not leave placeholders such as `[path]`, `TODO`, or `TBD` unless the user explicitly asked for a template.
+
+A strong goal includes:
+
+- one concrete outcome;
+- concrete verification evidence such as commands, logs, screenshots, files, URLs, API checks, or artifact paths;
+- constraints that protect unrelated behavior, data, secrets, default branches, and public contracts;
+- write boundaries and forbidden paths when the task touches a repo or machine;
+- bounded iteration policy after failures;
+- a done condition that proves completion;
+- pause conditions for credentials, payments, production data, destructive actions, legal/medical/financial judgment, copyrighted assets, unclear ownership, or repeated blockers.
+
+For Chinese-first users, write the primary copy-ready prompt in Chinese while keeping the executable command prefix `/goal`. Include a concise default reason when you made assumptions. Add numbered options only when a choice would materially change scope, risk, or direction. Include an English-compatible mirror only when the user asks for portability, English, Claude/Codex cross-use, or a complete bilingual draft.
+
+For unfamiliar or specialized domains, do not invent domain rules. Write a discovery-first goal that makes the agent inspect project docs, sample data, official references, and runtime evidence before implementation.
+
+Read `references/copy-ready-goals.md` when generating a user-copyable `/goal`, when the user gives a vague app/site/tool/game request, or when you need Chinese default output, per-field drafting craft, a question bank for the rare case you must ask, option lists, unknown-domain handling, or prompt quality checks.
+
+If a copy-ready goal is saved to a file or the user asks for validation, run `scripts/lint-goal-prompt.py <file>` and fix any missing labels, placeholders, unsafe vague wording, or thin verification.
 
 ## Decision Values
 
@@ -99,22 +131,21 @@ Goal Gate
 - Constraints: <scope/safety/must-not-change limits or n/a>
 - Checkpoints: <progress reporting cadence or n/a>
 - Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>
-- Prompt: <runtime-specific goal prompt or none>
+- Prompt: <runtime-specific goal prompt, "see Recommended /goal below", or none>
 - Next: <create goal | adopt goal and continue | provide prompt | ask approval | continue without goal | route elsewhere>
 ```
 
-Keep the block concise. Put long examples, if needed, below the block.
+Keep the block concise. If the prompt is longer than one short line, put `Prompt: see Recommended /goal below`, then emit the copy-ready prompt immediately below the block.
+
+When emitting a copy-ready prompt for a Chinese-first user, use this order as needed:
+
+1. `推荐执行版（中文，可直接复制）`
+2. `默认选择理由`
+3. `可选调整`
+4. `你可以直接回复`
+5. `Goal Draft (English-compatible)` when requested or useful for portability
 
 ## Prompt Rules
-
-A good goal prompt states:
-
-- one objective;
-- one done condition;
-- the exact evidence or commands that prove completion;
-- constraints that must not be violated;
-- checkpoint reporting expectations;
-- when to stop or ask instead of continuing.
 
 For Claude Code `/goal`, ensure the verification evidence will appear in the conversation, because the evaluator judges from surfaced transcript evidence rather than independently reading files or running commands.
 
@@ -135,3 +166,7 @@ If the user is actually asking which workflow to use, emit `Decision: defer` and
 ## References
 
 Read `references/examples.md` when you need worked examples for Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.
+
+Read `references/copy-ready-goals.md` when you need to write a polished, direct-copy `/goal` prompt, especially for vague Chinese requests, default-first MVP goals, unknown domains, option lists, and prompt linting.
+
+Use `scripts/lint-goal-prompt.py` when a generated prompt exists as a file or needs deterministic linting.
