@@ -70,7 +70,7 @@
   {
     "slug": "commit",
     "name": "commit",
-    "description": "Generate conventional commit messages with emoji prefixes from staged changes. Use when you need to draft, refine, or execute standardized commit messages quickly.",
+    "description": "Generate emoji-prefixed Conventional Commit messages and focused local commits from staged changes or a single clear unstaged change.",
     "metadata": {
       "author": "adonis"
     },
@@ -83,14 +83,15 @@
   {
     "slug": "commit-push",
     "name": "commit-push",
-    "description": "Commit staged Git changes with an emoji Conventional Commit message, then push the current branch to its remote. Use when the user asks to \"commit and push\", \"commit push\", \"submit and push\", \"push my committed change\", or wants a local commit finalized on the remote. Do not create pull requests, merge requests, releases, tags, rebases, or deployment changes.",
+    "description": "Commit a focused local change set with an emoji Conventional Commit message, safely stage a clear unstaged scope when needed, then push the current branch to its remote. Use when the user asks to \"commit and push\", \"commit push\", \"submit and push\", \"push my committed change\", or wants a local commit finalized on the remote. Do not create pull requests, merge requests, releases, tags, rebases, or deployment changes.",
     "metadata": {
       "author": "adonis"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-07-08T03:25:13.000Z"
   },
   {
     "slug": "discuss-before-plan",

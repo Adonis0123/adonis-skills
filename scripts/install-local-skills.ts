@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process'
-import { cp, readdir, stat } from 'node:fs/promises'
+import { cp, lstat, mkdir, readFile, readlink, readdir, rm, stat, symlink, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import { checkbox, confirm, select } from '@inquirer/prompts'
 
 type CliOptions = {
@@ -129,7 +129,7 @@ function printHelp() {
   console.log('  --no-interactive       Disable interactive mode')
   console.log('  --skill <slug>         Install a specific skill (repeatable)')
   console.log('  --all                  Install all skills')
-  console.log('  --sync-llm             Sync .agents/skills -> .claude/skills after install')
+  console.log('  --sync-llm             Ensure .claude/skills points to .agents/skills after install')
   console.log('  --dry-run              Print planned commands without executing')
   console.log('  --help                 Show help')
 }
@@ -168,19 +168,67 @@ async function runCommand(options: {
   })
 }
 
+async function readOptionalFile(filePath: string) {
+  try {
+    return await readFile(filePath, 'utf8')
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+      return null
+    }
+
+    throw error
+  }
+}
+
+export async function runWithPreservedSkillsLock(
+  repoRoot: string,
+  dryRun: boolean,
+  action: () => Promise<void>,
+) {
+  if (dryRun) {
+    await action()
+    return
+  }
+
+  const lockPath = path.join(repoRoot, 'skills-lock.json')
+  const originalLock = await readOptionalFile(lockPath)
+
+  try {
+    await action()
+  } finally {
+    const currentLock = await readOptionalFile(lockPath)
+    if (currentLock === originalLock) {
+      return
+    }
+
+    if (originalLock === null) {
+      await rm(lockPath, { force: true })
+      console.log('[skills:install:local] Removed skills-lock.json created by local install')
+      return
+    }
+
+    await writeFile(lockPath, originalLock, 'utf8')
+    console.log('[skills:install:local] Restored skills-lock.json after local install')
+  }
+}
+
 async function resolveRepoRoot(): Promise<string> {
   const __filename = fileURLToPath(import.meta.url)
   const __dirname = path.dirname(__filename)
   return path.resolve(__dirname, '..')
 }
 
-async function loadAvailableSkills(repoRoot: string): Promise<string[]> {
+function isSkillDirectoryEntry(entry: { isDirectory: () => boolean, name: string }) {
+  return entry.isDirectory() && !entry.name.startsWith('.') && !entry.name.endsWith('-workspace')
+}
+
+export async function loadAvailableSkills(repoRoot: string): Promise<string[]> {
   const skillsDir = path.resolve(repoRoot, 'skills')
   const entries = await readdir(skillsDir, { withFileTypes: true })
 
   const slugs: string[] = []
   for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith('.')) {
+    if (!isSkillDirectoryEntry(entry)) {
       continue
     }
 
@@ -300,40 +348,70 @@ async function installSkills(options: {
   skills: string[]
 }) {
   const { dryRun, installAll, repoRoot, skills } = options
-  let installedSlugs: string[]
+  let installedSlugs: string[] = []
 
-  if (installAll) {
-    await runCommand({
-      command: 'npx',
-      args: ['-y', 'skills', 'add', './skills', '-a', 'codex', '-y', '--skill', '*'],
-      cwd: repoRoot,
-      dryRun,
-    })
-    installedSlugs = await loadAvailableSkills(repoRoot)
-  } else {
-    for (const skill of skills) {
+  await runWithPreservedSkillsLock(repoRoot, dryRun, async () => {
+    if (installAll) {
       await runCommand({
         command: 'npx',
-        args: ['-y', 'skills', 'add', './skills', '-a', 'codex', '-y', '--skill', skill],
+        args: ['-y', 'skills', 'add', './skills', '-a', 'codex', '-y', '--skill', '*'],
         cwd: repoRoot,
         dryRun,
       })
+      installedSlugs = await loadAvailableSkills(repoRoot)
+    } else {
+      for (const skill of skills) {
+        await runCommand({
+          command: 'npx',
+          args: ['-y', 'skills', 'add', './skills', '-a', 'codex', '-y', '--skill', skill],
+          cwd: repoRoot,
+          dryRun,
+        })
+      }
+      installedSlugs = skills
     }
-    installedSlugs = skills
-  }
+  })
 
   // npx skills filters out certain files (e.g. _-prefixed). Merge to ensure
   // .agents/skills/ is a complete mirror of skills/.
   await mergeSkillFiles({ repoRoot, slugs: installedSlugs, dryRun })
 }
 
-async function syncLlmSkills(repoRoot: string, dryRun: boolean) {
-  await runCommand({
-    command: process.execPath,
-    args: ['--experimental-strip-types', './scripts/sync-llm-skills.ts'],
-    cwd: repoRoot,
-    dryRun,
-  })
+export async function syncLlmSkills(repoRoot: string, dryRun: boolean) {
+  const agentsSkillsDir = path.join(repoRoot, '.agents', 'skills')
+  const claudeDir = path.join(repoRoot, '.claude')
+  const claudeSkillsPath = path.join(claudeDir, 'skills')
+  const desiredLink = '../.agents/skills'
+
+  const agentsSkillsStats = await stat(agentsSkillsDir).catch(() => null)
+  if (!agentsSkillsStats?.isDirectory()) {
+    throw new Error(`Missing .agents/skills directory: ${agentsSkillsDir}`)
+  }
+
+  if (dryRun) {
+    console.log(`[skills:install:local] Dry run: ensure .claude/skills -> ${desiredLink}`)
+    return
+  }
+
+  await mkdir(claudeDir, { recursive: true })
+
+  const existingLinkStats = await lstat(claudeSkillsPath).catch(() => null)
+  if (existingLinkStats) {
+    if (!existingLinkStats.isSymbolicLink()) {
+      throw new Error('.claude/skills exists and is not a symlink. Run agent-symlink-init before syncing.')
+    }
+
+    const currentLink = await readlink(claudeSkillsPath)
+    if (currentLink === desiredLink) {
+      console.log(`[skills:install:local] .claude/skills already points to ${desiredLink}`)
+      return
+    }
+
+    await rm(claudeSkillsPath, { force: true })
+  }
+
+  await symlink(desiredLink, claudeSkillsPath, 'dir')
+  console.log(`[skills:install:local] Ensured .claude/skills -> ${desiredLink}`)
 }
 
 function ensureKnownSkills(selected: string[], available: string[]) {
@@ -380,13 +458,24 @@ async function main() {
   })
 
   if (cliOptions.syncLlm) {
-    console.log('[skills:install:local] Syncing .agents/skills -> .claude/skills')
+    console.log('[skills:install:local] Ensuring .claude/skills symlink')
     await syncLlmSkills(repoRoot, cliOptions.dryRun)
   }
 }
 
-main().catch((error: unknown) => {
-  console.error('[skills:install:local] Failed')
-  console.error(error)
-  process.exit(1)
-})
+function isDirectExecution() {
+  const entry = process.argv[1]
+  if (!entry) {
+    return false
+  }
+
+  return import.meta.url === pathToFileURL(path.resolve(entry)).href
+}
+
+if (isDirectExecution()) {
+  main().catch((error: unknown) => {
+    console.error('[skills:install:local] Failed')
+    console.error(error)
+    process.exit(1)
+  })
+}

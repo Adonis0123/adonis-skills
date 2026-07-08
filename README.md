@@ -83,10 +83,7 @@ The table below explains each script in `package.json`.
 | `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | Repository-wide skills validation. Required before commit/CI. |
 | `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | Regenerates `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json`. Run after adding/updating skills so web data stays fresh. |
 | `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | Installs skills from `skills/` into local `.agents/skills` (supports interactive selection, `--all`, `--skill`). Use for local agent testing. |
-| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then syncs to `.claude/skills`. Use when testing in local Claude/Codex runtime too. |
-| `pnpm skills:sync:llm` | `node --experimental-strip-types ./scripts/sync-llm-skills.ts` | Atomically syncs `.agents/skills` to `.claude/skills`. Use when you only want to rerun sync. |
-| `pnpm ruler:apply` | `pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup` | Generates/updates root outputs like `AGENTS.md` and `CLAUDE.md` from `.ruler/*`. Run after rule changes. |
-| `pnpm postinstall` | Conditional postinstall hook (`ruler:apply` and `skills:sync:llm` locally; skipped in CI) | Triggered by `pnpm install`: local runs perform `ruler:apply` and `skills:sync:llm`; CI skips them. |
+| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then ensures `.claude/skills` points at `.agents/skills`. Use when testing in local Claude/Codex runtime too. |
 
 Notes:
 
@@ -149,13 +146,13 @@ pnpm skills:finalize -- --dry-run skills/code-inspector-init
 
 ## Local Interactive Install and Testing
 
-This repository supports installing skills from `skills/` into `.agents/skills`, then optionally syncing to `.claude/skills`.
+This repository supports installing skills from `skills/` into `.agents/skills`. `.claude/skills` should be a symlink to `.agents/skills` for local Claude/Codex runtime testing.
 
 ```bash
 # Default: enter interactive menu (select + checkbox)
 pnpm skills:install:local
 
-# Interactive install, then one-step sync to .claude/skills
+# Interactive install, then ensure the .claude/skills symlink
 pnpm skills:test:local
 ```
 
@@ -174,14 +171,14 @@ pnpm skills:install:local -- --no-interactive --skill weekly-report
 # Install all
 pnpm skills:install:local -- --no-interactive --all
 
-# Install then sync in non-interactive mode
+# Install then ensure the local runtime symlink
 pnpm skills:test:local -- --no-interactive --skill weekly-report
 ```
 
 Notes:
 
 - Install command uses `npx skills add ./skills -a codex ...` under the hood, target directory is `.agents/skills`
-- `skills:test:local` runs `skills:sync:llm` after install and mirrors `.agents/skills` into `.claude/skills`
+- `skills:test:local` runs the same install flow with `--sync-llm`, which verifies or creates `.claude/skills -> ../.agents/skills`
 
 ## CI
 

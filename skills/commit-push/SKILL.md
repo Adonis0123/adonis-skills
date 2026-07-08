@@ -1,13 +1,13 @@
 ---
 name: commit-push
-description: Commit staged Git changes with an emoji Conventional Commit message, then push the current branch to its remote. Use when the user asks to "commit and push", "commit push", "submit and push", "push my committed change", or wants a local commit finalized on the remote. Do not create pull requests, merge requests, releases, tags, rebases, or deployment changes.
+description: Commit a focused local change set with an emoji Conventional Commit message, safely stage a clear unstaged scope when needed, then push the current branch to its remote. Use when the user asks to "commit and push", "commit push", "submit and push", "push my committed change", or wants a local commit finalized on the remote. Do not create pull requests, merge requests, releases, tags, rebases, or deployment changes.
 metadata:
   author: adonis
 ---
 
 # Commit Push
 
-Create one focused local commit from staged changes, push the current branch, and verify the branch is no longer ahead of its upstream.
+Create one focused local commit from staged changes or a clearly identified local change set, push the current branch, and verify the branch is no longer ahead of its upstream.
 
 This skill has remote side effects. Treat the push as the boundary that needs explicit state checks, conservative defaults, and clear final reporting.
 
@@ -21,9 +21,24 @@ Run:
 git status --short --branch
 ```
 
-Stop if the directory is not a Git repository. If there are no staged changes, ask the user to stage files first unless they explicitly asked you to stage a known set of files.
+Stop if the directory is not a Git repository.
 
-Use `git diff --cached --stat` and `git diff --cached` to understand exactly what will be committed. Do not include unstaged files in the commit unless the user explicitly asked you to stage them.
+Determine the commit scope:
+
+- If staged changes already exist, use only the staged changes. Do not automatically add remaining unstaged changes; report them at the end if they remain.
+- If there are no staged changes but there is exactly one clear unstaged or untracked file, inspect that file first, then stage it with `git add -- <path>` when it is safe.
+- If there are no staged changes and the user named specific files, or the current agent turn just produced a clearly related set of files with no unrelated dirty files, inspect those paths and stage them with `git add -- <path>...`.
+- If there are no staged changes and the unstaged/untracked files look ambiguous, unrelated, or broader than the active task, stop and ask which files to stage. Provide exact `git add -- <path>` suggestions.
+- If there are no staged changes and no unstaged/untracked changes, report that there is nothing to commit.
+
+Automatic staging boundaries:
+
+- Use exact pathspecs with `git add -- <path>` or `git add -- <path1> <path2>`. Do not use bare `git add .` or `git add -A` unless the user explicitly asked to commit all changes.
+- Before staging unstaged files, inspect the relevant diff with `git diff -- <path>`; for untracked files, inspect the path and content type as needed.
+- If a path or diff suggests secrets, credentials, cookies, private keys, local env files, certificates, or private user data, stop and ask before staging or committing.
+- If the selected scope contains multiple unrelated concerns, stop and ask whether to split the commit.
+
+After staging or when staged changes already existed, use `git diff --cached --stat` and `git diff --cached` to understand exactly what will be committed.
 
 ### 2. Check push safety
 
@@ -35,6 +50,8 @@ Stop and ask before committing or pushing when:
 - the staged diff includes secrets, credentials, local env files, private keys, or generated files that look accidental
 - the working tree contains unrelated unstaged changes that could be confused with the staged change
 - the user asked for PR/MR creation, release work, deployment, merge, rebase, or tag creation
+
+Protected/default branch confirmation is separate from staging. You may stage an exact, already-inspected scope first, but do not commit or push on a protected/default-looking branch until the user explicitly confirms that branch and push target.
 
 If the branch has no upstream, plan to push with:
 

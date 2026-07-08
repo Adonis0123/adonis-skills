@@ -83,10 +83,7 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 | `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | 仓库级 skills 校验。提交前/CI 前必跑。 |
 | `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | 重新生成 `apps/web/src/generated/skills-index-lite.json` 与 `apps/web/src/generated/skills-detail-index.json`。新增或修改 skill 后用于刷新 Web 数据。 |
 | `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | 将 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。用于本地 agent 联调。 |
-| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再同步到 `.claude/skills`。用于同时验证本机 Claude/Codex 运行场景。 |
-| `pnpm skills:sync:llm` | `node --experimental-strip-types ./scripts/sync-llm-skills.ts` | 将 `.agents/skills` 原子同步到 `.claude/skills`。仅想重跑同步时使用。 |
-| `pnpm ruler:apply` | `pnpm dlx @intellectronica/ruler@latest apply --local-only --no-backup` | 根据 `.ruler/*` 规则生成/更新根目录 `AGENTS.md`、`CLAUDE.md` 等产物。修改规则后使用。 |
-| `pnpm postinstall` | 条件执行安装后钩子（本地执行 `ruler:apply` 与 `skills:sync:llm`；CI 跳过） | 由 `pnpm install` 触发：本地会执行 `ruler:apply` 与 `skills:sync:llm`，CI 环境跳过。 |
+| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再确保 `.claude/skills` 指向 `.agents/skills`。用于同时验证本机 Claude/Codex 运行场景。 |
 
 补充：
 
@@ -149,13 +146,13 @@ pnpm skills:finalize -- --dry-run skills/code-inspector-init
 
 ## 本地交互安装与测试
 
-本仓库支持将 `skills/` 内的技能安装到 `.agents/skills`，再按需同步到 `.claude/skills`。
+本仓库支持将 `skills/` 内的技能安装到 `.agents/skills`。`.claude/skills` 应该是指向 `.agents/skills` 的 symlink，用于本机 Claude/Codex 运行时测试。
 
 ```bash
 # 默认进入交互菜单（select + checkbox）
 pnpm skills:install:local
 
-# 交互安装后，一键同步到 .claude/skills
+# 交互安装后，确保 .claude/skills symlink
 pnpm skills:test:local
 ```
 
@@ -174,14 +171,14 @@ pnpm skills:install:local -- --no-interactive --skill weekly-report
 # 安装全部
 pnpm skills:install:local -- --no-interactive --all
 
-# 非交互安装后同步
+# 非交互安装后，确保本地运行时 symlink
 pnpm skills:test:local -- --no-interactive --skill weekly-report
 ```
 
 说明：
 
 - 安装命令底层使用 `npx skills add ./skills -a codex ...`，目标目录为 `.agents/skills`
-- `skills:test:local` 会在安装后执行 `skills:sync:llm`，将 `.agents/skills` 镜像到 `.claude/skills`
+- `skills:test:local` 使用同一套安装流程并带上 `--sync-llm`，会检查或创建 `.claude/skills -> ../.agents/skills`
 
 ## CI
 

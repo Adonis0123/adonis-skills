@@ -22,7 +22,7 @@
     "skills:index": "turbo run skills:index --filter=@adonis-skills/web",
     "skills:validate": "turbo run skills:validate --filter=@adonis-skills/web",
     "skills:install:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
-    "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
+    "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm",
     "skills:eval-grade": "node ./scripts/grade-skill-evals.mjs"
   },
   "devDependencies": {

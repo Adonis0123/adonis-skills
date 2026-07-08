@@ -398,22 +398,22 @@
     "slug": "commit",
     "sections": [
       {
-        "raw": "根据暂存的代码变更自动生成符合 Conventional Commits 规范的提交信息，并自动添加对应的 emoji 前缀。",
+        "raw": "根据明确的 Git 提交范围自动生成符合 Conventional Commits 规范的提交信息，并自动添加对应的 emoji 前缀。",
         "heading": "Commit Message Generator",
         "level": 1
       },
       {
-        "raw": "- 用户执行 `/commit` 命令\n- 用户请求生成提交信息\n- 用户需要帮助编写符合规范的 commit message",
+        "raw": "- 用户执行 `/commit` 命令，希望生成或执行一次聚焦的本地提交\n- 用户请求生成提交信息\n- 用户需要帮助编写符合规范的 commit message",
         "heading": "使用场景",
         "level": 2
       },
       {
-        "raw": "执行 `git status` 查看当前暂存的文件变更。如果没有暂存的文件，提示用户先使用 `git add` 添加文件。",
-        "heading": "1. 检查暂存状态",
+        "raw": "执行：\n\n```bash\ngit status --short --branch\n```\n\n先判断这次提交的来源：\n\n- 如果已经有 staged changes，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。\n- 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。\n- 如果没有 staged changes，且存在多个 unstaged/untracked 文件，只有在用户明确说“全部提交”或明确点名文件时才 stage 对应路径。否则停止并列出最小的 `git add -- <path>` 建议，让用户选择提交范围。\n- 如果既没有 staged changes，也没有 unstaged/untracked changes，告诉用户当前没有可提交内容。\n\n自动 stage 前必须遵守这些边界：\n\n- 使用 `git add -- <path>` 或多个明确路径；不要用裸 `git add .`、`git add -A`，除非用户明确要求提交全部变更。\n- 对单个 unstaged 文件，先用 `git diff -- <path>` 或必要的文件读取确认变更意图。对 untracked 文件，先确认文件名和内容类型合理。\n- 如果文件名或 diff 暗示 `.env`、credential、token、cookie、private key、secret、证书、账号私密数据等敏感信息，停止并请用户确认，不要自动 stage 或提交。\n- 如果变更看起来包含多个无关目的，停止并询问是否拆分提交。",
+        "heading": "1. 检查 Git 状态和提交范围",
         "level": 3
       },
       {
-        "raw": "执行 `git diff --cached` 获取暂存的代码差异，分析变更内容：\n\n- 识别变更的文件类型和位置\n- 理解变更的目的（新功能、修复、重构等）\n- 确定影响范围（scope）",
+        "raw": "执行 `git diff --cached --stat` 和 `git diff --cached` 获取已确定提交范围的差异，分析变更内容：\n\n- 识别变更的文件类型和位置\n- 理解变更的目的（新功能、修复、重构等）\n- 确定影响范围（scope）",
         "heading": "2. 分析代码变更",
         "level": 3
       },
@@ -423,7 +423,7 @@
         "level": 3
       },
       {
-        "raw": "使用 HEREDOC 格式执行 git commit：\n\n```bash\ngit commit -m \"$(cat <<'EOF'\n✨ feat(auth): add user login feature\nEOF\n)\"\n```",
+        "raw": "如果用户只要求“生成 commit message”，只输出候选消息，不执行提交。\n\n如果用户要求执行提交，使用 HEREDOC 格式执行 git commit：\n\n```bash\ngit commit -m \"$(cat <<'EOF'\n✨ feat(auth): add user login feature\nEOF\n)\"\n```\n\n提交后执行：\n\n```bash\ngit status --short --branch\ngit log -1 --oneline\n```\n\n向用户报告提交 hash、提交信息、已执行的检查，以及仍然未提交的文件。",
         "heading": "4. 执行提交",
         "level": 3
       },
@@ -458,17 +458,17 @@
     "slug": "commit-push",
     "sections": [
       {
-        "raw": "Create one focused local commit from staged changes, push the current branch, and verify the branch is no longer ahead of its upstream.\n\nThis skill has remote side effects. Treat the push as the boundary that needs explicit state checks, conservative defaults, and clear final reporting.",
+        "raw": "Create one focused local commit from staged changes or a clearly identified local change set, push the current branch, and verify the branch is no longer ahead of its upstream.\n\nThis skill has remote side effects. Treat the push as the boundary that needs explicit state checks, conservative defaults, and clear final reporting.",
         "heading": "Commit Push",
         "level": 1
       },
       {
-        "raw": "Run:\n\n```bash\ngit status --short --branch\n```\n\nStop if the directory is not a Git repository. If there are no staged changes, ask the user to stage files first unless they explicitly asked you to stage a known set of files.\n\nUse `git diff --cached --stat` and `git diff --cached` to understand exactly what will be committed. Do not include unstaged files in the commit unless the user explicitly asked you to stage them.",
+        "raw": "Run:\n\n```bash\ngit status --short --branch\n```\n\nStop if the directory is not a Git repository.\n\nDetermine the commit scope:\n\n- If staged changes already exist, use only the staged changes. Do not automatically add remaining unstaged changes; report them at the end if they remain.\n- If there are no staged changes but there is exactly one clear unstaged or untracked file, inspect that file first, then stage it with `git add -- <path>` when it is safe.\n- If there are no staged changes and the user named specific files, or the current agent turn just produced a clearly related set of files with no unrelated dirty files, inspect those paths and stage them with `git add -- <path>...`.\n- If there are no staged changes and the unstaged/untracked files look ambiguous, unrelated, or broader than the active task, stop and ask which files to stage. Provide exact `git add -- <path>` suggestions.\n- If there are no staged changes and no unstaged/untracked changes, report that there is nothing to commit.\n\nAutomatic staging boundaries:\n\n- Use exact pathspecs with `git add -- <path>` or `git add -- <path1> <path2>`. Do not use bare `git add .` or `git add -A` unless the user explicitly asked to commit all changes.\n- Before staging unstaged files, inspect the relevant diff with `git diff -- <path>`; for untracked files, inspect the path and content type as needed.\n- If a path or diff suggests secrets, credentials, cookies, private keys, local env files, certificates, or private user data, stop and ask before staging or committing.\n- If the selected scope contains multiple unrelated concerns, stop and ask whether to split the commit.\n\nAfter staging or when staged changes already existed, use `git diff --cached --stat` and `git diff --cached` to understand exactly what will be committed.",
         "heading": "1. Inspect repository state",
         "level": 3
       },
       {
-        "raw": "Identify the current branch and upstream from `git status --short --branch`.\n\nStop and ask before committing or pushing when:\n\n- the current branch is `main`, `master`, `develop`, `release`, `test`, `prerelease`, or another protected/default-looking branch\n- the staged diff includes secrets, credentials, local env files, private keys, or generated files that look accidental\n- the working tree contains unrelated unstaged changes that could be confused with the staged change\n- the user asked for PR/MR creation, release work, deployment, merge, rebase, or tag creation\n\nIf the branch has no upstream, plan to push with:\n\n```bash\ngit push -u origin <branch>\n```\n\nOtherwise use:\n\n```bash\ngit push\n```",
+        "raw": "Identify the current branch and upstream from `git status --short --branch`.\n\nStop and ask before committing or pushing when:\n\n- the current branch is `main`, `master`, `develop`, `release`, `test`, `prerelease`, or another protected/default-looking branch\n- the staged diff includes secrets, credentials, local env files, private keys, or generated files that look accidental\n- the working tree contains unrelated unstaged changes that could be confused with the staged change\n- the user asked for PR/MR creation, release work, deployment, merge, rebase, or tag creation\n\nProtected/default branch confirmation is separate from staging. You may stage an exact, already-inspected scope first, but do not commit or push on a protected/default-looking branch until the user explicitly confirms that branch and push target.\n\nIf the branch has no upstream, plan to push with:\n\n```bash\ngit push -u origin <branch>\n```\n\nOtherwise use:\n\n```bash\ngit push\n```",
         "heading": "2. Check push safety",
         "level": 3
       },

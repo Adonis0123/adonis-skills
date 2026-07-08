@@ -1,4 +1,4 @@
 interface:
   display_name: "Commit Push"
-  short_description: "Commit staged changes and push the branch"
-  default_prompt: "Use $commit-push to commit my staged changes and push the current branch."
+  short_description: "Commit a focused local change set and push the branch"
+  default_prompt: "Use $commit-push to commit my current focused changes and push the current branch."

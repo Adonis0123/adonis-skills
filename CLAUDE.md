@@ -61,14 +61,13 @@ applyTo: '**'
 ## Key Directories
 
 - `skills/`: **public** skill definitions (for example `commit`, `staged-review-validator`, `weekly-report`) — indexed by web app, installable via `npx skills add`.
-- `.agents/skills/`: **internal** agent skills and tooling — not published, synced locally to `.claude/skills/`.
-- `.claude/skills/`: local mirror for Claude/Codex runtime testing (generated from `.agents/skills/`).
+- `.agents/skills/`: **internal** agent skills and tooling — not published, source for local runtime testing.
+- `.claude/skills/`: symlink to `.agents/skills/` for Claude/Codex runtime testing.
 - `scripts/`: automation scripts:
   - `create-skill.ts` — interactive/CLI workflow for creating a new skill
   - `generate-skills-index.mjs` — scans `skills/`, generates `skills-index.json`
   - `validate-skills.mjs` — validates all skills' frontmatter (used by CI)
-  - `install-local-skills.ts` — installs skills from `skills/` to `.agents/skills/` (supports `--all`, `--skill`, interactive mode)
-  - `sync-llm-skills.ts` — atomically mirrors `.agents/skills/` to `.claude/skills/`
+  - `install-local-skills.ts` — installs skills from `skills/` to `.agents/skills/` (supports `--all`, `--skill`, interactive mode, and `--sync-llm` symlink verification)
 - `.agents/skills/repo-skill-creator/scripts/`:
   - `init_skill.py` — scaffolds a skill directory structure
   - `quick_validate.py` — validates a single skill quickly
@@ -95,8 +94,7 @@ pnpm skills:openai-yaml skills/<skill-slug>          # generate skills/<slug>/ag
 pnpm skills:validate                                 # validate all skills (blocks CI on failure)
 pnpm skills:index                                    # regenerate apps/web/src/generated/skills-index.json
 pnpm skills:install:local [-- --all | --skill <name>] # install skills/ → .agents/skills/
-pnpm skills:test:local [-- --all | --skill <name>]    # install + sync → .claude/skills/
-pnpm skills:sync:llm                                 # sync .agents/skills/ → .claude/skills/
+pnpm skills:test:local [-- --all | --skill <name>]    # install + ensure .claude/skills symlink
 
 # AI rules
 pnpm ruler:apply                                     # regenerate CLAUDE.md + AGENTS.md from .ruler/*.md
@@ -246,7 +244,7 @@ skills/<slug>/agents/openai.yaml
 skills/<slug>/
     ↓  scripts/install-local-skills.ts  (pnpm skills:install:local)
 .agents/skills/<slug>/
-    ↓  scripts/sync-llm-skills.ts       (pnpm skills:sync:llm / pnpm skills:test:local)
+    ↑  .claude/skills symlink           (ensured by pnpm skills:test:local / --sync-llm)
 .claude/skills/<slug>/
 ```
 
@@ -264,7 +262,7 @@ CLAUDE.md + AGENTS.md  (generated — do not edit directly)
 
 ### postinstall Hook
 
-`pnpm install` automatically runs `ruler:apply` and `skills:sync:llm` in local environments (skipped in CI via `is-ci`).
+No `postinstall` hook is currently defined in `package.json`.
 
 
 
