@@ -455,6 +455,56 @@
     ]
   },
   {
+    "slug": "commit-push",
+    "sections": [
+      {
+        "raw": "Create one focused local commit from staged changes, push the current branch, and verify the branch is no longer ahead of its upstream.\n\nThis skill has remote side effects. Treat the push as the boundary that needs explicit state checks, conservative defaults, and clear final reporting.",
+        "heading": "Commit Push",
+        "level": 1
+      },
+      {
+        "raw": "Run:\n\n```bash\ngit status --short --branch\n```\n\nStop if the directory is not a Git repository. If there are no staged changes, ask the user to stage files first unless they explicitly asked you to stage a known set of files.\n\nUse `git diff --cached --stat` and `git diff --cached` to understand exactly what will be committed. Do not include unstaged files in the commit unless the user explicitly asked you to stage them.",
+        "heading": "1. Inspect repository state",
+        "level": 3
+      },
+      {
+        "raw": "Identify the current branch and upstream from `git status --short --branch`.\n\nStop and ask before committing or pushing when:\n\n- the current branch is `main`, `master`, `develop`, `release`, `test`, `prerelease`, or another protected/default-looking branch\n- the staged diff includes secrets, credentials, local env files, private keys, or generated files that look accidental\n- the working tree contains unrelated unstaged changes that could be confused with the staged change\n- the user asked for PR/MR creation, release work, deployment, merge, rebase, or tag creation\n\nIf the branch has no upstream, plan to push with:\n\n```bash\ngit push -u origin <branch>\n```\n\nOtherwise use:\n\n```bash\ngit push\n```",
+        "heading": "2. Check push safety",
+        "level": 3
+      },
+      {
+        "raw": "Run the smallest relevant checks for the change when practical. Prefer project-specific commands from local docs or package scripts. If verification is skipped or blocked, say so before committing and include the reason in the final report.\n\nDo not claim behavior is verified from code reading alone.",
+        "heading": "3. Verify before committing",
+        "level": 3
+      },
+      {
+        "raw": "Generate an emoji-prefixed Conventional Commit subject from the staged diff:\n\n```text\n<emoji> <type>(optional-scope): <subject>\n```\n\nUse these common mappings:\n\n| Type | Emoji | Use for |\n| --- | --- | --- |\n| feat | ✨ | user-facing features |\n| fix | 🐛 | bug fixes |\n| docs | 📝 | documentation only |\n| style | 🎨 | formatting or style-only code changes |\n| refactor | ♻️ | behavior-preserving code restructuring |\n| perf | ⚡️ | performance improvements |\n| test | ✅ | tests |\n| build | 🏗️ | build system or dependencies |\n| ci | 👷 | CI configuration |\n| chore | 🔧 | maintenance |\n\nUse a HEREDOC-style commit command so emoji and multiline bodies are handled safely:\n\n```bash\ngit commit -m \"$(cat <<'EOF'\n✨ feat(scope): concise subject\nEOF\n)\"\n```\n\nKeep the commit focused. If staged changes contain multiple unrelated concerns, stop and ask whether to split the commit.",
+        "heading": "4. Commit",
+        "level": 3
+      },
+      {
+        "raw": "After a successful commit, push the current branch. If `git push` fails, report the exact failing command and the relevant error line, then suggest the smallest safe next step.\n\nNever force-push unless the user explicitly asked for force push and the repository state has been inspected immediately before doing so.",
+        "heading": "5. Push",
+        "level": 3
+      },
+      {
+        "raw": "Run:\n\n```bash\ngit status --short --branch\ngit log -1 --oneline\n```\n\nSuccess requires a real signal that the branch is no longer ahead of its upstream, such as `git status --short --branch` showing no `[ahead N]`. If the command still shows ahead commits, do not report the push as complete.",
+        "heading": "6. Verify after push",
+        "level": 3
+      },
+      {
+        "raw": "Report only the useful facts:\n\n- commit hash and subject\n- branch and push target\n- verification commands and outcomes\n- any remaining uncommitted files, skipped checks, or risks\n\nIf the repo uses a generated index or validation workflow, mention the commands that were run and their result.",
+        "heading": "Final Report",
+        "level": 2
+      },
+      {
+        "raw": "Do not create PRs/MRs, merge branches, rebase, tag, release, deploy, land changes, or handle QA gates as part of this skill. Those are separate delivery workflows.",
+        "heading": "Boundaries",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "discuss-before-plan",
     "sections": [
       {

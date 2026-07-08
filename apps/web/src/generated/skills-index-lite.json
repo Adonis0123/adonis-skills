@@ -81,6 +81,18 @@
     "updatedAt": "2026-03-09T16:14:12.000Z"
   },
   {
+    "slug": "commit-push",
+    "name": "commit-push",
+    "description": "Commit staged Git changes with an emoji Conventional Commit message, then push the current branch to its remote. Use when the user asks to \"commit and push\", \"commit push\", \"submit and push\", \"push my committed change\", or wants a local commit finalized on the remote. Do not create pull requests, merge requests, releases, tags, rebases, or deployment changes.",
+    "metadata": {
+      "author": "adonis"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
     "description": "Enforces 'decide then plan' discipline - the pre-planning decision gate. Use when the user asks for a plan or starts a change while key decisions are unresolved: architecture tradeoffs, data flow, public interfaces, unclear requirements, multi-module scope, or roughly 5+ files affected. Also triggers when the user explicitly wants to discuss, compare options, or review architecture before committing. Core job: reduce incorrect-execution cost by confirming decisions before producing executable plans.",
@@ -133,7 +145,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-06-04T14:37:01.000Z"
+    "updatedAt": "2026-06-15T02:28:50.000Z"
   },
   {
     "slug": "lingui-next-init",
