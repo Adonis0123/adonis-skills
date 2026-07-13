@@ -1,6 +1,6 @@
 # Worked examples (edge cases) — workflow-gate
 
-These cover tiebreakers, mismatches, Rule #2 positive/negative variants, re-gating, contradictory-signal handling, and the "don't ask me" edge case. The core 7 (one per Route) live in `examples-core.md` — load this file only when the core set doesn't cover the prompt.
+These cover tiebreakers, mismatches, Rule #2 positive/negative variants, re-gating, contradictory-signal handling, and the "don't ask me" edge case. The core 6 (one per Route) live in `examples-core.md` — load this file only when the core set doesn't cover the prompt.
 
 ## Light + systematic-debugging — failing CI test
 
@@ -18,23 +18,23 @@ Workflow Gate
 - Next: Load systematic-debugging; reproduce CI conditions locally before patching.
 ```
 
-## Light + verification — "ready to commit?"
+## Light + direct verification — "ready to commit?"
 
 User: "Dashboard refactor done, can I ship?"
 
 ```
 Workflow Gate
 - Route: Light
-- Runtime skill: verification-before-completion
-- Fallback alias: superpowers:verification-before-completion
-- Execution path: n/a
+- Runtime skill: none
+- Fallback alias: none
+- Execution path: direct local work
 - Goal: Verify the dashboard refactor is actually shippable.
 - Signals: scope=multi-module; risk=medium; destructive=no; decisions=resolved; user-intent=ship
 - Assumptions: Project's verification suite (test + typecheck + lint) is runnable.
-- Next: Load verification-before-completion; run the suite and read fresh output before any ship claim.
+- Next: Run the full relevant verification suite and read fresh output and exit status before any ship claim.
 ```
 
-`Execution path` is `n/a` because the verification skill *is* the workflow — no implementation pattern needs to fire on top of it. The same pattern applies for Brainstorm / Discuss / Review-Handoff routes.
+Ship checks use `direct local work` because verification is enforced by the global evidence rule rather than a separate runtime skill. Brainstorm / Discuss / Review-Handoff still use `n/a` because their runtime skill is the workflow.
 
 ## Light + test-driven-development — referenced spec, direct few-file behavior change
 
@@ -90,7 +90,7 @@ Workflow Gate
 
 ## Re-gate trigger — destructive surfaces mid-Plan
 
-You are mid-Plan executing the OAuth integration (RFC-024). While loading `executing-plans`, you notice the plan calls for dropping the legacy `oauth_states` table to consolidate schema. That is a destructive signal that wasn't visible at gate time. **Re-run the gate before executing that task.**
+You are implementing the OAuth integration plan (RFC-024) when you notice it calls for dropping the legacy `oauth_states` table to consolidate schema. That is a destructive signal that wasn't visible at gate time. **Re-run the gate before executing that task.**
 
 ```
 Workflow Gate (re-gate)
@@ -101,7 +101,7 @@ Workflow Gate (re-gate)
 - Goal: Decide the safe path for the oauth_states drop introduced inside the OAuth plan.
 - Signals: scope=multi-module; risk=high; destructive=yes; decisions=unresolved; user-intent=plan
 - Assumptions: Other RFC-024 tasks remain on the original Plan route; only the destructive task is being re-gated.
-- Next: Load discuss-before-plan; confirm migration vs deprecation strategy, then resume executing-plans for the remaining tasks.
+- Next: Load discuss-before-plan; confirm migration vs deprecation strategy, then resume the remaining plan tasks through the normal implementation workflow.
 ```
 
 ## Rule #3 mismatch — user named a skill that doesn't fit
@@ -187,7 +187,7 @@ Workflow Gate
 - Route: Plan
 - Runtime skill: writing-plans
 - Fallback alias: none
-- Execution path: executing-plans
+- Execution path: n/a
 - Goal: Wire the share modal into apps/web per the referenced design doc.
 - Signals: scope=few-files; risk=low; destructive=no; decisions=resolved; user-intent=plan
 - Assumptions: docs/superpowers/specs/2026-05-12-share-modal-design.md is authoritative; Rule #2 exception fires (existing spec referenced) → skip brainstorming.

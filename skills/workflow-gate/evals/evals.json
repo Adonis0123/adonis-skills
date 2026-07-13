@@ -9,7 +9,7 @@
       "expectations": [
         "Output contains a 'Workflow Gate' block with a 'Route:' line",
         "Route is exactly 'Light' because this writes a file",
-        "Skill does NOT route to Brainstorm, Discuss, Plan, or Full",
+        "Skill does NOT route to Brainstorm, Discuss, or Plan",
         "Execution path is 'direct local work' or equivalent narrowest path",
         "Total Workflow Gate block is concise (under ~12 lines) since this is meant to be cheap"
       ]
@@ -35,7 +35,7 @@
         "Route is 'Brainstorm'",
         "Skill correctly recognizes user wants option generation / tradeoff space",
         "Runtime skill is the single bare token 'brainstorming' and Fallback alias is 'superpowers:brainstorming'",
-        "Skill does NOT jump to Plan or Full despite the scope"
+        "Skill does NOT jump to Plan despite the scope"
       ]
     },
     {
@@ -57,21 +57,21 @@
       "expected_route": "Plan",
       "expectations": [
         "Route is 'Plan'",
-        "Runtime skill is 'writing-plans' AND Execution path is 'executing-plans' (Runtime skill names the workflow; Execution path names the implementation pattern — they are distinct fields per SKILL.md output contract)",
-        "Skill does NOT escalate to Full because work is sequential and clearly scoped",
+        "Runtime skill is 'writing-plans' AND Execution path is 'n/a' because planning returns the plan to the user before implementation",
+        "Skill keeps broad resolved planning on the Plan route",
         "Skill recognizes that decisions are already resolved (RFC exists)"
       ]
     },
     {
       "id": 6,
-      "name": "large-multi-module-full",
+      "name": "large-multi-module-plan",
       "prompt": "把整个 auth 子系统从 session cookie 迁到 JWT。涉及 api、web、mobile 三个 app 共 30+ 文件，还要跟测试套件改造协调。先规划怎么并行推。",
-      "expected_route": "Full",
+      "expected_route": "Plan",
       "expectations": [
-        "Route is 'Full'",
-        "Runtime skill is 'writing-plans' AND Execution path includes 'subagent-driven-development' (or notes delegation explicitly)",
-        "Skill recognizes multi-bounded-context scope and parallelizable subtasks",
-        "Skill does NOT downgrade to Plan or Light"
+        "Route is 'Plan'",
+        "Runtime skill is 'writing-plans' AND Execution path is 'n/a' because the skill only creates a plan",
+        "Skill recognizes multi-bounded-context scope and captures it in one broad plan",
+        "Skill does NOT downgrade to Light"
       ]
     },
     {
@@ -94,7 +94,7 @@
       "expectations": [
         "Route is 'Light' (debugging is a write/investigative task, not a pure read-only lookup; per Rule #4 it pairs with systematic-debugging — not 'Direct')",
         "Execution path is 'systematic-debugging' (possibly followed by TDD)",
-        "Skill does NOT route to Brainstorm, Discuss, Plan, or Full",
+        "Skill does NOT route to Brainstorm, Discuss, or Plan",
         "Skill recognizes 'bug / failing test' as a signal pointing to debugging"
       ]
     },
@@ -104,9 +104,10 @@
       "prompt": "dashboard 重构搞完了，准备 commit，你帮我看看能不能 ship？",
       "expected_route": "Light",
       "expectations": [
-        "Route is 'Light' (verification runs tests/lint/typecheck which are write-class actions, not read-only; per Rule #5 it pairs with verification-before-completion — not 'Direct')",
-        "Runtime skill includes the single bare token 'verification-before-completion' (completion claim requires fresh evidence) and Fallback alias is 'superpowers:verification-before-completion'",
-        "Skill does NOT escalate to Brainstorm, Plan, or Full",
+        "Route is 'Light' because verification runs tests/lint/typecheck rather than answering a read-only lookup",
+        "Runtime skill is 'none', Fallback alias is 'none', and Execution path is 'direct local work'",
+        "Skill does NOT escalate to Brainstorm or Plan",
+        "Next requires fresh full verification output and exit status before any ship claim",
         "Skill flags this as a finishing/verification gate, not an implementation route"
       ]
     },
@@ -129,7 +130,7 @@
       "expected_route": "Brainstorm",
       "expectations": [
         "Route is exactly 'Brainstorm'",
-        "Skill does NOT route to Plan or Full despite the data contract being resolved",
+        "Skill does NOT route to Plan despite the data contract being resolved",
         "Runtime skill is the single bare token 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
         "Assumptions or rule reference mentions 'Creative-work HARD-GATE' OR Rule #2 OR equivalent reasoning about creative work / UI composition still needing design before plan"
       ]
@@ -179,8 +180,8 @@
       "expected_route": "Light",
       "expectations": [
         "Route is exactly 'Light'",
-        "Runtime skill is 'verification-before-completion' AND Fallback alias is 'superpowers:verification-before-completion'",
-        "Execution path is 'n/a' because verification-before-completion is the workflow",
+        "Runtime skill is 'none' AND Fallback alias is 'none'",
+        "Execution path is 'direct local work' and requires fresh verification evidence",
         "Assumptions or Next flags that persona fan-out / Ship-Fanout is not a supported Route yet, rather than emitting an unresolved 'agent-skills:ship' Runtime skill"
       ]
     },
@@ -231,7 +232,7 @@
       "expectations": [
         "Either the gate skips emission entirely (one-line answer is allowed per Fast-skip checklist) OR emits a Direct block with Runtime skill 'none' and Execution path 'direct local work'",
         "If a block IS emitted, it must be Direct (NOT Light, NOT any heavier Route)",
-        "Skill does NOT emit Brainstorm, Discuss, Plan, Full, or Review-Handoff for a pure read-only single-line lookup",
+        "Skill does NOT emit Brainstorm, Discuss, Plan, or Review-Handoff for a pure read-only single-line lookup",
         "Output is concise: skip OR ≤ 9 lines (Direct cap)",
         "LATENCY: wall-clock duration_ms ≤ 12000 (skip-path should be cheaper than full block emission)",
         "CONTEXT: references_loaded_count == 0 (fast-skip MUST NOT load any references/*.md)"
@@ -244,7 +245,7 @@
       "expected_route": "skip-or-Light",
       "expectations": [
         "Either the gate skips (user named a downstream skill that is cheaply safe and non-destructive) OR emits a Light block respecting the named skill",
-        "Skill does NOT escalate to Brainstorm, Discuss, Plan, or Full",
+        "Skill does NOT escalate to Brainstorm, Discuss, or Plan",
         "If a block is emitted, it does NOT flag a mismatch (the named skill fits the request)",
         "Output respects the user's named skill per Precedence Rule #3"
       ]
@@ -285,7 +286,7 @@
         "Route is exactly 'Light' (deleting commented-out code is reversible via git and does not affect runtime state)",
         "Skill does NOT route to Discuss despite the word '删/delete'",
         "Signals: destructive=no (the action is reversible code cleanup, not data/state destruction)",
-        "Runtime skill is 'none' or 'verification-before-completion'",
+        "Runtime skill is 'none'",
         "Execution path is 'direct local work'"
       ]
     },

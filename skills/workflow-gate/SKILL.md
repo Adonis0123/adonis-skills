@@ -1,6 +1,6 @@
 ---
 name: workflow-gate
-description: "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Brainstorm; destructive or hard-to-reverse work to Discuss; unresolved decisions, Plan/Full fan-out, ship checks, unclear bugs, and fresh-eyes fix-then-re-review need this gate. Skip single-line read-only lookups, pure typo/formatting edits, trivial safe one-line fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, and Execution path."
+description: "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Brainstorm; destructive or hard-to-reverse work to Discuss; unresolved decisions, planning, ship checks, unclear bugs, and fresh-eyes fix-then-re-review need this gate. Skip single-line read-only lookups, pure typo/formatting edits, trivial safe one-line fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, and Execution path."
 metadata:
   author: adonis
   version: "2.0.1"
@@ -38,11 +38,10 @@ For anything else, emit the block. If the user named a skill that clearly mismat
 | Route | Trigger keyword | Default Runtime skill | Default Execution path |
 |---|---|---|---|
 | **Direct** | read-only lookup, no write | `none` | `direct local work` |
-| **Light** | small write / debug / docs / ship-check | `none` *(or `systematic-debugging` / `test-driven-development` / `verification-before-completion` via the rules below)* | `direct local work` |
+| **Light** | small write / debug / docs / ship-check | `none` *(or `systematic-debugging` / `test-driven-development` via the rules below)* | `direct local work` |
 | **Brainstorm** | creative work — full trigger list in Rule #2; fires even when scope=few-files and decisions=resolved. Also "options / tradeoffs / first principles" framing. | `brainstorming` | `n/a` |
 | **Discuss** | "Stripe vs X / decide before plan" | `discuss-before-plan` | `n/a` |
-| **Plan** | RFC ready, ≤ 2 bounded contexts | `writing-plans` | `executing-plans` |
-| **Full** | ≥ 3 bounded contexts AND parallelizable | `writing-plans` | `subagent-driven-development` |
+| **Plan** | RFC/spec ready or broad resolved scope | `writing-plans` | `n/a` |
 | **Review-Handoff** | "fresh eyes / fix-then-re-review" | `agentic-review-handoff` | `n/a` |
 
 One row fits → emit the block. Multiple fire → use precedence below. Route adjustments (Upgrade / Downgrade / Re-gate / Light's Execution-path upgrades) live in `references/route-adjustments.md` — consult when the cheat card doesn't fit, or before emitting a Light route with debug / ship / behavior-regression signals. Use `references/workflow-systems.md` when you need the ecosystem / phase boundary between superpowers, `discuss-before-plan`, and addyosmani/agent-skills.
@@ -55,10 +54,10 @@ One row fits → emit the block. Multiple fire → use precedence below. Route a
    - Bug repair / failing test / build error / regression on existing behavior is not creative work; let Rule #4 handle it.
    - **Not creative work either:** a new exported function, util, endpoint, or API whose name + full signature + behavior are already specified in the prompt. The design decision is paid by the spec-in-prompt. Route **Light** + `test-driven-development` (behavior change with regression risk). Only escalate to Brainstorm if the signature is vague, the API surface affects 3+ consumers, or naming is contested.
    - Spec/design references that skip Brainstorm: `docs/superpowers/specs/*-design.md`, `docs/ideas/*.md`, `docs/rfcs/*.md`, `docs/forms/*-spec.md`, `designs/**/*.md`, or an explicit spec/design name or path. Note the reference in `Assumptions`.
-   - After a spec/design reference, route by requested next action: **Plan** for task breakdown, **Light** + `test-driven-development` for direct few-file implementation, **Full** for 3+ parallel bounded contexts.
+   - After a spec/design reference, route by requested next action: **Plan** for task breakdown (including broad multi-context work), or **Light** + `test-driven-development` for direct few-file implementation.
 3. **User named a downstream skill** (and Rules #1 / #2 didn't fire) → respect it; only flag a clear mismatch.
 4. **Bug / failing test / build / CI failure / unexpected behavior / perf symptom** → **Light** + `Runtime skill: systematic-debugging` + `Execution path: systematic-debugging`. Upgrade to **Discuss** if scope is multi-module OR `risk=high` (payments / auth / production data).
-5. **"Done? / ready to commit / ship this"** → **Light** + `Runtime skill: verification-before-completion` + `Fallback alias: superpowers:verification-before-completion` + `Execution path: n/a` (then `finishing-a-development-branch` if branch integration). If the user explicitly asks for persona fan-out / security + test + review coverage, still use this route for now but flag the missing fan-out bridge in `Assumptions` (see `references/workflow-systems.md`).
+5. **"Done? / ready to commit / ship this"** → **Light** + `Runtime skill: none` + `Fallback alias: none` + `Execution path: direct local work`. Run the relevant full verification command in the current turn, read its output and exit status, and cite that evidence before any completion claim. If the user explicitly asks for persona fan-out / security + test + review coverage, flag the unsupported fan-out in `Assumptions` and perform the available checks directly.
 6. **Cross-agent / fix-then-re-review** → **Review-Handoff**. Mutually exclusive with #2/#4/#5/#7/#8/#10 — replaces any of them. Rule #1 (destructive) still overrides per the tiebreaker.
 7. **"Options / tradeoffs / first principles"** → **Brainstorm**.
 8. **Decisions unresolved (provider / architecture / data model / API)** → **Discuss**.
@@ -71,7 +70,7 @@ Light's default Execution path is `direct local work`. Upgrade the Execution pat
 
 - **Regression risk on a behavior change** → `Runtime skill: test-driven-development`, `Fallback alias: superpowers:test-driven-development`, `Execution path: test-driven-development`.
 - **Symptom-first investigation (bug / failing test / build error)** → `Runtime skill: systematic-debugging`, `Execution path: systematic-debugging`.
-- **"Done / ready to ship" claim** → `Runtime skill: verification-before-completion`, `Fallback alias: superpowers:verification-before-completion`, `Execution path: n/a` (the verification skill is the workflow).
+- **"Done / ready to ship" claim** → `Runtime skill: none`, `Fallback alias: none`, `Execution path: direct local work`; fresh command output is still mandatory before any completion claim.
 
 
 ### Tiebreakers — only the non-obvious pairs
@@ -101,10 +100,10 @@ Rule #1 (destructive) is the canonical override and wins against every other rul
 
 ```text
 Workflow Gate
-- Route: <Direct | Light | Brainstorm | Discuss | Plan | Full | Review-Handoff>
+- Route: <Direct | Light | Brainstorm | Discuss | Plan | Review-Handoff>
 - Runtime skill: <none | bare-slug>
 - Fallback alias: <none | superpowers:bare-slug>
-- Execution path: <direct local work | systematic-debugging | test-driven-development | executing-plans | subagent-driven-development | n/a>
+- Execution path: <direct local work | systematic-debugging | test-driven-development | n/a>
 - Goal: <one sentence>
 - Signals: scope=<single-file | few-files | multi-module>; risk=<low | medium | high>; destructive=<no | yes>; decisions=<resolved | unresolved>; user-intent=<ideate | decide | plan | implement | debug | review | ship>
 - Assumptions: <none | explicit unverified premises>
@@ -113,18 +112,16 @@ Workflow Gate
 
 `Route` and `Runtime skill` lead because every downstream reader acts on them. `Runtime skill` is the single skill to load next and must stay one bare token (`none` or one slug); `Fallback alias` is metadata for runtimes that cannot resolve that bare token. `Execution path` is the implementation pattern once code is being written (`n/a` when no code yet). They may match for skills that are both the workflow and the implementation pattern, such as `systematic-debugging` and `test-driven-development`. `risk` and `destructive` are separate enums because they answer different questions: blast-radius vs reversibility.
 
-**Skill name resolution.** Most skills resolve as bare slugs in both Codex (`~/.agents/skills/`) and Claude Code (`~/.claude/skills/` + project mirror). Four skills are intentionally not mirrored to `~/.claude/skills/` because they live under the `superpowers:` plugin namespace. For those, keep `Runtime skill` as the bare slug and put the plugin name in `Fallback alias`. Codex should load `Runtime skill`; Claude Code should try `Runtime skill` first and, if it is unavailable, load `Fallback alias`.
+**Skill name resolution.** Most skills resolve as bare slugs in both Codex (`~/.agents/skills/`) and Claude Code (`~/.claude/skills/` + project mirror). Two skills are intentionally not mirrored to `~/.claude/skills/` because they live under the `superpowers:` plugin namespace. For those, keep `Runtime skill` as the bare slug and put the plugin name in `Fallback alias`. Codex should load `Runtime skill`; Claude Code should try `Runtime skill` first and, if it is unavailable, load `Fallback alias`.
 
 **Resolution-failure fallback.** If neither `Runtime skill` nor `Fallback alias` resolves in the current runtime, do NOT proceed with the emitted Route. Surface the load error to the user with the attempted slug, then re-gate by downgrading to the smallest safe Route that doesn't require the missing skill (typically Light + `direct local work`, or Discuss if the original task was non-trivial) and emit a fresh block. Stale routing into a non-existent skill silently breaks the downstream workflow.
 
 | Bare slug | Plugin alias | Emit fields |
 |---|---|---|
 | `brainstorming` | `superpowers:brainstorming` | `Runtime skill: brainstorming` + `Fallback alias: superpowers:brainstorming` |
-| `verification-before-completion` | `superpowers:verification-before-completion` | `Runtime skill: verification-before-completion` + `Fallback alias: superpowers:verification-before-completion` |
 | `test-driven-development` | `superpowers:test-driven-development` | `Runtime skill: test-driven-development` + `Fallback alias: superpowers:test-driven-development` |
-| `receiving-code-review` | `superpowers:receiving-code-review` | `Runtime skill: receiving-code-review` + `Fallback alias: superpowers:receiving-code-review` |
 
-All other skills (`discuss-before-plan`, `agentic-review-handoff`, `writing-plans`, `executing-plans`, `subagent-driven-development`, `systematic-debugging`, `finishing-a-development-branch`) are emitted as bare slugs with `Fallback alias: none` — they exist as bare entries in both runtimes.
+All other skills (`discuss-before-plan`, `agentic-review-handoff`, `writing-plans`, `systematic-debugging`) are emitted as bare slugs with `Fallback alias: none` — they exist as bare entries in both runtimes.
 
 ## Guardrails
 
@@ -133,4 +130,4 @@ All other skills (`discuss-before-plan`, `agentic-review-handoff`, `writing-plan
 - At most one blocking question.
 - Never create scripts, evals, references, or persistent artifacts from this skill alone — that belongs to the workflow that runs next.
 
-Worked output blocks live in two reference files: `references/examples-core.md` has one example per Route (Direct / Light / Brainstorm / Discuss / Plan / Full / Review-Handoff) and is the default lookup. `references/examples-edge.md` covers tiebreakers, mismatches, Rule #2 negatives, re-gating, contradictory-signal handling, and "don't ask me" — load it only when core doesn't cover the prompt.
+Worked output blocks live in two reference files: `references/examples-core.md` has one example per Route (Direct / Light / Brainstorm / Discuss / Plan / Review-Handoff) and is the default lookup. `references/examples-edge.md` covers tiebreakers, mismatches, Rule #2 negatives, re-gating, contradictory-signal handling, and "don't ask me" — load it only when core doesn't cover the prompt.

@@ -78,7 +78,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-07-08T08:49:57.000Z"
   },
   {
     "slug": "commit-push",
@@ -91,7 +91,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-08T03:25:13.000Z"
+    "updatedAt": "2026-07-08T08:49:57.000Z"
   },
   {
     "slug": "discuss-before-plan",
@@ -210,7 +210,7 @@
   {
     "slug": "workflow-gate",
     "name": "workflow-gate",
-    "description": "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Brainstorm; destructive or hard-to-reverse work to Discuss; unresolved decisions, Plan/Full fan-out, ship checks, unclear bugs, and fresh-eyes fix-then-re-review need this gate. Skip single-line read-only lookups, pure typo/formatting edits, trivial safe one-line fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, and Execution path.",
+    "description": "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Brainstorm; destructive or hard-to-reverse work to Discuss; unresolved decisions, planning, ship checks, unclear bugs, and fresh-eyes fix-then-re-review need this gate. Skip single-line read-only lookups, pure typo/formatting edits, trivial safe one-line fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, and Execution path.",
     "metadata": {
       "author": "adonis",
       "version": "2.0.1"

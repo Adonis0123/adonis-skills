@@ -1,6 +1,6 @@
 # Worked examples (core) — workflow-gate
 
-One example per Route (Direct / Light / Brainstorm / Discuss / Plan / Full / Review-Handoff). Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. For edge cases (tiebreakers, mismatches, Rule #2 negatives, re-gating, contradictory signals), see `examples-edge.md`.
+At least one example per Route (Direct / Light / Brainstorm / Discuss / Plan / Review-Handoff). Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. For edge cases (tiebreakers, mismatches, Rule #2 negatives, re-gating, contradictory signals), see `examples-edge.md`.
 
 ## Direct — read-only question
 
@@ -75,27 +75,27 @@ Workflow Gate
 - Route: Plan
 - Runtime skill: writing-plans
 - Fallback alias: none
-- Execution path: executing-plans
+- Execution path: n/a
 - Goal: Wire Google OAuth into apps/web per RFC-024.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=plan
 - Assumptions: RFC-024 is authoritative and current.
 - Next: Load writing-plans; produce a 5-8 task breakdown grounded in the RFC.
 ```
 
-## Full — multi-bounded-context migration
+## Plan — multi-bounded-context migration
 
 User: "Migrate auth across api+web+mobile from session cookies to JWT, 30+ files."
 
 ```
 Workflow Gate
-- Route: Full
+- Route: Plan
 - Runtime skill: writing-plans
 - Fallback alias: none
-- Execution path: subagent-driven-development
+- Execution path: n/a
 - Goal: Migrate auth from session cookies to JWT across api, web, and mobile.
 - Signals: scope=multi-module; risk=high; destructive=no; decisions=resolved; user-intent=plan
 - Assumptions: JWT signing strategy already chosen; rollout phases to be detailed in the plan.
-- Next: Load writing-plans; structure per-app tasks so subagent-driven-development can fan out.
+- Next: Load writing-plans; structure the per-app tasks and return the plan to the user before implementation.
 ```
 
 ## Review-Handoff — fresh eyes

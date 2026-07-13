@@ -33,13 +33,13 @@ Tag the prompt's phase before committing to a Route. The Phase column is never p
 | Ideation, fuzzy intent | `define-idea` | Brainstorm | `brainstorming` |
 | Concrete creative work (feature / screen / component / replicate / redesign / behavior change) | `define-design` | Brainstorm | `brainstorming` |
 | Named options, pick one | `decide` | Discuss | `discuss-before-plan` |
-| Spec or RFC exists, break into tasks | `plan` | Plan or Full | `writing-plans` |
-| Independent tasks, fan out in same session | `build` (fan-out) | Full | `writing-plans` (+ `subagent-driven-development` as Execution path) |
-| Sequential or context-heavy tasks | `build` (inline) | Plan | `writing-plans` (+ `executing-plans` as Execution path) |
+| Spec or RFC exists, break into tasks | `plan` | Plan | `writing-plans` |
+| Broad or multi-context task breakdown | `build-plan` | Plan | `writing-plans` |
+| Sequential or context-heavy implementation | `build` | Light or Plan | direct local work after user approval |
 | Symptom / bug / failing test | `verify-bug` | Light | `systematic-debugging` |
-| Claim of done / ready-to-ship | `verify-ship` | Light | `verification-before-completion` |
+| Claim of done / ready-to-ship | `verify-ship` | Light | direct verification with fresh evidence |
 | Cross-agent review / fix-then-re-review | `review` | Review-Handoff | `agentic-review-handoff` |
-| Pre-launch checklist with persona fan-out | `ship` | Light + `verification-before-completion` (flag fan-out gap in `Assumptions`) | `verification-before-completion` |
+| Pre-launch checklist with persona fan-out | `ship` | Light (flag unsupported fan-out in `Assumptions`) | direct verification with available checks |
 
 If the phase maps to a Route the gate supports, emit it. If it maps to a phase the gate does not yet model cleanly (today: persona-fan-out `ship`), route to the nearest existing Route and surface the gap in `Assumptions`.
 
