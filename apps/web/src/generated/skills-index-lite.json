@@ -146,7 +146,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-06-15T02:28:50.000Z"
+    "updatedAt": "2026-07-14T08:40:44.000Z"
   },
   {
     "slug": "lingui-next-init",
@@ -177,15 +177,16 @@
   {
     "slug": "review-prompt-composer",
     "name": "review-prompt-composer",
-    "description": "Compose a self-contained, copy-ready prompt for an external team or AI agent to independently review a specific git change set and run repository-defined checks. Use when users want a portable review brief with context, an evidence-backed change inventory, exact change-access or inline-patch instructions, review focus, test commands, and required output. Prompt generation only: do not use for same-repository review/fix/re-review loops or returned-feedback validation; use agentic-review-handoff for those. Never run tests, modify reviewed code, push changes, or send the prompt.",
+    "description": "Compose a copy-ready prompt or prompt-plus-attachments package for an external team or AI agent to independently review Git changes and run repository-defined checks. Use for committed ranges, staged changes, unstaged tracked changes, untracked files, or the entire uncommitted working tree. Support reviewers through a proven shared working tree, an accessible ref, an inline patch, or an automatically generated repository-external attachment package. Prompt generation only: do not use for same-repository review/fix/re-review loops or returned-feedback validation; use agentic-review-handoff for those. Never run tests, modify reviewed code, commit, stage, stash, push, or send the handoff.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.3.0"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-07-14T08:40:58.000Z"
   },
   {
     "slug": "tailwindcss-next-init",
