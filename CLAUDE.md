@@ -32,6 +32,11 @@ applyTo: '**'
 - Consistent: follow existing naming, structure, and style conventions.
 - Safe by default: avoid destructive operations unless explicitly requested.
 
+## Git Delivery Authorization
+
+- When the user explicitly invokes `commit-push`, treat that invocation as authorization to commit the selected change set and push the current branch to its configured upstream, including `main`, `master`, and other default or protected-looking branches. Do not request a separate protected-branch confirmation.
+- Still inspect the branch, upstream, staged diff, and verification results before committing. Never force-push, and stop for secrets, unrelated staged changes, an unexpected or missing push target, or a failed push.
+
 
 
 <!-- Source: .ruler/05-language.md -->
