@@ -17,6 +17,7 @@ Goal Gate
 - Done condition: The local app runs and the core add/view/edit transaction workflow is proven with runtime evidence.
 - Verification: Surface discovered project commands, local run output, screenshots or browser evidence for the workflow, and any skipped checks.
 - Constraints: No account system, paid services, production deployment, bank integration, or real financial advice.
+- Execution strategy: Assess decomposability before implementation; delegate only bounded, independently verifiable work and keep final integration with the main agent.
 - Checkpoints: Report after project inspection, first runnable workflow, and final verification.
 - Stop or ask when: Credentials, bank APIs, deployment, regulated financial advice, or unclear data ownership is required.
 - Prompt: see Recommended /goal below
@@ -29,6 +30,7 @@ Goal Gate
 验证：运行项目提供的最小相关检查，启动本地应用，在浏览器中完整走通新增、查看、编辑、删除收支记录流程，并用命令输出、日志或截图作为证据。
 约束：不接入真实银行、支付、账号系统、云同步、生产部署或金融建议；不保存真实敏感财务数据。
 边界：只写入新项目目录，或只修改现有项目中与记账核心流程直接相关的文件。
+执行编排：开始实现前结合任务复杂度、依赖、共享上下文、写入冲突和独立验证能力判断是否使用 subagent；主 agent 负责审查结果和最终集成验证，不适合或不支持时退化为单 agent。
 迭代策略：先做可运行核心流程，再根据检查结果和浏览器证据做最多 3 轮聚焦改进；同一错误连续失败 2 次后换日志、控制台或文档证据来源。
 完成条件：本地核心记账流程可运行，验证证据已展示，检查通过或缺失配置已明确说明。
 暂停条件：需要真实银行接口、账号凭证、付费服务、生产部署、法律/金融判断、敏感真实数据或产品范围决策时暂停。
@@ -51,6 +53,7 @@ Goal Gate
 - Done condition: All PLAN.md tasks are implemented, `pnpm test` passes, and `pnpm build` succeeds.
 - Verification: Surface changed files, the test/build commands, and their exit status.
 - Constraints: Stay within PLAN.md scope; do not push or commit unless asked.
+- Execution strategy: Before implementation, assess plan-task independence, shared context, write overlap, and separate verification; use installed subagent orchestration only when it helps, with the main agent retaining final integration responsibility.
 - Checkpoints: Report after each PLAN.md milestone.
 - Stop or ask when: PLAN.md is ambiguous, validation needs unavailable credentials, or a destructive action is required.
 - Prompt: none
@@ -74,6 +77,7 @@ Goal Gate
 - Done condition: Every PLAN.md acceptance criterion is implemented and the named validation commands exit 0.
 - Verification: Surface changed files, validation commands, exit status, and any skipped checks.
 - Constraints: Follow PLAN.md scope; do not push or commit unless explicitly asked.
+- Execution strategy: Assess single-agent versus delegated execution from plan dependencies and write boundaries; parallelize only independent non-conflicting tasks and keep final verification with the main agent.
 - Checkpoints: Report after each plan milestone.
 - Stop or ask when: PLAN.md is ambiguous, validation requires unavailable credentials, or a destructive action is needed.
 - Prompt: none
@@ -95,6 +99,7 @@ Goal Gate
 - Done condition: Migration complete, auth tests pass, and no unrelated files change.
 - Verification: Surface git diff summary plus the exact auth test command and passing output.
 - Constraints: Auth-sensitive change — keep scope tight; do not weaken token validation or session handling without review.
+- Execution strategy: Decide only after approval; keep security-sensitive integration under main-agent control and delegate only bounded work that inherits all auth constraints and receives independent review.
 - Checkpoints: Report after each migration slice.
 - Stop or ask when: Auth behavior would change in a way that needs review, or tests fail for an unclear reason.
 - Prompt: none
@@ -118,6 +123,7 @@ Goal Gate
 - Done condition: Refactor complete and validation passes.
 - Verification: Surface active goal status, the proposed objective, and validation output once approved.
 - Constraints: Do not replace or mutate the active goal without user approval.
+- Execution strategy: n/a until the active-goal decision is resolved.
 - Checkpoints: n/a
 - Stop or ask when: A goal is already active.
 - Prompt: none
@@ -141,9 +147,10 @@ Goal Gate
 - Done condition: All acceptance criteria hold, the app builds, and `pnpm test` passes.
 - Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
 - Constraints: Follow the plan; do not broaden scope; do not push.
+- Execution strategy: Assess plan-task independence before implementation; use subagents only for bounded independently verifiable tasks, and keep review, conflict resolution, and final integration verification with the main agent.
 - Checkpoints: Report after each acceptance-criteria group.
 - Stop or ask when: The plan conflicts with code reality, a destructive operation is needed, or verification cannot run.
-- Prompt: /goal Implement docs/PLAN.md without stopping until every acceptance criterion is satisfied, the app builds, and `pnpm test` passes. After each checkpoint, report what changed, what evidence was produced, and what remains. Stop and ask if the plan conflicts with the code, verification is blocked, or a destructive action would be required.
+- Prompt: /goal Implement docs/PLAN.md without stopping until every acceptance criterion is satisfied, the app builds, and `pnpm test` passes. Execution strategy: Before implementation, assess dependencies, shared context, write overlap, and independent verification to decide whether subagents help; keep final integration responsibility with the main agent and fall back to one agent when needed. After each checkpoint, report what changed, what evidence was produced, and what remains. Stop and ask if the plan conflicts with the code, verification is blocked, or a destructive action would be required.
 - Next: adopt goal and continue
 ```
 
@@ -164,9 +171,10 @@ Goal Gate
 - Done condition: All acceptance criteria hold, the app builds, and the specified tests pass.
 - Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
 - Constraints: Follow the design doc; do not broaden scope; do not push.
+- Execution strategy: Assess whether the plan contains bounded independently verifiable tasks; delegate only when useful and keep the main agent responsible for synthesis and final verification.
 - Checkpoints: Report after each acceptance-criteria group.
 - Stop or ask when: The doc conflicts with code, a destructive operation is needed, or verification cannot run.
-- Prompt: /goal Implement docs/design.md without stopping until every acceptance criterion is satisfied, the app builds, and the tests pass. After each checkpoint, report what changed, what evidence was produced, what remains, and whether the done condition is met. Stop and ask if the doc conflicts with the code, verification is blocked, or a destructive action would be required.
+- Prompt: /goal Implement docs/design.md without stopping until every acceptance criterion is satisfied, the app builds, and the tests pass. Execution strategy: Before implementation, assess dependencies, shared context, write overlap, and independent verification to decide whether subagents help; keep the main agent responsible for synthesis and final verification. After each checkpoint, report what changed, what evidence was produced, what remains, and whether the done condition is met. Stop and ask if the doc conflicts with the code, verification is blocked, or a destructive action would be required.
 - Next: provide prompt
 ```
 
@@ -183,9 +191,10 @@ Goal Gate
 - Done condition: The eval command reaches the target score or further changes require product guidance.
 - Verification: Surface each eval command, score, failing cases reviewed, and final diff summary.
 - Constraints: Keep prompt edits minimal and do not change eval fixtures unless explicitly approved.
+- Execution strategy: Delegate independent eval analysis only when it reduces context pressure; keep prompt edits serialized and final score/diff verification with the main agent.
 - Checkpoints: Report after each eval run.
 - Stop or ask when: The target cannot be reached without changing policy, product behavior, or eval fixtures.
-- Prompt: /goal Optimize the prompts in [prompt file or directory] until [eval command] reaches [target score]. After each change, run the eval, inspect failing cases, keep edits minimal, and surface scores and diffs. Stop when the target is met or when further changes require product or policy guidance.
+- Prompt: /goal Optimize the prompts in [prompt file or directory] until [eval command] reaches [target score]. Execution strategy: Delegate only independent read-only eval analysis that reduces context pressure; serialize prompt edits and keep final score/diff verification with the main agent. After each change, run the eval, inspect failing cases, keep edits minimal, and surface scores and diffs. Stop when the target is met or when further changes require product or policy guidance.
 - Next: provide prompt
 ```
 
@@ -204,9 +213,10 @@ Goal Gate
 - Done condition: Refactor is complete and the agreed validation signal passes.
 - Verification: Surface changed files, validation command output, and behavior-parity notes.
 - Constraints: No public API changes; no unrelated formatting churn.
+- Execution strategy: Assess delegation only if the runtime supports it; otherwise use one agent, and in all cases keep scope review and final behavior-parity verification with the main agent.
 - Checkpoints: Report after each logical slice.
 - Stop or ask when: The runtime lacks required tools, validation is unavailable, or scope expands.
-- Prompt: Complete the refactor until the agreed validation signal passes. Keep changes scoped, surface each verification result, and stop for ambiguity, unavailable tools, or scope expansion.
+- Prompt: Complete the refactor until the agreed validation signal passes. Execution strategy: Assess whether delegation helps only when the runtime supports it; otherwise use one agent, while keeping final scope and behavior-parity verification with the main agent. Keep changes scoped, surface each verification result, and stop for ambiguity, unavailable tools, or scope expansion.
 - Next: ask approval
 ```
 
@@ -227,6 +237,7 @@ Goal Gate
 - Done condition: All planned modules are implemented and their validation commands pass.
 - Verification: Surface per-module validation output and final git diff summary.
 - Constraints: Preserve the workflow-gate route; do not broaden scope beyond the plan.
+- Execution strategy: Assess bounded-context independence, dependency order, shared state, and write overlap; delegate or parallelize only non-conflicting work and keep aggregate verification with the main agent.
 - Checkpoints: Report after each module or bounded context.
 - Stop or ask when: The plan proves wrong, modules conflict, or validation is blocked.
 - Prompt: none

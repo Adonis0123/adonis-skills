@@ -1,6 +1,6 @@
 ---
 name: goal-gate
-description: "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt that keeps Codex, Claude Code, or another agent working until a verifiable done condition is met. It gates autonomy, handles runtime differences, and writes copy-ready goal contracts with outcome, verification, constraints, write boundaries, iteration policy, completion evidence, and pause/ask conditions. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'turn this vague app idea into a goal', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings."
+description: "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt that keeps Codex, Claude Code, or another agent working until a verifiable done condition is met. It gates autonomy, handles runtime differences, and writes copy-ready goal contracts with outcome, verification, constraints, write boundaries, delegation strategy, iteration policy, completion evidence, and pause/ask conditions. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'turn this vague app idea into a goal', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings."
 metadata:
   author: adonis
 ---
@@ -12,7 +12,7 @@ metadata:
 Use this skill to decide whether the current task deserves a durable goal and to write a copy-ready goal contract when it does. Keep two jobs separate:
 
 - Gate autonomy: decide `none`, `suggest`, `set-now`, or `defer`.
-- Draft the contract: produce a concrete `/goal` or portable prompt with verification, boundaries, iteration, and pause conditions.
+- Draft the contract: produce a concrete `/goal` or portable prompt with verification, boundaries, delegation, iteration, and pause conditions.
 
 This skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.
 
@@ -93,6 +93,7 @@ A strong goal includes:
 - concrete verification evidence such as commands, logs, screenshots, files, URLs, API checks, or artifact paths;
 - constraints that protect unrelated behavior, data, secrets, default branches, and public contracts;
 - write boundaries and forbidden paths when the task touches a repo or machine;
+- an execution strategy that assesses whether subagents improve the task without weakening ownership or verification;
 - bounded iteration policy after failures;
 - a done condition that proves completion;
 - pause conditions for credentials, payments, production data, destructive actions, legal/medical/financial judgment, copyrighted assets, unclear ownership, or repeated blockers.
@@ -100,6 +101,17 @@ A strong goal includes:
 For Chinese-first users, write the primary copy-ready prompt in Chinese while keeping the executable command prefix `/goal`. Include a concise default reason when you made assumptions. Add numbered options only when a choice would materially change scope, risk, or direction. Include an English-compatible mirror only when the user asks for portability, English, Claude/Codex cross-use, or a complete bilingual draft.
 
 For unfamiliar or specialized domains, do not invent domain rules. Write a discovery-first goal that makes the agent inspect project docs, sample data, official references, and runtime evidence before implementation.
+
+## Delegation Policy
+
+For every executable goal, require the main agent to assess the execution strategy before implementation. Judge task complexity together with dependency order, shared context or state, write overlap, output volume, independently verifiable subtasks, coordination cost, and runtime support. Do not delegate merely because a task is large.
+
+- Prefer one agent for quick targeted changes, tightly coupled work, sequential dependencies, or work that needs frequent shared-context refinement.
+- Consider subagents for bounded self-contained tasks, high-volume read-only research or test/log analysis, or two or more independent problem domains.
+- Parallelize only when tasks have no sequential dependency, shared mutable state, or conflicting write surface.
+- Prefer an installed orchestration skill when one fits, such as `subagent-driven-development` for independent tasks in an implementation plan or `dispatching-parallel-agents` for independent problem domains. Treat these as optional capabilities, not hard dependencies.
+- Keep the main agent accountable for the aggregate goal: pass down relevant constraints, review returned work and diffs, resolve conflicts, and run final integration verification. Subagents must not broaden scope or declare the whole goal complete.
+- Fall back to single-agent execution when subagents are unavailable or their coordination cost exceeds the expected benefit.
 
 Read `references/copy-ready-goals.md` when generating a user-copyable `/goal`, when the user gives a vague app/site/tool/game request, or when you need Chinese default output, per-field drafting craft, a question bank for the rare case you must ask, option lists, unknown-domain handling, or prompt quality checks.
 
@@ -129,6 +141,7 @@ Goal Gate
 - Done condition: <verifiable stopping condition or n/a>
 - Verification: <commands/artifacts/evidence the agent must surface or n/a>
 - Constraints: <scope/safety/must-not-change limits or n/a>
+- Execution strategy: <how to assess single-agent vs delegated vs parallel execution, or n/a>
 - Checkpoints: <progress reporting cadence or n/a>
 - Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>
 - Prompt: <runtime-specific goal prompt, "see Recommended /goal below", or none>
@@ -144,6 +157,8 @@ When emitting a copy-ready prompt for a Chinese-first user, use this order as ne
 3. `可选调整`
 4. `你可以直接回复`
 5. `Goal Draft (English-compatible)` when requested or useful for portability
+
+Every executable copy-ready prompt must include an `执行编排：` or `Execution strategy:` line that carries the Delegation Policy. Keep it shorter than the task-specific outcome and verification unless delegation is the main risk.
 
 ## Prompt Rules
 

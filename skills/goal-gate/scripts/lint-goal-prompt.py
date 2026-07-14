@@ -13,10 +13,13 @@ REQUIRED_GROUPS = [
     ("verification", [r"Verification[:：]", r"验证[:：]"]),
     ("constraints", [r"Constraints[:：]", r"约束[:：]"]),
     ("boundaries", [r"Boundaries[:：]", r"边界[:：]"]),
+    ("execution strategy", [r"Execution strategy[:：]", r"执行编排[:：]"]),
     ("iteration policy", [r"Iteration policy[:：]", r"迭代策略[:：]"]),
     ("stop when", [r"Stop when[:：]", r"完成条件[:：]", r"停止条件[:：]"]),
     ("pause if", [r"Pause if[:：]", r"暂停条件[:：]", r"阻塞条件[:：]"]),
 ]
+
+REQUIRED_PATTERNS = dict(REQUIRED_GROUPS)
 
 PLACEHOLDERS = [
     r"\[[^\]]+\]",
@@ -46,6 +49,23 @@ EVIDENCE_WORDS = [
     r"(运行|启动|打开|测试|构建|检查|验证|读取|截图|日志|产物|文件|链接|接口|API|浏览器|模拟器|本地|证据)",
 ]
 
+DELEGATION_ASSESSMENT_WORDS = [
+    r"\b(assess|evaluate|decide|determine|judge|choose)\b",
+    r"(评估|判断|决定|选择)",
+]
+
+DELEGATION_OPTION_WORDS = [
+    r"\b(sub-?agent\w*|delegat\w*|single-agent|one agent)\b",
+    r"(子代理|子智能体|单 agent|主 agent)",
+]
+
+MAIN_AGENT_WORDS = [r"\bmain agent\b", r"主 agent", r"主代理", r"主智能体"]
+
+OWNERSHIP_WORDS = [
+    r"\b(accountable|responsible|review|verify|verification|integrat)\w*\b",
+    r"(负责|责任|审查|复核|验证|集成)",
+]
+
 
 def marker_content(text: str, patterns: list[str]) -> str | None:
     for pattern in patterns:
@@ -73,9 +93,31 @@ def lint_text(text: str, label: str) -> list[str]:
         if re.search(pattern, text, re.IGNORECASE):
             errors.append(f"{label}: unsafe vague wording matched {pattern}")
 
-    verification = marker_content(text, REQUIRED_GROUPS[1][1])
+    verification = marker_content(text, REQUIRED_PATTERNS["verification"])
     if verification and not any(re.search(pattern, verification, re.IGNORECASE) for pattern in EVIDENCE_WORDS):
         errors.append(f"{label}: verification should name concrete evidence")
+
+    execution_strategy = marker_content(text, REQUIRED_PATTERNS["execution strategy"])
+    if execution_strategy:
+        assesses_delegation = any(
+            re.search(pattern, execution_strategy, re.IGNORECASE)
+            for pattern in DELEGATION_ASSESSMENT_WORDS
+        ) and any(
+            re.search(pattern, execution_strategy, re.IGNORECASE)
+            for pattern in DELEGATION_OPTION_WORDS
+        )
+        if not assesses_delegation:
+            errors.append(f"{label}: execution strategy should assess delegation")
+
+        keeps_main_accountable = any(
+            re.search(pattern, execution_strategy, re.IGNORECASE)
+            for pattern in MAIN_AGENT_WORDS
+        ) and any(
+            re.search(pattern, execution_strategy, re.IGNORECASE)
+            for pattern in OWNERSHIP_WORDS
+        )
+        if not keeps_main_accountable:
+            errors.append(f"{label}: execution strategy should keep the main agent accountable")
 
     goal_line = next((line.strip() for line in text.splitlines() if line.strip().startswith("/goal")), "")
     if goal_line and len(goal_line.removeprefix("/goal").strip()) < 20:

@@ -26,6 +26,7 @@ Default-first is the norm. When a missing detail is genuinely high-risk or high-
 - Verification: which project commands/tests already exist? local-only or real-device/online check? full suite or scoped?
 - Constraints: which behavior, API, or format must stay stable? what is off-limits (secrets, production data, default branch)?
 - Boundaries: which directories may change? any path or artifact forbidden?
+- Execution strategy: does the work contain self-contained, independently verifiable subtasks? would delegation reduce context pressure or wall-clock time without shared-state or write conflicts?
 - Iteration: how many focused rounds before reporting? what to do on repeated failure?
 - Stop / Pause: what evidence proves done? which steps need a human sign-off (auth, payment, production, destructive, regulated)?
 
@@ -41,6 +42,7 @@ Use `/goal` as the command prefix. The body may be Chinese.
 验证：<命令、日志、截图、文件、URL、API、浏览器/模拟器检查或产物证据。>
 约束：<不能改变的行为、数据、安全边界、分支、外部服务、版权或合规边界。>
 边界：<允许写入的目录/文件范围，以及禁止触碰的范围。>
+执行编排：<开始实现前结合任务复杂度、依赖、共享上下文、写入冲突和独立验证能力判断是否使用 subagent；主 agent 保留整体责任，不支持或不适合时退化为单 agent。>
 迭代策略：<每轮如何基于新证据改动；失败几次后换证据来源或暂停。>
 完成条件：<什么证据证明可以停止。>
 暂停条件：<凭证、付费、生产、破坏性、法律/医疗/金融、版权、所有权或反复阻塞。>
@@ -68,6 +70,7 @@ Use this when the user writes in English, asks for portability, or wants a bilin
 Verification: <commands, logs, screenshots, files, URLs, API checks, browser/simulator checks, or artifacts>.
 Constraints: <what must not change; safety and scope limits>.
 Boundaries: <allowed writes and forbidden paths/systems>.
+Execution strategy: <assess complexity, dependencies, shared context/state, write overlap, independent verification, coordination cost, and runtime support before choosing single-agent, delegated, or parallel execution; keep the main agent accountable and fall back to one agent when needed>.
 Iteration policy: <bounded retries based on evidence>.
 Stop when: <evidence proves the result or skipped checks are explicit>.
 Pause if: <credentials, payment, production data, destructive actions, regulated judgment, copyright, ownership, or repeated blockers are required>.
@@ -90,6 +93,7 @@ Naming the fields is not enough; each one fails in a predictable way, so write e
 - Verification: name the exact checks the repo already exposes (a real test command, a specific URL, a screenshot of a named screen). Discover them before inventing; a made-up command that fails teaches the agent nothing. This field is the spine of the contract — if it cannot run, the goal can never prove done.
 - Constraints: phrase as what must not change (behavior, public API, data, secrets, default branch), not as permissions granted. "Do not change the existing API response shape" is enforceable; "you may edit the API" invites scope creep.
 - Boundaries: restrict the write surface — which dirs/files may change, which paths are forbidden. This is filesystem reach, kept separate from Constraints' behavioral reach. Narrow boundaries are the cheapest insurance against an agent editing the whole repo.
+- Execution strategy: assess decomposability, not size alone. Delegate bounded self-contained work or high-volume read-only output; parallelize only independent tasks without shared mutable state, write conflicts, or sequential dependencies. Keep the main agent responsible for context handoff, review, conflict resolution, and final integration verification.
 - Iteration policy: bound the retries and require a new source of evidence after repeated failure. "After 2 failures on the same error, read logs/console/docs before retrying, at most 3 focused rounds" converges where "keep trying until it works" spins forever.
 - Done condition: define proof, never a feeling. "Tests pass and the workflow completes once with captured evidence" is checkable; "until it looks good" is not.
 - Pause condition: list every point that needs human judgment or external authority — credentials, payments, production or real-user data, destructive actions, legal/medical/financial calls, copyrighted assets, unclear ownership, repeated blockers. A goal without pause conditions is a long leash with no collar.
@@ -103,6 +107,8 @@ Reject or revise a copy-ready goal when it:
 - says only `make it work`, `fix bugs`, `做得高级`, or `直到满意` as the done condition;
 - lacks concrete verification evidence;
 - lets the agent edit the whole repo or machine without reason;
+- omits execution-strategy assessment or delegates solely because the task is large;
+- lets subagents broaden scope, share conflicting writes, or declare the aggregate goal complete;
 - asks for infinite retries without new evidence;
 - has no pause condition for credentials, payments, production data, destructive actions, regulated judgment, copyrighted assets, unclear ownership, or repeated blockers.
 

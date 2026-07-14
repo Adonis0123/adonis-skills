@@ -5,7 +5,7 @@
       "id": 0,
       "name": "autoset-codex-tooling",
       "prompt": "I'm in Codex and goal tooling is available (get_goal / create_goal). There's no goal active right now. Work through PLAN.md and implement every task in it, and don't stop until `pnpm test` passes and `pnpm build` succeeds. Just get it done and tell me when it's actually finished.",
-      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: codex-tooling that auto-creates the goal: the task is high fit, the safety gate is clear, so it does not stop to ask permission. Next is 'create goal' (call get_goal then create_goal with the objective), with a verifiable done condition (pnpm test passing + pnpm build succeeding).",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: codex-tooling that auto-creates the goal: the task is high fit, the safety gate is clear, so it does not stop to ask permission. Next is 'create goal' (call get_goal then create_goal with the objective), with a verifiable done condition (pnpm test passing + pnpm build succeeding) and an execution strategy that assesses whether independent plan tasks merit subagents while keeping final integration with the main agent.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block (contains a line starting with 'Goal Gate' and a '- Decision:' field)",
@@ -14,6 +14,8 @@
         "Goal fit is high",
         "Next is 'create goal' (calls/says to call create_goal, optionally after get_goal), not 'ask approval'",
         "Done condition references the verification signal (pnpm test passing and/or pnpm build succeeding)",
+        "Execution strategy assesses task dependencies, shared context, write overlap, or independent verification before deciding whether to use subagents",
+        "Keeps the main agent responsible for reviewing delegated work and final integration verification, with a single-agent fallback",
         "Does not set a token budget (no token/budget limit is added since the user did not ask for one)"
       ]
     },
@@ -21,7 +23,7 @@
       "id": 1,
       "name": "autoset-claude-slash-adopt",
       "prompt": "I'm in Claude Code. Implement everything in docs/PLAN.md and keep going on your own until `pnpm test` passes and the app builds. I'm stepping away for a bit — don't wait on me, just finish it and show me the evidence when it's done.",
-      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: claude-code-slash. Because Claude Code has no goal API, the agent adopts the goal contract itself (Next: adopt goal and continue) AND emits a runnable /goal prompt for reuse. Done condition is pnpm test passing + app building, with a reminder to surface verification evidence in the conversation.",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: claude-code-slash. Because Claude Code has no goal API, the agent adopts the goal contract itself (Next: adopt goal and continue) AND emits a runnable /goal prompt for reuse. Done condition is pnpm test passing + app building, with a reminder to surface verification evidence and assess whether bounded independent plan tasks benefit from subagents while the main agent retains aggregate responsibility.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block",
@@ -31,7 +33,9 @@
         "Next is 'adopt goal and continue' (the agent self-adopts the contract rather than only handing back a prompt)",
         "Still provides a runnable /goal prompt (Prompt field is a /goal command, not 'none')",
         "Done condition references pnpm test passing and/or the app building",
-        "Prompt/contract instructs the agent to surface verification evidence in the conversation/transcript"
+        "Prompt/contract instructs the agent to surface verification evidence in the conversation/transcript",
+        "Prompt/contract includes an execution strategy that assesses subagent usefulness rather than delegating solely because the task is large",
+        "Main agent retains review, conflict resolution, and final integration verification responsibility"
       ]
     },
     {
@@ -118,7 +122,7 @@
       "id": 8,
       "name": "vague-chinese-copy-ready-goal",
       "prompt": "帮我写一个 Codex /goal，我想做一个本地记账 App，先给能直接复制的版本。",
-      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: codex-slash, followed by a Chinese copy-ready /goal. The prompt keeps the executable command prefix /goal, chooses conservative local-MVP defaults, names verification evidence, constraints, write boundaries, iteration policy, completion condition, and pause conditions. It includes a short default reason and contains no placeholders.",
+      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: codex-slash, followed by a Chinese copy-ready /goal. The prompt keeps the executable command prefix /goal, chooses conservative local-MVP defaults, names verification evidence, constraints, write boundaries, execution strategy, iteration policy, completion condition, and pause conditions. It includes a short default reason and contains no placeholders.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block",
@@ -128,7 +132,9 @@
         "Provides a Chinese heading such as '推荐执行版（中文，可直接复制）'",
         "The executable command prefix is /goal, not /目标",
         "The /goal chooses safe local-MVP defaults rather than asking an open-ended questionnaire",
-        "The prompt includes verification evidence, constraints, boundaries, iteration policy, completion condition, and pause condition",
+        "The prompt includes verification evidence, constraints, boundaries, execution strategy, iteration policy, completion condition, and pause condition",
+        "The execution strategy assesses complexity together with dependencies, shared context/state, write overlap, or independent verification before using subagents",
+        "The main agent remains responsible for delegated result review and final integration verification, with a single-agent fallback",
         "Includes a concise default reason",
         "Does not leave placeholders such as TODO, TBD, [path], 待定, or 待补充"
       ]
@@ -137,16 +143,48 @@
       "id": 9,
       "name": "unknown-domain-discovery-first",
       "prompt": "给我一个 /goal，让 Codex 做一个医疗影像标注工具，先自己把能做的都做完。",
-      "expected_output": "A Goal Gate block plus a copy-ready /goal that treats the medical-imaging domain as specialized and discovery-first. It does not invent medical claims or compliance rules. It requires inspecting authoritative project/docs/sample-data context before implementation and pauses for medical judgment, real patient data, compliance approval, production deployment, or destructive data changes.",
+      "expected_output": "A Goal Gate block plus a copy-ready /goal that treats the medical-imaging domain as specialized and discovery-first. It does not invent medical claims or compliance rules. It requires inspecting authoritative project/docs/sample-data context before implementation, assesses delegation without handing domain or safety decisions to subagents, and pauses for medical judgment, real patient data, compliance approval, production deployment, or destructive data changes. Decision is suggest because the user asked for a copy-ready prompt rather than immediate execution.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block",
+        "Decision is suggest with Next providing the copy-ready prompt (the user asked for a /goal to copy; the agent does not auto-adopt with set-now)",
         "Does not auto-start risky regulated-domain work without guardrails",
         "The goal is discovery-first before implementation",
         "Verification mentions inspecting project docs, sample data, existing scripts, official references, or comparable authoritative evidence",
         "Constraints prohibit inventing medical conclusions, compliance claims, data semantics, or diagnosis/promise language",
         "Pause conditions include medical judgment, compliance approval, real patient or production data, credentials, deployment, or destructive data changes",
-        "The copy-ready prompt includes /goal and concrete evidence requirements"
+        "The copy-ready prompt includes /goal and concrete evidence requirements",
+        "Execution strategy keeps medical/compliance decisions and aggregate verification with the main agent even if bounded research is delegated"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "delegation-assessment-independent-plan-tasks",
+      "prompt": "Set a durable Codex goal to implement docs/PLAN.md. The plan has separate frontend accessibility fixes, API validation tests, and documentation updates. Keep working until each task's checks pass and the full test suite succeeds.",
+      "expected_output": "A high-fit goal contract that does not blindly require subagents but explicitly assesses whether the plan tasks are bounded, independently verifiable, free of shared-state/write conflicts, and supported by the runtime. It keeps the main agent accountable for constraints, returned work, conflicts, and final full-suite verification.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block with a concrete done condition and verification evidence",
+        "Includes an Execution strategy field or equivalent copy-ready prompt section",
+        "Assesses complexity together with at least three concrete decomposability factors (dependency order, shared context/state, write overlap, independently verifiable subtasks, coordination cost, or runtime support) rather than size alone",
+        "Delegates or parallelizes only bounded independent non-conflicting tasks; does not equate large or multi-file with automatically using subagents",
+        "Keeps the main agent accountable for passing constraints, reviewing returned work/diffs, conflict resolution, and final integration verification",
+        "Falls back to single-agent execution when subagents are unavailable or not beneficial"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "delegation-assessment-tightly-coupled-migration",
+      "prompt": "Write a portable /goal for a large but strictly sequential SQLite schema migration: every step depends on the previous schema version, the same migration files are edited throughout, and rollback tests must pass after each step.",
+      "expected_output": "A copy-ready goal that recognizes size alone does not justify subagents. Because the work has sequential dependencies, shared write surfaces, and tightly coupled verification, the execution strategy should keep implementation serialized under the main agent, while allowing only bounded read-only research if useful and preserving rollback checks and pause conditions.",
+      "files": [],
+      "expectations": [
+        "Provides a copy-ready /goal with verification, constraints, boundaries, an explicitly labeled execution-strategy field (Execution strategy: / 执行编排：), iteration policy, done condition, and pause condition",
+        "Does not recommend parallel implementation subagents merely because the migration is large",
+        "Identifies sequential dependencies, shared migration files/state, or coupled rollback verification as reasons to serialize implementation",
+        "Allows at most bounded non-conflicting delegation such as read-only research when useful",
+        "Keeps the main agent responsible for schema order, integrated rollback verification, and the aggregate done condition",
+        "Includes a single-agent fallback when subagents are unavailable"
       ]
     }
   ]
