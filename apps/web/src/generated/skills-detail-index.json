@@ -703,7 +703,7 @@
     "slug": "goal-gate",
     "sections": [
       {
-        "raw": "Use this skill to decide whether the current task deserves a durable goal and to write a copy-ready goal contract when it does. Keep two jobs separate:\n\n- Gate autonomy: decide `none`, `suggest`, `set-now`, or `defer`.\n- Draft the contract: produce a concrete `/goal` or portable prompt with verification, boundaries, iteration, and pause conditions.\n\nThis skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.",
+        "raw": "Use this skill to decide whether the current task deserves a durable goal and to write a copy-ready goal contract when it does. Keep two jobs separate:\n\n- Gate autonomy: decide `none`, `suggest`, `set-now`, or `defer`.\n- Draft the contract: produce a concrete `/goal` or portable prompt with verification, boundaries, delegation, iteration, and pause conditions.\n\nThis skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.",
         "heading": "Overview",
         "level": 2
       },
@@ -733,8 +733,13 @@
         "level": 2
       },
       {
-        "raw": "For any prompt or contract that a user may copy, make the first executable draft complete. Do not leave placeholders such as `[path]`, `TODO`, or `TBD` unless the user explicitly asked for a template.\n\nA strong goal includes:\n\n- one concrete outcome;\n- concrete verification evidence such as commands, logs, screenshots, files, URLs, API checks, or artifact paths;\n- constraints that protect unrelated behavior, data, secrets, default branches, and public contracts;\n- write boundaries and forbidden paths when the task touches a repo or machine;\n- bounded iteration policy after failures;\n- a done condition that proves completion;\n- pause conditions for credentials, payments, production data, destructive actions, legal/medical/financial judgment, copyrighted assets, unclear ownership, or repeated blockers.\n\nFor Chinese-first users, write the primary copy-ready prompt in Chinese while keeping the executable command prefix `/goal`. Include a concise default reason when you made assumptions. Add numbered options only when a choice would materially change scope, risk, or direction. Include an English-compatible mirror only when the user asks for portability, English, Claude/Codex cross-use, or a complete bilingual draft.\n\nFor unfamiliar or specialized domains, do not invent domain rules. Write a discovery-first goal that makes the agent inspect project docs, sample data, official references, and runtime evidence before implementation.\n\nRead `references/copy-ready-goals.md` when generating a user-copyable `/goal`, when the user gives a vague app/site/tool/game request, or when you need Chinese default output, per-field drafting craft, a question bank for the rare case you must ask, option lists, unknown-domain handling, or prompt quality checks.\n\nIf a copy-ready goal is saved to a file or the user asks for validation, run `scripts/lint-goal-prompt.py <file>` and fix any missing labels, placeholders, unsafe vague wording, or thin verification.",
+        "raw": "For any prompt or contract that a user may copy, make the first executable draft complete. Do not leave placeholders such as `[path]`, `TODO`, or `TBD` unless the user explicitly asked for a template.\n\nA strong goal includes:\n\n- one concrete outcome;\n- concrete verification evidence such as commands, logs, screenshots, files, URLs, API checks, or artifact paths;\n- constraints that protect unrelated behavior, data, secrets, default branches, and public contracts;\n- write boundaries and forbidden paths when the task touches a repo or machine;\n- an execution strategy that assesses whether subagents improve the task without weakening ownership or verification;\n- bounded iteration policy after failures;\n- a done condition that proves completion;\n- pause conditions for credentials, payments, production data, destructive actions, legal/medical/financial judgment, copyrighted assets, unclear ownership, or repeated blockers.\n\nFor Chinese-first users, write the primary copy-ready prompt in Chinese while keeping the executable command prefix `/goal`. Include a concise default reason when you made assumptions. Add numbered options only when a choice would materially change scope, risk, or direction. Include an English-compatible mirror only when the user asks for portability, English, Claude/Codex cross-use, or a complete bilingual draft.\n\nFor unfamiliar or specialized domains, do not invent domain rules. Write a discovery-first goal that makes the agent inspect project docs, sample data, official references, and runtime evidence before implementation.",
         "heading": "Goal Drafting",
+        "level": 2
+      },
+      {
+        "raw": "For every executable goal, require the main agent to assess the execution strategy before implementation. Judge task complexity together with dependency order, shared context or state, write overlap, output volume, independently verifiable subtasks, coordination cost, and runtime support. Do not delegate merely because a task is large.\n\n- Prefer one agent for quick targeted changes, tightly coupled work, sequential dependencies, or work that needs frequent shared-context refinement.\n- Consider subagents for bounded self-contained tasks, high-volume read-only research or test/log analysis, or two or more independent problem domains.\n- Parallelize only when tasks have no sequential dependency, shared mutable state, or conflicting write surface.\n- Prefer an installed orchestration skill when one fits, such as `subagent-driven-development` for independent tasks in an implementation plan or `dispatching-parallel-agents` for independent problem domains. Treat these as optional capabilities, not hard dependencies.\n- Keep the main agent accountable for the aggregate goal: pass down relevant constraints, review returned work and diffs, resolve conflicts, and run final integration verification. Subagents must not broaden scope or declare the whole goal complete.\n- Fall back to single-agent execution when subagents are unavailable or their coordination cost exceeds the expected benefit.\n\nRead `references/copy-ready-goals.md` when generating a user-copyable `/goal`, when the user gives a vague app/site/tool/game request, or when you need Chinese default output, per-field drafting craft, a question bank for the rare case you must ask, option lists, unknown-domain handling, or prompt quality checks.\n\nIf a copy-ready goal is saved to a file or the user asks for validation, run `scripts/lint-goal-prompt.py <file>` and fix any missing labels, placeholders, unsafe vague wording, or thin verification.",
+        "heading": "Delegation Policy",
         "level": 2
       },
       {
@@ -743,7 +748,7 @@
         "level": 2
       },
       {
-        "raw": "Emit this block:\n\n```text\nGoal Gate\n- Decision: <none | suggest | set-now | defer>\n- Runtime: <codex-tooling | codex-slash | claude-code-slash | unknown>\n- Goal fit: <low | medium | high>\n- Objective: <one durable objective or n/a>\n- Done condition: <verifiable stopping condition or n/a>\n- Verification: <commands/artifacts/evidence the agent must surface or n/a>\n- Constraints: <scope/safety/must-not-change limits or n/a>\n- Checkpoints: <progress reporting cadence or n/a>\n- Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>\n- Prompt: <runtime-specific goal prompt, \"see Recommended /goal below\", or none>\n- Next: <create goal | adopt goal and continue | provide prompt | ask approval | continue without goal | route elsewhere>\n```\n\nKeep the block concise. If the prompt is longer than one short line, put `Prompt: see Recommended /goal below`, then emit the copy-ready prompt immediately below the block.\n\nWhen emitting a copy-ready prompt for a Chinese-first user, use this order as needed:\n\n1. `推荐执行版（中文，可直接复制）`\n2. `默认选择理由`\n3. `可选调整`\n4. `你可以直接回复`\n5. `Goal Draft (English-compatible)` when requested or useful for portability",
+        "raw": "Emit this block:\n\n```text\nGoal Gate\n- Decision: <none | suggest | set-now | defer>\n- Runtime: <codex-tooling | codex-slash | claude-code-slash | unknown>\n- Goal fit: <low | medium | high>\n- Objective: <one durable objective or n/a>\n- Done condition: <verifiable stopping condition or n/a>\n- Verification: <commands/artifacts/evidence the agent must surface or n/a>\n- Constraints: <scope/safety/must-not-change limits or n/a>\n- Execution strategy: <how to assess single-agent vs delegated vs parallel execution, or n/a>\n- Checkpoints: <progress reporting cadence or n/a>\n- Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>\n- Prompt: <runtime-specific goal prompt, \"see Recommended /goal below\", or none>\n- Next: <create goal | adopt goal and continue | provide prompt | ask approval | continue without goal | route elsewhere>\n```\n\nKeep the block concise. If the prompt is longer than one short line, put `Prompt: see Recommended /goal below`, then emit the copy-ready prompt immediately below the block.\n\nWhen emitting a copy-ready prompt for a Chinese-first user, use this order as needed:\n\n1. `推荐执行版（中文，可直接复制）`\n2. `默认选择理由`\n3. `可选调整`\n4. `你可以直接回复`\n5. `Goal Draft (English-compatible)` when requested or useful for portability\n\nEvery executable copy-ready prompt must include an `执行编排：` or `Execution strategy:` line that carries the Delegation Policy. Keep it shorter than the task-specific outcome and verification unless delegation is the main risk.",
         "heading": "Output Contract",
         "level": 2
       },
@@ -860,6 +865,66 @@
       {
         "raw": "1. `references/i18n-commands.md`\n2. `references/workflow-daily.md`\n3. `references/maintenance-playbook.md`\n4. Runtime implementation check: `apps/web/scripts/i18n/index.ts`\n5. Runtime implementation check: `apps/web/scripts/i18n/manifest.ts`",
         "heading": "References",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "review-prompt-composer",
+    "sections": [
+      {
+        "raw": "把一组 Git 改动组装成一段自包含、可直接复制的审核提示词，交给外部团队或 AI agent 独立审核并运行仓库定义的检查。\n\n假设接收方不共享本轮对话、当前工作区或 `.review-handoff/` 产物。先保证接收方能够取得待审代码，再生成改动清单、待验证目标、审核重点、测试命令和输出要求。对方无法取得改动时，停止生成不可执行的提示词并说明缺少什么。",
+        "heading": "Review Prompt Composer",
+        "level": 1
+      },
+      {
+        "raw": "先运行以下只读命令，确认仓库、分支、HEAD 和工作区状态：\n\n```bash\ngit rev-parse --show-toplevel\ngit branch --show-current\ngit rev-parse HEAD\ngit status --short\n```\n\n明确用户要审核的唯一范围：工作区全部改动、仅已暂存改动、某分支相对基线的全量 diff，或特定 commits。不要把不同范围静默混在一起。\n\n需要基线时优先采用用户明确给出的 ref。用户未给出时，只能把实际存在的 upstream 或仓库默认分支作为候选；若不同候选会改变审核范围，先请用户确认。解析为真实 ref 和 SHA 后再写入提示词，最终提示词不得保留 `<base>`、`<sha>` 等占位符。",
+        "heading": "1. 确定审核范围",
+        "level": 3
+      },
+      {
+        "raw": "根据范围运行对应命令。工作区可能同时包含已暂存、未暂存和未跟踪文件，必须分别收集，不能只选其中一种状态。\n\n| 范围 | 证据命令 |\n|---|---|\n| 未暂存改动 | `git diff --stat` + `git diff --name-status` + `git diff` |\n| 已暂存改动 | `git diff --cached --stat` + `git diff --cached --name-status` + `git diff --cached` |\n| 未跟踪文件 | `git ls-files --others --exclude-standard`，再逐个读取文本文件；需要 patch 证据时运行 `git diff --no-index -- /dev/null \"$file\"` |\n| 分支全量 diff | `git log --oneline \"$base\"..HEAD` + `git diff --find-renames \"$base\"...HEAD --stat` + `git diff --find-renames \"$base\"...HEAD` |\n| 特定 commits | 对每个实际 SHA 运行 `git show --find-renames --stat \"$sha\"` + `git show --find-renames \"$sha\"` |\n\n`git diff --no-index` 发现差异时退出码为 1，这是正常结果。二进制文件不能靠文本清单完成审核；记录路径和类型，并在改动获取方式中要求提供相应文件或可访问 ref。\n\n逐项从本次命令输出和文件内容中建立改动清单。每项至少包含仓库根相对路径和可核对的具体变化；无法从证据中确认的内容不得写成事实。diff 很大时可以按模块概括，但不要跳过状态、重命名、删除或公开接口变化。",
+        "heading": "2. 收集完整证据",
+        "level": 3
+      },
+      {
+        "raw": "为接收方选择一种真实可用的获取方式：\n\n1. **可访问 ref**：接收方能访问包含全部改动的远端 branch 或 commits。写入精确的 base/head SHA 和 checkout/diff 命令。不要因为本地存在 branch 就假设它已推送；未经用户授权不得 push。\n2. **内联 patch**：改动尚未形成可访问 ref，但文本 patch 体积适合复制且已通过敏感信息检查。把完整 patch 放入提示词，明确接收方应按 patch 审核；不要再要求接收方在新 clone 中运行看不到内容的 `git diff`。\n3. **随附产物**：仅当用户确认会把指定 patch 或二进制文件一并交给接收方时使用。写入准确文件名、用途和校验值，不得引用只存在于本机且不会随提示词交付的路径。\n\n如果三种方式都不成立，停止并向用户说明：当前改动不可被外部接收方访问，需要可访问 ref、可内联 patch，或明确会随附的产物。不要生成表面完整但无法执行的审核提示词。",
+        "heading": "3. 通过改动获取门禁",
+        "level": 3
+      },
+      {
+        "raw": "把核心断言写成**待验证目标或不变量**，而不是既定事实，要求审核方主动尝试证伪。\n\n- 用户明确说明预期时，标注为“用户声明的待验证目标”，并检查它是否与 diff 明显冲突。\n- 需要从 diff 推断且不同解释会改变审核重点时，先向用户确认。\n- 发现用户声明与证据冲突时，先指出冲突，不要把错误断言直接放进提示词。\n\n示例：“用户声明的待验证目标：本次仅重构文件边界，不产生运行时行为变化；请尝试找出任何反例。”",
+        "heading": "4. 确定待验证目标",
+        "level": 3
+      },
+      {
+        "raw": "读取适用范围内的 `AGENTS.md`、仓库文档、包管理脚本和 CI 配置，找出与改动相关的测试、lint、typecheck 或 build 命令。优先采用仓库明确记录的命令，保持包管理器和参数原样。\n\n不要替接收方运行这些命令，也不要声称它们当前已经通过。把预期写成可核对结果，例如“退出码为 0、无失败用例”；需要凭据、服务或特定环境时，明确列出前置条件。找不到可靠命令时说明证据不足，不要凭记忆编造。",
+        "heading": "5. 从仓库证据确定检查命令",
+        "level": 3
+      },
+      {
+        "raw": "在把 branch、remote、diff、patch、日志或背景写入提示词前，检查是否包含凭据、私钥、token、cookie、`.env` 内容、内部地址、个人数据或其他不应交给外部接收方的信息。\n\n- 不输出疑似 secret 的原值来证明发现了它；只报告受影响的文件路径和风险类型。\n- 不输出带用户名、密码或 token 的 remote URL。\n- 可安全脱敏且不影响审核时，用 `[REDACTED: reason]` 明示脱敏位置。\n- 脱敏会破坏审核完整性时停止生成，并让用户选择安全的交付方式。",
+        "heading": "6. 执行敏感信息门禁",
+        "level": 3
+      },
+      {
+        "raw": "使用以下结构，并用实际值替换全部占位内容。按获取方式保留“精确命令”或“完整 patch”之一；不要让接收方猜测如何取得改动。\n\n    ````markdown\n    # 审核任务：<仓库与改动的一句话定位>\n\n    ## 背景与范围\n\n    仓库：`<repo>`\n    审核范围：`<实际 base/head SHA、commits 或 patch 范围>`\n    改动动机：<1-3 句>\n\n    **用户声明的待验证目标：<可证伪的不变量>。请主动寻找反例。**\n\n    ## 获取待审改动\n\n    <可直接复制的 checkout/diff 命令，或“以下 patch 即完整审核范围”的说明>\n\n    ```diff\n    <仅在使用内联 patch 时放入完整、已检查的 patch>\n    ```\n\n    ## 改动清单（N 项）\n\n    1. **<改动主题>**：`<仓库根相对路径>` — <证据支持的具体变化>\n    2. ...\n\n    ## 审核重点\n\n    - <围绕待验证目标的反例检查>\n    - <边界、回归和公开接口风险>\n\n    ## 检查命令\n\n    依次运行并贴出完整输出：\n\n    ```bash\n    <来自仓库文档、脚本或 CI 的精确命令>\n    ```\n\n    预期：<每条命令可核对的退出状态或结果；不要声称已在本地通过>。\n\n    ## 输出要求\n\n    1. 给出总体结论：通过 / 有保留通过 / 阻塞。\n    2. 按严重程度列出发现，并附仓库根相对路径、行号或 diff hunk 证据。\n    3. 对改动清单逐项标注核对结果。\n    4. 列出每条检查命令的实际结果；未运行时说明原因。\n    ````\n\n没有可靠检查命令时可以删除“检查命令”小节，但必须说明查阅了哪些仓库来源以及为何无法确定命令。没有内联 patch 时删除空的 `diff` 代码块。",
+        "heading": "7. 生成固定结构",
+        "level": 3
+      },
+      {
+        "raw": "输出前逐项检查，不满足就修正：\n\n- [ ] 接收方能通过精确命令、内联 patch 或已确认随附的产物取得全部待审改动。\n- [ ] 已覆盖范围内所有 staged、unstaged、untracked、rename、delete 和 binary 状态。\n- [ ] 每个事实、路径、SHA 和命令都有本次读取到的证据。\n- [ ] 没有引用本轮对话、`.review-handoff/` 或不会交付的本机路径。\n- [ ] 没有未替换的占位符、模糊代词或需要接收方猜测的命令。\n- [ ] 待验证目标被表述为需要主动证伪的声明，而不是预设结论。\n- [ ] 没有泄露 secret、凭据、私有数据或带凭据的 remote URL。",
+        "heading": "8. 自包含检查",
+        "level": 3
+      },
+      {
+        "raw": "默认在聊天中输出一个用四个反引号包裹的 Markdown 块，使内部三反引号代码块仍可整体复制。仅当用户明确要求保存时才写文件。\n\n提示词生成后只提醒用户：审核结果回来后，使用 `agentic-review-handoff` 验证反馈并跟进修复。",
+        "heading": "输出规则",
+        "level": 2
+      },
+      {
+        "raw": "- 只生成提示词；不运行被审核仓库的测试，不修改被审核代码，不 push，不发送提示词。\n- 不把“本地 branch/commit 存在”当成“外部接收方可访问”的证据。\n- 不省略无法传输的改动；缺少安全交付方式时停止并说明阻塞项。\n- 不为填满模板而编造背景、命令、预期结果、文件变化或审核结论。",
+        "heading": "Guardrails",
         "level": 2
       }
     ]

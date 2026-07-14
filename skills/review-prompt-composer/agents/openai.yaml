@@ -1,0 +1,4 @@
+interface:
+  display_name: "Review Prompt Composer"
+  short_description: "Compose evidence-backed external review prompts"
+  default_prompt: "Use $review-prompt-composer to create a self-contained prompt for an external reviewer to inspect my current Git changes and run the repository-defined checks."
