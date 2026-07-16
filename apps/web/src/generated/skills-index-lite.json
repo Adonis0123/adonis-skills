@@ -15,10 +15,10 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires a git repo because packet addressing uses git rev-parse --show-toplevel. Use when the user asks for an independent, read-only second pair of eyes on a diff/branch/PR another agent or teammate implemented; asks to verify reviewer feedback before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each loop under $repo_root/.review-handoff/active/ so agents can resume without copy-paste. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders/zips/tarballs/temp dirs, or when the user names a different review skill.",
+    "description": "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires a git repo because packet addressing uses git rev-parse --show-toplevel. Use when the user asks for an independent, read-only second pair of eyes on a diff/branch/PR another agent or teammate implemented; provides reviewer feedback or a Review-Prompt-ID to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each loop under $repo_root/.review-handoff/active/ and can record read-only provenance from $repo_root/.review-handoff/prompts/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders/zips/tarballs/temp dirs, or when the user names a different review skill.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.0"
+      "version": "2.1.0"
     },
     "files": {
       "hasReferences": true,
@@ -177,16 +177,16 @@
   {
     "slug": "review-prompt-composer",
     "name": "review-prompt-composer",
-    "description": "Compose a copy-ready prompt or prompt-plus-attachments package for an external team or AI agent to independently review Git changes and run repository-defined checks. Use for committed ranges, staged changes, unstaged tracked changes, untracked files, or the entire uncommitted working tree. Support reviewers through a proven shared working tree, an accessible ref, an inline patch, or an automatically generated repository-external attachment package. Prompt generation only: do not use for same-repository review/fix/re-review loops or returned-feedback validation; use agentic-review-handoff for those. Never run tests, modify reviewed code, commit, stage, stash, push, or send the handoff.",
+    "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for committed ranges, staged changes, unstaged tracked changes, untracked files, or all uncommitted changes when the reviewer can read the same repository and index. Persist prompts under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID that agentic-review-handoff can resolve later. Prompt generation only: do not use when the receiver lacks working-tree access; do not run tests, modify reviewed code, commit, stage, stash, push, send the prompt, or duplicate reviewed code. Use agentic-review-handoff for returned-feedback validation and review-fix-re-review loops.",
     "metadata": {
       "author": "adonis",
-      "version": "1.3.0"
+      "version": "2.0.0"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-14T08:40:58.000Z"
+    "updatedAt": "2026-07-14T12:05:36.000Z"
   },
   {
     "slug": "tailwindcss-next-init",

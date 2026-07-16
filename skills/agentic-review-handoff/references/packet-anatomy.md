@@ -26,8 +26,13 @@ updated: 2026-05-15T14:35:02Z
 last_anchor: review_findings
 lifecycle_state: in_progress
 round: 1
+source_prompt_id: feat-payment/2026-07-15_14-30-refactor-checkout
+source_prompt_head: 78b4382b19abd651a2274b5f6f188849cbec845d
+source_prompt_scope: all-uncommitted
 ---
 ```
+
+The three `source_prompt_*` fields are optional and must appear as a complete group when this loop originated from a resolved `review-prompt-composer` artifact. Resolve and validate them through `source-prompt-addressing.md`; never infer a partial group.
 
 Field semantics: see `packet-addressing.md`. The two key invariants:
 

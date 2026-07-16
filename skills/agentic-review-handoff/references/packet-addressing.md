@@ -6,8 +6,8 @@ How to find / create / name / advance / archive packet files. Read this when you
 
 ```
 $repo_root/
-├── .git/info/exclude           ← contains "/.review-handoff/" (auto-managed by this skill)
-├── .gitignore                  ← only adonis-skills repo itself dogfoods this; other repos rely on .git/info/exclude
+├── $GIT_COMMON_DIR/info/exclude ← contains "/.review-handoff/" (auto-managed by this skill)
+├── .gitignore                  ← only adonis-skills repo itself dogfoods this
 └── .review-handoff/
     ├── active/                 ← in-progress packets; addressing always reads here first
     │   └── <branch_slug>/
@@ -17,7 +17,7 @@ $repo_root/
             └── <local_minute>-<scope_slug>.md
 ```
 
-**Why repo-local + per-repo isolation**: the protocol is for two CLI agents running on the same machine in the same repo, taking turns. We don't sync packets across machines (use `docs/reviews/` and remove the gitignore line if you ever need that). We do not modify the target repo's `.gitignore` because this skill runs in repos that don't belong to its author; per-repo `.git/info/exclude` is the right git-native isolation primitive (local-only, not in history, never affects collaborators).
+**Why repo-local + per-repo isolation**: the protocol is for two CLI agents running on the same machine in the same repo, taking turns. We don't sync packets across machines. We do not modify the target repo's `.gitignore`; `$GIT_COMMON_DIR/info/exclude` is the repository-local Git mechanism and also works when `.git` is a worktree pointer file rather than a directory.
 
 ## Filename format
 
@@ -55,8 +55,12 @@ Re-stated from `SKILL.md` for completeness. Run this every time before writing o
        - Verdict in {PASS, NO_FINDINGS}            → DO NOT write # Fix Handoff; archive immediately
          (mv packet from active/$branch_slug/ to archive/$branch_slug/, set lifecycle_state = archived). See SKILL.md
          Lifecycle and Archive Trigger 1.
-4. --packet=<path> override: prefer it, but verify the path is under $repo_root/.review-handoff/.
+4. --packet=<path> override: prefer it, but verify the real path is under
+   $repo_root/.review-handoff/active/ or $repo_root/.review-handoff/archive/.
+   Reject $repo_root/.review-handoff/prompts/** and every other sibling.
 ```
+
+Selecting a creation path does not authorize an early write. Resolve optional source-prompt provenance before creating the packet file; ambiguity, traversal, or provenance mismatch must leave packet files unchanged.
 
 ## Frontmatter fields (full reference)
 
@@ -70,6 +74,9 @@ Re-stated from `SKILL.md` for completeness. Run this every time before writing o
 | `last_anchor` | enum (see below) | every writer | **Structural fact**: the last H1 anchor in the body, normalized. |
 | `lifecycle_state` | enum (see below) | every writer | **Domain state**: where this packet sits in its review-loop lifecycle. |
 | `round` | int | writer of `# Fix Completion (round N)` and `# Re-review (round N)` | Default 1. Increment when starting a new fix round. |
+| `source_prompt_id` | string, optional | source resolver | Stable repository-local prompt identity. Must be present with both other `source_prompt_*` fields. |
+| `source_prompt_head` | 40-char SHA, optional | source resolver | HEAD recorded by the validated source prompt. Provenance only, not current-code evidence. |
+| `source_prompt_scope` | string, optional | source resolver | Canonical scope copied from the validated source prompt. |
 
 ### `last_anchor` values
 
@@ -117,13 +124,18 @@ Any other combination is illegal:
 - `lifecycle_state != archived` while file is in `archive/` → invalid (file moved without lifecycle update, or vice versa).
 - `last_anchor in {review_handoff, review_intake}` with `lifecycle_state == archived` → invalid (review never produced findings; no terminal verdict to archive on).
 
-## `.git/info/exclude` bootstrapping
+## Git common-dir `info/exclude` bootstrapping
 
 Before creating the first packet in any repo:
 
 ```bash
-exclude_file="$repo_root/.git/info/exclude"
-mkdir -p "$repo_root/.git/info"
+common_dir=$(git -C "$repo_root" rev-parse --git-common-dir)
+case "$common_dir" in
+  /*) ;;
+  *) common_dir="$repo_root/$common_dir" ;;
+esac
+exclude_file="$common_dir/info/exclude"
+mkdir -p "$common_dir/info"
 touch "$exclude_file"
 # Canonical form is /.review-handoff/ (leading slash anchors to repo root).
 # Tolerate the unanchored form .review-handoff/ from earlier versions of this
@@ -131,7 +143,7 @@ touch "$exclude_file"
 grep -qE '^/?\.review-handoff/$' "$exclude_file" || echo '/.review-handoff/' >> "$exclude_file"
 ```
 
-This is repo-local, never enters git history, never modifies `.gitignore` (which would dirty the working tree of a repo that isn't yours). Verify with `git status --short` that `.review-handoff/` does not appear after a packet write.
+This is repo-local, never enters Git history, and never modifies `.gitignore`. Verify with `git status --short` that `.review-handoff/` does not appear after a packet or prompt write.
 
 ## Edge cases
 

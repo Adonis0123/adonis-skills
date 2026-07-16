@@ -1,4 +1,4 @@
 interface:
   display_name: "Review Prompt Composer"
-  short_description: "Compose review prompts for any Git working state"
-  default_prompt: "Use $review-prompt-composer to create a portable review prompt for my current Git changes, preserve the requested staged/unstaged/untracked scope exactly, and automatically build a repository-external attachment package when the receiver cannot access the worktree and the material cannot be safely inlined."
+  short_description: "Create project-local Git review prompts"
+  default_prompt: "Use $review-prompt-composer to create one repository-local, copy-ready Markdown review prompt for my requested Git scope, require Review-Prompt-ID echoing, and keep the shared working tree as the only source of reviewed code."

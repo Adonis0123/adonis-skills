@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires a git repo because packet addressing uses git rev-parse --show-toplevel. Use when the user asks for an independent, read-only second pair of eyes on a diff/branch/PR another agent or teammate implemented; asks to verify reviewer feedback before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each loop under $repo_root/.review-handoff/active/ so agents can resume without copy-paste. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders/zips/tarballs/temp dirs, or when the user names a different review skill."
+description: "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires a git repo because packet addressing uses git rev-parse --show-toplevel. Use when the user asks for an independent, read-only second pair of eyes on a diff/branch/PR another agent or teammate implemented; provides reviewer feedback or a Review-Prompt-ID to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each loop under $repo_root/.review-handoff/active/ and can record read-only provenance from $repo_root/.review-handoff/prompts/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders/zips/tarballs/temp dirs, or when the user names a different review skill."
 metadata:
   author: adonis
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Agentic Review Handoff
@@ -16,6 +16,7 @@ For ordinary review / fix / re-review turns, use this `SKILL.md` only. Do not pr
 
 - packet shape or template uncertainty → `references/packet-anatomy.md`
 - lifecycle, naming, archive, branch, or concurrency edge case → `references/packet-addressing.md`
+- prompt ID parsing, source prompt lookup, or provenance conflict → `references/source-prompt-addressing.md`
 - severity / source / verdict / feedback-validation / deep-review details → `references/review-contract.md`
 - example diffing or exact table shape uncertainty → `references/example-packet.md`
 
@@ -25,7 +26,7 @@ This skill historically said "review/re-review are read-only by default; do not 
 
 - **Read-only still means**: do not modify the code, docs, tests, or configs being reviewed; do not commit / push / rebase.
 - **Packet artifact writes are part of the protocol, not a violation**: creating, appending to, renaming, and `mv`-ing files under `$repo_root/.review-handoff/**` is exactly what makes the cross-agent loop work. Treat these writes the same way you treat printing findings to the terminal.
-- **Before writing the first packet in a repo**, ensure `$repo_root/.git/info/exclude` already contains a line `/.review-handoff/` (leading slash anchors to repo root, the canonical form). If neither `/.review-handoff/` nor the unanchored `.review-handoff/` is already present, append the canonical form. See `references/packet-addressing.md` § ".git/info/exclude bootstrapping" for the exact idempotent snippet. This isolates the artifact per-repo without modifying anyone's `.gitignore` (important when reviewing in a repo that isn't yours).
+- **Before writing the first packet in a repo**, resolve `$GIT_COMMON_DIR` with `git rev-parse --git-common-dir` and ensure its `info/exclude` contains `/.review-handoff/` (the canonical root-anchored form). Treat the historical `.review-handoff/` form as already configured. See `references/packet-addressing.md` for the exact idempotent snippet.
 
 ## Workflow
 
@@ -69,12 +70,23 @@ Before writing any output, run packet addressing exactly in this order. These st
        section is implementer-only and writing it without implementer context
        breaks the evidence-first trust boundary.
 4. If the user explicitly passed --packet=<path> or named a packet file, prefer that,
-   but still verify it lives under $repo_root/.review-handoff/.
+   but verify it lives under $repo_root/.review-handoff/active/ or archive/.
+   Never accept a prompts/ file as a review-loop packet.
 ```
 
-Before writing the first packet for a branch, create `$repo_root/.review-handoff/active/${branch_slug}/` and `$repo_root/.review-handoff/archive/${branch_slug}/` if needed. Also ensure the `.git/info/exclude` line described above is in place.
+Before writing the first packet for a branch, create `$repo_root/.review-handoff/active/${branch_slug}/` and `$repo_root/.review-handoff/archive/${branch_slug}/` if needed. Also ensure the Git common-dir `info/exclude` line described above is in place.
 
-### 3. Append the stage's required H1 section group, then atomically rewrite frontmatter
+Packet addressing may select a target filename at this stage, but do not create or write the packet file until optional source-prompt resolution in step 3 succeeds. Ambiguous or unsafe prompt provenance must leave packet files unchanged.
+
+### 3. Resolve optional source prompt provenance
+
+After locating or creating the packet identity but before writing its first H1 group, apply `references/source-prompt-addressing.md` when the user supplies a prompt ID/path, pasted feedback contains `Review-Prompt-ID`, the packet already records `source_prompt_id`, or the current branch has prompt candidates.
+
+Use this order: explicit ID/path → echoed ID → existing packet provenance → exactly one non-expired current-branch prompt → ask on remaining ambiguity. Validate the ID, real path, frontmatter, lifecycle, and active/archive uniqueness before using it.
+
+When resolved, write `source_prompt_id`, `source_prompt_head`, and `source_prompt_scope` into packet frontmatter. Preserve matching existing provenance and stop on mismatch. The source prompt is read-only provenance: never mutate it, never treat its summary as verified evidence, and revalidate returned feedback against current code. Lack of a prompt remains valid for existing agentic workflows with no prompt signal or candidate.
+
+### 4. Append the stage's required H1 section group, then atomically rewrite frontmatter
 
 Two write rules govern every packet edit:
 
@@ -86,11 +98,11 @@ Two write rules govern every packet edit:
   Do **not** stop after a single H1 if the stage requires more — partial groups break the auto-resume chain (e.g. reviewer stopping after `# Review Intake` leaves the fixer nothing to act on).
 - **Frontmatter is metadata; rewrite it atomically once per stage entry.** After appending the stage's H1 group, rewrite the entire YAML frontmatter to update `updated`, `last_anchor` (= the **last** H1 you just wrote), `lifecycle_state`, and (when entering a new round) `round`. Rewriting frontmatter is **not** a violation of append-only.
 
-### 4. Use references only on demand
+### 5. Use references only on demand
 
 Use the Fast Path map above. Loading references is optional and should be tied to a concrete uncertainty; routine turns should not read all reference files.
 
-### 5. Run the loop
+### 6. Run the loop
 
 - **Review stage**: verify what the user pasted as a defect report, not as ground truth. Use a lightweight first-principles frame by default: goal, constraints, invariants, evidence, assumptions, concrete failure modes. Escalate to the deeper DDD / high-cohesion / low-coupling lens only when the change is architectural, cross-module, or domain-rule heavy. Use official or primary sources only when the claim depends on external API, framework, browser, security, payment, legal, or platform behavior.
 - **Fix handoff stage**: when the user wants to ship the review result to the original implementer or another agent, ensure the packet ends with a `# Fix Handoff` section per `references/packet-anatomy.md`.
