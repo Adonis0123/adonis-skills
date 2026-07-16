@@ -1,10 +1,10 @@
 ---
 name: code-plugin-architecture
 description: >-
-  Use when the user's pain is "adding/removing one more X means editing N files" and X is a recurring variant kind: popup, banner, modal, ad slot, payment method, AI model/tool, form field type, connector, sub-site, command, menu item, agent, extension point, or data source. Use when they want to design, refactor, review, name, or explain a pluggable mechanism using registry, interface/trait contract, runtime core, and convention folders; mention pluginize, pluggable, plugin architecture, extension point, registry pattern, or extensibility. Use when explaining the first-principles rationale, DDD/SOLID/OCP mapping, or industry analogies behind that structure. Use for cross-stack mapping to VSCode contributes, Webpack/Vite plugins, Rust/Tauri connectors, Python entry_points, or cargo features. Skip one variant's internals/styles/hooks/copy/bugs, and skip register/registry meaning DI container, user signup, or package registry.
+  Use when adding/removing one more X means editing N files and X is a recurring variant: popup, banner, modal, ad slot/placement, payment method, AI model/tool, form field type, connector, sub-site, command, menu item, agent, extension point, or data source. Use to design, refactor, review, name, or explain pluggable mechanisms via registry, interface/trait contract, runtime core, and convention folders (pluginize, plugin architecture, extension point, registry pattern, extensibility). Use for first-principles of the five pieces (Identity, Contract, Registry, Runtime Core, Convention Folder), DDD/SOLID/OCP, industry analogies, or persuading a team off switch-case growth; also static code plugins (ad placement types) vs runtime inventory/ops. Use for cross-stack mapping to VSCode contributes, Webpack/Vite plugins, Rust/Tauri connectors, Python entry_points, or cargo features. Skip one variant's internals/styles/hooks/copy/bugs; skip register/registry as DI container, user signup, or package registry.
 metadata:
   author: adonis
-  version: "0.2.0"
+  version: "0.3.1"
 ---
 
 # Code Plugin Architecture
@@ -168,7 +168,7 @@ popups/[Name]/
 
 > 这就是"高内聚低耦合"在这里的精确落点：**高内聚** = Convention Folder（一个变种的东西聚一处）+ Registry（一类东西的名单聚一处）；**低耦合** = Contract 是唯一通道，依赖方向单向 `Plugin → Contract ← Core`（谁都不依赖对方实现，即 DIP）。
 >
-> 注意类比是"可类比"，不是等号——例如 Microkernel 的 registry 含动态发现/协议协商/版本治理，本方法论的 Registry 通常只是"中心元数据清单"那一层。完整推导、DDD 全映射与出处见 [references/first-principles.md](references/first-principles.md)。
+> 注意类比是"可类比"，不是等号——例如 Microkernel 的 registry 记录插件的 name、契约格式与访问协议（契约可版本化）并支持动态发现，本方法论的 Registry 通常只是"中心元数据清单"那一层。完整推导、DDD 全映射与出处见 [references/first-principles.md](references/first-principles.md)。
 
 ## 递归组合：插件化是分形的
 
@@ -299,22 +299,11 @@ if (!IS_PROD) {
 
 这条是"声明式注册"在真实运行时会撞上的两个坑，框架无关。
 
-**① 重算逃生阀**。注册通常做成幂等的（同一个 key 注册第二次就短路，避免重复初始化）。但当一个插件的"要不要显示 / 要不要启用"**取决于会变化的运行时上下文**（登录态、权限、AB 实验分组、远程开关），幂等就会把后续更新吃掉——上下文从"未登录"变成"已登录"，插件状态却停在第一次注册的结果。
+**① 重算逃生阀**。注册通常做成幂等的（同 key 二次注册短路）。但当"要不要显示 / 启用"**取决于会变化的运行时上下文**（登录态、权限、AB 分组、远程开关），幂等会把后续更新吃掉——此时注册入口要提供 `register({ ..., force: true })` 绕过短路、按新 ctx 重算。判断边界："注册意图是否会随上下文失效"——纯静态插件不需要；依赖外部可变状态的必须留这个逃生阀，否则会出"切换账号后弹窗永不出现"这类静默 bug。
 
-```ts
-register({ key, enabled: deriveEnabled(ctx), force: true })
-//                                            ^ 绕过幂等短路，按新 ctx 重算
-```
+**② 状态维度隔离**。Core 持有的横切状态（缓存、关闭计数、冷却时间）要按维度（用户 / 租户 / 环境）隔离时，用"主键 + 维度后缀"组合存储键（`${prefix}_${pluginKey}_${userId}`），而不是为每个维度新造主键——否则 A 用户的"已关闭一次"会串到同设备的 B 用户身上。
 
-判断边界：注册入口要不要 `force`，取决于"注册意图是否会随上下文失效"。纯静态插件不需要；意图依赖外部可变状态的，必须留这个逃生阀，否则会出"切换账号后弹窗永不出现"这类静默 bug。
-
-**② 状态维度隔离**。Core 持有的横切状态（缓存、关闭计数、已读标记、冷却时间）如果要按**维度**隔离（按用户 / 租户 / 环境），用"主键 + 维度后缀"组合出存储键，而不是为每个维度新造一个主键：
-
-```ts
-storageKey = `${prefix}_${pluginKey}_${dimensionSuffix}`  // 如 ..._${userId}
-```
-
-否则 A 用户的"已关闭一次"会串到同设备的 B 用户身上。维度后缀让同一个插件主键在多用户/多环境下天然隔离，且不污染主键命名体系。
+两个机制的代码级真实案例见 [references/case-studies.md](references/case-studies.md) 案例 3。
 
 ## 落地流程（最小步骤）
 
@@ -432,7 +421,8 @@ interface PluginContract {
 - [references/first-principles.md](references/first-principles.md) — 第一性原理完整推导（O(N)→O(1) 为什么逼出五件套）、DDD 全映射、业界出处（Microkernel / Fowler Plugin / OCP / Shotgun Surgery）与 SOLID 关系，**用于说服他人"这套不是编的"或对齐团队架构词汇**。
 - [references/case-studies.md](references/case-studies.md) — 4 个真实案例的对照表（多站点站群、推广横幅、推广弹窗、工具扩展 apps），每个案例都给出"五件套"映射，**用于实际操作前对齐**。
 - [references/anti-patterns.md](references/anti-patterns.md) — 八种最常见的"伪插件化"反模式（按严重程度分层：Must-fix / Smell / Context-dependent），**用于代码评审和 PR review 时挑出问题**。
-- [references/cross-stack.md](references/cross-stack.md) — 这套模式在 Webpack / VSCode / Express / Tailwind / Rust trait / Python entry_points 上的同构映射，**用于跨语言/跨框架 onboarding 时建立类比**。
+- [references/cross-stack.md](references/cross-stack.md) — 这套模式在 Webpack / VSCode / Express / Tailwind / Rust trait / Python entry_points / MCP / Claude Code plugins 上的同构映射，**用于跨语言/跨框架 onboarding 时建立类比**。
+- [references/governance.md](references/governance.md) — 五件套之外的四个治理关注点（版本演进、隔离与权限、生命周期失败处理、插件测试策略），**用于机制要长期运营或对外开放第三方插件时**。
 
 ## 用户给的需求不够明确时
 
