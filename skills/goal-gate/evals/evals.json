@@ -191,18 +191,20 @@
       "id": 12,
       "name": "autoset-grok-tooling",
       "prompt": "I'm in Grok Build and the session exposes the update_goal tool. No goal is active right now. Work through PLAN.md and implement every task in it, and don't stop until `pnpm test` passes and `pnpm build` succeeds. Just get it done and tell me when it's actually finished.",
-      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: grok-tooling. Because Grok has no create_goal/get_goal, Next is adopt goal and continue (not create goal). Still emits a runnable /goal prompt. Mentions update_goal for checkpoint messages and completed:true only after verification evidence; does not invent create_goal.",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: grok-tooling. Because Grok has no create_goal/get_goal and no goal is Active, Next is 'wait for user /goal' (not create goal, not silent adopt-and-implement). Emits a runnable /goal prompt immediately and stops without calling update_goal or starting PLAN.md work. Clarifies /goal-gate is not /goal. Mentions update_goal only after Active.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block (contains a line starting with 'Goal Gate' and a '- Decision:' field)",
         "Decision is set-now (auto-set fires; not suggest)",
         "Runtime is grok-tooling",
         "Goal fit is high",
-        "Next is 'adopt goal and continue' (or equivalent self-adopt), not 'create goal'",
+        "Next is 'wait for user /goal' (or clearly waits for the user to paste /goal), not 'create goal' and not silent full adopt-and-implement",
         "Provides a runnable /goal prompt for durable Grok goal mode",
+        "Does not start implementing PLAN.md or claim the durable goal is already active in this turn",
+        "Does not call update_goal (message/completed/blocked) while the goal is inactive",
         "Done condition references pnpm test and/or pnpm build",
-        "Instructs using update_goal for progress (message at checkpoints) and/or completed:true only when verification proves done",
         "Does not call or invent create_goal or get_goal",
+        "States or implies that /goal-gate is not the same as product /goal activation",
         "Execution strategy assesses decomposability before subagents and keeps main-agent final verification"
       ]
     },
@@ -241,14 +243,30 @@
       "id": 15,
       "name": "disambiguate-update-goal-is-grok",
       "prompt": "This coding-agent session only has the update_goal tool for goals (no get_goal, no create_goal). Keep implementing docs/PLAN.md until the test suite is green. I'm stepping away — finish it.",
-      "expected_output": "Correctly classifies runtime as grok-tooling (update_goal alone is Grok, not Codex). set-now with adopt, not create_goal.",
+      "expected_output": "Correctly classifies runtime as grok-tooling (update_goal alone is Grok, not Codex). set-now with Next wait for user /goal (or soft-adopt only if declined), not create_goal. Emits /goal and does not invent create_goal.",
       "files": [],
       "expectations": [
         "Runtime is grok-tooling (not codex-tooling)",
         "Decision is set-now",
         "Does not claim create_goal or get_goal will be called",
-        "Next is adopt goal and continue (or report via update_goal), not create goal",
-        "Mentions update_goal and/or a /goal prompt appropriate for Grok"
+        "Next is wait for user /goal (preferred) or adopt only with explicit soft path — not create goal",
+        "Mentions a /goal prompt appropriate for Grok; update_goal only after Active"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "grok-soft-adopt-opt-out",
+      "prompt": "I'm in Grok Build with update_goal available. No goal is active. Finish PLAN.md until pnpm test and pnpm build pass. Soft only — do not use native /goal, just do the work.",
+      "expected_output": "set-now with Runtime grok-tooling, Next adopt goal and continue because the user explicitly declined durable /goal. Does not call update_goal while inactive. Does not invent create_goal.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is set-now",
+        "Runtime is grok-tooling",
+        "Next is adopt goal and continue (soft-adopt after explicit opt-out of native /goal)",
+        "Does not require the user to paste /goal before working",
+        "Does not call or invent create_goal or get_goal",
+        "Does not call update_goal while the goal is inactive"
       ]
     }
   ]

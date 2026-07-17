@@ -2,11 +2,11 @@
 
 These examples assume the auto-set rule: when the safety gate is clear and goal fit is high, `set-now` fires without asking. Medium fit stays on `suggest`; a tripped safety gate drops to `suggest` or `defer`.
 
-## Grok tooling: auto set-now (adopt + update_goal)
+## Grok tooling: auto set-now (wait for user /goal)
 
 User: "I'm in Grok Build. The session has `update_goal`. No goal is active. Work through PLAN.md and don't stop until `pnpm test` passes and `pnpm build` succeeds."
 
-High fit, gate clear. Grok has no `create_goal` — adopt the contract, emit a copy-ready `/goal`, and use `update_goal` for progress once a goal is active (or when the user runs the slash command).
+High fit, gate clear. Grok has no `create_goal` — durable mode is inactive until the user pastes `/goal`. Emit the contract + copy-ready slash command, set `Next: wait for user /goal`, and **stop**. Do not start PLAN.md work and do not call `update_goal` yet.
 
 ```text
 Goal Gate
@@ -18,17 +18,45 @@ Goal Gate
 - Verification: Surface changed files, the test/build commands, and their exit status.
 - Constraints: Stay within PLAN.md scope; do not push or commit unless asked.
 - Execution strategy: Before implementation, assess plan-task independence, shared context, write overlap, and separate verification; use subagents only when beneficial and keep final integration with the main agent.
-- Checkpoints: Report after each PLAN.md milestone via `update_goal` message when a goal is active.
+- Checkpoints: After goal is Active, report after each PLAN.md milestone via `update_goal` message.
 - Stop or ask when: PLAN.md is ambiguous, validation needs unavailable credentials, or a destructive action is required.
 - Prompt: see Recommended /goal below
-- Next: adopt goal and continue
+- Next: wait for user /goal
 ```
 
 ```text
 /goal Implement every task in PLAN.md without stopping until pnpm test passes and pnpm build succeeds. Execution strategy: assess dependencies, shared context, write overlap, and independent verification before using subagents; keep final integration with the main agent. Surface each checkpoint with commands and exit codes. Pause for credentials, production data, or destructive actions.
 ```
 
-Do not call `create_goal` or `get_goal`. When working under an active goal, call `update_goal` with checkpoint `message` values; call `completed: true` only after verification evidence proves the done condition; call `blocked_reason` only when genuinely stuck.
+One-line truth for the user: `/goal-gate` drafted this contract; paste the `/goal` line above (or say "soft only / no native goal") to continue. Do not call `create_goal` or `get_goal`. After the user activates, work under Active goal and call `update_goal` with checkpoint `message` values; call `completed: true` only after verification evidence proves the done condition; call `blocked_reason` only when genuinely stuck.
+
+## Grok tooling: set-now after user activates /goal
+
+User follows the previous turn by pasting the recommended `/goal …` (or `/goal status` shows Active).
+
+Now work the contract. Checkpoints use `update_goal` messages; completion uses `completed: true` only with surfaced evidence. If `update_goal` returns `Goal is not Active`, stop and re-request `/goal` activation — do not retry complete.
+
+## Grok tooling: soft-adopt exception (user declines native goal)
+
+User: "I'm in Grok. Just do PLAN.md until tests pass — no /goal, soft only."
+
+```text
+Goal Gate
+- Decision: set-now
+- Runtime: grok-tooling
+- Goal fit: high
+- Objective: Implement every task in PLAN.md until the named validation commands pass.
+- Done condition: All PLAN.md tasks are implemented, `pnpm test` passes, and `pnpm build` succeeds.
+- Verification: Surface changed files, the test/build commands, and their exit status.
+- Constraints: Stay within PLAN.md scope; soft-adopt only — no durable Grok goal.
+- Execution strategy: Assess plan-task independence before subagents; main agent keeps final integration.
+- Checkpoints: Report in transcript only (no update_goal while inactive).
+- Stop or ask when: PLAN.md is ambiguous or a destructive action is required.
+- Prompt: none (user declined durable /goal)
+- Next: adopt goal and continue
+```
+
+Never call `update_goal` while inactive, even on soft-adopt.
 
 ## Grok slash: copy-ready Chinese prompt
 
