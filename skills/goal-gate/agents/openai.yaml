@@ -1,4 +1,4 @@
 interface:
   display_name: "Goal Gate"
-  short_description: "Gate autonomy and draft durable goals."
-  default_prompt: "Use $goal-gate to decide whether this task should run under a durable goal, then draft the safest copy-ready /goal contract."
+  short_description: "Gate autonomy and draft durable goals for Grok, Codex, and Claude Code."
+  default_prompt: "Use $goal-gate to decide whether this task should run under a durable goal (Grok /goal + update_goal, Codex create_goal, or Claude Code adopt), then draft the safest copy-ready /goal contract."

@@ -1,6 +1,6 @@
 # Copy-Ready Goal Drafting
 
-Use this reference when `goal-gate` needs to produce a prompt the user may paste directly into Codex, Claude Code, or a compatible agent.
+Use this reference when `goal-gate` needs to produce a prompt the user may paste directly into Grok Build, Codex, Claude Code, or a compatible agent. The `/goal` body shape is shared; only the post-prompt runtime action differs (Grok: adopt + optional `update_goal` progress; Codex tooling: `create_goal`; Claude Code: adopt + transcript evidence).
 
 ## Default-First Strategy
 

@@ -1,6 +1,6 @@
 ---
 name: goal-gate
-description: "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt that keeps Codex, Claude Code, or another agent working until a verifiable done condition is met. It gates autonomy, handles runtime differences, and writes copy-ready goal contracts with outcome, verification, constraints, write boundaries, delegation strategy, iteration policy, completion evidence, and pause/ask conditions. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'turn this vague app idea into a goal', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings."
+description: "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt that keeps Grok Build, Codex, Claude Code, or another agent working until a verifiable done condition is met. It gates autonomy, handles runtime differences (including Grok /goal + update_goal progress reporting), and writes copy-ready goal contracts with outcome, verification, constraints, write boundaries, delegation strategy, iteration policy, completion evidence, and pause/ask conditions. Trigger on requests like 'should I set a goal?', 'set up a durable goal', 'give me a /goal prompt', 'Grok goal', 'turn this vague app idea into a goal', 'keep refactoring until tests pass', 'I am stepping away, have the agent finish this', migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or multi-checkpoint work. Do not use for single quick edits, running tests once, OKR/scrum goal questions, recurring reminders, or token-budget settings."
 metadata:
   author: adonis
 ---
@@ -31,10 +31,14 @@ Use explicit user intent before ambient tool availability:
 
 | Runtime | Signal | Goal action |
 |---|---|---|
+| `grok-slash` | The user is in Grok Build / Grok TUI, asks for a Grok `/goal`, or wants a Grok-compatible slash prompt. | Output a `/goal ...` prompt (Grok args: objective, `status`, `pause`, `resume`, `clear`). |
+| `grok-tooling` | The session exposes the `update_goal` tool (Grok goal feature enabled), and the user did not explicitly ask only for a slash-command prompt. | Adopt/work the contract; report progress with `update_goal`. Do **not** invent `create_goal` / `get_goal` — Grok has no create/get goal API. |
 | `codex-slash` | The user is in Codex and wants a slash-command prompt, or explicitly asks for Codex `/goal`. | Output a `/goal ...` prompt. |
 | `claude-code-slash` | The user is in Claude Code, asks for Claude Code `/goal`, or asks for a Claude Code-compatible prompt. | Output a `/goal ...` prompt tuned for Claude Code evaluation. |
-| `codex-tooling` | The session exposes tools such as `get_goal`, `create_goal`, or `update_goal`, and the user did not explicitly ask for a slash-command prompt. | Call goal tools only when the user explicitly asked to set or manage a goal. |
+| `codex-tooling` | The session exposes Codex goal tools such as `get_goal` or `create_goal`, and the user did not explicitly ask for a slash-command prompt. | Call Codex goal tools only when the user explicitly asked to set or manage a goal (or `set-now` auto-creates). |
 | `unknown` | The runtime cannot be inferred. | Output a portable contract, not an executable command. |
+
+Disambiguation: `update_goal` alone marks **Grok**, not Codex. Codex tooling is `get_goal` / `create_goal`. If both a slash prompt and tooling are requested, emit one block per runtime.
 
 If multiple runtimes are requested, emit one `Goal Gate` block per runtime. Keep each block executable or copyable on its own.
 
@@ -63,7 +67,7 @@ For vague but low-risk work, prefer a goal with safe defaults over a clarificati
 Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.
 
 - Destructive, irreversible, billing, auth, production-data, or schema-breaking work.
-- A goal is already active (for runtimes that expose goal status). Never replace or mutate it silently; ask whether to continue, complete, block, clear, or replace it, and emit `Decision: defer`.
+- A goal is already active (Codex `get_goal`, Grok `/goal status` / user statement, or in-progress `update_goal` work). Never replace or mutate it silently; ask whether to continue, complete, block, clear, or replace it, and emit `Decision: defer`.
 - The objective still needs a design or scoping decision that `brainstorming` or `discuss-before-plan` should resolve.
 - Verification cannot run, so completion could never be proven from evidence.
 
@@ -78,7 +82,8 @@ When the safety gate is clear and goal fit is `high`, treat the goal as authoriz
 How `set-now` executes depends on the runtime:
 
 - `codex-tooling`: call `get_goal` first when available; if no goal is active, call `create_goal` with the `Objective`. Do not set a token budget unless the user asked for one.
-- `codex-slash` / `claude-code-slash`: there is no goal API to call, so adopt the goal contract yourself — keep working toward the done condition, reporting at the checkpoints, until it is met or a stop-or-ask condition fires. Still emit the `/goal` prompt so the user can re-run it as a durable goal in a fresh session.
+- `grok-tooling`: Grok does not expose `create_goal` / `get_goal`. Adopt the contract and keep working. Still emit a copy-ready `/goal <objective>` so the user can formalize durable goal mode in the TUI. While a goal is active, report with `update_goal` (`message` at checkpoints; `completed: true` only when verification evidence proves the done condition; `blocked_reason` when a stop-or-ask condition fires — never invent success).
+- `grok-slash` / `codex-slash` / `claude-code-slash`: there is no create-goal API to call, so adopt the goal contract yourself — keep working toward the done condition, reporting at the checkpoints, until it is met or a stop-or-ask condition fires. Still emit the `/goal` prompt so the user can re-run it as a durable goal in a fresh session. For Grok, mention that `/goal` appears only when the goal feature is enabled and `update_goal` is in the toolset; management args are `status` / `pause` / `resume` / `clear`.
 - `unknown`: capabilities are uncertain, so do not auto-execute. Emit a portable contract with `Next: ask approval` and let the user start it.
 
 Hold the auto-set for `medium` fit: stay on `suggest`, because the medium boundary is fuzzy enough that a quick nod from the user is worth more than the saved round-trip. `low` fit is `none`.
@@ -126,7 +131,7 @@ If a copy-ready goal is saved to a file or the user asks for validation, run `sc
 | `set-now` | Goal fit is high and the safety gate is clear, or the user explicitly asked and the goal is verifiable. | Auto-execute the runtime-specific action. |
 | `defer` | Scope, decisions, evidence, or an already-active goal block a clean start. | Stop and ask, or route to the smallest prerequisite workflow. |
 
-`set-now` is reached two ways: the user explicitly asks for a goal, or the task clears the safety gate at high goal fit. Do not silently mutate an active goal in `codex-tooling`; if `get_goal` shows one, emit `Decision: defer` and ask what to do with it.
+`set-now` is reached two ways: the user explicitly asks for a goal, or the task clears the safety gate at high goal fit. Do not silently mutate an active goal: in `codex-tooling`, if `get_goal` shows one, emit `Decision: defer` and ask; in `grok-tooling` / `grok-slash`, if a goal is already active (user says so, `/goal status`, or prior progress), emit `Decision: defer` and ask whether to continue, complete via `update_goal`, pause/resume/clear via `/goal`, or replace — never call `update_goal(completed=true)` or tell the user to `/goal clear` without explicit approval when replacement is the issue.
 
 ## Output Contract
 
@@ -135,7 +140,7 @@ Emit this block:
 ```text
 Goal Gate
 - Decision: <none | suggest | set-now | defer>
-- Runtime: <codex-tooling | codex-slash | claude-code-slash | unknown>
+- Runtime: <grok-tooling | grok-slash | codex-tooling | codex-slash | claude-code-slash | unknown>
 - Goal fit: <low | medium | high>
 - Objective: <one durable objective or n/a>
 - Done condition: <verifiable stopping condition or n/a>
@@ -145,7 +150,7 @@ Goal Gate
 - Checkpoints: <progress reporting cadence or n/a>
 - Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>
 - Prompt: <runtime-specific goal prompt, "see Recommended /goal below", or none>
-- Next: <create goal | adopt goal and continue | provide prompt | ask approval | continue without goal | route elsewhere>
+- Next: <create goal | adopt goal and continue | report via update_goal | provide prompt | ask approval | continue without goal | route elsewhere>
 ```
 
 Keep the block concise. If the prompt is longer than one short line, put `Prompt: see Recommended /goal below`, then emit the copy-ready prompt immediately below the block.
@@ -166,6 +171,24 @@ For Claude Code `/goal`, ensure the verification evidence will appear in the con
 
 For Codex slash `/goal`, include the same durable contract and validation loop. If goals may be disabled, tell the user to enable goals before running the prompt.
 
+For Grok `/goal` (`grok-slash` or the copy-ready prompt under `grok-tooling`):
+
+- Keep the executable prefix `/goal` (not `/目标`). Body may be Chinese for Chinese-first users.
+- Put a concrete, verifiable objective in the first line after `/goal` — Grok stores that string as the autonomous objective across turns.
+- Require the agent to surface verification evidence in the transcript (commands, exit codes, logs, screenshots, paths). Grok goal completion may be checked adversarially against the contract; unsourced "done" claims are weak.
+- Include execution strategy, iteration bounds, and pause conditions like other runtimes.
+- Optionally note management commands when the user is operating an existing goal: `/goal status`, `/goal pause`, `/goal resume`, `/goal clear`.
+- If the goal feature might be off, tell the user `/goal` appears only when goals are enabled and `update_goal` is in the session toolset.
+
+For Grok tooling (`update_goal`), if `Decision: set-now`:
+
+1. Adopt the contract and continue the work (same autonomy as Claude Code adopt).
+2. Emit a copy-ready `/goal <objective>` for durable multi-turn goal mode.
+3. When a goal is active, call `update_goal` with a short `message` at checkpoints.
+4. Call `update_goal` with `completed: true` **only** after the done condition is proven by surfaced evidence — never mark complete on hope or partial work.
+5. Call `update_goal` with `blocked_reason` when a stop-or-ask condition fires after genuine stuckness (credentials, approval, repeated failure), not for routine questions.
+6. Do not invent `create_goal` / `get_goal`. Do not silently clear or replace an active goal.
+
 For Codex tooling, if `Decision: set-now`, call `get_goal` first when available. If no active goal exists, call `create_goal` with the `Objective`; do not set a token budget unless the user explicitly requested one. If a goal is active, do not replace it silently; ask the user what to do with the active goal before any goal mutation.
 
 ## Workflow-Gate Relationship
@@ -180,8 +203,8 @@ If the user is actually asking which workflow to use, emit `Decision: defer` and
 
 ## References
 
-Read `references/examples.md` when you need worked examples for Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.
+Read `references/examples.md` when you need worked examples for Grok tooling, Grok slash, Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.
 
-Read `references/copy-ready-goals.md` when you need to write a polished, direct-copy `/goal` prompt, especially for vague Chinese requests, default-first MVP goals, unknown domains, option lists, and prompt linting.
+Read `references/copy-ready-goals.md` when you need to write a polished, direct-copy `/goal` prompt, especially for vague Chinese requests, default-first MVP goals, unknown domains, option lists, and prompt linting. The same `/goal` shape is valid for Grok, Codex, and Claude Code; only the runtime action after the prompt differs.
 
 Use `scripts/lint-goal-prompt.py` when a generated prompt exists as a file or needs deterministic linting.

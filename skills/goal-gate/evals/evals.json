@@ -186,6 +186,70 @@
         "Keeps the main agent responsible for schema order, integrated rollback verification, and the aggregate done condition",
         "Includes a single-agent fallback when subagents are unavailable"
       ]
+    },
+    {
+      "id": 12,
+      "name": "autoset-grok-tooling",
+      "prompt": "I'm in Grok Build and the session exposes the update_goal tool. No goal is active right now. Work through PLAN.md and implement every task in it, and don't stop until `pnpm test` passes and `pnpm build` succeeds. Just get it done and tell me when it's actually finished.",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: grok-tooling. Because Grok has no create_goal/get_goal, Next is adopt goal and continue (not create goal). Still emits a runnable /goal prompt. Mentions update_goal for checkpoint messages and completed:true only after verification evidence; does not invent create_goal.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block (contains a line starting with 'Goal Gate' and a '- Decision:' field)",
+        "Decision is set-now (auto-set fires; not suggest)",
+        "Runtime is grok-tooling",
+        "Goal fit is high",
+        "Next is 'adopt goal and continue' (or equivalent self-adopt), not 'create goal'",
+        "Provides a runnable /goal prompt for durable Grok goal mode",
+        "Done condition references pnpm test and/or pnpm build",
+        "Instructs using update_goal for progress (message at checkpoints) and/or completed:true only when verification proves done",
+        "Does not call or invent create_goal or get_goal",
+        "Execution strategy assesses decomposability before subagents and keeps main-agent final verification"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "grok-slash-chinese-copy-ready",
+      "prompt": "帮我写一个 Grok /goal，我想做一个本地待办 App，先给能直接复制的版本。",
+      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: grok-slash, plus a Chinese copy-ready /goal with verification, constraints, boundaries, execution strategy, iteration, done and pause conditions, and a default reason. No placeholders.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is suggest, not set-now (user asked for a copyable prompt)",
+        "Runtime is grok-slash",
+        "Provides a Chinese heading or body for the copy-ready prompt",
+        "The executable command prefix is /goal, not /目标",
+        "Chooses safe local-MVP defaults rather than an open questionnaire",
+        "Includes verification, constraints, boundaries, execution strategy, iteration, done/stop, and pause conditions",
+        "Does not leave placeholders such as TODO, TBD, [path], 待定, or 待补充"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "grok-active-goal-defer",
+      "prompt": "I'm in Grok Build with update_goal available. A goal is already active for the search-indexing refactor. Set a new goal to also finish the pagination rewrite and run it to completion.",
+      "expected_output": "Active goal trips the safety gate. Decision is defer. Does not silently complete/clear/replace via update_goal or /goal clear. Asks how to handle the active goal.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is defer (NOT set-now) because a goal is already active",
+        "Runtime is grok-tooling or grok-slash",
+        "Does not automatically call update_goal with completed:true on the old goal or instruct silent /goal clear",
+        "Asks the user how to handle the active goal (continue / complete / pause / clear / replace)"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "disambiguate-update-goal-is-grok",
+      "prompt": "This coding-agent session only has the update_goal tool for goals (no get_goal, no create_goal). Keep implementing docs/PLAN.md until the test suite is green. I'm stepping away — finish it.",
+      "expected_output": "Correctly classifies runtime as grok-tooling (update_goal alone is Grok, not Codex). set-now with adopt, not create_goal.",
+      "files": [],
+      "expectations": [
+        "Runtime is grok-tooling (not codex-tooling)",
+        "Decision is set-now",
+        "Does not claim create_goal or get_goal will be called",
+        "Next is adopt goal and continue (or report via update_goal), not create goal",
+        "Mentions update_goal and/or a /goal prompt appropriate for Grok"
+      ]
     }
   ]
 }

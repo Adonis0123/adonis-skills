@@ -2,6 +2,92 @@
 
 These examples assume the auto-set rule: when the safety gate is clear and goal fit is high, `set-now` fires without asking. Medium fit stays on `suggest`; a tripped safety gate drops to `suggest` or `defer`.
 
+## Grok tooling: auto set-now (adopt + update_goal)
+
+User: "I'm in Grok Build. The session has `update_goal`. No goal is active. Work through PLAN.md and don't stop until `pnpm test` passes and `pnpm build` succeeds."
+
+High fit, gate clear. Grok has no `create_goal` — adopt the contract, emit a copy-ready `/goal`, and use `update_goal` for progress once a goal is active (or when the user runs the slash command).
+
+```text
+Goal Gate
+- Decision: set-now
+- Runtime: grok-tooling
+- Goal fit: high
+- Objective: Implement every task in PLAN.md until the named validation commands pass.
+- Done condition: All PLAN.md tasks are implemented, `pnpm test` passes, and `pnpm build` succeeds.
+- Verification: Surface changed files, the test/build commands, and their exit status.
+- Constraints: Stay within PLAN.md scope; do not push or commit unless asked.
+- Execution strategy: Before implementation, assess plan-task independence, shared context, write overlap, and separate verification; use subagents only when beneficial and keep final integration with the main agent.
+- Checkpoints: Report after each PLAN.md milestone via `update_goal` message when a goal is active.
+- Stop or ask when: PLAN.md is ambiguous, validation needs unavailable credentials, or a destructive action is required.
+- Prompt: see Recommended /goal below
+- Next: adopt goal and continue
+```
+
+```text
+/goal Implement every task in PLAN.md without stopping until pnpm test passes and pnpm build succeeds. Execution strategy: assess dependencies, shared context, write overlap, and independent verification before using subagents; keep final integration with the main agent. Surface each checkpoint with commands and exit codes. Pause for credentials, production data, or destructive actions.
+```
+
+Do not call `create_goal` or `get_goal`. When working under an active goal, call `update_goal` with checkpoint `message` values; call `completed: true` only after verification evidence proves the done condition; call `blocked_reason` only when genuinely stuck.
+
+## Grok slash: copy-ready Chinese prompt
+
+User: "帮我写一个 Grok /goal，我想做一个本地待办 App，先给能直接复制的版本。"
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: grok-slash
+- Goal fit: high
+- Objective: Build a first-version local personal todo app MVP.
+- Done condition: The local app runs and the core add/list/complete todo workflow is proven with runtime evidence.
+- Verification: Surface project commands, local run output, and browser evidence for the workflow.
+- Constraints: No accounts, paid services, production deploy, or cloud sync.
+- Execution strategy: Assess decomposability before implementation; keep final integration with the main agent.
+- Checkpoints: Report after inspection, first runnable workflow, and final verification.
+- Stop or ask when: Credentials, deployment, or product-scope decisions are required.
+- Prompt: see Recommended /goal below
+- Next: provide prompt
+```
+
+```text
+推荐执行版（中文，可直接复制）
+/goal 创建第一版本地待办 App MVP；先读取项目已有命令和约束，若无现有项目则创建最小本地 Web 应用，实现添加、列表、完成/取消完成待办的核心流程。
+验证：运行项目最小相关检查，启动本地应用，在浏览器走通新增、列表、完成待办，并用命令输出或截图作为证据。
+约束：不接入账号、云同步、付费服务或生产部署。
+边界：只写入新项目目录，或只修改与待办核心流程直接相关的文件。
+执行编排：开始前评估依赖、共享上下文、写入冲突与独立验证能力再决定是否用 subagent；主 agent 负责最终集成验证。
+迭代策略：先做可运行核心流程，最多 3 轮聚焦改进。
+完成条件：本地核心待办流程可运行且验证证据已展示。
+暂停条件：需要凭证、付费、生产部署或产品范围决策时暂停。
+
+默认选择理由：本地 MVP 最快验证核心流程，并避开账号与云端风险。
+```
+
+Note: `/goal` in Grok is available when the goal feature is enabled and `update_goal` is in the toolset. Management: `/goal status` | `pause` | `resume` | `clear`.
+
+## Grok tooling: active goal already present
+
+User: "I'm in Grok. A goal is already active for the search-indexing refactor. Set a new goal to finish the pagination rewrite."
+
+```text
+Goal Gate
+- Decision: defer
+- Runtime: grok-tooling
+- Goal fit: high
+- Objective: Finish the pagination rewrite with validation evidence.
+- Done condition: Pagination rewrite complete and agreed checks pass.
+- Verification: Surface active-goal status, proposed objective, and validation output once approved.
+- Constraints: Do not clear, complete, or replace the active goal without user approval.
+- Execution strategy: n/a until the active-goal decision is resolved.
+- Checkpoints: n/a
+- Stop or ask when: A goal is already active.
+- Prompt: none
+- Next: ask approval
+```
+
+Ask whether to continue the active goal, mark it complete via `update_goal` only if truly done, `/goal pause|resume|clear`, or replace after clear. Do not call `update_goal(completed=true)` on the wrong objective.
+
 ## Codex slash: vague Chinese app prompt
 
 User: "帮我写一个 Codex /goal，我想做一个本地记账 App，先给能直接复制的版本。"
