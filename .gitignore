@@ -25,3 +25,18 @@ coverage
 
 # Local workflow-gate iteration workspace.
 /.workflow-gate-workspace/
+
+# Public-skill local installs under .agents/skills (SoT is skills/).
+# Created by `pnpm skills:install:local` / `skills:test:local` for runtime testing.
+# Do not dual-commit these mirrors. Internal-only skills in .agents/skills stay tracked.
+# Dual-tracked historical mirrors (commit, weekly-report, lingui-*, …) remain tracked.
+.agents/skills/branch-creator/
+.agents/skills/code-plugin-architecture/
+.agents/skills/commit-push/
+.agents/skills/discuss-before-plan/
+.agents/skills/enforce-lf/
+.agents/skills/global-modal-scaffold/
+.agents/skills/goal-gate/
+.agents/skills/review-prompt-composer/
+.agents/skills/workflow-gate/
+.agents/skills/zustand-store-scaffold/
