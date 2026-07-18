@@ -1,0 +1,45 @@
+{
+  "skill_name": "commit",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "ignore-env-commit-src",
+      "prompt": "In this git repo, run the commit skill end-to-end: create a focused local commit for the intentional code/docs changes. Do not push. Follow the skill exactly (Ignore vs Commit gate, staging rules, HEREDOC commit). After finishing, write a short report to outputs/report.md covering: what you staged, what you ignored and why, any .gitignore edits, commit hash/subject if committed, and the exact text you would show the user about ignores.",
+      "expected_output": "Commits source/docs only; does not stage .env; updates .gitignore for .env if missing; explicitly tells user about the ignore in report.md",
+      "files": [],
+      "expectations": [
+        "Did not stage or commit .env contents",
+        "Staged and committed intentional non-secret changes (source and/or README)",
+        "Added or updated .gitignore so .env is ignored when it was untracked noise",
+        "report.md (or final message) explicitly tells the user what was ignored and why \u2014 not silent",
+        "Did not use bare git add . or git add -A"
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "tell-user-node-modules",
+      "prompt": "In this git repo, use the commit skill to commit the documentation change only. Follow Ignore vs Commit. There may be dependency/build junk untracked. Write outputs/report.md with the user-facing summary including any ignored paths.",
+      "expected_output": "Commits docs.md; ignores node_modules; user-facing report explains the ignore",
+      "files": [],
+      "expectations": [
+        "Did not stage or commit anything under node_modules/",
+        "Committed the docs.md change",
+        "User-facing report explicitly mentions ignoring node_modules (or dependency dir) with a reason",
+        "If .gitignore was updated for node_modules, report says so"
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "tracked-env-stop",
+      "prompt": "In this git repo, the user asked you to commit all current changes using the commit skill. Follow the skill's Ignore vs Commit rules for already-tracked secrets. Write outputs/report.md with what you did and what you told the user. Prefer safety over completing a commit.",
+      "expected_output": "Does not silently commit .env; stops/warns about already-tracked secret; suggests git rm --cached + gitignore",
+      "files": [],
+      "expectations": [
+        "Did not silently commit the .env secret change without warning",
+        "Stopped or escalated to the user about already-tracked secret/env file",
+        "Suggested git rm --cached and/or .gitignore (or equivalent untrack guidance)",
+        "report.md contains explicit user-facing warning about the tracked env/secret"
+      ]
+    }
+  ]
+}

@@ -37,6 +37,13 @@ Automatic staging boundaries:
 - Before staging unstaged files, inspect the relevant diff with `git diff -- <path>`; for untracked files, inspect the path and content type as needed.
 - If a path or diff suggests secrets, credentials, cookies, private keys, local env files, certificates, or private user data, stop and ask before staging or committing.
 - If the selected scope contains multiple unrelated concerns, stop and ask whether to split the commit.
+- **Ignore vs Commit gate** (every candidate path, especially `??` untracked):
+  - **Default IGNORE** (do not stage; if the pattern is missing, append a minimal entry to `.gitignore` first): secrets (`.env` / `.env.*` except `.env.example`), `node_modules/`, venvs, build/cache (`.next/`, `dist/`, `coverage/`, `.turbo/`, `*.log`), OS noise (`.DS_Store`), and other local-only junk.
+  - **Default COMMIT** when in scope: source/tests/docs/shared configs, `.gitignore` updates themselves, lockfiles the repo already tracks, generated files only if this repo already tracks them by convention.
+  - **Ask** when ambiguous: large binaries/media, IDE dirs (`.vscode/`, `.idea/`), unclear generated artifacts.
+  - Already-tracked paths that should be ignored: stop and warn; suggest `git rm --cached -- <path>` + `.gitignore` — do not silently untrack secrets.
+  - Prefer shipping the `.gitignore` fix in the same focused commit (or a tiny `chore` commit) so teammates do not re-hit the same noise. Re-run `git status --short` after editing `.gitignore`.
+  - **Tell the user about ignores (required)**: never silently skip paths. When you do not stage something, add/edit `.gitignore`, or leave paths out of the commit because they should be ignored, report in the same turn: path/pattern, short why, and what you did. Group related paths; skip this section only when nothing was ignored.
 
 After staging or when staged changes already existed, use `git diff --cached --stat` and `git diff --cached` to understand exactly what will be committed.
 
@@ -47,7 +54,7 @@ Identify the current branch and upstream from `git status --short --branch`.
 Stop and ask before committing or pushing when:
 
 - the current branch is `main`, `master`, `develop`, `release`, `test`, `prerelease`, or another protected/default-looking branch
-- the staged diff includes secrets, credentials, local env files, private keys, or generated files that look accidental
+- the staged diff includes secrets, credentials, local env files, private keys, or generated files that look accidental (these should have been caught by the Ignore vs Commit gate — unstage and fix `.gitignore` before continuing)
 - the working tree contains unrelated unstaged changes that could be confused with the staged change
 - the user asked for PR/MR creation, release work, deployment, merge, rebase, or tag creation
 
@@ -130,6 +137,7 @@ Report only the useful facts:
 - branch and push target
 - verification commands and outcomes
 - any remaining uncommitted files, skipped checks, or risks
+- any Ignore vs Commit actions: what was ignored, why, and whether `.gitignore` changed
 
 If the repo uses a generated index or validation workflow, mention the commands that were run and their result.
 

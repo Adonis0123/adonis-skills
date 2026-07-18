@@ -38,6 +38,8 @@ git status --short --branch
 - 对单个 unstaged 文件，先用 `git diff -- <path>` 或必要的文件读取确认变更意图。对 untracked 文件，先确认文件名和内容类型合理。
 - 如果文件名或 diff 暗示 `.env`、credential、token、cookie、private key、secret、证书、账号私密数据等敏感信息，停止并请用户确认，不要自动 stage 或提交。
 - 如果变更看起来包含多个无关目的，停止并询问是否拆分提交。
+- **Ignore vs Commit 门禁**（对每个候选路径，尤其 `??` untracked）：该忽略的先写进 `.gitignore` 再跳过 stage；该提交的才 `git add -- <path>`。细则见 `references/ignore-vs-commit.md`。
+- **忽略必须说明**：凡跳过 stage、写入/修改 `.gitignore`、或因 ignore 规则未纳入本次提交的路径，不得静默处理。须在当轮明确告诉用户：路径/pattern、原因、做了什么（未 stage / 已改 `.gitignore` 等）。多条可按原因分组列表；无忽略则不必多写。
 
 ### 2. 分析代码变更
 
@@ -91,7 +93,7 @@ git status --short --branch
 git log -1 --oneline
 ```
 
-向用户报告提交 hash、提交信息、已执行的检查，以及仍然未提交的文件。
+向用户报告提交 hash、提交信息、已执行的检查、仍然未提交的文件，以及本次 **Ignore vs Commit** 处理过的路径（忽略了什么、为何忽略、是否改了 `.gitignore`）。
 
 ## 提交信息编写规则
 
@@ -126,7 +128,7 @@ git log -1 --oneline
 
 ## 注意事项
 
-- 不要提交包含敏感信息的文件（.env、credentials 等）
+- 不要提交包含敏感信息的文件（.env、credentials 等）；缺 ignore 规则时先补 `.gitignore`
 - 提交前确保代码通过 lint 和类型检查
 - 一次提交只做一件事，保持提交的原子性
 - 提交信息要准确反映变更内容，关注"为什么"而非"做了什么"
@@ -134,5 +136,6 @@ git log -1 --oneline
 ## 参考资源
 
 详细的提交规范和项目配置，参考：
+- **`references/ignore-vs-commit.md`** - 忽略 vs 提交门禁（`.gitignore` 与 stage 决策）
 - **`references/commit-convention.md`** - 完整的提交规范文档
 - **`references/commit-examples.md`** - 提交信息示例

@@ -1,0 +1,18 @@
+{
+  "skill_name": "commit-push",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "ignore-gate-before-push",
+      "prompt": "This is a local-only eval. Follow the commit-push skill for committing, but DO NOT actually push to any remote (simulate push as skipped with reason 'eval fixture has no remote'). Create a focused commit for intentional code changes only. Write outputs/report.md including Ignore vs Commit actions.",
+      "expected_output": "Same ignore gate as commit; report lists ignores; no push to real remote",
+      "files": [],
+      "expectations": [
+        "Did not stage or commit .env",
+        "Committed intentional source/docs changes",
+        "report.md lists what was ignored and why",
+        "Did not push to a real remote (or documented skip)"
+      ]
+    }
+  ]
+}
