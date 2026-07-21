@@ -12,6 +12,9 @@ coverage
 
 /.claude/settings.local.json
 
+# Local brainstorming visual companion sessions.
+/.superpowers/
+
 # Local skill-creator iteration workspaces (snapshots, benchmark runs, eval outputs)
 /.skill-creator-workspaces/
 # Per-skill sibling workspaces created by skill-creator (e.g. skills/foo-workspace/)
