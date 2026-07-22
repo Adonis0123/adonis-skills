@@ -113,7 +113,7 @@ describe('T5 negative paths', () => {
       }),
     });
     assert.equal(r1.status, 'blocked');
-    cmdAppendFixCompletion({
+    await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r1.packetPath,
       body: '## Changes\n- attempt 1\n',
@@ -141,7 +141,7 @@ describe('T5 negative paths', () => {
     const meta = repo.readPacketMeta(r2.packetPath);
     const st = loadRunState(dir, meta.packetId);
     saveRunState(dir, meta.packetId, { ...st, round: 2, roundsBudget: 2, openBlocking: ['F1'] });
-    cmdAppendFixCompletion({
+    await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r2.packetPath,
       body: '## Changes\n- attempt 2\n',
@@ -180,7 +180,7 @@ describe('T5 negative paths', () => {
       }),
     });
     fs.appendFileSync(r1.packetPath, '\n<!-- evil -->\n');
-    assert.throws(
+    await assert.rejects(
       () =>
         cmdAppendFixCompletion({
           repoRoot: dir,

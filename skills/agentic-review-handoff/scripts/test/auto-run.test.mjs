@@ -213,7 +213,7 @@ describe('auto-run happy paths', () => {
     assert.ok(fs.existsSync(r1.packetPath));
 
     // Fixer writes Fix Completion via claim-free writer
-    cmdAppendFixCompletion({
+    await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r1.packetPath,
       body: '## Changes\n- fixed off-by-one\n\n## Verification\n- unit test\n',
@@ -280,7 +280,7 @@ describe('packet hash guard', () => {
     assert.equal(r1.status, 'blocked');
     // external rewrite
     fs.appendFileSync(r1.packetPath, '\n<!-- external edit -->\n');
-    assert.throws(
+    await assert.rejects(
       () =>
         cmdAppendFixCompletion({
           repoRoot: dir,

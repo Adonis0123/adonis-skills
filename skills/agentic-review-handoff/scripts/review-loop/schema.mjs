@@ -327,8 +327,17 @@ export function parseReReview(text, priorFindingIds = []) {
       };
     }
   }
-  if (verdict === 'PASS_WITH_CONCERNS' && newBlocking.length) {
-    return { ok: false, error: 'PASS_WITH_CONCERNS cannot include new [阻塞] findings' };
+  // F1: unresolved/partially priors are blockers — only BLOCKED allowed
+  if (verdict === 'PASS_WITH_CONCERNS') {
+    if (newBlocking.length) {
+      return { ok: false, error: 'PASS_WITH_CONCERNS cannot include new [阻塞] findings' };
+    }
+    if (unresolved.length) {
+      return {
+        ok: false,
+        error: 'PASS_WITH_CONCERNS rejected: unresolved/partially prior findings remain (must BLOCKED)',
+      };
+    }
   }
   if (verdict === 'BLOCKED' && !unresolved.length && !newBlocking.length) {
     return { ok: false, error: 'BLOCKED re-review requires unresolved prior or new blocker' };

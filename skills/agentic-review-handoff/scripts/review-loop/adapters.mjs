@@ -256,6 +256,22 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
  */
 export function invokeProduct(cfg) {
   return new Promise((resolve) => {
+    // F6: refuse to spawn if STOP already present
+    if (
+      fs.existsSync(cfg.globalStopPath)
+      || (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
+    ) {
+      resolve({
+        ok: false,
+        code: DELIVERY_UNKNOWN,
+        error: 'STOP interrupt (pre-spawn)',
+        exitCode: null,
+        timedOut: false,
+        stopped: true,
+      });
+      return;
+    }
+
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-adapter-'));
     const outFile = path.join(tmpDir, 'out.txt');
     const argv = buildArgv({
@@ -341,7 +357,12 @@ export function invokeProduct(cfg) {
     });
 
     child.on('close', (exitCode) => {
-      if (stopped) {
+      // F6: re-check STOP at close to cover race with poll interval
+      if (
+        stopped
+        || fs.existsSync(cfg.globalStopPath)
+        || (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
+      ) {
         finish({
           ok: false,
           code: DELIVERY_UNKNOWN,

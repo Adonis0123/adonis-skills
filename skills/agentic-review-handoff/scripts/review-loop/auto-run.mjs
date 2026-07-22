@@ -251,12 +251,10 @@ async function runBody(ctx) {
   // On first start: if never ran, nextRound=1. On continue after BLOCKED fix: increment.
 
   if (!isContinue && round > 0) {
-    // Re-entry without --continue after partial run: allow only if no review yet
-    if (state.lastVerdict && state.lastVerdict !== 'BLOCKED') {
-      throw new Error(
-        `packet already has verdict ${state.lastVerdict}; use --continue or a new packet`,
-      );
-    }
+    // F5: never silently restart round 1 on an in-progress packet
+    throw new Error(
+      `packet already has round=${round} (lastVerdict=${state.lastVerdict ?? 'n/a'}); use run --continue or a new packet`,
+    );
   }
 
   // If continuing from BLOCKED, require legitimate Fix Completion (A2)
@@ -427,10 +425,15 @@ async function runBody(ctx) {
   }
 
   // Format stages + write
-  const lifecycle = lifecycleForVerdict(
+  // Packet lifecycle for write: BLOCKED+Fix Handoff stays in_progress (F4 validator);
+  // PASS_WITH_CONCERNS stays awaiting_user_decision (terminal park).
+  let lifecycle = lifecycleForVerdict(
     effectiveRound <= 1 ? 'review_findings' : 're_review',
     parsed.verdict,
   );
+  if (effectiveRound <= 1 && parsed.verdict === 'BLOCKED') {
+    lifecycle = 'in_progress';
+  }
 
   let sectionMarkdown;
   let lastAnchor;
@@ -611,7 +614,7 @@ function terminalReport(x) {
 /**
  * Fixer helper: append Fix Completion stage (claim-free) after addressing BLOCKED findings.
  */
-export function cmdAppendFixCompletion(opts) {
+export async function cmdAppendFixCompletion(opts) {
   const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
   const branch = resolveBranch(repoRoot);
   if (!opts.packetPath) throw new Error('--packet required');
@@ -624,6 +627,19 @@ export function cmdAppendFixCompletion(opts) {
   });
   if (meta.lifecycleState === 'archived') {
     throw new Error('fix-completion refuses lifecycle_state=archived');
+  }
+  // F3: legal stage gate — must follow Fix Handoff or blocked re-review
+  const last = lastPhysicalH1(meta.text);
+  const okPrior =
+    last
+    && (last.anchor === 'fix_handoff'
+      || last.anchor === 're_review'
+      || /^re_review/.test(last.anchor)
+      || last.anchor === 'fix_completion');
+  if (!okPrior) {
+    throw new Error(
+      `fix-completion refuses last_anchor=${meta.lastAnchor ?? last?.anchor ?? 'none'} (need fix_handoff or re_review after BLOCKED)`,
+    );
   }
   const body =
     opts.body
@@ -639,12 +655,15 @@ export function cmdAppendFixCompletion(opts) {
   if (!/^#\s*Fix Completion(\s*\(round\s+\d+\))?\s*$/i.test(firstH1.trim())) {
     throw new Error('fix-completion body must start with "# Fix Completion" H1');
   }
-  return appendStageAuto({
-    repoRoot,
-    packetPath,
-    packetId,
-    sectionMarkdown: section,
-    lastAnchor: 'fix_completion',
-    lifecycleState: 'in_progress',
-  });
+  // F3: hold same packet lock as run
+  return withPacketLock(repoRoot, packetId, async () =>
+    appendStageAuto({
+      repoRoot,
+      packetPath,
+      packetId,
+      sectionMarkdown: section,
+      lastAnchor: 'fix_completion',
+      lifecycleState: 'in_progress',
+    }),
+  );
 }

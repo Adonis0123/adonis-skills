@@ -143,7 +143,7 @@ async function main() {
         break;
       }
       case 'fix-completion':
-        result = autoRun.cmdAppendFixCompletion({
+        result = await autoRun.cmdAppendFixCompletion({
           ...base,
           bodyFile: base.bodyFile,
           body: args.body,

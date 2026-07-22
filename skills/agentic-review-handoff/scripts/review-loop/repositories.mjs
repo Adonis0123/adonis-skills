@@ -220,10 +220,16 @@ export function createPacketFile(repoRoot, branch, scopeSlug = 'review-loop') {
   fs.mkdirSync(path.join(repoRoot, '.review-handoff', 'archive', slug), { recursive: true });
 
   const minute = localMinuteStamp();
+  const archiveDir = path.join(repoRoot, '.review-handoff', 'archive', slug);
   let base = `${minute}-${scopeSlug}`;
   let file = path.join(activeDir, `${base}.md`);
   let n = 2;
-  while (fs.existsSync(file)) {
+  // F2: avoid colliding with archived packets or runtime ids from same minute/scope
+  while (
+    fs.existsSync(file)
+    || fs.existsSync(path.join(archiveDir, `${base}.md`))
+    || fs.existsSync(path.join(repoRoot, '.review-handoff', 'runtime', packetIdFromParts(branch, base)))
+  ) {
     base = `${minute}-${scopeSlug}-${String(n).padStart(2, '0')}`;
     file = path.join(activeDir, `${base}.md`);
     n += 1;
