@@ -58,7 +58,7 @@
         "level": 1
       },
       {
-        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **classic single-session packet review (no automation)** → Workflow sections below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive → `references/packet-addressing.md`\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`",
+        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **resume a past reviewer session (\"给我 codex/grok/claude 恢复对话的命令\")** → `review-loop sessions`\n- **classic single-session packet review (no automation)** → Workflow sections below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive → `references/packet-addressing.md`\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`",
         "heading": "Fast Path",
         "level": 2
       },
@@ -78,12 +78,17 @@
         "level": 1
       },
       {
-        "raw": "node \"$RL\" consult --repo \"$REPO\" --peer=codex --question-file /tmp/q.md\n```\n\n| Concept | Rule |\n|---|---|\n| Fixer | Visible session — sole worktree + packet writer |\n| Reviewer | Headless, read-only sandbox (flags hardcoded in adapters) |\n| Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |\n| Rounds | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate) |\n| STOP | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP` |\n| Sandbox | Cannot be disabled via CLI flags |\n\nContract details: `references/auto-loop-contract.md`.\n\nTests:\n\n```bash",
+        "raw": "node \"$RL\" consult --repo \"$REPO\" --peer=codex --question-file /tmp/q.md",
         "heading": "Advisory decision consult (not part of Verdict machine)",
         "level": 1
       },
       {
-        "raw": "node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/auto-run.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/auto-run-negatives.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/consult.test.mjs\n```",
+        "raw": "node \"$RL\" sessions --repo \"$REPO\" [--product=codex|grok|claude]\n```\n\n| Concept | Rule |\n|---|---|\n| Fixer | Visible session — sole worktree + packet writer |\n| Reviewer | Headless, read-only sandbox (flags hardcoded in adapters) |\n| Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |\n| Rounds | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate) |\n| STOP | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP` |\n| Sandbox | Cannot be disabled via CLI flags |\n\nContract details: `references/auto-loop-contract.md`.\n\nTests:\n\n```bash",
+        "heading": "(Codex Desktop's list hides codex_exec sessions — this is the way back in)",
+        "level": 1
+      },
+      {
+        "raw": "node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/auto-run.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/auto-run-negatives.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/consult.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/sessions.test.mjs\n```",
         "heading": "from repo root",
         "level": 1
       },

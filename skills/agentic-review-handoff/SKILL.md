@@ -16,6 +16,7 @@ Dual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not c
 
 - **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)
 - **decision consult / ask another AI for stance** → `review-loop consult`
+- **resume a past reviewer session ("给我 codex/grok/claude 恢复对话的命令")** → `review-loop sessions`
 - **classic single-session packet review (no automation)** → Workflow sections below
 - packet shape → `references/packet-anatomy.md`
 - lifecycle / archive → `references/packet-addressing.md`
@@ -39,6 +40,10 @@ node "$RL" run --continue --repo "$REPO" --packet "$PACKET"
 
 # Advisory decision consult (not part of Verdict machine)
 node "$RL" consult --repo "$REPO" --peer=codex --question-file /tmp/q.md
+
+# List recorded reviewer sessions + copy-ready resume commands
+# (Codex Desktop's list hides codex_exec sessions — this is the way back in)
+node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 ```
 
 | Concept | Rule |
@@ -59,7 +64,8 @@ Tests:
 node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
   skills/agentic-review-handoff/scripts/test/auto-run.test.mjs \
   skills/agentic-review-handoff/scripts/test/auto-run-negatives.test.mjs \
-  skills/agentic-review-handoff/scripts/test/consult.test.mjs
+  skills/agentic-review-handoff/scripts/test/consult.test.mjs \
+  skills/agentic-review-handoff/scripts/test/sessions.test.mjs
 ```
 
 ## Legacy dual-window — removed (T8)

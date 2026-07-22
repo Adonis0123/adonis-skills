@@ -12,6 +12,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as autoRun from './review-loop/auto-run.mjs';
 import * as consult from './review-loop/consult.mjs';
+import * as sessions from './review-loop/sessions.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -61,6 +62,7 @@ function help() {
       'review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]',
       'review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH',
       'review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH',
+      'review-loop sessions --repo=PATH [--product=codex|grok|claude]',
     ],
     removed: [
       'open/bind/next/wait/append-eof/complete/board/resolve/gate/disarm/blind-submit/h1-probe',
@@ -158,8 +160,16 @@ async function main() {
           question: args.question,
         });
         break;
+      case 'sessions':
+        result = sessions.cmdSessions({
+          ...base,
+          product: typeof args.product === 'string' ? args.product : undefined,
+        });
+        break;
       default:
-        throw new Error(`Unknown command: ${command}. Try: run | fix-completion | consult | help`);
+        throw new Error(
+          `Unknown command: ${command}. Try: run | fix-completion | consult | sessions | help`,
+        );
     }
     print(result);
     if (result && result.ok === false) process.exitCode = 2;
