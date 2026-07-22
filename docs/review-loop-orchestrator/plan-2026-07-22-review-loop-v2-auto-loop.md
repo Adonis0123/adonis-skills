@@ -293,6 +293,7 @@ flowchart LR
 | Delegate mode | headless 派发带写权限的实现活给另一模型 | 需先设计"独占移交"语义保住单写者不变量；且注意 Grok durable goal（/goal）激活是 user-only，headless 不可达 |
 | deep profile 盲评 | 独立盲答 + 交叉质疑物化进 packet | 标准路径转绿后按需求再议（当前倾向 T8 一并删除 stub） |
 | Grok 三席 Consult 面板 | consult 同时问两家取立场对照 | consult 单发模式用出真实需求后 |
+| `roundsAttempted` 计数语义 | 预算耗尽报告用 Reviewer round 计数，`--rounds 1` 时与 `present:false` 并存易误读（实现 R3 非阻塞遗留，auto-run.mjs:793/800） | 下次触碰该文件时顺手修 |
 
 ## 10. 参考与证据
 
@@ -318,6 +319,14 @@ flowchart LR
 | R3 · 2026-07-22 | Codex（resume 同一会话） | BLOCKED：项 5 resolved；项 3 剩一毫米——round ≥2 schema 未明写末行 Verdict；无新增阻塞项 | 一句话修订（Re-review schema 明写末行 Verdict，缺 Verdict 按 malformed）；3 轮预算用尽，用户侧追加收口轮 |
 | R4 · 2026-07-22 | Codex（resume 同一会话） | **PASS**：项 3 resolved，无新增阻塞项 | 定稿。本表 4 轮本身即 D1/D5/D6 拓扑的首次实战（headless 只读 + resume + 代录） |
 
+**实现评审（被审对象 = Grok 的实现 diff `37b91af..HEAD`，Reviewer = Codex 新会话 `019f885f-5bb5-75c3-9e4f-efec246a267f`，报告归档于 `.review-handoff/runtime/consults/`）**
+
+| 轮 | 结论 | 处置 |
+|---|---|---|
+| 实现 R1 · 2026-07-22 | BLOCKED：5 阻塞（scoped continue hash 绕过 / resume 白名单过宽 / 首轮 PWC lifecycle 分裂 / 预算出口晚一轮+汇报失真 / schema 非 fail-closed）+ 2 非阻塞 | 交 Grok 修复（commit `f630ee2`） |
+| 实现 R2 · 2026-07-22 | BLOCKED：5/7 resolved；剩 #4 预算汇报缺真实双方立场、#5 New Findings 残缺表放行 | 交 Grok 修复（commit `4d22cf4`） |
+| 实现 R3 · 2026-07-22 | **PASS_WITH_CONCERNS**：#4/#5 resolved，无新增阻塞；1 条非阻塞（`roundsAttempted` 计数语义）记 backlog | 预算内收敛，交用户终裁 |
+
 ## 探针记录（2026-07-22 T0 完成）
 
 | 探针 | 结论 | 证据 |
@@ -331,7 +340,7 @@ flowchart LR
 | Claude 只读 smoke + diff 取证 | **PASS** | `claude -p … --allowedTools "Read,Grep,Glob" --output-format json` 能正确读冻结 diff（MARKER/OFF_BY_ONE）；`session_id` 一等字段 |
 | Claude 只读隔离 | **PASS（须 hardened 旗标）** | **仅** `--allowedTools "Read,Grep,Glob"` **失败**：探针文件被真实写入（`WRITE:OK`）。**必须**追加 `--disallowedTools "Write,Edit,MultiEdit,NotebookEdit,Bash"` → `WRITE:DENIED`，文件不存在。adapter 硬编码两套列表 |
 | Claude resume | **PASS** | 新开 `CLAUDE-T0-R1`（session `6b667344-821d-4c6c-85cd-708513fd8019`）→ `claude -p --resume <id> …` 回报 `CLAUDE-T0-R1` |
-| Codex Desktop 可见性 | **FS 同库已证；Desktop UI 待用户点一眼** | 探针 session 落盘 `~/.codex/sessions/2026/07/22/rollout-…-019f87d1-….jsonl`，payload `originator=codex_exec`；库内 ≥333 个 `codex_exec` 样本。是否出现在 Desktop 会话列表**不影响设计** |
+| Codex Desktop 可见性 | **列表不显示**（用户 app 实测 2026-07-22）：Desktop 会话列表按来源过滤，`codex_exec` 会话不出现在 UI | 会话仍完整落盘同库（`~/.codex/sessions/…/rollout-*.jsonl`，7 轮评审会话均在，payload `originator=codex_exec`），可 `codex exec resume <id>` 捞回；**人读审查记录以 `.review-handoff/runtime/consults/` 归档为准**。不影响设计 |
 
 ### go/no-go（T0）
 
