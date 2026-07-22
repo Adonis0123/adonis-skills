@@ -1,24 +1,68 @@
 ---
 name: agentic-review-handoff
-description: "Cross-agent code review handoff and review-fix-re-review loop with persistent packet artifacts. Requires a git repo because packet addressing uses git rev-parse --show-toplevel. Use when the user asks for an independent, read-only second pair of eyes on a diff/branch/PR another agent or teammate implemented; provides reviewer feedback or a Review-Prompt-ID to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; or asks for first-principles, DDD, high-cohesion/low-coupling review. Persists each loop under $repo_root/.review-handoff/active/ and can record read-only provenance from $repo_root/.review-handoff/prompts/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders/zips/tarballs/temp dirs, or when the user names a different review skill."
+description: "Cross-agent code review handoff and auto review→fix→re-review loop in one visible session (review-loop run / auto loop) with headless read-only Reviewer (codex|grok|claude), plus classic packet handoff and legacy dual-window orchestration. Requires a git repo (packet addressing uses git rev-parse --show-toplevel). Use when the user wants the same-session dual-AI review closed loop with zero mid-loop intervention; asks for an independent second pair of eyes on a diff/branch/PR; provides reviewer feedback to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; wants DecisionConsult advisory peer stance; or first-principles/DDD/high-cohesion review. Persists packets under $repo_root/.review-handoff/active/ and runtime under .review-handoff/runtime/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders, or when the user names a different review skill."
 metadata:
   author: adonis
-  version: "2.1.0"
+  version: "3.0.0"
 ---
 
 # Agentic Review Handoff
 
-Persistent packet protocol that lets two agents (typically Claude Code as reviewer + Codex as implementer/fixer) hand a review loop back and forth via a file artifact instead of manual copy-paste. Each review→fix→re-review loop is one append-only markdown file under `$repo_root/.review-handoff/active/`.
+Persistent packet protocol for review→fix→re-review. **Preferred path (v2): auto loop** — one visible Fixer session drives everything; the Reviewer is invoked headless and read-only; the loop stops only at start, terminal report, or exception.
+
+Legacy dual-window bind/wait/gate path is **deprecated** (dogfood-failed). Do not start new loops with `open`/`bind`. See `references/auto-loop-contract.md` and `references/review-loop-playbook.md`.
 
 ## Fast Path
 
-For ordinary review / fix / re-review turns, use this `SKILL.md` only. Do not preload all references. Open a reference only when the current turn needs its details:
+- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)
+- **decision consult / ask another AI for stance** → `review-loop consult`
+- **classic single-session packet review (no automation)** → Workflow sections below
+- packet shape → `references/packet-anatomy.md`
+- lifecycle / archive → `references/packet-addressing.md`
+- severity / verdict vocabulary → `references/review-contract.md`
+- **legacy dual-window (do not use for new work)** → `references/human-control-plane.md` / `worker-contract.md` (marked legacy)
 
-- packet shape or template uncertainty → `references/packet-anatomy.md`
-- lifecycle, naming, archive, branch, or concurrency edge case → `references/packet-addressing.md`
-- prompt ID parsing, source prompt lookup, or provenance conflict → `references/source-prompt-addressing.md`
-- severity / source / verdict / feedback-validation / deep-review details → `references/review-contract.md`
-- example diffing or exact table shape uncertainty → `references/example-packet.md`
+## Auto loop (`review-loop run`) — preferred
+
+Human intervenes only at: **initiate**, **terminal report**, **exception** (DELIVERY_UNKNOWN / hash mismatch / budget / deadlock).
+
+```bash
+RL="<skill-dir>/scripts/review-loop.mjs"
+REPO="$(git rev-parse --show-toplevel)"
+
+# Start (pins base SHA, freezes evidence, headless Reviewer, writes packet stages)
+node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--base <sha>] [--rounds 3]
+
+# After BLOCKED: Fixer edits code, then records completion, then continue
+node "$RL" fix-completion --repo "$REPO" --packet "$PACKET" --body-file /tmp/fix.md
+node "$RL" run --continue --repo "$REPO" --packet "$PACKET"
+
+# Advisory decision consult (not part of Verdict machine)
+node "$RL" consult --repo "$REPO" --peer=codex --question-file /tmp/q.md
+```
+
+| Concept | Rule |
+|---|---|
+| Fixer | Visible session — sole worktree + packet writer |
+| Reviewer | Headless, read-only sandbox (flags hardcoded in adapters) |
+| Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |
+| Rounds | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate) |
+| STOP | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP` |
+| Sandbox | Cannot be disabled via CLI flags |
+
+Contract details: `references/auto-loop-contract.md`.
+
+Tests:
+
+```bash
+node --test scripts/test/adapters.test.mjs scripts/test/auto-run.test.mjs scripts/test/consult.test.mjs
+```
+
+## Legacy dual-window (`loop=on`) — deprecated
+
+> **Legacy (dogfood-failed).** Incidents: mid-packet H1 inserts, dual-window "continue" thrash, freeze on concurrent dev. Kept for archive until T8 cleanup. **Do not use for new loops.**
+
+Historical commands: `open`, `bind`, `next`, `wait`, `append-eof`, `complete`, `board`, `resolve`, `summary`. See `references/human-control-plane.md` (legacy).
 
 ## Read-only Boundary (Important)
 
@@ -91,6 +135,7 @@ When resolved, write `source_prompt_id`, `source_prompt_head`, and `source_promp
 Two write rules govern every packet edit:
 
 - **Body H1 sections are append-only.** Once a `# Anchor` section has been written, never modify, delete, or reorder it. New writes only append to the end of the file.
+- **Under `loop=on`**, prefer `review-loop append-eof` over free-form editor patches so frontmatter and last physical H1 stay aligned (mid-file inserts open Protocol Gate).
 - **A single stage entry may append more than one H1 section.** Specifically:
   - **review / feedback-validation stage** typically writes a group of H1 sections in one atomic packet update: `# Review Intake` (or `# Review Handoff` for implementer-initiated) → `# Review Findings` → (conditional) `# Fix Handoff`. The Fix Handoff is appended only when Verdict is `BLOCKED` or `PASS_WITH_CONCERNS`; on `PASS` / `NO_FINDINGS` the group ends after `# Review Findings` and the packet is archived.
   - **fix stage** appends exactly one `# Fix Completion` (or `# Fix Completion (round N)`).

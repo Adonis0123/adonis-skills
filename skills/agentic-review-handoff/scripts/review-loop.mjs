@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as coord from './review-loop/coordinator.mjs';
 import * as autoRun from './review-loop/auto-run.mjs';
+import * as consult from './review-loop/consult.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -148,6 +149,14 @@ async function main() {
           ...base,
           bodyFile: base.bodyFile,
           body: args.body,
+        });
+        break;
+      case 'consult':
+        result = await consult.cmdConsult({
+          ...base,
+          peer: args.peer ?? args.reviewer,
+          questionFile: args['question-file'] ?? args.questionFile,
+          question: args.question,
         });
         break;
       case 'open':
