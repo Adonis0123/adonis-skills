@@ -332,11 +332,7 @@ Scoped re-review of fix for prior findings (not a restart).
 BLOCKED | PASS_WITH_CONCERNS | PASS | NO_FINDINGS
 ```
 
-After writing the Verdict, apply the lifecycle action from **Lifecycle and Archive** in `packet-addressing.md` (single source of truth):
-
-- `PASS` / `NO_FINDINGS` → `mv` to `archive/`, set `lifecycle_state = archived`.
-- `PASS_WITH_CONCERNS` → keep in `active/`, set `lifecycle_state = awaiting_user_decision`, tell the user it will auto-continue on next "fix it".
-- `BLOCKED` → keep in `active/`, set `lifecycle_state = blocked`, await next fix round.
+After writing the Verdict, apply lifecycle/archive from **Lifecycle derivation and archive actions** in `packet-addressing.md` (single source of truth — do not restate Verdict→state mappings here).
 
 ---
 
@@ -346,32 +342,35 @@ Infer path and stage from the user's signal. `SKILL.md` only points here.
 
 ### Default to auto loop (`review-loop run`)
 
-| User signal                                                                                                                               | Path                       | Required output                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | -------------------------------------------------------- |
-| "review", "second pair of eyes", "audit this diff", same-session dual-AI closed loop, auto loop, review-fix-re-review zero mid-loop human | **auto** `review-loop run` | Script-driven stages; headless Reviewer; terminal report |
-| "fix it" / "修一下" after auto BLOCKED or PASS_WITH_CONCERNS with Fix Completion ready                                                    | **auto** `run --continue`  | Re-review via auto loop                                  |
+| User signal                                                                                                                               | Path                                                                        | Required output                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| "review", "second pair of eyes", "audit this diff", same-session dual-AI closed loop, auto loop, review-fix-re-review zero mid-loop human | **auto** `review-loop run`                                                  | Script-driven stages; headless Reviewer; terminal report          |
+| "review this then fix it" / ordinary mixed review-then-fix **without** pasted feedback or classic packet                                  | **auto** `review-loop run` then Fixer + `fix-completion` + `run --continue` | Do **not** hand-write classic H1 stages for ordinary mixed review |
+| "fix it" / "修一下" after auto BLOCKED or PASS_WITH_CONCERNS with Fix Completion ready                                                    | **auto** `run --continue`                                                   | Re-review via auto loop                                           |
 
 ### Classic compatibility path only (prompt-protocol; no script guarantees)
 
 Do **not** route these into auto: auto seeds implementer `# Review Handoff` and budget-exhaust exits differ from classic "stop at Fix Handoff."
 
-| User signal                                                                                                                  | Stage                         | Required output                                                         |
-| ---------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------- |
-| Reviewer-initiated live review that needs `# Review Intake` (no implementer handoff context)                                 | classic `intake`              | `# Review Intake` → `# Review Findings` → (conditional) `# Fix Handoff` |
-| Pasted team/reviewer feedback to validate as defect report before fixing                                                     | classic `feedback_validation` | Findings validation + optional `# Fix Handoff`                          |
-| Explicit manual continuation of an existing classic packet without `review-loop run`                                         | classic `manual_continuation` | Append next stage per last_anchor                                       |
-| "give this back to the implementer", repair brief                                                                            | fix handoff                   | Append `# Fix Handoff`                                                  |
-| "fix according to this packet", "apply only these validated findings", "fix it", "修改吧", "改吧", "修一下" (classic packet) | fix                           | Code/doc changes + `# Fix Completion` (`Fix Conclusion` first)          |
-| "fixed, review again", "改好了再看", or last section is `# Fix Completion` (classic)                                         | re-review                     | Append `# Re-review`                                                    |
+| User signal                                                                                                                                                                                                                                                                | Stage                         | Required output                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Reviewer-initiated live review that needs `# Review Intake` (no implementer handoff context)                                                                                                                                                                               | classic `intake`              | `# Review Intake` → `# Review Findings` → (conditional) `# Fix Handoff`                                   |
+| Pasted team/reviewer feedback to validate as defect report before fixing                                                                                                                                                                                                   | classic `feedback_validation` | Findings validation + optional `# Fix Handoff`                                                            |
+| Explicit manual continuation of an existing classic packet without `review-loop run`                                                                                                                                                                                       | classic `manual_continuation` | Append next stage per last_anchor                                                                         |
+| "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief                                                                                                                                                                           | fix handoff                   | Append `# Fix Handoff`                                                                                    |
+| "fix according to this packet", "apply only these validated findings", "fix it", "apply the valid feedback", "修改吧", "改吧", "修一下", "按这个改", "按 review 意见修", "修改之后给出结论", "修完给结论", or "改完给我结论" (classic packet or after classic Fix Handoff) | fix                           | Code/doc changes plus appended `# Fix Completion` whose first subsection is `Fix Conclusion`              |
+| "fixed, review again", "改好了再看", or the latest section in the packet is `# Fix Completion` (classic)                                                                                                                                                                   | re-review                     | Append `# Re-review` (Prior findings reassessment, new fix-induced findings, regression surface, verdict) |
 
 ### Mixed-stage requests
 
-When one user message combines review/validation with a fix request (e.g. "review this then fix it", "validate this feedback and apply the valid parts"), execute stages sequentially:
+**Route first by path:**
 
-1. Finish review or feedback validation: append `# Review Findings` with verdict. Then branch:
-   - Verdict in `BLOCKED` / `PASS_WITH_CONCERNS` → append `# Fix Handoff` with validated findings, then proceed to step 2.
-   - Verdict in `PASS` / `NO_FINDINGS` → **do not** write `# Fix Handoff`. Archive immediately per Lifecycle Trigger 1 in `packet-addressing.md` and **skip step 2** — the user's "fix it" becomes a no-op. Say so explicitly.
-2. Only enter fix stage when step 1 produced a `# Fix Handoff`. Apply only the validated findings, then append `# Fix Completion`.
+1. **Ordinary mixed** ("review this then fix it" on a git diff, no pasted feedback, no existing classic packet) → **auto loop** (`review-loop run`). The Fixer session repairs after BLOCKED, then `fix-completion` + `run --continue`. Do not invent classic stages for this case.
+2. **Classic mixed** only when the review half is already classic-only semantics — e.g. "validate this pasted feedback and apply the valid parts" (`feedback_validation`), or continuing an existing classic packet (`manual_continuation`). Then execute stages sequentially:
+   1. Finish review or feedback validation: append `# Review Findings` with verdict. Then branch:
+      - Verdict in `BLOCKED` / `PASS_WITH_CONCERNS` → append `# Fix Handoff`, then fix stage.
+      - Verdict in `PASS` / `NO_FINDINGS` → **do not** write `# Fix Handoff`. Archive per Lifecycle Trigger 1 in `packet-addressing.md` and skip fix.
+   2. Only enter fix when step 1 produced a `# Fix Handoff`. Apply only validated findings, then append `# Fix Completion`.
 
 Do not merge review evidence and fix changes into one unstructured response. Merging stages destroys the portability the packet design depends on — a later re-reviewer cannot independently re-attest findings if there is no `# Fix Handoff` section to anchor them. Free-form "rewrite this function" requests not tied to a validated finding are not a stage switch — defer them as a separate implementation task.
 
@@ -415,6 +414,8 @@ updated: <ts>
 last_anchor: review_findings
 lifecycle_state: in_progress
 round: 1
+mode: classic
+classic_reason: intake
 ---
 
 # Review Intake
