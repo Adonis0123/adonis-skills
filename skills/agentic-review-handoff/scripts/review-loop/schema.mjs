@@ -154,6 +154,10 @@ export function parseReviewFindings(text) {
           error: `finding ${f.id} missing evidence/required fix/acceptance check`,
         };
       }
+      // Target files required for any finding that blocks or needs fix handoff
+      if (f.blocking && !f.targetFiles) {
+        return { ok: false, error: `finding ${f.id} missing Target files` };
+      }
     }
   }
 
@@ -259,10 +263,10 @@ export function parseReReview(text, priorFindingIds = []) {
     if (!f.title || !f.severity) {
       return { ok: false, error: `new finding ${f.id} missing title or severity` };
     }
-    if (f.blocking && (!f.evidence || !f.requiredFix || !f.acceptanceCheck)) {
+    if (f.blocking && (!f.evidence || !f.requiredFix || !f.acceptanceCheck || !f.targetFiles)) {
       return {
         ok: false,
-        error: `new blocking finding ${f.id} missing evidence/required fix/acceptance check`,
+        error: `new blocking finding ${f.id} missing evidence/target files/required fix/acceptance check`,
       };
     }
   }

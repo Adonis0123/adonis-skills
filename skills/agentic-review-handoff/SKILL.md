@@ -10,7 +10,7 @@ metadata:
 
 Persistent packet protocol for review→fix→re-review. **Preferred path (v2): auto loop** — one visible Fixer session drives everything; the Reviewer is invoked headless and read-only; the loop stops only at start, terminal report, or exception.
 
-Legacy dual-window bind/wait/gate path is **deprecated** (dogfood-failed). Do not start new loops with `open`/`bind`. See `references/auto-loop-contract.md` and `references/review-loop-playbook.md`.
+Dual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not call `open`/`bind`/… — CLI returns a migration error. See `references/auto-loop-contract.md`.
 
 ## Fast Path
 

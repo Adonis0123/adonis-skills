@@ -15,6 +15,7 @@ import {
   parseReReview,
   extractVerdict,
 } from '../review-loop/schema.mjs';
+// parseReReview used by schema fail-closed tests
 import { appendStageAuto, seedPacketHash, contentHash } from '../review-loop/stage-writer.mjs';
 import { cmdRun, cmdAppendFixCompletion, withPacketLock } from '../review-loop/auto-run.mjs';
 
@@ -357,5 +358,47 @@ describe('extractVerdict', () => {
   it('reads trailing Verdict line', () => {
     assert.equal(extractVerdict('foo\n\nVerdict: BLOCKED\n'), 'BLOCKED');
     assert.equal(extractVerdict('## Verdict\n\nPASS\n'), 'PASS');
+  });
+});
+
+describe('schema fail-closed target files', () => {
+  it('rejects BLOCKED finding with empty Target files', () => {
+    const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| F1 | [阻塞] | bug | evidence here |  | return n | unit test |
+
+## Verdict
+
+BLOCKED
+`;
+    const r = parseReviewFindings(text);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /Target files|target files/i);
+  });
+
+  it('rejects re-review new blocker missing Target files', () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| B1 | [阻塞] | crash | stack |  | fix it | test |
+
+## Regression Surface
+
+Still broken.
+
+## Verdict
+
+BLOCKED
+`;
+    const r = parseReReview(text, ['F1']);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /target files|Target files/i);
   });
 });

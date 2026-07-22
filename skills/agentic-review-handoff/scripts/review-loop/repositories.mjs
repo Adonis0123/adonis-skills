@@ -91,7 +91,7 @@ export function listArchivedPackets(repoRoot, branch) {
     .map((f) => path.join(dir, f));
 }
 
-/** After a PASS archive, active/ is empty — board/summary fall back here. */
+/** After a PASS archive, active/ is empty — resume from archive for read-only report. */
 export function latestArchivedPacket(repoRoot, branch) {
   const list = listArchivedPackets(repoRoot, branch);
   return list.length ? list[list.length - 1] : null;
@@ -150,7 +150,7 @@ export function buildCompletionReport({ packetPath, meta, packetId, stopped = fa
     '',
     allTasksComplete
       ? '下一步: 无需再 continue；需要细节时打开 packet。'
-      : '下一步: 见 review-loop board 的 human.action。',
+      : '下一步: BLOCKED 时先修复并 review-loop fix-completion，再 run --continue；PASS_WITH_CONCERNS 等人决定。',
     '',
   ].join('\n');
 
@@ -479,46 +479,48 @@ export function appendEvent(repoRoot, packetId, event) {
   fs.appendFileSync(file, `${JSON.stringify({ ...event, at: new Date().toISOString() })}\n`);
 }
 
+/**
+ * @deprecated dual-window runtime bundle removed in T8.
+ * Auto loop uses auto-run-state.json + reviewer-session.json only.
+ */
 export function loadRuntimeBundle(repoRoot, packetId) {
   const dir = runtimeDir(repoRoot, packetId);
   return {
     dir,
-    bindings: readJson(path.join(dir, 'bindings.json'), { reviewer: null, fixer: null }),
-    claim: readJson(path.join(dir, 'claim.json'), null),
-    driver: readJson(path.join(dir, 'driver.json'), null),
-    gate: readJson(path.join(dir, 'gate.json'), null),
-    runMeta: readJson(path.join(dir, 'run-meta.json'), null),
+    autoRunState: readJson(path.join(dir, 'auto-run-state.json'), null),
+    reviewerSession: readJson(path.join(dir, 'reviewer-session.json'), null),
   };
 }
 
-export function saveBindings(repoRoot, packetId, bindings) {
-  writeJson(path.join(runtimeDir(repoRoot, packetId), 'bindings.json'), bindings);
+function removedDualWindowApi(name) {
+  throw new Error(
+    `${name} removed in auto-loop v2 (T8 dual-window cleanup). Use review-loop run | fix-completion | consult`,
+  );
 }
 
-export function saveClaim(repoRoot, packetId, claim) {
-  const file = path.join(runtimeDir(repoRoot, packetId), 'claim.json');
-  if (claim == null) {
-    if (fs.existsSync(file)) fs.unlinkSync(file);
-    return;
-  }
-  writeJson(file, claim);
+/** @deprecated T8 */
+export function saveBindings() {
+  removedDualWindowApi('saveBindings');
 }
 
-export function saveGate(repoRoot, packetId, gate) {
-  const file = path.join(runtimeDir(repoRoot, packetId), 'gate.json');
-  if (gate == null) {
-    if (fs.existsSync(file)) fs.unlinkSync(file);
-    return;
-  }
-  writeJson(file, gate);
+/** @deprecated T8 */
+export function saveClaim() {
+  removedDualWindowApi('saveClaim');
 }
 
-export function saveDriver(repoRoot, packetId, driver) {
-  writeJson(path.join(runtimeDir(repoRoot, packetId), 'driver.json'), driver);
+/** @deprecated T8 */
+export function saveGate() {
+  removedDualWindowApi('saveGate');
 }
 
-export function saveRunMeta(repoRoot, packetId, meta) {
-  writeJson(path.join(runtimeDir(repoRoot, packetId), 'run-meta.json'), meta);
+/** @deprecated T8 */
+export function saveDriver() {
+  removedDualWindowApi('saveDriver');
+}
+
+/** @deprecated T8 */
+export function saveRunMeta() {
+  removedDualWindowApi('saveRunMeta');
 }
 
 export function sha256(text) {
@@ -613,8 +615,7 @@ export function validateCompletedStage({ packetPath, meta, role }) {
   if (last.anchor !== meta.lastAnchor) {
     throw new Error(
       `last physical H1 is ${last.anchor}, but frontmatter last_anchor is ${meta.lastAnchor}. ` +
-        `Likely mid-file packet edit — discard that insert; write only via review-loop run/fix-completion stage writer, ` +
-        `then human: review-loop board + resolve once (do not ask both windows)`,
+        `Likely mid-file packet edit — discard that insert; write only via review-loop run / fix-completion (auto stage writer).`,
     );
   }
 
