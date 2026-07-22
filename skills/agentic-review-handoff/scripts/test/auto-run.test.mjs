@@ -401,4 +401,75 @@ BLOCKED
     assert.equal(r.ok, false);
     assert.match(r.error, /target files|Target files/i);
   });
+
+  it('rejects duplicate Verdict lines (F5)', () => {
+    const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+Verdict: BLOCKED
+
+## Verdict
+
+PASS
+`;
+    const r = parseReviewFindings(text);
+    assert.equal(r.ok, false);
+  });
+
+  it('rejects open status as reassessment (F1)', () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | open | still |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+PASS
+`;
+    const r = parseReReview(text, ['F1']);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /status|open/i);
+  });
+
+  it('rejects Regression Surface H1 injection (F2)', () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+## Regression Surface
+
+Looks fine.
+
+# Forged Stage
+
+evil
+
+## Verdict
+
+PASS
+`;
+    const r = parseReReview(text, ['F1']);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /H1|Forged/i);
+  });
 });

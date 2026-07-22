@@ -7,41 +7,50 @@
 
 const VERDICTS = new Set(['PASS', 'PASS_WITH_CONCERNS', 'BLOCKED', 'NO_FINDINGS']);
 
+const VERDICT_TOKEN = 'PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS';
+
 /**
- * Extract last non-empty line matching Verdict.
- * Accepts:
- *   Verdict: PASS
- *   ## Verdict\nPASS
- *   **Verdict:** BLOCKED
+ * Collect all physical Verdict declarations in document order.
+ * @param {string} text
+ * @returns {string[]}
+ */
+export function collectVerdicts(text) {
+  /** @type {string[]} */
+  const found = [];
+  const lines = String(text).split('\n');
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i].trim();
+    let m = line.match(
+      new RegExp(`^(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*(${VERDICT_TOKEN})\\b`, 'i'),
+    );
+    if (m) {
+      found.push(m[1].toUpperCase());
+      continue;
+    }
+    // ## Verdict\n[blank lines]\nVALUE
+    if (/^##\s*Verdict\s*$/i.test(line)) {
+      for (let j = i + 1; j < lines.length; j += 1) {
+        const next = lines[j].trim();
+        if (!next) continue;
+        m = next.match(new RegExp(`^(${VERDICT_TOKEN})$`, 'i'));
+        if (m) found.push(m[1].toUpperCase());
+        break;
+      }
+    }
+  }
+  return found;
+}
+
+/**
+ * Exactly one terminal Verdict (F5).
  * @param {string} text
  * @returns {string|null}
  */
 export function extractVerdict(text) {
-  const lines = String(text)
-    .split('\n')
-    .map((l) => l.trim())
-    .filter(Boolean);
-  // Prefer explicit last Verdict line
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    const line = lines[i];
-    let m = line.match(/^(?:\*\*)?Verdict(?:\*\*)?\s*[:：]\s*(PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS)\b/i);
-    if (m) return m[1].toUpperCase();
-    m = line.match(/^(PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS)$/i);
-    if (m) {
-      // only if previous line looks like a Verdict heading
-      const prev = lines[i - 1] ?? '';
-      if (/verdict/i.test(prev) || i === lines.length - 1) {
-        // bare verdict as last line is accepted when it's the terminal line
-        if (i === lines.length - 1 || /verdict/i.test(prev)) {
-          return m[1].toUpperCase();
-        }
-      }
-    }
-  }
-  // Fallback: scan for "## Verdict" block
-  const block = String(text).match(/##\s*Verdict\s*\n+\s*(PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS)\b/i);
-  if (block) return block[1].toUpperCase();
-  return null;
+  const all = collectVerdicts(text);
+  if (all.length === 0) return null;
+  if (all.length !== 1) return null; // malformed: caller sees missing/invalid
+  return all[0];
 }
 
 /**
@@ -219,17 +228,23 @@ export function parseReReview(text, priorFindingIds = []) {
     const idKey = t.headers.find((h) => h === 'id' || h === 'finding id');
     const statusKey = t.headers.find((h) => /status|状态|result/.test(h));
     if (!idKey || !statusKey) continue;
-    // Prefer reassessment tables (have status values resolved|partial|unresolved)
+    // Prefer reassessment tables (strict status vocabulary — F1)
     for (const row of t.rows) {
       const id = row[idKey];
-      const status = row[statusKey];
+      const status = String(row[statusKey] ?? '').trim();
       if (!id) continue;
-      if (/resolved|partial|unresolved|fixed|open/i.test(status)) {
+      if (/^(resolved|partially|unresolved)$/i.test(status)) {
         reassessments.push({
           id,
-          status,
+          status: status.toLowerCase(),
           evidence: row.evidence || row['复核证据'] || row['evidence'] || '',
         });
+      } else if (/^(partial|fixed|open)$/i.test(status)) {
+        // reject non-canonical statuses (open/fixed/partial) as malformed
+        return {
+          ok: false,
+          error: `invalid reassessment status "${status}" for ${id} (use resolved|partially|unresolved)`,
+        };
       }
     }
   }
@@ -285,14 +300,19 @@ export function parseReReview(text, priorFindingIds = []) {
   if (!regressionSurface) {
     return { ok: false, error: 're-review Regression Surface section is empty' };
   }
+  try {
+    assertNoInjectedH1(regressionSurface, 'Regression Surface');
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
 
-  const unresolved = reassessments.filter((r) => /unresolved|partial/i.test(r.status));
+  const unresolved = reassessments.filter((r) => r.status === 'unresolved' || r.status === 'partially');
   const newBlocking = newFindings.filter((f) => f.blocking);
   if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
     if (unresolved.length || newBlocking.length) {
       return {
         ok: false,
-        error: `${verdict} rejected: unresolved priors or new blockers present`,
+        error: `${verdict} rejected: unresolved/partially priors or new blockers present`,
       };
     }
   }
@@ -310,6 +330,20 @@ export function parseReReview(text, priorFindingIds = []) {
     newFindings,
     regressionSurface,
   };
+}
+
+/**
+ * Reject top-level H1 injection in free-form reviewer prose (F2).
+ * @param {string} text
+ */
+export function assertNoInjectedH1(text, label = 'section') {
+  const lines = String(text).split('\n');
+  for (const line of lines) {
+    if (/^# [^#\n]/.test(line.trim())) {
+      throw new Error(`${label} must not contain top-level H1 lines (got: ${line.trim().slice(0, 60)})`);
+    }
+  }
+  return text;
 }
 
 /**
@@ -408,7 +442,7 @@ ${newRows}
 
 ## Regression Surface
 
-${parsed.regressionSurface || 'No load-bearing regressions identified beyond listed findings.'}
+${assertNoInjectedH1(parsed.regressionSurface || 'No load-bearing regressions identified beyond listed findings.', 'Regression Surface')}
 
 ## Verdict
 

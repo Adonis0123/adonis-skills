@@ -33,10 +33,11 @@ Human touchpoints: **initiate · terminal report · exception** only.
 ## Tests
 
 ```bash
-node --test scripts/test/adapters.test.mjs \
-  scripts/test/auto-run.test.mjs \
-  scripts/test/auto-run-negatives.test.mjs \
-  scripts/test/consult.test.mjs
+# from repo root
+node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
+  skills/agentic-review-handoff/scripts/test/auto-run.test.mjs \
+  skills/agentic-review-handoff/scripts/test/auto-run-negatives.test.mjs \
+  skills/agentic-review-handoff/scripts/test/consult.test.mjs
 ```
 
 ## Removed (T8)

@@ -285,6 +285,7 @@ async function runBody(ctx) {
   }
 
   // Freeze evidence (reuse same-round file if already frozen — A6)
+  // F3: continue inherits pinned path scope unless explicit new paths provided
   /** @type {string[]|undefined} */
   let pathFilter = ctx.paths;
   if (!pathFilter && ctx.path) {
@@ -292,6 +293,19 @@ async function runBody(ctx) {
   }
   if (typeof pathFilter === 'string') {
     pathFilter = pathFilter.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  if ((!pathFilter || !pathFilter.length) && Array.isArray(state.paths) && state.paths.length) {
+    pathFilter = state.paths;
+  }
+  if (pathFilter?.length) {
+    saveRunState(repoRoot, packetId, {
+      ...loadRunState(repoRoot, packetId),
+      paths: pathFilter,
+      baseSha,
+      reviewer,
+      updated: new Date().toISOString(),
+    });
+    state = loadRunState(repoRoot, packetId);
   }
 
   const evidenceDir = path.join(runtimeDir(repoRoot, packetId), 'evidence');
@@ -303,7 +317,7 @@ async function runBody(ctx) {
       evidencePath,
       diffText,
       lineCount: diffText.split('\n').length,
-      paths: pathFilter || [],
+      paths: pathFilter || state.paths || [],
     };
   } else {
     evidence = freezeRoundEvidence({
@@ -317,6 +331,7 @@ async function runBody(ctx) {
       ...loadRunState(repoRoot, packetId),
       [`evidenceRound${effectiveRound}`]: true,
       evidencePath: evidence.evidencePath,
+      paths: pathFilter || state.paths || null,
       baseSha,
       reviewer,
       updated: new Date().toISOString(),
@@ -589,6 +604,15 @@ export function cmdAppendFixCompletion(opts) {
     ? opts.packetPath
     : path.resolve(repoRoot, opts.packetPath);
   const { packetPath, packetId } = validatePacketPath(repoRoot, branch, abs);
+  // F4: never mutate archived packets
+  const loc = String(packetPath).split(path.sep).join('/');
+  if (loc.includes('/.review-handoff/archive/')) {
+    throw new Error('fix-completion refuses archived packet; only active packets may be written');
+  }
+  const meta = readPacketMeta(packetPath);
+  if (meta.lifecycleState === 'archived') {
+    throw new Error('fix-completion refuses lifecycle_state=archived');
+  }
   const body =
     opts.body
     || (opts.bodyFile ? fs.readFileSync(opts.bodyFile, 'utf8') : null);
