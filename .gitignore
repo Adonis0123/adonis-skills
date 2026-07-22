@@ -33,6 +33,7 @@ coverage
 # Created by `pnpm skills:install:local` / `skills:test:local` for runtime testing.
 # Do not dual-commit these mirrors. Internal-only skills in .agents/skills stay tracked.
 # Dual-tracked historical mirrors (commit, weekly-report, lingui-*, …) remain tracked.
+.agents/skills/agentic-review-handoff/
 .agents/skills/branch-creator/
 .agents/skills/code-plugin-architecture/
 .agents/skills/commit-push/
