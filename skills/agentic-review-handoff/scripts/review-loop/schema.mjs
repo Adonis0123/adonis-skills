@@ -50,17 +50,17 @@ export function extractVerdict(text) {
   const all = collectVerdicts(text);
   if (all.length === 0) return null;
   if (all.length !== 1) return null; // malformed: caller sees missing/invalid
-  // F5: Verdict must be near terminal — among last 5 non-empty lines
+  // F5: sole Verdict must be the last non-empty line
   const lines = String(text)
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
-  const tail = lines.slice(-5);
+  const last = lines.at(-1) ?? '';
   const verdictRe = new RegExp(
     `^(?:(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*)?(${VERDICT_TOKEN})$`,
     'i',
   );
-  if (!tail.some((l) => verdictRe.test(l))) return null;
+  if (!verdictRe.test(last)) return null;
   return all[0];
 }
 
