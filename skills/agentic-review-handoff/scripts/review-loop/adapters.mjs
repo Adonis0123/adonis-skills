@@ -74,9 +74,15 @@ export function createAdapter(product, opts) {
       : null);
 
   /** @type {{ product: Product, sessionId: string|null }} */
+  const stored = loadSessionRecord(sessionStorePath);
+  // A4: never resume a session id from a different product
+  const sessionId =
+    stored.sessionId && stored.product && stored.product !== p
+      ? null
+      : stored.sessionId;
   const state = {
     product: /** @type {Product} */ (p),
-    sessionId: loadSessionId(sessionStorePath),
+    sessionId,
   };
 
   return {
@@ -457,12 +463,21 @@ function tryParseJson(s) {
 }
 
 function loadSessionId(storePath) {
-  if (!storePath || !fs.existsSync(storePath)) return null;
+  return loadSessionRecord(storePath).sessionId;
+}
+
+function loadSessionRecord(storePath) {
+  if (!storePath || !fs.existsSync(storePath)) {
+    return { sessionId: null, product: null };
+  }
   try {
     const data = JSON.parse(fs.readFileSync(storePath, 'utf8'));
-    return data.sessionId ?? data.session_id ?? null;
+    return {
+      sessionId: data.sessionId ?? data.session_id ?? null,
+      product: data.product ?? null,
+    };
   } catch {
-    return null;
+    return { sessionId: null, product: null };
   }
 }
 

@@ -238,7 +238,7 @@ export function parseReReview(text, priorFindingIds = []) {
     }
   }
 
-  // New findings table (optional rows)
+  // New findings table (optional rows; real findings need full schema — B1)
   /** @type {ReturnType<typeof findingFromRow>[]} */
   let newFindings = [];
   // Heuristic: table after "New Findings" heading
@@ -248,9 +248,22 @@ export function parseReReview(text, priorFindingIds = []) {
     const nt = parseMarkdownTables(beforeNext);
     for (const t of nt) {
       if (t.headers.some((h) => h === 'id' || h === 'finding id')) {
-        newFindings = t.rows.map(findingFromRow).filter((f) => f.id);
+        newFindings = t.rows
+          .map(findingFromRow)
+          .filter((f) => f.id && f.id !== '(none)' && !/^[-—]+$/.test(f.id));
         break;
       }
+    }
+  }
+  for (const f of newFindings) {
+    if (!f.title || !f.severity) {
+      return { ok: false, error: `new finding ${f.id} missing title or severity` };
+    }
+    if (f.blocking && (!f.evidence || !f.requiredFix || !f.acceptanceCheck)) {
+      return {
+        ok: false,
+        error: `new blocking finding ${f.id} missing evidence/required fix/acceptance check`,
+      };
     }
   }
 
