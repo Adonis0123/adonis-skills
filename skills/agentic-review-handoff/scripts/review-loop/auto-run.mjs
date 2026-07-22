@@ -184,39 +184,55 @@ export async function withPacketLock(repoRoot, packetId, operation) {
     fs.writeFileSync(ownerFile, `${ownerToken}\n${process.pid}\n`, 'utf8');
   };
 
+  const GRACE_MS = 2000;
   try {
     tryAcquire();
   } catch (err) {
     if (err?.code !== 'EEXIST') throw err;
     let owner = '';
+    let ownerMissing = false;
     try {
       owner = fs.readFileSync(ownerFile, 'utf8');
     } catch {
-      // incomplete lock (mkdir without owner yet) — treat as held briefly
-      const e = new Error('packet lock held (owner not published yet)');
-      // @ts-expect-error
-      e.code = 'PACKET_LOCK_HELD';
-      throw e;
+      ownerMissing = true;
     }
-    const oldPid = Number(String(owner).split('\n')[1] || 0);
-    let alive = false;
-    if (oldPid > 0) {
+    if (ownerMissing) {
+      // N2: incomplete lock — honor short grace based on dir mtime, then reclaim
+      let mtimeMs = 0;
       try {
-        process.kill(oldPid, 0);
-        alive = true;
+        mtimeMs = fs.statSync(lockDir).mtimeMs;
       } catch {
-        alive = false;
+        mtimeMs = 0;
       }
+      if (mtimeMs && Date.now() - mtimeMs < GRACE_MS) {
+        const e = new Error('packet lock held (owner not published yet)');
+        // @ts-expect-error
+        e.code = 'PACKET_LOCK_HELD';
+        throw e;
+      }
+      fs.rmSync(lockDir, { recursive: true, force: true });
+      tryAcquire();
+    } else {
+      const oldPid = Number(String(owner).split('\n')[1] || 0);
+      let alive = false;
+      if (oldPid > 0) {
+        try {
+          process.kill(oldPid, 0);
+          alive = true;
+        } catch {
+          alive = false;
+        }
+      }
+      if (alive) {
+        const e = new Error(`packet lock held by pid ${oldPid}`);
+        // @ts-expect-error
+        e.code = 'PACKET_LOCK_HELD';
+        throw e;
+      }
+      // reclaim stale lock only when owner pid is dead
+      fs.rmSync(lockDir, { recursive: true, force: true });
+      tryAcquire();
     }
-    if (alive || !oldPid) {
-      const e = new Error(`packet lock held by pid ${oldPid || 'unknown'}`);
-      // @ts-expect-error
-      e.code = 'PACKET_LOCK_HELD';
-      throw e;
-    }
-    // reclaim stale lock only when owner pid is dead
-    fs.rmSync(lockDir, { recursive: true, force: true });
-    tryAcquire();
   }
 
   try {
