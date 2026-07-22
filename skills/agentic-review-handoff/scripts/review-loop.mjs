@@ -141,6 +141,7 @@ async function main() {
           cont: args.continue === true || args.cont === true,
           scopeSlug: args.scope ?? args['scope-slug'],
           packetPath: base.packetPath,
+          paths: args.paths ?? args.path,
         });
         break;
       }

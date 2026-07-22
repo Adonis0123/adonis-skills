@@ -52,11 +52,28 @@ async function main() {
       continue
     }
 
-    if (typeof frontmatter.name !== 'string' || !frontmatter.name.trim())
+    if (typeof frontmatter.name !== 'string' || !frontmatter.name.trim()) {
       errors.push(`[${entry.name}] frontmatter.name 不能为空`)
+    }
+    else if (frontmatter.name !== entry.name) {
+      // Directory slug is the public skill id; name must match for install/index.
+      errors.push(
+        `[${entry.name}] frontmatter.name (${frontmatter.name}) 必须与目录名一致`,
+      )
+    }
+    else if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(frontmatter.name)) {
+      errors.push(`[${entry.name}] frontmatter.name 必须是 lowercase hyphen-case`)
+    }
 
-    if (typeof frontmatter.description !== 'string' || !frontmatter.description.trim())
+    if (typeof frontmatter.description !== 'string' || !frontmatter.description.trim()) {
       errors.push(`[${entry.name}] frontmatter.description 不能为空`)
+    }
+    else {
+      const description = frontmatter.description.trim()
+      if (description.length < 20) {
+        errors.push(`[${entry.name}] frontmatter.description 过短（至少 20 字符，供工具选择器展示）`)
+      }
+    }
 
     if (typeof frontmatter.metadata !== 'object' || frontmatter.metadata === null || Array.isArray(frontmatter.metadata))
       errors.push(`[${entry.name}] frontmatter.metadata 必须是一个对象`)

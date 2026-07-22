@@ -253,12 +253,21 @@ async function runBody(ctx) {
   }
 
   // Freeze evidence
+  /** @type {string[]|undefined} */
+  let pathFilter = ctx.paths;
+  if (!pathFilter && ctx.path) {
+    pathFilter = Array.isArray(ctx.path) ? ctx.path : [ctx.path];
+  }
+  if (typeof pathFilter === 'string') {
+    pathFilter = pathFilter.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+
   const evidence = freezeRoundEvidence({
     repoRoot,
     packetId,
     baseSha,
     round: effectiveRound,
-    paths: ctx.paths,
+    paths: pathFilter,
   });
 
   const adapter = (adapterFactory || createAdapter)(reviewer, {

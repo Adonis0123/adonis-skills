@@ -63,7 +63,7 @@ export function saveRunState(repoRoot, packetId, state) {
 export function appendStageAuto(opts) {
   const {
     repoRoot,
-    packetPath,
+    packetPath: rawPacketPath,
     packetId,
     sectionMarkdown,
     lastAnchor,
@@ -71,6 +71,11 @@ export function appendStageAuto(opts) {
     extra,
     expectedHash,
   } = opts;
+
+  // Always resolve absolute so archive path marker matching works.
+  const packetPath = path.isAbsolute(rawPacketPath)
+    ? rawPacketPath
+    : path.resolve(repoRoot || process.cwd(), rawPacketPath);
 
   const current = fs.readFileSync(packetPath, 'utf8');
   const currentHash = contentHash(current);
