@@ -386,7 +386,9 @@ async function runBody(ctx) {
   let parsed =
     effectiveRound <= 1
       ? parseReviewFindings(invokeResult.text)
-      : parseReReview(invokeResult.text, priorFindingIds);
+      : parseReReview(invokeResult.text, priorFindingIds, {
+          priorBlockingIds: state.openBlocking || priorFindingIds,
+        });
 
   if (!parsed.ok) {
     const correction = buildReviewerPrompt({
@@ -410,7 +412,9 @@ async function runBody(ctx) {
     parsed =
       effectiveRound <= 1
         ? parseReviewFindings(retry.text)
-        : parseReReview(retry.text, priorFindingIds);
+        : parseReReview(retry.text, priorFindingIds, {
+            priorBlockingIds: state.openBlocking || priorFindingIds,
+          });
     if (!parsed.ok) {
       return {
         ok: false,
@@ -655,15 +659,34 @@ export async function cmdAppendFixCompletion(opts) {
   if (!/^#\s*Fix Completion(\s*\(round\s+\d+\))?\s*$/i.test(firstH1.trim())) {
     throw new Error('fix-completion body must start with "# Fix Completion" H1');
   }
-  // F3: hold same packet lock as run
-  return withPacketLock(repoRoot, packetId, async () =>
-    appendStageAuto({
+  // Ensure validator-required H2s exist (F4)
+  if (!/##\s*Fix Conclusion/i.test(section)) {
+    section = section.replace(
+      /^# Fix Completion[^\n]*\n/,
+      `# Fix Completion\n\n## Fix Conclusion\n\n- Auto loop fix completion recorded.\n\n## Original Findings Snapshot\n\n- See prior Fix Handoff / Review Findings.\n\n## Finding Status\n\n- See Changes below.\n\n## Verification\n\n- See Verification below.\n\n## Re-review Instructions\n\n- Run \`review-loop run --continue\`.\n\n`,
+    );
+  }
+  // F3: hold same packet lock as run; re-check last anchor under lock
+  return withPacketLock(repoRoot, packetId, async () => {
+    const metaLocked = readPacketMeta(packetPath);
+    const lastLocked = lastPhysicalH1(metaLocked.text);
+    const ok =
+      lastLocked
+      && (lastLocked.anchor === 'fix_handoff'
+        || lastLocked.anchor === 're_review'
+        || /^re_review/.test(lastLocked.anchor));
+    if (!ok) {
+      throw new Error(
+        `fix-completion under lock refuses last_anchor=${metaLocked.lastAnchor} (need fix_handoff or re_review)`,
+      );
+    }
+    return appendStageAuto({
       repoRoot,
       packetPath,
       packetId,
       sectionMarkdown: section,
       lastAnchor: 'fix_completion',
       lifecycleState: 'in_progress',
-    }),
-  );
+    });
+  });
 }

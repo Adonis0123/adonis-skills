@@ -210,8 +210,9 @@ export function parseReviewFindings(text) {
  * Validate re-review output (round ≥ 2).
  * @param {string} text
  * @param {string[]} priorFindingIds
+ * @param {{ priorBlockingIds?: string[] }} [opts]
  */
-export function parseReReview(text, priorFindingIds = []) {
+export function parseReReview(text, priorFindingIds = [], opts = {}) {
   const verdict = extractVerdict(text);
   if (!verdict || !VERDICTS.has(verdict)) {
     return { ok: false, error: 'missing or invalid Verdict on re-review' };
@@ -319,28 +320,34 @@ export function parseReReview(text, priorFindingIds = []) {
 
   const unresolved = reassessments.filter((r) => r.status === 'unresolved' || r.status === 'partially');
   const newBlocking = newFindings.filter((f) => f.blocking);
+  // F1: only prior *blocking* IDs gate PASS; default treat all prior IDs as potentially blocking
+  const priorBlocking = new Set(
+    Array.isArray(opts.priorBlockingIds) && opts.priorBlockingIds.length
+      ? opts.priorBlockingIds
+      : priorFindingIds,
+  );
+  const unresolvedBlocking = unresolved.filter((r) => priorBlocking.has(r.id));
   if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
-    if (unresolved.length || newBlocking.length) {
+    if (unresolvedBlocking.length || newBlocking.length) {
       return {
         ok: false,
-        error: `${verdict} rejected: unresolved/partially priors or new blockers present`,
+        error: `${verdict} rejected: unresolved/partially prior blockers or new blockers present`,
       };
     }
   }
-  // F1: unresolved/partially priors are blockers — only BLOCKED allowed
   if (verdict === 'PASS_WITH_CONCERNS') {
     if (newBlocking.length) {
       return { ok: false, error: 'PASS_WITH_CONCERNS cannot include new [阻塞] findings' };
     }
-    if (unresolved.length) {
+    if (unresolvedBlocking.length) {
       return {
         ok: false,
-        error: 'PASS_WITH_CONCERNS rejected: unresolved/partially prior findings remain (must BLOCKED)',
+        error: 'PASS_WITH_CONCERNS rejected: unresolved/partially prior blockers remain (must BLOCKED)',
       };
     }
   }
-  if (verdict === 'BLOCKED' && !unresolved.length && !newBlocking.length) {
-    return { ok: false, error: 'BLOCKED re-review requires unresolved prior or new blocker' };
+  if (verdict === 'BLOCKED' && !unresolvedBlocking.length && !newBlocking.length) {
+    return { ok: false, error: 'BLOCKED re-review requires unresolved prior blocker or new blocker' };
   }
 
   return {
@@ -384,9 +391,18 @@ export function formatReviewFindingsStage(parsed) {
 
   let md = `# Review Findings
 
-> reviewer: ${reviewer}
-> base_sha: ${baseSha}
-> evidence: ${evidencePath}
+## Scope reviewed
+
+- Auto loop frozen evidence: \`${evidencePath}\`
+- Base SHA: \`${baseSha}\`
+- Reviewer: ${reviewer}
+
+## Verification
+
+- Evidence file read by Reviewer (headless)
+- Schema fail-closed parse of findings + Verdict
+
+## Findings
 
 | ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
 |---|---|---|---|---|---|---|
@@ -407,9 +423,28 @@ ${verdict}
     md += `
 # Fix Handoff
 
+## Scope
+
+- Findings from auto loop round review
+- Evidence: \`${evidencePath}\`
+
+## Validated findings to fix
+
 | ID | 严重度 | 标题 | Target files | Required fix | Acceptance check |
 |---|---|---|---|---|---|
 ${handoffRows}
+
+## Constraints
+
+- Fix only listed findings; do not broaden scope
+
+## Verification required
+
+- Per-finding Acceptance check in table above
+
+## Required fix agent output
+
+- Append \`# Fix Completion\` via \`review-loop fix-completion\`
 `;
   }
   return md.trim() + '\n';
@@ -447,6 +482,11 @@ export function formatReReviewStage(parsed) {
 
 > reviewer: ${parsed.reviewer}
 > evidence: ${parsed.evidencePath}
+
+## Scope
+
+- Scoped re-review of prior findings against frozen evidence \`${parsed.evidencePath}\`
+- Reviewer: ${parsed.reviewer}
 
 ## Prior Findings Reassessment
 

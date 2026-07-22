@@ -261,7 +261,25 @@ loop: on
 - Repository: ${repoRoot}
 - Branch: ${branch}
 `;
-  fs.writeFileSync(file, body, 'utf8');
+  // Exclusive create (wx) to close TOCTOU window (F2)
+  try {
+    const fd = fs.openSync(file, 'wx');
+    fs.writeFileSync(fd, body, 'utf8');
+    fs.closeSync(fd);
+  } catch (err) {
+    if (err?.code === 'EEXIST') {
+      // rare race: retry once with suffix
+      base = `${minute}-${scopeSlug}-${String(n).padStart(2, '0')}`;
+      file = path.join(activeDir, `${base}.md`);
+      const packetId2 = packetIdFromParts(branch, base);
+      const body2 = body.replace(packetId, packetId2);
+      const fd = fs.openSync(file, 'wx');
+      fs.writeFileSync(fd, body2, 'utf8');
+      fs.closeSync(fd);
+      return { packetPath: file, packetId: packetId2, fileBase: base };
+    }
+    throw err;
+  }
   return { packetPath: file, packetId, fileBase: base };
 }
 
