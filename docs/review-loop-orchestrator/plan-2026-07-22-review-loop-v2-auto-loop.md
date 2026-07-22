@@ -278,12 +278,12 @@ flowchart LR
 
 ## 8. 验收标准汇总（checklist）
 
-- [ ] T0 探针记录三条齐全（Grok resume 结论明确：PASS 或降级 one-shot）
-- [ ] T1–T3 全部 node --test 通过（含 T5 两条负路径）
-- [ ] `pnpm skills:validate` + `pnpm skills:index` 通过
-- [ ] Demo 1：中性对象、零介入、终态汇报、packet 归档、无人工 resolve
-- [ ] Demo 2：自举本实现 diff，零介入到终态
-- [ ] T8 清理后全量测试与校验仍绿（单独 commit）
+- [x] T0 探针记录三条齐全（Grok resume 结论明确：PASS 或降级 one-shot） — 证据：本文「探针记录」节 + implementer/t0-probes.md；三产品 adapter YES
+- [x] T1–T5 全部 node --test 通过（含 T5 四条负路径） — 证据：`node --test skills/agentic-review-handoff/scripts/test/*.test.mjs` → 40 pass（implementer/node-test.log）
+- [x] `pnpm skills:validate` + `pnpm skills:index` 通过 — 证据：implementer/skills-validate.log + skills-index.log
+- [x] Demo 1：中性对象、零介入、终态汇报、packet 归档、无人工 resolve — packet `.review-handoff/archive/main/2026-07-22_11-34-demo1-val2.md`；subject `scripts/validate-skills.mjs`
+- [x] Demo 2：自举本实现 diff，零介入到终态 — packet `.review-handoff/archive/main/2026-07-22_12-54-demo2g.md`；JSON status=archived verdict=PASS round=4（implementer/demo2-rerun/demo2g-continue3.json）
+- [x] T8 清理后全量测试与校验仍绿（单独 commit） — commit `1cef197` + follow-ups；bind 返回 removed；40 tests + validate/index 绿
 
 ## 9. Backlog（明确不做，留档防加戏）
 
