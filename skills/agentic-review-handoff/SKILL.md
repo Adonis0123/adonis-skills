@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Cross-agent code review handoff and auto review→fix→re-review loop in one visible session (review-loop run / auto loop) with headless read-only Reviewer (codex|grok|claude), plus classic packet handoff and legacy dual-window orchestration. Requires a git repo (packet addressing uses git rev-parse --show-toplevel). Use when the user wants the same-session dual-AI review closed loop with zero mid-loop intervention; asks for an independent second pair of eyes on a diff/branch/PR; provides reviewer feedback to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; wants DecisionConsult advisory peer stance; or first-principles/DDD/high-cohesion review. Persists packets under $repo_root/.review-handoff/active/ and runtime under .review-handoff/runtime/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders, or when the user names a different review skill."
+description: "Cross-agent code review handoff and auto review→fix→re-review loop in one visible session (review-loop run / auto loop) with headless read-only Reviewer (codex|grok|claude), plus classic packet handoff. Requires a git repo (packet addressing uses git rev-parse --show-toplevel). Use when the user wants the same-session dual-AI review closed loop with zero mid-loop intervention; asks for an independent second pair of eyes on a diff/branch/PR; provides reviewer feedback to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; wants DecisionConsult advisory peer stance; or first-principles/DDD/high-cohesion review. Persists packets under $repo_root/.review-handoff/active/ and runtime under .review-handoff/runtime/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders, or when the user names a different review skill."
 metadata:
   author: adonis
-  version: "3.0.0"
+  version: "3.1.0"
 ---
 
 # Agentic Review Handoff
