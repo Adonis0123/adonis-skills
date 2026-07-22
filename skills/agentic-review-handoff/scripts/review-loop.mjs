@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 /**
- * review-loop CLI — absolute-path friendly, never depends on cwd for skill location.
+ * review-loop CLI (v2 auto loop only).
+ *
+ * Dual-window bind/next/wait/open/claim/gate path was removed in T8
+ * (plan-2026-07-22-review-loop-v2-auto-loop.md D11).
  *
  * Usage:
  *   node /abs/path/to/skills/agentic-review-handoff/scripts/review-loop.mjs <command> [options]
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import * as coord from './review-loop/coordinator.mjs';
 import * as autoRun from './review-loop/auto-run.mjs';
 import * as consult from './review-loop/consult.mjs';
 
@@ -53,21 +55,21 @@ function help() {
   return {
     ok: true,
     skillScriptsDir: __dirname,
+    mode: 'auto-loop',
     usage: [
-      '--- AUTO LOOP (v2, preferred) ---',
-      'review-loop run --repo=PATH --reviewer=codex|grok|claude [--base=SHA] [--rounds=3] [--packet=PATH]',
-      'review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3]',
+      'review-loop run --repo=PATH --reviewer=codex|grok|claude [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]',
+      'review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3] [--paths=a,b]',
       'review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH',
-      'review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH  (T3)',
-      '--- LEGACY dual-window (deprecated; dogfood-failed; do not use for new loops) ---',
-      'review-loop open --repo=PATH',
-      'review-loop board|summary|status|resolve|bind|next|wait|append-eof|complete|gate|disarm …',
+      'review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH',
+    ],
+    removed: [
+      'open/bind/next/wait/append-eof/complete/board/resolve/gate/disarm/blind-submit/h1-probe',
+      'See docs/review-loop-orchestrator/plan-2026-07-22-review-loop-v2-auto-loop.md T8',
     ],
     defaults: {
-      autoLoop: 'single visible Fixer session; headless read-only Reviewer; zero mid-loop human',
+      autoLoop: 'single visible Fixer; headless read-only Reviewer; zero mid-loop human',
       reviewer: 'codex|grok|claude',
       rounds: 3,
-      packetWrite: 'auto stage writer (claim-free) or legacy append-eof',
       sandbox: 'hardcoded in adapters; cannot be disabled via CLI',
     },
   };
@@ -87,54 +89,49 @@ async function main() {
     cwd: args.cwd ?? process.cwd(),
     repoRoot: args.repo ?? args['repo-root'],
     packetPath: args.packet ?? args['packet-path'],
-    role: args.role,
-    product: args.product,
-    productReviewer: args['product-reviewer'] ?? args.productReviewer,
-    productFixer: args['product-fixer'] ?? args.productFixer,
-    loop: args.loop,
-    profile: args.profile,
-    runtime: args.runtime,
-    driver: args.driver,
-    h1Passed:
-      args['h1-passed'] == null
-        ? undefined
-        : args['h1-passed'] === true || args['h1-passed'] === 'true',
-    scopeSlug: args.scope,
-    createPacket: args['create-packet'] === true,
-    autoStage: args['auto-stage'] === true || args.autoStage === true,
-    type: args.type,
-    evidence: args.evidence,
-    decision: args.decision,
-    phase: args.phase,
-    forceComplete: args['force-complete'] === true,
-    generation: args.generation != null ? Number(args.generation) : undefined,
-    once: args.once === true,
-    pollMs: args['poll-ms'] != null ? Number(args['poll-ms']) : undefined,
-    maxWaitMs:
-      args['max-wait-ms'] != null
-        ? Number(args['max-wait-ms'])
-        : args['max-wait-seconds'] != null
-          ? Number(args['max-wait-seconds']) * 1000
-          : undefined,
-    heartbeatMs: args['heartbeat-ms'] != null ? Number(args['heartbeat-ms']) : undefined,
-    stage: args.stage,
     bodyFile: args['body-file'] ?? args.bodyFile,
-    lifecycle: args.lifecycle ?? args['lifecycle-state'],
-    watch: args.watch === true,
-    watchMs: args['watch-ms'] != null ? Number(args['watch-ms']) : 2000,
   };
+
+  // Retired dual-window commands: hard fail with migration hint
+  const retired = new Set([
+    'open',
+    'pair',
+    'prompts',
+    'bind',
+    'next',
+    'wait',
+    'complete',
+    'append-eof',
+    'append',
+    'board',
+    'summary',
+    'finish',
+    'report',
+    'status',
+    'gate',
+    'resolve',
+    'disarm',
+    'blind-submit',
+    'h1-probe',
+  ]);
+  if (retired.has(command)) {
+    fail(
+      new Error(
+        `command "${command}" removed in auto-loop v2 (T8). Use: review-loop run | fix-completion | consult`,
+      ),
+    );
+  }
 
   try {
     let result;
     switch (command) {
       case 'run': {
-        // Refuse flags that would disable sandbox (adapters hardcode isolation).
         if (args['no-sandbox'] || args['disable-sandbox'] || args.sandbox === 'off') {
           throw new Error('sandbox flags are hardcoded in adapters and cannot be disabled');
         }
         result = await autoRun.cmdRun({
           ...base,
-          reviewer: args.reviewer ?? base.productReviewer,
+          reviewer: args.reviewer ?? args['product-reviewer'],
           base: args.base,
           rounds: args.rounds != null ? Number(args.rounds) : undefined,
           continue: args.continue === true || args.cont === true,
@@ -160,83 +157,8 @@ async function main() {
           question: args.question,
         });
         break;
-      case 'open':
-      case 'pair':
-      case 'prompts':
-        result = coord.cmdOpen({ ...base, loop: 'on' });
-        break;
-      case 'bind':
-        if (!base.role) throw new Error('--role required');
-        result = coord.cmdBind({ ...base, loop: base.loop ?? 'on' });
-        break;
-      case 'next':
-        result = coord.cmdNext(base);
-        break;
-      case 'wait':
-        result = coord.cmdWait(base);
-        break;
-      case 'complete':
-        result = coord.cmdComplete(base);
-        break;
-      case 'status':
-        result = coord.cmdStatus(base);
-        break;
-      case 'board':
-        result = coord.cmdBoard(base);
-        if (base.watch) {
-          // Stream board lines to stderr until Ctrl+C (human control plane)
-          const max = Number(args['max-ticks'] ?? 0);
-          let ticks = 0;
-          while (true) {
-            const b = coord.cmdBoard(base);
-            process.stderr.write(`[board] ${b.line}\n`);
-            if (b.gate) process.stderr.write(`[board] ${b.human.action}\n`);
-            if (b.allTasksComplete && b.report?.text) {
-              process.stderr.write(`[board]\n${b.report.text}\n`);
-            }
-            ticks += 1;
-            if (max > 0 && ticks >= max) {
-              result = b;
-              break;
-            }
-            Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, base.watchMs || 2000);
-            result = b;
-          }
-        }
-        break;
-      case 'summary':
-      case 'finish':
-      case 'report':
-        result = coord.cmdSummary(base);
-        break;
-      case 'append-eof':
-      case 'append':
-        result = coord.cmdAppendEof(base);
-        break;
-      case 'gate':
-        result = coord.cmdGate(base);
-        break;
-      case 'resolve':
-        if (!base.decision) throw new Error('--decision required');
-        result = coord.cmdResolve(base);
-        break;
-      case 'disarm':
-        result = coord.cmdDisarm(base);
-        break;
-      case 'blind-submit':
-        result = coord.cmdBlindSubmit(base);
-        break;
-      case 'h1-probe': {
-        const { runH1Probe } = await import('./review-loop/h1-probe.mjs');
-        result = await runH1Probe({
-          idleSeconds: Number(args['idle-seconds'] ?? args.idle ?? 900),
-          outPath: args.out,
-          products: args.products,
-        });
-        break;
-      }
       default:
-        throw new Error(`Unknown command: ${command}`);
+        throw new Error(`Unknown command: ${command}. Try: run | fix-completion | consult | help`);
     }
     print(result);
     if (result && result.ok === false) process.exitCode = 2;

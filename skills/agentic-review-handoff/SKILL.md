@@ -20,7 +20,7 @@ Legacy dual-window bind/wait/gate path is **deprecated** (dogfood-failed). Do no
 - packet shape → `references/packet-anatomy.md`
 - lifecycle / archive → `references/packet-addressing.md`
 - severity / verdict vocabulary → `references/review-contract.md`
-- **legacy dual-window (do not use for new work)** → `references/human-control-plane.md` / `worker-contract.md` (marked legacy)
+- auto loop contract → `references/auto-loop-contract.md`
 
 ## Auto loop (`review-loop run`) — preferred
 
@@ -58,11 +58,9 @@ Tests:
 node --test scripts/test/adapters.test.mjs scripts/test/auto-run.test.mjs scripts/test/consult.test.mjs
 ```
 
-## Legacy dual-window (`loop=on`) — deprecated
+## Legacy dual-window — removed (T8)
 
-> **Legacy (dogfood-failed).** Incidents: mid-packet H1 inserts, dual-window "continue" thrash, freeze on concurrent dev. Kept for archive until T8 cleanup. **Do not use for new loops.**
-
-Historical commands: `open`, `bind`, `next`, `wait`, `append-eof`, `complete`, `board`, `resolve`, `summary`. See `references/human-control-plane.md` (legacy).
+`open` / `bind` / `next` / `wait` / `append-eof` / `complete` / `board` / `resolve` / `gate` / `disarm` / `blind-submit` / `h1-probe` were deleted in T8 (`plan-2026-07-22-review-loop-v2-auto-loop.md` D11). Invoking them returns a migration error pointing at `run` / `fix-completion` / `consult`.
 
 ## Read-only Boundary (Important)
 
@@ -135,7 +133,7 @@ When resolved, write `source_prompt_id`, `source_prompt_head`, and `source_promp
 Two write rules govern every packet edit:
 
 - **Body H1 sections are append-only.** Once a `# Anchor` section has been written, never modify, delete, or reorder it. New writes only append to the end of the file.
-- **Under `loop=on`**, prefer `review-loop append-eof` over free-form editor patches so frontmatter and last physical H1 stay aligned (mid-file inserts open Protocol Gate).
+- **Under auto loop**, packet stages are written only by the claim-free stage writer (`run` / `fix-completion`); never mid-file edit the packet.
 - **A single stage entry may append more than one H1 section.** Specifically:
   - **review / feedback-validation stage** typically writes a group of H1 sections in one atomic packet update: `# Review Intake` (or `# Review Handoff` for implementer-initiated) → `# Review Findings` → (conditional) `# Fix Handoff`. The Fix Handoff is appended only when Verdict is `BLOCKED` or `PASS_WITH_CONCERNS`; on `PASS` / `NO_FINDINGS` the group ends after `# Review Findings` and the packet is archived.
   - **fix stage** appends exactly one `# Fix Completion` (or `# Fix Completion (round N)`).

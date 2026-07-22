@@ -58,7 +58,7 @@
         "level": 1
       },
       {
-        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **classic single-session packet review (no automation)** → Workflow sections below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive → `references/packet-addressing.md`\n- severity / verdict vocabulary → `references/review-contract.md`\n- **legacy dual-window (do not use for new work)** → `references/human-control-plane.md` / `worker-contract.md` (marked legacy)",
+        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **classic single-session packet review (no automation)** → Workflow sections below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive → `references/packet-addressing.md`\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`",
         "heading": "Fast Path",
         "level": 2
       },
@@ -83,8 +83,8 @@
         "level": 1
       },
       {
-        "raw": "> **Legacy (dogfood-failed).** Incidents: mid-packet H1 inserts, dual-window \"continue\" thrash, freeze on concurrent dev. Kept for archive until T8 cleanup. **Do not use for new loops.**\n\nHistorical commands: `open`, `bind`, `next`, `wait`, `append-eof`, `complete`, `board`, `resolve`, `summary`. See `references/human-control-plane.md` (legacy).",
-        "heading": "Legacy dual-window (`loop=on`) — deprecated",
+        "raw": "`open` / `bind` / `next` / `wait` / `append-eof` / `complete` / `board` / `resolve` / `gate` / `disarm` / `blind-submit` / `h1-probe` were deleted in T8 (`plan-2026-07-22-review-loop-v2-auto-loop.md` D11). Invoking them returns a migration error pointing at `run` / `fix-completion` / `consult`.",
+        "heading": "Legacy dual-window — removed (T8)",
         "level": 2
       },
       {

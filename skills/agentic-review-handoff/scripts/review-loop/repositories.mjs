@@ -613,7 +613,7 @@ export function validateCompletedStage({ packetPath, meta, role }) {
   if (last.anchor !== meta.lastAnchor) {
     throw new Error(
       `last physical H1 is ${last.anchor}, but frontmatter last_anchor is ${meta.lastAnchor}. ` +
-        `Likely mid-file packet edit — discard that insert; write only via review-loop append-eof, ` +
+        `Likely mid-file packet edit — discard that insert; write only via review-loop run/fix-completion stage writer, ` +
         `then human: review-loop board + resolve once (do not ask both windows)`,
     );
   }
