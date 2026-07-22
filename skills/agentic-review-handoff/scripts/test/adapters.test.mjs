@@ -410,6 +410,34 @@ exit 42`,
     assert.equal(r.code, DELIVERY_UNKNOWN);
     assert.equal(fs.readFileSync(countFile, 'utf8').trim(), '1', 'must not second-call');
   });
+
+  it('cannot resume + connection reset is gray-zone (no newSession)', async () => {
+    const repoRoot = makeRepo();
+    const countFile = path.join(repoRoot, 'call-count-cr');
+    fs.writeFileSync(countFile, '0');
+    const bin = writeFakeBin(
+      repoRoot,
+      'fake-cannot-resume',
+      `N=$(cat "${countFile}")
+echo $((N+1)) > "${countFile}"
+echo "cannot resume: connection reset after request" >&2
+exit 1`,
+    );
+    const adapter = createAdapter('codex', {
+      repoRoot,
+      packetId: 'pkt-1',
+      bin,
+      timeoutMs: 5000,
+    });
+    const r = await adapter.resume('019f0000-0000-0000-0000-000000000099', 'prompt');
+    assert.equal(r.ok, false);
+    assert.equal(r.code, DELIVERY_UNKNOWN);
+    assert.equal(
+      fs.readFileSync(countFile, 'utf8').trim(),
+      '1',
+      'must not degrade cannot-resume gray zone to newSession',
+    );
+  });
 });
 
 describe('cwd is repoRoot', () => {

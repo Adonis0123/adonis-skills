@@ -20,8 +20,16 @@ export const DEFAULT_TIMEOUT_MS = Number(process.env.REVIEW_LOOP_TIMEOUT_MS ?? 6
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
+/** Strict session-not-found class only — never broad "cannot resume" (gray-zone false positive). */
 const SESSION_NOT_FOUND_RE =
-  /session not found|unknown session|no such session|invalid session|session.*does not exist|cannot resume/i;
+  /session not found|unknown session|no such session|invalid session|session(?: id)?\s*(?:does not exist|not found)/i;
+
+/** Connection / mid-flight failures must never degrade to newSession (double delivery). */
+const GRAY_ZONE_RE =
+  /connection (?:reset|interrupted|refused|closed)|econnreset|etimedout|network|mid-flight|after request|timeout/i;
+
+/** CLI "immediately rejects" window for whitelist (c); longer exits are gray-zone. */
+const IMMEDIATE_REJECT_MS = 5_000;
 
 /**
  * @typedef {'codex'|'grok'|'claude'} Product
@@ -155,12 +163,18 @@ export function createAdapter(product, opts) {
       });
 
       // Whitelist (c): CLI immediately rejects with session-not-found class error
+      // Must be mechanical proof the model call never started — not gray-zone mid-flight text.
+      const errText = result.error || '';
+      const immediate =
+        result.elapsedMs == null || result.elapsedMs <= IMMEDIATE_REJECT_MS;
       if (
         !result.ok
         && result.code === DELIVERY_UNKNOWN
-        && SESSION_NOT_FOUND_RE.test(result.error || '')
+        && SESSION_NOT_FOUND_RE.test(errText)
+        && !GRAY_ZONE_RE.test(errText)
         && !result.timedOut
         && !result.stopped
+        && immediate
       ) {
         const r = await this.newSession(prompt);
         if (r.ok) {
@@ -256,6 +270,9 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
  */
 export function invokeProduct(cfg) {
   return new Promise((resolve) => {
+    const startedAt = Date.now();
+    const elapsed = () => Date.now() - startedAt;
+
     // F6: refuse to spawn if STOP already present
     if (
       fs.existsSync(cfg.globalStopPath)
@@ -268,6 +285,7 @@ export function invokeProduct(cfg) {
         exitCode: null,
         timedOut: false,
         stopped: true,
+        elapsedMs: elapsed(),
       });
       return;
     }
@@ -342,7 +360,7 @@ export function invokeProduct(cfg) {
       } catch {
         /* ignore */
       }
-      resolve(result);
+      resolve({ ...result, elapsedMs: result.elapsedMs ?? elapsed() });
     };
 
     child.on('error', (err) => {
@@ -532,4 +550,4 @@ export function assertSandboxHardcoded(product, argv) {
   }
 }
 
-export { UUID_RE, SESSION_NOT_FOUND_RE };
+export { UUID_RE, SESSION_NOT_FOUND_RE, GRAY_ZONE_RE, IMMEDIATE_REJECT_MS };

@@ -18,7 +18,6 @@ import {
   branchSlug,
   validatePacketPath,
   lastPhysicalH1,
-  rewriteFrontmatter,
 } from './repositories.mjs';
 import { createAdapter, DELIVERY_UNKNOWN } from './adapters.mjs';
 import { freezeRoundEvidence, resolveBaseSha } from './evidence.mjs';
@@ -106,17 +105,6 @@ export async function cmdRun(opts) {
   ensureReviewHandoffLayout(repoRoot);
   const branch = resolveBranch(repoRoot);
   const isContinue = Boolean(opts.continue || opts.cont);
-  // F4: continue inherits persisted roundsBudget unless explicit --rounds
-  let roundsBudget;
-  if (opts.rounds != null && opts.rounds !== '') {
-    roundsBudget = Number(opts.rounds);
-    if (!Number.isFinite(roundsBudget) || roundsBudget < 1) {
-      throw new Error('--rounds must be a positive finite number');
-    }
-  } else {
-    roundsBudget = null; // resolve after packet id known
-  }
-
   // Resolve / create packet
   let packetPath = opts.packetPath || null;
   let packetId = opts.packetId || null;
@@ -165,14 +153,9 @@ export async function cmdRun(opts) {
     throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
   }
 
-  if (roundsBudget == null) {
-    const prior = loadRunState(repoRoot, packetId) ?? {};
-    roundsBudget =
-      isContinue && prior.roundsBudget != null
-        ? Number(prior.roundsBudget)
-        : DEFAULT_ROUNDS;
-    if (!Number.isFinite(roundsBudget) || roundsBudget < 1) roundsBudget = DEFAULT_ROUNDS;
-  }
+  // F4: continue inherits persisted roundsBudget unless explicit --rounds.
+  // `--rounds +N` is additive authorization (T5); bare N is absolute ceiling.
+  const roundsBudget = resolveRoundsBudget(opts.rounds, priorState, isContinue);
 
   return withPacketLock(repoRoot, packetId, () =>
     runBody({
@@ -380,6 +363,8 @@ async function runBody(ctx) {
     pathFilter = state.paths;
   }
   if (pathFilter?.length) {
+    // Paths live only in auto-run-state.json. Never rewrite packet + reseed hash here:
+    // that would absorb external packet edits and defeat PACKET_HASH_MISMATCH (R1 #1).
     saveRunState(repoRoot, packetId, {
       ...loadRunState(repoRoot, packetId),
       paths: pathFilter,
@@ -388,17 +373,6 @@ async function runBody(ctx) {
       updated: new Date().toISOString(),
     });
     state = loadRunState(repoRoot, packetId);
-    // Pin scope into packet frontmatter for human-visible continuity (F3)
-    try {
-      rewriteFrontmatter(packetPath, {
-        review_paths: pathFilter.join(','),
-        base_sha: baseSha,
-        reviewer,
-      });
-      seedPacketHash(repoRoot, packetId, packetPath);
-    } catch {
-      /* non-fatal if packet missing during early create */
-    }
   }
 
   const evidenceDir = path.join(runtimeDir(repoRoot, packetId), 'evidence');
@@ -529,19 +503,13 @@ async function runBody(ctx) {
     invokeResult = retry;
   }
 
-  // Format stages + write
-  // Packet lifecycle for write: Fix Handoff group requires in_progress (F4 validator).
-  // User-facing status for PASS_WITH_CONCERNS remains awaiting_user_decision below.
-  let lifecycle = lifecycleForVerdict(
+  // Lifecycle matches auto-loop contract (plan T2 §6):
+  // PASS/NO_FINDINGS → archived; PWC → awaiting_user_decision; BLOCKED → blocked.
+  // Fix Handoff is only for BLOCKED (not PWC).
+  const lifecycle = lifecycleForVerdict(
     effectiveRound <= 1 ? 'review_findings' : 're_review',
     parsed.verdict,
   );
-  if (
-    effectiveRound <= 1
-    && (parsed.verdict === 'BLOCKED' || parsed.verdict === 'PASS_WITH_CONCERNS')
-  ) {
-    lifecycle = 'in_progress';
-  }
 
   let sectionMarkdown;
   let lastAnchor;
@@ -553,11 +521,8 @@ async function runBody(ctx) {
       baseSha,
       evidencePath: evidence.evidencePath,
     });
-    // When Fix Handoff is included, last physical H1 is Fix Handoff
-    lastAnchor =
-      parsed.verdict === 'BLOCKED' || parsed.verdict === 'PASS_WITH_CONCERNS'
-        ? 'fix_handoff'
-        : 'review_findings';
+    // Plan T2: first-round Fix Handoff only when BLOCKED
+    lastAnchor = parsed.verdict === 'BLOCKED' ? 'fix_handoff' : 'review_findings';
   } else {
     sectionMarkdown = formatReReviewStage({
       verdict: parsed.verdict,
@@ -649,6 +614,17 @@ async function runBody(ctx) {
   }
 
   if (parsed.verdict === 'BLOCKED') {
+    // Budget is a ceiling: on the final budgeted round, BLOCKED exits immediately
+    // (plan flowchart: 轮次 < 预算? 否 → 预算耗尽). Do not ask for another fix pass.
+    if (effectiveRound >= roundsBudget && !nextState.budgetOverride) {
+      return budgetExhaustedReport({
+        packetPath,
+        state: nextState,
+        roundsBudget,
+        openBlocking,
+        findings: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
+      });
+    }
     return {
       ok: true,
       status: 'blocked',
@@ -709,15 +685,68 @@ function deliveryUnknownReport({ packetPath, state, error, code }) {
   };
 }
 
-function budgetExhaustedReport({ packetPath, state, roundsBudget }) {
+/**
+ * Parse --rounds: absolute N, or additive +N on continue (T5 budget re-authorization).
+ * @param {string|number|null|undefined} raw
+ * @param {Record<string, unknown>} prior
+ * @param {boolean} isContinue
+ */
+export function resolveRoundsBudget(raw, prior = {}, isContinue = false) {
+  if (raw == null || raw === '') {
+    const inherited =
+      isContinue && prior.roundsBudget != null ? Number(prior.roundsBudget) : DEFAULT_ROUNDS;
+    return Number.isFinite(inherited) && inherited >= 1 ? inherited : DEFAULT_ROUNDS;
+  }
+  const text = String(raw).trim();
+  if (text.startsWith('+')) {
+    const delta = Number(text.slice(1));
+    if (!Number.isFinite(delta) || delta < 1) {
+      throw new Error('--rounds +N requires a positive finite N');
+    }
+    const base =
+      prior.roundsBudget != null
+        ? Number(prior.roundsBudget)
+        : prior.round != null
+          ? Number(prior.round)
+          : DEFAULT_ROUNDS;
+    const baseBudget = Number.isFinite(base) && base >= 1 ? base : DEFAULT_ROUNDS;
+    return baseBudget + delta;
+  }
+  const n = Number(text);
+  if (!Number.isFinite(n) || n < 1) {
+    throw new Error('--rounds must be a positive finite number');
+  }
+  return n;
+}
+
+function budgetExhaustedReport({ packetPath, state, roundsBudget, openBlocking, findings }) {
+  const unresolved = openBlocking || state.openBlocking || [];
   return {
     ok: false,
     status: 'budget_exhausted',
     message: `Round budget (${roundsBudget}) exhausted with unresolved blockers`,
     packetPath,
-    openBlocking: state.openBlocking || [],
-    lastVerdict: state.lastVerdict,
-    recommendation: 'Authorize more rounds: run --continue --rounds N (new budget)',
+    openBlocking: unresolved,
+    unresolved,
+    lastVerdict: state.lastVerdict || 'BLOCKED',
+    roundsUsed: state.round,
+    roundsBudget,
+    // 双方立场：Reviewer 末轮结论 vs Fixer 已提交的修复轮次
+    positions: {
+      reviewer: {
+        lastVerdict: state.lastVerdict || 'BLOCKED',
+        openBlocking: unresolved,
+        findingIds: state.findingIds || [],
+        findings: findings || null,
+      },
+      fixer: {
+        note:
+          'Fixer submitted Fix Completion through prior rounds; latest Reviewer re-review still reports blockers',
+        roundsAttempted: state.round,
+      },
+    },
+    recommendation:
+      'Authorize more rounds: run --continue --rounds +N (additive) or --rounds N (absolute ceiling)',
   };
 }
 

@@ -252,9 +252,9 @@ loop: on
 # Review Handoff
 
 ## Goal
-- User request: review-loop automated dual-session handoff
-- Intended behavior: packet-driven evaluator-optimizer loop
-- Non-goals: deep blind (unless profile=deep)
+- User request: review-loop auto loop handoff
+- Intended behavior: packet-driven Fixer + headless Reviewer loop
+- Non-goals: dual-window coordination; profile=deep blind review
 
 ## Review Scope
 - Scope type: working tree / loop orchestration
@@ -294,9 +294,9 @@ loop: on
 # Review Handoff
 
 ## Goal
-- User request: review-loop automated dual-session handoff
-- Intended behavior: packet-driven evaluator-optimizer loop
-- Non-goals: deep blind (unless profile=deep)
+- User request: review-loop auto loop handoff
+- Intended behavior: packet-driven Fixer + headless Reviewer loop
+- Non-goals: dual-window coordination; profile=deep blind review
 
 ## Review Scope
 - Scope type: working tree / loop orchestration
@@ -558,50 +558,6 @@ export function appendEvent(repoRoot, packetId, event) {
   fs.appendFileSync(file, `${JSON.stringify({ ...event, at: new Date().toISOString() })}\n`);
 }
 
-/**
- * @deprecated dual-window runtime bundle removed in T8.
- * Auto loop uses auto-run-state.json + reviewer-session.json only.
- */
-export function loadRuntimeBundle(repoRoot, packetId) {
-  const dir = runtimeDir(repoRoot, packetId);
-  return {
-    dir,
-    autoRunState: readJson(path.join(dir, 'auto-run-state.json'), null),
-    reviewerSession: readJson(path.join(dir, 'reviewer-session.json'), null),
-  };
-}
-
-function removedDualWindowApi(name) {
-  throw new Error(
-    `${name} removed in auto-loop v2 (T8 dual-window cleanup). Use review-loop run | fix-completion | consult`,
-  );
-}
-
-/** @deprecated T8 */
-export function saveBindings() {
-  removedDualWindowApi('saveBindings');
-}
-
-/** @deprecated T8 */
-export function saveClaim() {
-  removedDualWindowApi('saveClaim');
-}
-
-/** @deprecated T8 */
-export function saveGate() {
-  removedDualWindowApi('saveGate');
-}
-
-/** @deprecated T8 */
-export function saveDriver() {
-  removedDualWindowApi('saveDriver');
-}
-
-/** @deprecated T8 */
-export function saveRunMeta() {
-  removedDualWindowApi('saveRunMeta');
-}
-
 export function sha256(text) {
   return crypto.createHash('sha256').update(text).digest('hex');
 }
@@ -610,81 +566,6 @@ function localMinuteStamp() {
   const d = new Date();
   const p = (n) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}_${p(d.getHours())}-${p(d.getMinutes())}`;
-}
-
-export function worktreeManifest(repoRoot) {
-  try {
-    const paths = new Set();
-    for (const args of [
-      ['diff', '--name-only', '-z'],
-      ['diff', '--cached', '--name-only', '-z'],
-      ['ls-files', '--others', '--exclude-standard', '-z'],
-    ]) {
-      const output = execFileSync('git', args, { cwd: repoRoot, encoding: 'buffer' });
-      for (const entry of output.toString('utf8').split('\0')) {
-        if (entry && !entry.startsWith('.review-handoff/')) paths.add(entry);
-      }
-    }
-    return Object.fromEntries(
-      [...paths]
-        .sort()
-        .map((relativePath) => [relativePath, hashWorktreePath(repoRoot, relativePath)]),
-    );
-  } catch {
-    return null;
-  }
-}
-
-export function worktreeManifestHash(repoRoot, manifest = worktreeManifest(repoRoot)) {
-  return manifest == null ? null : sha256(JSON.stringify(manifest));
-}
-
-export function diffWorktreeManifests(before, after) {
-  if (before == null || after == null) return null;
-  const paths = new Set([...Object.keys(before), ...Object.keys(after)]);
-  return [...paths].filter((file) => before[file] !== after[file]).sort();
-}
-
-export function authorizedFixPatterns(packetText) {
-  return authorizedFixTargets(packetText).map((target) => target.pattern);
-}
-
-export function authorizedFixTargets(packetText) {
-  const sections = parseH1Sections(packetText);
-  const handoff = [...sections].reverse().find((section) => section.anchor === 'fix_handoff');
-  if (!handoff) return [];
-  const validatedTable = sectionH2Blocks(handoff).find(
-    (block) => block.heading === 'validated findings to fix',
-  );
-  if (!validatedTable) return [];
-  const table = parseMarkdownTable(validatedTable.body);
-  const idIndex = table.headers.findIndex((header) => header === 'id');
-  const targetIndex = table.headers.findIndex((header) => header === 'target files/lines');
-  if (idIndex === -1 || targetIndex === -1) return [];
-
-  const targets = [];
-  for (const row of table.rows) {
-    const findingId = row[idIndex]?.trim();
-    const targetCell = row[targetIndex] ?? '';
-    if (!findingId) continue;
-    for (const match of targetCell.matchAll(/`([^`]+)`/g)) {
-      const withoutLine = match[1].replace(/:\d+(?:-\d+)?$/, '');
-      if (withoutLine.startsWith('/') || withoutLine.includes('..')) continue;
-      if (!withoutLine.includes('/') && !/^[A-Za-z0-9_.-]+\.[A-Za-z0-9]+$/.test(withoutLine)) continue;
-      for (const expanded of expandBracePattern(withoutLine)) {
-        targets.push({ findingId, pattern: expanded });
-      }
-    }
-  }
-  return targets;
-}
-
-export function pathMatchesAnyPattern(relativePath, patterns) {
-  return patterns.some((pattern) =>
-    pattern.includes('/')
-      ? globToRegExp(pattern).test(relativePath)
-      : globToRegExp(pattern).test(path.basename(relativePath)),
-  );
 }
 
 export function validateCompletedStage({ packetPath, meta, role }) {
@@ -753,7 +634,16 @@ function validateLifecycleTuple({ meta, location, sections }) {
   const lifecycle = meta.lifecycleState;
   const last = sections.at(-1);
   const verdict = sectionVerdict(last);
-  if (anchor === 'fix_handoff' || anchor === 'fix_completion') {
+  // Auto-loop contract: BLOCKED Fix Handoff → blocked; Fix Completion mid-fix → in_progress
+  if (anchor === 'fix_handoff') {
+    if (location !== 'active' || (lifecycle !== 'blocked' && lifecycle !== 'in_progress')) {
+      throw new Error(
+        `fix_handoff requires lifecycle_state=blocked (or in_progress) under active/ (got ${lifecycle}/${location})`,
+      );
+    }
+    return;
+  }
+  if (anchor === 'fix_completion') {
     if (lifecycle !== 'in_progress' || location !== 'active') {
       throw new Error(`${anchor} requires lifecycle_state=in_progress under active/`);
     }
@@ -763,6 +653,22 @@ function validateLifecycleTuple({ meta, location, sections }) {
     const terminal = ['PASS', 'NO_FINDINGS'].includes(verdict);
     if (terminal && (lifecycle !== 'archived' || location !== 'archive')) {
       throw new Error('terminal Review Findings requires lifecycle_state=archived under archive/');
+    }
+    if (verdict === 'PASS_WITH_CONCERNS') {
+      if (lifecycle !== 'awaiting_user_decision' || location !== 'active') {
+        throw new Error(
+          'PASS_WITH_CONCERNS Review Findings requires lifecycle_state=awaiting_user_decision under active/',
+        );
+      }
+      return;
+    }
+    if (verdict === 'BLOCKED') {
+      if (location !== 'active' || (lifecycle !== 'blocked' && lifecycle !== 'in_progress')) {
+        throw new Error(
+          'BLOCKED Review Findings requires lifecycle_state=blocked under active/',
+        );
+      }
+      return;
     }
     if (!terminal && (lifecycle !== 'in_progress' || location !== 'active')) {
       throw new Error('non-terminal Review Findings requires lifecycle_state=in_progress under active/');
@@ -929,24 +835,4 @@ function assertContained(root, candidate, label) {
   if (!isContained(root, candidate)) throw new Error(`${label} escapes ${root}`);
 }
 
-function hashWorktreePath(repoRoot, relativePath) {
-  const file = path.join(repoRoot, relativePath);
-  if (!fs.existsSync(file)) return '<deleted>';
-  const stat = fs.lstatSync(file);
-  if (stat.isSymbolicLink()) return `symlink:${fs.readlinkSync(file)}`;
-  if (!stat.isFile()) return `<${stat.mode}>`;
-  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-}
 
-function expandBracePattern(pattern) {
-  const match = pattern.match(/\{([^{}]+)\}/);
-  if (!match) return [pattern];
-  return match[1]
-    .split(',')
-    .flatMap((value) => expandBracePattern(`${pattern.slice(0, match.index)}${value}${pattern.slice(match.index + match[0].length)}`));
-}
-
-function globToRegExp(pattern) {
-  const escaped = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*');
-  return new RegExp(`^${escaped}$`);
-}

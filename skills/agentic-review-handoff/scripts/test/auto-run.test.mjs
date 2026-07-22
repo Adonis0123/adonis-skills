@@ -197,10 +197,10 @@ describe('auto-run happy paths', () => {
     assert.match(text, /lifecycle_state: archived/);
   });
 
-  it('BLOCKED → fix completion → re-review PASS (two rounds, fresh process continue)', async () => {
+  it('BLOCKED → fix completion → re-review PASS (two rounds, fresh OS process continue)', async () => {
     const dir = initTempRepo();
     fs.writeFileSync(path.join(dir, 'b.ts'), 'export const b = 1;\n');
-    const { factory, calls } = makeFakeAdapterFactory([blockedText('F1'), reReviewPass(['F1'])]);
+    const { factory } = makeFakeAdapterFactory([blockedText('F1')]);
     const r1 = await cmdRun({
       repoRoot: dir,
       reviewer: 'codex',
@@ -212,7 +212,6 @@ describe('auto-run happy paths', () => {
     assert.equal(r1.needsContinue, true);
     assert.ok(fs.existsSync(r1.packetPath));
 
-    // Fixer writes Fix Completion via claim-free writer
     await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r1.packetPath,
@@ -235,28 +234,50 @@ describe('auto-run happy paths', () => {
 `,
     });
 
-    // Continue as fresh OS process would: new factory instance sharing filesystem state
-    const { factory: factory2 } = makeFakeAdapterFactory([reReviewPass(['F1'])]);
-    // Need session continuity optional — new adapter is fine; auto-run will newSession if no session
-    // But script index is fresh so first call returns re-review text
-    const r2 = await cmdRun({
-      repoRoot: dir,
-      reviewer: 'codex',
-      continue: true,
-      packetPath: r1.packetPath,
-      adapterFactory: factory2,
-      rounds: 3,
+    // True fresh OS process: child loads modules and continues from packet + runtime only
+    const autoRunUrl = pathToFileURL(
+      path.join(path.dirname(fileURLToPath(import.meta.url)), '../review-loop/auto-run.mjs'),
+    ).href;
+    const responsesPath = path.join(dir, 'child-responses.json');
+    fs.writeFileSync(responsesPath, JSON.stringify([reReviewPass(['F1'])]));
+    const childSrc = `
+import { cmdRun } from ${JSON.stringify(autoRunUrl)};
+import fs from 'node:fs';
+const responses = JSON.parse(fs.readFileSync(${JSON.stringify(responsesPath)}, 'utf8'));
+let i = 0;
+const r = await cmdRun({
+  repoRoot: ${JSON.stringify(dir)},
+  reviewer: 'codex',
+  continue: true,
+  packetPath: ${JSON.stringify(r1.packetPath)},
+  rounds: 3,
+  adapterFactory: () => ({
+    product: 'codex',
+    getSessionId: () => null,
+    async newSession() {
+      return { ok: true, text: responses[i++] ?? '', sessionId: 'child-s' };
+    },
+    async resume() {
+      return { ok: true, text: responses[i++] ?? '', sessionId: 'child-s' };
+    },
+  }),
+});
+process.stdout.write(JSON.stringify(r));
+`;
+    const out = execFileSync(process.execPath, ['--input-type=module', '-e', childSrc], {
+      encoding: 'utf8',
+      timeout: 30_000,
     });
+    const r2 = JSON.parse(out);
     assert.equal(r2.ok, true, JSON.stringify(r2));
     assert.equal(r2.status, 'archived');
     assert.equal(r2.verdict, 'PASS');
     const text = fs.readFileSync(r2.packetPath, 'utf8');
     assert.match(text, /# Fix Completion/);
     assert.match(text, /# Re-review/);
-    void calls;
   });
 
-  it('PASS_WITH_CONCERNS → awaiting_user_decision', async () => {
+  it('PASS_WITH_CONCERNS → awaiting_user_decision (no Fix Handoff)', async () => {
     const dir = initTempRepo();
     const concerns = `Style nits only.
 
@@ -279,9 +300,10 @@ PASS_WITH_CONCERNS
     assert.equal(r.status, 'awaiting_user_decision');
     assert.equal(r.verdict, 'PASS_WITH_CONCERNS');
     const meta = repo.readPacketMeta(r.packetPath);
-    // Fix Handoff group uses in_progress for packet validator; user status is awaiting_user_decision
-    assert.equal(meta.lifecycleState, 'in_progress');
-    assert.equal(meta.lastAnchor, 'fix_handoff');
+    assert.equal(meta.lifecycleState, 'awaiting_user_decision');
+    assert.equal(meta.lastAnchor, 'review_findings');
+    const text = fs.readFileSync(r.packetPath, 'utf8');
+    assert.doesNotMatch(text, /# Fix Handoff/);
   });
 });
 
@@ -363,28 +385,67 @@ describe('DELIVERY_UNKNOWN', () => {
 });
 
 describe('concurrency lock', () => {
-  it('two concurrent runs — only one advances', async () => {
+  it('two concurrent OS processes — only one holds packet lock', async () => {
     const dir = initTempRepo();
-    // Hold lock in parent, spawn child that tries to lock
     const packet = repo.createPacketFile(dir, repo.resolveBranch(dir), 'lock');
     seedPacketHash(dir, packet.packetId, packet.packetPath);
 
-    const lockDir = path.join(
-      repo.runtimeDir(dir, packet.packetId),
-      '.auto-run.lock',
-    );
-    fs.mkdirSync(lockDir, { recursive: true });
-    fs.writeFileSync(path.join(lockDir, 'pid'), `${process.pid}\n`);
+    const autoRunUrl = pathToFileURL(
+      path.join(path.dirname(fileURLToPath(import.meta.url)), '../review-loop/auto-run.mjs'),
+    ).href;
+    const markerPath = path.join(dir, 'lock-race.jsonl');
+    fs.writeFileSync(markerPath, '');
 
-    let threw = false;
-    try {
-      await withPacketLock(dir, packet.packetId, async () => 'should-not');
-    } catch (err) {
-      threw = true;
-      assert.match(String(err.message), /lock held/i);
-    }
-    assert.equal(threw, true);
-    fs.rmSync(lockDir, { recursive: true, force: true });
+    const childSrc = `
+import { withPacketLock } from ${JSON.stringify(autoRunUrl)};
+import fs from 'node:fs';
+const marker = ${JSON.stringify(markerPath)};
+const label = process.argv[1];
+const holdMs = Number(process.argv[2] || 800);
+try {
+  await withPacketLock(${JSON.stringify(dir)}, ${JSON.stringify(packet.packetId)}, async () => {
+    fs.appendFileSync(marker, JSON.stringify({ label, event: 'acquired', at: Date.now() }) + '\\n');
+    await new Promise((r) => setTimeout(r, holdMs));
+    fs.appendFileSync(marker, JSON.stringify({ label, event: 'released', at: Date.now() }) + '\\n');
+    return 'ok';
+  }, { timeoutMs: 400 });
+  fs.appendFileSync(marker, JSON.stringify({ label, event: 'done', at: Date.now() }) + '\\n');
+  process.exit(0);
+} catch (err) {
+  fs.appendFileSync(marker, JSON.stringify({ label, event: 'failed', msg: String(err.message || err), at: Date.now() }) + '\\n');
+  process.exit(2);
+}
+`;
+
+    const spawnChild = (label, holdMs) =>
+      new Promise((resolve) => {
+        const child = spawn(
+          process.execPath,
+          ['--input-type=module', '-e', childSrc, label, String(holdMs)],
+          { stdio: ['ignore', 'pipe', 'pipe'] },
+        );
+        let stderr = '';
+        child.stderr.on('data', (b) => {
+          stderr += b.toString();
+        });
+        child.on('close', (code) => resolve({ label, code, stderr }));
+      });
+
+    const [a, b] = await Promise.all([spawnChild('A', 900), spawnChild('B', 900)]);
+    const lines = fs
+      .readFileSync(markerPath, 'utf8')
+      .trim()
+      .split('\n')
+      .filter(Boolean)
+      .map((l) => JSON.parse(l));
+    const acquired = lines.filter((e) => e.event === 'acquired');
+    const failed = lines.filter((e) => e.event === 'failed');
+    assert.equal(acquired.length, 1, `expected one acquirer, got ${JSON.stringify(lines)}`);
+    assert.ok(failed.length >= 1, `expected loser to fail lock, got ${JSON.stringify(lines)}`);
+    assert.ok(
+      [a.code, b.code].includes(0) && [a.code, b.code].includes(2),
+      `expected one exit 0 and one exit 2, got A=${a.code} B=${b.code}`,
+    );
   });
 });
 
@@ -408,6 +469,44 @@ BLOCKED
     const r = parseReviewFindings(text);
     assert.equal(r.ok, false);
     assert.match(r.error, /Target files|target files/i);
+  });
+
+  it('rejects non-blocking finding missing Target files', () => {
+    const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| C1 | [非阻塞] | naming | style |  | rename | n/a |
+
+## Verdict
+
+PASS_WITH_CONCERNS
+`;
+    const r = parseReviewFindings(text);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /Target files|target files/i);
+  });
+
+  it('rejects New Findings prose without table', () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+
+## New Findings
+
+none
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+PASS
+`;
+    const r = parseReReview(text, ['F1']);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /New Findings|table/i);
   });
 
   it('rejects re-review new blocker missing Target files', () => {

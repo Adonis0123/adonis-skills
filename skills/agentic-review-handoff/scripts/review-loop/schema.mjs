@@ -200,7 +200,8 @@ export function parseReviewFindings(text) {
         error: `finding ${f.id} missing evidence/required fix/acceptance check`,
       };
     }
-    if (f.blocking && !f.targetFiles) {
+    // Fail-closed: every finding (blocking and non-blocking) must name Target files
+    if (!f.targetFiles) {
       return { ok: false, error: `finding ${f.id} missing Target files` };
     }
   }
@@ -301,23 +302,28 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
     }
   }
 
-  // New findings table (optional rows; real findings need full schema — B1)
+  // New Findings: same schema as round 1 — require the table (use (none) row if empty)
   /** @type {ReturnType<typeof findingFromRow>[]} */
   let newFindings = [];
-  // Heuristic: table after "New Findings" heading
-  const newSection = String(text).split(/##\s*New Findings/i)[1] ?? '';
-  if (newSection) {
-    const beforeNext = newSection.split(/##\s+/)[0];
-    const nt = parseMarkdownTables(beforeNext);
-    for (const t of nt) {
-      if (t.headers.some((h) => h === 'id' || h === 'finding id')) {
-        newFindings = t.rows
-          .map(findingFromRow)
-          .filter((f) => f.id && f.id !== '(none)' && !/^[-—]+$/.test(f.id));
-        break;
-      }
-    }
+  const newSectionMatch = String(text).split(/##\s*New Findings/i);
+  if (newSectionMatch.length < 2) {
+    return { ok: false, error: 're-review missing New Findings section' };
   }
+  const newSectionBody = newSectionMatch[1].split(/##\s+/)[0] ?? '';
+  const newTables = parseMarkdownTables(newSectionBody);
+  const newFindingsTable = newTables.find((t) =>
+    t.headers.some((h) => h === 'id' || h === 'finding id'),
+  );
+  if (!newFindingsTable) {
+    return {
+      ok: false,
+      error:
+        'New Findings must include findings table with ID column (use a single (none) row if empty)',
+    };
+  }
+  newFindings = newFindingsTable.rows
+    .map(findingFromRow)
+    .filter((f) => f.id && f.id !== '(none)' && !/^[-—]+$/.test(f.id));
   for (const f of newFindings) {
     if (!f.title || !f.severity) {
       return { ok: false, error: `new finding ${f.id} missing title or severity` };
@@ -456,7 +462,8 @@ ${rows}
 ${verdict}
 `;
 
-  if (verdict === 'BLOCKED' || verdict === 'PASS_WITH_CONCERNS') {
+  // Plan T2: Fix Handoff only for BLOCKED (PWC parks as awaiting_user_decision without handoff)
+  if (verdict === 'BLOCKED') {
     const handoffRows = findings
       .map(
         (f) =>

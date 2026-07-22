@@ -95,7 +95,7 @@ describe('T5 negative paths', () => {
 
   it('2) budget exhausted still blocked → structured report, packet continuable', async () => {
     const dir = initTempRepo();
-    // Round 1 BLOCKED
+    // Round 1 BLOCKED (budget 2 → still allow fix)
     const r1 = await cmdRun({
       repoRoot: dir,
       reviewer: 'codex',
@@ -118,7 +118,7 @@ describe('T5 negative paths', () => {
       packetPath: r1.packetPath,
       body: '# Fix Completion\n\n## Fix Conclusion\n- attempt 1\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
     });
-    // Round 2 still BLOCKED
+    // Round 2 still BLOCKED → budget exhaust on this final budgeted round (not round 3)
     const r2 = await cmdRun({
       repoRoot: dir,
       reviewer: 'codex',
@@ -136,30 +136,98 @@ describe('T5 negative paths', () => {
         },
       }),
     });
-    assert.equal(r2.status, 'blocked');
-    // Seed state as if budget fully used: round == budget, try continue again
+    assert.equal(r2.ok, false);
+    assert.equal(r2.status, 'budget_exhausted');
+    assert.match(r2.message, /budget/i);
+    assert.ok(Array.isArray(r2.unresolved) || Array.isArray(r2.openBlocking));
+    assert.ok(r2.positions?.reviewer && r2.positions?.fixer, 'report must include both sides');
+    assert.match(String(r2.recommendation || ''), /\+N|rounds/i);
+    assert.ok(fs.existsSync(r2.packetPath), 'packet remains for later continue with higher budget');
+
+    // --rounds +2 must raise ceiling (not treat "+2" as absolute 2)
     const meta = repo.readPacketMeta(r2.packetPath);
     const st = loadRunState(dir, meta.packetId);
-    saveRunState(dir, meta.packetId, { ...st, round: 2, roundsBudget: 2, openBlocking: ['F1'] });
+    assert.equal(Number(st.roundsBudget), 2);
     await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r2.packetPath,
-      body: '# Fix Completion\n\n## Fix Conclusion\n- attempt 2\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
+      body: '# Fix Completion\n\n## Fix Conclusion\n- attempt after +budget\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
     });
     const r3 = await cmdRun({
       repoRoot: dir,
       reviewer: 'codex',
       continue: true,
       packetPath: r2.packetPath,
-      rounds: 2,
-      adapterFactory: () => {
-        throw new Error('should not invoke when budget exhausted');
-      },
+      rounds: '+2',
+      adapterFactory: () => ({
+        product: 'codex',
+        getSessionId: () => 's',
+        async newSession() {
+          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+        },
+        async resume() {
+          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+        },
+      }),
     });
-    assert.equal(r3.ok, false);
-    assert.equal(r3.status, 'budget_exhausted');
-    assert.match(r3.message, /budget/i);
-    assert.ok(fs.existsSync(r2.packetPath), 'packet remains for later continue with higher budget');
+    // Budget is now 4; round 3 BLOCKED should still allow continue (not exhaust yet)
+    assert.equal(r3.status, 'blocked', JSON.stringify(r3));
+    assert.equal(r3.needsContinue, true);
+    const st3 = loadRunState(dir, meta.packetId);
+    assert.equal(Number(st3.roundsBudget), 4);
+  });
+
+  it('2b) scoped continue after external packet edit → hash refuse (not absorb)', async () => {
+    const dir = initTempRepo();
+    fs.writeFileSync(path.join(dir, 'a.ts'), 'export const a = 1;\n');
+    const r1 = await cmdRun({
+      repoRoot: dir,
+      reviewer: 'codex',
+      scopeSlug: 't5-paths',
+      paths: ['a.ts'],
+      adapterFactory: () => ({
+        product: 'codex',
+        getSessionId: () => null,
+        async newSession() {
+          return { ok: true, text: blocked('F1'), sessionId: 's' };
+        },
+        async resume() {
+          return { ok: true, text: blocked('F1'), sessionId: 's' };
+        },
+      }),
+    });
+    assert.equal(r1.status, 'blocked');
+    // Legitimate Fix Completion first (hash still matches)
+    await cmdAppendFixCompletion({
+      repoRoot: dir,
+      packetPath: r1.packetPath,
+      body: '# Fix Completion\n\n## Fix Conclusion\n- x\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
+    });
+    // External edit after fix-completion; continue must not rewrite+reseed and absorb it
+    fs.appendFileSync(r1.packetPath, '\n<!-- external edit after fix -->\n');
+    const r2 = await cmdRun({
+      repoRoot: dir,
+      reviewer: 'codex',
+      continue: true,
+      packetPath: r1.packetPath,
+      paths: ['a.ts'],
+      adapterFactory: () => ({
+        product: 'codex',
+        getSessionId: () => null,
+        async newSession() {
+          return {
+            ok: true,
+            text: reBlocked(['F1']),
+            sessionId: 's',
+          };
+        },
+        async resume() {
+          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+        },
+      }),
+    });
+    assert.equal(r2.ok, false, JSON.stringify(r2));
+    assert.equal(r2.status, 'packet_hash_mismatch');
   });
 
   it('3) external packet rewrite → hash refuse + stop', async () => {

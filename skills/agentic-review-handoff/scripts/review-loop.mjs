@@ -58,7 +58,7 @@ function help() {
     mode: 'auto-loop',
     usage: [
       'review-loop run --repo=PATH --reviewer=codex|grok|claude [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]',
-      'review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3] [--paths=a,b]',
+      'review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]',
       'review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH',
       'review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH',
     ],
@@ -133,7 +133,8 @@ async function main() {
           ...base,
           reviewer: args.reviewer ?? args['product-reviewer'],
           base: args.base,
-          rounds: args.rounds != null ? Number(args.rounds) : undefined,
+          // Pass raw string so --rounds +N stays additive (do not Number() early)
+          rounds: args.rounds,
           continue: args.continue === true || args.cont === true,
           cont: args.continue === true || args.cont === true,
           scopeSlug: args.scope ?? args['scope-slug'],
