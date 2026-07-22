@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Use this skill for auto loop (review-loop run/continue): same-session dual-AI review-fix-re-review with visible Fixer, headless read-only codex|grok|claude Reviewer, and zero mid-loop human; ordinary review / second pair of eyes / audit this diff routes here via auto loop. Also when validating pasted team review feedback as a defect report (feedback validation) before fix, Review Intake for reviewer-initiated live review, or manual packet continuation (classic prompt-protocol only - no script guarantees). Also DecisionConsult (review-loop consult), review-loop sessions (resume headless reviewer commands), PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review. Requires a git repo. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait removed; migrate to run, fix-completion, or consult."
 metadata:
   author: adonis
-  version: "3.2.1"
+  version: "3.2.2"
 ---
 
 # Agentic Review Handoff
@@ -107,9 +107,15 @@ Steps when classic is correct:
 
 1. Infer stage/scope (Stage Defaults in `packet-anatomy.md` — classic-only rows).
 2. Locate or create the packet via `packet-addressing.md` addressing algorithm (only full statement of steps 0–4).
-3. Resolve optional source-prompt provenance via `source-prompt-addressing.md`.
-4. Append the stage's required H1 group (packet-anatomy templates); rewrite frontmatter atomically.
-5. Apply lifecycle/archive actions from `packet-addressing.md` after Verdicts.
+3. On create (and keep on every classic rewrite), set observability frontmatter:
+   ```yaml
+   mode: classic
+   classic_reason: intake | feedback_validation | manual_continuation
+   ```
+   Closed set only — exactly one of those three reasons. Auto loop packets use their own markers; do not set `mode: classic` on auto-written packets.
+4. Resolve optional source-prompt provenance via `source-prompt-addressing.md`.
+5. Append the stage's required H1 group (packet-anatomy templates); rewrite frontmatter atomically.
+6. Apply lifecycle/archive actions from `packet-addressing.md` after Verdicts.
 
 ### Classic write rules (summary)
 

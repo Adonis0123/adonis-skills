@@ -26,11 +26,26 @@ updated: 2026-05-15T14:35:02Z
 last_anchor: review_findings
 lifecycle_state: in_progress
 round: 1
+mode: classic
+classic_reason: intake
 source_prompt_id: feat-payment/2026-07-15_14-30-refactor-checkout
 source_prompt_head: 78b4382b19abd651a2274b5f6f188849cbec845d
 source_prompt_scope: all-uncommitted
 ---
 ```
+
+### Classic observability fields (classic path only)
+
+| Field            | Required when                | Closed values                                              | Meaning                                                                     |
+| ---------------- | ---------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `mode`           | classic prompt-protocol path | `classic`                                                  | Marks packet as classic (not auto loop). Auto path does not set this field. |
+| `classic_reason` | `mode: classic`              | `intake` \| `feedback_validation` \| `manual_continuation` | Why classic was chosen instead of auto                                      |
+
+- `intake` — reviewer-initiated `# Review Intake` start
+- `feedback_validation` — pasted feedback validated as defect report
+- `manual_continuation` — continuing a classic packet without `review-loop run`
+
+These exist so observers can count real classic usage under `.review-handoff/{active,archive}/**` (see plan backlog A trigger: count `mode: classic` + reason distribution). Do not invent other reason strings.
 
 The three `source_prompt_*` fields are optional and must appear as a complete group when this loop originated from a resolved `review-prompt-composer` artifact. Resolve and validate them through `source-prompt-addressing.md`; never infer a partial group.
 

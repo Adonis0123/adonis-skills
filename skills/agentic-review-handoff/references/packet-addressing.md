@@ -94,6 +94,8 @@ Selecting a creation path does not authorize an early write. Resolve optional so
 | `source_prompt_id`    | string, optional             | source resolver                                                    | Stable repository-local prompt identity. Must be present with both other `source_prompt_*` fields.                                           |
 | `source_prompt_head`  | 40-char SHA, optional        | source resolver                                                    | HEAD recorded by the validated source prompt. Provenance only, not current-code evidence.                                                    |
 | `source_prompt_scope` | string, optional             | source resolver                                                    | Canonical scope copied from the validated source prompt.                                                                                     |
+| `mode`                | enum, classic path only      | classic writer                                                     | Set to `classic` on classic prompt-protocol packets. Auto loop leaves this unset.                                                            |
+| `classic_reason`      | enum, classic path only      | classic writer                                                     | Required when `mode: classic`. Closed set: `intake` \| `feedback_validation` \| `manual_continuation`.                                       |
 
 ### `last_anchor` values
 
