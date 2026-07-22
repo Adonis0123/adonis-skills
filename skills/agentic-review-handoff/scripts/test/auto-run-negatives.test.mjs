@@ -116,7 +116,7 @@ describe('T5 negative paths', () => {
     await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r1.packetPath,
-      body: '## Changes\n- attempt 1\n',
+      body: '# Fix Completion\n\n## Fix Conclusion\n- attempt 1\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
     });
     // Round 2 still BLOCKED
     const r2 = await cmdRun({
@@ -144,7 +144,7 @@ describe('T5 negative paths', () => {
     await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r2.packetPath,
-      body: '## Changes\n- attempt 2\n',
+      body: '# Fix Completion\n\n## Fix Conclusion\n- attempt 2\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
     });
     const r3 = await cmdRun({
       repoRoot: dir,
@@ -185,7 +185,7 @@ describe('T5 negative paths', () => {
         cmdAppendFixCompletion({
           repoRoot: dir,
           packetPath: r1.packetPath,
-          body: '## Changes\n- x\n',
+          body: '# Fix Completion\n\n## Fix Conclusion\n- x\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
         }),
       /PACKET_HASH_MISMATCH/,
     );

@@ -159,40 +159,45 @@ export function parseReviewFindings(text) {
     if (findings.length) break;
   }
 
-  // PASS / NO_FINDINGS may have zero findings, but never blockers
-  if (verdict === 'BLOCKED' || verdict === 'PASS_WITH_CONCERNS') {
-    if (!findings.length) {
-      return { ok: false, error: `${verdict} requires at least one finding row with ID` };
-    }
-    // Always require a findings table (PASS may use a single (none) row)
+  // Always require a findings table (PASS may use a single (none) row)
   if (!tables.some((t) => t.headers.some((h) => h === 'id' || h === 'finding id'))) {
     return { ok: false, error: 'missing findings table with ID column' };
   }
 
-  for (const f of findings) {
-      if (!f.title || !f.severity) {
-        return { ok: false, error: `finding ${f.id} missing title or severity` };
-      }
-      if (!/^\[(阻塞|非阻塞)\]$/.test(f.severity) && !/^(blocking|non-?blocking)$/i.test(f.severity)) {
-        return {
-          ok: false,
-          error: `finding ${f.id} severity must be [阻塞] or [非阻塞] (got "${f.severity}")`,
-        };
-      }
-      if (!f.evidence || !f.requiredFix || !f.acceptanceCheck) {
-        return {
-          ok: false,
-          error: `finding ${f.id} missing evidence/required fix/acceptance check`,
-        };
-      }
-      // Target files required for any finding that blocks or needs fix handoff
-      if (f.blocking && !f.targetFiles) {
-        return { ok: false, error: `finding ${f.id} missing Target files` };
-      }
+  // Filter placeholder (none) rows for field validation
+  const realFindings = findings.filter(
+    (f) => f.id && f.id !== '(none)' && !/^[-—]+$/.test(f.id),
+  );
+
+  if (verdict === 'BLOCKED' || verdict === 'PASS_WITH_CONCERNS') {
+    if (!realFindings.length) {
+      return { ok: false, error: `${verdict} requires at least one finding row with ID` };
     }
   }
 
-  const blocking = findings.filter((f) => f.blocking);
+  for (const f of realFindings) {
+    if (!f.title || !f.severity) {
+      return { ok: false, error: `finding ${f.id} missing title or severity` };
+    }
+    if (!/^\[(阻塞|非阻塞)\]$/.test(f.severity) && !/^(blocking|non-?blocking)$/i.test(f.severity)) {
+      return {
+        ok: false,
+        error: `finding ${f.id} severity must be [阻塞] or [非阻塞] (got "${f.severity}")`,
+      };
+    }
+    if (!f.evidence || !f.requiredFix || !f.acceptanceCheck) {
+      return {
+        ok: false,
+        error: `finding ${f.id} missing evidence/required fix/acceptance check`,
+      };
+    }
+    if (f.blocking && !f.targetFiles) {
+      return { ok: false, error: `finding ${f.id} missing Target files` };
+    }
+  }
+
+  const blocking = realFindings.filter((f) => f.blocking);
+  findings = realFindings;
   if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
     if (blocking.length) {
       return { ok: false, error: `${verdict} cannot include [阻塞] findings` };
@@ -257,10 +262,17 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
       const status = String(row[statusKey] ?? '').trim();
       if (!id) continue;
       if (/^(resolved|partially|unresolved)$/i.test(status)) {
+        const evidence = row.evidence || row['复核证据'] || row['evidence'] || '';
+        if (!String(evidence).trim() || evidence === '—') {
+          return {
+            ok: false,
+            error: `reassessment for ${id} missing 复核证据`,
+          };
+        }
         reassessments.push({
           id,
           status: status.toLowerCase(),
-          evidence: row.evidence || row['复核证据'] || row['evidence'] || '',
+          evidence: String(evidence).trim(),
         });
       } else if (/^(partial|fixed|open)$/i.test(status)) {
         // reject non-canonical statuses (open/fixed/partial) as malformed

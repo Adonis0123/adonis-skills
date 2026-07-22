@@ -316,11 +316,25 @@ async function runBody(ctx) {
   const nextRound = isContinue ? round + 1 : Math.max(round, 0) + 1;
   // On first start: if never ran, nextRound=1. On continue after BLOCKED fix: increment.
 
-  if (!isContinue && round > 0) {
-    // F5: never silently restart round 1 on an in-progress packet
-    throw new Error(
-      `packet already has round=${round} (lastVerdict=${state.lastVerdict ?? 'n/a'}); use run --continue or a new packet`,
-    );
+  // F4: recover round from packet if runtime state lost
+  const metaNow = readPacketMeta(packetPath);
+  const physical = lastPhysicalH1(metaNow.text);
+  if (!isContinue) {
+    if (round > 0) {
+      throw new Error(
+        `packet already has round=${round} (lastVerdict=${state.lastVerdict ?? 'n/a'}); use run --continue or a new packet`,
+      );
+    }
+    if (
+      physical
+      && physical.anchor !== 'review_handoff'
+      && metaNow.lastAnchor
+      && metaNow.lastAnchor !== 'review_handoff'
+    ) {
+      throw new Error(
+        `packet already has stages (last_anchor=${metaNow.lastAnchor}); use run --continue or a new packet`,
+      );
+    }
   }
 
   // If continuing from BLOCKED, require legitimate Fix Completion (A2)
@@ -393,13 +407,21 @@ async function runBody(ctx) {
   if (fs.existsSync(evidencePath) && state[`evidenceRound${effectiveRound}`]) {
     const diffText = fs.readFileSync(evidencePath, 'utf8');
     const digest = contentHash(diffText);
-    if (state[`evidenceDigest${effectiveRound}`] && state[`evidenceDigest${effectiveRound}`] !== digest) {
-      return {
-        ok: false,
-        status: 'evidence_hash_mismatch',
-        message: `Frozen evidence round-${effectiveRound}.diff digest mismatch; refuse to proceed`,
-        packetPath,
-      };
+    if (state[`evidenceDigest${effectiveRound}`]) {
+      if (state[`evidenceDigest${effectiveRound}`] !== digest) {
+        return {
+          ok: false,
+          status: 'evidence_hash_mismatch',
+          message: `Frozen evidence round-${effectiveRound}.diff digest mismatch; refuse to proceed`,
+          packetPath,
+        };
+      }
+    } else {
+      // F6: backfill digest on first resume of legacy state
+      saveRunState(repoRoot, packetId, {
+        ...loadRunState(repoRoot, packetId),
+        [`evidenceDigest${effectiveRound}`]: digest,
+      });
     }
     evidence = {
       evidencePath,
@@ -747,7 +769,7 @@ export async function cmdAppendFixCompletion(opts) {
   if (!/^#\s*Fix Completion(\s*\(round\s+\d+\))?\s*$/i.test(firstH1.trim())) {
     throw new Error('fix-completion body must start with "# Fix Completion" H1');
   }
-  // F2: always ensure full Fix Completion H2 set (validator-required)
+  // F2/F3: require full Fix Completion H2 set — no placeholder auto-fabricate
   const requiredH2 = [
     'Fix Conclusion',
     'Original Findings Snapshot',
@@ -757,10 +779,9 @@ export async function cmdAppendFixCompletion(opts) {
   ];
   const missing = requiredH2.filter((h) => !new RegExp(`##\\s*${h}`, 'i').test(section));
   if (missing.length) {
-    const inject = requiredH2
-      .map((h) => `## ${h}\n\n- (auto-loop) ${h}\n`)
-      .join('\n');
-    section = section.replace(/^# Fix Completion[^\n]*\n/, `# Fix Completion\n\n${inject}\n`);
+    throw new Error(
+      `fix-completion missing required H2 sections: ${missing.join(', ')}`,
+    );
   }
   // F3: hold same packet lock as run; re-check last anchor under lock
   return withPacketLock(repoRoot, packetId, async () => {

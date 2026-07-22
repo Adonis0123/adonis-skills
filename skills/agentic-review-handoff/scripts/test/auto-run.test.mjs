@@ -216,7 +216,23 @@ describe('auto-run happy paths', () => {
     await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r1.packetPath,
-      body: '## Changes\n- fixed off-by-one\n\n## Verification\n- unit test\n',
+      body: `# Fix Completion
+
+## Fix Conclusion
+- fixed off-by-one
+
+## Original Findings Snapshot
+- F1 off-by-one
+
+## Finding Status
+- F1 fixed
+
+## Verification
+- unit test
+
+## Re-review Instructions
+- run --continue
+`,
     });
 
     // Continue as fresh OS process would: new factory instance sharing filesystem state
@@ -287,7 +303,23 @@ describe('packet hash guard', () => {
         cmdAppendFixCompletion({
           repoRoot: dir,
           packetPath: r1.packetPath,
-          body: '## Changes\n- x\n',
+          body: `# Fix Completion
+
+## Fix Conclusion
+- x
+
+## Original Findings Snapshot
+- F1
+
+## Finding Status
+- F1
+
+## Verification
+- n/a
+
+## Re-review Instructions
+- continue
+`,
         }),
       /PACKET_HASH_MISMATCH/,
     );
