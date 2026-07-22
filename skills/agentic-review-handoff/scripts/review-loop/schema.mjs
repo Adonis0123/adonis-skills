@@ -164,9 +164,20 @@ export function parseReviewFindings(text) {
     if (!findings.length) {
       return { ok: false, error: `${verdict} requires at least one finding row with ID` };
     }
-    for (const f of findings) {
+    // Always require a findings table (PASS may use a single (none) row)
+  if (!tables.some((t) => t.headers.some((h) => h === 'id' || h === 'finding id'))) {
+    return { ok: false, error: 'missing findings table with ID column' };
+  }
+
+  for (const f of findings) {
       if (!f.title || !f.severity) {
         return { ok: false, error: `finding ${f.id} missing title or severity` };
+      }
+      if (!/^\[(阻塞|非阻塞)\]$/.test(f.severity) && !/^(blocking|non-?blocking)$/i.test(f.severity)) {
+        return {
+          ok: false,
+          error: `finding ${f.id} severity must be [阻塞] or [非阻塞] (got "${f.severity}")`,
+        };
       }
       if (!f.evidence || !f.requiredFix || !f.acceptanceCheck) {
         return {
@@ -290,7 +301,20 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
     if (!f.title || !f.severity) {
       return { ok: false, error: `new finding ${f.id} missing title or severity` };
     }
-    if (f.blocking && (!f.evidence || !f.requiredFix || !f.acceptanceCheck || !f.targetFiles)) {
+    if (!/^\[(阻塞|非阻塞)\]$/.test(f.severity) && !/^(blocking|non-?blocking)$/i.test(f.severity)) {
+      return {
+        ok: false,
+        error: `new finding ${f.id} severity must be [阻塞] or [非阻塞]`,
+      };
+    }
+    // Round ≥2: only load-bearing blockers allowed as new findings
+    if (!f.blocking) {
+      return {
+        ok: false,
+        error: `new finding ${f.id} must be [阻塞] on re-review (non-blocking not allowed)`,
+      };
+    }
+    if (!f.evidence || !f.requiredFix || !f.acceptanceCheck || !f.targetFiles) {
       return {
         ok: false,
         error: `new blocking finding ${f.id} missing evidence/target files/required fix/acceptance check`,

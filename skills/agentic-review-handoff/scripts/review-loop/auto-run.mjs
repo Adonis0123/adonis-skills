@@ -34,6 +34,7 @@ import {
   seedPacketHash,
   loadRunState,
   saveRunState,
+  contentHash,
 } from './stage-writer.mjs';
 
 const DEFAULT_ROUNDS = 3;
@@ -105,7 +106,16 @@ export async function cmdRun(opts) {
   ensureReviewHandoffLayout(repoRoot);
   const branch = resolveBranch(repoRoot);
   const isContinue = Boolean(opts.continue || opts.cont);
-  const roundsBudget = Number(opts.rounds ?? DEFAULT_ROUNDS) || DEFAULT_ROUNDS;
+  // F4: continue inherits persisted roundsBudget unless explicit --rounds
+  let roundsBudget;
+  if (opts.rounds != null && opts.rounds !== '') {
+    roundsBudget = Number(opts.rounds);
+    if (!Number.isFinite(roundsBudget) || roundsBudget < 1) {
+      throw new Error('--rounds must be a positive finite number');
+    }
+  } else {
+    roundsBudget = null; // resolve after packet id known
+  }
 
   // Resolve / create packet
   let packetPath = opts.packetPath || null;
@@ -153,6 +163,15 @@ export async function cmdRun(opts) {
   reviewer = String(reviewer || 'codex').toLowerCase();
   if (!['codex', 'grok', 'claude'].includes(reviewer)) {
     throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
+  }
+
+  if (roundsBudget == null) {
+    const prior = loadRunState(repoRoot, packetId) ?? {};
+    roundsBudget =
+      isContinue && prior.roundsBudget != null
+        ? Number(prior.roundsBudget)
+        : DEFAULT_ROUNDS;
+    if (!Number.isFinite(roundsBudget) || roundsBudget < 1) roundsBudget = DEFAULT_ROUNDS;
   }
 
   return withPacketLock(repoRoot, packetId, () =>
@@ -373,11 +392,21 @@ async function runBody(ctx) {
   let evidence;
   if (fs.existsSync(evidencePath) && state[`evidenceRound${effectiveRound}`]) {
     const diffText = fs.readFileSync(evidencePath, 'utf8');
+    const digest = contentHash(diffText);
+    if (state[`evidenceDigest${effectiveRound}`] && state[`evidenceDigest${effectiveRound}`] !== digest) {
+      return {
+        ok: false,
+        status: 'evidence_hash_mismatch',
+        message: `Frozen evidence round-${effectiveRound}.diff digest mismatch; refuse to proceed`,
+        packetPath,
+      };
+    }
     evidence = {
       evidencePath,
       diffText,
       lineCount: diffText.split('\n').length,
       paths: pathFilter || state.paths || [],
+      digest,
     };
   } else {
     evidence = freezeRoundEvidence({
@@ -387,15 +416,18 @@ async function runBody(ctx) {
       round: effectiveRound,
       paths: pathFilter,
     });
+    const digest = contentHash(evidence.diffText);
     saveRunState(repoRoot, packetId, {
       ...loadRunState(repoRoot, packetId),
       [`evidenceRound${effectiveRound}`]: true,
+      [`evidenceDigest${effectiveRound}`]: digest,
       evidencePath: evidence.evidencePath,
       paths: pathFilter || state.paths || null,
       baseSha,
       reviewer,
       updated: new Date().toISOString(),
     });
+    evidence.digest = digest;
   }
 
   const adapter = (adapterFactory || createAdapter)(reviewer, {
@@ -555,6 +587,7 @@ async function runBody(ctx) {
           ...(parsed.newFindings || []).map((f) => f.id),
         ].filter((v, i, a) => a.indexOf(v) === i);
 
+  // F3: openBlocking never treats empty prior set as wildcard
   const priorBlockingSet = new Set(state.openBlocking || []);
   const openBlocking =
     effectiveRound <= 1
@@ -564,7 +597,7 @@ async function runBody(ctx) {
             .filter(
               (r) =>
                 (r.status === 'unresolved' || r.status === 'partially')
-                && (priorBlockingSet.size === 0 || priorBlockingSet.has(r.id)),
+                && priorBlockingSet.has(r.id),
             )
             .map((r) => r.id),
           ...(parsed.newFindings || []).filter((f) => f.blocking).map((f) => f.id),
@@ -714,12 +747,20 @@ export async function cmdAppendFixCompletion(opts) {
   if (!/^#\s*Fix Completion(\s*\(round\s+\d+\))?\s*$/i.test(firstH1.trim())) {
     throw new Error('fix-completion body must start with "# Fix Completion" H1');
   }
-  // Ensure validator-required H2s exist (F4)
-  if (!/##\s*Fix Conclusion/i.test(section)) {
-    section = section.replace(
-      /^# Fix Completion[^\n]*\n/,
-      `# Fix Completion\n\n## Fix Conclusion\n\n- Auto loop fix completion recorded.\n\n## Original Findings Snapshot\n\n- See prior Fix Handoff / Review Findings.\n\n## Finding Status\n\n- See Changes below.\n\n## Verification\n\n- See Verification below.\n\n## Re-review Instructions\n\n- Run \`review-loop run --continue\`.\n\n`,
-    );
+  // F2: always ensure full Fix Completion H2 set (validator-required)
+  const requiredH2 = [
+    'Fix Conclusion',
+    'Original Findings Snapshot',
+    'Finding Status',
+    'Verification',
+    'Re-review Instructions',
+  ];
+  const missing = requiredH2.filter((h) => !new RegExp(`##\\s*${h}`, 'i').test(section));
+  if (missing.length) {
+    const inject = requiredH2
+      .map((h) => `## ${h}\n\n- (auto-loop) ${h}\n`)
+      .join('\n');
+    section = section.replace(/^# Fix Completion[^\n]*\n/, `# Fix Completion\n\n${inject}\n`);
   }
   // F3: hold same packet lock as run; re-check last anchor under lock
   return withPacketLock(repoRoot, packetId, async () => {
