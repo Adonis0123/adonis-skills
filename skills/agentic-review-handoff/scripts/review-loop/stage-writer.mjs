@@ -22,6 +22,29 @@ export function contentHash(text) {
 }
 
 /**
+ * Top-level H1 titles outside fenced code blocks.
+ * @param {string} markdown
+ * @returns {string[]}
+ */
+export function listTopLevelH1Titles(markdown) {
+  /** @type {string[]} */
+  const titles = [];
+  let inFence = false;
+  for (const raw of String(markdown).split('\n')) {
+    const line = raw.replace(/\r$/, '');
+    if (/^```/.test(line.trim())) {
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) continue;
+    if (/^# [^#\n]/.test(line)) {
+      titles.push(line.replace(/^#\s+/, '').trim());
+    }
+  }
+  return titles;
+}
+
+/**
  * @param {string} repoRoot
  * @param {string} packetId
  */
@@ -95,11 +118,8 @@ export function appendStageAuto(opts) {
     throw err;
   }
 
-  // F2: candidate section must not introduce extra top-level H1 beyond expected lastAnchor
-  const h1s = String(sectionMarkdown)
-    .split('\n')
-    .filter((l) => /^# [^#]/.test(l.trim()))
-    .map((l) => l.replace(/^#\s+/, '').trim());
+  // F2/N1: fence-aware H1 scan (do not treat `#` inside ``` fences as H1)
+  const h1s = listTopLevelH1Titles(sectionMarkdown);
   if (!h1s.length) {
     throw new Error('stage section missing H1');
   }
