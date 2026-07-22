@@ -175,17 +175,30 @@ export async function cmdRun(opts) {
  */
 export async function withPacketLock(repoRoot, packetId, operation) {
   const lockDir = path.join(runtimeDir(repoRoot, packetId), '.auto-run.lock');
-  const pidFile = path.join(lockDir, 'pid');
-  try {
+  const ownerFile = path.join(lockDir, 'owner');
+  const ownerToken = `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  const tryAcquire = () => {
     fs.mkdirSync(lockDir);
+    // N1: publish owner immediately after mkdir (no await between)
+    fs.writeFileSync(ownerFile, `${ownerToken}\n${process.pid}\n`, 'utf8');
+  };
+
+  try {
+    tryAcquire();
   } catch (err) {
     if (err?.code !== 'EEXIST') throw err;
-    let oldPid = 0;
+    let owner = '';
     try {
-      oldPid = Number(fs.readFileSync(pidFile, 'utf8').trim());
+      owner = fs.readFileSync(ownerFile, 'utf8');
     } catch {
-      oldPid = 0;
+      // incomplete lock (mkdir without owner yet) — treat as held briefly
+      const e = new Error('packet lock held (owner not published yet)');
+      // @ts-expect-error
+      e.code = 'PACKET_LOCK_HELD';
+      throw e;
     }
+    const oldPid = Number(String(owner).split('\n')[1] || 0);
     let alive = false;
     if (oldPid > 0) {
       try {
@@ -195,20 +208,29 @@ export async function withPacketLock(repoRoot, packetId, operation) {
         alive = false;
       }
     }
-    if (alive) {
-      const e = new Error(`packet lock held by pid ${oldPid}`);
+    if (alive || !oldPid) {
+      const e = new Error(`packet lock held by pid ${oldPid || 'unknown'}`);
       // @ts-expect-error
       e.code = 'PACKET_LOCK_HELD';
       throw e;
     }
+    // reclaim stale lock only when owner pid is dead
     fs.rmSync(lockDir, { recursive: true, force: true });
-    fs.mkdirSync(lockDir);
+    tryAcquire();
   }
-  fs.writeFileSync(pidFile, `${process.pid}\n`);
+
   try {
     return await operation();
   } finally {
-    fs.rmSync(lockDir, { recursive: true, force: true });
+    // Only delete if we still own the lock
+    try {
+      const cur = fs.readFileSync(ownerFile, 'utf8');
+      if (cur.startsWith(ownerToken)) {
+        fs.rmSync(lockDir, { recursive: true, force: true });
+      }
+    } catch {
+      /* ignore */
+    }
   }
 }
 
