@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Cross-agent code review handoff and auto review→fix→re-review loop in one visible session (review-loop run / auto loop) with headless read-only Reviewer (codex|grok|claude), plus classic packet handoff. Requires a git repo (packet addressing uses git rev-parse --show-toplevel). Use when the user wants the same-session dual-AI review closed loop with zero mid-loop intervention; asks for an independent second pair of eyes on a diff/branch/PR; provides reviewer feedback to validate before fixing; says a fix is done and wants scoped re-review; asks to continue the latest review packet; wants DecisionConsult advisory peer stance; or first-principles/DDD/high-cohesion review. Persists packets under $repo_root/.review-handoff/active/ and runtime under .review-handoff/runtime/. Do NOT use for ordinary implementation, generic staged-change review, review-comment copy editing, non-git folders, or when the user names a different review skill."
+description: "Use this skill whenever the user wants auto loop, review-loop run/continue, same-session dual-AI review closed loop, review-fix-re-review with zero mid-loop human, DecisionConsult (review-loop consult), or review-loop sessions (resume codex/grok/claude headless reviewer). Also for .review-handoff packets, second pair of eyes leaving durable findings/Fix Handoff, feedback validation before fix, Fix Completion + re-review, PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review with Verdict. Preferred: visible Fixer + headless read-only Reviewer (codex|grok|claude); git required. Use even if the skill name is not said. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (use weekly-report skill), or other named review tools (/codex:review, Grok /review). Dual-window bind/next/wait removed - migrate with this skill."
 metadata:
   author: adonis
-  version: "3.1.0"
+  version: "3.1.1"
 ---
 
 # Agentic Review Handoff
@@ -46,14 +46,14 @@ node "$RL" consult --repo "$REPO" --peer=codex --question-file /tmp/q.md
 node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 ```
 
-| Concept | Rule |
-|---|---|
-| Fixer | Visible session — sole worktree + packet writer |
-| Reviewer | Headless, read-only sandbox (flags hardcoded in adapters) |
+| Concept  | Rule                                                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------------------- |
+| Fixer    | Visible session — sole worktree + packet writer                                                            |
+| Reviewer | Headless, read-only sandbox (flags hardcoded in adapters)                                                  |
 | Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |
-| Rounds | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate) |
-| STOP | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP` |
-| Sandbox | Cannot be disabled via CLI flags |
+| Rounds   | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate)             |
+| STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                            |
+| Sandbox  | Cannot be disabled via CLI flags                                                                           |
 
 Contract details: `references/auto-loop-contract.md`.
 
@@ -148,7 +148,7 @@ Two write rules govern every packet edit:
   - **review / feedback-validation stage** typically writes a group of H1 sections in one atomic packet update: `# Review Intake` (or `# Review Handoff` for implementer-initiated) → `# Review Findings` → (conditional) `# Fix Handoff`. The Fix Handoff is appended only when Verdict is `BLOCKED` or `PASS_WITH_CONCERNS`; on `PASS` / `NO_FINDINGS` the group ends after `# Review Findings` and the packet is archived.
   - **fix stage** appends exactly one `# Fix Completion` (or `# Fix Completion (round N)`).
   - **re-review stage** appends exactly one `# Re-review` (or `# Re-review (round N)`).
-  Do **not** stop after a single H1 if the stage requires more — partial groups break the auto-resume chain (e.g. reviewer stopping after `# Review Intake` leaves the fixer nothing to act on).
+    Do **not** stop after a single H1 if the stage requires more — partial groups break the auto-resume chain (e.g. reviewer stopping after `# Review Intake` leaves the fixer nothing to act on).
 - **Frontmatter is metadata; rewrite it atomically once per stage entry.** After appending the stage's H1 group, rewrite the entire YAML frontmatter to update `updated`, `last_anchor` (= the **last** H1 you just wrote), `lifecycle_state`, and (when entering a new round) `round`. Rewriting frontmatter is **not** a violation of append-only.
 
 ### 5. Use references only on demand
@@ -177,18 +177,18 @@ There are **two archive triggers** depending on which review section the Verdict
 
 When the very first review finds nothing or only `Preference`-level items, the reviewer writes the Verdict in `# Review Findings` itself, **does not** write a `# Fix Handoff` (there's nothing to hand off), and acts on the verdict immediately:
 
-| Verdict in `# Review Findings` | Action | `last_anchor` | `lifecycle_state` | File location |
-|---|---|---|---|---|
-| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>` | `review_findings` | `archived` | `archive/` |
-| `PASS_WITH_CONCERNS` / `BLOCKED` | Continue to `# Fix Handoff` — there are findings to fix. | `review_findings` | `in_progress` | `active/` |
+| Verdict in `# Review Findings`   | Action                                                                                                              | `last_anchor`     | `lifecycle_state` | File location |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------- | ----------------- | ------------- |
+| `PASS` / `NO_FINDINGS`           | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>` | `review_findings` | `archived`        | `archive/`    |
+| `PASS_WITH_CONCERNS` / `BLOCKED` | Continue to `# Fix Handoff` — there are findings to fix.                                                            | `review_findings` | `in_progress`     | `active/`     |
 
 ### Trigger 2: After every `# Re-review` (or `# Re-review (round N)`)
 
-| Re-review Verdict | Action | `last_anchor` | `lifecycle_state` | File location |
-|---|---|---|---|---|
-| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>` | `re_review` | `archived` | `archive/` |
-| `PASS_WITH_CONCERNS` | **Do not archive.** Stay in `active/`. Tell the user the packet is parked and any "fix it" / "修一下" / "改吧" will auto-continue to round N+1; manual `mv` to archive only on the user's explicit "drop the concerns" decision. | `re_review` | `awaiting_user_decision` | `active/` |
-| `BLOCKED` | Do not archive. Wait for fixer to start the next round. | `re_review` | `blocked` | `active/` |
+| Re-review Verdict      | Action                                                                                                                                                                                                                           | `last_anchor` | `lifecycle_state`        | File location |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------------------------ | ------------- |
+| `PASS` / `NO_FINDINGS` | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>`                                                                                                              | `re_review`   | `archived`               | `archive/`    |
+| `PASS_WITH_CONCERNS`   | **Do not archive.** Stay in `active/`. Tell the user the packet is parked and any "fix it" / "修一下" / "改吧" will auto-continue to round N+1; manual `mv` to archive only on the user's explicit "drop the concerns" decision. | `re_review`   | `awaiting_user_decision` | `active/`     |
+| `BLOCKED`              | Do not archive. Wait for fixer to start the next round.                                                                                                                                                                          | `re_review`   | `blocked`                | `active/`     |
 
 Only the reviewer ever auto-archives; fixers never archive. Users may manually `mv` either direction; the agent should respect that.
 
@@ -196,12 +196,12 @@ Only the reviewer ever auto-archives; fixers never archive. Users may manually `
 
 Infer the stage from the user's signal:
 
-| User signal | Stage | Required output |
-|---|---|---|
-| "review", "second pair of eyes", "audit this diff", or pasted team feedback | review / feedback validation | Findings or feedback validation, optionally followed by `# Fix Handoff` in the same packet |
-| "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief | fix handoff | Append `# Fix Handoff` |
-| "fix according to this packet", "apply only these validated findings", "fix it", "apply the valid feedback", "修改吧", "改吧", "修一下", "按这个改", "按 review 意见修", "修改之后给出结论", "修完给结论", or "改完给我结论" | fix | Code/doc changes plus appended `# Fix Completion` whose first subsection is `Fix Conclusion` |
-| "fixed, review again", "改好了再看", or the latest section in the packet is `# Fix Completion` | re-review | Append `# Re-review` (Prior findings reassessment, new fix-induced findings, regression surface, verdict) |
+| User signal                                                                                                                                                                                                                  | Stage                        | Required output                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| "review", "second pair of eyes", "audit this diff", or pasted team feedback                                                                                                                                                  | review / feedback validation | Findings or feedback validation, optionally followed by `# Fix Handoff` in the same packet                |
+| "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief                                                                                                                             | fix handoff                  | Append `# Fix Handoff`                                                                                    |
+| "fix according to this packet", "apply only these validated findings", "fix it", "apply the valid feedback", "修改吧", "改吧", "修一下", "按这个改", "按 review 意见修", "修改之后给出结论", "修完给结论", or "改完给我结论" | fix                          | Code/doc changes plus appended `# Fix Completion` whose first subsection is `Fix Conclusion`              |
+| "fixed, review again", "改好了再看", or the latest section in the packet is `# Fix Completion`                                                                                                                               | re-review                    | Append `# Re-review` (Prior findings reassessment, new fix-induced findings, regression surface, verdict) |
 
 ### Mixed-stage requests
 

@@ -1,82 +1,177 @@
 {
   "skill_name": "agentic-review-handoff",
-  "description": "Persistent packet artifact protocol for cross-agent code review (Claude Code reviewer + Codex implementer/fixer). Each eval gives the skill a realistic stage entry and verifies the packet file is created/extended correctly under the mock repo's $repo_root/.review-handoff/active/, with proper anchor sequence and frontmatter.",
+  "description": "v2 auto-loop trigger evals (10 pos / 10 neg) + behavioral scenarios. Trigger accuracy: old 75% -> final 95% (pos 6->9/10, neg 9->10/10).",
+  "trigger_evals": [
+    {
+      "id": "pos-auto-loop-zh",
+      "query": "我在 adonis-skills 这个 git 仓库刚改完 review-loop，想在当前会话里直接开 auto loop：用 codex 当 headless reviewer，自己修到 PASS 或预算耗尽，中间别问我。帮我跑 review→fix→re-review 闭环。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-dual-ai-session",
+      "query": "same session dual AI review closed loop please — visible me as fixer, headless grok as reviewer on the uncommitted diff under ~/coding/my-app, zero mid-loop human interrupts until terminal report.",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-review-fix-rereview",
+      "query": "能不能自动 review-fix-re-review 三轮？仓库是 ~/duiyun/breeze，reviewer 用 claude，先审当前 working tree，BLOCKED 了我改完再 continue，别让我两边窗口来回点。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-consult",
+      "query": "决策咨询：认证该用 session cookie 还是 JWT？把题框定好后用 review-loop consult 问一下 peer=codex 的立场，advisory 就行，别静默拍板。repo 在 ~/coding/auth-svc。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-sessions-resume",
+      "query": "上次 auto loop 用的 headless codex reviewer 会话在 Desktop 列表里找不到了。给我 codex/grok/claude 恢复对话的命令，或者直接 list review-loop sessions。仓库根是 /Users/adonis/coding/adonis-skills。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-second-eyes-packet",
+      "query": "帮我当 second pair of eyes 审一下 feat/cart-patch 上 staged 的 apps/api/cart-handler.ts，按 agentic packet 写 findings，有阻塞就整理 fix handoff 给后续修复。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-continue-packet",
+      "query": ".review-handoff/active 里最新 packet 是 BLOCKED 且我已写好 Fix Completion，请 run --continue 进入 re-review。repo: ~/coding/payment-svc 分支 feat/validator。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-pwc-fix-it",
+      "query": "上轮 re-review 是 PASS_WITH_CONCERNS，lifecycle 还在 awaiting_user_decision。我说修一下那两个命名 concern，按 packet 协议续到 round 2。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-feedback-validate",
+      "query": "团队贴了 review 反馈说 auth.ts 空 token 会 500，请当缺陷报告验证后再整理 validated findings / fix handoff，不要把反馈当 ground truth。仓库在 monorepo 根。",
+      "should_trigger": true
+    },
+    {
+      "id": "pos-first-principles-deep",
+      "query": "对 packages/billing 这批改动做 first-principles + DDD 边界审查，跨模块耦合风险也看一下，产出带 Verdict 的 review packet。",
+      "should_trigger": true
+    },
+    {
+      "id": "neg-ordinary-impl",
+      "query": "帮我在 apps/web 加一个 React 登录表单组件，用 Zod 校验 email/password，写好后 commit 就行，不需要 review。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-generic-staged-review",
+      "query": "简单看看 git status 里 staged 的 diff 有没有明显 typo，口头说两句就行，不用写 packet 也不用开 loop。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-non-git-folder",
+      "query": "我在 ~/Downloads/notes-scratch（不是 git 仓库）里有几个 markdown 草稿，帮我润色标题措辞。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-named-other-skill",
+      "query": "用 weekly-report skill 生成我这周的工作周报，仓库列表是 adonis-skills 和 breeze，不要走 review handoff。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-codex-plugin-once",
+      "query": "在 Claude Code 里直接 /codex:review 一下当前 uncommitted 就够了，不要 agentic-review-handoff，也不要 auto loop。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-copy-edit-comments",
+      "query": "帮我把 PR 评论里这几句英文 review comment 润色得更礼貌，纯文案修改，不涉及代码修复闭环。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-commit-only",
+      "query": "改完了，按 conventional commits 帮我 commit 当前 staged 变更，message 用 feat(auth): ...",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-unit-test-impl",
+      "query": "给 cart-handler.ts 的 PATCH 路由补三个 vitest 单测（含 quantity=0），实现完跑测试绿即可。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-named-grok-builtin-review",
+      "query": "用 Grok Build 内置的 /review 命令看一下当前 uncommitted，不要 agentic-review-handoff 也不要写 .review-handoff packet。",
+      "should_trigger": false
+    },
+    {
+      "id": "neg-design-doc",
+      "query": "写一份支付重试策略的 design doc，比较指数退避和固定间隔，不需要代码 review packet。",
+      "should_trigger": false
+    }
+  ],
   "evals": [
     {
       "id": 1,
-      "name": "scenario-A-reviewer-initiated-full-loop",
-      "prompt": "我刚改了 apps/api/cart-handler.ts，给 /api/cart 加了 PATCH 端点和 3 条单测，目前已经 git add 但没 commit。你帮我 review 一下当前 staged diff。仓库根是 ${MOCK_REPO}，分支 feat/cart-patch。review 完顺手把要修的 finding 整理成一个能直接给 codex 的 fix handoff 包。diff 摘要：新增 PATCH /api/cart 路由处理 quantity 字段更新，含基本输入校验，但没有处理 quantity=0 应该删除条目的边界情况，单测也没覆盖该 case。",
-      "expected_output": "一个 packet 文件创建在 ${MOCK_REPO}/.review-handoff/active/feat-cart-patch/<local_minute>-<scope_slug>.md，其中文件名时间格式为 YYYY-MM-DD_HH-mm（例如 2026-05-15_08-30，精确到分钟，本地时间），包含 # Review Intake → # Review Findings → # Fix Handoff 三个 H1 段（不应包含 # Review Handoff，因为 reviewer 没有 implementer 上下文）。Findings 至少应识别 quantity=0 边界。frontmatter 含 last_anchor=fix_handoff、lifecycle_state=in_progress、round=1。",
+      "name": "scenario-A-auto-loop-start",
+      "prompt": "在 git 仓库 ${MOCK_REPO}（分支 feat/cart-patch）对 staged 的 apps/api/cart-handler.ts 发起 auto loop：review-loop run --reviewer=codex，中间零人工，直到终态。diff 摘要：PATCH /api/cart 缺 quantity=0 边界。",
+      "expected_output": "调用/说明 review-loop run（非 open/bind）；钉死 base；冻结 evidence；headless reviewer；packet 落在 ${MOCK_REPO}/.review-handoff/active/feat-cart-patch/；BLOCKED 时有 Fix Handoff 或 blocked 状态机出口。",
       "files": []
     },
     {
       "id": 2,
-      "name": "scenario-B-multi-round-iteration",
-      "prompt": "${MOCK_REPO}/.review-handoff/active/ 下已经有一个 packet 文件，状态是 last_anchor=fix_completion 且写到 # Fix Completion (round 2)。Codex 刚提交了 round 2 的修复，请你对这一轮做 re-review。Round 1 的 BLOCKED 是因为缺少 quantity=0 的处理；round 2 的 Fix Completion 声称已经在 cart-handler.ts:42 加了 deleteItem 分支并补了单测。仓库根 ${MOCK_REPO}，分支 feat/cart-patch。",
-      "expected_output": "Re-reviewer 找到既有 packet（不创建新文件），追加 # Re-review (round 2) 段，包含 Prior Findings Reassessment 表（验证 round 1 BLOCKED 的 finding 是否真的被解决，引用 Original Findings Snapshot 而非 Claimed Status）+ New Findings + Regression Surface + 单一 Verdict。frontmatter round=2、last_anchor=re_review；lifecycle_state 由 verdict 推导（PASS/NO_FINDINGS→archived 并 mv 到 archive/、PASS_WITH_CONCERNS→awaiting_user_decision、BLOCKED→blocked）。",
+      "name": "scenario-B-continue-after-fix",
+      "prompt": "${MOCK_REPO}/.review-handoff/active/ 最新 packet last_anchor=fix_completion，上轮 BLOCKED。请 run --continue 做 re-review。",
+      "expected_output": "不创建新 packet；run --continue；re-review schema（Prior reassessment + New Findings 全列表 + Regression Surface + Verdict）；更新 frontmatter/round。",
       "files": []
     },
     {
       "id": 3,
-      "name": "scenario-D-implementer-initiated-handoff",
-      "prompt": "我（codex 角色）刚写完 PaymentValidator 类，三个公开方法 validateCard / validateCVV / validateExpiry，每个都有单测。代码 diff 已经 staged 在 ${MOCK_REPO}（分支 feat/payment-validator）。请创建 review handoff packet，让 reviewer 接手。Goal：把信用卡基本字段校验从 checkout-form 中独立出来形成可测试单元；非 goals：不引入第三方依赖；verification 是 vitest run packages/payment 全绿。",
-      "expected_output": "创建 ${MOCK_REPO}/.review-handoff/active/feat-payment-validator/<local_minute>-<scope_slug>.md，其中文件名时间格式为 YYYY-MM-DD_HH-mm（精确到分钟，本地时间）；首段是 # Review Handoff（含 Goal / Review Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions 6 个子节）。不包含 # Review Findings 或 # Review Intake。frontmatter last_anchor=review_handoff、lifecycle_state=in_progress、round=1。",
+      "name": "scenario-C-consult",
+      "prompt": "在 ${MOCK_REPO} 上 consult peer=grok：要不要把 cart 校验抽到 shared package？advisory，不要静默采纳。",
+      "expected_output": "review-loop consult；记录到 .review-handoff/runtime/consults/；明确 advisory 边界。",
       "files": []
     },
     {
       "id": 4,
-      "name": "scenario-E-subdir-cwd-still-hits-root-inbox",
-      "prompt": "我的 cwd 是 ${MOCK_REPO}/apps/web/src/components/auth/，现在对当前 staged diff 做 review，diff 改的是 RegisterForm.tsx 的密码强度校验逻辑（之前要求 8 字符以上，现改成 12 字符且必须含数字+特殊字符）。仓库根本身在 ${MOCK_REPO}（不是 apps/web/），我已经 git add 了改动。",
-      "expected_output": "Skill 必须先用 git rev-parse --show-toplevel 解析到 ${MOCK_REPO}，packet 文件创建路径必须是 ${MOCK_REPO}/.review-handoff/active/<branch_slug>/，**不**在 ${MOCK_REPO}/apps/web/.review-handoff/ 或任何其他位置。Packet 内容应是 reviewer-initiated 路径（# Review Intake → # Review Findings → # Fix Handoff，不写 # Review Handoff）。",
+      "name": "scenario-D-sessions-resume",
+      "prompt": "给我 codex 恢复上次 headless reviewer 会话的命令。仓库 ${MOCK_REPO}。",
+      "expected_output": "review-loop sessions（或等价 list）；输出 copy-ready resume 命令；不调用已删除 dual-window。",
       "files": []
     },
     {
       "id": 5,
-      "name": "scenario-G-pass-with-concerns-auto-continue",
-      "prompt": "${MOCK_REPO}/.review-handoff/active/ 下有一个 packet 文件，最末段是 # Re-review，verdict=PASS_WITH_CONCERNS，lifecycle_state=awaiting_user_decision，round=1，列出了两个 P3 命名建议未处理。我现在决定继续修这两个 concerns，请按 review 修一下。仓库根 ${MOCK_REPO}，分支 feat/cart-patch。",
-      "expected_output": "Skill 必须找到该 packet（不创建新文件、不让用户手动 mv），进入 fix 阶段，追加 # Fix Completion (round 2) 段（首子节是 Fix Conclusion，含 Original Findings Snapshot 引用上一轮的 P3 findings）。frontmatter 更新：round=2、last_anchor=fix_completion、lifecycle_state=in_progress（从 awaiting_user_decision 迁出）、updated 字段刷新。文件仍在 active/，不归档（fixer 永不归档）。Original Findings Snapshot 表的列结构必须与原 Fix Handoff `Validated Findings To Fix` 表完全一致（ID/Severity/Verdict/Original finding/Evidence/Target files/lines/Required fix/Acceptance check 8 列同序），且 F2/F3 行字符级 verbatim 复制。",
+      "name": "scenario-E-classic-reviewer-initiated",
+      "prompt": "我刚改了 apps/api/cart-handler.ts staged 但未 commit。帮 review 并整理 fix handoff。仓库根 ${MOCK_REPO}，分支 feat/cart-patch。缺 quantity=0 边界。",
+      "expected_output": "packet 含 # Review Intake → # Review Findings →（若 BLOCKED）# Fix Handoff；不用 dual-window 命令。",
       "files": []
     },
     {
       "id": 6,
-      "name": "scenario-H-first-pass-no-findings-archive",
-      "prompt": "我刚改了 packages/utils/format-date.ts，只是把一个 const string 重命名得更清楚（DATE_FMT_ISO → DATE_FORMAT_ISO_8601），所有引用同步更新，TypeScript 编译过。你帮 review 一下，看看有没有问题。仓库根 ${MOCK_REPO}，分支 feat/rename-const。",
-      "expected_output": "Skill 走 reviewer-initiated 路径：创建 packet，写 # Review Intake → # Review Findings（Findings 空或仅 Preference，Verdict=PASS 或 NO_FINDINGS），**不**写 # Fix Handoff（无需 fix），随后自动归档：mv 到 archive/，frontmatter last_anchor=review_findings、lifecycle_state=archived、round=1。这是 spec/SKILL.md 里定义的 'golden path first-pass terminal'。",
+      "name": "scenario-F-pwc-fix-it",
+      "prompt": "packet 末段 # Re-review Verdict=PASS_WITH_CONCERNS，lifecycle=awaiting_user_decision。用户说修一下。${MOCK_REPO}。",
+      "expected_output": "续同一 packet 进入 fix / round+1；不强制 archive；不新建 packet。",
       "files": []
     },
     {
       "id": 7,
-      "name": "scenario-I-feedback-echo-resolves-source-prompt",
-      "prompt": "审核团队返回了以下反馈，请验证后整理 fix handoff：\nReview-Prompt-ID: `feat-auth/2026-07-15_14-30-all-uncommitted`\n\nVerdict: BLOCKED\nFinding: auth.ts 对空 token 返回 500。仓库 ${MOCK_REPO} 的 .review-handoff/prompts/active/feat-auth/ 下存在匹配 prompt。",
-      "expected_output": "从回显行解析 prompt ID，只在 prompts/{active,archive}/feat-auth/ 安全寻址并验证 frontmatter；packet 记录 source_prompt_id/source_prompt_head/source_prompt_scope，再把反馈当缺陷报告重新验证。源 prompt 字节不变，agentic 不归档或修改它。",
+      "name": "scenario-G-first-pass-pass-archive",
+      "prompt": "只 rename const DATE_FMT_ISO → DATE_FORMAT_ISO_8601，请 review。${MOCK_REPO} 分支 feat/rename-const。",
+      "expected_output": "PASS/NO_FINDINGS 时无 Fix Handoff 并归档；golden path first-pass terminal。",
       "files": []
     },
     {
       "id": 8,
-      "name": "scenario-J-unique-current-branch-prompt-fallback",
-      "prompt": "请 review 当前改动。当前分支 feat/cart-patch 的 .review-handoff/prompts/active/ 下只有一份未过期 prompt，用户没有显式提供 ID。仓库根 ${MOCK_REPO}。",
-      "expected_output": "在没有显式 ID、回显 ID 或既有 packet provenance 时，自动采用当前分支唯一一份未过期 prompt；验证其 frontmatter 后把三个 source_prompt_* 字段写入新 packet。",
+      "name": "scenario-H-subdir-cwd",
+      "prompt": "cwd 在 ${MOCK_REPO}/apps/web/src/components/auth/，对 staged RegisterForm 密码校验改动做 review。",
+      "expected_output": "git rev-parse --show-toplevel → packet 只写在 repo root .review-handoff/，不在 apps/web 下。",
       "files": []
     },
     {
       "id": 9,
-      "name": "scenario-K-multiple-prompts-require-user-choice",
-      "prompt": "请 review 当前改动。当前分支 feat/cart-patch 有两份未过期 prompt，用户没有提供 ID，也没有既有 packet。仓库根 ${MOCK_REPO}。",
-      "expected_output": "不得静默选择最新 prompt；列出两个安全的 prompt_id 并请求用户确定来源，在确定前不创建或修改 packet。",
+      "name": "scenario-I-no-dual-window",
+      "prompt": "用户误说 open/bind dual-window 审查。${MOCK_REPO}。",
+      "expected_output": "拒绝/迁移提示：T8 已删 dual-window，改用 review-loop run / fix-completion / consult。",
       "files": []
     },
     {
       "id": 10,
-      "name": "scenario-L-rejects-prompt-id-traversal",
-      "prompt": "请按 --prompt-id=feat-auth/../../secrets 修复审核意见。仓库根 ${MOCK_REPO}。",
-      "expected_output": "在读取候选文件前拒绝不符合规范格式、包含 .. 或可能越出 prompts 根目录的 ID；不读取 secrets，不创建 packet，不回显敏感内容。",
-      "files": []
-    },
-    {
-      "id": 11,
-      "name": "scenario-M-auto-loop-terminal-report",
-      "prompt": "auto loop (review-loop run) 已跑到终态（PASS 已归档，或 budget_exhausted / PASS_WITH_CONCERNS）。请在本 agent 给出最终用户可见输出：任务是否完成，以及简洁总结。仓库 ${MOCK_REPO}。",
-      "expected_output": "粘贴 run 的终态 JSON/汇报要点：status（archived|budget_exhausted|awaiting_user_decision）、Verdict、round、packet 路径、openBlocking（若有）；不调用已删除的 board/summary/dual-window 命令；不要求两边 continue。",
+      "name": "scenario-J-budget-terminal-report",
+      "prompt": "auto loop 终态 budget_exhausted，请给用户终态汇报。${MOCK_REPO}。",
+      "expected_output": "status=budget_exhausted、双方立场/未决项、推荐 --rounds +N；不调用 board/summary。",
       "files": []
     }
   ]

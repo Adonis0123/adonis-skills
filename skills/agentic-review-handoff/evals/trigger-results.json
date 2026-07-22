@@ -1,0 +1,30 @@
+{
+  "metric": "trigger accuracy (claude -p Skill tool mentions agentic-review-handoff; 1 run/query)",
+  "eval_set": "skills/agentic-review-handoff/evals/trigger-eval.json (10 positive + 10 negative)",
+  "baseline_old_description": {
+    "pass": "15/20",
+    "rate": 0.75,
+    "pos": "6/10",
+    "neg": "9/10",
+    "source": "git HEAD description (v3.1.0 auto-loop text, 945 chars)"
+  },
+  "final_description": {
+    "pass": "19/20",
+    "rate": 0.95,
+    "pos": "9/10",
+    "neg": "10/10",
+    "chars": 952,
+    "constraints": "ASCII-only, <=1024 for quick_validate"
+  },
+  "delta": "+20 percentage points (75% -> 95%); positives +3; negatives +1",
+  "remaining_miss": "pos-first-principles-deep (DDD/first-principles without auto-loop keywords)",
+  "coverage": [
+    "auto loop / review-fix-re-review zero human",
+    "same-session dual-AI closed loop",
+    "consult",
+    "sessions resume commands",
+    "packet continue / PWC fix-it",
+    "second pair of eyes + feedback validation",
+    "negatives: ordinary impl, non-git, weekly-report, /codex:review, Grok /review"
+  ]
+}

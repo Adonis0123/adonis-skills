@@ -1,0 +1,102 @@
+[
+  {
+    "id": "pos-auto-loop-zh",
+    "query": "我在 adonis-skills 这个 git 仓库刚改完 review-loop，想在当前会话里直接开 auto loop：用 codex 当 headless reviewer，自己修到 PASS 或预算耗尽，中间别问我。帮我跑 review→fix→re-review 闭环。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-dual-ai-session",
+    "query": "same session dual AI review closed loop please — visible me as fixer, headless grok as reviewer on the uncommitted diff under ~/coding/my-app, zero mid-loop human interrupts until terminal report.",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-review-fix-rereview",
+    "query": "能不能自动 review-fix-re-review 三轮？仓库是 ~/duiyun/breeze，reviewer 用 claude，先审当前 working tree，BLOCKED 了我改完再 continue，别让我两边窗口来回点。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-consult",
+    "query": "决策咨询：认证该用 session cookie 还是 JWT？把题框定好后用 review-loop consult 问一下 peer=codex 的立场，advisory 就行，别静默拍板。repo 在 ~/coding/auth-svc。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-sessions-resume",
+    "query": "上次 auto loop 用的 headless codex reviewer 会话在 Desktop 列表里找不到了。给我 codex/grok/claude 恢复对话的命令，或者直接 list review-loop sessions。仓库根是 /Users/adonis/coding/adonis-skills。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-second-eyes-packet",
+    "query": "帮我当 second pair of eyes 审一下 feat/cart-patch 上 staged 的 apps/api/cart-handler.ts，按 agentic packet 写 findings，有阻塞就整理 fix handoff 给后续修复。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-continue-packet",
+    "query": ".review-handoff/active 里最新 packet 是 BLOCKED 且我已写好 Fix Completion，请 run --continue 进入 re-review。repo: ~/coding/payment-svc 分支 feat/validator。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-pwc-fix-it",
+    "query": "上轮 re-review 是 PASS_WITH_CONCERNS，lifecycle 还在 awaiting_user_decision。我说修一下那两个命名 concern，按 packet 协议续到 round 2。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-feedback-validate",
+    "query": "团队贴了 review 反馈说 auth.ts 空 token 会 500，请当缺陷报告验证后再整理 validated findings / fix handoff，不要把反馈当 ground truth。仓库在 monorepo 根。",
+    "should_trigger": true
+  },
+  {
+    "id": "pos-first-principles-deep",
+    "query": "对 packages/billing 这批改动做 first-principles + DDD 边界审查，跨模块耦合风险也看一下，产出带 Verdict 的 review packet。",
+    "should_trigger": true
+  },
+  {
+    "id": "neg-ordinary-impl",
+    "query": "帮我在 apps/web 加一个 React 登录表单组件，用 Zod 校验 email/password，写好后 commit 就行，不需要 review。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-generic-staged-review",
+    "query": "简单看看 git status 里 staged 的 diff 有没有明显 typo，口头说两句就行，不用写 packet 也不用开 loop。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-non-git-folder",
+    "query": "我在 ~/Downloads/notes-scratch（不是 git 仓库）里有几个 markdown 草稿，帮我润色标题措辞。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-named-other-skill",
+    "query": "用 weekly-report skill 生成我这周的工作周报，仓库列表是 adonis-skills 和 breeze，不要走 review handoff。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-codex-plugin-once",
+    "query": "在 Claude Code 里直接 /codex:review 一下当前 uncommitted 就够了，不要 agentic-review-handoff，也不要 auto loop。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-copy-edit-comments",
+    "query": "帮我把 PR 评论里这几句英文 review comment 润色得更礼貌，纯文案修改，不涉及代码修复闭环。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-commit-only",
+    "query": "改完了，按 conventional commits 帮我 commit 当前 staged 变更，message 用 feat(auth): ...",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-unit-test-impl",
+    "query": "给 cart-handler.ts 的 PATCH 路由补三个 vitest 单测（含 quantity=0），实现完跑测试绿即可。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-named-grok-builtin-review",
+    "query": "用 Grok Build 内置的 /review 命令看一下当前 uncommitted，不要 agentic-review-handoff 也不要写 .review-handoff packet。",
+    "should_trigger": false
+  },
+  {
+    "id": "neg-design-doc",
+    "query": "写一份支付重试策略的 design doc，比较指数退避和固定间隔，不需要代码 review packet。",
+    "should_trigger": false
+  }
+]
