@@ -49,14 +49,28 @@ Run this every time before writing packet output.
 2. List $repo_root/.review-handoff/active/${branch_slug}/*.md, sort ascending by filename.
    File names use local minute time plus scope: `YYYY-MM-DD_HH-mm-<scope_slug>.md`.
    The fixed-width local minute prefix guarantees lexical sort = chronological sort within the branch folder.
-3. Take the last (newest) one:
-   - Exists → read the whole file; the last H1 anchor + frontmatter tells you which
-     section to append next (see stage transitions / Stage Defaults in packet-anatomy.md).
+3. Select a packet for this path (mode isolation — classic must never rewrite auto):
+   - List active packets newest-first as in step 2.
+   - **If this stage is classic** (intake / feedback_validation / manual_continuation):
+     · Prefer the newest packet whose frontmatter has `mode: classic`.
+     · Treat a packet as **auto-owned** (do not continue it for classic) when any of:
+       - frontmatter has `loop: on` and `mode` is not `classic`, or
+       - runtime `auto-run-state.json` exists for that `packet_id`, or
+       - frontmatter lacks `mode: classic` and was created by `review-loop run`.
+     · If the newest active packet is auto-owned → **do not** set `mode: classic` on it.
+       Create a **new** classic packet instead (manual_continuation without a classic target
+       must ask for `--packet` or refuse).
+     · Only after selecting a classic packet (or creating one) may you write
+       `mode: classic` + `classic_reason`.
+   - **If this stage is auto** (`review-loop run`): operate only on packets the CLI creates/continues;
+     never require `mode: classic`.
+   - Exists (and mode-allowed) → read the whole file; last H1 + frontmatter decide next stage
+     (see Stage Defaults in packet-anatomy.md).
      · lifecycle_state in {in_progress, blocked} → continue normally based on last_anchor.
      · lifecycle_state == awaiting_user_decision and user said "fix it" / "修一下" / "改吧"
        → start a new round: append # Fix Completion (round N+1), increment round.
-     · lifecycle_state == archived → the user is engaging a finished packet; copy it back
-       to active/$branch_slug/ with a new local_minute filename and a new round before continuing.
+     · lifecycle_state == archived → copy back to active/$branch_slug/ with a new local_minute
+       filename and a new round before continuing (preserve mode if classic).
    - Does not exist → creation path, branched by who triggered:
      · implementer-initiated (user/agent just finished writing code and is asking for review)
        → start with # Review Handoff (implementer fills Goal / Implementation Summary /
@@ -119,33 +133,36 @@ Direct normalization of H1 anchor text: strip `# `, strip ` (round N)` suffix, s
 | `blocked`                | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round.                                                                                                                                                                                                                |
 | `archived`               | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`. |
 
-## Lifecycle derivation and archive actions — single source of truth
+## Lifecycle derivation and archive actions
 
-`lifecycle_state` is **not** the snake_case of the last H1. Validators, evals, and writers all use **this table only**. Other docs (including `packet-anatomy.md`) must pointer here — do not restate Verdict→location→state mappings elsewhere.
+`lifecycle_state` is **not** the snake_case of the last H1. **Auto and classic do not share one map:**
+
+| Path                              | Source of truth                                                                                                                                                                                                                          |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **auto loop** (`review-loop run`) | `auto-loop-contract.md` + script validators (`lifecycleForVerdict` / `validateLifecycleTuple`). Example: first-round `PASS_WITH_CONCERNS` → `last_anchor=review_findings`, `lifecycle_state=awaiting_user_decision`, **no** Fix Handoff. |
+| **classic** prompt-protocol       | **Classic table below only.**                                                                                                                                                                                                            |
+
+Other docs must pointer to the correct path — do not merge the two maps.
+
+### Classic prompt-protocol table (classic only)
 
 Only the reviewer ever auto-archives; fixers never archive. Users may manually `mv` either direction; the agent should respect that.
 
-| `last_anchor`                      | Verdict (in `# Review Findings` for first-pass, in `# Re-review` for later rounds) | File location | `lifecycle_state`        | Writer action                                                                                                                                       |
-| ---------------------------------- | ---------------------------------------------------------------------------------- | ------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `review_handoff` / `review_intake` | (no Verdict yet)                                                                   | `active/`     | `in_progress`            | Continue review                                                                                                                                     |
-| `review_findings`                  | none yet, or `BLOCKED` / `PASS_WITH_CONCERNS`                                      | `active/`     | `in_progress`            | **Trigger 1 path B:** append `# Fix Handoff` when Verdict is `BLOCKED` / `PASS_WITH_CONCERNS`                                                       |
-| `review_findings`                  | `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff)                              | `archive/`    | `archived`               | **Trigger 1 path A:** `mv` to `archive/<branch_slug>/` immediately; no Fix Handoff                                                                  |
-| `fix_handoff` / `fix_completion`   | (n/a — re-review not done)                                                         | `active/`     | `in_progress`            | Fixer completes fix; wait for re-review                                                                                                             |
-| `re_review`                        | `PASS` / `NO_FINDINGS`                                                             | `archive/`    | `archived`               | **Trigger 2:** `mv` to `archive/<branch_slug>/`                                                                                                     |
-| `re_review`                        | `PASS_WITH_CONCERNS`                                                               | `active/`     | `awaiting_user_decision` | **Trigger 2:** do not archive; tell user "fix it" / "修一下" / "改吧" continues to round N+1; manual `mv` to archive only on explicit drop-concerns |
-| `re_review`                        | `BLOCKED`                                                                          | `active/`     | `blocked`                | **Trigger 2:** do not archive; wait for fixer next round                                                                                            |
+| `last_anchor`                      | Verdict (first-pass in `# Review Findings`; later in `# Re-review`) | File location | `lifecycle_state`        | Writer action                                                                                 |
+| ---------------------------------- | ------------------------------------------------------------------- | ------------- | ------------------------ | --------------------------------------------------------------------------------------------- |
+| `review_handoff` / `review_intake` | (no Verdict yet)                                                    | `active/`     | `in_progress`            | Continue review                                                                               |
+| `review_findings`                  | none yet, or `BLOCKED` / `PASS_WITH_CONCERNS`                       | `active/`     | `in_progress`            | **Trigger 1 path B:** append `# Fix Handoff` when Verdict is `BLOCKED` / `PASS_WITH_CONCERNS` |
+| `review_findings`                  | `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff)               | `archive/`    | `archived`               | **Trigger 1 path A:** `mv` to `archive/<branch_slug>/`; no Fix Handoff                        |
+| `fix_handoff` / `fix_completion`   | (n/a — re-review not done)                                          | `active/`     | `in_progress`            | Fixer completes fix; wait for re-review                                                       |
+| `re_review`                        | `PASS` / `NO_FINDINGS`                                              | `archive/`    | `archived`               | **Trigger 2:** `mv` to `archive/<branch_slug>/`                                               |
+| `re_review`                        | `PASS_WITH_CONCERNS`                                                | `active/`     | `awaiting_user_decision` | **Trigger 2:** stay active; "fix it" continues round N+1                                      |
+| `re_review`                        | `BLOCKED`                                                           | `active/`     | `blocked`                | **Trigger 2:** wait for fixer next round                                                      |
 
-**Trigger 1 (first-pass `# Review Findings`):** when the very first review finds nothing or only Preference-level items, write Verdict in `# Review Findings` itself and take path A (archive) or path B (Fix Handoff) from the table — never invent a Fix Handoff on PASS/NO_FINDINGS.
+**Trigger 1 (classic first-pass):** path A archive or path B Fix Handoff from the table — never Fix Handoff on PASS/NO_FINDINGS.
 
-**Trigger 2 (every `# Re-review`):** apply the matching `re_review` row after the Verdict.
+**Trigger 2 (classic re-review):** apply the matching `re_review` row.
 
-Any other combination is illegal:
-
-- `last_anchor != re_review` with `lifecycle_state in {awaiting_user_decision, blocked}` → invalid
-- `last_anchor == re_review` with `lifecycle_state == in_progress` → invalid
-- `lifecycle_state == archived` while file is in `active/` → invalid
-- `lifecycle_state != archived` while file is in `archive/` → invalid
-- `last_anchor in {review_handoff, review_intake}` with `lifecycle_state == archived` → invalid
+Classic illegal combinations: `awaiting_user_decision`/`blocked` with `last_anchor != re_review`; `re_review` + `in_progress`; archive location/lifecycle mismatch; intake/handoff + `archived`.
 
 ## Git common-dir `info/exclude` bootstrapping
 

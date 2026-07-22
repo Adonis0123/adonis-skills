@@ -332,7 +332,7 @@ Scoped re-review of fix for prior findings (not a restart).
 BLOCKED | PASS_WITH_CONCERNS | PASS | NO_FINDINGS
 ```
 
-After writing the Verdict, apply lifecycle/archive from **Lifecycle derivation and archive actions** in `packet-addressing.md` (single source of truth — do not restate Verdict→state mappings here).
+After writing the Verdict on a **classic** packet, apply lifecycle/archive from the **classic** table in `packet-addressing.md`. Auto-loop packets use `auto-loop-contract.md` + scripts — do not apply the classic map to auto.
 
 ---
 

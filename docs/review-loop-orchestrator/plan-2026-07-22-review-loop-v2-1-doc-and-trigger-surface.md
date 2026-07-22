@@ -32,7 +32,7 @@
 
 - 任一条协议规则（寻址步骤 / lifecycle 表 / stage 默认）在全仓 grep 只出现一处正文 + 若干指针；
 - SKILL.md 主体不再含完整寻址算法与 lifecycle 表；
-- `pnpm skills:quick-validate` + `skills:validate` + `skills:index` 绿。
+- `pnpm skills:quick-validate skills/agentic-review-handoff` + `pnpm skills:validate` + `pnpm skills:index` 绿。
 
 ## 3. T2 · 触发面改写（Grok 补丁：防虚构降级）
 
@@ -45,7 +45,7 @@
 
 **验收**：
 
-- description 通过 quick-validate（ASCII、≤1024）；
+- description 通过 `pnpm skills:quick-validate skills/agentic-review-handoff`（ASCII、≤1024）；
 - 定向触发评测（同步镜像后跑，方法与 trigger-results.json 记录一致）：至少复测 3 条——1 条普通 review 正例应仍触发本 skill（走 auto 措辞）、1 条 feedback validation 正例仍触发、1 条普通实现负例不触发；结果追加进 `evals/trigger-results.json`；
 - SKILL.md 中经典路径兼容标注含"无脚本保证"与"与 auto 的语义差异"两点。
 

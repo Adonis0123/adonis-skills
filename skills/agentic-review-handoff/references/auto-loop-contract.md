@@ -46,11 +46,13 @@ Missing any section (including Verdict) is **malformed**. Auto loop asks for one
 
 ## Verdict lifecycle (auto path)
 
-| Verdict | lifecycle_state | Action |
-|---|---|---|
-| `PASS` / `NO_FINDINGS` | `archived` | Archive packet; terminal report |
-| `PASS_WITH_CONCERNS` | `awaiting_user_decision` | Terminal report lists concerns; user archives or continues |
-| `BLOCKED` | `blocked` | Return structured blockers; Fixer fixes + `fix-completion` + `run --continue` |
+This table is the auto-loop source of truth (scripts enforce it). Do **not** apply the classic lifecycle table in `packet-addressing.md` to auto packets.
+
+| Verdict                | lifecycle_state          | Typical `last_anchor`                                                   | Action                                                                        |
+| ---------------------- | ------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `PASS` / `NO_FINDINGS` | `archived`               | `review_findings` or `re_review`                                        | Archive packet; terminal report                                               |
+| `PASS_WITH_CONCERNS`   | `awaiting_user_decision` | first round: `review_findings` (no Fix Handoff); re-review: `re_review` | Terminal report lists concerns; user archives or continues                    |
+| `BLOCKED`              | `blocked`                | first round: `fix_handoff`; re-review: `re_review`                      | Return structured blockers; Fixer fixes + `fix-completion` + `run --continue` |
 
 ## Convergence rules (8+1)
 
