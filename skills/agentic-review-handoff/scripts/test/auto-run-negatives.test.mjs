@@ -46,8 +46,8 @@ BLOCKED
 `;
 }
 
-function reBlocked(ids = ['F1']) {
-  const rows = ids.map((id) => `| ${id} | unresolved | still broken |`).join('\n');
+function reBlocked(ids = ['F1'], evidence = 'still broken: off-by-one remains at demo.ts:12') {
+  const rows = ids.map((id) => `| ${id} | unresolved | ${evidence} |`).join('\n');
   return `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -95,6 +95,9 @@ describe('T5 negative paths', () => {
 
   it('2) budget exhausted still blocked → structured report, packet continuable', async () => {
     const dir = initTempRepo();
+    const fixerConclusion =
+      'attempted return n instead of n+1 (reason X: off-by-one in demo.ts)';
+    const reviewerEvidence = 'still broken: off-by-one remains at demo.ts:12 (evidence Y)';
     // Round 1 BLOCKED (budget 2 → still allow fix)
     const r1 = await cmdRun({
       repoRoot: dir,
@@ -108,7 +111,7 @@ describe('T5 negative paths', () => {
           return { ok: true, text: blocked('F1'), sessionId: 's' };
         },
         async resume() {
-          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+          return { ok: true, text: reBlocked(['F1'], reviewerEvidence), sessionId: 's' };
         },
       }),
     });
@@ -116,7 +119,23 @@ describe('T5 negative paths', () => {
     await cmdAppendFixCompletion({
       repoRoot: dir,
       packetPath: r1.packetPath,
-      body: '# Fix Completion\n\n## Fix Conclusion\n- attempt 1\n\n## Original Findings Snapshot\n- F1\n\n## Finding Status\n- F1 fixed\n\n## Verification\n- n/a\n\n## Re-review Instructions\n- continue\n',
+      body: `# Fix Completion
+
+## Fix Conclusion
+- ${fixerConclusion}
+
+## Original Findings Snapshot
+- F1
+
+## Finding Status
+- F1 claimed fixed via return-n patch
+
+## Verification
+- unit test green locally
+
+## Re-review Instructions
+- continue
+`,
     });
     // Round 2 still BLOCKED → budget exhaust on this final budgeted round (not round 3)
     const r2 = await cmdRun({
@@ -129,10 +148,10 @@ describe('T5 negative paths', () => {
         product: 'codex',
         getSessionId: () => 's',
         async newSession() {
-          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+          return { ok: true, text: reBlocked(['F1'], reviewerEvidence), sessionId: 's' };
         },
         async resume() {
-          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+          return { ok: true, text: reBlocked(['F1'], reviewerEvidence), sessionId: 's' };
         },
       }),
     });
@@ -141,6 +160,17 @@ describe('T5 negative paths', () => {
     assert.match(r2.message, /budget/i);
     assert.ok(Array.isArray(r2.unresolved) || Array.isArray(r2.openBlocking));
     assert.ok(r2.positions?.reviewer && r2.positions?.fixer, 'report must include both sides');
+    // Content must come from real stages — not empty findings + canned fixer note
+    const reassess = r2.positions.reviewer.reassessments || [];
+    assert.ok(reassess.length >= 1, 're-review exhaust must surface unresolved reassessments');
+    assert.equal(reassess[0].id, 'F1');
+    assert.match(String(reassess[0].evidence), /demo\.ts:12|evidence Y|off-by-one remains/i);
+    assert.equal(r2.positions.fixer.present, true);
+    assert.match(String(r2.positions.fixer.conclusion), /reason X|return n|off-by-one/i);
+    assert.doesNotMatch(
+      String(r2.positions.fixer.conclusion || r2.positions.fixer.note || ''),
+      /submitted Fix Completion through prior rounds/i,
+    );
     assert.match(String(r2.recommendation || ''), /\+N|rounds/i);
     assert.ok(fs.existsSync(r2.packetPath), 'packet remains for later continue with higher budget');
 
@@ -163,10 +193,10 @@ describe('T5 negative paths', () => {
         product: 'codex',
         getSessionId: () => 's',
         async newSession() {
-          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+          return { ok: true, text: reBlocked(['F1'], reviewerEvidence), sessionId: 's' };
         },
         async resume() {
-          return { ok: true, text: reBlocked(['F1']), sessionId: 's' };
+          return { ok: true, text: reBlocked(['F1'], reviewerEvidence), sessionId: 's' };
         },
       }),
     });
@@ -175,6 +205,37 @@ describe('T5 negative paths', () => {
     assert.equal(r3.needsContinue, true);
     const st3 = loadRunState(dir, meta.packetId);
     assert.equal(Number(st3.roundsBudget), 4);
+  });
+
+  it('2c) --rounds 1 first-round budget exhaust must not claim Fix Completion', async () => {
+    const dir = initTempRepo();
+    const r = await cmdRun({
+      repoRoot: dir,
+      reviewer: 'codex',
+      scopeSlug: 't5-bud1',
+      rounds: 1,
+      adapterFactory: () => ({
+        product: 'codex',
+        getSessionId: () => 's',
+        async newSession() {
+          return { ok: true, text: blocked('F1'), sessionId: 's' };
+        },
+        async resume() {
+          return { ok: true, text: blocked('F1'), sessionId: 's' };
+        },
+      }),
+    });
+    assert.equal(r.status, 'budget_exhausted', JSON.stringify(r));
+    assert.equal(r.positions?.fixer?.present, false);
+    assert.equal(r.positions?.fixer?.conclusion, null);
+    assert.match(String(r.positions?.fixer?.note || ''), /No # Fix Completion|before a fix pass/i);
+    assert.doesNotMatch(
+      JSON.stringify(r.positions?.fixer || {}),
+      /submitted Fix Completion through prior rounds/i,
+    );
+    // Round-1 findings still surface on reviewer side
+    const findings = r.positions?.reviewer?.findings || [];
+    assert.ok(findings.some((f) => f.id === 'F1'));
   });
 
   it('2b) scoped continue after external packet edit → hash refuse (not absorb)', async () => {

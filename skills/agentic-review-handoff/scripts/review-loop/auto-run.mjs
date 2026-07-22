@@ -617,12 +617,20 @@ async function runBody(ctx) {
     // Budget is a ceiling: on the final budgeted round, BLOCKED exits immediately
     // (plan flowchart: 轮次 < 预算? 否 → 预算耗尽). Do not ask for another fix pass.
     if (effectiveRound >= roundsBudget && !nextState.budgetOverride) {
+      const unresolvedReassessments =
+        effectiveRound > 1
+          ? (parsed.reassessments || []).filter(
+              (r) => r.status === 'unresolved' || r.status === 'partially',
+            )
+          : [];
       return budgetExhaustedReport({
         packetPath,
         state: nextState,
         roundsBudget,
         openBlocking,
+        // Round 1: findings; Re-review: newFindings + unresolved reassessments (with evidence)
         findings: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
+        reassessments: unresolvedReassessments,
       });
     }
     return {
@@ -719,8 +727,82 @@ export function resolveRoundsBudget(raw, prior = {}, isContinue = false) {
   return n;
 }
 
-function budgetExhaustedReport({ packetPath, state, roundsBudget, openBlocking, findings }) {
+/**
+ * Latest # Fix Completion stance from packet (actual stage text, not canned copy).
+ * @param {string|null|undefined} packetPath
+ * @returns {{ present: boolean, conclusion: string|null, findingStatus: string|null, verification: string|null }}
+ */
+export function extractLatestFixCompletionStance(packetPath) {
+  const empty = {
+    present: false,
+    conclusion: null,
+    findingStatus: null,
+    verification: null,
+  };
+  if (!packetPath || !fs.existsSync(packetPath)) return empty;
+  let body = fs.readFileSync(packetPath, 'utf8');
+  if (body.startsWith('---')) {
+    const end = body.indexOf('\n---', 3);
+    if (end !== -1) body = body.slice(end + 4);
+  }
+  /** @type {string|null} */
+  let lastSection = null;
+  // Split on top-level H1 (fence-unaware is ok: Fix Completion stages are not fenced titles)
+  for (const chunk of body.split(/^# /m)) {
+    if (/^Fix Completion(?:\s*\(round\s+\d+\))?\s*(?:\n|$)/i.test(chunk)) {
+      lastSection = chunk;
+    }
+  }
+  if (!lastSection) return empty;
+
+  const h2Body = (heading) => {
+    const re = new RegExp(
+      `##\\s*${heading}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`,
+      'i',
+    );
+    const m = lastSection.match(re);
+    return m ? m[1].trim() : null;
+  };
+  return {
+    present: true,
+    conclusion: h2Body('Fix Conclusion'),
+    findingStatus: h2Body('Finding Status'),
+    verification: h2Body('Verification'),
+  };
+}
+
+function budgetExhaustedReport({
+  packetPath,
+  state,
+  roundsBudget,
+  openBlocking,
+  findings,
+  reassessments,
+}) {
   const unresolved = openBlocking || state.openBlocking || [];
+  const fixerStance = extractLatestFixCompletionStance(packetPath);
+  const unresolvedReassessments = Array.isArray(reassessments) ? reassessments : [];
+
+  /** @type {Record<string, unknown>} */
+  const fixerPosition = fixerStance.present
+    ? {
+        present: true,
+        conclusion: fixerStance.conclusion,
+        findingStatus: fixerStance.findingStatus,
+        verification: fixerStance.verification,
+        roundsAttempted: state.round,
+      }
+    : {
+        present: false,
+        conclusion: null,
+        findingStatus: null,
+        verification: null,
+        roundsAttempted: state.round ?? 0,
+        // First-round budget exhaust (--rounds 1) never had a Fix Completion stage
+        note:
+          'No # Fix Completion stage on packet (budget exhausted before a fix pass, or Fix Completion missing)',
+      };
+
   return {
     ok: false,
     status: 'budget_exhausted',
@@ -731,19 +813,18 @@ function budgetExhaustedReport({ packetPath, state, roundsBudget, openBlocking, 
     lastVerdict: state.lastVerdict || 'BLOCKED',
     roundsUsed: state.round,
     roundsBudget,
-    // 双方立场：Reviewer 末轮结论 vs Fixer 已提交的修复轮次
+    // 双方立场：Reviewer 末轮真实证据 + Fixer 最新 Fix Completion 实际结论
     positions: {
       reviewer: {
         lastVerdict: state.lastVerdict || 'BLOCKED',
         openBlocking: unresolved,
         findingIds: state.findingIds || [],
-        findings: findings || null,
+        // New findings this round (may be empty when only prior blockers remain)
+        findings: findings || [],
+        // Unresolved/partially reassessments with Reviewer 复核证据 (re-review exhaust)
+        reassessments: unresolvedReassessments,
       },
-      fixer: {
-        note:
-          'Fixer submitted Fix Completion through prior rounds; latest Reviewer re-review still reports blockers',
-        roundsAttempted: state.round,
-      },
+      fixer: fixerPosition,
     },
     recommendation:
       'Authorize more rounds: run --continue --rounds +N (additive) or --rounds N (absolute ceiling)',

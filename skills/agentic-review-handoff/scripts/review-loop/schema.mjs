@@ -125,6 +125,39 @@ function normalizeHeader(h) {
 }
 
 /**
+ * First-round / New Findings table column contract (auto-loop-contract.md).
+ * Each entry lists accepted header aliases (already compared after normalizeHeader).
+ */
+const FINDINGS_TABLE_COLUMNS = [
+  { label: 'ID', aliases: ['id', 'finding id', 'finding_id'] },
+  { label: 'Severity', aliases: ['严重度', 'severity', 'sev'] },
+  { label: 'Summary', aliases: ['标题', 'title', 'summary'] },
+  { label: 'Evidence', aliases: ['证据', 'evidence'] },
+  { label: 'Target files', aliases: ['target files', 'target file', 'files', 'target'] },
+  { label: 'Required fix', aliases: ['required fix', 'fix', 'required'] },
+  {
+    label: 'Acceptance check',
+    aliases: ['acceptance check', 'acceptance', 'check'],
+  },
+];
+
+/**
+ * @param {string[]} headers already normalizeHeader'd
+ * @returns {string[]} missing column labels
+ */
+export function missingFindingsTableColumns(headers) {
+  const set = new Set((headers || []).map((h) => normalizeHeader(h)));
+  /** @type {string[]} */
+  const missing = [];
+  for (const col of FINDINGS_TABLE_COLUMNS) {
+    if (!col.aliases.some((a) => set.has(normalizeHeader(a)))) {
+      missing.push(col.label);
+    }
+  }
+  return missing;
+}
+
+/**
  * @param {Record<string,string>} row
  */
 export function findingFromRow(row) {
@@ -302,7 +335,7 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
     }
   }
 
-  // New Findings: same schema as round 1 — require the table (use (none) row if empty)
+  // New Findings: same schema as round 1 — full column set + table (use (none) row if empty)
   /** @type {ReturnType<typeof findingFromRow>[]} */
   let newFindings = [];
   const newSectionMatch = String(text).split(/##\s*New Findings/i);
@@ -319,6 +352,15 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
       ok: false,
       error:
         'New Findings must include findings table with ID column (use a single (none) row if empty)',
+    };
+  }
+  // Fail-closed: table must carry the same column set as first-round findings schema
+  // (reject `| ID |` only stubs that would parse as ok with empty rows).
+  const missingCols = missingFindingsTableColumns(newFindingsTable.headers);
+  if (missingCols.length) {
+    return {
+      ok: false,
+      error: `New Findings table missing columns required by first-round schema: ${missingCols.join(', ')}`,
     };
   }
   newFindings = newFindingsTable.rows

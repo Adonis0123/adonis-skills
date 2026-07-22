@@ -509,6 +509,32 @@ PASS
     assert.match(r.error, /New Findings|table/i);
   });
 
+  it('rejects New Findings table present but schema incomplete (ID-only)', () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+
+## New Findings
+
+| ID |
+|---|
+| (none) |
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+PASS
+`;
+    const r = parseReReview(text, ['F1']);
+    assert.equal(r.ok, false, 'ID-only New Findings table must fail-closed');
+    assert.match(r.error, /missing columns|Severity|Summary|Evidence|Target files/i);
+  });
+
   it('rejects re-review new blocker missing Target files', () => {
     const text = `## Prior Findings Reassessment
 
