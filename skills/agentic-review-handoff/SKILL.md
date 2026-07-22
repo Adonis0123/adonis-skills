@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Runs a git-only agentic review workflow with durable .review-handoff packets: second pair of eyes review, feedback validation, Fix Handoff, Fix Completion, scoped re-review, and first-principles/DDD/high-cohesion/low-coupling review with a Verdict. Use when the user asks for a first-principles or DDD review packet; review-loop run/continue or an auto loop; a same-session dual-AI review-fix-re-review closed loop with visible Fixer, headless read-only codex|grok|claude Reviewer, and zero mid-loop human; DecisionConsult via review-loop consult; review-loop sessions or resume commands; packet continuation; or a PASS_WITH_CONCERNS fix round. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy editing, non-git folders, non-review design docs, weekly reports (use weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait is removed; migrate to run, fix-completion, or consult."
+description: "Use this skill for auto loop (review-loop run/continue): same-session dual-AI review-fix-re-review with visible Fixer, headless read-only codex|grok|claude Reviewer, and zero mid-loop human; ordinary review / second pair of eyes / audit this diff routes here via auto loop. Also when validating pasted team review feedback as a defect report (feedback validation) before fix, Review Intake for reviewer-initiated live review, or manual packet continuation (classic prompt-protocol only - no script guarantees). Also DecisionConsult (review-loop consult), review-loop sessions (resume headless reviewer commands), PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review. Requires a git repo. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait removed; migrate to run, fix-completion, or consult."
 metadata:
   author: adonis
-  version: "3.2.0"
+  version: "3.2.1"
 ---
 
 # Agentic Review Handoff
@@ -14,10 +14,10 @@ Dual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not c
 
 ## Fast Path
 
-- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)
+- **same-session dual AI review closed loop / auto loop / zero mid-loop human / ordinary "review" or "audit this diff"** → `review-loop run` (below)
 - **decision consult / ask another AI for stance** → `review-loop consult`
 - **resume a past reviewer session ("给我 codex/grok/claude 恢复对话的命令")** → `review-loop sessions`
-- **classic single-session packet review (no automation)** → Classic compatibility path (below)
+- **classic compatibility path** (prompt-protocol only, **no script guarantees**) — only for: Review Intake (reviewer-initiated live review), feedback validation of pasted findings, or manual packet continuation → Classic section below
 - packet shape → `references/packet-anatomy.md`
 - lifecycle / archive / addressing algorithm → `references/packet-addressing.md`
 - stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults
@@ -91,24 +91,37 @@ These survive every path (auto loop and classic). Each line is an accident-backe
 
 ## Classic compatibility path (prompt-protocol only)
 
-For classic single-session packet review **without** `review-loop run` automation:
+**Compatibility path — prompt-protocol only (no script guarantees).** Use only when auto loop cannot express the intent:
 
-1. Infer stage/scope (see Stage Defaults in `packet-anatomy.md`).
-2. Locate or create the packet via the addressing algorithm in `packet-addressing.md` (only full statement of steps 0–4).
+| `classic_reason`      | When                                                                                                       |
+| --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `intake`              | Reviewer-initiated live review that must start with `# Review Intake` (not implementer `# Review Handoff`) |
+| `feedback_validation` | User pasted reviewer/team feedback to validate as a defect report before fix                               |
+| `manual_continuation` | User continues an existing classic packet without `review-loop run`                                        |
+
+**Why not auto for these:** auto `createPacketFile` always seeds implementer `# Review Handoff` — routing reviewer-initiated Intake into auto would forge Handoff and break the evidence boundary. Also, auto budget exit (`budget_exhausted` on final BLOCKED round, including `--rounds 1`) is not the same as classic "stop at Fix Handoff and wait for a human fixer."
+
+Ordinary "review this" / "second pair of eyes" / "audit this diff" **defaults to auto loop**, not classic.
+
+Steps when classic is correct:
+
+1. Infer stage/scope (Stage Defaults in `packet-anatomy.md` — classic-only rows).
+2. Locate or create the packet via `packet-addressing.md` addressing algorithm (only full statement of steps 0–4).
 3. Resolve optional source-prompt provenance via `source-prompt-addressing.md`.
 4. Append the stage's required H1 group (packet-anatomy templates); rewrite frontmatter atomically.
 5. Apply lifecycle/archive actions from `packet-addressing.md` after Verdicts.
 
 ### Classic write rules (summary)
 
-- Body H1 sections are append-only; auto loop uses the claim-free stage writer only.
+- Body H1 sections are append-only (model-written; **no** claim-free stage writer / hash guard).
 - Review / feedback-validation typically appends `# Review Intake` or `# Review Handoff` → `# Review Findings` → (conditional) `# Fix Handoff`.
 - Fix stage appends `# Fix Completion`; re-review appends `# Re-review`.
 - Full templates and Stage Defaults: `packet-anatomy.md`. Lifecycle tables: `packet-addressing.md`.
 
 ### Run the loop (classic)
 
-- **Review**: verify pasted feedback as a defect report, not ground truth. Lightweight first-principles by default; escalate to DDD / cohesion only when architectural.
+- **Review / Intake**: verify code and claims with evidence; never invent implementer intent in Intake.
+- **Feedback validation**: treat pasted feedback as a defect report, not ground truth.
 - **Fix handoff / Fix / Re-review**: follow packet-anatomy section templates; re-review order is Prior reassessment → New findings → Regression Surface → Verdict.
 
 ## Review Modes

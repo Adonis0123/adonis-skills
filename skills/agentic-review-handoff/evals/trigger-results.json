@@ -38,5 +38,37 @@
     },
     "caveat": "remaining 17 queries not re-run (keywords preserved superset of v3.1.1); measurement pitfall recorded: claude -p reads .agents/skills runtime copy, always sync before measuring",
     "chars": 991
+  },
+  "v3_2_1_t2_trigger_surface": {
+    "at": "2026-07-22T08:55:56.245897+00:00",
+    "method": "pnpm skills:install:local first; claude -p --max-turns 2 stream-json Skill/Read tool_use contains agentic-review-handoff; props only under /tmp",
+    "queries": [
+      {
+        "id": "pos-ordinary-review-auto",
+        "query": "Please review the uncommitted cart-handler changes in my git repo at ~/coding/payment-svc — second pair of eyes, find real bugs, prefer auto loop with headless codex.",
+        "should_trigger": true,
+        "triggered": true,
+        "pass": true
+      },
+      {
+        "id": "pos-feedback-validation",
+        "query": "Team pasted review feedback claiming auth.ts returns 500 on empty token. Validate each claim as a defect report before any fix; use classic feedback validation packet if needed.",
+        "should_trigger": true,
+        "triggered": true,
+        "pass": true
+      },
+      {
+        "id": "neg-ordinary-impl",
+        "query": "Add a React LoginForm with Zod email/password validation under apps/web and commit it. No review packet.",
+        "should_trigger": false,
+        "triggered": false,
+        "pass": true
+      }
+    ],
+    "summary": {
+      "passed": 3,
+      "total": 3
+    },
+    "note": "description retuned to promote feedback validation in Use-when (first directed run undertriggered it)"
   }
 }

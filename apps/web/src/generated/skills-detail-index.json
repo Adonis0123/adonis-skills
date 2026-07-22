@@ -58,7 +58,7 @@
         "level": 1
       },
       {
-        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **resume a past reviewer session (\"给我 codex/grok/claude 恢复对话的命令\")** → `review-loop sessions`\n- **classic single-session packet review (no automation)** → Classic compatibility path (below)\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive / addressing algorithm → `references/packet-addressing.md`\n- stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`",
+        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human / ordinary \"review\" or \"audit this diff\"** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **resume a past reviewer session (\"给我 codex/grok/claude 恢复对话的命令\")** → `review-loop sessions`\n- **classic compatibility path** (prompt-protocol only, **no script guarantees**) — only for: Review Intake (reviewer-initiated live review), feedback validation of pasted findings, or manual packet continuation → Classic section below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive / addressing algorithm → `references/packet-addressing.md`\n- stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`",
         "heading": "Fast Path",
         "level": 2
       },
@@ -108,17 +108,17 @@
         "level": 2
       },
       {
-        "raw": "For classic single-session packet review **without** `review-loop run` automation:\n\n1. Infer stage/scope (see Stage Defaults in `packet-anatomy.md`).\n2. Locate or create the packet via the addressing algorithm in `packet-addressing.md` (only full statement of steps 0–4).\n3. Resolve optional source-prompt provenance via `source-prompt-addressing.md`.\n4. Append the stage's required H1 group (packet-anatomy templates); rewrite frontmatter atomically.\n5. Apply lifecycle/archive actions from `packet-addressing.md` after Verdicts.",
+        "raw": "**Compatibility path — prompt-protocol only (no script guarantees).** Use only when auto loop cannot express the intent:\n\n| `classic_reason` | When |\n|---|---|\n| `intake` | Reviewer-initiated live review that must start with `# Review Intake` (not implementer `# Review Handoff`) |\n| `feedback_validation` | User pasted reviewer/team feedback to validate as a defect report before fix |\n| `manual_continuation` | User continues an existing classic packet without `review-loop run` |\n\n**Why not auto for these:** auto `createPacketFile` always seeds implementer `# Review Handoff` — routing reviewer-initiated Intake into auto would forge Handoff and break the evidence boundary. Also, auto budget exit (`budget_exhausted` on final BLOCKED round, including `--rounds 1`) is not the same as classic \"stop at Fix Handoff and wait for a human fixer.\"\n\nOrdinary \"review this\" / \"second pair of eyes\" / \"audit this diff\" **defaults to auto loop**, not classic.\n\nSteps when classic is correct:\n\n1. Infer stage/scope (Stage Defaults in `packet-anatomy.md` — classic-only rows).\n2. Locate or create the packet via `packet-addressing.md` addressing algorithm (only full statement of steps 0–4).\n3. Resolve optional source-prompt provenance via `source-prompt-addressing.md`.\n4. Append the stage's required H1 group (packet-anatomy templates); rewrite frontmatter atomically.\n5. Apply lifecycle/archive actions from `packet-addressing.md` after Verdicts.",
         "heading": "Classic compatibility path (prompt-protocol only)",
         "level": 2
       },
       {
-        "raw": "- Body H1 sections are append-only; auto loop uses the claim-free stage writer only.\n- Review / feedback-validation typically appends `# Review Intake` or `# Review Handoff` → `# Review Findings` → (conditional) `# Fix Handoff`.\n- Fix stage appends `# Fix Completion`; re-review appends `# Re-review`.\n- Full templates and Stage Defaults: `packet-anatomy.md`. Lifecycle tables: `packet-addressing.md`.",
+        "raw": "- Body H1 sections are append-only (model-written; **no** claim-free stage writer / hash guard).\n- Review / feedback-validation typically appends `# Review Intake` or `# Review Handoff` → `# Review Findings` → (conditional) `# Fix Handoff`.\n- Fix stage appends `# Fix Completion`; re-review appends `# Re-review`.\n- Full templates and Stage Defaults: `packet-anatomy.md`. Lifecycle tables: `packet-addressing.md`.",
         "heading": "Classic write rules (summary)",
         "level": 3
       },
       {
-        "raw": "- **Review**: verify pasted feedback as a defect report, not ground truth. Lightweight first-principles by default; escalate to DDD / cohesion only when architectural.\n- **Fix handoff / Fix / Re-review**: follow packet-anatomy section templates; re-review order is Prior reassessment → New findings → Regression Surface → Verdict.",
+        "raw": "- **Review / Intake**: verify code and claims with evidence; never invent implementer intent in Intake.\n- **Feedback validation**: treat pasted feedback as a defect report, not ground truth.\n- **Fix handoff / Fix / Re-review**: follow packet-anatomy section templates; re-review order is Prior reassessment → New findings → Regression Surface → Verdict.",
         "heading": "Run the loop (classic)",
         "level": 3
       },
