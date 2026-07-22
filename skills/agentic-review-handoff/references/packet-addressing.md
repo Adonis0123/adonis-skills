@@ -32,87 +32,104 @@ $repo_root/
 
 Example: `.review-handoff/active/feat-payment/2026-05-15_14-30-refactor-checkout.md`.
 
-## Addressing algorithm (every stage entry)
+## Addressing algorithm (every stage entry) — single source of truth
 
-Re-stated from `SKILL.md` for completeness. Run this every time before writing output.
+This is the **only** full statement of the addressing algorithm. `SKILL.md` and other docs must pointer here, not restate steps 0–4.
+
+Run this every time before writing packet output.
 
 ```
 0. repo_root=$(git rev-parse --show-toplevel)
    - Not in a git repo → fail loudly. The packet protocol requires a repo identity.
-1. branch_slug = lowercase($(git rev-parse --abbrev-ref HEAD) with "/" and "\" → "-")
-2. ls $repo_root/.review-handoff/active/${branch_slug}/*.md | sort
-3. tail -1:
-   - Exists → read whole file. Find the last H1 anchor and frontmatter.
+   - All read / write / mv must use $repo_root/.review-handoff/... absolute paths.
+     Do not use cwd-relative paths — agents are often invoked from monorepo subdirectories
+     like apps/web/, and a relative path would create a second inbox or miss the root one.
+1. branch=$(git rev-parse --abbrev-ref HEAD)
+   branch_slug = lowercase(branch with "/" and "\" replaced by "-")
+2. List $repo_root/.review-handoff/active/${branch_slug}/*.md, sort ascending by filename.
+   File names use local minute time plus scope: `YYYY-MM-DD_HH-mm-<scope_slug>.md`.
+   The fixed-width local minute prefix guarantees lexical sort = chronological sort within the branch folder.
+3. Take the last (newest) one:
+   - Exists → read the whole file; the last H1 anchor + frontmatter tells you which
+     section to append next (see stage transitions / Stage Defaults in packet-anatomy.md).
      · lifecycle_state in {in_progress, blocked} → continue normally based on last_anchor.
      · lifecycle_state == awaiting_user_decision and user said "fix it" / "修一下" / "改吧"
        → start a new round: append # Fix Completion (round N+1), increment round.
      · lifecycle_state == archived → the user is engaging a finished packet; copy it back
        to active/$branch_slug/ with a new local_minute filename and a new round before continuing.
-   - Does not exist → creation path:
-     · implementer-initiated → start with # Review Handoff (reviewer will append the rest)
-     · reviewer-initiated → start with # Review Intake → # Review Findings, then branch on Verdict:
-       - Verdict in {BLOCKED, PASS_WITH_CONCERNS} → append # Fix Handoff (continues to fix)
-       - Verdict in {PASS, NO_FINDINGS}            → DO NOT write # Fix Handoff; archive immediately
-         (mv packet from active/$branch_slug/ to archive/$branch_slug/, set lifecycle_state = archived). See SKILL.md
-         Lifecycle and Archive Trigger 1.
-4. --packet=<path> override: prefer it, but verify the real path is under
-   $repo_root/.review-handoff/active/ or $repo_root/.review-handoff/archive/.
-   Reject $repo_root/.review-handoff/prompts/** and every other sibling.
+   - Does not exist → creation path, branched by who triggered:
+     · implementer-initiated (user/agent just finished writing code and is asking for review)
+       → start with # Review Handoff (implementer fills Goal / Implementation Summary /
+         Open Questions etc.)
+     · reviewer-initiated (user is directly asking the reviewer to look at a staged/working-tree
+       diff with no implementer handoff) → start with # Review Intake (scope, verification,
+       inferred goal labelled inferred from diff), then # Review Findings.
+       **Whether to write # Fix Handoff after # Review Findings depends on the Verdict**
+       (see Lifecycle and Archive Trigger 1 below):
+       - Verdict in {BLOCKED, PASS_WITH_CONCERNS} → append # Fix Handoff
+       - Verdict in {PASS, NO_FINDINGS} → DO NOT write # Fix Handoff; archive immediately
+       Do NOT fabricate # Review Handoff — implementer-only; writing it without implementer
+       context breaks the evidence-first trust boundary.
+4. If the user explicitly passed --packet=<path> or named a packet file, prefer that,
+   but verify it lives under $repo_root/.review-handoff/active/ or archive/.
+   Never accept a prompts/ file as a review-loop packet.
 ```
 
-Selecting a creation path does not authorize an early write. Resolve optional source-prompt provenance before creating the packet file; ambiguity, traversal, or provenance mismatch must leave packet files unchanged.
+Before writing the first packet for a branch, create `$repo_root/.review-handoff/active/${branch_slug}/` and `$repo_root/.review-handoff/archive/${branch_slug}/` if needed. Also ensure the Git common-dir `info/exclude` line (below) is in place.
+
+Selecting a creation path does not authorize an early write. Resolve optional source-prompt provenance (`source-prompt-addressing.md`) before creating the packet file; ambiguity, traversal, or provenance mismatch must leave packet files unchanged.
 
 ## Frontmatter fields (full reference)
 
-| Field | Type | Maintained by | Description |
-|---|---|---|---|
-| `packet_id` | string | creator | Equals `<branch_slug>/<filename without .md>`. Acts as packet identity across active/archive moves (creator must not change after creation). |
-| `branch` | string | creator | Original `git branch` value, including `/`. Kept for traceability when filename's `branch_slug` has been munged. |
-| `scope` | string | creator | Free-form 1-line scope description from the user. |
-| `created` | ISO datetime (UTC, with `Z`) | creator | Set once at creation, never modified. |
-| `updated` | ISO datetime (UTC, with `Z`) | every writer | Updated on every frontmatter rewrite (i.e. after every H1 append). |
-| `last_anchor` | enum (see below) | every writer | **Structural fact**: the last H1 anchor in the body, normalized. |
-| `lifecycle_state` | enum (see below) | every writer | **Domain state**: where this packet sits in its review-loop lifecycle. |
-| `round` | int | writer of `# Fix Completion (round N)` and `# Re-review (round N)` | Default 1. Increment when starting a new fix round. |
-| `source_prompt_id` | string, optional | source resolver | Stable repository-local prompt identity. Must be present with both other `source_prompt_*` fields. |
-| `source_prompt_head` | 40-char SHA, optional | source resolver | HEAD recorded by the validated source prompt. Provenance only, not current-code evidence. |
-| `source_prompt_scope` | string, optional | source resolver | Canonical scope copied from the validated source prompt. |
+| Field                 | Type                         | Maintained by                                                      | Description                                                                                                                                  |
+| --------------------- | ---------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packet_id`           | string                       | creator                                                            | Equals `<branch_slug>/<filename without .md>`. Acts as packet identity across active/archive moves (creator must not change after creation). |
+| `branch`              | string                       | creator                                                            | Original `git branch` value, including `/`. Kept for traceability when filename's `branch_slug` has been munged.                             |
+| `scope`               | string                       | creator                                                            | Free-form 1-line scope description from the user.                                                                                            |
+| `created`             | ISO datetime (UTC, with `Z`) | creator                                                            | Set once at creation, never modified.                                                                                                        |
+| `updated`             | ISO datetime (UTC, with `Z`) | every writer                                                       | Updated on every frontmatter rewrite (i.e. after every H1 append).                                                                           |
+| `last_anchor`         | enum (see below)             | every writer                                                       | **Structural fact**: the last H1 anchor in the body, normalized.                                                                             |
+| `lifecycle_state`     | enum (see below)             | every writer                                                       | **Domain state**: where this packet sits in its review-loop lifecycle.                                                                       |
+| `round`               | int                          | writer of `# Fix Completion (round N)` and `# Re-review (round N)` | Default 1. Increment when starting a new fix round.                                                                                          |
+| `source_prompt_id`    | string, optional             | source resolver                                                    | Stable repository-local prompt identity. Must be present with both other `source_prompt_*` fields.                                           |
+| `source_prompt_head`  | 40-char SHA, optional        | source resolver                                                    | HEAD recorded by the validated source prompt. Provenance only, not current-code evidence.                                                    |
+| `source_prompt_scope` | string, optional             | source resolver                                                    | Canonical scope copied from the validated source prompt.                                                                                     |
 
 ### `last_anchor` values
 
 Direct normalization of H1 anchor text: strip `# `, strip ` (round N)` suffix, snake_case.
 
-| H1 written | `last_anchor` |
-|---|---|
-| `# Review Handoff` | `review_handoff` |
-| `# Review Intake` | `review_intake` |
-| `# Review Findings` | `review_findings` |
-| `# Fix Handoff` | `fix_handoff` |
-| `# Fix Completion` or `# Fix Completion (round N)` | `fix_completion` |
-| `# Re-review` or `# Re-review (round N)` | `re_review` |
+| H1 written                                         | `last_anchor`     |
+| -------------------------------------------------- | ----------------- |
+| `# Review Handoff`                                 | `review_handoff`  |
+| `# Review Intake`                                  | `review_intake`   |
+| `# Review Findings`                                | `review_findings` |
+| `# Fix Handoff`                                    | `fix_handoff`     |
+| `# Fix Completion` or `# Fix Completion (round N)` | `fix_completion`  |
+| `# Re-review` or `# Re-review (round N)`           | `re_review`       |
 
 ### `lifecycle_state` values
 
-| Value | Meaning |
-|---|---|
-| `in_progress` | Loop still running. Default state from creation through `# Re-review` write. |
-| `awaiting_user_decision` | Re-review verdict was `PASS_WITH_CONCERNS`. Packet stays in `active/` waiting for user to either say "fix it" (auto-resumes to round N+1) or manually `mv` to archive (drop the concerns). |
-| `blocked` | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round. |
-| `archived` | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`. |
+| Value                    | Meaning                                                                                                                                                                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `in_progress`            | Loop still running. Default state from creation through `# Re-review` write.                                                                                                                                                                                                               |
+| `awaiting_user_decision` | Re-review verdict was `PASS_WITH_CONCERNS`. Packet stays in `active/` waiting for user to either say "fix it" (auto-resumes to round N+1) or manually `mv` to archive (drop the concerns).                                                                                                 |
+| `blocked`                | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round.                                                                                                                                                                                                                |
+| `archived`               | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`. |
 
 ## Lifecycle derivation table (validator / eval source of truth)
 
 `lifecycle_state` is **not** simply the snake_case of the last H1. It must satisfy this table — both the validator and eval assertions should compute the expected `lifecycle_state` from this table, not from the H1 anchor alone.
 
-| `last_anchor` | Verdict (in `# Review Findings` for first-pass, in `# Re-review` for subsequent rounds) | File location | Expected `lifecycle_state` |
-|---|---|---|---|
-| `review_handoff` / `review_intake` | (no Verdict yet — review not done) | `active/` | `in_progress` |
-| `review_findings` | (no Verdict written yet, or Verdict ∈ `BLOCKED` / `PASS_WITH_CONCERNS` — fix needed) | `active/` | `in_progress` |
-| `review_findings` | `PASS` / `NO_FINDINGS` (first-pass terminal — no fix needed, no Fix Handoff written) | `archive/` | `archived` |
-| `fix_handoff` / `fix_completion` | (n/a — Re-review hasn't run yet) | `active/` | `in_progress` |
-| `re_review` | `PASS` / `NO_FINDINGS` | `archive/` | `archived` |
-| `re_review` | `PASS_WITH_CONCERNS` | `active/` | `awaiting_user_decision` |
-| `re_review` | `BLOCKED` | `active/` | `blocked` |
+| `last_anchor`                      | Verdict (in `# Review Findings` for first-pass, in `# Re-review` for subsequent rounds) | File location | Expected `lifecycle_state` |
+| ---------------------------------- | --------------------------------------------------------------------------------------- | ------------- | -------------------------- |
+| `review_handoff` / `review_intake` | (no Verdict yet — review not done)                                                      | `active/`     | `in_progress`              |
+| `review_findings`                  | (no Verdict written yet, or Verdict ∈ `BLOCKED` / `PASS_WITH_CONCERNS` — fix needed)    | `active/`     | `in_progress`              |
+| `review_findings`                  | `PASS` / `NO_FINDINGS` (first-pass terminal — no fix needed, no Fix Handoff written)    | `archive/`    | `archived`                 |
+| `fix_handoff` / `fix_completion`   | (n/a — Re-review hasn't run yet)                                                        | `active/`     | `in_progress`              |
+| `re_review`                        | `PASS` / `NO_FINDINGS`                                                                  | `archive/`    | `archived`                 |
+| `re_review`                        | `PASS_WITH_CONCERNS`                                                                    | `active/`     | `awaiting_user_decision`   |
+| `re_review`                        | `BLOCKED`                                                                               | `active/`     | `blocked`                  |
 
 The first-pass `review_findings` → `archived` row is the **golden-path terminal**: when reviewer finds no issues at all, no Fix Handoff is needed — the reviewer writes Verdict in `# Review Findings`, immediately archives the packet. No fixer involvement, no Re-review.
 
@@ -123,6 +140,27 @@ Any other combination is illegal:
 - `lifecycle_state == archived` while file is in `active/` → invalid (archive action skipped).
 - `lifecycle_state != archived` while file is in `archive/` → invalid (file moved without lifecycle update, or vice versa).
 - `last_anchor in {review_handoff, review_intake}` with `lifecycle_state == archived` → invalid (review never produced findings; no terminal verdict to archive on).
+
+## Lifecycle and Archive actions — single source of truth
+
+There are **two archive triggers** depending on which review section the Verdict was written in. Only the reviewer ever auto-archives; fixers never archive. Users may manually `mv` either direction; the agent should respect that.
+
+### Trigger 1: First-pass `# Review Findings` with no fix needed (golden path)
+
+When the very first review finds nothing or only `Preference`-level items, the reviewer writes the Verdict in `# Review Findings` itself, **does not** write a `# Fix Handoff`, and acts immediately:
+
+| Verdict in `# Review Findings`   | Action                                                                                                              | `last_anchor`     | `lifecycle_state` | File location |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------- | ----------------- | ------------- |
+| `PASS` / `NO_FINDINGS`           | `mv $repo_root/.review-handoff/active/<branch_slug>/<file> $repo_root/.review-handoff/archive/<branch_slug>/<file>` | `review_findings` | `archived`        | `archive/`    |
+| `PASS_WITH_CONCERNS` / `BLOCKED` | Continue to `# Fix Handoff` — there are findings to fix.                                                            | `review_findings` | `in_progress`     | `active/`     |
+
+### Trigger 2: After every `# Re-review` (or `# Re-review (round N)`)
+
+| Re-review Verdict      | Action                                                                                                                                                                         | `last_anchor` | `lifecycle_state`        | File location |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------------ | ------------- |
+| `PASS` / `NO_FINDINGS` | `mv` packet to `archive/<branch_slug>/`                                                                                                                                        | `re_review`   | `archived`               | `archive/`    |
+| `PASS_WITH_CONCERNS`   | **Do not archive.** Stay in `active/`. Tell the user any "fix it" / "修一下" / "改吧" will continue to round N+1; manual `mv` to archive only on explicit "drop the concerns". | `re_review`   | `awaiting_user_decision` | `active/`     |
+| `BLOCKED`              | Do not archive. Wait for fixer to start the next round.                                                                                                                        | `re_review`   | `blocked`                | `active/`     |
 
 ## Git common-dir `info/exclude` bootstrapping
 
@@ -151,7 +189,7 @@ This is repo-local, never enters Git history, and never modifies `.gitignore`. V
 
 `git rev-parse --abbrev-ref HEAD` is read at every addressing call. If the user switched branches between stages, the agent will list a different `active/` namespace and may not find a packet — that is correct behavior. The previous-branch packet stays in its own namespace and resumes if the user switches back.
 
-If a fix branch was created *off* the review branch (`feat/x` → `feat/x-review-fix`), say so explicitly and either: (a) move/copy the packet into the new branch folder, (b) symlink from the new branch folder to the old packet, or (c) create a new packet and link the old `packet_id` in `scope`. The user has a workflow preference here; ask if unsure.
+If a fix branch was created _off_ the review branch (`feat/x` → `feat/x-review-fix`), say so explicitly and either: (a) move/copy the packet into the new branch folder, (b) symlink from the new branch folder to the old packet, or (c) create a new packet and link the old `packet_id` in `scope`. The user has a workflow preference here; ask if unsure.
 
 ### Two active packets on the same branch
 

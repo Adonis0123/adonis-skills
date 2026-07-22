@@ -18,13 +18,13 @@
     "description": "Runs a git-only agentic review workflow with durable .review-handoff packets: second pair of eyes review, feedback validation, Fix Handoff, Fix Completion, scoped re-review, and first-principles/DDD/high-cohesion/low-coupling review with a Verdict. Use when the user asks for a first-principles or DDD review packet; review-loop run/continue or an auto loop; a same-session dual-AI review-fix-re-review closed loop with visible Fixer, headless read-only codex|grok|claude Reviewer, and zero mid-loop human; DecisionConsult via review-loop consult; review-loop sessions or resume commands; packet continuation; or a PASS_WITH_CONCERNS fix round. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy editing, non-git folders, non-review design docs, weekly reports (use weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait is removed; migrate to run, fix-completion, or consult.",
     "metadata": {
       "author": "adonis",
-      "version": "3.1.2"
+      "version": "3.2.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-22T07:27:11.000Z"
+    "updatedAt": "2026-07-22T08:00:14.000Z"
   },
   {
     "slug": "branch-creator",

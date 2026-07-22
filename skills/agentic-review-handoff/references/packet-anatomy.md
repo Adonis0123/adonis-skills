@@ -60,23 +60,27 @@ Written by the implementer (typically Codex) after finishing code, when they wan
 # Review Handoff
 
 ## Goal
+
 - User request:
 - Intended behavior:
 - Non-goals:
 
 ## Review Scope
+
 - Scope type: staged diff / working tree diff / full branch diff / docs only / specific files
 - Repository:
 - Branch:
 - Files changed:
 
 ## Implementation Summary
+
 - What changed:
 - Main code paths:
 - Data or API contracts affected:
 - Feature flags, experiments, or environment assumptions:
 
 ## Verification
+
 - Commands run:
 - Passing results:
 - Failing results:
@@ -84,12 +88,14 @@ Written by the implementer (typically Codex) after finishing code, when they wan
 - Checks not run and why:
 
 ## Reviewer Focus
+
 - Highest-risk areas:
 - Boundary cases to inspect:
 - Security/privacy/payment/data concerns:
 - Compatibility or migration concerns:
 
 ## Open Questions
+
 - Confirmed assumptions:
 - Unverified assumptions:
 - Decisions still needing human judgment:
@@ -105,16 +111,19 @@ Written by the reviewer when the user pointed them at a diff with no implementer
 # Review Intake
 
 ## Scope reviewed
+
 - Scope type: staged diff / working tree diff / full branch diff / docs only / specific files
 - Repository:
 - Branch:
 - Files inspected:
 
 ## Verification
+
 - Commands run this session:
 - Tools used (grep, git log, file reads):
 
 ## Inferred Goal
+
 - Best-effort summary of what the diff appears to do (mark each line `inferred from diff` or `inferred from commit message`).
 - Do not write "the implementer intended X" without an explicit source.
 ```
@@ -129,12 +138,15 @@ Written by the reviewer after inspecting the diff. Follows `references/review-co
 # Review Findings
 
 ## Scope reviewed
+
 (One line: same as Review Handoff Scope or Review Intake Scope, restated so this section is self-contained.)
 
 ## Verification
+
 (Commands run, skipped checks, or blocked checks.)
 
 ## Findings
+
 - [P0|P1|P2|P3] Title
   File: path/to/file.ts:LINE
   Evidence: what the code/docs/test output shows
@@ -145,6 +157,7 @@ Written by the reviewer after inspecting the diff. Follows `references/review-co
 (If no issues, write "No findings" plus checks run and residual risk.)
 
 ## Verdict
+
 BLOCKED | PASS_WITH_CONCERNS | PASS | NO_FINDINGS
 ```
 
@@ -158,6 +171,7 @@ Written by the reviewer immediately after `# Review Findings` (same writer, same
 # Fix Handoff
 
 ## Scope
+
 - Repository:
 - Branch / diff:
 - Files affected:
@@ -165,17 +179,17 @@ Written by the reviewer immediately after `# Review Findings` (same writer, same
 
 ## Validated Findings To Fix
 
-| ID | Severity | Verdict | Original finding | Evidence | Target files/lines | Required fix | Acceptance check |
-|---|---|---|---|---|---|---|---|
-| F1 | P1 | valid | (verbatim from Review Findings) | path:line or command | concrete file:line | smallest required change | observable signal proving it (test name, response field, log line) |
+| ID  | Severity | Verdict | Original finding                | Evidence             | Target files/lines | Required fix             | Acceptance check                                                   |
+| --- | -------- | ------- | ------------------------------- | -------------------- | ------------------ | ------------------------ | ------------------------------------------------------------------ |
+| F1  | P1       | valid   | (verbatim from Review Findings) | path:line or command | concrete file:line | smallest required change | observable signal proving it (test name, response field, log line) |
 
 Each row must be self-contained: a fixer who has only this packet plus repo access must be able to act without re-asking.
 
 ## Feedback Not To Fix
 
-| Claim | Why rejected / downgraded | Evidence |
-|---|---|---|
-| ... | invalid / hypothesis / preference / out of scope | path:line or reason |
+| Claim | Why rejected / downgraded                        | Evidence            |
+| ----- | ------------------------------------------------ | ------------------- |
+| ...   | invalid / hypothesis / preference / out of scope | path:line or reason |
 
 ## Constraints
 
@@ -207,6 +221,7 @@ Written by the fixer (typically Codex) after applying changes. The `Original Fin
 # Fix Completion
 
 ## Fix Conclusion
+
 - Overall status: all validated findings fixed / partially fixed / blocked / not fixed
 - Scope changed: files changed, one line
 - Not changed: invalid / out-of-scope / blocked / intentionally deferred findings and why
@@ -214,6 +229,7 @@ Written by the fixer (typically Codex) after applying changes. The `Original Fin
 - Re-review focus: exact finding IDs or nearby regression surface for the next reviewer
 
 ## Fix Scope
+
 - Repository:
 - Branch / diff:
 - Files changed:
@@ -225,14 +241,14 @@ Written by the fixer (typically Codex) after applying changes. The `Original Fin
 
 If the fixer wants to surface additional context (constraints, non-goals, fixer notes), append an optional `Notes` column to the right of the original columns. Never modify the original columns or remove any of them.)
 
-| ID | Severity | Verdict | Original finding | Evidence | Target files/lines | Required fix | Acceptance check |
-|---|---|---|---|---|---|---|---|
+| ID  | Severity | Verdict | Original finding | Evidence | Target files/lines | Required fix | Acceptance check |
+| --- | -------- | ------- | ---------------- | -------- | ------------------ | ------------ | ---------------- |
 
 ## Finding Status
 
-| Finding ID | Claimed status | Files changed | Verification |
-|---|---|---|---|
-| F1 | resolved / partially resolved / not resolved / not changed (invalid or out of scope) / blocked | path list | command/result or "not run + why" |
+| Finding ID | Claimed status                                                                                 | Files changed | Verification                      |
+| ---------- | ---------------------------------------------------------------------------------------------- | ------------- | --------------------------------- |
+| F1         | resolved / partially resolved / not resolved / not changed (invalid or out of scope) / blocked | path list     | command/result or "not run + why" |
 
 ## Changes Made
 
@@ -268,17 +284,19 @@ Written by the reviewer after the fix. Re-attests prior findings against the `Or
 # Re-review
 
 ## Scope
+
 Scoped re-review of fix for prior findings (not a restart).
 
 ## Verification
+
 - Commands run this session:
 - Skipped / blocked checks:
 
 ## Prior Findings Reassessment
 
-| Finding ID | Original finding (verbatim from snapshot) | Verdict | Evidence | Notes |
-|---|---|---|---|---|
-| F1 | ... | resolved / partially resolved / not resolved / regressed | path:line or command output | ... |
+| Finding ID | Original finding (verbatim from snapshot) | Verdict                                                  | Evidence                    | Notes |
+| ---------- | ----------------------------------------- | -------------------------------------------------------- | --------------------------- | ----- |
+| F1         | ...                                       | resolved / partially resolved / not resolved / regressed | path:line or command output | ...   |
 
 ## New Findings Introduced By Fix
 
@@ -295,14 +313,39 @@ Scoped re-review of fix for prior findings (not a restart).
 - Not checked:
 
 ## Verdict
+
 BLOCKED | PASS_WITH_CONCERNS | PASS | NO_FINDINGS
 ```
 
-After writing the Verdict, apply the lifecycle action from the Lifecycle and Archive table in `SKILL.md`:
+After writing the Verdict, apply the lifecycle action from **Lifecycle and Archive** in `packet-addressing.md` (single source of truth):
 
 - `PASS` / `NO_FINDINGS` → `mv` to `archive/`, set `lifecycle_state = archived`.
 - `PASS_WITH_CONCERNS` → keep in `active/`, set `lifecycle_state = awaiting_user_decision`, tell the user it will auto-continue on next "fix it".
 - `BLOCKED` → keep in `active/`, set `lifecycle_state = blocked`, await next fix round.
+
+---
+
+## Stage Defaults — single source of truth
+
+Infer the stage from the user's signal. `SKILL.md` only points here.
+
+| User signal                                                                                                                                                                                                                  | Stage                        | Required output                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------- |
+| "review", "second pair of eyes", "audit this diff", or pasted team feedback                                                                                                                                                  | review / feedback validation | Findings or feedback validation, optionally followed by `# Fix Handoff` in the same packet                |
+| "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief                                                                                                                             | fix handoff                  | Append `# Fix Handoff`                                                                                    |
+| "fix according to this packet", "apply only these validated findings", "fix it", "apply the valid feedback", "修改吧", "改吧", "修一下", "按这个改", "按 review 意见修", "修改之后给出结论", "修完给结论", or "改完给我结论" | fix                          | Code/doc changes plus appended `# Fix Completion` whose first subsection is `Fix Conclusion`              |
+| "fixed, review again", "改好了再看", or the latest section in the packet is `# Fix Completion`                                                                                                                               | re-review                    | Append `# Re-review` (Prior findings reassessment, new fix-induced findings, regression surface, verdict) |
+
+### Mixed-stage requests
+
+When one user message combines review/validation with a fix request (e.g. "review this then fix it", "validate this feedback and apply the valid parts"), execute stages sequentially:
+
+1. Finish review or feedback validation: append `# Review Findings` with verdict. Then branch:
+   - Verdict in `BLOCKED` / `PASS_WITH_CONCERNS` → append `# Fix Handoff` with validated findings, then proceed to step 2.
+   - Verdict in `PASS` / `NO_FINDINGS` → **do not** write `# Fix Handoff`. Archive immediately per Lifecycle Trigger 1 in `packet-addressing.md` and **skip step 2** — the user's "fix it" becomes a no-op. Say so explicitly.
+2. Only enter fix stage when step 1 produced a `# Fix Handoff`. Apply only the validated findings, then append `# Fix Completion`.
+
+Do not merge review evidence and fix changes into one unstructured response. Merging stages destroys the portability the packet design depends on — a later re-reviewer cannot independently re-attest findings if there is no `# Fix Handoff` section to anchor them. Free-form "rewrite this function" requests not tied to a validated finding are not a stage switch — defer them as a separate implementation task.
 
 ---
 
@@ -314,14 +357,15 @@ If Re-review verdict is `BLOCKED` or the user re-engages an `awaiting_user_decis
 # Fix Completion (round 2)
 
 ## Fix Conclusion
+
 - ...
 
 (...same template as round 1...)
 
-
 # Re-review (round 2)
 
 ## Scope
+
 Scoped re-review of round 2 fix for prior unresolved / new findings.
 
 (...same template as round 1...)
@@ -346,11 +390,13 @@ round: 1
 ---
 
 # Review Intake
+
 Scope reviewed: working-tree diff for path/to/file.ts
 Verification: read file path/to/file.ts (lines 1-50)
 Inferred Goal: <one line, marked inferred from diff>
 
 # Review Findings
+
 Scope reviewed: (same)
 Verification: (same)
 Findings: ... (or "No findings.")

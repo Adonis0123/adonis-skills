@@ -6,7 +6,7 @@ For the current templates:
 
 - `# Fix Handoff` section schema — see `packet-anatomy.md` § "Section: # Fix Handoff"
 - `# Fix Completion` section schema (with `Fix Conclusion` / `Original Findings Snapshot` rules) — see `packet-anatomy.md` § "Section: # Fix Completion"
-- `# Re-review` section schema and verdict-to-lifecycle action — see `packet-anatomy.md` § "Section: # Re-review" and § "Lifecycle and Archive" in `SKILL.md`
+- `# Re-review` section schema and verdict-to-lifecycle action — see `packet-anatomy.md` § "Section: # Re-review" and `packet-addressing.md` § "Lifecycle and Archive"
 - Multi-round `(round N)` suffix convention — see `packet-anatomy.md` § "Multi-round suffix"
 - Frontmatter, addressing, naming, edge cases — see `packet-addressing.md`
 
