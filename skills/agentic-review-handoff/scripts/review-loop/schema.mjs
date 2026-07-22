@@ -320,11 +320,9 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
 
   const unresolved = reassessments.filter((r) => r.status === 'unresolved' || r.status === 'partially');
   const newBlocking = newFindings.filter((f) => f.blocking);
-  // F1: only prior *blocking* IDs gate PASS; default treat all prior IDs as potentially blocking
+  // F1: only prior *blocking* IDs gate PASS (explicit list; empty means none blocking)
   const priorBlocking = new Set(
-    Array.isArray(opts.priorBlockingIds) && opts.priorBlockingIds.length
-      ? opts.priorBlockingIds
-      : priorFindingIds,
+    Array.isArray(opts.priorBlockingIds) ? opts.priorBlockingIds : priorFindingIds,
   );
   const unresolvedBlocking = unresolved.filter((r) => priorBlocking.has(r.id));
   if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {

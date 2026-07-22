@@ -196,8 +196,8 @@ export async function withPacketLock(repoRoot, packetId, operation) {
     } catch {
       ownerMissing = true;
     }
-    if (ownerMissing) {
-      // N2: incomplete lock — honor short grace based on dir mtime, then reclaim
+    if (ownerMissing || !String(owner).trim()) {
+      // N1/N2: incomplete or empty owner — honor short grace based on dir mtime, then reclaim
       let mtimeMs = 0;
       try {
         mtimeMs = fs.statSync(lockDir).mtimeMs;
@@ -223,13 +223,22 @@ export async function withPacketLock(repoRoot, packetId, operation) {
           alive = false;
         }
       }
-      if (alive) {
-        const e = new Error(`packet lock held by pid ${oldPid}`);
-        // @ts-expect-error
-        e.code = 'PACKET_LOCK_HELD';
-        throw e;
+      if (alive || !oldPid) {
+        // invalid/zero pid with non-empty owner → treat as held unless stale mtime
+        let mtimeMs = 0;
+        try {
+          mtimeMs = fs.statSync(lockDir).mtimeMs;
+        } catch {
+          mtimeMs = 0;
+        }
+        if (alive || (mtimeMs && Date.now() - mtimeMs < GRACE_MS)) {
+          const e = new Error(`packet lock held by pid ${oldPid || 'unknown'}`);
+          // @ts-expect-error
+          e.code = 'PACKET_LOCK_HELD';
+          throw e;
+        }
       }
-      // reclaim stale lock only when owner pid is dead
+      // reclaim stale lock only when owner pid is dead (or grace expired for invalid pid)
       fs.rmSync(lockDir, { recursive: true, force: true });
       tryAcquire();
     }
@@ -467,13 +476,16 @@ async function runBody(ctx) {
   }
 
   // Format stages + write
-  // Packet lifecycle for write: BLOCKED+Fix Handoff stays in_progress (F4 validator);
-  // PASS_WITH_CONCERNS stays awaiting_user_decision (terminal park).
+  // Packet lifecycle for write: Fix Handoff group requires in_progress (F4 validator).
+  // User-facing status for PASS_WITH_CONCERNS remains awaiting_user_decision below.
   let lifecycle = lifecycleForVerdict(
     effectiveRound <= 1 ? 'review_findings' : 're_review',
     parsed.verdict,
   );
-  if (effectiveRound <= 1 && parsed.verdict === 'BLOCKED') {
+  if (
+    effectiveRound <= 1
+    && (parsed.verdict === 'BLOCKED' || parsed.verdict === 'PASS_WITH_CONCERNS')
+  ) {
     lifecycle = 'in_progress';
   }
 
@@ -543,12 +555,17 @@ async function runBody(ctx) {
           ...(parsed.newFindings || []).map((f) => f.id),
         ].filter((v, i, a) => a.indexOf(v) === i);
 
+  const priorBlockingSet = new Set(state.openBlocking || []);
   const openBlocking =
     effectiveRound <= 1
       ? (parsed.findings || []).filter((f) => f.blocking).map((f) => f.id)
       : [
           ...(parsed.reassessments || [])
-            .filter((r) => /unresolved|partial/i.test(r.status))
+            .filter(
+              (r) =>
+                (r.status === 'unresolved' || r.status === 'partially')
+                && (priorBlockingSet.size === 0 || priorBlockingSet.has(r.id)),
+            )
             .map((r) => r.id),
           ...(parsed.newFindings || []).filter((f) => f.blocking).map((f) => f.id),
         ];

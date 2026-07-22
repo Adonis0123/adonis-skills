@@ -263,7 +263,9 @@ PASS_WITH_CONCERNS
     assert.equal(r.status, 'awaiting_user_decision');
     assert.equal(r.verdict, 'PASS_WITH_CONCERNS');
     const meta = repo.readPacketMeta(r.packetPath);
-    assert.equal(meta.lifecycleState, 'awaiting_user_decision');
+    // Fix Handoff group uses in_progress for packet validator; user status is awaiting_user_decision
+    assert.equal(meta.lifecycleState, 'in_progress');
+    assert.equal(meta.lastAnchor, 'fix_handoff');
   });
 });
 

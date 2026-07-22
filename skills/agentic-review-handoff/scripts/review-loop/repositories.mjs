@@ -262,25 +262,58 @@ loop: on
 - Branch: ${branch}
 `;
   // Exclusive create (wx) to close TOCTOU window (F2)
-  try {
-    const fd = fs.openSync(file, 'wx');
-    fs.writeFileSync(fd, body, 'utf8');
-    fs.closeSync(fd);
-  } catch (err) {
-    if (err?.code === 'EEXIST') {
-      // rare race: retry once with suffix
-      base = `${minute}-${scopeSlug}-${String(n).padStart(2, '0')}`;
-      file = path.join(activeDir, `${base}.md`);
-      const packetId2 = packetIdFromParts(branch, base);
-      const body2 = body.replace(packetId, packetId2);
-      const fd = fs.openSync(file, 'wx');
-      fs.writeFileSync(fd, body2, 'utf8');
-      fs.closeSync(fd);
-      return { packetPath: file, packetId: packetId2, fileBase: base };
+  // Exclusive create with multi-retry against active/archive/runtime (F2)
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const tryBase =
+      attempt === 0 ? base : `${minute}-${scopeSlug}-${String(n + attempt - 1).padStart(2, '0')}`;
+    const tryFile = path.join(activeDir, `${tryBase}.md`);
+    const tryId = packetIdFromParts(branch, tryBase);
+    if (
+      fs.existsSync(tryFile)
+      || fs.existsSync(path.join(archiveDir, `${tryBase}.md`))
+      || fs.existsSync(path.join(repoRoot, '.review-handoff', 'runtime', tryId))
+    ) {
+      continue;
     }
-    throw err;
+    const tryBody = body
+      .replace(packetId, tryId)
+      .replace(`scope: ${scopeSlug}`, `scope: ${scopeSlug}`);
+    // ensure packet_id line correct
+    const bodyFinal = `---
+packet_id: ${tryId}
+branch: ${branch}
+scope: ${scopeSlug}
+created: ${now}
+updated: ${now}
+last_anchor: review_handoff
+lifecycle_state: in_progress
+round: 1
+loop: on
+---
+
+# Review Handoff
+
+## Goal
+- User request: review-loop automated dual-session handoff
+- Intended behavior: packet-driven evaluator-optimizer loop
+- Non-goals: deep blind (unless profile=deep)
+
+## Review Scope
+- Scope type: working tree / loop orchestration
+- Repository: ${repoRoot}
+- Branch: ${branch}
+`;
+    try {
+      const fd = fs.openSync(tryFile, 'wx');
+      fs.writeFileSync(fd, bodyFinal, 'utf8');
+      fs.closeSync(fd);
+      return { packetPath: tryFile, packetId: tryId, fileBase: tryBase };
+    } catch (err) {
+      if (err?.code === 'EEXIST') continue;
+      throw err;
+    }
   }
-  return { packetPath: file, packetId, fileBase: base };
+  throw new Error('createPacketFile: exhausted unique name retries');
 }
 
 export function readPacketMeta(packetPath) {
