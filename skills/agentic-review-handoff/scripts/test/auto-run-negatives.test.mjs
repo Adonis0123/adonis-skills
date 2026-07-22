@@ -166,6 +166,11 @@ describe('T5 negative paths', () => {
     assert.equal(reassess[0].id, 'F1');
     assert.match(String(reassess[0].evidence), /demo\.ts:12|evidence Y|off-by-one remains/i);
     assert.equal(r2.positions.fixer.present, true);
+    assert.equal(
+      r2.positions.fixer.fixRoundsCompleted,
+      1,
+      'fixRoundsCompleted counts # Fix Completion stages on packet, not reviewer rounds',
+    );
     assert.match(String(r2.positions.fixer.conclusion), /reason X|return n|off-by-one/i);
     assert.doesNotMatch(
       String(r2.positions.fixer.conclusion || r2.positions.fixer.note || ''),
@@ -227,6 +232,11 @@ describe('T5 negative paths', () => {
     });
     assert.equal(r.status, 'budget_exhausted', JSON.stringify(r));
     assert.equal(r.positions?.fixer?.present, false);
+    assert.equal(
+      r.positions?.fixer?.fixRoundsCompleted,
+      0,
+      'no Fix Completion stage → fixRoundsCompleted must be 0 (never the reviewer round)',
+    );
     assert.equal(r.positions?.fixer?.conclusion, null);
     assert.match(String(r.positions?.fixer?.note || ''), /No # Fix Completion|before a fix pass/i);
     assert.doesNotMatch(

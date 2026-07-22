@@ -729,12 +729,15 @@ export function resolveRoundsBudget(raw, prior = {}, isContinue = false) {
 
 /**
  * Latest # Fix Completion stance from packet (actual stage text, not canned copy).
+ * `count` is the number of # Fix Completion stages physically on the packet —
+ * the only truthful "fix rounds completed" figure (reviewer rounds may run ahead).
  * @param {string|null|undefined} packetPath
- * @returns {{ present: boolean, conclusion: string|null, findingStatus: string|null, verification: string|null }}
+ * @returns {{ present: boolean, count: number, conclusion: string|null, findingStatus: string|null, verification: string|null }}
  */
 export function extractLatestFixCompletionStance(packetPath) {
   const empty = {
     present: false,
+    count: 0,
     conclusion: null,
     findingStatus: null,
     verification: null,
@@ -747,10 +750,12 @@ export function extractLatestFixCompletionStance(packetPath) {
   }
   /** @type {string|null} */
   let lastSection = null;
+  let count = 0;
   // Split on top-level H1 (fence-unaware is ok: Fix Completion stages are not fenced titles)
   for (const chunk of body.split(/^# /m)) {
     if (/^Fix Completion(?:\s*\(round\s+\d+\))?\s*(?:\n|$)/i.test(chunk)) {
       lastSection = chunk;
+      count += 1;
     }
   }
   if (!lastSection) return empty;
@@ -765,6 +770,7 @@ export function extractLatestFixCompletionStance(packetPath) {
   };
   return {
     present: true,
+    count,
     conclusion: h2Body('Fix Conclusion'),
     findingStatus: h2Body('Finding Status'),
     verification: h2Body('Verification'),
@@ -790,14 +796,15 @@ function budgetExhaustedReport({
         conclusion: fixerStance.conclusion,
         findingStatus: fixerStance.findingStatus,
         verification: fixerStance.verification,
-        roundsAttempted: state.round,
+        // Actual # Fix Completion stages on packet — never the reviewer round counter
+        fixRoundsCompleted: fixerStance.count,
       }
     : {
         present: false,
         conclusion: null,
         findingStatus: null,
         verification: null,
-        roundsAttempted: state.round ?? 0,
+        fixRoundsCompleted: 0,
         // First-round budget exhaust (--rounds 1) never had a Fix Completion stage
         note:
           'No # Fix Completion stage on packet (budget exhausted before a fix pass, or Fix Completion missing)',
