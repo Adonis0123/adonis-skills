@@ -50,6 +50,17 @@ export function extractVerdict(text) {
   const all = collectVerdicts(text);
   if (all.length === 0) return null;
   if (all.length !== 1) return null; // malformed: caller sees missing/invalid
+  // F5: Verdict must be terminal — last non-empty line is the verdict token or "Verdict: X"
+  const lines = String(text)
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const last = lines.at(-1) ?? '';
+  const lastIsVerdict =
+    new RegExp(`^(?:(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*)?(${VERDICT_TOKEN})$`, 'i').test(
+      last,
+    );
+  if (!lastIsVerdict) return null;
   return all[0];
 }
 

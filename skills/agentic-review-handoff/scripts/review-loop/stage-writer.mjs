@@ -32,7 +32,7 @@ export function listTopLevelH1Titles(markdown) {
   let inFence = false;
   for (const raw of String(markdown).split('\n')) {
     const line = raw.replace(/\r$/, '');
-    if (/^```/.test(line.trim())) {
+    if (/^\s*(```|~~~)/.test(line)) {
       inFence = !inFence;
       continue;
     }

@@ -18,6 +18,7 @@ import {
   branchSlug,
   validatePacketPath,
   lastPhysicalH1,
+  rewriteFrontmatter,
 } from './repositories.mjs';
 import { createAdapter, DELIVERY_UNKNOWN } from './adapters.mjs';
 import { freezeRoundEvidence, resolveBaseSha } from './evidence.mjs';
@@ -309,6 +310,17 @@ async function runBody(ctx) {
       updated: new Date().toISOString(),
     });
     state = loadRunState(repoRoot, packetId);
+    // Pin scope into packet frontmatter for human-visible continuity (F3)
+    try {
+      rewriteFrontmatter(packetPath, {
+        review_paths: pathFilter.join(','),
+        base_sha: baseSha,
+        reviewer,
+      });
+      seedPacketHash(repoRoot, packetId, packetPath);
+    } catch {
+      /* non-fatal if packet missing during early create */
+    }
   }
 
   const evidenceDir = path.join(runtimeDir(repoRoot, packetId), 'evidence');
