@@ -139,7 +139,7 @@ export function parseReviewFindings(text) {
     if (findings.length) break;
   }
 
-  // PASS / NO_FINDINGS may have zero findings
+  // PASS / NO_FINDINGS may have zero findings, but never blockers
   if (verdict === 'BLOCKED' || verdict === 'PASS_WITH_CONCERNS') {
     if (!findings.length) {
       return { ok: false, error: `${verdict} requires at least one finding row with ID` };
@@ -157,8 +157,14 @@ export function parseReviewFindings(text) {
     }
   }
 
+  const blocking = findings.filter((f) => f.blocking);
+  if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
+    if (blocking.length) {
+      return { ok: false, error: `${verdict} cannot include [阻塞] findings` };
+    }
+  }
+
   if (verdict === 'PASS_WITH_CONCERNS') {
-    const blocking = findings.filter((f) => f.blocking);
     if (blocking.length) {
       return {
         ok: false,
@@ -168,7 +174,6 @@ export function parseReviewFindings(text) {
   }
 
   if (verdict === 'BLOCKED') {
-    const blocking = findings.filter((f) => f.blocking);
     if (!blocking.length) {
       return { ok: false, error: 'BLOCKED requires at least one [阻塞] finding' };
     }
@@ -249,11 +254,44 @@ export function parseReReview(text, priorFindingIds = []) {
     }
   }
 
+  // Extract Regression Surface body (preserve reviewer text; never invent "none")
+  let regressionSurface = '';
+  const regSplit = String(text).split(/##\s*Regression Surface/i);
+  if (regSplit[1]) {
+    regressionSurface = regSplit[1].split(/##\s+/)[0].trim();
+    // Strip trailing verdict block if nested
+    regressionSurface = regressionSurface
+      .replace(/##\s*Verdict[\s\S]*$/i, '')
+      .replace(/^Verdict\s*[:：].*$/im, '')
+      .trim();
+  }
+  if (!regressionSurface) {
+    return { ok: false, error: 're-review Regression Surface section is empty' };
+  }
+
+  const unresolved = reassessments.filter((r) => /unresolved|partial/i.test(r.status));
+  const newBlocking = newFindings.filter((f) => f.blocking);
+  if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
+    if (unresolved.length || newBlocking.length) {
+      return {
+        ok: false,
+        error: `${verdict} rejected: unresolved priors or new blockers present`,
+      };
+    }
+  }
+  if (verdict === 'PASS_WITH_CONCERNS' && newBlocking.length) {
+    return { ok: false, error: 'PASS_WITH_CONCERNS cannot include new [阻塞] findings' };
+  }
+  if (verdict === 'BLOCKED' && !unresolved.length && !newBlocking.length) {
+    return { ok: false, error: 'BLOCKED re-review requires unresolved prior or new blocker' };
+  }
+
   return {
     ok: true,
     verdict,
     reassessments,
     newFindings,
+    regressionSurface,
   };
 }
 
@@ -353,7 +391,7 @@ ${newRows}
 
 ## Regression Surface
 
-No load-bearing regressions identified beyond listed findings.
+${parsed.regressionSurface || 'No load-bearing regressions identified beyond listed findings.'}
 
 ## Verdict
 

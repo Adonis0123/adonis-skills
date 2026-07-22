@@ -16,6 +16,8 @@ import {
   runtimeDir,
   latestActivePacket,
   branchSlug,
+  validatePacketPath,
+  lastPhysicalH1,
 } from './repositories.mjs';
 import { createAdapter, DELIVERY_UNKNOWN } from './adapters.mjs';
 import { freezeRoundEvidence, resolveBaseSha } from './evidence.mjs';
@@ -103,10 +105,6 @@ export async function cmdRun(opts) {
   const branch = resolveBranch(repoRoot);
   const isContinue = Boolean(opts.continue || opts.cont);
   const roundsBudget = Number(opts.rounds ?? DEFAULT_ROUNDS) || DEFAULT_ROUNDS;
-  const reviewer = String(opts.reviewer || opts.productReviewer || 'codex').toLowerCase();
-  if (!['codex', 'grok', 'claude'].includes(reviewer)) {
-    throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
-  }
 
   // Resolve / create packet
   let packetPath = opts.packetPath || null;
@@ -134,9 +132,24 @@ export async function cmdRun(opts) {
     packetId = created.packetId;
   }
 
-  const meta0 = readPacketMeta(packetPath);
-  packetId = packetId || meta0.packetId;
-  if (!packetId) throw new Error('packet_id missing');
+  // Containment: only packets under this repo's .review-handoff/{active,archive}/<branch>
+  const absPacket = path.isAbsolute(packetPath)
+    ? packetPath
+    : path.resolve(repoRoot, packetPath);
+  const validated = validatePacketPath(repoRoot, branch, absPacket);
+  packetPath = validated.packetPath;
+  packetId = validated.packetId;
+
+  // Reviewer: explicit flag wins; else continue inherits prior; else default codex
+  const priorState = loadRunState(repoRoot, packetId) ?? {};
+  let reviewer = opts.reviewer || opts.productReviewer || null;
+  if (!reviewer && isContinue && priorState.reviewer) {
+    reviewer = priorState.reviewer;
+  }
+  reviewer = String(reviewer || 'codex').toLowerCase();
+  if (!['codex', 'grok', 'claude'].includes(reviewer)) {
+    throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
+  }
 
   return withPacketLock(repoRoot, packetId, () =>
     runBody({
@@ -211,7 +224,7 @@ async function runBody(ctx) {
   let packetPath = initialPacketPath;
   let state = loadRunState(repoRoot, packetId) ?? {};
 
-  // Pin base SHA
+  // Pin base SHA BEFORE any external call (A6)
   let baseSha = state.baseSha;
   if (!baseSha) {
     baseSha = resolveBaseSha(repoRoot, base);
@@ -220,6 +233,14 @@ async function runBody(ctx) {
     seedPacketHash(repoRoot, packetId, packetPath);
     state = loadRunState(repoRoot, packetId);
   }
+  // Persist base + reviewer early so DELIVERY_UNKNOWN retries cannot drift
+  saveRunState(repoRoot, packetId, {
+    ...state,
+    baseSha,
+    reviewer,
+    updated: new Date().toISOString(),
+  });
+  state = loadRunState(repoRoot, packetId);
 
   const round = Number(state.round ?? 0);
   const nextRound = isContinue ? round + 1 : Math.max(round, 0) + 1;
@@ -234,7 +255,7 @@ async function runBody(ctx) {
     }
   }
 
-  // If continuing from BLOCKED, expect Fix Completion already written by fixer (human/agent)
+  // If continuing from BLOCKED, require legitimate Fix Completion (A2)
   if (isContinue) {
     const meta = readPacketMeta(packetPath);
     if (meta.lifecycleState === 'archived') {
@@ -245,6 +266,17 @@ async function runBody(ctx) {
         message: 'Packet already archived',
       });
     }
+    if (state.lastVerdict === 'BLOCKED' || meta.lifecycleState === 'blocked') {
+      const last = lastPhysicalH1(meta.text);
+      const lastIsFixCompletion =
+        last
+        && (last.anchor === 'fix_completion' || /^fix_completion/.test(last.anchor));
+      if (!lastIsFixCompletion || meta.lastAnchor !== 'fix_completion') {
+        throw new Error(
+          'run --continue after BLOCKED requires a trailing # Fix Completion stage (use fix-completion)',
+        );
+      }
+    }
   }
 
   const effectiveRound = isContinue ? nextRound : 1;
@@ -252,7 +284,7 @@ async function runBody(ctx) {
     return budgetExhaustedReport({ packetPath, state, roundsBudget });
   }
 
-  // Freeze evidence
+  // Freeze evidence (reuse same-round file if already frozen — A6)
   /** @type {string[]|undefined} */
   let pathFilter = ctx.paths;
   if (!pathFilter && ctx.path) {
@@ -262,13 +294,34 @@ async function runBody(ctx) {
     pathFilter = pathFilter.split(',').map((s) => s.trim()).filter(Boolean);
   }
 
-  const evidence = freezeRoundEvidence({
-    repoRoot,
-    packetId,
-    baseSha,
-    round: effectiveRound,
-    paths: pathFilter,
-  });
+  const evidenceDir = path.join(runtimeDir(repoRoot, packetId), 'evidence');
+  const evidencePath = path.join(evidenceDir, `round-${effectiveRound}.diff`);
+  let evidence;
+  if (fs.existsSync(evidencePath) && state[`evidenceRound${effectiveRound}`]) {
+    const diffText = fs.readFileSync(evidencePath, 'utf8');
+    evidence = {
+      evidencePath,
+      diffText,
+      lineCount: diffText.split('\n').length,
+      paths: pathFilter || [],
+    };
+  } else {
+    evidence = freezeRoundEvidence({
+      repoRoot,
+      packetId,
+      baseSha,
+      round: effectiveRound,
+      paths: pathFilter,
+    });
+    saveRunState(repoRoot, packetId, {
+      ...loadRunState(repoRoot, packetId),
+      [`evidenceRound${effectiveRound}`]: true,
+      evidencePath: evidence.evidencePath,
+      baseSha,
+      reviewer,
+      updated: new Date().toISOString(),
+    });
+  }
 
   const adapter = (adapterFactory || createAdapter)(reviewer, {
     repoRoot,
@@ -369,6 +422,7 @@ async function runBody(ctx) {
       verdict: parsed.verdict,
       reassessments: parsed.reassessments,
       newFindings: parsed.newFindings,
+      regressionSurface: parsed.regressionSurface,
       reviewer,
       round: effectiveRound,
       evidencePath: evidence.evidencePath,
@@ -529,10 +583,12 @@ function terminalReport(x) {
  */
 export function cmdAppendFixCompletion(opts) {
   const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
-  const packetPath = opts.packetPath;
-  if (!packetPath) throw new Error('--packet required');
-  const meta = readPacketMeta(packetPath);
-  const packetId = meta.packetId;
+  const branch = resolveBranch(repoRoot);
+  if (!opts.packetPath) throw new Error('--packet required');
+  const abs = path.isAbsolute(opts.packetPath)
+    ? opts.packetPath
+    : path.resolve(repoRoot, opts.packetPath);
+  const { packetPath, packetId } = validatePacketPath(repoRoot, branch, abs);
   const body =
     opts.body
     || (opts.bodyFile ? fs.readFileSync(opts.bodyFile, 'utf8') : null);
@@ -541,6 +597,11 @@ export function cmdAppendFixCompletion(opts) {
   // Must be a top-level H1 (# Title), not ## subsection
   if (!/^# [^#\n]/.test(section)) {
     section = `# Fix Completion\n\n${section}\n`;
+  }
+  // Canonical title required (A2) — reject forged non-fix-completion H1s
+  const firstH1 = section.split('\n').find((l) => /^# [^#]/.test(l)) ?? '';
+  if (!/^#\s*Fix Completion(\s*\(round\s+\d+\))?\s*$/i.test(firstH1.trim())) {
+    throw new Error('fix-completion body must start with "# Fix Completion" H1');
   }
   return appendStageAuto({
     repoRoot,

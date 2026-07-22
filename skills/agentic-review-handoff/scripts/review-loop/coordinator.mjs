@@ -502,14 +502,10 @@ export function cmdBoard(opts) {
 
   if (gate) {
     phase = `GATE:${gate.type}`;
+    // A8: render only durable allowedResolutions (no hardcoded continue|stop overwrite)
     const resolutions = (gate.allowedResolutions || ['continue', 'stop']).join('|');
     nextHuman =
-      `ONE resolve only (any window — do not ask twice):\n` +
-      `  node "${path.join(path.dirname(fileURLToPath(import.meta.url)), '../review-loop.mjs')}" ` +
-      `resolve --repo "${ctx.repoRoot}" --decision <${resolutions}>`;
-    // Prefer shorter portable form
-    nextHuman =
-      `【人只需做一次】node review-loop.mjs resolve --repo "${ctx.repoRoot}" --decision continue|stop\n` +
+      `【人只需做一次】node review-loop.mjs resolve --repo "${ctx.repoRoot}" --decision <${resolutions}>\n` +
       `证据: ${String(gate.evidence || '').slice(0, 200)}`;
     nextWorker = 'workers: 禁止自行 resolve；wait 会返回 gate，静默等待人 resolve';
   } else if (ctx.run.stopped || ctx.run.lifecycleState === 'archived') {
@@ -717,22 +713,32 @@ export function cmdAppendEof(opts) {
     || opts.lifecycleState
     || defaultLifecycleForStage(stage, body);
 
-  const meta = repo.appendStageAtEof(ctx.packetPath, {
+  let packetPath = ctx.packetPath;
+  const meta = repo.appendStageAtEof(packetPath, {
     sectionMarkdown: body,
     lastAnchor: stage,
     lifecycleState: lifecycle,
     preserveFrontmatter: false,
   });
 
+  // A7: terminal PASS/NO_FINDINGS must archive in the same transition as append
+  let finalPath = packetPath;
+  if (lifecycle === 'archived') {
+    finalPath = repo.archivePacket(packetPath);
+  }
+
   // Keep run projection in sync for subsequent complete in same process
   return {
     ok: true,
     command: 'append-eof',
-    packetPath: ctx.packetPath,
+    packetPath: finalPath,
     lastAnchor: meta.lastAnchor,
-    lifecycleState: meta.lifecycleState,
-    lastPhysicalH1: repo.lastPhysicalH1(meta.text),
-    message: 'Stage appended at EOF. Next: review-loop complete --role ' + role,
+    lifecycleState: lifecycle === 'archived' ? 'archived' : meta.lifecycleState,
+    lastPhysicalH1: repo.lastPhysicalH1(repo.readPacketMeta(finalPath).text),
+    message:
+      lifecycle === 'archived'
+        ? 'Stage appended and packet archived (terminal verdict).'
+        : 'Stage appended at EOF. Next: review-loop complete --role ' + role,
   };
 }
 
