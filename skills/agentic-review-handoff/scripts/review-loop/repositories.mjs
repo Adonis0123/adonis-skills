@@ -427,16 +427,25 @@ export function writeJson(file, data) {
   fs.renameSync(tmp, file);
 }
 
-export function validatePacketPath(repoRoot, branch, packetPath) {
+/**
+ * @param {string} repoRoot
+ * @param {string} branch
+ * @param {string} packetPath
+ * @param {{ activeOnly?: boolean }} [opts]
+ */
+export function validatePacketPath(repoRoot, branch, packetPath, opts = {}) {
   const resolved = fs.realpathSync(packetPath);
   const resolvedRepoRoot = fs.realpathSync(repoRoot);
   const branchDir = branchSlug(branch);
-  const allowedRoots = ['active', 'archive'].map((location) =>
+  const locations = opts.activeOnly ? ['active'] : ['active', 'archive'];
+  const allowedRoots = locations.map((location) =>
     path.resolve(resolvedRepoRoot, '.review-handoff', location, branchDir),
   );
   if (!allowedRoots.some((root) => isContained(root, resolved))) {
     throw new Error(
-      `packet must be under .review-handoff/active/${branchDir} or .review-handoff/archive/${branchDir}`,
+      opts.activeOnly
+        ? `packet must be under .review-handoff/active/${branchDir} (writes refuse archive)`
+        : `packet must be under .review-handoff/active/${branchDir} or .review-handoff/archive/${branchDir}`,
     );
   }
   const meta = readPacketMeta(resolved);

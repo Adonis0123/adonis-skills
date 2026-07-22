@@ -132,11 +132,14 @@ export async function cmdRun(opts) {
     packetId = created.packetId;
   }
 
-  // Containment: only packets under this repo's .review-handoff/{active,archive}/<branch>
+  // Containment: writes/continues require active packet; read of archive only if already archived terminal
   const absPacket = path.isAbsolute(packetPath)
     ? packetPath
     : path.resolve(repoRoot, packetPath);
-  const validated = validatePacketPath(repoRoot, branch, absPacket);
+  const validated = validatePacketPath(repoRoot, branch, absPacket, {
+    activeOnly: isContinue || Boolean(opts.packetPath),
+  });
+  // First create path already under active; continue/explicit packet must stay active
   packetPath = validated.packetPath;
   packetId = validated.packetId;
 
@@ -603,13 +606,10 @@ export function cmdAppendFixCompletion(opts) {
   const abs = path.isAbsolute(opts.packetPath)
     ? opts.packetPath
     : path.resolve(repoRoot, opts.packetPath);
-  const { packetPath, packetId } = validatePacketPath(repoRoot, branch, abs);
-  // F4: never mutate archived packets
-  const loc = String(packetPath).split(path.sep).join('/');
-  if (loc.includes('/.review-handoff/archive/')) {
-    throw new Error('fix-completion refuses archived packet; only active packets may be written');
-  }
-  const meta = readPacketMeta(packetPath);
+  // F4: writes only accept active packets
+  const { packetPath, packetId, meta } = validatePacketPath(repoRoot, branch, abs, {
+    activeOnly: true,
+  });
   if (meta.lifecycleState === 'archived') {
     throw new Error('fix-completion refuses lifecycle_state=archived');
   }

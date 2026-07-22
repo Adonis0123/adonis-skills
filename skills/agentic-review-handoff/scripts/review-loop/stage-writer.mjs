@@ -95,6 +95,23 @@ export function appendStageAuto(opts) {
     throw err;
   }
 
+  // F2: candidate section must not introduce extra top-level H1 beyond expected lastAnchor
+  const h1s = String(sectionMarkdown)
+    .split('\n')
+    .filter((l) => /^# [^#]/.test(l.trim()))
+    .map((l) => l.replace(/^#\s+/, '').trim());
+  if (!h1s.length) {
+    throw new Error('stage section missing H1');
+  }
+  // free-form prose between H1s must not inject additional unexpected anchors for single-stage writes
+  // (Review Findings + Fix Handoff is the only intentional multi-H1 group)
+  const allowedMulti = lastAnchor === 'fix_handoff' && h1s.length === 2;
+  if (h1s.length > 1 && !allowedMulti) {
+    throw new Error(
+      `stage section has ${h1s.length} H1s; only fix_handoff group may include Review Findings + Fix Handoff`,
+    );
+  }
+
   const meta = appendStageAtEof(packetPath, {
     sectionMarkdown,
     lastAnchor,
@@ -102,6 +119,14 @@ export function appendStageAuto(opts) {
     extra,
     preserveFrontmatter: false,
   });
+
+  // Post-write: last physical H1 must match requested lastAnchor
+  const after = readPacketMeta(packetPath);
+  if (after.lastAnchor !== lastAnchor) {
+    throw new Error(
+      `post-write last_anchor mismatch: expected ${lastAnchor}, got ${after.lastAnchor}`,
+    );
+  }
 
   let finalPath = packetPath;
   if (lifecycleState === 'archived') {
