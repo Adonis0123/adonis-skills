@@ -50,15 +50,24 @@ export function extractVerdict(text) {
   const all = collectVerdicts(text);
   if (all.length === 0) return null;
   if (all.length !== 1) return null; // malformed: caller sees missing/invalid
-  // F5: sole Verdict declaration must equal the last non-empty line's verdict token
+  // F5: last non-empty line must be the declaration itself:
+  //   - `Verdict: TOKEN`, or
+  //   - bare TOKEN only when immediately preceded by `## Verdict`
   const lines = String(text)
     .split('\n')
     .map((l) => l.trim())
     .filter(Boolean);
+  if (lines.length < 1) return null;
   const last = lines.at(-1) ?? '';
-  const m = last.match(
-    new RegExp(`^(?:(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*)?(${VERDICT_TOKEN})$`, 'i'),
+  const prev = lines.at(-2) ?? '';
+  const labeled = last.match(
+    new RegExp(`^(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*(${VERDICT_TOKEN})$`, 'i'),
   );
+  const bare =
+    !labeled && new RegExp(`^(${VERDICT_TOKEN})$`, 'i').test(last) && /^##\s*Verdict$/i.test(prev)
+      ? last.match(new RegExp(`^(${VERDICT_TOKEN})$`, 'i'))
+      : null;
+  const m = labeled || bare;
   if (!m) return null;
   if (m[1].toUpperCase() !== all[0]) return null;
   return all[0];
