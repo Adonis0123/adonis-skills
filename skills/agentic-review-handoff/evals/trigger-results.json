@@ -26,5 +26,17 @@
     "packet continue / PWC fix-it",
     "second pair of eyes + feedback validation",
     "negatives: ordinary impl, non-git, weekly-report, /codex:review, Grok /review"
-  ]
+  ],
+  "v3_1_2_codex_round": {
+    "description_source": "Codex advisory proposal (session 019f88cc-6118-7170-8a3f-9d3b562980f6), applied 2026-07-22",
+    "change": "first-principles/DDD/high-cohesion/low-coupling promoted to capability summary + first Use-when branch; added low-coupling keyword and non-review design docs guard",
+    "verification": "targeted re-eval, 3 queries, 1 run/query, claude -p --max-turns 2 stream-json Skill tool_use check, runtime copy synced via skills:install:local first",
+    "results": {
+      "pos-first-principles-deep": "PASS (was the only v3.1.1 failure)",
+      "neg-design-doc": "PASS",
+      "neg-ordinary-impl": "PASS"
+    },
+    "caveat": "remaining 17 queries not re-run (keywords preserved superset of v3.1.1); measurement pitfall recorded: claude -p reads .agents/skills runtime copy, always sync before measuring",
+    "chars": 991
+  }
 }

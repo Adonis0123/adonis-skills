@@ -15,10 +15,10 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Use this skill whenever the user wants auto loop, review-loop run/continue, same-session dual-AI review closed loop, review-fix-re-review with zero mid-loop human, DecisionConsult (review-loop consult), or review-loop sessions (resume codex/grok/claude headless reviewer). Also for .review-handoff packets, second pair of eyes leaving durable findings/Fix Handoff, feedback validation before fix, Fix Completion + re-review, PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review with Verdict. Preferred: visible Fixer + headless read-only Reviewer (codex|grok|claude); git required. Use even if the skill name is not said. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (use weekly-report skill), or other named review tools (/codex:review, Grok /review). Dual-window bind/next/wait removed - migrate with this skill.",
+    "description": "Runs a git-only agentic review workflow with durable .review-handoff packets: second pair of eyes review, feedback validation, Fix Handoff, Fix Completion, scoped re-review, and first-principles/DDD/high-cohesion/low-coupling review with a Verdict. Use when the user asks for a first-principles or DDD review packet; review-loop run/continue or an auto loop; a same-session dual-AI review-fix-re-review closed loop with visible Fixer, headless read-only codex|grok|claude Reviewer, and zero mid-loop human; DecisionConsult via review-loop consult; review-loop sessions or resume commands; packet continuation; or a PASS_WITH_CONCERNS fix round. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy editing, non-git folders, non-review design docs, weekly reports (use weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait is removed; migrate to run, fix-completion, or consult.",
     "metadata": {
       "author": "adonis",
-      "version": "3.1.1"
+      "version": "3.1.2"
     },
     "files": {
       "hasReferences": true,
