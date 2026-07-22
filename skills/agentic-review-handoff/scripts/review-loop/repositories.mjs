@@ -361,10 +361,23 @@ export function appendStageAtEof(packetPath, opts) {
   const last = lastPhysicalH1(meta.text);
   if (!last) throw new Error('appendStageAtEof: no H1 after write');
   // Last H1 inside the appended chunk must be the packet's last physical H1
-  const appendedTitles = section
-    .split('\n')
-    .filter((line) => /^# [^#]/.test(line))
-    .map((line) => line.replace(/^#\s+/, '').trim());
+  // Fence-aware (N1): ignore `#` lines inside ``` / ~~~ code fences
+  const appendedTitles = (() => {
+    const lines = section.split('\n');
+    /** @type {string[]} */
+    const titles = [];
+    let fenced = false;
+    for (const line of lines) {
+      if (/^\s*(```|~~~)/.test(line)) {
+        fenced = !fenced;
+        continue;
+      }
+      if (fenced) continue;
+      const match = line.match(/^# ([^#].*?)\s*$/);
+      if (match) titles.push(match[1].trim());
+    }
+    return titles;
+  })();
   const expectedTitle = appendedTitles.at(-1);
   if (!expectedTitle) throw new Error('appendStageAtEof: section has no H1');
   if (last.title !== expectedTitle && last.anchor !== normalizeH1(expectedTitle)) {
