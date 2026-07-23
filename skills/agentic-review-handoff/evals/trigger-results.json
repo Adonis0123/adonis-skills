@@ -114,7 +114,7 @@
     "passed": "2/3"
   },
   "v3_3_3_description_slim": {
-    "at": "2026-07-23",
+    "at": "2026-07-23T04:27:00Z",
     "change": "description slimmed ~1023→634 chars (routing only); dual-window/migration removed from description; body T8 collapsed to Fast Path one-liner; maintainer gate pointer kept",
     "description_chars": 634,
     "description_version": "3.3.3",
@@ -122,8 +122,45 @@
       "codex": "APPROVE_WITH_CHANGES — target 600-700; keep feedback validation first; drop dual-window from description",
       "claude": "APPROVE_WITH_CHANGES — keep PASS_WITH_CONCERNS + Review Intake; keep maintainer gate in body; T8 one line"
     },
-    "remeasure_status": "NOT_RUN",
-    "note": "User primarily invokes by slash command; full Skill-only 20x3 remeasure deferred. Revert if core positives fall below 2/3 on later remeasure."
+    "skill_creator_stock_run_eval": {
+      "status": "INVALID_METHODOLOGY",
+      "detail": "python -m scripts.run_eval injects temp .claude/commands/<name>-skill-<uuid>.md and only counts hits on that UUID name. With agentic-review-handoff already installed, Claude invokes the real skill name → all 10 positives false-negative (0/20 headline). Do not use stock run_eval for this skill without adapter.",
+      "result_headline": "10/20 (all negatives pass-by-not-triggering; all positives fail)"
+    },
+    "skill_only_remeasure": {
+      "status": "PARTIAL",
+      "method": "custom runner agentic-review-handoff-workspace/trigger-v3.3.3/run_trigger_skill_only.py; claude -p --max-turns 2 stream-json; hit = Skill tool mentions agentic-review-handoff; 3 runs/query; 2 workers; pnpm skills:install:local first",
+      "metric_alignment": "matches historical Skill-only metric (NOT skill-creator temp command UUID)",
+      "results_file": "agentic-review-handoff-workspace/trigger-v3.3.3/results-3x20.json",
+      "positives": {
+        "passed": "10/10",
+        "run_hits": "29/30",
+        "note": "threshold 0.5; only pos-consult was 2/3 (one miss). feedback-validation 3/3 (improved vs historical flaky).",
+        "per_query_triggers": {
+          "pos-auto-loop-zh": "3/3",
+          "pos-dual-ai-session": "3/3",
+          "pos-review-fix-rereview": "3/3",
+          "pos-consult": "2/3",
+          "pos-sessions-resume": "3/3",
+          "pos-second-eyes-packet": "3/3",
+          "pos-continue-packet": "3/3",
+          "pos-pwc-fix-it": "3/3",
+          "pos-feedback-validate": "3/3",
+          "pos-first-principles-deep": "3/3"
+        }
+      },
+      "negatives": {
+        "status": "INVALID_BLOCKED_BY_CLAUDE_SESSION_LIMIT",
+        "detail": "All 30 negative runs returned session limit (resets 4:40pm Asia/Singapore). 0/30 Skill hits is consistent with quota failure, NOT proof of non-trigger. Do not cite 10/10 neg as acceptance."
+      },
+      "headline": {
+        "pos": "10/10 pass (29/30 hits)",
+        "neg": "UNVERIFIED (429 session limit)",
+        "overall": "NOT full 20/20 acceptance — positives good; negatives need re-run after quota"
+      }
+    },
+    "remeasure_status": "PARTIAL_POS_OK_NEG_429",
+    "t2_acceptance": "Positives MET for v3.3.3 slim description under Skill-only 3-run threshold. Negatives NOT MET (quota). Re-run negatives after Claude session limit resets."
   },
   "v3_2_3_description_fix_headline": {
     "at": "2026-07-22T09:43:38.469069+00:00",
