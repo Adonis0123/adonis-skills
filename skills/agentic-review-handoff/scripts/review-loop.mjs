@@ -8,11 +8,11 @@
  * Usage:
  *   node /abs/path/to/skills/agentic-review-handoff/scripts/review-loop.mjs <command> [options]
  */
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-import * as autoRun from './review-loop/auto-run.mjs';
-import * as consult from './review-loop/consult.mjs';
-import * as sessions from './review-loop/sessions.mjs';
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import * as autoRun from "./review-loop/auto-run.mjs";
+import * as consult from "./review-loop/consult.mjs";
+import * as sessions from "./review-loop/sessions.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -29,16 +29,16 @@ function parseArgs(argv) {
   const args = { _: [] };
   for (let i = 0; i < argv.length; i += 1) {
     const a = argv[i];
-    if (a.startsWith('--')) {
-      const eq = a.indexOf('=');
+    if (a.startsWith("--")) {
+      const eq = a.indexOf("=");
       if (eq !== -1) {
         const key = a.slice(2, eq);
         const val = a.slice(eq + 1);
-        args[key] = val === 'true' ? true : val === 'false' ? false : val;
+        args[key] = val === "true" ? true : val === "false" ? false : val;
       } else {
         const key = a.slice(2);
         const next = argv[i + 1];
-        if (next && !next.startsWith('--')) {
+        if (next && !next.startsWith("--")) {
           args[key] = next;
           i += 1;
         } else {
@@ -56,30 +56,37 @@ function help() {
   return {
     ok: true,
     skillScriptsDir: __dirname,
-    mode: 'auto-loop',
+    mode: "auto-loop",
     usage: [
-      'review-loop run --repo=PATH --reviewer=codex|grok|claude [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]',
-      'review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]',
-      'review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH',
-      'review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH',
-      'review-loop sessions --repo=PATH [--product=codex|grok|claude]',
+      "review-loop run --repo=PATH --reviewer=codex|grok|claude [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
+      "review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]",
+      "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
+      "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
+      "review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH",
+      "review-loop sessions --repo=PATH [--product=codex|grok|claude]",
     ],
     removed: [
-      'open/bind/next/wait/append-eof/complete/board/resolve/gate/disarm/blind-submit/h1-probe',
-      'See docs/review-loop-orchestrator/plan-2026-07-22-review-loop-v2-auto-loop.md T8',
+      "open/bind/next/wait/append-eof/complete/board/resolve/gate/disarm/blind-submit/h1-probe",
+      "See docs/review-loop-orchestrator/plan-2026-07-22-review-loop-v2-auto-loop.md T8",
     ],
     defaults: {
-      autoLoop: 'single visible Fixer; headless read-only Reviewer; zero mid-loop human',
-      reviewer: 'codex|grok|claude',
+      autoLoop:
+        "single visible Fixer; headless read-only Reviewer; zero mid-loop human",
+      reviewer: "codex|grok|claude",
       rounds: 3,
-      sandbox: 'hardcoded in adapters; cannot be disabled via CLI',
+      sandbox: "hardcoded in adapters; cannot be disabled via CLI",
     },
   };
 }
 
 async function main() {
   const argv = process.argv.slice(2);
-  if (argv.length === 0 || argv[0] === 'help' || argv[0] === '--help' || argv[0] === '-h') {
+  if (
+    argv.length === 0 ||
+    argv[0] === "help" ||
+    argv[0] === "--help" ||
+    argv[0] === "-h"
+  ) {
     print(help());
     return;
   }
@@ -89,37 +96,37 @@ async function main() {
 
   const base = {
     cwd: args.cwd ?? process.cwd(),
-    repoRoot: args.repo ?? args['repo-root'],
-    packetPath: args.packet ?? args['packet-path'],
-    bodyFile: args['body-file'] ?? args.bodyFile,
+    repoRoot: args.repo ?? args["repo-root"],
+    packetPath: args.packet ?? args["packet-path"],
+    bodyFile: args["body-file"] ?? args.bodyFile,
   };
 
   // Retired dual-window commands: hard fail with migration hint
   const retired = new Set([
-    'open',
-    'pair',
-    'prompts',
-    'bind',
-    'next',
-    'wait',
-    'complete',
-    'append-eof',
-    'append',
-    'board',
-    'summary',
-    'finish',
-    'report',
-    'status',
-    'gate',
-    'resolve',
-    'disarm',
-    'blind-submit',
-    'h1-probe',
+    "open",
+    "pair",
+    "prompts",
+    "bind",
+    "next",
+    "wait",
+    "complete",
+    "append-eof",
+    "append",
+    "board",
+    "summary",
+    "finish",
+    "report",
+    "status",
+    "gate",
+    "resolve",
+    "disarm",
+    "blind-submit",
+    "h1-probe",
   ]);
   if (retired.has(command)) {
     fail(
       new Error(
-        `command "${command}" removed in auto-loop v2 (T8). Use: review-loop run | fix-completion | consult`,
+        `command "${command}" removed in auto-loop v2 (T8). Use: review-loop run | fix-completion | close | consult`,
       ),
     );
   }
@@ -127,48 +134,61 @@ async function main() {
   try {
     let result;
     switch (command) {
-      case 'run': {
-        if (args['no-sandbox'] || args['disable-sandbox'] || args.sandbox === 'off') {
-          throw new Error('sandbox flags are hardcoded in adapters and cannot be disabled');
+      case "run": {
+        if (
+          args["no-sandbox"] ||
+          args["disable-sandbox"] ||
+          args.sandbox === "off"
+        ) {
+          throw new Error(
+            "sandbox flags are hardcoded in adapters and cannot be disabled",
+          );
         }
         result = await autoRun.cmdRun({
           ...base,
-          reviewer: args.reviewer ?? args['product-reviewer'],
+          reviewer: args.reviewer ?? args["product-reviewer"],
           base: args.base,
           // Pass raw string so --rounds +N stays additive (do not Number() early)
           rounds: args.rounds,
           continue: args.continue === true || args.cont === true,
           cont: args.continue === true || args.cont === true,
-          scopeSlug: args.scope ?? args['scope-slug'],
+          scopeSlug: args.scope ?? args["scope-slug"],
           packetPath: base.packetPath,
           paths: args.paths ?? args.path,
         });
         break;
       }
-      case 'fix-completion':
+      case "fix-completion":
         result = await autoRun.cmdAppendFixCompletion({
           ...base,
           bodyFile: base.bodyFile,
           body: args.body,
         });
         break;
-      case 'consult':
+      case "close":
+        result = await autoRun.cmdClose({
+          ...base,
+          packetPath: base.packetPath,
+          reason: args.reason,
+        });
+        break;
+      case "consult":
         result = await consult.cmdConsult({
           ...base,
           peer: args.peer ?? args.reviewer,
-          questionFile: args['question-file'] ?? args.questionFile,
+          questionFile: args["question-file"] ?? args.questionFile,
           question: args.question,
         });
         break;
-      case 'sessions':
+      case "sessions":
         result = sessions.cmdSessions({
           ...base,
-          product: typeof args.product === 'string' ? args.product : undefined,
+          product: typeof args.product === "string" ? args.product : undefined,
         });
         break;
       default:
         throw new Error(
-          `Unknown command: ${command}. Try: run | fix-completion | consult | sessions | help`,
+          `Unknown command: ${command}. Try: run | fix-completion | close | consult | sessions | help`,
         );
     }
     print(result);

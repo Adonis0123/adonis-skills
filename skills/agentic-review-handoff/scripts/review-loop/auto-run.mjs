@@ -5,8 +5,8 @@
  *   run --repo --reviewer [--base] [--rounds 3] [--packet]
  *   run --continue --repo [--packet] [--rounds]
  */
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 import {
   resolveRepoRoot,
   resolveBranch,
@@ -15,26 +15,28 @@ import {
   readPacketMeta,
   runtimeDir,
   latestActivePacket,
-  branchSlug,
   validatePacketPath,
   lastPhysicalH1,
-} from './repositories.mjs';
-import { createAdapter, DELIVERY_UNKNOWN } from './adapters.mjs';
-import { freezeRoundEvidence, resolveBaseSha } from './evidence.mjs';
+} from "./repositories.mjs";
+import { createAdapter, DELIVERY_UNKNOWN } from "./adapters.mjs";
+import { freezeRoundEvidence, resolveBaseSha } from "./evidence.mjs";
 import {
   parseReviewFindings,
   parseReReview,
   formatReviewFindingsStage,
   formatReReviewStage,
+  formatDecisionClosureStage,
   lifecycleForVerdict,
-} from './schema.mjs';
+  parseMarkdownTables,
+  findingFromRow,
+} from "./schema.mjs";
 import {
   appendStageAuto,
   seedPacketHash,
   loadRunState,
   saveRunState,
   contentHash,
-} from './stage-writer.mjs';
+} from "./stage-writer.mjs";
 
 const DEFAULT_ROUNDS = 3;
 
@@ -63,27 +65,27 @@ Rules:
 
   const schemaRoundN = `Output MUST include ALL of:
 1. ## Prior Findings Reassessment — table: ID | 状态(resolved|partially|unresolved) | 复核证据
-   Cover every prior finding ID: ${priorFindingIds.join(', ') || '(none)'}
+   Cover every prior finding ID: ${priorFindingIds.join(", ") || "(none)"}
 2. ## New Findings — same columns as first-round findings table (only load-bearing blockers allowed)
 3. ## Regression Surface — short conclusion
 4. Exactly one terminal Verdict: PASS | PASS_WITH_CONCERNS | BLOCKED | NO_FINDINGS
 Missing any section (including Verdict) is malformed.`;
 
   const parts = [
-    'You are a read-only code reviewer in an auto review loop.',
+    "You are a read-only code reviewer in an auto review loop.",
     `Packet path: ${packetPath}`,
     `Base SHA (pinned): ${baseSha}`,
     `Frozen evidence file (authoritative — read this file): ${evidencePath}`,
-    `Paths in scope: ${(paths || []).join(', ') || '(see evidence file)'}`,
+    `Paths in scope: ${(paths || []).join(", ") || "(see evidence file)"}`,
     `Round: ${round}`,
     round <= 1 ? schemaRound1 : schemaRoundN,
-    'Do not modify any files. Do not write the packet. Stdout only.',
+    "Do not modify any files. Do not write the packet. Stdout only.",
   ];
   if (correctionNote) {
     parts.push(`CORRECTION (previous output was malformed): ${correctionNote}`);
-    parts.push('Re-emit a complete valid response only.');
+    parts.push("Re-emit a complete valid response only.");
   }
-  return parts.join('\n');
+  return parts.join("\n");
 }
 
 /**
@@ -109,24 +111,30 @@ export async function cmdRun(opts) {
   let packetPath = opts.packetPath || null;
   let packetId = opts.packetId || null;
   if (!packetPath && packetId) {
-    // try active path reconstruction
-    const base = packetId.includes('/') ? packetId.split('/').pop() : packetId;
-    const candidate = path.join(
-      repoRoot,
-      '.review-handoff',
-      'active',
-      branchSlug(branch),
-      `${base}.md`,
-    );
-    if (fs.existsSync(candidate)) packetPath = candidate;
+    // Locate by packet_id's own slug (never recompute slug from current branch algorithm)
+    const segments = String(packetId).split("/");
+    if (segments.length === 2 && segments[0] && segments[1]) {
+      const candidate = path.join(
+        repoRoot,
+        ".review-handoff",
+        "active",
+        segments[0],
+        `${segments[1]}.md`,
+      );
+      if (fs.existsSync(candidate)) packetPath = candidate;
+    }
   }
   if (!packetPath && isContinue) {
     packetPath = latestActivePacket(repoRoot, branch);
   }
 
   if (!packetPath) {
-    if (isContinue) throw new Error('run --continue requires an active packet');
-    const created = createPacketFile(repoRoot, branch, opts.scopeSlug || 'auto-loop');
+    if (isContinue) throw new Error("run --continue requires an active packet");
+    const created = createPacketFile(
+      repoRoot,
+      branch,
+      opts.scopeSlug || "auto-loop",
+    );
     packetPath = created.packetPath;
     packetId = created.packetId;
   }
@@ -148,8 +156,8 @@ export async function cmdRun(opts) {
   if (!reviewer && isContinue && priorState.reviewer) {
     reviewer = priorState.reviewer;
   }
-  reviewer = String(reviewer || 'codex').toLowerCase();
-  if (!['codex', 'grok', 'claude'].includes(reviewer)) {
+  reviewer = String(reviewer || "codex").toLowerCase();
+  if (!["codex", "grok", "claude"].includes(reviewer)) {
     throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
   }
 
@@ -176,25 +184,25 @@ export async function cmdRun(opts) {
  * Holds the lock across awaited reviewer invokes.
  */
 export async function withPacketLock(repoRoot, packetId, operation) {
-  const lockDir = path.join(runtimeDir(repoRoot, packetId), '.auto-run.lock');
-  const ownerFile = path.join(lockDir, 'owner');
+  const lockDir = path.join(runtimeDir(repoRoot, packetId), ".auto-run.lock");
+  const ownerFile = path.join(lockDir, "owner");
   const ownerToken = `${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
   const tryAcquire = () => {
     fs.mkdirSync(lockDir);
     // N1: publish owner immediately after mkdir (no await between)
-    fs.writeFileSync(ownerFile, `${ownerToken}\n${process.pid}\n`, 'utf8');
+    fs.writeFileSync(ownerFile, `${ownerToken}\n${process.pid}\n`, "utf8");
   };
 
   const GRACE_MS = 2000;
   try {
     tryAcquire();
   } catch (err) {
-    if (err?.code !== 'EEXIST') throw err;
-    let owner = '';
+    if (err?.code !== "EEXIST") throw err;
+    let owner = "";
     let ownerMissing = false;
     try {
-      owner = fs.readFileSync(ownerFile, 'utf8');
+      owner = fs.readFileSync(ownerFile, "utf8");
     } catch {
       ownerMissing = true;
     }
@@ -207,15 +215,15 @@ export async function withPacketLock(repoRoot, packetId, operation) {
         mtimeMs = 0;
       }
       if (mtimeMs && Date.now() - mtimeMs < GRACE_MS) {
-        const e = new Error('packet lock held (owner not published yet)');
+        const e = new Error("packet lock held (owner not published yet)");
         // @ts-expect-error
-        e.code = 'PACKET_LOCK_HELD';
+        e.code = "PACKET_LOCK_HELD";
         throw e;
       }
       fs.rmSync(lockDir, { recursive: true, force: true });
       tryAcquire();
     } else {
-      const oldPid = Number(String(owner).split('\n')[1] || 0);
+      const oldPid = Number(String(owner).split("\n")[1] || 0);
       let alive = false;
       if (oldPid > 0) {
         try {
@@ -234,9 +242,9 @@ export async function withPacketLock(repoRoot, packetId, operation) {
           mtimeMs = 0;
         }
         if (alive || (mtimeMs && Date.now() - mtimeMs < GRACE_MS)) {
-          const e = new Error(`packet lock held by pid ${oldPid || 'unknown'}`);
+          const e = new Error(`packet lock held by pid ${oldPid || "unknown"}`);
           // @ts-expect-error
-          e.code = 'PACKET_LOCK_HELD';
+          e.code = "PACKET_LOCK_HELD";
           throw e;
         }
       }
@@ -251,7 +259,7 @@ export async function withPacketLock(repoRoot, packetId, operation) {
   } finally {
     // Only delete if we still own the lock
     try {
-      const cur = fs.readFileSync(ownerFile, 'utf8');
+      const cur = fs.readFileSync(ownerFile, "utf8");
       if (cur.startsWith(ownerToken)) {
         fs.rmSync(lockDir, { recursive: true, force: true });
       }
@@ -305,14 +313,14 @@ async function runBody(ctx) {
   if (!isContinue) {
     if (round > 0) {
       throw new Error(
-        `packet already has round=${round} (lastVerdict=${state.lastVerdict ?? 'n/a'}); use run --continue or a new packet`,
+        `packet already has round=${round} (lastVerdict=${state.lastVerdict ?? "n/a"}); use run --continue or a new packet`,
       );
     }
     if (
-      physical
-      && physical.anchor !== 'review_handoff'
-      && metaNow.lastAnchor
-      && metaNow.lastAnchor !== 'review_handoff'
+      physical &&
+      physical.anchor !== "review_handoff" &&
+      metaNow.lastAnchor &&
+      metaNow.lastAnchor !== "review_handoff"
     ) {
       throw new Error(
         `packet already has stages (last_anchor=${metaNow.lastAnchor}); use run --continue or a new packet`,
@@ -323,22 +331,23 @@ async function runBody(ctx) {
   // If continuing from BLOCKED, require legitimate Fix Completion (A2)
   if (isContinue) {
     const meta = readPacketMeta(packetPath);
-    if (meta.lifecycleState === 'archived') {
+    if (meta.lifecycleState === "archived") {
       return terminalReport({
-        status: 'already_archived',
+        status: "already_archived",
         packetPath,
         state,
-        message: 'Packet already archived',
+        message: "Packet already archived",
       });
     }
-    if (state.lastVerdict === 'BLOCKED' || meta.lifecycleState === 'blocked') {
+    if (state.lastVerdict === "BLOCKED" || meta.lifecycleState === "blocked") {
       const last = lastPhysicalH1(meta.text);
       const lastIsFixCompletion =
-        last
-        && (last.anchor === 'fix_completion' || /^fix_completion/.test(last.anchor));
-      if (!lastIsFixCompletion || meta.lastAnchor !== 'fix_completion') {
+        last &&
+        (last.anchor === "fix_completion" ||
+          /^fix_completion/.test(last.anchor));
+      if (!lastIsFixCompletion || meta.lastAnchor !== "fix_completion") {
         throw new Error(
-          'run --continue after BLOCKED requires a trailing # Fix Completion stage (use fix-completion)',
+          "run --continue after BLOCKED requires a trailing # Fix Completion stage (use fix-completion)",
         );
       }
     }
@@ -356,10 +365,17 @@ async function runBody(ctx) {
   if (!pathFilter && ctx.path) {
     pathFilter = Array.isArray(ctx.path) ? ctx.path : [ctx.path];
   }
-  if (typeof pathFilter === 'string') {
-    pathFilter = pathFilter.split(',').map((s) => s.trim()).filter(Boolean);
+  if (typeof pathFilter === "string") {
+    pathFilter = pathFilter
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
-  if ((!pathFilter || !pathFilter.length) && Array.isArray(state.paths) && state.paths.length) {
+  if (
+    (!pathFilter || !pathFilter.length) &&
+    Array.isArray(state.paths) &&
+    state.paths.length
+  ) {
     pathFilter = state.paths;
   }
   if (pathFilter?.length) {
@@ -375,17 +391,17 @@ async function runBody(ctx) {
     state = loadRunState(repoRoot, packetId);
   }
 
-  const evidenceDir = path.join(runtimeDir(repoRoot, packetId), 'evidence');
+  const evidenceDir = path.join(runtimeDir(repoRoot, packetId), "evidence");
   const evidencePath = path.join(evidenceDir, `round-${effectiveRound}.diff`);
   let evidence;
   if (fs.existsSync(evidencePath) && state[`evidenceRound${effectiveRound}`]) {
-    const diffText = fs.readFileSync(evidencePath, 'utf8');
+    const diffText = fs.readFileSync(evidencePath, "utf8");
     const digest = contentHash(diffText);
     if (state[`evidenceDigest${effectiveRound}`]) {
       if (state[`evidenceDigest${effectiveRound}`] !== digest) {
         return {
           ok: false,
-          status: 'evidence_hash_mismatch',
+          status: "evidence_hash_mismatch",
           message: `Frozen evidence round-${effectiveRound}.diff digest mismatch; refuse to proceed`,
           packetPath,
         };
@@ -400,7 +416,7 @@ async function runBody(ctx) {
     evidence = {
       evidencePath,
       diffText,
-      lineCount: diffText.split('\n').length,
+      lineCount: diffText.split("\n").length,
       paths: pathFilter || state.paths || [],
       digest,
     };
@@ -493,7 +509,7 @@ async function runBody(ctx) {
     if (!parsed.ok) {
       return {
         ok: false,
-        status: 'malformed_reviewer_output',
+        status: "malformed_reviewer_output",
         message: `Reviewer output malformed after one correction: ${parsed.error}`,
         packetPath,
         error: parsed.error,
@@ -507,7 +523,7 @@ async function runBody(ctx) {
   // PASS/NO_FINDINGS → archived; PWC → awaiting_user_decision; BLOCKED → blocked.
   // Fix Handoff is only for BLOCKED (not PWC).
   const lifecycle = lifecycleForVerdict(
-    effectiveRound <= 1 ? 'review_findings' : 're_review',
+    effectiveRound <= 1 ? "review_findings" : "re_review",
     parsed.verdict,
   );
 
@@ -522,7 +538,8 @@ async function runBody(ctx) {
       evidencePath: evidence.evidencePath,
     });
     // Plan T2: first-round Fix Handoff only when BLOCKED
-    lastAnchor = parsed.verdict === 'BLOCKED' ? 'fix_handoff' : 'review_findings';
+    lastAnchor =
+      parsed.verdict === "BLOCKED" ? "fix_handoff" : "review_findings";
   } else {
     sectionMarkdown = formatReReviewStage({
       verdict: parsed.verdict,
@@ -533,7 +550,7 @@ async function runBody(ctx) {
       round: effectiveRound,
       evidencePath: evidence.evidencePath,
     });
-    lastAnchor = 're_review';
+    lastAnchor = "re_review";
   }
 
   let writeResult;
@@ -549,15 +566,15 @@ async function runBody(ctx) {
         base_sha: baseSha,
         reviewer,
         round: String(effectiveRound),
-        mode: 'auto',
+        mode: "auto",
       },
     });
     packetPath = writeResult.packetPath;
   } catch (err) {
-    if (err?.code === 'PACKET_HASH_MISMATCH') {
+    if (err?.code === "PACKET_HASH_MISMATCH") {
       return {
         ok: false,
-        status: 'packet_hash_mismatch',
+        status: "packet_hash_mismatch",
         message: err.message,
         packetPath,
       };
@@ -583,11 +600,13 @@ async function runBody(ctx) {
           ...(parsed.reassessments || [])
             .filter(
               (r) =>
-                (r.status === 'unresolved' || r.status === 'partially')
-                && priorBlockingSet.has(r.id),
+                (r.status === "unresolved" || r.status === "partially") &&
+                priorBlockingSet.has(r.id),
             )
             .map((r) => r.id),
-          ...(parsed.newFindings || []).filter((f) => f.blocking).map((f) => f.id),
+          ...(parsed.newFindings || [])
+            .filter((f) => f.blocking)
+            .map((f) => f.id),
         ];
 
   const nextState = {
@@ -608,19 +627,19 @@ async function runBody(ctx) {
   saveRunState(repoRoot, packetId, nextState);
 
   // Clean packet STOP if present on terminal
-  const packetStop = path.join(runtimeDir(repoRoot, packetId), 'STOP');
-  if (lifecycle === 'archived' && fs.existsSync(packetStop)) {
+  const packetStop = path.join(runtimeDir(repoRoot, packetId), "STOP");
+  if (lifecycle === "archived" && fs.existsSync(packetStop)) {
     fs.unlinkSync(packetStop);
   }
 
-  if (parsed.verdict === 'BLOCKED') {
+  if (parsed.verdict === "BLOCKED") {
     // Budget is a ceiling: on the final budgeted round, BLOCKED exits immediately
     // (plan flowchart: 轮次 < 预算? 否 → 预算耗尽). Do not ask for another fix pass.
     if (effectiveRound >= roundsBudget && !nextState.budgetOverride) {
       const unresolvedReassessments =
         effectiveRound > 1
           ? (parsed.reassessments || []).filter(
-              (r) => r.status === 'unresolved' || r.status === 'partially',
+              (r) => r.status === "unresolved" || r.status === "partially",
             )
           : [];
       return budgetExhaustedReport({
@@ -635,7 +654,7 @@ async function runBody(ctx) {
     }
     return {
       ok: true,
-      status: 'blocked',
+      status: "blocked",
       verdict: parsed.verdict,
       round: effectiveRound,
       packetPath,
@@ -643,22 +662,23 @@ async function runBody(ctx) {
       openBlocking,
       findings: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
       message:
-        'BLOCKED — Fixer should address open blocking findings, append # Fix Completion, then: review-loop run --continue',
+        "BLOCKED — Fixer should address open blocking findings, append # Fix Completion, then: review-loop run --continue",
       warning: evidence.warning,
       needsContinue: true,
     };
   }
 
-  if (parsed.verdict === 'PASS_WITH_CONCERNS') {
+  if (parsed.verdict === "PASS_WITH_CONCERNS") {
     return {
       ok: true,
-      status: 'awaiting_user_decision',
+      status: "awaiting_user_decision",
       verdict: parsed.verdict,
       round: effectiveRound,
       packetPath,
       packetId,
       concerns: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
-      message: 'PASS_WITH_CONCERNS — non-blocking concerns remain; user decides archive or another round',
+      message:
+        "PASS_WITH_CONCERNS — non-blocking concerns remain; user decides archive or another round",
       warning: evidence.warning,
     };
   }
@@ -666,7 +686,7 @@ async function runBody(ctx) {
   // PASS / NO_FINDINGS
   return {
     ok: true,
-    status: 'archived',
+    status: "archived",
     verdict: parsed.verdict,
     round: effectiveRound,
     packetPath,
@@ -685,7 +705,7 @@ async function runBody(ctx) {
 function deliveryUnknownReport({ packetPath, state, error, code }) {
   return {
     ok: false,
-    status: 'DELIVERY_UNKNOWN',
+    status: "DELIVERY_UNKNOWN",
     code: code || DELIVERY_UNKNOWN,
     message: `Reviewer invoke failed (no retry): ${error}`,
     packetPath,
@@ -700,16 +720,20 @@ function deliveryUnknownReport({ packetPath, state, error, code }) {
  * @param {boolean} isContinue
  */
 export function resolveRoundsBudget(raw, prior = {}, isContinue = false) {
-  if (raw == null || raw === '') {
+  if (raw == null || raw === "") {
     const inherited =
-      isContinue && prior.roundsBudget != null ? Number(prior.roundsBudget) : DEFAULT_ROUNDS;
-    return Number.isFinite(inherited) && inherited >= 1 ? inherited : DEFAULT_ROUNDS;
+      isContinue && prior.roundsBudget != null
+        ? Number(prior.roundsBudget)
+        : DEFAULT_ROUNDS;
+    return Number.isFinite(inherited) && inherited >= 1
+      ? inherited
+      : DEFAULT_ROUNDS;
   }
   const text = String(raw).trim();
-  if (text.startsWith('+')) {
+  if (text.startsWith("+")) {
     const delta = Number(text.slice(1));
     if (!Number.isFinite(delta) || delta < 1) {
-      throw new Error('--rounds +N requires a positive finite N');
+      throw new Error("--rounds +N requires a positive finite N");
     }
     const base =
       prior.roundsBudget != null
@@ -717,12 +741,13 @@ export function resolveRoundsBudget(raw, prior = {}, isContinue = false) {
         : prior.round != null
           ? Number(prior.round)
           : DEFAULT_ROUNDS;
-    const baseBudget = Number.isFinite(base) && base >= 1 ? base : DEFAULT_ROUNDS;
+    const baseBudget =
+      Number.isFinite(base) && base >= 1 ? base : DEFAULT_ROUNDS;
     return baseBudget + delta;
   }
   const n = Number(text);
   if (!Number.isFinite(n) || n < 1) {
-    throw new Error('--rounds must be a positive finite number');
+    throw new Error("--rounds must be a positive finite number");
   }
   return n;
 }
@@ -743,9 +768,9 @@ export function extractLatestFixCompletionStance(packetPath) {
     verification: null,
   };
   if (!packetPath || !fs.existsSync(packetPath)) return empty;
-  let body = fs.readFileSync(packetPath, 'utf8');
-  if (body.startsWith('---')) {
-    const end = body.indexOf('\n---', 3);
+  let body = fs.readFileSync(packetPath, "utf8");
+  if (body.startsWith("---")) {
+    const end = body.indexOf("\n---", 3);
     if (end !== -1) body = body.slice(end + 4);
   }
   /** @type {string|null} */
@@ -763,7 +788,7 @@ export function extractLatestFixCompletionStance(packetPath) {
   const h2Body = (heading) => {
     const re = new RegExp(
       `##\\s*${heading}\\s*\\n([\\s\\S]*?)(?=\\n##\\s|$)`,
-      'i',
+      "i",
     );
     const m = lastSection.match(re);
     return m ? m[1].trim() : null;
@@ -771,9 +796,9 @@ export function extractLatestFixCompletionStance(packetPath) {
   return {
     present: true,
     count,
-    conclusion: h2Body('Fix Conclusion'),
-    findingStatus: h2Body('Finding Status'),
-    verification: h2Body('Verification'),
+    conclusion: h2Body("Fix Conclusion"),
+    findingStatus: h2Body("Finding Status"),
+    verification: h2Body("Verification"),
   };
 }
 
@@ -787,7 +812,9 @@ function budgetExhaustedReport({
 }) {
   const unresolved = openBlocking || state.openBlocking || [];
   const fixerStance = extractLatestFixCompletionStance(packetPath);
-  const unresolvedReassessments = Array.isArray(reassessments) ? reassessments : [];
+  const unresolvedReassessments = Array.isArray(reassessments)
+    ? reassessments
+    : [];
 
   /** @type {Record<string, unknown>} */
   const fixerPosition = fixerStance.present
@@ -806,24 +833,23 @@ function budgetExhaustedReport({
         verification: null,
         fixRoundsCompleted: 0,
         // First-round budget exhaust (--rounds 1) never had a Fix Completion stage
-        note:
-          'No # Fix Completion stage on packet (budget exhausted before a fix pass, or Fix Completion missing)',
+        note: "No # Fix Completion stage on packet (budget exhausted before a fix pass, or Fix Completion missing)",
       };
 
   return {
     ok: false,
-    status: 'budget_exhausted',
+    status: "budget_exhausted",
     message: `Round budget (${roundsBudget}) exhausted with unresolved blockers`,
     packetPath,
     openBlocking: unresolved,
     unresolved,
-    lastVerdict: state.lastVerdict || 'BLOCKED',
+    lastVerdict: state.lastVerdict || "BLOCKED",
     roundsUsed: state.round,
     roundsBudget,
     // 双方立场：Reviewer 末轮真实证据 + Fixer 最新 Fix Completion 实际结论
     positions: {
       reviewer: {
-        lastVerdict: state.lastVerdict || 'BLOCKED',
+        lastVerdict: state.lastVerdict || "BLOCKED",
         openBlocking: unresolved,
         findingIds: state.findingIds || [],
         // New findings this round (may be empty when only prior blockers remain)
@@ -834,7 +860,7 @@ function budgetExhaustedReport({
       fixer: fixerPosition,
     },
     recommendation:
-      'Authorize more rounds: run --continue --rounds +N (additive) or --rounds N (absolute ceiling)',
+      "Authorize more rounds: run --continue --rounds +N (additive) or --rounds N (absolute ceiling)",
   };
 }
 
@@ -843,61 +869,253 @@ function terminalReport(x) {
 }
 
 /**
+ * Extract non-placeholder findings from the last Review Findings / Re-review section body.
+ * @param {string} packetText
+ * @returns {{ id: string, title: string, severity: string }[]}
+ */
+function extractConcernsFromPacket(packetText) {
+  const text = String(packetText);
+  /** @type {{ index: number, title: string }[]} */
+  const h1s = [];
+  let fenced = false;
+  const lines = text.split("\n");
+  for (let i = 0; i < lines.length; i += 1) {
+    if (/^\s*(```|~~~)/.test(lines[i])) {
+      fenced = !fenced;
+      continue;
+    }
+    if (fenced) continue;
+    const m = lines[i].match(/^# ([^#].*?)\s*$/);
+    if (m) h1s.push({ index: i, title: m[1] });
+  }
+  for (let s = h1s.length - 1; s >= 0; s -= 1) {
+    const title = h1s[s].title.toLowerCase();
+    if (!/review findings|re-review/.test(title)) continue;
+    if (
+      /fix handoff|fix completion|decision closure|review handoff/.test(title)
+    )
+      continue;
+    const start = h1s[s].index + 1;
+    const end = h1s[s + 1]?.index ?? lines.length;
+    const body = lines.slice(start, end).join("\n");
+    let slice = body;
+    if (/re-review/i.test(title)) {
+      const newSplit = body.split(/##\s*New Findings/i);
+      if (newSplit.length >= 2) {
+        // Prefer prior findings reassessment + new findings: use whole body tables
+        // and take the last ID table that has real rows if New Findings is empty
+        slice = body;
+      }
+    } else {
+      const findingsSplit = body.split(/##\s*Findings/i);
+      if (findingsSplit.length >= 2) {
+        slice = findingsSplit[1].split(/##\s+/)[0] ?? findingsSplit[1];
+      }
+    }
+    const tables = parseMarkdownTables(slice);
+    /** @type {{ id: string, title: string, severity: string }[]} */
+    const collected = [];
+    for (const table of tables) {
+      if (!table.headers.some((h) => h === "id" || h === "finding id"))
+        continue;
+      // Skip reassessment tables (status column, no severity)
+      const isReassessment =
+        table.headers.some((h) => /status|状态|result/.test(h)) &&
+        !table.headers.some(
+          (h) => h === "严重度" || h === "severity" || h === "sev",
+        );
+      if (isReassessment) continue;
+      for (const f of table.rows.map(findingFromRow)) {
+        if (!f.id || f.id === "(none)" || /^[-—]+$/.test(f.id)) continue;
+        collected.push({ id: f.id, title: f.title, severity: f.severity });
+      }
+    }
+    if (collected.length) return collected;
+  }
+  return [];
+}
+
+/**
+ * User Decision Closure: accept PASS_WITH_CONCERNS and archive without re-review.
+ * Does not rewrite original Verdict to PASS.
+ *
+ * @param {{
+ *   repoRoot?: string,
+ *   cwd?: string,
+ *   packetPath: string,
+ *   reason?: string,
+ * }} opts
+ */
+export async function cmdClose(opts) {
+  const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
+  const branch = resolveBranch(repoRoot);
+  const reason = String(opts.reason || "").trim();
+  if (reason !== "accept-concerns") {
+    throw new Error(
+      "close --reason must be accept-concerns (only supported reason this version)",
+    );
+  }
+  if (!opts.packetPath) throw new Error("--packet required");
+  const abs = path.isAbsolute(opts.packetPath)
+    ? opts.packetPath
+    : path.resolve(repoRoot, opts.packetPath);
+  const { packetPath, packetId, meta } = validatePacketPath(
+    repoRoot,
+    branch,
+    abs,
+    {
+      activeOnly: true,
+    },
+  );
+  if (meta.lifecycleState === "archived") {
+    throw new Error("close refuses lifecycle_state=archived (already closed)");
+  }
+  if (meta.lifecycleState !== "awaiting_user_decision") {
+    throw new Error(
+      `close refuses lifecycle_state=${meta.lifecycleState} (need awaiting_user_decision after PASS_WITH_CONCERNS)`,
+    );
+  }
+  const last = lastPhysicalH1(meta.text);
+  const okPrior =
+    last &&
+    (last.anchor === "review_findings" ||
+      last.anchor === "re_review" ||
+      /^re_review/.test(last.anchor));
+  if (!okPrior) {
+    throw new Error(
+      `close refuses last_anchor=${meta.lastAnchor ?? last?.anchor ?? "none"} (need review_findings or re_review after PASS_WITH_CONCERNS)`,
+    );
+  }
+
+  const concerns = extractConcernsFromPacket(meta.text);
+  const closedAt = new Date().toISOString();
+  const section = formatDecisionClosureStage({
+    reason,
+    originalVerdict: "PASS_WITH_CONCERNS",
+    concerns,
+    closedAt,
+  });
+
+  return withPacketLock(repoRoot, packetId, async () => {
+    const metaLocked = readPacketMeta(packetPath);
+    if (metaLocked.lifecycleState !== "awaiting_user_decision") {
+      throw new Error(
+        `close under lock refuses lifecycle_state=${metaLocked.lifecycleState} (need awaiting_user_decision)`,
+      );
+    }
+    const lastLocked = lastPhysicalH1(metaLocked.text);
+    const ok =
+      lastLocked &&
+      (lastLocked.anchor === "review_findings" ||
+        lastLocked.anchor === "re_review" ||
+        /^re_review/.test(lastLocked.anchor));
+    if (!ok) {
+      throw new Error(
+        `close under lock refuses last_anchor=${metaLocked.lastAnchor ?? lastLocked?.anchor ?? "none"}`,
+      );
+    }
+    const written = appendStageAuto({
+      repoRoot,
+      packetPath,
+      packetId,
+      sectionMarkdown: section,
+      lastAnchor: "decision_closure",
+      lifecycleState: "archived",
+      extra: {
+        close_reason: reason,
+        closed_at: closedAt,
+      },
+    });
+    const reportMeta = readPacketMeta(written.packetPath);
+    return {
+      ok: true,
+      status: "archived",
+      reason,
+      packetPath: written.packetPath,
+      packetId,
+      lastAnchor: "decision_closure",
+      lifecycleState: "archived",
+      originalVerdict: "PASS_WITH_CONCERNS",
+      acceptedConcernIds: concerns.map((c) => c.id),
+      message:
+        "PASS_WITH_CONCERNS accepted as backlog — packet archived via Decision Closure (original Verdict not rewritten to PASS)",
+      report: {
+        originalVerdict: "PASS_WITH_CONCERNS",
+        closeReason: reason,
+        acceptedConcernIds: concerns.map((c) => c.id),
+        closedAt,
+        lastAnchor: reportMeta.lastAnchor,
+        lifecycleState: reportMeta.lifecycleState,
+      },
+    };
+  });
+}
+
+/**
  * Fixer helper: append Fix Completion stage (claim-free) after addressing BLOCKED findings.
  */
 export async function cmdAppendFixCompletion(opts) {
   const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
   const branch = resolveBranch(repoRoot);
-  if (!opts.packetPath) throw new Error('--packet required');
+  if (!opts.packetPath) throw new Error("--packet required");
   const abs = path.isAbsolute(opts.packetPath)
     ? opts.packetPath
     : path.resolve(repoRoot, opts.packetPath);
   // F4: writes only accept active packets
-  const { packetPath, packetId, meta } = validatePacketPath(repoRoot, branch, abs, {
-    activeOnly: true,
-  });
-  if (meta.lifecycleState === 'archived') {
-    throw new Error('fix-completion refuses lifecycle_state=archived');
+  const { packetPath, packetId, meta } = validatePacketPath(
+    repoRoot,
+    branch,
+    abs,
+    {
+      activeOnly: true,
+    },
+  );
+  if (meta.lifecycleState === "archived") {
+    throw new Error("fix-completion refuses lifecycle_state=archived");
   }
   // F3: legal stage gate — must follow Fix Handoff or blocked re-review
   const last = lastPhysicalH1(meta.text);
   const okPrior =
-    last
-    && (last.anchor === 'fix_handoff'
-      || last.anchor === 're_review'
-      || /^re_review/.test(last.anchor)
-      || last.anchor === 'fix_completion');
+    last &&
+    (last.anchor === "fix_handoff" ||
+      last.anchor === "re_review" ||
+      /^re_review/.test(last.anchor) ||
+      last.anchor === "fix_completion");
   if (!okPrior) {
     throw new Error(
-      `fix-completion refuses last_anchor=${meta.lastAnchor ?? last?.anchor ?? 'none'} (need fix_handoff or re_review after BLOCKED)`,
+      `fix-completion refuses last_anchor=${meta.lastAnchor ?? last?.anchor ?? "none"} (need fix_handoff or re_review after BLOCKED)`,
     );
   }
   const body =
-    opts.body
-    || (opts.bodyFile ? fs.readFileSync(opts.bodyFile, 'utf8') : null);
-  if (!body) throw new Error('--body-file or body required');
+    opts.body ||
+    (opts.bodyFile ? fs.readFileSync(opts.bodyFile, "utf8") : null);
+  if (!body) throw new Error("--body-file or body required");
   let section = String(body).trim();
   // Must be a top-level H1 (# Title), not ## subsection
   if (!/^# [^#\n]/.test(section)) {
     section = `# Fix Completion\n\n${section}\n`;
   }
   // Canonical title required (A2) — reject forged non-fix-completion H1s
-  const firstH1 = section.split('\n').find((l) => /^# [^#]/.test(l)) ?? '';
+  const firstH1 = section.split("\n").find((l) => /^# [^#]/.test(l)) ?? "";
   if (!/^#\s*Fix Completion(\s*\(round\s+\d+\))?\s*$/i.test(firstH1.trim())) {
-    throw new Error('fix-completion body must start with "# Fix Completion" H1');
+    throw new Error(
+      'fix-completion body must start with "# Fix Completion" H1',
+    );
   }
   // F2/F3: require full Fix Completion H2 set — no placeholder auto-fabricate
   const requiredH2 = [
-    'Fix Conclusion',
-    'Original Findings Snapshot',
-    'Finding Status',
-    'Verification',
-    'Re-review Instructions',
+    "Fix Conclusion",
+    "Original Findings Snapshot",
+    "Finding Status",
+    "Verification",
+    "Re-review Instructions",
   ];
-  const missing = requiredH2.filter((h) => !new RegExp(`##\\s*${h}`, 'i').test(section));
+  const missing = requiredH2.filter(
+    (h) => !new RegExp(`##\\s*${h}`, "i").test(section),
+  );
   if (missing.length) {
     throw new Error(
-      `fix-completion missing required H2 sections: ${missing.join(', ')}`,
+      `fix-completion missing required H2 sections: ${missing.join(", ")}`,
     );
   }
   // F3: hold same packet lock as run; re-check last anchor under lock
@@ -905,10 +1123,10 @@ export async function cmdAppendFixCompletion(opts) {
     const metaLocked = readPacketMeta(packetPath);
     const lastLocked = lastPhysicalH1(metaLocked.text);
     const ok =
-      lastLocked
-      && (lastLocked.anchor === 'fix_handoff'
-        || lastLocked.anchor === 're_review'
-        || /^re_review/.test(lastLocked.anchor));
+      lastLocked &&
+      (lastLocked.anchor === "fix_handoff" ||
+        lastLocked.anchor === "re_review" ||
+        /^re_review/.test(lastLocked.anchor));
     if (!ok) {
       throw new Error(
         `fix-completion under lock refuses last_anchor=${metaLocked.lastAnchor} (need fix_handoff or re_review)`,
@@ -919,8 +1137,8 @@ export async function cmdAppendFixCompletion(opts) {
       packetPath,
       packetId,
       sectionMarkdown: section,
-      lastAnchor: 'fix_completion',
-      lifecycleState: 'in_progress',
+      lastAnchor: "fix_completion",
+      lifecycleState: "in_progress",
     });
   });
 }

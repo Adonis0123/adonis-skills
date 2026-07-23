@@ -1,23 +1,32 @@
 /**
  * T2: auto-loop core engine tests (fake adapter, no live CLI).
  */
-import { afterEach, describe, it } from 'node:test';
-import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
-import { execFileSync, spawn } from 'node:child_process';
-import { fileURLToPath, pathToFileURL } from 'node:url';
-import * as repo from '../review-loop/repositories.mjs';
-import { freezeRoundEvidence } from '../review-loop/evidence.mjs';
+import { afterEach, describe, it } from "node:test";
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { execFileSync, spawn } from "node:child_process";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import * as repo from "../review-loop/repositories.mjs";
+import { freezeRoundEvidence } from "../review-loop/evidence.mjs";
 import {
   parseReviewFindings,
   parseReReview,
   extractVerdict,
-} from '../review-loop/schema.mjs';
+} from "../review-loop/schema.mjs";
 // parseReReview used by schema fail-closed tests
-import { appendStageAuto, seedPacketHash, contentHash } from '../review-loop/stage-writer.mjs';
-import { cmdRun, cmdAppendFixCompletion, withPacketLock } from '../review-loop/auto-run.mjs';
+import {
+  appendStageAuto,
+  seedPacketHash,
+  contentHash,
+} from "../review-loop/stage-writer.mjs";
+import {
+  cmdRun,
+  cmdAppendFixCompletion,
+  cmdClose,
+  withPacketLock,
+} from "../review-loop/auto-run.mjs";
 
 const cleanup = [];
 afterEach(() => {
@@ -32,14 +41,16 @@ afterEach(() => {
 });
 
 function initTempRepo() {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'auto-run-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "auto-run-"));
   cleanup.push(dir);
-  execFileSync('git', ['init', '--quiet'], { cwd: dir });
-  execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: dir });
-  execFileSync('git', ['config', 'user.name', 'Test'], { cwd: dir });
-  fs.writeFileSync(path.join(dir, 'README.md'), '# test\n');
-  execFileSync('git', ['add', 'README.md'], { cwd: dir });
-  execFileSync('git', ['commit', '--quiet', '-m', 'init'], { cwd: dir });
+  execFileSync("git", ["init", "--quiet"], { cwd: dir });
+  execFileSync("git", ["config", "user.email", "test@example.com"], {
+    cwd: dir,
+  });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: dir });
+  fs.writeFileSync(path.join(dir, "README.md"), "# test\n");
+  execFileSync("git", ["add", "README.md"], { cwd: dir });
+  execFileSync("git", ["commit", "--quiet", "-m", "init"], { cwd: dir });
   return dir;
 }
 
@@ -56,7 +67,7 @@ PASS
 `;
 }
 
-function blockedText(id = 'F1') {
+function blockedText(id = "F1") {
   return `Found a bug.
 
 | ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
@@ -69,8 +80,10 @@ BLOCKED
 `;
 }
 
-function reReviewPass(priorIds = ['F1']) {
-  const rows = priorIds.map((id) => `| ${id} | resolved | rechecked evidence file |`).join('\n');
+function reReviewPass(priorIds = ["F1"]) {
+  const rows = priorIds
+    .map((id) => `| ${id} | resolved | rechecked evidence file |`)
+    .join("\n");
   return `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -101,22 +114,36 @@ function makeFakeAdapterFactory(script) {
   return {
     calls,
     factory: () => ({
-      product: 'fake',
+      product: "fake",
       getSessionId: () => sessionId,
       async newSession(prompt) {
-        calls.push({ mode: 'new', prompt });
-        sessionId = 'fake-session-1';
-        const text = typeof script === 'function' ? script(i++, prompt, 'new') : script[i++];
+        calls.push({ mode: "new", prompt });
+        sessionId = "fake-session-1";
+        const text =
+          typeof script === "function"
+            ? script(i++, prompt, "new")
+            : script[i++];
         if (text === null) {
-          return { ok: false, code: 'DELIVERY_UNKNOWN', error: 'simulated fail' };
+          return {
+            ok: false,
+            code: "DELIVERY_UNKNOWN",
+            error: "simulated fail",
+          };
         }
         return { ok: true, text, sessionId };
       },
       async resume(sid, prompt) {
-        calls.push({ mode: 'resume', sid, prompt });
-        const text = typeof script === 'function' ? script(i++, prompt, 'resume') : script[i++];
+        calls.push({ mode: "resume", sid, prompt });
+        const text =
+          typeof script === "function"
+            ? script(i++, prompt, "resume")
+            : script[i++];
         if (text === null) {
-          return { ok: false, code: 'DELIVERY_UNKNOWN', error: 'simulated fail' };
+          return {
+            ok: false,
+            code: "DELIVERY_UNKNOWN",
+            error: "simulated fail",
+          };
         }
         return { ok: true, text, sessionId: sid || sessionId };
       },
@@ -124,48 +151,54 @@ function makeFakeAdapterFactory(script) {
   };
 }
 
-describe('schema parse', () => {
-  it('parses PASS findings', () => {
+describe("schema parse", () => {
+  it("parses PASS findings", () => {
     const r = parseReviewFindings(passText());
     assert.equal(r.ok, true);
-    assert.equal(r.verdict, 'PASS');
+    assert.equal(r.verdict, "PASS");
   });
 
-  it('parses BLOCKED with required fields', () => {
+  it("parses BLOCKED with required fields", () => {
     const r = parseReviewFindings(blockedText());
     assert.equal(r.ok, true);
-    assert.equal(r.verdict, 'BLOCKED');
-    assert.equal(r.findings[0].id, 'F1');
+    assert.equal(r.verdict, "BLOCKED");
+    assert.equal(r.findings[0].id, "F1");
     assert.equal(r.findings[0].blocking, true);
   });
 
-  it('rejects missing Verdict', () => {
-    const r = parseReviewFindings('just some text without verdict');
+  it("rejects missing Verdict", () => {
+    const r = parseReviewFindings("just some text without verdict");
     assert.equal(r.ok, false);
   });
 
-  it('parses re-review with prior IDs', () => {
-    const r = parseReReview(reReviewPass(['F1']), ['F1']);
+  it("parses re-review with prior IDs", () => {
+    const r = parseReReview(reReviewPass(["F1"]), ["F1"]);
     assert.equal(r.ok, true);
-    assert.equal(r.verdict, 'PASS');
+    assert.equal(r.verdict, "PASS");
   });
 
-  it('rejects re-review missing Verdict', () => {
+  it("rejects re-review missing Verdict", () => {
     const r = parseReReview(
       `## Prior Findings Reassessment\n\n| ID | 状态 | 复核证据 |\n|---|---|---|\n| F1 | resolved | x |\n\n## New Findings\n\nnone\n\n## Regression Surface\n\nok\n`,
-      ['F1'],
+      ["F1"],
     );
     assert.equal(r.ok, false);
   });
 });
 
-describe('frozen evidence includes untracked', () => {
-  it('puts untracked file content into round diff', () => {
+describe("frozen evidence includes untracked", () => {
+  it("puts untracked file content into round diff", () => {
     const dir = initTempRepo();
-    fs.writeFileSync(path.join(dir, 'new-untracked.ts'), 'export const X = "UNIQUE_UNTRACKED_MARK";\n');
+    fs.writeFileSync(
+      path.join(dir, "new-untracked.ts"),
+      'export const X = "UNIQUE_UNTRACKED_MARK";\n',
+    );
     const branch = repo.resolveBranch(dir);
-    const created = repo.createPacketFile(dir, branch, 'ev');
-    const base = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim();
+    const created = repo.createPacketFile(dir, branch, "ev");
+    const base = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: dir,
+      encoding: "utf8",
+    }).trim();
     const ev = freezeRoundEvidence({
       repoRoot: dir,
       packetId: created.packetId,
@@ -177,38 +210,40 @@ describe('frozen evidence includes untracked', () => {
   });
 });
 
-describe('auto-run happy paths', () => {
-  it('1-round PASS archives packet', async () => {
+describe("auto-run happy paths", () => {
+  it("1-round PASS archives packet", async () => {
     const dir = initTempRepo();
-    fs.writeFileSync(path.join(dir, 'a.ts'), 'export const a = 1;\n');
+    fs.writeFileSync(path.join(dir, "a.ts"), "export const a = 1;\n");
     const { factory } = makeFakeAdapterFactory([passText()]);
     const result = await cmdRun({
       repoRoot: dir,
-      reviewer: 'codex',
-      scopeSlug: 'pass-one',
+      reviewer: "codex",
+      scopeSlug: "pass-one",
       adapterFactory: factory,
     });
     assert.equal(result.ok, true);
-    assert.equal(result.status, 'archived');
-    assert.equal(result.verdict, 'PASS');
-    assert.ok(String(result.packetPath).includes(`${path.sep}archive${path.sep}`));
-    const text = fs.readFileSync(result.packetPath, 'utf8');
+    assert.equal(result.status, "archived");
+    assert.equal(result.verdict, "PASS");
+    assert.ok(
+      String(result.packetPath).includes(`${path.sep}archive${path.sep}`),
+    );
+    const text = fs.readFileSync(result.packetPath, "utf8");
     assert.match(text, /# Review Findings/);
     assert.match(text, /lifecycle_state: archived/);
   });
 
-  it('BLOCKED → fix completion → re-review PASS (two rounds, fresh OS process continue)', async () => {
+  it("BLOCKED → fix completion → re-review PASS (two rounds, fresh OS process continue)", async () => {
     const dir = initTempRepo();
-    fs.writeFileSync(path.join(dir, 'b.ts'), 'export const b = 1;\n');
-    const { factory } = makeFakeAdapterFactory([blockedText('F1')]);
+    fs.writeFileSync(path.join(dir, "b.ts"), "export const b = 1;\n");
+    const { factory } = makeFakeAdapterFactory([blockedText("F1")]);
     const r1 = await cmdRun({
       repoRoot: dir,
-      reviewer: 'codex',
-      scopeSlug: 'two-round',
+      reviewer: "codex",
+      scopeSlug: "two-round",
       adapterFactory: factory,
     });
     assert.equal(r1.ok, true);
-    assert.equal(r1.status, 'blocked');
+    assert.equal(r1.status, "blocked");
     assert.equal(r1.needsContinue, true);
     assert.ok(fs.existsSync(r1.packetPath));
 
@@ -236,10 +271,13 @@ describe('auto-run happy paths', () => {
 
     // True fresh OS process: child loads modules and continues from packet + runtime only
     const autoRunUrl = pathToFileURL(
-      path.join(path.dirname(fileURLToPath(import.meta.url)), '../review-loop/auto-run.mjs'),
+      path.join(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../review-loop/auto-run.mjs",
+      ),
     ).href;
-    const responsesPath = path.join(dir, 'child-responses.json');
-    fs.writeFileSync(responsesPath, JSON.stringify([reReviewPass(['F1'])]));
+    const responsesPath = path.join(dir, "child-responses.json");
+    fs.writeFileSync(responsesPath, JSON.stringify([reReviewPass(["F1"])]));
     const childSrc = `
 import { cmdRun } from ${JSON.stringify(autoRunUrl)};
 import fs from 'node:fs';
@@ -264,20 +302,24 @@ const r = await cmdRun({
 });
 process.stdout.write(JSON.stringify(r));
 `;
-    const out = execFileSync(process.execPath, ['--input-type=module', '-e', childSrc], {
-      encoding: 'utf8',
-      timeout: 30_000,
-    });
+    const out = execFileSync(
+      process.execPath,
+      ["--input-type=module", "-e", childSrc],
+      {
+        encoding: "utf8",
+        timeout: 30_000,
+      },
+    );
     const r2 = JSON.parse(out);
     assert.equal(r2.ok, true, JSON.stringify(r2));
-    assert.equal(r2.status, 'archived');
-    assert.equal(r2.verdict, 'PASS');
-    const text = fs.readFileSync(r2.packetPath, 'utf8');
+    assert.equal(r2.status, "archived");
+    assert.equal(r2.verdict, "PASS");
+    const text = fs.readFileSync(r2.packetPath, "utf8");
     assert.match(text, /# Fix Completion/);
     assert.match(text, /# Re-review/);
   });
 
-  it('PASS_WITH_CONCERNS → awaiting_user_decision (no Fix Handoff)', async () => {
+  it("PASS_WITH_CONCERNS → awaiting_user_decision (no Fix Handoff)", async () => {
     const dir = initTempRepo();
     const concerns = `Style nits only.
 
@@ -292,34 +334,34 @@ PASS_WITH_CONCERNS
     const { factory } = makeFakeAdapterFactory([concerns]);
     const r = await cmdRun({
       repoRoot: dir,
-      reviewer: 'grok',
-      scopeSlug: 'concerns',
+      reviewer: "grok",
+      scopeSlug: "concerns",
       adapterFactory: factory,
     });
     assert.equal(r.ok, true);
-    assert.equal(r.status, 'awaiting_user_decision');
-    assert.equal(r.verdict, 'PASS_WITH_CONCERNS');
+    assert.equal(r.status, "awaiting_user_decision");
+    assert.equal(r.verdict, "PASS_WITH_CONCERNS");
     const meta = repo.readPacketMeta(r.packetPath);
-    assert.equal(meta.lifecycleState, 'awaiting_user_decision');
-    assert.equal(meta.lastAnchor, 'review_findings');
-    const text = fs.readFileSync(r.packetPath, 'utf8');
+    assert.equal(meta.lifecycleState, "awaiting_user_decision");
+    assert.equal(meta.lastAnchor, "review_findings");
+    const text = fs.readFileSync(r.packetPath, "utf8");
     assert.doesNotMatch(text, /# Fix Handoff/);
   });
 });
 
-describe('packet hash guard', () => {
-  it('external mid-loop rewrite refuses append', async () => {
+describe("packet hash guard", () => {
+  it("external mid-loop rewrite refuses append", async () => {
     const dir = initTempRepo();
-    const { factory } = makeFakeAdapterFactory([blockedText('F1')]);
+    const { factory } = makeFakeAdapterFactory([blockedText("F1")]);
     const r1 = await cmdRun({
       repoRoot: dir,
-      reviewer: 'codex',
-      scopeSlug: 'hash',
+      reviewer: "codex",
+      scopeSlug: "hash",
       adapterFactory: factory,
     });
-    assert.equal(r1.status, 'blocked');
+    assert.equal(r1.status, "blocked");
     // external rewrite
-    fs.appendFileSync(r1.packetPath, '\n<!-- external edit -->\n');
+    fs.appendFileSync(r1.packetPath, "\n<!-- external edit -->\n");
     await assert.rejects(
       () =>
         cmdAppendFixCompletion({
@@ -348,53 +390,59 @@ describe('packet hash guard', () => {
   });
 });
 
-describe('malformed fail-closed', () => {
-  it('one correction then still bad → stop without half-write stages', async () => {
+describe("malformed fail-closed", () => {
+  it("one correction then still bad → stop without half-write stages", async () => {
     const dir = initTempRepo();
     // first output bad, second (correction resume) also bad
-    const { factory } = makeFakeAdapterFactory(['not a review at all', 'still garbage']);
+    const { factory } = makeFakeAdapterFactory([
+      "not a review at all",
+      "still garbage",
+    ]);
     const r = await cmdRun({
       repoRoot: dir,
-      reviewer: 'codex',
-      scopeSlug: 'malformed',
+      reviewer: "codex",
+      scopeSlug: "malformed",
       adapterFactory: factory,
     });
     assert.equal(r.ok, false);
-    assert.equal(r.status, 'malformed_reviewer_output');
+    assert.equal(r.status, "malformed_reviewer_output");
     // packet should only have Review Handoff from create, no Review Findings
-    const text = fs.readFileSync(r.packetPath, 'utf8');
+    const text = fs.readFileSync(r.packetPath, "utf8");
     assert.doesNotMatch(text, /# Review Findings/);
   });
 });
 
-describe('DELIVERY_UNKNOWN', () => {
-  it('invoke failure stops without write', async () => {
+describe("DELIVERY_UNKNOWN", () => {
+  it("invoke failure stops without write", async () => {
     const dir = initTempRepo();
     const { factory } = makeFakeAdapterFactory([null]);
     const r = await cmdRun({
       repoRoot: dir,
-      reviewer: 'codex',
-      scopeSlug: 'delivery',
+      reviewer: "codex",
+      scopeSlug: "delivery",
       adapterFactory: factory,
     });
     assert.equal(r.ok, false);
-    assert.equal(r.status, 'DELIVERY_UNKNOWN');
-    const text = fs.readFileSync(r.packetPath, 'utf8');
+    assert.equal(r.status, "DELIVERY_UNKNOWN");
+    const text = fs.readFileSync(r.packetPath, "utf8");
     assert.doesNotMatch(text, /# Review Findings/);
   });
 });
 
-describe('concurrency lock', () => {
-  it('two concurrent OS processes — only one holds packet lock', async () => {
+describe("concurrency lock", () => {
+  it("two concurrent OS processes — only one holds packet lock", async () => {
     const dir = initTempRepo();
-    const packet = repo.createPacketFile(dir, repo.resolveBranch(dir), 'lock');
+    const packet = repo.createPacketFile(dir, repo.resolveBranch(dir), "lock");
     seedPacketHash(dir, packet.packetId, packet.packetPath);
 
     const autoRunUrl = pathToFileURL(
-      path.join(path.dirname(fileURLToPath(import.meta.url)), '../review-loop/auto-run.mjs'),
+      path.join(
+        path.dirname(fileURLToPath(import.meta.url)),
+        "../review-loop/auto-run.mjs",
+      ),
     ).href;
-    const markerPath = path.join(dir, 'lock-race.jsonl');
-    fs.writeFileSync(markerPath, '');
+    const markerPath = path.join(dir, "lock-race.jsonl");
+    fs.writeFileSync(markerPath, "");
 
     const childSrc = `
 import { withPacketLock } from ${JSON.stringify(autoRunUrl)};
@@ -421,27 +469,37 @@ try {
       new Promise((resolve) => {
         const child = spawn(
           process.execPath,
-          ['--input-type=module', '-e', childSrc, label, String(holdMs)],
-          { stdio: ['ignore', 'pipe', 'pipe'] },
+          ["--input-type=module", "-e", childSrc, label, String(holdMs)],
+          { stdio: ["ignore", "pipe", "pipe"] },
         );
-        let stderr = '';
-        child.stderr.on('data', (b) => {
+        let stderr = "";
+        child.stderr.on("data", (b) => {
           stderr += b.toString();
         });
-        child.on('close', (code) => resolve({ label, code, stderr }));
+        child.on("close", (code) => resolve({ label, code, stderr }));
       });
 
-    const [a, b] = await Promise.all([spawnChild('A', 900), spawnChild('B', 900)]);
+    const [a, b] = await Promise.all([
+      spawnChild("A", 900),
+      spawnChild("B", 900),
+    ]);
     const lines = fs
-      .readFileSync(markerPath, 'utf8')
+      .readFileSync(markerPath, "utf8")
       .trim()
-      .split('\n')
+      .split("\n")
       .filter(Boolean)
       .map((l) => JSON.parse(l));
-    const acquired = lines.filter((e) => e.event === 'acquired');
-    const failed = lines.filter((e) => e.event === 'failed');
-    assert.equal(acquired.length, 1, `expected one acquirer, got ${JSON.stringify(lines)}`);
-    assert.ok(failed.length >= 1, `expected loser to fail lock, got ${JSON.stringify(lines)}`);
+    const acquired = lines.filter((e) => e.event === "acquired");
+    const failed = lines.filter((e) => e.event === "failed");
+    assert.equal(
+      acquired.length,
+      1,
+      `expected one acquirer, got ${JSON.stringify(lines)}`,
+    );
+    assert.ok(
+      failed.length >= 1,
+      `expected loser to fail lock, got ${JSON.stringify(lines)}`,
+    );
     assert.ok(
       [a.code, b.code].includes(0) && [a.code, b.code].includes(2),
       `expected one exit 0 and one exit 2, got A=${a.code} B=${b.code}`,
@@ -449,15 +507,239 @@ try {
   });
 });
 
-describe('extractVerdict', () => {
-  it('reads trailing Verdict line', () => {
-    assert.equal(extractVerdict('foo\n\nVerdict: BLOCKED\n'), 'BLOCKED');
-    assert.equal(extractVerdict('## Verdict\n\nPASS\n'), 'PASS');
+describe("extractVerdict", () => {
+  it("reads trailing Verdict line", () => {
+    assert.equal(extractVerdict("foo\n\nVerdict: BLOCKED\n"), "BLOCKED");
+    assert.equal(extractVerdict("## Verdict\n\nPASS\n"), "PASS");
   });
 });
 
-describe('schema fail-closed target files', () => {
-  it('rejects BLOCKED finding with empty Target files', () => {
+describe("schema fail-closed round-1 full columns", () => {
+  it("rejects ID-only findings table with PASS (contract hole closed)", () => {
+    const text = `| ID |
+|---|
+| (none) |
+
+## Verdict
+
+PASS
+`;
+    const r = parseReviewFindings(text);
+    assert.equal(r.ok, false, "ID-only first-round table must fail-closed");
+    assert.match(
+      r.error,
+      /missing columns|Severity|Summary|Evidence|Target files/i,
+    );
+  });
+
+  it("rejects unescaped pipe causing column count mismatch", () => {
+    const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| F1 | [阻塞] | type | string | number | src/a.ts | use enum | tsc |
+
+## Verdict
+
+BLOCKED
+`;
+    const r = parseReviewFindings(text);
+    assert.equal(
+      r.ok,
+      false,
+      "extra | in evidence must not silently shift columns",
+    );
+    assert.match(r.error, /column count mismatch|unescaped/i);
+  });
+});
+
+describe("branchSlug v2 isolation", () => {
+  it("separates feature/payment, feature-payment, Feature/Payment", () => {
+    const a = repo.branchSlug("feature/payment");
+    const b = repo.branchSlug("feature-payment");
+    const c = repo.branchSlug("Feature/Payment");
+    assert.notEqual(a, b);
+    assert.notEqual(a, c);
+    assert.notEqual(b, c);
+    assert.match(a, /--[0-9a-f]{12}$/);
+    assert.match(b, /--[0-9a-f]{12}$/);
+  });
+
+  it("detached identity uses detached:<sha> and distinct slugs per commit", () => {
+    const sha1 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    const sha2 = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    const s1 = repo.branchSlug(`detached:${sha1}`);
+    const s2 = repo.branchSlug(`detached:${sha2}`);
+    assert.notEqual(s1, s2);
+    assert.match(s1, /^detached-aaaaaaaaaaaa--/);
+    assert.equal(repo.branchSlugLegacy(`detached:${sha1}`), "head");
+  });
+
+  it("legacy packet under v1 dir still validates via packet_id slug (no rewrite)", () => {
+    const dir = initTempRepo();
+    const branch = repo.resolveBranch(dir);
+    const legacySlug = repo.branchSlugLegacy(branch);
+    const activeDir = path.join(dir, ".review-handoff", "active", legacySlug);
+    fs.mkdirSync(activeDir, { recursive: true });
+    const fileBase = "2026-07-23_00-00-legacy";
+    const packetId = `${legacySlug}/${fileBase}`;
+    const packetPath = path.join(activeDir, `${fileBase}.md`);
+    fs.writeFileSync(
+      packetPath,
+      `---
+packet_id: ${packetId}
+branch: ${branch}
+scope: legacy
+created: 2026-07-23T00:00:00.000Z
+updated: 2026-07-23T00:00:00.000Z
+last_anchor: review_handoff
+lifecycle_state: in_progress
+round: 1
+loop: on
+---
+
+# Review Handoff
+
+## Goal
+- legacy
+`,
+    );
+    const validated = repo.validatePacketPath(dir, branch, packetPath, {
+      activeOnly: true,
+    });
+    assert.equal(validated.packetId, packetId);
+    assert.ok(
+      validated.packetPath.includes(`${path.sep}${legacySlug}${path.sep}`),
+    );
+    // dual-read list finds it (normalize realpath: macOS /var vs /private/var)
+    const listed = repo
+      .listActivePackets(dir, branch)
+      .map((p) => fs.realpathSync(p));
+    assert.ok(
+      listed.some((p) => p === validated.packetPath),
+      `expected ${validated.packetPath} in ${JSON.stringify(listed)}`,
+    );
+  });
+
+  it("refuses legacy HEAD packet auto-attach to detached identity", () => {
+    const dir = initTempRepo();
+    const headSha = execFileSync("git", ["rev-parse", "HEAD"], {
+      cwd: dir,
+      encoding: "utf8",
+    }).trim();
+    // create orphan commit then detach
+    execFileSync("git", ["checkout", "--detach", "HEAD"], { cwd: dir });
+    const branch = repo.resolveBranch(dir);
+    assert.equal(branch, `detached:${headSha}`);
+
+    const legacyDir = path.join(dir, ".review-handoff", "active", "head");
+    fs.mkdirSync(legacyDir, { recursive: true });
+    const fileBase = "2026-07-23_00-00-head";
+    const packetPath = path.join(legacyDir, `${fileBase}.md`);
+    fs.writeFileSync(
+      packetPath,
+      `---
+packet_id: head/${fileBase}
+branch: HEAD
+scope: head
+created: 2026-07-23T00:00:00.000Z
+updated: 2026-07-23T00:00:00.000Z
+last_anchor: review_handoff
+lifecycle_state: in_progress
+round: 1
+loop: on
+---
+
+# Review Handoff
+
+## Goal
+- head
+`,
+    );
+    assert.throws(
+      () =>
+        repo.validatePacketPath(dir, branch, packetPath, { activeOnly: true }),
+      /branch mismatch|HEAD|detached/i,
+    );
+    // dual-read must not auto-list it
+    assert.equal(repo.listActivePackets(dir, branch).length, 0);
+  });
+});
+
+describe("close accept-concerns", () => {
+  it("archives PWC packet with Decision Closure without rewriting Verdict", async () => {
+    const dir = initTempRepo();
+    const concerns = `Style nits only.
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| C1 | [非阻塞] | naming | style | a.ts | rename | n/a |
+
+## Verdict
+
+PASS_WITH_CONCERNS
+`;
+    const { factory } = makeFakeAdapterFactory([concerns]);
+    const r = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      scopeSlug: "close-pwc",
+      adapterFactory: factory,
+    });
+    assert.equal(r.status, "awaiting_user_decision");
+    const closed = await cmdClose({
+      repoRoot: dir,
+      packetPath: r.packetPath,
+      reason: "accept-concerns",
+    });
+    assert.equal(closed.ok, true);
+    assert.equal(closed.status, "archived");
+    assert.equal(closed.originalVerdict, "PASS_WITH_CONCERNS");
+    assert.deepEqual(closed.acceptedConcernIds, ["C1"]);
+    assert.ok(
+      String(closed.packetPath).includes(`${path.sep}archive${path.sep}`),
+    );
+    const text = fs.readFileSync(closed.packetPath, "utf8");
+    assert.match(text, /# Decision Closure/);
+    assert.match(text, /last_anchor: decision_closure/);
+    assert.match(text, /lifecycle_state: archived/);
+    assert.match(text, /close_reason: accept-concerns/);
+    assert.match(text, /PASS_WITH_CONCERNS/);
+    assert.doesNotMatch(text, /## Verdict\n\nPASS\n/);
+    // idempotent refuse
+    await assert.rejects(
+      () =>
+        cmdClose({
+          repoRoot: dir,
+          packetPath: closed.packetPath,
+          reason: "accept-concerns",
+        }),
+      /archive|active|mismatch|refuses/i,
+    );
+  });
+
+  it("refuses close when not awaiting_user_decision", async () => {
+    const dir = initTempRepo();
+    const { factory } = makeFakeAdapterFactory([passText()]);
+    const r = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      scopeSlug: "close-pass",
+      adapterFactory: factory,
+    });
+    assert.equal(r.status, "archived");
+    await assert.rejects(
+      () =>
+        cmdClose({
+          repoRoot: dir,
+          packetPath: r.packetPath,
+          reason: "accept-concerns",
+        }),
+      /archive|awaiting_user_decision|refuses/i,
+    );
+  });
+});
+
+describe("schema fail-closed target files", () => {
+  it("rejects BLOCKED finding with empty Target files", () => {
     const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
 |---|---|---|---|---|---|---|
 | F1 | [阻塞] | bug | evidence here |  | return n | unit test |
@@ -471,7 +753,7 @@ BLOCKED
     assert.match(r.error, /Target files|target files/i);
   });
 
-  it('rejects non-blocking finding missing Target files', () => {
+  it("rejects non-blocking finding missing Target files", () => {
     const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
 |---|---|---|---|---|---|---|
 | C1 | [非阻塞] | naming | style |  | rename | n/a |
@@ -485,7 +767,7 @@ PASS_WITH_CONCERNS
     assert.match(r.error, /Target files|target files/i);
   });
 
-  it('rejects New Findings prose without table', () => {
+  it("rejects New Findings prose without table", () => {
     const text = `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -504,12 +786,12 @@ ok
 
 PASS
 `;
-    const r = parseReReview(text, ['F1']);
+    const r = parseReReview(text, ["F1"]);
     assert.equal(r.ok, false);
     assert.match(r.error, /New Findings|table/i);
   });
 
-  it('rejects New Findings table present but schema incomplete (ID-only)', () => {
+  it("rejects New Findings table present but schema incomplete (ID-only)", () => {
     const text = `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -530,12 +812,15 @@ ok
 
 PASS
 `;
-    const r = parseReReview(text, ['F1']);
-    assert.equal(r.ok, false, 'ID-only New Findings table must fail-closed');
-    assert.match(r.error, /missing columns|Severity|Summary|Evidence|Target files/i);
+    const r = parseReReview(text, ["F1"]);
+    assert.equal(r.ok, false, "ID-only New Findings table must fail-closed");
+    assert.match(
+      r.error,
+      /missing columns|Severity|Summary|Evidence|Target files/i,
+    );
   });
 
-  it('rejects re-review new blocker missing Target files', () => {
+  it("rejects re-review new blocker missing Target files", () => {
     const text = `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -556,12 +841,12 @@ Still broken.
 
 BLOCKED
 `;
-    const r = parseReReview(text, ['F1']);
+    const r = parseReReview(text, ["F1"]);
     assert.equal(r.ok, false);
     assert.match(r.error, /target files|Target files/i);
   });
 
-  it('rejects duplicate Verdict lines (F5)', () => {
+  it("rejects duplicate Verdict lines (F5)", () => {
     const text = `| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
 |---|---|---|---|---|---|---|
 | (none) | — | — | — | — | — | — |
@@ -576,7 +861,7 @@ PASS
     assert.equal(r.ok, false);
   });
 
-  it('rejects open status as reassessment (F1)', () => {
+  it("rejects open status as reassessment (F1)", () => {
     const text = `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -597,12 +882,12 @@ ok
 
 PASS
 `;
-    const r = parseReReview(text, ['F1']);
+    const r = parseReReview(text, ["F1"]);
     assert.equal(r.ok, false);
     assert.match(r.error, /status|open/i);
   });
 
-  it('rejects Regression Surface H1 injection (F2)', () => {
+  it("rejects Regression Surface H1 injection (F2)", () => {
     const text = `## Prior Findings Reassessment
 
 | ID | 状态 | 复核证据 |
@@ -627,7 +912,7 @@ evil
 
 PASS
 `;
-    const r = parseReReview(text, ['F1']);
+    const r = parseReReview(text, ["F1"]);
     assert.equal(r.ok, false);
     assert.match(r.error, /H1|Forged/i);
   });

@@ -5,9 +5,14 @@
  * Round ≥2 (Re-review): prior reassessment + New Findings + Regression Surface + Verdict
  */
 
-const VERDICTS = new Set(['PASS', 'PASS_WITH_CONCERNS', 'BLOCKED', 'NO_FINDINGS']);
+const VERDICTS = new Set([
+  "PASS",
+  "PASS_WITH_CONCERNS",
+  "BLOCKED",
+  "NO_FINDINGS",
+]);
 
-const VERDICT_TOKEN = 'PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS';
+const VERDICT_TOKEN = "PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS";
 
 /**
  * Collect all physical Verdict declarations in document order.
@@ -17,11 +22,14 @@ const VERDICT_TOKEN = 'PASS_WITH_CONCERNS|PASS|BLOCKED|NO_FINDINGS';
 export function collectVerdicts(text) {
   /** @type {string[]} */
   const found = [];
-  const lines = String(text).split('\n');
+  const lines = String(text).split("\n");
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i].trim();
     let m = line.match(
-      new RegExp(`^(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*(${VERDICT_TOKEN})\\b`, 'i'),
+      new RegExp(
+        `^(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*(${VERDICT_TOKEN})\\b`,
+        "i",
+      ),
     );
     if (m) {
       found.push(m[1].toUpperCase());
@@ -32,7 +40,7 @@ export function collectVerdicts(text) {
       for (let j = i + 1; j < lines.length; j += 1) {
         const next = lines[j].trim();
         if (!next) continue;
-        m = next.match(new RegExp(`^(${VERDICT_TOKEN})$`, 'i'));
+        m = next.match(new RegExp(`^(${VERDICT_TOKEN})$`, "i"));
         if (m) found.push(m[1].toUpperCase());
         break;
       }
@@ -54,18 +62,23 @@ export function extractVerdict(text) {
   //   - `Verdict: TOKEN`, or
   //   - bare TOKEN only when immediately preceded by `## Verdict`
   const lines = String(text)
-    .split('\n')
+    .split("\n")
     .map((l) => l.trim())
     .filter(Boolean);
   if (lines.length < 1) return null;
-  const last = lines.at(-1) ?? '';
-  const prev = lines.at(-2) ?? '';
+  const last = lines.at(-1) ?? "";
+  const prev = lines.at(-2) ?? "";
   const labeled = last.match(
-    new RegExp(`^(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*(${VERDICT_TOKEN})$`, 'i'),
+    new RegExp(
+      `^(?:\\*\\*)?Verdict(?:\\*\\*)?\\s*[:：]\\s*(${VERDICT_TOKEN})$`,
+      "i",
+    ),
   );
   const bare =
-    !labeled && new RegExp(`^(${VERDICT_TOKEN})$`, 'i').test(last) && /^##\s*Verdict$/i.test(prev)
-      ? last.match(new RegExp(`^(${VERDICT_TOKEN})$`, 'i'))
+    !labeled &&
+    new RegExp(`^(${VERDICT_TOKEN})$`, "i").test(last) &&
+    /^##\s*Verdict$/i.test(prev)
+      ? last.match(new RegExp(`^(${VERDICT_TOKEN})$`, "i"))
       : null;
   const m = labeled || bare;
   if (!m) return null;
@@ -75,22 +88,26 @@ export function extractVerdict(text) {
 
 /**
  * Parse a markdown pipe table into rows of objects keyed by header.
+ * Fail-closed metadata: when a data row's cell count ≠ header count (typical unescaped `|`
+ * in evidence/code), set `columnMismatch` so callers can refuse silent field shifts.
  * @param {string} text
- * @returns {{ headers: string[], rows: Record<string,string>[] }}
+ * @returns {{ headers: string[], rows: Record<string,string>[], columnMismatch: null|{rowIndex:number,expected:number,actual:number} }[]}
  */
 export function parseMarkdownTables(text) {
-  const lines = String(text).split('\n');
-  /** @type {{ headers: string[], rows: Record<string,string>[] }[]} */
+  const lines = String(text).split("\n");
+  /** @type {{ headers: string[], rows: Record<string,string>[], columnMismatch: null|{rowIndex:number,expected:number,actual:number} }[]} */
   const tables = [];
   for (let i = 0; i < lines.length; i += 1) {
     if (!/^\s*\|/.test(lines[i])) continue;
     const headerCells = splitRow(lines[i]);
     if (!headerCells.length) continue;
-    const next = lines[i + 1] ?? '';
+    const next = lines[i + 1] ?? "";
     if (!/^\s*\|?\s*:?-{3,}/.test(next)) continue;
     const headers = headerCells.map(normalizeHeader);
     /** @type {Record<string,string>[]} */
     const rows = [];
+    /** @type {null|{rowIndex:number,expected:number,actual:number}} */
+    let columnMismatch = null;
     i += 2;
     while (i < lines.length && /^\s*\|/.test(lines[i])) {
       const cells = splitRow(lines[i]);
@@ -98,30 +115,34 @@ export function parseMarkdownTables(text) {
         i += 1;
         continue;
       }
+      if (cells.length !== headers.length && !columnMismatch) {
+        columnMismatch = {
+          rowIndex: rows.length,
+          expected: headers.length,
+          actual: cells.length,
+        };
+      }
       /** @type {Record<string,string>} */
       const row = {};
       headers.forEach((h, idx) => {
-        row[h] = (cells[idx] ?? '').trim();
+        row[h] = (cells[idx] ?? "").trim();
       });
       rows.push(row);
       i += 1;
     }
     i -= 1;
-    tables.push({ headers, rows });
+    tables.push({ headers, rows, columnMismatch });
   }
   return tables;
 }
 
 function splitRow(line) {
-  const raw = line.trim().replace(/^\|/, '').replace(/\|$/, '');
-  return raw.split('|').map((c) => c.trim());
+  const raw = line.trim().replace(/^\|/, "").replace(/\|$/, "");
+  return raw.split("|").map((c) => c.trim());
 }
 
 function normalizeHeader(h) {
-  return String(h)
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ');
+  return String(h).trim().toLowerCase().replace(/\s+/g, " ");
 }
 
 /**
@@ -129,15 +150,18 @@ function normalizeHeader(h) {
  * Each entry lists accepted header aliases (already compared after normalizeHeader).
  */
 const FINDINGS_TABLE_COLUMNS = [
-  { label: 'ID', aliases: ['id', 'finding id', 'finding_id'] },
-  { label: 'Severity', aliases: ['严重度', 'severity', 'sev'] },
-  { label: 'Summary', aliases: ['标题', 'title', 'summary'] },
-  { label: 'Evidence', aliases: ['证据', 'evidence'] },
-  { label: 'Target files', aliases: ['target files', 'target file', 'files', 'target'] },
-  { label: 'Required fix', aliases: ['required fix', 'fix', 'required'] },
+  { label: "ID", aliases: ["id", "finding id", "finding_id"] },
+  { label: "Severity", aliases: ["严重度", "severity", "sev"] },
+  { label: "Summary", aliases: ["标题", "title", "summary"] },
+  { label: "Evidence", aliases: ["证据", "evidence"] },
   {
-    label: 'Acceptance check',
-    aliases: ['acceptance check', 'acceptance', 'check'],
+    label: "Target files",
+    aliases: ["target files", "target file", "files", "target"],
+  },
+  { label: "Required fix", aliases: ["required fix", "fix", "required"] },
+  {
+    label: "Acceptance check",
+    aliases: ["acceptance check", "acceptance", "check"],
   },
 ];
 
@@ -161,13 +185,19 @@ export function missingFindingsTableColumns(headers) {
  * @param {Record<string,string>} row
  */
 export function findingFromRow(row) {
-  const id = row.id || row['finding id'] || row['finding_id'] || '';
-  const severity = row['严重度'] || row.severity || row['sev'] || '';
-  const title = row['标题'] || row.title || row.summary || '';
-  const evidence = row['证据'] || row.evidence || '';
-  const target = row['target files'] || row['target file'] || row.files || row['target'] || '';
-  const required = row['required fix'] || row.fix || row['required'] || '';
-  const acceptance = row['acceptance check'] || row.acceptance || row['check'] || '';
+  const id = row.id || row["finding id"] || row["finding_id"] || "";
+  const severity = row["严重度"] || row.severity || row["sev"] || "";
+  const title = row["标题"] || row.title || row.summary || "";
+  const evidence = row["证据"] || row.evidence || "";
+  const target =
+    row["target files"] ||
+    row["target file"] ||
+    row.files ||
+    row["target"] ||
+    "";
+  const required = row["required fix"] || row.fix || row["required"] || "";
+  const acceptance =
+    row["acceptance check"] || row.acceptance || row["check"] || "";
   return {
     id: String(id).trim(),
     severity: String(severity).trim(),
@@ -176,7 +206,9 @@ export function findingFromRow(row) {
     targetFiles: String(target).trim(),
     requiredFix: String(required).trim(),
     acceptanceCheck: String(acceptance).trim(),
-    blocking: /阻塞|blocking|blocker/i.test(severity) && !/非阻塞|non-?blocking/i.test(severity),
+    blocking:
+      /阻塞|blocking|blocker/i.test(severity) &&
+      !/非阻塞|non-?blocking/i.test(severity),
   };
 }
 
@@ -188,32 +220,51 @@ export function findingFromRow(row) {
 export function parseReviewFindings(text) {
   const verdict = extractVerdict(text);
   if (!verdict || !VERDICTS.has(verdict)) {
-    return { ok: false, error: 'missing or invalid Verdict (expected PASS|PASS_WITH_CONCERNS|BLOCKED|NO_FINDINGS)' };
+    return {
+      ok: false,
+      error:
+        "missing or invalid Verdict (expected PASS|PASS_WITH_CONCERNS|BLOCKED|NO_FINDINGS)",
+    };
   }
 
   const tables = parseMarkdownTables(text);
-  /** @type {ReturnType<typeof findingFromRow>[]} */
-  let findings = [];
-  for (const t of tables) {
-    const hasId = t.headers.some((h) => h === 'id' || h === 'finding id');
-    if (!hasId) continue;
-    findings = t.rows.map(findingFromRow).filter((f) => f.id);
-    if (findings.length) break;
+  const findingsTable = tables.find((t) =>
+    t.headers.some((h) => h === "id" || h === "finding id"),
+  );
+  // Always require a findings table (PASS may use a single (none) row)
+  if (!findingsTable) {
+    return { ok: false, error: "missing findings table with ID column" };
+  }
+  // Fail-closed: same full column set as re-review New Findings (reject ID-only stubs)
+  const missingCols = missingFindingsTableColumns(findingsTable.headers);
+  if (missingCols.length) {
+    return {
+      ok: false,
+      error: `findings table missing columns required by first-round schema: ${missingCols.join(", ")}`,
+    };
+  }
+  if (findingsTable.columnMismatch) {
+    const m = findingsTable.columnMismatch;
+    return {
+      ok: false,
+      error: `findings table column count mismatch at data row ${m.rowIndex}: expected ${m.expected} cells, got ${m.actual} (unescaped | in a cell?)`,
+    };
   }
 
-  // Always require a findings table (PASS may use a single (none) row)
-  if (!tables.some((t) => t.headers.some((h) => h === 'id' || h === 'finding id'))) {
-    return { ok: false, error: 'missing findings table with ID column' };
-  }
+  /** @type {ReturnType<typeof findingFromRow>[]} */
+  let findings = findingsTable.rows.map(findingFromRow).filter((f) => f.id);
 
   // Filter placeholder (none) rows for field validation
   const realFindings = findings.filter(
-    (f) => f.id && f.id !== '(none)' && !/^[-—]+$/.test(f.id),
+    (f) => f.id && f.id !== "(none)" && !/^[-—]+$/.test(f.id),
   );
 
-  if (verdict === 'BLOCKED' || verdict === 'PASS_WITH_CONCERNS') {
+  if (verdict === "BLOCKED" || verdict === "PASS_WITH_CONCERNS") {
     if (!realFindings.length) {
-      return { ok: false, error: `${verdict} requires at least one finding row with ID` };
+      return {
+        ok: false,
+        error: `${verdict} requires at least one finding row with ID`,
+      };
     }
   }
 
@@ -221,7 +272,10 @@ export function parseReviewFindings(text) {
     if (!f.title || !f.severity) {
       return { ok: false, error: `finding ${f.id} missing title or severity` };
     }
-    if (!/^\[(阻塞|非阻塞)\]$/.test(f.severity) && !/^(blocking|non-?blocking)$/i.test(f.severity)) {
+    if (
+      !/^\[(阻塞|非阻塞)\]$/.test(f.severity) &&
+      !/^(blocking|non-?blocking)$/i.test(f.severity)
+    ) {
       return {
         ok: false,
         error: `finding ${f.id} severity must be [阻塞] or [非阻塞] (got "${f.severity}")`,
@@ -241,24 +295,28 @@ export function parseReviewFindings(text) {
 
   const blocking = realFindings.filter((f) => f.blocking);
   findings = realFindings;
-  if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
+  if (verdict === "PASS" || verdict === "NO_FINDINGS") {
     if (blocking.length) {
       return { ok: false, error: `${verdict} cannot include [阻塞] findings` };
     }
   }
 
-  if (verdict === 'PASS_WITH_CONCERNS') {
+  if (verdict === "PASS_WITH_CONCERNS") {
     if (blocking.length) {
       return {
         ok: false,
-        error: 'PASS_WITH_CONCERNS only allowed when all remaining findings are non-blocking',
+        error:
+          "PASS_WITH_CONCERNS only allowed when all remaining findings are non-blocking",
       };
     }
   }
 
-  if (verdict === 'BLOCKED') {
+  if (verdict === "BLOCKED") {
     if (!blocking.length) {
-      return { ok: false, error: 'BLOCKED requires at least one [阻塞] finding' };
+      return {
+        ok: false,
+        error: "BLOCKED requires at least one [阻塞] finding",
+      };
     }
   }
 
@@ -274,39 +332,48 @@ export function parseReviewFindings(text) {
 export function parseReReview(text, priorFindingIds = [], opts = {}) {
   const verdict = extractVerdict(text);
   if (!verdict || !VERDICTS.has(verdict)) {
-    return { ok: false, error: 'missing or invalid Verdict on re-review' };
+    return { ok: false, error: "missing or invalid Verdict on re-review" };
   }
 
   // Prior findings reassessment: need status per prior ID when priors exist
   const lower = String(text).toLowerCase();
-  if (!/prior findings reassessment|prior finding|复评|reassessment/i.test(text) && priorFindingIds.length) {
-    return { ok: false, error: 're-review missing Prior Findings Reassessment section' };
+  if (
+    !/prior findings reassessment|prior finding|复评|reassessment/i.test(
+      text,
+    ) &&
+    priorFindingIds.length
+  ) {
+    return {
+      ok: false,
+      error: "re-review missing Prior Findings Reassessment section",
+    };
   }
   if (!/new findings/i.test(lower) && !/新增/i.test(text)) {
     // allow empty new findings if section header present
     if (!/##\s*new findings/i.test(text)) {
-      return { ok: false, error: 're-review missing New Findings section' };
+      return { ok: false, error: "re-review missing New Findings section" };
     }
   }
   if (!/regression surface/i.test(lower) && !/回归/i.test(text)) {
-    return { ok: false, error: 're-review missing Regression Surface section' };
+    return { ok: false, error: "re-review missing Regression Surface section" };
   }
 
   /** @type {{ id: string, status: string, evidence: string }[]} */
   const reassessments = [];
   const tables = parseMarkdownTables(text);
   for (const t of tables) {
-    const idKey = t.headers.find((h) => h === 'id' || h === 'finding id');
+    const idKey = t.headers.find((h) => h === "id" || h === "finding id");
     const statusKey = t.headers.find((h) => /status|状态|result/.test(h));
     if (!idKey || !statusKey) continue;
     // Prefer reassessment tables (strict status vocabulary — F1)
     for (const row of t.rows) {
       const id = row[idKey];
-      const status = String(row[statusKey] ?? '').trim();
+      const status = String(row[statusKey] ?? "").trim();
       if (!id) continue;
       if (/^(resolved|partially|unresolved)$/i.test(status)) {
-        const evidence = row.evidence || row['复核证据'] || row['evidence'] || '';
-        if (!String(evidence).trim() || evidence === '—') {
+        const evidence =
+          row.evidence || row["复核证据"] || row["evidence"] || "";
+        if (!String(evidence).trim() || evidence === "—") {
           return {
             ok: false,
             error: `reassessment for ${id} missing 复核证据`,
@@ -330,7 +397,10 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
   if (priorFindingIds.length) {
     for (const id of priorFindingIds) {
       if (!reassessments.some((r) => r.id === id)) {
-        return { ok: false, error: `re-review missing reassessment for prior finding ${id}` };
+        return {
+          ok: false,
+          error: `re-review missing reassessment for prior finding ${id}`,
+        };
       }
     }
   }
@@ -340,18 +410,18 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
   let newFindings = [];
   const newSectionMatch = String(text).split(/##\s*New Findings/i);
   if (newSectionMatch.length < 2) {
-    return { ok: false, error: 're-review missing New Findings section' };
+    return { ok: false, error: "re-review missing New Findings section" };
   }
-  const newSectionBody = newSectionMatch[1].split(/##\s+/)[0] ?? '';
+  const newSectionBody = newSectionMatch[1].split(/##\s+/)[0] ?? "";
   const newTables = parseMarkdownTables(newSectionBody);
   const newFindingsTable = newTables.find((t) =>
-    t.headers.some((h) => h === 'id' || h === 'finding id'),
+    t.headers.some((h) => h === "id" || h === "finding id"),
   );
   if (!newFindingsTable) {
     return {
       ok: false,
       error:
-        'New Findings must include findings table with ID column (use a single (none) row if empty)',
+        "New Findings must include findings table with ID column (use a single (none) row if empty)",
     };
   }
   // Fail-closed: table must carry the same column set as first-round findings schema
@@ -360,17 +430,30 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
   if (missingCols.length) {
     return {
       ok: false,
-      error: `New Findings table missing columns required by first-round schema: ${missingCols.join(', ')}`,
+      error: `New Findings table missing columns required by first-round schema: ${missingCols.join(", ")}`,
+    };
+  }
+  if (newFindingsTable.columnMismatch) {
+    const m = newFindingsTable.columnMismatch;
+    return {
+      ok: false,
+      error: `New Findings table column count mismatch at data row ${m.rowIndex}: expected ${m.expected} cells, got ${m.actual} (unescaped | in a cell?)`,
     };
   }
   newFindings = newFindingsTable.rows
     .map(findingFromRow)
-    .filter((f) => f.id && f.id !== '(none)' && !/^[-—]+$/.test(f.id));
+    .filter((f) => f.id && f.id !== "(none)" && !/^[-—]+$/.test(f.id));
   for (const f of newFindings) {
     if (!f.title || !f.severity) {
-      return { ok: false, error: `new finding ${f.id} missing title or severity` };
+      return {
+        ok: false,
+        error: `new finding ${f.id} missing title or severity`,
+      };
     }
-    if (!/^\[(阻塞|非阻塞)\]$/.test(f.severity) && !/^(blocking|non-?blocking)$/i.test(f.severity)) {
+    if (
+      !/^\[(阻塞|非阻塞)\]$/.test(f.severity) &&
+      !/^(blocking|non-?blocking)$/i.test(f.severity)
+    ) {
       return {
         ok: false,
         error: `new finding ${f.id} severity must be [阻塞] or [非阻塞]`,
@@ -392,33 +475,43 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
   }
 
   // Extract Regression Surface body (preserve reviewer text; never invent "none")
-  let regressionSurface = '';
+  let regressionSurface = "";
   const regSplit = String(text).split(/##\s*Regression Surface/i);
   if (regSplit[1]) {
     regressionSurface = regSplit[1].split(/##\s+/)[0].trim();
     // Strip trailing verdict block if nested
     regressionSurface = regressionSurface
-      .replace(/##\s*Verdict[\s\S]*$/i, '')
-      .replace(/^Verdict\s*[:：].*$/im, '')
+      .replace(/##\s*Verdict[\s\S]*$/i, "")
+      .replace(/^Verdict\s*[:：].*$/im, "")
       .trim();
   }
   if (!regressionSurface) {
-    return { ok: false, error: 're-review Regression Surface section is empty' };
+    return {
+      ok: false,
+      error: "re-review Regression Surface section is empty",
+    };
   }
   try {
-    assertNoInjectedH1(regressionSurface, 'Regression Surface');
+    assertNoInjectedH1(regressionSurface, "Regression Surface");
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 
-  const unresolved = reassessments.filter((r) => r.status === 'unresolved' || r.status === 'partially');
+  const unresolved = reassessments.filter(
+    (r) => r.status === "unresolved" || r.status === "partially",
+  );
   const newBlocking = newFindings.filter((f) => f.blocking);
   // F1: only prior *blocking* IDs gate PASS (explicit list; empty means none blocking)
   const priorBlocking = new Set(
-    Array.isArray(opts.priorBlockingIds) ? opts.priorBlockingIds : priorFindingIds,
+    Array.isArray(opts.priorBlockingIds)
+      ? opts.priorBlockingIds
+      : priorFindingIds,
   );
   const unresolvedBlocking = unresolved.filter((r) => priorBlocking.has(r.id));
-  if (verdict === 'PASS' || verdict === 'NO_FINDINGS') {
+  if (verdict === "PASS" || verdict === "NO_FINDINGS") {
     if (unresolvedBlocking.length || newBlocking.length) {
       return {
         ok: false,
@@ -426,19 +519,31 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
       };
     }
   }
-  if (verdict === 'PASS_WITH_CONCERNS') {
+  if (verdict === "PASS_WITH_CONCERNS") {
     if (newBlocking.length) {
-      return { ok: false, error: 'PASS_WITH_CONCERNS cannot include new [阻塞] findings' };
+      return {
+        ok: false,
+        error: "PASS_WITH_CONCERNS cannot include new [阻塞] findings",
+      };
     }
     if (unresolvedBlocking.length) {
       return {
         ok: false,
-        error: 'PASS_WITH_CONCERNS rejected: unresolved/partially prior blockers remain (must BLOCKED)',
+        error:
+          "PASS_WITH_CONCERNS rejected: unresolved/partially prior blockers remain (must BLOCKED)",
       };
     }
   }
-  if (verdict === 'BLOCKED' && !unresolvedBlocking.length && !newBlocking.length) {
-    return { ok: false, error: 'BLOCKED re-review requires unresolved prior blocker or new blocker' };
+  if (
+    verdict === "BLOCKED" &&
+    !unresolvedBlocking.length &&
+    !newBlocking.length
+  ) {
+    return {
+      ok: false,
+      error:
+        "BLOCKED re-review requires unresolved prior blocker or new blocker",
+    };
   }
 
   return {
@@ -454,11 +559,13 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
  * Reject top-level H1 injection in free-form reviewer prose (F2).
  * @param {string} text
  */
-export function assertNoInjectedH1(text, label = 'section') {
-  const lines = String(text).split('\n');
+export function assertNoInjectedH1(text, label = "section") {
+  const lines = String(text).split("\n");
   for (const line of lines) {
     if (/^# [^#\n]/.test(line.trim())) {
-      throw new Error(`${label} must not contain top-level H1 lines (got: ${line.trim().slice(0, 60)})`);
+      throw new Error(
+        `${label} must not contain top-level H1 lines (got: ${line.trim().slice(0, 60)})`,
+      );
     }
   }
   return text;
@@ -472,13 +579,13 @@ export function formatReviewFindingsStage(parsed) {
   const { verdict, findings, reviewer, baseSha, evidencePath } = parsed;
   const rows =
     findings.length === 0
-      ? '| (none) | — | No findings | — | — | — | — |'
+      ? "| (none) | — | No findings | — | — | — | — |"
       : findings
           .map(
             (f) =>
               `| ${f.id} | ${f.severity} | ${f.title} | ${f.evidence} | ${f.targetFiles} | ${f.requiredFix} | ${f.acceptanceCheck} |`,
           )
-          .join('\n');
+          .join("\n");
 
   let md = `# Review Findings
 
@@ -505,13 +612,13 @@ ${verdict}
 `;
 
   // Plan T2: Fix Handoff only for BLOCKED (PWC parks as awaiting_user_decision without handoff)
-  if (verdict === 'BLOCKED') {
+  if (verdict === "BLOCKED") {
     const handoffRows = findings
       .map(
         (f) =>
           `| ${f.id} | ${f.severity} | ${f.title} | ${f.targetFiles} | ${f.requiredFix} | ${f.acceptanceCheck} |`,
       )
-      .join('\n');
+      .join("\n");
     md += `
 # Fix Handoff
 
@@ -539,7 +646,7 @@ ${handoffRows}
 - Append \`# Fix Completion\` via \`review-loop fix-completion\`
 `;
   }
-  return md.trim() + '\n';
+  return md.trim() + "\n";
 }
 
 /**
@@ -553,22 +660,23 @@ ${handoffRows}
  * }} parsed
  */
 export function formatReReviewStage(parsed) {
-  const title = parsed.round > 2 ? `# Re-review (round ${parsed.round})` : '# Re-review';
+  const title =
+    parsed.round > 2 ? `# Re-review (round ${parsed.round})` : "# Re-review";
   const reRows =
     parsed.reassessments.length === 0
-      ? '| (none) | — | — |'
+      ? "| (none) | — | — |"
       : parsed.reassessments
-          .map((r) => `| ${r.id} | ${r.status} | ${r.evidence || '—'} |`)
-          .join('\n');
+          .map((r) => `| ${r.id} | ${r.status} | ${r.evidence || "—"} |`)
+          .join("\n");
   const newRows =
     parsed.newFindings.length === 0
-      ? '| (none) | — | — | — | — | — | — |'
+      ? "| (none) | — | — | — | — | — | — |"
       : parsed.newFindings
           .map(
             (f) =>
               `| ${f.id} | ${f.severity} | ${f.title} | ${f.evidence} | ${f.targetFiles} | ${f.requiredFix} | ${f.acceptanceCheck} |`,
           )
-          .join('\n');
+          .join("\n");
 
   return `${title}
 
@@ -594,7 +702,7 @@ ${newRows}
 
 ## Regression Surface
 
-${assertNoInjectedH1(parsed.regressionSurface || 'No load-bearing regressions identified beyond listed findings.', 'Regression Surface')}
+${assertNoInjectedH1(parsed.regressionSurface || "No load-bearing regressions identified beyond listed findings.", "Regression Surface")}
 
 ## Verdict
 
@@ -609,10 +717,56 @@ ${parsed.verdict}
  */
 export function lifecycleForVerdict(stage, verdict) {
   const v = String(verdict).toUpperCase();
-  if (v === 'PASS' || v === 'NO_FINDINGS') return 'archived';
-  if (v === 'PASS_WITH_CONCERNS') return 'awaiting_user_decision';
-  if (v === 'BLOCKED') return 'blocked';
-  return 'in_progress';
+  if (v === "PASS" || v === "NO_FINDINGS") return "archived";
+  if (v === "PASS_WITH_CONCERNS") return "awaiting_user_decision";
+  if (v === "BLOCKED") return "blocked";
+  return "in_progress";
+}
+
+/**
+ * Format user Decision Closure stage (PWC accept-concerns).
+ * Does not rewrite the original Verdict — acceptance ≠ resolved.
+ * @param {{
+ *   reason: string,
+ *   originalVerdict: string,
+ *   concerns: { id: string, title?: string, severity?: string }[],
+ *   closedAt?: string,
+ * }} opts
+ */
+export function formatDecisionClosureStage(opts) {
+  const closedAt = opts.closedAt || new Date().toISOString();
+  const concerns = Array.isArray(opts.concerns) ? opts.concerns : [];
+  const rows =
+    concerns.length === 0
+      ? "| (none) | — | — | accepted as backlog |"
+      : concerns
+          .map(
+            (c) =>
+              `| ${c.id || "—"} | ${c.severity || "—"} | ${c.title || "—"} | accepted as backlog |`,
+          )
+          .join("\n");
+  return `# Decision Closure
+
+## Reason
+
+\`${opts.reason}\`
+
+## Original Verdict
+
+\`${opts.originalVerdict}\`
+
+## Accepted Concerns
+
+| ID | 严重度 | 标题 | Disposition |
+|---|---|---|---|
+${rows}
+
+## Closure
+
+- closed_at: ${closedAt}
+- actor: user via review-loop close
+- note: accepting concerns does not rewrite the original Verdict to PASS
+`;
 }
 
 export { VERDICTS };

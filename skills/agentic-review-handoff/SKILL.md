@@ -39,6 +39,9 @@ node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--base <sha>] [--rou
 node "$RL" fix-completion --repo "$REPO" --packet "$PACKET" --body-file /tmp/fix.md
 node "$RL" run --continue --repo "$REPO" --packet "$PACKET"
 
+# After PASS_WITH_CONCERNS: accept remaining concerns and archive (no re-review)
+node "$RL" close --repo "$REPO" --packet "$PACKET" --reason accept-concerns
+
 # Advisory decision consult (not part of Verdict machine)
 node "$RL" consult --repo "$REPO" --peer=codex --question-file /tmp/q.md
 
@@ -71,7 +74,7 @@ node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
 
 ## Legacy dual-window — removed (T8)
 
-`open` / `bind` / `next` / `wait` / `append-eof` / `complete` / `board` / `resolve` / `gate` / `disarm` / `blind-submit` / `h1-probe` were deleted in T8 (`plan-2026-07-22-review-loop-v2-auto-loop.md` D11). Invoking them returns a migration error pointing at `run` / `fix-completion` / `consult`.
+`open` / `bind` / `next` / `wait` / `append-eof` / `complete` / `board` / `resolve` / `gate` / `disarm` / `blind-submit` / `h1-probe` were deleted in T8 (`plan-2026-07-22-review-loop-v2-auto-loop.md` D11). Invoking them returns a migration error pointing at `run` / `fix-completion` / `close` / `consult`.
 
 ## Read-only Boundary (Important)
 

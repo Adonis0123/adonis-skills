@@ -14,6 +14,7 @@ Authoritative machine + Reviewer contract for `review-loop run`.
 review-loop run --repo <root> --reviewer codex|grok|claude [--base <sha>] [--rounds 3] [--packet <path>]
 review-loop run --continue --repo <root> [--packet <path>] [--rounds N]
 review-loop fix-completion --repo <root> --packet <path> --body-file <md>
+review-loop close --repo <root> --packet <path> --reason accept-concerns
 review-loop consult --repo <root> --peer codex|grok|claude --question-file <md>
 ```
 
@@ -24,8 +25,10 @@ review-loop consult --repo <root> --peer codex|grok|claude --question-file <md>
 Must emit:
 
 1. Markdown table columns: `ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check`
+   (full header set required even for a single `(none)` row; ID-only stubs are malformed)
 2. Severity tags: `[阻塞]` or `[非阻塞]`
 3. Exactly one terminal Verdict: `PASS` | `PASS_WITH_CONCERNS` | `BLOCKED` | `NO_FINDINGS`
+4. Do not put unescaped `|` inside table cells (TypeScript unions, shell pipes). Unescaped pipes cause fail-closed column-count rejection.
 
 Rules:
 
@@ -48,11 +51,21 @@ Missing any section (including Verdict) is **malformed**. Auto loop asks for one
 
 This table is the auto-loop source of truth (scripts enforce it). Do **not** apply the classic lifecycle table in `packet-addressing.md` to auto packets.
 
-| Verdict                | lifecycle_state          | Typical `last_anchor`                                                   | Action                                                                        |
-| ---------------------- | ------------------------ | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `PASS` / `NO_FINDINGS` | `archived`               | `review_findings` or `re_review`                                        | Archive packet; terminal report                                               |
-| `PASS_WITH_CONCERNS`   | `awaiting_user_decision` | first round: `review_findings` (no Fix Handoff); re-review: `re_review` | Terminal report lists concerns; user archives or continues                    |
-| `BLOCKED`              | `blocked`                | first round: `fix_handoff`; re-review: `re_review`                      | Return structured blockers; Fixer fixes + `fix-completion` + `run --continue` |
+| Verdict                | lifecycle_state          | Typical `last_anchor`                                                   | Action                                                                                        |
+| ---------------------- | ------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `PASS` / `NO_FINDINGS` | `archived`               | `review_findings` or `re_review`                                        | Archive packet; terminal report                                                               |
+| `PASS_WITH_CONCERNS`   | `awaiting_user_decision` | first round: `review_findings` (no Fix Handoff); re-review: `re_review` | Terminal report lists concerns; user `close --reason accept-concerns` **or** `run --continue` |
+| `BLOCKED`              | `blocked`                | first round: `fix_handoff`; re-review: `re_review`                      | Return structured blockers; Fixer fixes + `fix-completion` + `run --continue`                 |
+
+### Decision Closure (`close --reason accept-concerns`)
+
+User-only terminal path when lifecycle is `awaiting_user_decision` after `PASS_WITH_CONCERNS`:
+
+- Requires packet lock + content-hash guard (same as other auto stage writes).
+- Appends `# Decision Closure` with reason, original Verdict `PASS_WITH_CONCERNS`, accepted concern IDs, and timestamp.
+- Sets `last_anchor=decision_closure`, `lifecycle_state=archived`, `mv` to `archive/` under the **packet_id slug** (no path rewrite).
+- Does **not** rewrite the original Verdict to `PASS`, does **not** invent Fix Completion, and does **not** trigger re-review.
+- Auto loop must never call `close` by itself.
 
 ## Convergence rules (8+1)
 

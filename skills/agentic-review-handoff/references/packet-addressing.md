@@ -25,7 +25,10 @@ $repo_root/
 .review-handoff/active/<branch_slug>/<local_minute>-<scope_slug>.md
 ```
 
-- `branch_slug`: `git rev-parse --abbrev-ref HEAD` lowercased, with `/` and `\` replaced by `-`.
+- `branch_slug` (v2): `<readable-prefix>--<sha256(branchIdentity)[0:12]>`.
+  - Attached: `branchIdentity` is the case-sensitive full branch name; readable prefix is lowercase with `/` `\` → `-` (truncated).
+  - Detached HEAD: `branchIdentity` is `detached:<full SHA>` (never bare `HEAD`); readable prefix `detached-<shortSHA>`.
+  - Legacy v1 directories (lowercase + slash→hyphen only, no hash) are dual-read for lookup when frontmatter `branch` exactly matches; never auto-migrate or rewrite `packet_id`.
 - `local_minute`: readable local minute stamp `YYYY-MM-DD_HH-mm` (e.g. `2026-05-15_14-30`). It is precise to minutes and keeps lexical sort = chronological sort inside a branch folder.
 - `scope_slug`: 1–3 kebab-case words from the user's stated scope (or the first feature keyword if not stated). Max 24 chars. Must not contain `/`.
 - Collision rule: if the exact filename already exists in `active/` or `archive/`, append `-02`, `-03`, ... to the `scope_slug` before `.md`. Do not add seconds back into the timestamp.
@@ -45,8 +48,9 @@ Run this every time before writing packet output.
      Do not use cwd-relative paths — agents are often invoked from monorepo subdirectories
      like apps/web/, and a relative path would create a second inbox or miss the root one.
 1. branch=$(git rev-parse --abbrev-ref HEAD)
-   branch_slug = lowercase(branch with "/" and "\" replaced by "-")
-2. List $repo_root/.review-handoff/active/${branch_slug}/*.md, sort ascending by filename.
+   branch_identity = attached branch name, or detached:<full HEAD SHA>
+   branch_slug = v2 `<readable>--<hash12(identity)>` (see bullet above)
+2. List $repo_root/.review-handoff/active/${branch_slug}/*.md (and legacy slug dir if different), keep only packets whose frontmatter `branch` exactly equals branch_identity, sort ascending by filename.
    File names use local minute time plus scope: `YYYY-MM-DD_HH-mm-<scope_slug>.md`.
    The fixed-width local minute prefix guarantees lexical sort = chronological sort within the branch folder.
 3. Select a packet for this path (mode isolation — classic must never rewrite auto):
@@ -126,12 +130,12 @@ Direct normalization of H1 anchor text: strip `# `, strip ` (round N)` suffix, s
 
 ### `lifecycle_state` values
 
-| Value                    | Meaning                                                                                                                                                                                                                                                                                    |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `in_progress`            | Loop still running. Default state from creation through `# Re-review` write.                                                                                                                                                                                                               |
-| `awaiting_user_decision` | Re-review verdict was `PASS_WITH_CONCERNS`. Packet stays in `active/` waiting for user to either say "fix it" (auto-resumes to round N+1) or manually `mv` to archive (drop the concerns).                                                                                                 |
-| `blocked`                | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round.                                                                                                                                                                                                                |
-| `archived`               | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`. |
+| Value                    | Meaning                                                                                                                                                                                                                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `in_progress`            | Loop still running. Default state from creation through `# Re-review` write.                                                                                                                                                                                                                             |
+| `awaiting_user_decision` | Verdict was `PASS_WITH_CONCERNS`. Packet stays in `active/` waiting for user to either continue (`run --continue` / "修一下") or formally close via `review-loop close --reason accept-concerns` (appends `# Decision Closure`, archives; does not rewrite Verdict to PASS). Manual `mv` is legacy only. |
+| `blocked`                | Re-review verdict was `BLOCKED`. Waiting for fixer to start the next round.                                                                                                                                                                                                                              |
+| `archived`               | Terminal state. Two ways in: (a) first-pass `# Review Findings` Verdict was `PASS` / `NO_FINDINGS` (golden path — no Fix Handoff written); (b) `# Re-review` (or `# Re-review (round N)`) Verdict was `PASS` / `NO_FINDINGS`. In both cases the packet file has been `mv`'d to `archive/`.               |
 
 ## Lifecycle derivation and archive actions
 
