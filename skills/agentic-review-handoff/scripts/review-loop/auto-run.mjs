@@ -299,7 +299,8 @@ async function runBody(ctx) {
     state = loadRunState(repoRoot, packetId);
   }
 
-  // Unified reconciliation BEFORE effectiveRound / Reviewer (legacy ledger + crash recovery)
+  // Reconciliation BEFORE Reviewer: hash drift fail-closed; optional ledger rebuild.
+  // No pendingStage auto-replay (v3.3.1 SIMPLIFY_TO_C — crash-safe dual-write not claimed).
   const recon = reconcileRuntimeState({
     repoRoot,
     packetId,
@@ -309,13 +310,19 @@ async function runBody(ctx) {
   if (recon.error) return recon.error;
   state = recon.state;
   if (recon.packetPath) packetPath = recon.packetPath;
-  if (recon.returnEarly) return recon.returnEarly;
 
-  // Persist base + reviewer early so DELIVERY_UNKNOWN retries cannot drift
+  // Pin packet baseline BEFORE long Reviewer await (F1: never re-read as trusted oldHash later)
+  const roundStartPacketHash =
+    state.packetHash || contentHash(fs.readFileSync(packetPath, "utf8"));
+
+  // Persist base + reviewer + baseline early so DELIVERY_UNKNOWN retries cannot drift
   saveRunState(repoRoot, packetId, {
     ...state,
     baseSha,
     reviewer,
+    packetHash: roundStartPacketHash,
+    roundStartPacketHash,
+    pendingStage: null, // clear stale journal if present after explicit fail-closed above
     updated: new Date().toISOString(),
   });
   state = loadRunState(repoRoot, packetId);
@@ -480,7 +487,7 @@ async function runBody(ctx) {
     priorFindingIds,
   });
 
-  // Invoke reviewer
+  // Invoke reviewer (long await — packet must not be re-baselined from post-await content)
   let invokeResult =
     effectiveRound <= 1 || !adapter.getSessionId?.()
       ? await adapter.newSession(prompt)
@@ -622,9 +629,26 @@ async function runBody(ctx) {
     evidencePath: evidence.evidencePath,
     lineCount: evidence.lineCount,
   };
+
+  // F1: after all Reviewer awaits (incl. one correction), still must match pre-await pin
+  {
+    const afterReviewHash = contentHash(fs.readFileSync(packetPath, "utf8"));
+    if (afterReviewHash !== roundStartPacketHash) {
+      return {
+        ok: false,
+        status: "packet_hash_mismatch",
+        message:
+          "PACKET_HASH_MISMATCH: packet changed during Reviewer invoke; refuse to absorb external rewrite (roundStartPacketHash pinned before await)",
+        packetPath,
+        expectedHash: roundStartPacketHash,
+        actualHash: afterReviewHash,
+      };
+    }
+  }
+
   let writeResult;
   try {
-    writeResult = commitStageWithPendingLedger({
+    writeResult = commitStageWithLedger({
       repoRoot,
       packetPath,
       packetId,
@@ -639,6 +663,7 @@ async function runBody(ctx) {
       },
       nextLedger,
       priorState: loadRunState(repoRoot, packetId) ?? state,
+      expectedHash: roundStartPacketHash,
     });
     packetPath = writeResult.packetPath;
   } catch (err) {
@@ -653,16 +678,11 @@ async function runBody(ctx) {
     throw err;
   }
 
-  const nextState = {
-    ...loadRunState(repoRoot, packetId),
+  const finalState = loadRunState(repoRoot, packetId) ?? {
     ...nextLedger,
     packetPath,
     packetHash: writeResult.packetHash,
-    pendingStage: null,
-    updated: new Date().toISOString(),
   };
-  // commitStageWithPendingLedger already finalizes state; re-load for safety
-  const finalState = loadRunState(repoRoot, packetId) ?? nextState;
 
   // Clean packet STOP if present on terminal
   const packetStop = path.join(runtimeDir(repoRoot, packetId), "STOP");
@@ -1138,10 +1158,12 @@ export function needsLedgerRebuild(state, meta, packetText) {
 }
 
 /**
- * Write-ahead pending stage then append packet, then promote ledger.
- * Crash recovery via reconcileRuntimeState.
+ * Append stage then update runtime ledger.
+ * Requires expectedHash (round-start pin) — never re-derives baseline from current file alone.
+ * Non-goal: crash-safe dual-write; mid-write kill may leave packet/runtime inconsistent
+ * (caller gets PACKET_HASH_MISMATCH or STATE_RECOVERY_REQUIRED on next run).
  */
-export function commitStageWithPendingLedger(opts) {
+export function commitStageWithLedger(opts) {
   const {
     repoRoot,
     packetPath,
@@ -1152,27 +1174,23 @@ export function commitStageWithPendingLedger(opts) {
     extra,
     nextLedger,
     priorState,
+    expectedHash,
   } = opts;
+  if (!expectedHash) {
+    throw new Error(
+      "commitStageWithLedger requires expectedHash (roundStart pin)",
+    );
+  }
   const text = fs.readFileSync(packetPath, "utf8");
-  const oldHash = contentHash(text);
-  const pendingStage = {
-    oldHash,
-    round: nextLedger.round,
-    lastAnchor,
-    lifecycleState,
-    sectionMarkdown,
-    extra: extra || {},
-    nextLedger: {
-      ...nextLedger,
-      packetPath, // may update after archive
-    },
-    createdAt: new Date().toISOString(),
-  };
-  saveRunState(repoRoot, packetId, {
-    ...priorState,
-    pendingStage,
-    updated: pendingStage.createdAt,
-  });
+  const currentHash = contentHash(text);
+  if (currentHash !== expectedHash) {
+    const err = new Error(
+      "PACKET_HASH_MISMATCH: packet diverged from pinned expectedHash before stage write",
+    );
+    // @ts-expect-error
+    err.code = "PACKET_HASH_MISMATCH";
+    throw err;
+  }
 
   const writeResult = appendStageAuto({
     repoRoot,
@@ -1182,7 +1200,7 @@ export function commitStageWithPendingLedger(opts) {
     lastAnchor,
     lifecycleState,
     extra,
-    expectedHash: oldHash,
+    expectedHash,
   });
 
   const finalized = {
@@ -1196,6 +1214,7 @@ export function commitStageWithPendingLedger(opts) {
         ? "archived"
         : (writeResult.meta?.lifecycleState ?? lifecycleState),
     pendingStage: null,
+    roundStartPacketHash: null,
     updated: new Date().toISOString(),
   };
   saveRunState(repoRoot, packetId, finalized);
@@ -1203,8 +1222,9 @@ export function commitStageWithPendingLedger(opts) {
 }
 
 /**
- * Recover pending crash + rebuild missing/stale ledger from packet before Reviewer.
- * @returns {{ state: Record<string, unknown>, packetPath?: string, returnEarly?: object, error?: object }}
+ * Pre-Reviewer reconcile: hash drift fail-closed; rebuild missing ledger from packet stages.
+ * Stale pendingStage from old journal builds → STATE_RECOVERY_REQUIRED (no auto-replay).
+ * @returns {{ state: Record<string, unknown>, packetPath?: string, error?: object }}
  */
 export function reconcileRuntimeState({
   repoRoot,
@@ -1218,20 +1238,30 @@ export function reconcileRuntimeState({
   let text = meta.text;
   let currentHash = contentHash(fs.readFileSync(pathNow, "utf8"));
 
-  // Without pending journal, packet hash drift is external edit or unrecoverable crash
-  // — never silently re-seed hash from the mutated packet (would absorb mid-loop rewrites).
-  if (
-    s.packetHash &&
-    currentHash !== s.packetHash &&
-    !(s.pendingStage && typeof s.pendingStage === "object")
-  ) {
+  // Legacy incomplete journal: refuse silent guess
+  if (s.pendingStage && typeof s.pendingStage === "object") {
+    return {
+      state: s,
+      error: {
+        ok: false,
+        status: "STATE_RECOVERY_REQUIRED",
+        message:
+          "STATE_RECOVERY_REQUIRED: leftover pendingStage from crash-safe journal (removed in v3.3.1). Clear runtime auto-run-state.json pendingStage after manual inspection, or start a new packet. Auto-replay is intentionally disabled.",
+        packetPath: pathNow,
+        recovery:
+          "Inspect packet under active/ or archive/; if stages look complete, delete pendingStage from auto-run-state.json and re-run with --packet; otherwise create a new review-loop run packet.",
+      },
+    };
+  }
+
+  if (s.packetHash && currentHash !== s.packetHash) {
     return {
       state: s,
       error: {
         ok: false,
         status: "packet_hash_mismatch",
         message:
-          "PACKET_HASH_MISMATCH: packet was modified outside auto loop (no pending stage to recover); refuse continue and stop",
+          "PACKET_HASH_MISMATCH: packet was modified outside auto loop; refuse continue and stop",
         packetPath: pathNow,
         expectedHash: s.packetHash,
         actualHash: currentHash,
@@ -1239,99 +1269,7 @@ export function reconcileRuntimeState({
     };
   }
 
-  // --- pendingStage recovery (write-ahead journal) ---
-  if (s.pendingStage && typeof s.pendingStage === "object") {
-    const p = /** @type {any} */ (s.pendingStage);
-    if (currentHash === p.oldHash) {
-      // Packet write never landed — re-apply stage then finalize
-      try {
-        const w = appendStageAuto({
-          repoRoot,
-          packetPath: pathNow,
-          packetId,
-          sectionMarkdown: p.sectionMarkdown,
-          lastAnchor: p.lastAnchor,
-          lifecycleState: p.lifecycleState,
-          extra: p.extra || {},
-          expectedHash: p.oldHash,
-        });
-        pathNow = w.packetPath;
-        s = {
-          ...s,
-          ...(p.nextLedger || {}),
-          round: p.round,
-          packetPath: w.packetPath,
-          packetHash: w.packetHash,
-          lastAnchor: p.lastAnchor,
-          lifecycle: p.lifecycleState,
-          lifecycleState: p.lifecycleState,
-          pendingStage: null,
-          recoveredFromPending: true,
-          updated: new Date().toISOString(),
-        };
-        saveRunState(repoRoot, packetId, s);
-        meta = readPacketMeta(pathNow);
-        text = meta.text;
-        currentHash = w.packetHash;
-      } catch (err) {
-        return {
-          state: s,
-          error: {
-            ok: false,
-            status: "PACKET_HASH_MISMATCH",
-            message: `pending stage re-apply failed: ${err?.message || err}`,
-            packetPath: pathNow,
-          },
-        };
-      }
-    } else if (
-      meta.lastAnchor === p.lastAnchor ||
-      (p.lifecycleState === "archived" &&
-        (meta.lifecycleState === "archived" ||
-          String(pathNow).includes(`${path.sep}archive${path.sep}`)))
-    ) {
-      // Packet write landed; promote ledger only
-      const finalPath =
-        p.nextLedger?.packetPath && fs.existsSync(p.nextLedger.packetPath)
-          ? p.nextLedger.packetPath
-          : pathNow;
-      pathNow = finalPath;
-      currentHash = contentHash(fs.readFileSync(pathNow, "utf8"));
-      s = {
-        ...s,
-        ...(p.nextLedger || {}),
-        round: p.round,
-        packetPath: pathNow,
-        packetHash: currentHash,
-        lastAnchor: p.lastAnchor,
-        lifecycle: p.lifecycleState,
-        lifecycleState: p.lifecycleState,
-        pendingStage: null,
-        recoveredFromPending: true,
-        updated: new Date().toISOString(),
-      };
-      saveRunState(repoRoot, packetId, s);
-      meta = readPacketMeta(pathNow);
-      text = meta.text;
-    } else {
-      return {
-        state: s,
-        error: {
-          ok: false,
-          status: "PACKET_HASH_MISMATCH",
-          message:
-            "pending stage recovery failed: packet hash matches neither pre-write hash nor expected post-write last_anchor (external edit or corrupted pending)",
-          packetPath: pathNow,
-        },
-      };
-    }
-
-    // If pending recovery finished a terminal review write, do not re-invoke Reviewer
-    const early = terminalReportFromRecoveredState(s, pathNow);
-    if (early) return { state: s, packetPath: pathNow, returnEarly: early };
-  }
-
-  // --- ledger rebuild / migration ---
+  // --- ledger rebuild / migration (explicit, only when catalog incomplete) ---
   if (needsLedgerRebuild(s, meta, text)) {
     try {
       const rebuilt = rebuildLedgerFromPacketText(text);
@@ -1351,6 +1289,7 @@ export function reconcileRuntimeState({
         packetHash: currentHash,
         packetPath: pathNow,
         ledgerRebuiltFromPacket: true,
+        pendingStage: null,
         updated: new Date().toISOString(),
       };
       saveRunState(repoRoot, packetId, s);
@@ -1370,65 +1309,6 @@ export function reconcileRuntimeState({
   }
 
   return { state: s, packetPath: pathNow };
-}
-
-/**
- * After pending recovery of a just-written terminal stage, return report without double review.
- * @param {Record<string, unknown>} state
- * @param {string} packetPath
- */
-function terminalReportFromRecoveredState(state, packetPath) {
-  if (!state?.recoveredFromPending) return null;
-  const verdict = String(state.lastVerdict || "").toUpperCase();
-  if (verdict === "PASS" || verdict === "NO_FINDINGS") {
-    return {
-      ok: true,
-      status: "archived",
-      verdict,
-      round: state.round,
-      packetPath,
-      packetId: state.packetId,
-      message: `Recovered terminal ${verdict} after crash (no re-review)`,
-      recoveredFromPending: true,
-    };
-  }
-  if (verdict === "PASS_WITH_CONCERNS") {
-    const catalog = /** @type {Record<string, any>} */ (
-      state.findingCatalog || {}
-    );
-    const openConcerns = Array.isArray(state.openConcerns)
-      ? state.openConcerns.map(String)
-      : [];
-    return {
-      ok: true,
-      status: "awaiting_user_decision",
-      verdict,
-      round: state.round,
-      packetPath,
-      concerns: openConcerns.map((id) =>
-        catalogEntryToConcern(id, catalog[id]),
-      ),
-      openConcerns,
-      message:
-        "Recovered PASS_WITH_CONCERNS after crash — user decides archive or another round",
-      recoveredFromPending: true,
-    };
-  }
-  if (verdict === "BLOCKED") {
-    return {
-      ok: true,
-      status: "blocked",
-      verdict,
-      round: state.round,
-      packetPath,
-      openBlocking: state.openBlocking || [],
-      needsContinue: true,
-      message:
-        "Recovered BLOCKED after crash — Fixer should fix-completion then run --continue",
-      recoveredFromPending: true,
-    };
-  }
-  return null;
 }
 
 /**
@@ -1749,7 +1629,9 @@ export async function cmdClose(opts) {
       closedAt,
     });
 
-    const written = commitStageWithPendingLedger({
+    const expectedHash =
+      state.packetHash || contentHash(fs.readFileSync(pathLocked, "utf8"));
+    const written = commitStageWithLedger({
       repoRoot,
       packetPath: pathLocked,
       packetId,
@@ -1770,6 +1652,7 @@ export async function cmdClose(opts) {
         closedAt,
       },
       priorState: state,
+      expectedHash,
     });
     const reportMeta = readPacketMeta(written.packetPath);
     return {
@@ -1863,8 +1746,25 @@ export async function cmdAppendFixCompletion(opts) {
       `fix-completion missing required H2 sections: ${missing.join(", ")}`,
     );
   }
-  // F3: hold same packet lock as run; re-check last anchor under lock
+  // F3: hold same packet lock as run; re-check last anchor + packet hash under lock
   return withPacketLock(repoRoot, packetId, async () => {
+    let state = loadRunState(repoRoot, packetId) ?? {};
+    if (state.pendingStage && typeof state.pendingStage === "object") {
+      throw new Error(
+        "STATE_RECOVERY_REQUIRED: leftover pendingStage; clear after inspection or start a new packet (auto journal removed in v3.3.1)",
+      );
+    }
+    const currentHash = contentHash(fs.readFileSync(packetPath, "utf8"));
+    const expectedHash = state.packetHash || currentHash;
+    if (state.packetHash && currentHash !== state.packetHash) {
+      const err = new Error(
+        "PACKET_HASH_MISMATCH: packet was modified outside auto loop before fix-completion",
+      );
+      // @ts-expect-error
+      err.code = "PACKET_HASH_MISMATCH";
+      throw err;
+    }
+
     const metaLocked = readPacketMeta(packetPath);
     const lastLocked = lastPhysicalH1(metaLocked.text);
     const ok =
@@ -1877,13 +1777,23 @@ export async function cmdAppendFixCompletion(opts) {
         `fix-completion under lock refuses last_anchor=${metaLocked.lastAnchor} (need fix_handoff or re_review)`,
       );
     }
-    return appendStageAuto({
+
+    // Same commit path as review stages: pin expectedHash, append, update runtime
+    // (does not mutate finding catalog / open sets — only lastAnchor + hash)
+    return commitStageWithLedger({
       repoRoot,
       packetPath,
       packetId,
       sectionMarkdown: section,
       lastAnchor: "fix_completion",
       lifecycleState: "in_progress",
+      nextLedger: {
+        ...state,
+        lastVerdict: state.lastVerdict || "BLOCKED",
+        lifecycle: "in_progress",
+      },
+      priorState: state,
+      expectedHash,
     });
   });
 }

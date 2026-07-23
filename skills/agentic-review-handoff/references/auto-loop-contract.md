@@ -59,9 +59,11 @@ This table is the auto-loop source of truth (scripts enforce it). Do **not** app
 
 ### Finding ledger (runtime `auto-run-state.json`)
 
-**Write-ahead pending stage** (crash window): before `appendStageAuto`, runtime stores `pendingStage` with `oldHash`, section body, and full `nextLedger`. After packet hash advances and ledger is promoted, `pendingStage` is cleared. On next start, `reconcileRuntimeState` either re-applies the stage (hash still `oldHash`) or finalizes ledger (packet already advanced). Other hash states → `PACKET_HASH_MISMATCH`.
+**Anti-tamper (not crash-safe dual-write):** before the long Reviewer await, pin `roundStartPacketHash`. After Reviewer returns (and after one correction if any), current packet hash must still match that pin; then stage write uses the same `expectedHash`. External rewrite mid-await → `packet_hash_mismatch` (never re-baselines from post-await content).
 
-**Legacy / stale ledger rebuild**: if `findingCatalog` is missing or inconsistent with packet review stages, replay `# Review Findings` + every `# Re-review` through the same parsers/ledger/verdict invariants. Unreadable stages → `STATE_MIGRATION_REQUIRED` (before Reviewer invoke). Markdown replay is migration/recovery only; normal `close` still reads structured ledger after reconcile.
+**Crash / dual-write non-goals:** packet Markdown + `auto-run-state.json` are two files; mid-write process kill may leave them inconsistent. Next run fails closed (`PACKET_HASH_MISMATCH` or `STATE_RECOVERY_REQUIRED`). Leftover `pendingStage` from the removed journal auto-replays is **not** applied — explicit recovery or a new packet is required. Do not claim kill/power-loss exactly-once recovery without a real transactional store.
+
+**Legacy / stale ledger rebuild:** if `findingCatalog` is missing or inconsistent with packet review stages, replay `# Review Findings` + every `# Re-review` through the same parsers/ledger/verdict invariants. Unreadable stages → `STATE_MIGRATION_REQUIRED` (before Reviewer invoke). Markdown replay is migration only; normal `close` still reads structured ledger after reconcile.
 
 After each successful Reviewer parse, the Fixer script persists:
 

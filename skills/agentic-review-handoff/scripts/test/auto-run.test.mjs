@@ -1252,7 +1252,7 @@ PASS_WITH_CONCERNS
     );
   });
 
-  it("pendingStage finalize when packet already advanced (crash after packet write)", async () => {
+  it("leftover pendingStage fails closed (no auto-replay)", async () => {
     const dir2 = initTempRepo();
     const { factory: f2 } = makeFakeAdapterFactory([blockedText("F1")]);
     const b = await cmdRun({
@@ -1265,27 +1265,14 @@ PASS_WITH_CONCERNS
     const meta = repo.readPacketMeta(b.packetPath);
     const packetId = meta.packetId;
     const st = loadRunState(dir2, packetId);
-    // Incomplete finalize: packet written, pending still present, catalog wiped
     saveRunState(dir2, packetId, {
       ...st,
       pendingStage: {
         oldHash: "deadbeef",
         round: 1,
         lastAnchor: meta.lastAnchor,
-        lifecycleState: "blocked",
         sectionMarkdown: "# unused",
-        nextLedger: {
-          round: 1,
-          lastVerdict: "BLOCKED",
-          findingIds: st.findingIds,
-          findingCatalog: st.findingCatalog,
-          openBlocking: st.openBlocking,
-          openConcerns: st.openConcerns || [],
-          lifecycle: "blocked",
-        },
       },
-      findingCatalog: {},
-      openBlocking: [],
     });
     const recon = reconcileRuntimeState({
       repoRoot: dir2,
@@ -1293,14 +1280,48 @@ PASS_WITH_CONCERNS
       packetPath: b.packetPath,
       state: loadRunState(dir2, packetId),
     });
-    assert.equal(recon.error, undefined, JSON.stringify(recon.error));
-    assert.ok(
-      recon.returnEarly || recon.state.findingCatalog?.F1,
-      JSON.stringify(recon),
-    );
-    if (!recon.returnEarly) {
-      assert.ok(Object.keys(recon.state.findingCatalog || {}).length > 0);
-    }
+    assert.equal(recon.error?.status, "STATE_RECOVERY_REQUIRED");
+    assert.match(String(recon.error?.message || ""), /pendingStage|journal/i);
+  });
+
+  it("refuses absorb when packet mutates during Reviewer await", async () => {
+    const dir = initTempRepo();
+    fs.writeFileSync(path.join(dir, "m.ts"), "export const m = 1;\n");
+    let packetPathSeen = null;
+    const factory = () => ({
+      product: "fake",
+      getSessionId: () => "s",
+      async newSession() {
+        // mutate packet while "Reviewer" runs
+        if (!packetPathSeen) {
+          // discover packet after create: look under active
+          const activeRoot = path.join(dir, ".review-handoff", "active");
+          const walk = (d) => {
+            for (const name of fs.readdirSync(d)) {
+              const p = path.join(d, name);
+              if (fs.statSync(p).isDirectory()) walk(p);
+              else if (p.endsWith(".md")) packetPathSeen = p;
+            }
+          };
+          if (fs.existsSync(activeRoot)) walk(activeRoot);
+        }
+        if (packetPathSeen && fs.existsSync(packetPathSeen)) {
+          fs.appendFileSync(packetPathSeen, "\n<!-- mid-reviewer edit -->\n");
+        }
+        return { ok: true, text: passText(), sessionId: "s" };
+      },
+      async resume() {
+        return { ok: true, text: passText(), sessionId: "s" };
+      },
+    });
+    const r = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      scopeSlug: "tamper",
+      adapterFactory: factory,
+    });
+    assert.equal(r.ok, false);
+    assert.equal(r.status, "packet_hash_mismatch");
   });
 });
 

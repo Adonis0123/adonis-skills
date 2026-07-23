@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Use this skill when the user pastes review feedback to validate as a defect report before any fix (feedback validation), and for auto loop (review-loop run/continue): same-session dual-AI review-fix-re-review with visible Fixer, headless read-only codex|grok|claude Reviewer, zero mid-loop human; ordinary review / second pair of eyes / audit this diff routes here via auto loop. Also Review Intake for reviewer-initiated live review or manual packet continuation (classic prompt-protocol only - no script guarantees), DecisionConsult (review-loop consult), review-loop sessions (resume headless reviewer commands), PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review. Requires a git repo. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait removed; migrate to run, fix-completion, or consult."
 metadata:
   author: adonis
-  version: "3.3.0"
+  version: "3.3.1"
 ---
 
 # Agentic Review Handoff
