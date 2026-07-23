@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Use this skill when the user pastes review feedback to validate as a defect report before any fix (feedback validation), and for auto loop (review-loop run/continue): same-session dual-AI review-fix-re-review with visible Fixer, headless read-only codex|grok|claude Reviewer, zero mid-loop human; ordinary review / second pair of eyes / audit this diff routes here via auto loop. Also Review Intake for reviewer-initiated live review or manual packet continuation (classic prompt-protocol only - no script guarantees), DecisionConsult (review-loop consult), review-loop sessions (resume headless reviewer commands), PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review. Requires a git repo. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait removed; migrate to run, fix-completion, or consult."
 metadata:
   author: adonis
-  version: "3.3.1"
+  version: "3.3.2"
 ---
 
 # Agentic Review Handoff
@@ -23,6 +23,7 @@ Dual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not c
 - stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults
 - severity / verdict vocabulary → `references/review-contract.md`
 - auto loop contract → `references/auto-loop-contract.md`
+- **maintainer-only** protocol evolution gate → `references/protocol-evolution-gate.md` (see below)
 
 ## Auto loop (`review-loop run`) — preferred
 
@@ -71,6 +72,10 @@ node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
   skills/agentic-review-handoff/scripts/test/consult.test.mjs \
   skills/agentic-review-handoff/scripts/test/sessions.test.mjs
 ```
+
+## Maintainer-only (evolving this skill)
+
+Ordinary review-loop runs **do not** load this. Before changing this skill’s protocol/state machine, persistence format, or integrity / tamper-detection / recovery / atomicity / durability / exactly-once claims—or DecisionConsult **about evolving this skill**—read `references/protocol-evolution-gate.md`. Source of truth is `skills/agentic-review-handoff/`; sync local runtime with `pnpm skills:install:local -- --skill agentic-review-handoff`.
 
 ## Legacy dual-window — removed (T8)
 
