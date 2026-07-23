@@ -1,6 +1,21 @@
 {
   "metric": "trigger accuracy (claude -p Skill tool mentions agentic-review-handoff; 1 run/query)",
   "eval_set": "skills/agentic-review-handoff/evals/trigger-eval.json (10 positive + 10 negative)",
+  "public_claim": {
+    "do_not_advertise": "auto-trigger 100% accuracy / full 20/20 acceptance on current description",
+    "current_description": {
+      "version": "3.3.4",
+      "chars": 664,
+      "note": "routing-only slim (~1023→664); copy-edit negative restored vs v3.3.3"
+    },
+    "latest_skill_only": {
+      "description_version_measured": "3.3.3",
+      "positives": "10/10 scenarios, 29/30 hits",
+      "negatives": "UNVERIFIED (Claude session limit 429) — not acceptance",
+      "v3_3_4_remeasure": "NOT_RUN_quota"
+    },
+    "how_to_introduce": "Say: auto-trigger is strong on positive review/handoff intents under Skill-only remeasure (10/10, 29/30); negative-case non-trigger and v3.3.4 are not fully re-verified yet. Prefer explicit skill invoke when accuracy matters."
+  },
   "baseline_old_description": {
     "pass": "15/20",
     "rate": 0.75,

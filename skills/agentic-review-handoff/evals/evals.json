@@ -1,6 +1,6 @@
 {
   "skill_name": "agentic-review-handoff",
-  "description": "v2 auto-loop trigger evals (10 pos / 10 neg) + behavioral scenarios. Trigger accuracy: old 75% -> final 95% (pos 6->9/10, neg 9->10/10).",
+  "description": "v2 auto-loop trigger evals (10 pos / 10 neg) + behavioral scenarios. Public claim: do NOT advertise auto-trigger 100% accuracy. Latest honest Skill-only evidence (description v3.3.3 slim): positives 10/10 scenarios / 29/30 hits; negatives UNVERIFIED (Claude 429). v3.3.4 (664 chars, copy-edit negative restored) not remeasured yet. Historical baseline only: old description 75% -> intermediate 95% under older full 20-query run — do not cite as current v3.3.x acceptance.",
   "trigger_evals": [
     {
       "id": "pos-auto-loop-zh",

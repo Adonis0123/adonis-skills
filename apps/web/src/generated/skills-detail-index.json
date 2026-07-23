@@ -53,12 +53,12 @@
     "slug": "agentic-review-handoff",
     "sections": [
       {
-        "raw": "Persistent packet protocol for review→fix→re-review. **Preferred path (v2): auto loop** — one visible Fixer session drives everything; the Reviewer is invoked headless and read-only; the loop stops only at start, terminal report, or exception.\n\nDual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not call `open`/`bind`/… — CLI returns a migration error. See `references/auto-loop-contract.md`.",
+        "raw": "Persistent packet protocol for review→fix→re-review. **Preferred path (v2): auto loop** — one visible Fixer session drives everything; the Reviewer is invoked headless and read-only; the loop stops only at start, terminal report, or exception.",
         "heading": "Agentic Review Handoff",
         "level": 1
       },
       {
-        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human / ordinary \"review\" or \"audit this diff\"** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **resume a past reviewer session (\"给我 codex/grok/claude 恢复对话的命令\")** → `review-loop sessions`\n- **classic compatibility path** (prompt-protocol only, **no script guarantees**) — only for: Review Intake (reviewer-initiated live review), feedback validation of pasted findings, or manual packet continuation → Classic section below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive / addressing algorithm → `references/packet-addressing.md`\n- stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`",
+        "raw": "- **same-session dual AI review closed loop / auto loop / zero mid-loop human / ordinary \"review\" or \"audit this diff\"** → `review-loop run` (below)\n- **decision consult / ask another AI for stance** → `review-loop consult`\n- **resume a past reviewer session (\"给我 codex/grok/claude 恢复对话的命令\")** → `review-loop sessions`\n- **classic compatibility path** (prompt-protocol only, **no script guarantees**) — only for: Review Intake (reviewer-initiated live review), feedback validation of pasted findings, or manual packet continuation → Classic section below\n- packet shape → `references/packet-anatomy.md`\n- lifecycle / archive / addressing algorithm → `references/packet-addressing.md`\n- stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults\n- severity / verdict vocabulary → `references/review-contract.md`\n- auto loop contract → `references/auto-loop-contract.md`\n- **maintainer-only:** before protocol/state-machine/persistence changes, integrity/tamper/recovery/atomicity/durability/exactly-once claim changes, or DecisionConsult about evolving this protocol, read `references/protocol-evolution-gate.md`; ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`)\n- **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`",
         "heading": "Fast Path",
         "level": 2
       },
@@ -78,6 +78,11 @@
         "level": 1
       },
       {
+        "raw": "node \"$RL\" close --repo \"$REPO\" --packet \"$PACKET\" --reason accept-concerns",
+        "heading": "After PASS_WITH_CONCERNS: accept remaining concerns and archive (no re-review)",
+        "level": 1
+      },
+      {
         "raw": "node \"$RL\" consult --repo \"$REPO\" --peer=codex --question-file /tmp/q.md",
         "heading": "Advisory decision consult (not part of Verdict machine)",
         "level": 1
@@ -91,11 +96,6 @@
         "raw": "node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/auto-run.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/auto-run-negatives.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/consult.test.mjs \\\n  skills/agentic-review-handoff/scripts/test/sessions.test.mjs\n```",
         "heading": "from repo root",
         "level": 1
-      },
-      {
-        "raw": "`open` / `bind` / `next` / `wait` / `append-eof` / `complete` / `board` / `resolve` / `gate` / `disarm` / `blind-submit` / `h1-probe` were deleted in T8 (`plan-2026-07-22-review-loop-v2-auto-loop.md` D11). Invoking them returns a migration error pointing at `run` / `fix-completion` / `consult`.",
-        "heading": "Legacy dual-window — removed (T8)",
-        "level": 2
       },
       {
         "raw": "This skill historically said \"review/re-review are read-only by default; do not edit files.\" That rule still holds for the **subject of review** (source / docs / product / tests / configs being reviewed) but is **explicitly overridden** for one path: writing to the packet artifact itself.\n\n- **Read-only still means**: do not modify the code, docs, tests, or configs being reviewed; do not commit / push / rebase.\n- **Packet artifact writes are part of the protocol, not a violation**: creating, appending to, renaming, and `mv`-ing files under `$repo_root/.review-handoff/**` is exactly what makes the cross-agent loop work. Treat these writes the same way you treat printing findings to the terminal.\n- **Before writing the first packet in a repo**, resolve `$GIT_COMMON_DIR` with `git rev-parse --git-common-dir` and ensure its `info/exclude` contains `/.review-handoff/` (the canonical root-anchored form). Treat the historical `.review-handoff/` form as already configured. See `references/packet-addressing.md` for the exact idempotent snippet.",
