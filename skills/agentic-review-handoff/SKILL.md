@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
+description: "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing review comments, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
 metadata:
   author: adonis
-  version: "3.3.3"
+  version: "3.3.4"
 ---
 
 # Agentic Review Handoff
@@ -21,7 +21,7 @@ Persistent packet protocol for review→fix→re-review. **Preferred path (v2): 
 - stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults
 - severity / verdict vocabulary → `references/review-contract.md`
 - auto loop contract → `references/auto-loop-contract.md`
-- **maintainer-only** protocol evolution gate → `references/protocol-evolution-gate.md` (see below)
+- **maintainer-only:** before protocol/state-machine/persistence changes, integrity/tamper/recovery/atomicity/durability/exactly-once claim changes, or DecisionConsult about evolving this protocol, read `references/protocol-evolution-gate.md`; ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`)
 - **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`
 
 ## Auto loop (`review-loop run`) — preferred
@@ -71,10 +71,6 @@ node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
   skills/agentic-review-handoff/scripts/test/consult.test.mjs \
   skills/agentic-review-handoff/scripts/test/sessions.test.mjs
 ```
-
-## Maintainer-only (evolving this skill)
-
-Ordinary review-loop runs **do not** load this. Before changing this skill’s protocol/state machine, persistence format, or integrity / tamper-detection / recovery / atomicity / durability / exactly-once claims—or DecisionConsult **about evolving this skill**—read `references/protocol-evolution-gate.md`. Source of truth is `skills/agentic-review-handoff/`; sync local runtime with `pnpm skills:install:local -- --skill agentic-review-handoff`.
 
 ## Read-only Boundary (Important)
 

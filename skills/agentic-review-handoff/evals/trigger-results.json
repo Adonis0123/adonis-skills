@@ -113,6 +113,15 @@
     },
     "passed": "2/3"
   },
+  "v3_3_4_copyedit_neg_and_maintainer_slim": {
+    "at": "2026-07-23",
+    "change": "restore description negative 'copy-editing review comments'; collapse Maintainer-only section into Fast Path one-liner (Codex consult APPROVE_WITH_CHANGES; Claude 429)",
+    "description_chars": 664,
+    "description_version": "3.3.4",
+    "not_changed": "classic prompt-only; codex|grok|claude CLI coupling; Fast Path bilingual (design tradeoffs)",
+    "remeasure_status": "NOT_RUN_quota",
+    "note": "Negatives still need post-quota Skill-only remeasure; copy-edit phrase is low-cost near-miss guard."
+  },
   "v3_3_3_description_slim": {
     "at": "2026-07-23T04:27:00Z",
     "change": "description slimmed ~1023→634 chars (routing only); dual-window/migration removed from description; body T8 collapsed to Fast Path one-liner; maintainer gate pointer kept",
