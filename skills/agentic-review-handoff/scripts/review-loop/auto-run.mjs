@@ -27,8 +27,6 @@ import {
   formatReReviewStage,
   formatDecisionClosureStage,
   lifecycleForVerdict,
-  parseMarkdownTables,
-  findingFromRow,
 } from "./schema.mjs";
 import {
   appendStageAuto,
@@ -61,7 +59,8 @@ Rules:
 - PASS / NO_FINDINGS: zero blocking findings.
 - BLOCKED: ≥1 [阻塞] finding with falsifiable breakage.
 - PASS_WITH_CONCERNS: only [非阻塞] remaining.
-- Style/taste is never blocking.`;
+- Style/taste is never blocking.
+- Never place a literal pipe character in table cells (TypeScript unions, shell pipes, etc.). Use &#124; instead.`;
 
   const schemaRoundN = `Output MUST include ALL of:
 1. ## Prior Findings Reassessment — table: ID | 状态(resolved|partially|unresolved) | 复核证据
@@ -69,7 +68,8 @@ Rules:
 2. ## New Findings — same columns as first-round findings table (only load-bearing blockers allowed)
 3. ## Regression Surface — short conclusion
 4. Exactly one terminal Verdict: PASS | PASS_WITH_CONCERNS | BLOCKED | NO_FINDINGS
-Missing any section (including Verdict) is malformed.`;
+Missing any section (including Verdict) is malformed.
+Never place a literal pipe character in table cells. Use &#124; instead.`;
 
   const parts = [
     "You are a read-only code reviewer in an auto review loop.",
@@ -448,7 +448,13 @@ async function runBody(ctx) {
     ...(adapterOpts || {}),
   });
 
-  const priorFindingIds = state.findingIds || [];
+  const priorFindingIds =
+    Array.isArray(state.findingIds) && state.findingIds.length
+      ? state.findingIds
+      : Object.keys(state.findingCatalog || {});
+  // All historical blockers in catalog (not only currently open) so re-opened
+  // blockers still gate PASS after a prior resolve.
+  const priorBlockingIds = catalogBlockingIds(state.findingCatalog);
   let prompt = buildReviewerPrompt({
     round: effectiveRound,
     packetPath,
@@ -478,7 +484,10 @@ async function runBody(ctx) {
     effectiveRound <= 1
       ? parseReviewFindings(invokeResult.text)
       : parseReReview(invokeResult.text, priorFindingIds, {
-          priorBlockingIds: state.openBlocking || priorFindingIds,
+          priorBlockingIds:
+            priorBlockingIds.length > 0
+              ? priorBlockingIds
+              : state.openBlocking || priorFindingIds,
         });
 
   if (!parsed.ok) {
@@ -504,7 +513,10 @@ async function runBody(ctx) {
       effectiveRound <= 1
         ? parseReviewFindings(retry.text)
         : parseReReview(retry.text, priorFindingIds, {
-            priorBlockingIds: state.openBlocking || priorFindingIds,
+            priorBlockingIds:
+              priorBlockingIds.length > 0
+                ? priorBlockingIds
+                : state.openBlocking || priorFindingIds,
           });
     if (!parsed.ok) {
       return {
@@ -517,6 +529,33 @@ async function runBody(ctx) {
       };
     }
     invokeResult = retry;
+  }
+
+  // Structured finding ledger (runtime state) — single source for PWC concerns / close
+  let findingCatalog;
+  let openBlocking;
+  let openConcerns;
+  let findingIds;
+  try {
+    const sets = computeFindingLedger({
+      effectiveRound,
+      parsed,
+      priorCatalog: state.findingCatalog || {},
+      priorFindingIds,
+    });
+    findingCatalog = sets.findingCatalog;
+    openBlocking = sets.openBlocking;
+    openConcerns = sets.openConcerns;
+    findingIds = sets.findingIds;
+    assertVerdictOpenSets(parsed.verdict, openBlocking, openConcerns);
+  } catch (err) {
+    return {
+      ok: false,
+      status: "malformed_reviewer_output",
+      message: `Finding ledger / verdict invariant failed: ${err?.message || err}`,
+      packetPath,
+      error: err?.message || String(err),
+    };
   }
 
   // Lifecycle matches auto-loop contract (plan T2 §6):
@@ -582,33 +621,6 @@ async function runBody(ctx) {
     throw err;
   }
 
-  // Update run state
-  const findingIds =
-    effectiveRound <= 1
-      ? (parsed.findings || []).map((f) => f.id)
-      : [
-          ...priorFindingIds,
-          ...(parsed.newFindings || []).map((f) => f.id),
-        ].filter((v, i, a) => a.indexOf(v) === i);
-
-  // F3: openBlocking never treats empty prior set as wildcard
-  const priorBlockingSet = new Set(state.openBlocking || []);
-  const openBlocking =
-    effectiveRound <= 1
-      ? (parsed.findings || []).filter((f) => f.blocking).map((f) => f.id)
-      : [
-          ...(parsed.reassessments || [])
-            .filter(
-              (r) =>
-                (r.status === "unresolved" || r.status === "partially") &&
-                priorBlockingSet.has(r.id),
-            )
-            .map((r) => r.id),
-          ...(parsed.newFindings || [])
-            .filter((f) => f.blocking)
-            .map((f) => f.id),
-        ];
-
   const nextState = {
     ...loadRunState(repoRoot, packetId),
     baseSha,
@@ -617,7 +629,9 @@ async function runBody(ctx) {
     reviewer,
     lastVerdict: parsed.verdict,
     findingIds,
+    findingCatalog,
     openBlocking,
+    openConcerns,
     lifecycle,
     packetPath,
     evidencePath: evidence.evidencePath,
@@ -631,6 +645,10 @@ async function runBody(ctx) {
   if (lifecycle === "archived" && fs.existsSync(packetStop)) {
     fs.unlinkSync(packetStop);
   }
+
+  const concernRows = openConcerns.map((id) =>
+    catalogEntryToConcern(id, findingCatalog[id]),
+  );
 
   if (parsed.verdict === "BLOCKED") {
     // Budget is a ceiling: on the final budgeted round, BLOCKED exits immediately
@@ -647,8 +665,13 @@ async function runBody(ctx) {
         state: nextState,
         roundsBudget,
         openBlocking,
-        // Round 1: findings; Re-review: newFindings + unresolved reassessments (with evidence)
-        findings: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
+        // Round 1: findings; Re-review: open blockers from ledger + unresolved reassessments
+        findings:
+          effectiveRound <= 1
+            ? parsed.findings
+            : openBlocking.map((id) =>
+                catalogEntryToConcern(id, findingCatalog[id]),
+              ),
         reassessments: unresolvedReassessments,
       });
     }
@@ -660,7 +683,13 @@ async function runBody(ctx) {
       packetPath,
       packetId,
       openBlocking,
-      findings: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
+      openConcerns,
+      findings:
+        effectiveRound <= 1
+          ? parsed.findings
+          : openBlocking.map((id) =>
+              catalogEntryToConcern(id, findingCatalog[id]),
+            ),
       message:
         "BLOCKED — Fixer should address open blocking findings, append # Fix Completion, then: review-loop run --continue",
       warning: evidence.warning,
@@ -676,7 +705,8 @@ async function runBody(ctx) {
       round: effectiveRound,
       packetPath,
       packetId,
-      concerns: effectiveRound <= 1 ? parsed.findings : parsed.newFindings,
+      openConcerns,
+      concerns: concernRows,
       message:
         "PASS_WITH_CONCERNS — non-blocking concerns remain; user decides archive or another round",
       warning: evidence.warning,
@@ -869,70 +899,220 @@ function terminalReport(x) {
 }
 
 /**
- * Extract non-placeholder findings from the last Review Findings / Re-review section body.
- * @param {string} packetText
- * @returns {{ id: string, title: string, severity: string }[]}
+ * Historical blocker IDs from findingCatalog (blocking identity never demotes).
+ * @param {Record<string, {blocking?: boolean}>|null|undefined} catalog
+ * @returns {string[]}
  */
-function extractConcernsFromPacket(packetText) {
-  const text = String(packetText);
-  /** @type {{ index: number, title: string }[]} */
-  const h1s = [];
-  let fenced = false;
-  const lines = text.split("\n");
-  for (let i = 0; i < lines.length; i += 1) {
-    if (/^\s*(```|~~~)/.test(lines[i])) {
-      fenced = !fenced;
-      continue;
+export function catalogBlockingIds(catalog) {
+  return Object.entries(catalog || {})
+    .filter(([, e]) => e && e.blocking)
+    .map(([id]) => id);
+}
+
+/**
+ * @param {{ id: string, severity?: string, title?: string, targetFiles?: string, blocking?: boolean, evidence?: string, requiredFix?: string, acceptanceCheck?: string }} f
+ */
+function catalogEntryFromFinding(f) {
+  return {
+    severity: f.severity || "",
+    title: f.title || "",
+    targetFiles: f.targetFiles || "",
+    blocking: Boolean(f.blocking),
+    evidence: f.evidence || "",
+    requiredFix: f.requiredFix || "",
+    acceptanceCheck: f.acceptanceCheck || "",
+  };
+}
+
+/**
+ * @param {string} id
+ * @param {{ severity?: string, title?: string, targetFiles?: string, blocking?: boolean }|undefined} entry
+ */
+function catalogEntryToConcern(id, entry) {
+  return {
+    id,
+    severity: entry?.severity || "",
+    title: entry?.title || "",
+    targetFiles: entry?.targetFiles || "",
+    blocking: Boolean(entry?.blocking),
+  };
+}
+
+/**
+ * Build findingCatalog + openBlocking + openConcerns from a parsed round.
+ * Recomputes open sets from full catalog + latest reassessment (not only prior open sets).
+ *
+ * @param {{
+ *   effectiveRound: number,
+ *   parsed: { findings?: any[], newFindings?: any[], reassessments?: {id:string,status:string}[] },
+ *   priorCatalog: Record<string, object>,
+ *   priorFindingIds: string[],
+ * }} opts
+ */
+export function computeFindingLedger(opts) {
+  const { effectiveRound, parsed, priorCatalog, priorFindingIds } = opts;
+  /** @type {Record<string, ReturnType<typeof catalogEntryFromFinding>>} */
+  const findingCatalog = { ...(priorCatalog || {}) };
+
+  if (effectiveRound <= 1) {
+    const findings = parsed.findings || [];
+    const seen = new Set();
+    for (const f of findings) {
+      if (seen.has(f.id)) {
+        throw new Error(`duplicate finding id in round 1: ${f.id}`);
+      }
+      seen.add(f.id);
+      findingCatalog[f.id] = catalogEntryFromFinding(f);
     }
-    if (fenced) continue;
-    const m = lines[i].match(/^# ([^#].*?)\s*$/);
-    if (m) h1s.push({ index: i, title: m[1] });
+    return {
+      findingCatalog,
+      openBlocking: findings.filter((f) => f.blocking).map((f) => f.id),
+      openConcerns: findings.filter((f) => !f.blocking).map((f) => f.id),
+      findingIds: findings.map((f) => f.id),
+    };
   }
-  for (let s = h1s.length - 1; s >= 0; s -= 1) {
-    const title = h1s[s].title.toLowerCase();
-    if (!/review findings|re-review/.test(title)) continue;
-    if (
-      /fix handoff|fix completion|decision closure|review handoff/.test(title)
-    )
-      continue;
-    const start = h1s[s].index + 1;
-    const end = h1s[s + 1]?.index ?? lines.length;
-    const body = lines.slice(start, end).join("\n");
-    let slice = body;
-    if (/re-review/i.test(title)) {
-      const newSplit = body.split(/##\s*New Findings/i);
-      if (newSplit.length >= 2) {
-        // Prefer prior findings reassessment + new findings: use whole body tables
-        // and take the last ID table that has real rows if New Findings is empty
-        slice = body;
-      }
-    } else {
-      const findingsSplit = body.split(/##\s*Findings/i);
-      if (findingsSplit.length >= 2) {
-        slice = findingsSplit[1].split(/##\s+/)[0] ?? findingsSplit[1];
-      }
+
+  for (const f of parsed.newFindings || []) {
+    if (findingCatalog[f.id]) {
+      throw new Error(`New Findings reuses existing finding id: ${f.id}`);
     }
-    const tables = parseMarkdownTables(slice);
-    /** @type {{ id: string, title: string, severity: string }[]} */
-    const collected = [];
-    for (const table of tables) {
-      if (!table.headers.some((h) => h === "id" || h === "finding id"))
-        continue;
-      // Skip reassessment tables (status column, no severity)
-      const isReassessment =
-        table.headers.some((h) => /status|状态|result/.test(h)) &&
-        !table.headers.some(
-          (h) => h === "严重度" || h === "severity" || h === "sev",
+    findingCatalog[f.id] = catalogEntryFromFinding(f);
+  }
+
+  const reassessMap = new Map(
+    (parsed.reassessments || []).map((r) => [
+      r.id,
+      String(r.status).toLowerCase(),
+    ]),
+  );
+  const newIds = new Set((parsed.newFindings || []).map((f) => f.id));
+  /** @type {string[]} */
+  const openBlocking = [];
+  /** @type {string[]} */
+  const openConcerns = [];
+
+  for (const [id, entry] of Object.entries(findingCatalog)) {
+    if (newIds.has(id)) {
+      if (entry.blocking) openBlocking.push(id);
+      else openConcerns.push(id);
+      continue;
+    }
+    const status = reassessMap.get(id);
+    if (!status) {
+      throw new Error(`missing reassessment status for catalog id ${id}`);
+    }
+    if (status === "resolved") continue;
+    if (status === "unresolved" || status === "partially") {
+      if (entry.blocking) openBlocking.push(id);
+      else openConcerns.push(id);
+      continue;
+    }
+    throw new Error(`invalid reassessment status for ${id}: ${status}`);
+  }
+
+  const findingIds = [
+    ...priorFindingIds,
+    ...(parsed.newFindings || []).map((f) => f.id),
+  ].filter((v, i, a) => a.indexOf(v) === i);
+
+  return { findingCatalog, openBlocking, openConcerns, findingIds };
+}
+
+/**
+ * Fail-closed verdict vs open-set invariants (before packet write).
+ * @param {string} verdict
+ * @param {string[]} openBlocking
+ * @param {string[]} openConcerns
+ */
+export function assertVerdictOpenSets(verdict, openBlocking, openConcerns) {
+  const v = String(verdict).toUpperCase();
+  const b = openBlocking || [];
+  const c = openConcerns || [];
+  if (v === "PASS_WITH_CONCERNS") {
+    if (b.length) {
+      throw new Error("PASS_WITH_CONCERNS requires openBlocking empty");
+    }
+    if (!c.length) {
+      throw new Error("PASS_WITH_CONCERNS requires at least one openConcern");
+    }
+  }
+  if (v === "PASS" || v === "NO_FINDINGS") {
+    if (b.length || c.length) {
+      throw new Error(
+        `${v} requires openBlocking and openConcerns both empty (got blocking=${b.join(",") || "∅"} concerns=${c.join(",") || "∅"})`,
+      );
+    }
+  }
+  if (v === "BLOCKED" && !b.length) {
+    throw new Error("BLOCKED requires at least one openBlocking id");
+  }
+}
+
+/**
+ * Resolve accepted concerns for close from structured runtime state only.
+ * Round-1 PWC without ledger may one-time backfill from openConcerns empty + catalog empty
+ * is not allowed for re-review packets.
+ *
+ * @param {{
+ *   state: Record<string, unknown>|null,
+ *   lastAnchor: string|null,
+ * }} opts
+ * @returns {{ id: string, severity: string, title: string, targetFiles?: string, blocking?: boolean }[]}
+ */
+export function resolveConcernsForClose(opts) {
+  const state = opts.state || {};
+  const lastAnchor = opts.lastAnchor || "";
+  const catalog = /** @type {Record<string, any>} */ (
+    state.findingCatalog || null
+  );
+  const openConcerns = Array.isArray(state.openConcerns)
+    ? state.openConcerns.map(String)
+    : null;
+  const openBlocking = Array.isArray(state.openBlocking)
+    ? state.openBlocking.map(String)
+    : [];
+
+  if (openBlocking.length) {
+    throw new Error(
+      `close refuses openBlocking still set (${openBlocking.join(", ")}); only PASS_WITH_CONCERNS with no blockers may close`,
+    );
+  }
+
+  if (
+    catalog &&
+    typeof catalog === "object" &&
+    openConcerns &&
+    openConcerns.length
+  ) {
+    /** @type {ReturnType<typeof catalogEntryToConcern>[]} */
+    const rows = [];
+    for (const id of openConcerns) {
+      if (!catalog[id]) {
+        throw new Error(
+          `close openConcerns id ${id} missing from findingCatalog`,
         );
-      if (isReassessment) continue;
-      for (const f of table.rows.map(findingFromRow)) {
-        if (!f.id || f.id === "(none)" || /^[-—]+$/.test(f.id)) continue;
-        collected.push({ id: f.id, title: f.title, severity: f.severity });
       }
+      if (catalog[id].blocking) {
+        throw new Error(
+          `close openConcerns id ${id} is blocking in catalog (expected non-blocking concern)`,
+        );
+      }
+      rows.push(catalogEntryToConcern(id, catalog[id]));
     }
-    if (collected.length) return collected;
+    return rows;
   }
-  return [];
+
+  // One-time first-round backfill only: review_findings + missing structured state
+  // (legacy packets written before findingCatalog). Re-review must fail closed.
+  if (lastAnchor === "review_findings" || lastAnchor === "fix_handoff") {
+    throw new Error(
+      "close missing findingCatalog/openConcerns in auto-run-state.json for first-round PWC; re-run review-loop run so ledger is written, then close again",
+    );
+  }
+
+  throw new Error(
+    "close fail-closed: re-review/terminal PWC requires findingCatalog + non-empty openConcerns in runtime auto-run-state.json (no Markdown reparse). Recovery: re-run the loop from a clean packet, or restore runtime state.",
+  );
 }
 
 /**
@@ -987,15 +1167,6 @@ export async function cmdClose(opts) {
     );
   }
 
-  const concerns = extractConcernsFromPacket(meta.text);
-  const closedAt = new Date().toISOString();
-  const section = formatDecisionClosureStage({
-    reason,
-    originalVerdict: "PASS_WITH_CONCERNS",
-    concerns,
-    closedAt,
-  });
-
   return withPacketLock(repoRoot, packetId, async () => {
     const metaLocked = readPacketMeta(packetPath);
     if (metaLocked.lifecycleState !== "awaiting_user_decision") {
@@ -1014,6 +1185,21 @@ export async function cmdClose(opts) {
         `close under lock refuses last_anchor=${metaLocked.lastAnchor ?? lastLocked?.anchor ?? "none"}`,
       );
     }
+
+    const state = loadRunState(repoRoot, packetId);
+    const concerns = resolveConcernsForClose({
+      state,
+      lastAnchor: metaLocked.lastAnchor ?? lastLocked?.anchor ?? null,
+    });
+
+    const closedAt = new Date().toISOString();
+    const section = formatDecisionClosureStage({
+      reason,
+      originalVerdict: "PASS_WITH_CONCERNS",
+      concerns,
+      closedAt,
+    });
+
     const written = appendStageAuto({
       repoRoot,
       packetPath,
@@ -1027,6 +1213,17 @@ export async function cmdClose(opts) {
       },
     });
     const reportMeta = readPacketMeta(written.packetPath);
+    // Clear open concerns in runtime after archive
+    saveRunState(repoRoot, packetId, {
+      ...(loadRunState(repoRoot, packetId) || {}),
+      openConcerns: [],
+      openBlocking: [],
+      lifecycle: "archived",
+      packetPath: written.packetPath,
+      closedAt,
+      closeReason: reason,
+      updated: closedAt,
+    });
     return {
       ok: true,
       status: "archived",

@@ -26,6 +26,8 @@ import {
   cmdAppendFixCompletion,
   cmdClose,
   withPacketLock,
+  computeFindingLedger,
+  assertVerdictOpenSets,
 } from "../review-loop/auto-run.mjs";
 
 const cleanup = [];
@@ -103,6 +105,53 @@ None.
 ## Verdict
 
 PASS
+`;
+}
+
+/** Re-review: prior blockers resolved, non-blocking concerns still open → PWC */
+function reReviewPwc({
+  resolved = ["F1"],
+  openConcerns = [{ id: "C1", title: "naming" }],
+} = {}) {
+  const reRows = [
+    ...resolved.map((id) => `| ${id} | resolved | rechecked blocker fixed |`),
+    ...openConcerns.map(
+      (c) => `| ${c.id} | unresolved | still ${c.title || "open"} |`,
+    ),
+  ].join("\n");
+  return `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+${reRows}
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+## Regression Surface
+
+No new blockers.
+
+## Verdict
+
+PASS_WITH_CONCERNS
+`;
+}
+
+function blockedWithConcernText() {
+  return `Found a blocker and a style concern.
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| F1 | [阻塞] | off-by-one | returns n+1 | demo.ts | return n | unit test |
+| C1 | [非阻塞] | naming | style | demo.ts | rename | n/a |
+
+## Verdict
+
+BLOCKED
 `;
 }
 
@@ -551,6 +600,88 @@ BLOCKED
   });
 });
 
+describe("listPacketsUnder dual-dir sort", () => {
+  it("picks v2 newer packet over legacy older when dual-read", () => {
+    const dir = initTempRepo();
+    const branch = repo.resolveBranch(dir);
+    const v2 = repo.branchSlug(branch);
+    const legacy = repo.branchSlugLegacy(branch);
+    assert.notEqual(v2, legacy);
+
+    const writePacket = (slug, fileBase, branchField = branch) => {
+      const d = path.join(dir, ".review-handoff", "active", slug);
+      fs.mkdirSync(d, { recursive: true });
+      const packetId = `${slug}/${fileBase}`;
+      const p = path.join(d, `${fileBase}.md`);
+      fs.writeFileSync(
+        p,
+        `---
+packet_id: ${packetId}
+branch: ${branchField}
+scope: dual
+created: 2026-07-23T00:00:00.000Z
+updated: 2026-07-23T00:00:00.000Z
+last_anchor: review_handoff
+lifecycle_state: in_progress
+round: 1
+loop: on
+---
+
+# Review Handoff
+
+## Goal
+- dual
+`,
+      );
+      return p;
+    };
+
+    const olderLegacy = writePacket(legacy, "2026-07-22_10-00-old");
+    const newerV2 = writePacket(v2, "2026-07-23_10-00-new");
+    const latest = repo.latestActivePacket(dir, branch);
+    assert.equal(fs.realpathSync(latest), fs.realpathSync(newerV2));
+    assert.notEqual(fs.realpathSync(latest), fs.realpathSync(olderLegacy));
+  });
+
+  it("same basename prefers v2 path over legacy", () => {
+    const dir = initTempRepo();
+    const branch = repo.resolveBranch(dir);
+    const v2 = repo.branchSlug(branch);
+    const legacy = repo.branchSlugLegacy(branch);
+    const fileBase = "2026-07-23_12-00-same";
+
+    for (const slug of [legacy, v2]) {
+      const d = path.join(dir, ".review-handoff", "active", slug);
+      fs.mkdirSync(d, { recursive: true });
+      const packetId = `${slug}/${fileBase}`;
+      fs.writeFileSync(
+        path.join(d, `${fileBase}.md`),
+        `---
+packet_id: ${packetId}
+branch: ${branch}
+scope: same
+created: 2026-07-23T00:00:00.000Z
+updated: 2026-07-23T00:00:00.000Z
+last_anchor: review_handoff
+lifecycle_state: in_progress
+round: 1
+loop: on
+---
+
+# Review Handoff
+
+## Goal
+- same
+`,
+      );
+    }
+
+    const latest = repo.latestActivePacket(dir, branch);
+    assert.ok(latest.includes(`${path.sep}${v2}${path.sep}`));
+    assert.ok(!latest.includes(`${path.sep}${legacy}${path.sep}`));
+  });
+});
+
 describe("branchSlug v2 isolation", () => {
   it("separates feature/payment, feature-payment, Feature/Payment", () => {
     const a = repo.branchSlug("feature/payment");
@@ -685,6 +816,10 @@ PASS_WITH_CONCERNS
       adapterFactory: factory,
     });
     assert.equal(r.status, "awaiting_user_decision");
+    assert.deepEqual(
+      (r.concerns || []).map((c) => c.id),
+      ["C1"],
+    );
     const closed = await cmdClose({
       repoRoot: dir,
       packetPath: r.packetPath,
@@ -716,6 +851,84 @@ PASS_WITH_CONCERNS
     );
   });
 
+  it("BLOCKED → fix → re-review PWC → close accepts only open concern C1", async () => {
+    const dir = initTempRepo();
+    const { factory } = makeFakeAdapterFactory([
+      blockedWithConcernText(),
+      reReviewPwc({
+        resolved: ["F1"],
+        openConcerns: [{ id: "C1", title: "naming" }],
+      }),
+    ]);
+    const r1 = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      scopeSlug: "pwc-rr",
+      adapterFactory: factory,
+      rounds: 3,
+    });
+    assert.equal(r1.status, "blocked");
+    assert.deepEqual(r1.openBlocking, ["F1"]);
+
+    await cmdAppendFixCompletion({
+      repoRoot: dir,
+      packetPath: r1.packetPath,
+      body: `# Fix Completion
+
+## Fix Conclusion
+- fixed F1
+
+## Original Findings Snapshot
+- F1 blocker
+- C1 naming
+
+## Finding Status
+- F1 fixed
+- C1 deferred
+
+## Verification
+- unit test
+
+## Re-review Instructions
+- continue
+`,
+    });
+
+    const r2 = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      continue: true,
+      packetPath: r1.packetPath,
+      adapterFactory: factory,
+      rounds: 3,
+    });
+    assert.equal(r2.status, "awaiting_user_decision", JSON.stringify(r2));
+    assert.equal(r2.verdict, "PASS_WITH_CONCERNS");
+    assert.deepEqual(
+      (r2.concerns || []).map((c) => c.id),
+      ["C1"],
+      "re-review PWC must surface open non-blocking concerns, not empty newFindings",
+    );
+    assert.ok(
+      !(r2.concerns || []).some((c) => c.id === "F1"),
+      "resolved blocker must not appear as concern",
+    );
+
+    const closed = await cmdClose({
+      repoRoot: dir,
+      packetPath: r2.packetPath,
+      reason: "accept-concerns",
+    });
+    assert.equal(closed.ok, true);
+    assert.deepEqual(closed.acceptedConcernIds, ["C1"]);
+    const text = fs.readFileSync(closed.packetPath, "utf8");
+    assert.match(text, /# Decision Closure/);
+    // Only assert Decision Closure body — earlier stages still list historical F1
+    const closure = text.split("# Decision Closure")[1] || "";
+    assert.match(closure, /\| C1 \|/);
+    assert.doesNotMatch(closure, /\| F1 \|/);
+  });
+
   it("refuses close when not awaiting_user_decision", async () => {
     const dir = initTempRepo();
     const { factory } = makeFakeAdapterFactory([passText()]);
@@ -734,6 +947,97 @@ PASS_WITH_CONCERNS
           reason: "accept-concerns",
         }),
       /archive|awaiting_user_decision|refuses/i,
+    );
+  });
+});
+
+describe("finding ledger helpers", () => {
+  it("re-review PWC openConcerns keeps unresolved non-blockers", () => {
+    const priorCatalog = {
+      F1: {
+        severity: "[阻塞]",
+        title: "bug",
+        targetFiles: "a.ts",
+        blocking: true,
+      },
+      C1: {
+        severity: "[非阻塞]",
+        title: "naming",
+        targetFiles: "a.ts",
+        blocking: false,
+      },
+    };
+    const ledger = computeFindingLedger({
+      effectiveRound: 2,
+      priorCatalog,
+      priorFindingIds: ["F1", "C1"],
+      parsed: {
+        reassessments: [
+          { id: "F1", status: "resolved", evidence: "ok" },
+          { id: "C1", status: "unresolved", evidence: "still" },
+        ],
+        newFindings: [],
+      },
+    });
+    assert.deepEqual(ledger.openBlocking, []);
+    assert.deepEqual(ledger.openConcerns, ["C1"]);
+    assert.doesNotThrow(() =>
+      assertVerdictOpenSets(
+        "PASS_WITH_CONCERNS",
+        ledger.openBlocking,
+        ledger.openConcerns,
+      ),
+    );
+  });
+
+  it("rejects New Findings reusing catalog id", () => {
+    assert.throws(
+      () =>
+        computeFindingLedger({
+          effectiveRound: 2,
+          priorCatalog: {
+            F1: {
+              severity: "[阻塞]",
+              title: "bug",
+              targetFiles: "a.ts",
+              blocking: true,
+            },
+          },
+          priorFindingIds: ["F1"],
+          parsed: {
+            reassessments: [{ id: "F1", status: "resolved", evidence: "ok" }],
+            newFindings: [
+              {
+                id: "F1",
+                severity: "[阻塞]",
+                title: "dup",
+                targetFiles: "b.ts",
+                blocking: true,
+              },
+            ],
+          },
+        }),
+      /reuses existing finding id/i,
+    );
+  });
+});
+
+describe("scope slug contract", () => {
+  it("rejects scope slugs longer than 24 or more than 3 words", () => {
+    const dir = initTempRepo();
+    const branch = repo.resolveBranch(dir);
+    assert.throws(
+      () => repo.createPacketFile(dir, branch, "one-two-three-four"),
+      /invalid packet scope slug|1–3|24/i,
+    );
+    assert.throws(
+      () =>
+        repo.createPacketFile(
+          dir,
+          branch,
+          "abcdefghijklmnopqrstuvwxy", // 25 chars, 1 word
+        ),
+      /invalid packet scope slug|24/i,
     );
   });
 });

@@ -177,7 +177,18 @@ function listPacketsUnder(repoRoot, branch, location) {
       }
     }
   }
-  return out.sort();
+  // Sort by filename (local_minute-scope), NOT full path — otherwise legacy dir names
+  // like `main/` sort after `main--hash/` and latestActivePacket picks a stale packet.
+  // Same basename: prefer v2 slug so dual-dir collisions resolve deterministically.
+  const v2Slug = branchSlug(branch);
+  return out.sort((a, b) => {
+    const byName = path.basename(a).localeCompare(path.basename(b));
+    if (byName !== 0) return byName;
+    const aIsV2 = path.basename(path.dirname(a)) === v2Slug;
+    const bIsV2 = path.basename(path.dirname(b)) === v2Slug;
+    // v2 last (latestActivePacket takes last element)
+    return Number(aIsV2) - Number(bIsV2);
+  });
 }
 
 /** After a PASS archive, active/ is empty — resume from archive for read-only report. */
@@ -339,11 +350,14 @@ function extractReassessmentRows(sections) {
 }
 
 export function createPacketFile(repoRoot, branch, scopeSlug = "review-loop") {
+  // Contract: 1–3 kebab-case words, max 24 chars (packet-addressing.md)
   if (
-    !/^[a-z0-9]+(?:-[a-z0-9]+){0,4}$/.test(scopeSlug) ||
-    scopeSlug.length > 48
+    !/^[a-z0-9]+(?:-[a-z0-9]+){0,2}$/.test(scopeSlug) ||
+    scopeSlug.length > 24
   ) {
-    throw new Error(`invalid packet scope slug: ${scopeSlug}`);
+    throw new Error(
+      `invalid packet scope slug: ${scopeSlug} (need 1–3 kebab-case words, max 24 chars)`,
+    );
   }
   ensureReviewHandoffLayout(repoRoot);
   const slug = branchSlug(branch);

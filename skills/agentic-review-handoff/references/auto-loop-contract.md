@@ -57,11 +57,32 @@ This table is the auto-loop source of truth (scripts enforce it). Do **not** app
 | `PASS_WITH_CONCERNS`   | `awaiting_user_decision` | first round: `review_findings` (no Fix Handoff); re-review: `re_review` | Terminal report lists concerns; user `close --reason accept-concerns` **or** `run --continue` |
 | `BLOCKED`              | `blocked`                | first round: `fix_handoff`; re-review: `re_review`                      | Return structured blockers; Fixer fixes + `fix-completion` + `run --continue`                 |
 
+### Finding ledger (runtime `auto-run-state.json`)
+
+After each successful Reviewer parse (before packet stage write), the Fixer script persists:
+
+| Field            | Meaning                                                                        |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `findingCatalog` | Stable map `id → { severity, title, targetFiles, blocking, ... }`              |
+| `openBlocking`   | IDs still open as blockers (recomputed from reassessment + catalog each round) |
+| `openConcerns`   | IDs still open as non-blocking concerns                                        |
+
+Re-review `PASS_WITH_CONCERNS` terminal `concerns` and `close` **must** read this ledger — not re-parse Markdown tables (New Findings is empty under valid PWC).
+
+Verdict invariants (fail-closed before write):
+
+- `PASS_WITH_CONCERNS` → `openBlocking=[]` and `openConcerns.length ≥ 1`
+- `PASS` / `NO_FINDINGS` → both open sets empty
+- `BLOCKED` → `openBlocking.length ≥ 1`
+
+`parseReReview` prior-blocker gate uses **all historical blocking IDs in catalog**, not only the previous `openBlocking` set (so a re-opened blocker still fails PASS).
+
 ### Decision Closure (`close --reason accept-concerns`)
 
 User-only terminal path when lifecycle is `awaiting_user_decision` after `PASS_WITH_CONCERNS`:
 
 - Requires packet lock + content-hash guard (same as other auto stage writes).
+- Reads `findingCatalog` + non-empty `openConcerns` from runtime state under the lock; missing/corrupt ledger → **fail closed** (no Markdown reverse-parse for re-review packets).
 - Appends `# Decision Closure` with reason, original Verdict `PASS_WITH_CONCERNS`, accepted concern IDs, and timestamp.
 - Sets `last_anchor=decision_closure`, `lifecycle_state=archived`, `mv` to `archive/` under the **packet_id slug** (no path rewrite).
 - Does **not** rewrite the original Verdict to `PASS`, does **not** invent Fix Completion, and does **not** trigger re-review.
