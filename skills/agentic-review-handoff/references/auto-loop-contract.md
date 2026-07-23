@@ -59,7 +59,11 @@ This table is the auto-loop source of truth (scripts enforce it). Do **not** app
 
 ### Finding ledger (runtime `auto-run-state.json`)
 
-After each successful Reviewer parse (before packet stage write), the Fixer script persists:
+**Write-ahead pending stage** (crash window): before `appendStageAuto`, runtime stores `pendingStage` with `oldHash`, section body, and full `nextLedger`. After packet hash advances and ledger is promoted, `pendingStage` is cleared. On next start, `reconcileRuntimeState` either re-applies the stage (hash still `oldHash`) or finalizes ledger (packet already advanced). Other hash states → `PACKET_HASH_MISMATCH`.
+
+**Legacy / stale ledger rebuild**: if `findingCatalog` is missing or inconsistent with packet review stages, replay `# Review Findings` + every `# Re-review` through the same parsers/ledger/verdict invariants. Unreadable stages → `STATE_MIGRATION_REQUIRED` (before Reviewer invoke). Markdown replay is migration/recovery only; normal `close` still reads structured ledger after reconcile.
+
+After each successful Reviewer parse, the Fixer script persists:
 
 | Field            | Meaning                                                                        |
 | ---------------- | ------------------------------------------------------------------------------ |

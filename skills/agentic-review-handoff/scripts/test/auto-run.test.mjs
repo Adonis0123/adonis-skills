@@ -20,6 +20,8 @@ import {
   appendStageAuto,
   seedPacketHash,
   contentHash,
+  loadRunState,
+  saveRunState,
 } from "../review-loop/stage-writer.mjs";
 import {
   cmdRun,
@@ -28,6 +30,8 @@ import {
   withPacketLock,
   computeFindingLedger,
   assertVerdictOpenSets,
+  rebuildLedgerFromPacketText,
+  reconcileRuntimeState,
 } from "../review-loop/auto-run.mjs";
 
 const cleanup = [];
@@ -1039,6 +1043,264 @@ describe("scope slug contract", () => {
         ),
       /invalid packet scope slug|24/i,
     );
+  });
+});
+
+describe("reassessment exact-once", () => {
+  it("rejects duplicate reassessment id", () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+| F1 | unresolved | still open |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+PASS
+`;
+    const r = parseReReview(text, ["F1"]);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /duplicate reassessment/i);
+  });
+
+  it("rejects unknown reassessment id not in prior set", () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+| X9 | unresolved | extra |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+PASS
+`;
+    const r = parseReReview(text, ["F1"]);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /not in prior|X9/i);
+  });
+
+  it("rejects New Findings id that collides with prior", () => {
+    const text = `## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | ok |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| F1 | [阻塞] | again | e | a.ts | fix | t |
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+BLOCKED
+`;
+    const r = parseReReview(text, ["F1"]);
+    assert.equal(r.ok, false);
+    assert.match(r.error, /collides|F1/i);
+  });
+});
+
+describe("ledger rebuild + pending recovery", () => {
+  it("rebuilds catalog from packet Review Findings + Re-review stages", () => {
+    const packetText = `---
+packet_id: x/y
+branch: master
+last_anchor: re_review
+lifecycle_state: awaiting_user_decision
+round: 2
+---
+
+# Review Findings
+
+## Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| F1 | [阻塞] | bug | e | a.ts | fix | t |
+| C1 | [非阻塞] | naming | s | a.ts | rename | n/a |
+
+## Verdict
+
+BLOCKED
+
+# Re-review
+
+## Prior Findings Reassessment
+
+| ID | 状态 | 复核证据 |
+|---|---|---|
+| F1 | resolved | fixed |
+| C1 | unresolved | still |
+
+## New Findings
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| (none) | — | — | — | — | — | — |
+
+## Regression Surface
+
+ok
+
+## Verdict
+
+PASS_WITH_CONCERNS
+`;
+    const rebuilt = rebuildLedgerFromPacketText(packetText);
+    assert.equal(rebuilt.round, 2);
+    assert.equal(rebuilt.lastVerdict, "PASS_WITH_CONCERNS");
+    assert.deepEqual(rebuilt.openBlocking, []);
+    assert.deepEqual(rebuilt.openConcerns, ["C1"]);
+    assert.ok(rebuilt.findingCatalog.F1.blocking);
+    assert.equal(rebuilt.findingCatalog.C1.blocking, false);
+  });
+
+  it("legacy empty catalog on continue rebuilds then re-review PWC close", async () => {
+    const dir = initTempRepo();
+    const { factory } = makeFakeAdapterFactory([
+      blockedWithConcernText(),
+      reReviewPwc({
+        resolved: ["F1"],
+        openConcerns: [{ id: "C1", title: "naming" }],
+      }),
+    ]);
+    const r1 = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      scopeSlug: "legacy",
+      adapterFactory: factory,
+      rounds: 3,
+    });
+    assert.equal(r1.status, "blocked");
+
+    await cmdAppendFixCompletion({
+      repoRoot: dir,
+      packetPath: r1.packetPath,
+      body: `# Fix Completion
+
+## Fix Conclusion
+- fixed F1
+
+## Original Findings Snapshot
+- F1
+- C1
+
+## Finding Status
+- F1 fixed
+
+## Verification
+- ok
+
+## Re-review Instructions
+- continue
+`,
+    });
+
+    // Simulate pre-ledger state: wipe catalog but keep findingIds/round
+    const packetId = repo.readPacketMeta(r1.packetPath).packetId;
+    const st = loadRunState(dir, packetId);
+    saveRunState(dir, packetId, {
+      ...st,
+      findingCatalog: undefined,
+      openBlocking: ["F1"],
+      openConcerns: ["C1"],
+      findingIds: ["F1", "C1"],
+      round: 1,
+      lastVerdict: "BLOCKED",
+    });
+
+    const r2 = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      continue: true,
+      packetPath: r1.packetPath,
+      adapterFactory: factory,
+      rounds: 3,
+    });
+    assert.equal(r2.status, "awaiting_user_decision", JSON.stringify(r2));
+    assert.deepEqual(
+      (r2.concerns || []).map((c) => c.id),
+      ["C1"],
+    );
+  });
+
+  it("pendingStage finalize when packet already advanced (crash after packet write)", async () => {
+    const dir2 = initTempRepo();
+    const { factory: f2 } = makeFakeAdapterFactory([blockedText("F1")]);
+    const b = await cmdRun({
+      repoRoot: dir2,
+      reviewer: "codex",
+      scopeSlug: "pend2",
+      adapterFactory: f2,
+    });
+    assert.equal(b.status, "blocked");
+    const meta = repo.readPacketMeta(b.packetPath);
+    const packetId = meta.packetId;
+    const st = loadRunState(dir2, packetId);
+    // Incomplete finalize: packet written, pending still present, catalog wiped
+    saveRunState(dir2, packetId, {
+      ...st,
+      pendingStage: {
+        oldHash: "deadbeef",
+        round: 1,
+        lastAnchor: meta.lastAnchor,
+        lifecycleState: "blocked",
+        sectionMarkdown: "# unused",
+        nextLedger: {
+          round: 1,
+          lastVerdict: "BLOCKED",
+          findingIds: st.findingIds,
+          findingCatalog: st.findingCatalog,
+          openBlocking: st.openBlocking,
+          openConcerns: st.openConcerns || [],
+          lifecycle: "blocked",
+        },
+      },
+      findingCatalog: {},
+      openBlocking: [],
+    });
+    const recon = reconcileRuntimeState({
+      repoRoot: dir2,
+      packetId,
+      packetPath: b.packetPath,
+      state: loadRunState(dir2, packetId),
+    });
+    assert.equal(recon.error, undefined, JSON.stringify(recon.error));
+    assert.ok(
+      recon.returnEarly || recon.state.findingCatalog?.F1,
+      JSON.stringify(recon),
+    );
+    if (!recon.returnEarly) {
+      assert.ok(Object.keys(recon.state.findingCatalog || {}).length > 0);
+    }
   });
 });
 

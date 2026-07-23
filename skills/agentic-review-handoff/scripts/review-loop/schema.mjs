@@ -358,18 +358,32 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
     return { ok: false, error: "re-review missing Regression Surface section" };
   }
 
+  // Exact section only — do not scan unrelated tables for reassessment rows
+  let priorSectionBody = "";
+  const engPrior = String(text).split(/##\s*Prior Findings Reassessment/i);
+  if (engPrior.length >= 2) {
+    priorSectionBody = engPrior[1].split(/##\s+/)[0] ?? "";
+  } else {
+    const zhPrior = String(text).split(/##\s*复评/i);
+    if (zhPrior.length >= 2) {
+      priorSectionBody = zhPrior[1].split(/##\s+/)[0] ?? "";
+    } else if (priorFindingIds.length) {
+      return {
+        ok: false,
+        error: "re-review missing Prior Findings Reassessment section body",
+      };
+    }
+  }
   /** @type {{ id: string, status: string, evidence: string }[]} */
   const reassessments = [];
-  const tables = parseMarkdownTables(text);
-  for (const t of tables) {
+  for (const t of parseMarkdownTables(priorSectionBody)) {
     const idKey = t.headers.find((h) => h === "id" || h === "finding id");
     const statusKey = t.headers.find((h) => /status|状态|result/.test(h));
     if (!idKey || !statusKey) continue;
-    // Prefer reassessment tables (strict status vocabulary — F1)
     for (const row of t.rows) {
-      const id = row[idKey];
+      const id = String(row[idKey] ?? "").trim();
       const status = String(row[statusKey] ?? "").trim();
-      if (!id) continue;
+      if (!id || id === "(none)" || /^[-—]+$/.test(id)) continue;
       if (/^(resolved|partially|unresolved)$/i.test(status)) {
         const evidence =
           row.evidence || row["复核证据"] || row["evidence"] || "";
@@ -385,7 +399,6 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
           evidence: String(evidence).trim(),
         });
       } else if (/^(partial|fixed|open)$/i.test(status)) {
-        // reject non-canonical statuses (open/fixed/partial) as malformed
         return {
           ok: false,
           error: `invalid reassessment status "${status}" for ${id} (use resolved|partially|unresolved)`,
@@ -394,12 +407,32 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
     }
   }
 
+  // Exact-once: no duplicate reassessment IDs
+  const reassessIds = reassessments.map((r) => r.id);
+  const reassessSet = new Set(reassessIds);
+  if (reassessSet.size !== reassessIds.length) {
+    const dups = reassessIds.filter((id, i) => reassessIds.indexOf(id) !== i);
+    return {
+      ok: false,
+      error: `duplicate reassessment id(s): ${[...new Set(dups)].join(", ")}`,
+    };
+  }
+  // Exact set equality with priorFindingIds when priors exist
   if (priorFindingIds.length) {
+    const priorSet = new Set(priorFindingIds);
     for (const id of priorFindingIds) {
-      if (!reassessments.some((r) => r.id === id)) {
+      if (!reassessSet.has(id)) {
         return {
           ok: false,
           error: `re-review missing reassessment for prior finding ${id}`,
+        };
+      }
+    }
+    for (const id of reassessSet) {
+      if (!priorSet.has(id)) {
+        return {
+          ok: false,
+          error: `reassessment id ${id} is not in prior finding set`,
         };
       }
     }
@@ -443,6 +476,20 @@ export function parseReReview(text, priorFindingIds = [], opts = {}) {
   newFindings = newFindingsTable.rows
     .map(findingFromRow)
     .filter((f) => f.id && f.id !== "(none)" && !/^[-—]+$/.test(f.id));
+  // New Findings IDs unique among themselves
+  const newIds = newFindings.map((f) => f.id);
+  if (new Set(newIds).size !== newIds.length) {
+    return { ok: false, error: "New Findings contains duplicate finding ids" };
+  }
+  // New Findings must not intersect prior / reassessment IDs
+  for (const id of newIds) {
+    if (priorFindingIds.includes(id) || reassessSet.has(id)) {
+      return {
+        ok: false,
+        error: `New Findings id ${id} collides with prior/reassessment ids`,
+      };
+    }
+  }
   for (const f of newFindings) {
     if (!f.title || !f.severity) {
       return {

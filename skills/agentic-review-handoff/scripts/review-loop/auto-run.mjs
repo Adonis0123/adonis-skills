@@ -27,6 +27,10 @@ import {
   formatReReviewStage,
   formatDecisionClosureStage,
   lifecycleForVerdict,
+  parseMarkdownTables,
+  findingFromRow,
+  missingFindingsTableColumns,
+  extractVerdict,
 } from "./schema.mjs";
 import {
   appendStageAuto,
@@ -294,6 +298,19 @@ async function runBody(ctx) {
     seedPacketHash(repoRoot, packetId, packetPath);
     state = loadRunState(repoRoot, packetId);
   }
+
+  // Unified reconciliation BEFORE effectiveRound / Reviewer (legacy ledger + crash recovery)
+  const recon = reconcileRuntimeState({
+    repoRoot,
+    packetId,
+    packetPath,
+    state,
+  });
+  if (recon.error) return recon.error;
+  state = recon.state;
+  if (recon.packetPath) packetPath = recon.packetPath;
+  if (recon.returnEarly) return recon.returnEarly;
+
   // Persist base + reviewer early so DELIVERY_UNKNOWN retries cannot drift
   saveRunState(repoRoot, packetId, {
     ...state,
@@ -303,11 +320,10 @@ async function runBody(ctx) {
   });
   state = loadRunState(repoRoot, packetId);
 
+  // Round from reconciled durable state (not only raw pre-recovery state.round)
   const round = Number(state.round ?? 0);
   const nextRound = isContinue ? round + 1 : Math.max(round, 0) + 1;
-  // On first start: if never ran, nextRound=1. On continue after BLOCKED fix: increment.
 
-  // F4: recover round from packet if runtime state lost
   const metaNow = readPacketMeta(packetPath);
   const physical = lastPhysicalH1(metaNow.text);
   if (!isContinue) {
@@ -592,9 +608,23 @@ async function runBody(ctx) {
     lastAnchor = "re_review";
   }
 
+  const nextLedger = {
+    baseSha,
+    round: effectiveRound,
+    roundsBudget,
+    reviewer,
+    lastVerdict: parsed.verdict,
+    findingIds,
+    findingCatalog,
+    openBlocking,
+    openConcerns,
+    lifecycle,
+    evidencePath: evidence.evidencePath,
+    lineCount: evidence.lineCount,
+  };
   let writeResult;
   try {
-    writeResult = appendStageAuto({
+    writeResult = commitStageWithPendingLedger({
       repoRoot,
       packetPath,
       packetId,
@@ -607,6 +637,8 @@ async function runBody(ctx) {
         round: String(effectiveRound),
         mode: "auto",
       },
+      nextLedger,
+      priorState: loadRunState(repoRoot, packetId) ?? state,
     });
     packetPath = writeResult.packetPath;
   } catch (err) {
@@ -623,22 +655,14 @@ async function runBody(ctx) {
 
   const nextState = {
     ...loadRunState(repoRoot, packetId),
-    baseSha,
-    round: effectiveRound,
-    roundsBudget,
-    reviewer,
-    lastVerdict: parsed.verdict,
-    findingIds,
-    findingCatalog,
-    openBlocking,
-    openConcerns,
-    lifecycle,
+    ...nextLedger,
     packetPath,
-    evidencePath: evidence.evidencePath,
-    lineCount: evidence.lineCount,
+    packetHash: writeResult.packetHash,
+    pendingStage: null,
     updated: new Date().toISOString(),
   };
-  saveRunState(repoRoot, packetId, nextState);
+  // commitStageWithPendingLedger already finalizes state; re-load for safety
+  const finalState = loadRunState(repoRoot, packetId) ?? nextState;
 
   // Clean packet STOP if present on terminal
   const packetStop = path.join(runtimeDir(repoRoot, packetId), "STOP");
@@ -653,7 +677,7 @@ async function runBody(ctx) {
   if (parsed.verdict === "BLOCKED") {
     // Budget is a ceiling: on the final budgeted round, BLOCKED exits immediately
     // (plan flowchart: 轮次 < 预算? 否 → 预算耗尽). Do not ask for another fix pass.
-    if (effectiveRound >= roundsBudget && !nextState.budgetOverride) {
+    if (effectiveRound >= roundsBudget && !finalState.budgetOverride) {
       const unresolvedReassessments =
         effectiveRound > 1
           ? (parsed.reassessments || []).filter(
@@ -662,7 +686,7 @@ async function runBody(ctx) {
           : [];
       return budgetExhaustedReport({
         packetPath,
-        state: nextState,
+        state: finalState,
         roundsBudget,
         openBlocking,
         // Round 1: findings; Re-review: open blockers from ledger + unresolved reassessments
@@ -896,6 +920,515 @@ function budgetExhaustedReport({
 
 function terminalReport(x) {
   return { ok: true, ...x };
+}
+
+/**
+ * Fence-aware top-level H1 sections (title + body after the H1 line).
+ * @param {string} text
+ * @returns {{ title: string, body: string }[]}
+ */
+export function splitTopLevelH1Sections(text) {
+  const lines = String(text).split("\n");
+  /** @type {{ title: string, bodyLines: string[] }[]} */
+  const sections = [];
+  let fenced = false;
+  /** @type {{ title: string, bodyLines: string[] }|null} */
+  let current = null;
+  for (const line of lines) {
+    if (/^\s*(```|~~~)/.test(line)) {
+      fenced = !fenced;
+      if (current) current.bodyLines.push(line);
+      continue;
+    }
+    if (!fenced) {
+      const m = line.match(/^# ([^#].*?)\s*$/);
+      if (m) {
+        if (current) sections.push(current);
+        current = { title: m[1].trim(), bodyLines: [] };
+        continue;
+      }
+    }
+    if (current) current.bodyLines.push(line);
+  }
+  if (current) sections.push(current);
+  return sections.map((s) => ({
+    title: s.title,
+    body: s.bodyLines.join("\n"),
+  }));
+}
+
+/**
+ * Completed review rounds from durable packet H1 chain (not bare frontmatter).
+ * Review Findings → 1; first Re-review → 2; Re-review (round N) → N.
+ * @param {string} text
+ */
+export function completedReviewRoundFromPacket(text) {
+  let maxRound = 0;
+  for (const sec of splitTopLevelH1Sections(text)) {
+    if (/^Review Findings$/i.test(sec.title)) {
+      maxRound = Math.max(maxRound, 1);
+      continue;
+    }
+    const m = sec.title.match(/^Re-review(?:\s*\(round\s+(\d+)\))?$/i);
+    if (m) {
+      maxRound = Math.max(maxRound, m[1] ? Number(m[1]) : 2);
+    }
+  }
+  return maxRound;
+}
+
+/**
+ * @param {string} body
+ * @returns {ReturnType<typeof findingFromRow>[]|null}
+ */
+export function extractFindingsFromSectionBody(body) {
+  let slice = body;
+  const split = String(body).split(/##\s*Findings/i);
+  if (split.length >= 2) {
+    slice = split[1].split(/##\s+/)[0] ?? split[1];
+  }
+  const tables = parseMarkdownTables(slice);
+  const table = tables.find((t) =>
+    t.headers.some((h) => h === "id" || h === "finding id"),
+  );
+  if (!table) return null;
+  if (missingFindingsTableColumns(table.headers).length) return null;
+  if (table.columnMismatch) return null;
+  return table.rows
+    .map(findingFromRow)
+    .filter((f) => f.id && f.id !== "(none)" && !/^[-—]+$/.test(f.id));
+}
+
+/**
+ * Rebuild finding ledger by replaying Review Findings + Re-review stages from packet.
+ * Fail-closed if stages are not parseable (STATE_MIGRATION_REQUIRED).
+ * @param {string} packetText
+ */
+export function rebuildLedgerFromPacketText(packetText) {
+  const sections = splitTopLevelH1Sections(packetText);
+  /** @type {Record<string, ReturnType<typeof catalogEntryFromFinding>>} */
+  let findingCatalog = {};
+  /** @type {string[]} */
+  let findingIds = [];
+  /** @type {string[]} */
+  let openBlocking = [];
+  /** @type {string[]} */
+  let openConcerns = [];
+  let round = 0;
+  /** @type {string|null} */
+  let lastVerdict = null;
+
+  for (const sec of sections) {
+    if (/^Review Findings$/i.test(sec.title)) {
+      const findings = extractFindingsFromSectionBody(sec.body);
+      if (!findings) {
+        throw new Error(
+          "STATE_MIGRATION_REQUIRED: cannot parse # Review Findings findings table",
+        );
+      }
+      const sectionText = `# Review Findings\n${sec.body}`;
+      const verdict = extractVerdict(sectionText);
+      if (!verdict) {
+        throw new Error(
+          "STATE_MIGRATION_REQUIRED: # Review Findings missing Verdict",
+        );
+      }
+      const ledger = computeFindingLedger({
+        effectiveRound: 1,
+        parsed: { findings, verdict },
+        priorCatalog: {},
+        priorFindingIds: [],
+      });
+      assertVerdictOpenSets(verdict, ledger.openBlocking, ledger.openConcerns);
+      findingCatalog = ledger.findingCatalog;
+      findingIds = ledger.findingIds;
+      openBlocking = ledger.openBlocking;
+      openConcerns = ledger.openConcerns;
+      round = 1;
+      lastVerdict = verdict;
+      continue;
+    }
+    const reMatch = sec.title.match(/^Re-review(?:\s*\(round\s+(\d+)\))?$/i);
+    if (reMatch) {
+      const nextRound = reMatch[1]
+        ? Number(reMatch[1])
+        : Math.max(round + 1, 2);
+      const sectionText = `# ${sec.title}\n${sec.body}`;
+      const parsed = parseReReview(sectionText, findingIds, {
+        priorBlockingIds: catalogBlockingIds(findingCatalog),
+      });
+      if (!parsed.ok) {
+        throw new Error(
+          `STATE_MIGRATION_REQUIRED: cannot parse re-review stage: ${parsed.error}`,
+        );
+      }
+      const ledger = computeFindingLedger({
+        effectiveRound: nextRound,
+        parsed,
+        priorCatalog: findingCatalog,
+        priorFindingIds: findingIds,
+      });
+      assertVerdictOpenSets(
+        parsed.verdict,
+        ledger.openBlocking,
+        ledger.openConcerns,
+      );
+      findingCatalog = ledger.findingCatalog;
+      findingIds = ledger.findingIds;
+      openBlocking = ledger.openBlocking;
+      openConcerns = ledger.openConcerns;
+      round = nextRound;
+      lastVerdict = parsed.verdict;
+    }
+  }
+
+  if (round === 0) {
+    throw new Error(
+      "STATE_MIGRATION_REQUIRED: no # Review Findings stage to rebuild ledger from",
+    );
+  }
+  return {
+    findingCatalog,
+    findingIds,
+    openBlocking,
+    openConcerns,
+    round,
+    lastVerdict,
+  };
+}
+
+/**
+ * @param {Record<string, unknown>} state
+ * @param {ReturnType<typeof readPacketMeta>} meta
+ * @param {string} packetText
+ */
+export function needsLedgerRebuild(state, meta, packetText) {
+  const completed = completedReviewRoundFromPacket(packetText);
+  if (completed === 0) return false;
+  const catalog = /** @type {Record<string, {blocking?: boolean}>} */ (
+    state.findingCatalog || {}
+  );
+  const keys = Object.keys(catalog);
+  if (keys.length === 0) return true;
+  const stateRound = Number(state.round ?? 0);
+  if (stateRound < completed) return true;
+  const findingIds = Array.isArray(state.findingIds)
+    ? state.findingIds.map(String)
+    : [];
+  if (findingIds.length !== keys.length) return true;
+  for (const id of findingIds) {
+    if (!catalog[id]) return true;
+  }
+  for (const id of state.openBlocking || []) {
+    if (!catalog[String(id)]?.blocking) return true;
+  }
+  for (const id of state.openConcerns || []) {
+    const e = catalog[String(id)];
+    if (!e || e.blocking) return true;
+  }
+  if (
+    state.lastVerdict &&
+    meta.lifecycleState &&
+    state.lifecycle &&
+    state.lifecycle !== meta.lifecycleState
+  ) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Write-ahead pending stage then append packet, then promote ledger.
+ * Crash recovery via reconcileRuntimeState.
+ */
+export function commitStageWithPendingLedger(opts) {
+  const {
+    repoRoot,
+    packetPath,
+    packetId,
+    sectionMarkdown,
+    lastAnchor,
+    lifecycleState,
+    extra,
+    nextLedger,
+    priorState,
+  } = opts;
+  const text = fs.readFileSync(packetPath, "utf8");
+  const oldHash = contentHash(text);
+  const pendingStage = {
+    oldHash,
+    round: nextLedger.round,
+    lastAnchor,
+    lifecycleState,
+    sectionMarkdown,
+    extra: extra || {},
+    nextLedger: {
+      ...nextLedger,
+      packetPath, // may update after archive
+    },
+    createdAt: new Date().toISOString(),
+  };
+  saveRunState(repoRoot, packetId, {
+    ...priorState,
+    pendingStage,
+    updated: pendingStage.createdAt,
+  });
+
+  const writeResult = appendStageAuto({
+    repoRoot,
+    packetPath,
+    packetId,
+    sectionMarkdown,
+    lastAnchor,
+    lifecycleState,
+    extra,
+    expectedHash: oldHash,
+  });
+
+  const finalized = {
+    ...priorState,
+    ...nextLedger,
+    packetPath: writeResult.packetPath,
+    packetHash: writeResult.packetHash,
+    lastAnchor: writeResult.meta?.lastAnchor ?? lastAnchor,
+    lifecycleState:
+      lifecycleState === "archived"
+        ? "archived"
+        : (writeResult.meta?.lifecycleState ?? lifecycleState),
+    pendingStage: null,
+    updated: new Date().toISOString(),
+  };
+  saveRunState(repoRoot, packetId, finalized);
+  return writeResult;
+}
+
+/**
+ * Recover pending crash + rebuild missing/stale ledger from packet before Reviewer.
+ * @returns {{ state: Record<string, unknown>, packetPath?: string, returnEarly?: object, error?: object }}
+ */
+export function reconcileRuntimeState({
+  repoRoot,
+  packetId,
+  packetPath,
+  state,
+}) {
+  let s = { ...(state || {}) };
+  let pathNow = packetPath;
+  let meta = readPacketMeta(pathNow);
+  let text = meta.text;
+  let currentHash = contentHash(fs.readFileSync(pathNow, "utf8"));
+
+  // Without pending journal, packet hash drift is external edit or unrecoverable crash
+  // — never silently re-seed hash from the mutated packet (would absorb mid-loop rewrites).
+  if (
+    s.packetHash &&
+    currentHash !== s.packetHash &&
+    !(s.pendingStage && typeof s.pendingStage === "object")
+  ) {
+    return {
+      state: s,
+      error: {
+        ok: false,
+        status: "packet_hash_mismatch",
+        message:
+          "PACKET_HASH_MISMATCH: packet was modified outside auto loop (no pending stage to recover); refuse continue and stop",
+        packetPath: pathNow,
+        expectedHash: s.packetHash,
+        actualHash: currentHash,
+      },
+    };
+  }
+
+  // --- pendingStage recovery (write-ahead journal) ---
+  if (s.pendingStage && typeof s.pendingStage === "object") {
+    const p = /** @type {any} */ (s.pendingStage);
+    if (currentHash === p.oldHash) {
+      // Packet write never landed — re-apply stage then finalize
+      try {
+        const w = appendStageAuto({
+          repoRoot,
+          packetPath: pathNow,
+          packetId,
+          sectionMarkdown: p.sectionMarkdown,
+          lastAnchor: p.lastAnchor,
+          lifecycleState: p.lifecycleState,
+          extra: p.extra || {},
+          expectedHash: p.oldHash,
+        });
+        pathNow = w.packetPath;
+        s = {
+          ...s,
+          ...(p.nextLedger || {}),
+          round: p.round,
+          packetPath: w.packetPath,
+          packetHash: w.packetHash,
+          lastAnchor: p.lastAnchor,
+          lifecycle: p.lifecycleState,
+          lifecycleState: p.lifecycleState,
+          pendingStage: null,
+          recoveredFromPending: true,
+          updated: new Date().toISOString(),
+        };
+        saveRunState(repoRoot, packetId, s);
+        meta = readPacketMeta(pathNow);
+        text = meta.text;
+        currentHash = w.packetHash;
+      } catch (err) {
+        return {
+          state: s,
+          error: {
+            ok: false,
+            status: "PACKET_HASH_MISMATCH",
+            message: `pending stage re-apply failed: ${err?.message || err}`,
+            packetPath: pathNow,
+          },
+        };
+      }
+    } else if (
+      meta.lastAnchor === p.lastAnchor ||
+      (p.lifecycleState === "archived" &&
+        (meta.lifecycleState === "archived" ||
+          String(pathNow).includes(`${path.sep}archive${path.sep}`)))
+    ) {
+      // Packet write landed; promote ledger only
+      const finalPath =
+        p.nextLedger?.packetPath && fs.existsSync(p.nextLedger.packetPath)
+          ? p.nextLedger.packetPath
+          : pathNow;
+      pathNow = finalPath;
+      currentHash = contentHash(fs.readFileSync(pathNow, "utf8"));
+      s = {
+        ...s,
+        ...(p.nextLedger || {}),
+        round: p.round,
+        packetPath: pathNow,
+        packetHash: currentHash,
+        lastAnchor: p.lastAnchor,
+        lifecycle: p.lifecycleState,
+        lifecycleState: p.lifecycleState,
+        pendingStage: null,
+        recoveredFromPending: true,
+        updated: new Date().toISOString(),
+      };
+      saveRunState(repoRoot, packetId, s);
+      meta = readPacketMeta(pathNow);
+      text = meta.text;
+    } else {
+      return {
+        state: s,
+        error: {
+          ok: false,
+          status: "PACKET_HASH_MISMATCH",
+          message:
+            "pending stage recovery failed: packet hash matches neither pre-write hash nor expected post-write last_anchor (external edit or corrupted pending)",
+          packetPath: pathNow,
+        },
+      };
+    }
+
+    // If pending recovery finished a terminal review write, do not re-invoke Reviewer
+    const early = terminalReportFromRecoveredState(s, pathNow);
+    if (early) return { state: s, packetPath: pathNow, returnEarly: early };
+  }
+
+  // --- ledger rebuild / migration ---
+  if (needsLedgerRebuild(s, meta, text)) {
+    try {
+      const rebuilt = rebuildLedgerFromPacketText(text);
+      const lifecycle = lifecycleForVerdict(
+        rebuilt.round <= 1 ? "review_findings" : "re_review",
+        rebuilt.lastVerdict || "BLOCKED",
+      );
+      s = {
+        ...s,
+        findingCatalog: rebuilt.findingCatalog,
+        findingIds: rebuilt.findingIds,
+        openBlocking: rebuilt.openBlocking,
+        openConcerns: rebuilt.openConcerns,
+        round: rebuilt.round,
+        lastVerdict: rebuilt.lastVerdict,
+        lifecycle,
+        packetHash: currentHash,
+        packetPath: pathNow,
+        ledgerRebuiltFromPacket: true,
+        updated: new Date().toISOString(),
+      };
+      saveRunState(repoRoot, packetId, s);
+    } catch (err) {
+      return {
+        state: s,
+        error: {
+          ok: false,
+          status: "STATE_MIGRATION_REQUIRED",
+          message: err?.message || String(err),
+          packetPath: pathNow,
+          recovery:
+            "Packet review stages could not rebuild findingCatalog. Create a new packet with review-loop run, or restore a complete auto-run-state.json.",
+        },
+      };
+    }
+  }
+
+  return { state: s, packetPath: pathNow };
+}
+
+/**
+ * After pending recovery of a just-written terminal stage, return report without double review.
+ * @param {Record<string, unknown>} state
+ * @param {string} packetPath
+ */
+function terminalReportFromRecoveredState(state, packetPath) {
+  if (!state?.recoveredFromPending) return null;
+  const verdict = String(state.lastVerdict || "").toUpperCase();
+  if (verdict === "PASS" || verdict === "NO_FINDINGS") {
+    return {
+      ok: true,
+      status: "archived",
+      verdict,
+      round: state.round,
+      packetPath,
+      packetId: state.packetId,
+      message: `Recovered terminal ${verdict} after crash (no re-review)`,
+      recoveredFromPending: true,
+    };
+  }
+  if (verdict === "PASS_WITH_CONCERNS") {
+    const catalog = /** @type {Record<string, any>} */ (
+      state.findingCatalog || {}
+    );
+    const openConcerns = Array.isArray(state.openConcerns)
+      ? state.openConcerns.map(String)
+      : [];
+    return {
+      ok: true,
+      status: "awaiting_user_decision",
+      verdict,
+      round: state.round,
+      packetPath,
+      concerns: openConcerns.map((id) =>
+        catalogEntryToConcern(id, catalog[id]),
+      ),
+      openConcerns,
+      message:
+        "Recovered PASS_WITH_CONCERNS after crash — user decides archive or another round",
+      recoveredFromPending: true,
+    };
+  }
+  if (verdict === "BLOCKED") {
+    return {
+      ok: true,
+      status: "blocked",
+      verdict,
+      round: state.round,
+      packetPath,
+      openBlocking: state.openBlocking || [],
+      needsContinue: true,
+      message:
+        "Recovered BLOCKED after crash — Fixer should fix-completion then run --continue",
+      recoveredFromPending: true,
+    };
+  }
+  return null;
 }
 
 /**
@@ -1168,7 +1701,24 @@ export async function cmdClose(opts) {
   }
 
   return withPacketLock(repoRoot, packetId, async () => {
-    const metaLocked = readPacketMeta(packetPath);
+    let pathLocked = packetPath;
+    let state = loadRunState(repoRoot, packetId) ?? {};
+    const recon = reconcileRuntimeState({
+      repoRoot,
+      packetId,
+      packetPath: pathLocked,
+      state,
+    });
+    if (recon.error) {
+      throw new Error(
+        recon.error.message ||
+          `close reconciliation failed: ${recon.error.status}`,
+      );
+    }
+    state = recon.state;
+    if (recon.packetPath) pathLocked = recon.packetPath;
+
+    const metaLocked = readPacketMeta(pathLocked);
     if (metaLocked.lifecycleState !== "awaiting_user_decision") {
       throw new Error(
         `close under lock refuses lifecycle_state=${metaLocked.lifecycleState} (need awaiting_user_decision)`,
@@ -1186,7 +1736,6 @@ export async function cmdClose(opts) {
       );
     }
 
-    const state = loadRunState(repoRoot, packetId);
     const concerns = resolveConcernsForClose({
       state,
       lastAnchor: metaLocked.lastAnchor ?? lastLocked?.anchor ?? null,
@@ -1200,9 +1749,9 @@ export async function cmdClose(opts) {
       closedAt,
     });
 
-    const written = appendStageAuto({
+    const written = commitStageWithPendingLedger({
       repoRoot,
-      packetPath,
+      packetPath: pathLocked,
       packetId,
       sectionMarkdown: section,
       lastAnchor: "decision_closure",
@@ -1211,19 +1760,18 @@ export async function cmdClose(opts) {
         close_reason: reason,
         closed_at: closedAt,
       },
+      nextLedger: {
+        ...state,
+        openConcerns: [],
+        openBlocking: [],
+        lifecycle: "archived",
+        lastVerdict: "PASS_WITH_CONCERNS",
+        closeReason: reason,
+        closedAt,
+      },
+      priorState: state,
     });
     const reportMeta = readPacketMeta(written.packetPath);
-    // Clear open concerns in runtime after archive
-    saveRunState(repoRoot, packetId, {
-      ...(loadRunState(repoRoot, packetId) || {}),
-      openConcerns: [],
-      openBlocking: [],
-      lifecycle: "archived",
-      packetPath: written.packetPath,
-      closedAt,
-      closeReason: reason,
-      updated: closedAt,
-    });
     return {
       ok: true,
       status: "archived",
