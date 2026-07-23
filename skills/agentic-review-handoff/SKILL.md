@@ -1,16 +1,14 @@
 ---
 name: agentic-review-handoff
-description: "Use this skill when the user pastes review feedback to validate as a defect report before any fix (feedback validation), and for auto loop (review-loop run/continue): same-session dual-AI review-fix-re-review with visible Fixer, headless read-only codex|grok|claude Reviewer, zero mid-loop human; ordinary review / second pair of eyes / audit this diff routes here via auto loop. Also Review Intake for reviewer-initiated live review or manual packet continuation (classic prompt-protocol only - no script guarantees), DecisionConsult (review-loop consult), review-loop sessions (resume headless reviewer commands), PASS_WITH_CONCERNS fix-it, and first-principles/DDD/high-cohesion review. Requires a git repo. Do NOT use for ordinary implementation, unit-test-only work, verbal staged-diff glances without packets, review-comment copy-edit, non-git folders, weekly reports (weekly-report), or named alternatives (/codex:review, Grok /review). Dual-window bind/next/wait removed; migrate to run, fix-completion, or consult."
+description: "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
 metadata:
   author: adonis
-  version: "3.3.2"
+  version: "3.3.3"
 ---
 
 # Agentic Review Handoff
 
 Persistent packet protocol for review→fix→re-review. **Preferred path (v2): auto loop** — one visible Fixer session drives everything; the Reviewer is invoked headless and read-only; the loop stops only at start, terminal report, or exception.
-
-Dual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not call `open`/`bind`/… — CLI returns a migration error. See `references/auto-loop-contract.md`.
 
 ## Fast Path
 
@@ -24,6 +22,7 @@ Dual-window bind/wait/gate path was **removed in T8** (dogfood-failed). Do not c
 - severity / verdict vocabulary → `references/review-contract.md`
 - auto loop contract → `references/auto-loop-contract.md`
 - **maintainer-only** protocol evolution gate → `references/protocol-evolution-gate.md` (see below)
+- **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`
 
 ## Auto loop (`review-loop run`) — preferred
 
@@ -76,10 +75,6 @@ node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
 ## Maintainer-only (evolving this skill)
 
 Ordinary review-loop runs **do not** load this. Before changing this skill’s protocol/state machine, persistence format, or integrity / tamper-detection / recovery / atomicity / durability / exactly-once claims—or DecisionConsult **about evolving this skill**—read `references/protocol-evolution-gate.md`. Source of truth is `skills/agentic-review-handoff/`; sync local runtime with `pnpm skills:install:local -- --skill agentic-review-handoff`.
-
-## Legacy dual-window — removed (T8)
-
-`open` / `bind` / `next` / `wait` / `append-eof` / `complete` / `board` / `resolve` / `gate` / `disarm` / `blind-submit` / `h1-probe` were deleted in T8 (`plan-2026-07-22-review-loop-v2-auto-loop.md` D11). Invoking them returns a migration error pointing at `run` / `fix-completion` / `close` / `consult`.
 
 ## Read-only Boundary (Important)
 

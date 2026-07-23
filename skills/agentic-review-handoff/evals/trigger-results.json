@@ -113,6 +113,18 @@
     },
     "passed": "2/3"
   },
+  "v3_3_3_description_slim": {
+    "at": "2026-07-23",
+    "change": "description slimmed ~1023→634 chars (routing only); dual-window/migration removed from description; body T8 collapsed to Fast Path one-liner; maintainer gate pointer kept",
+    "description_chars": 634,
+    "description_version": "3.3.3",
+    "consult": {
+      "codex": "APPROVE_WITH_CHANGES — target 600-700; keep feedback validation first; drop dual-window from description",
+      "claude": "APPROVE_WITH_CHANGES — keep PASS_WITH_CONCERNS + Review Intake; keep maintainer gate in body; T8 one line"
+    },
+    "remeasure_status": "NOT_RUN",
+    "note": "User primarily invokes by slash command; full Skill-only 20x3 remeasure deferred. Revert if core positives fall below 2/3 on later remeasure."
+  },
   "v3_2_3_description_fix_headline": {
     "at": "2026-07-22T09:43:38.469069+00:00",
     "change": "feedback validation promoted to first Use-when clause of description (version 3.2.3); mirrors synced via pnpm skills:install:local + rsync to ~/.agents/skills (global install target)",
