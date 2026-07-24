@@ -7,16 +7,26 @@
  * - Non-zero / empty / timeout → DELIVERY_UNKNOWN (no retry).
  * - Resume degrades to newSession only on the mechanical whitelist (a/b/c).
  */
-import { spawn } from 'node:child_process';
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
+import { spawn } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
 
-export const DELIVERY_UNKNOWN = 'DELIVERY_UNKNOWN';
-export const RESUME_DEGRADED = 'RESUME_DEGRADED';
+export const DELIVERY_UNKNOWN = "DELIVERY_UNKNOWN";
+export const RESUME_DEGRADED = "RESUME_DEGRADED";
 
-/** Default single-hand timeout (seconds → ms via env override). */
-export const DEFAULT_TIMEOUT_MS = Number(process.env.REVIEW_LOOP_TIMEOUT_MS ?? 600_000);
+/** Default single-hand timeout: 20 minutes. */
+export const DEFAULT_TIMEOUT_MS = 1_200_000;
+export const DEFAULT_PROGRESS_INTERVAL_MS = 30_000;
+
+export function resolveTimeoutMs(value = process.env.REVIEW_LOOP_TIMEOUT_MS) {
+  if (value == null || value === "") return DEFAULT_TIMEOUT_MS;
+  const timeoutMs = Number(value);
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    throw new Error("REVIEW_LOOP_TIMEOUT_MS must be a positive finite number");
+  }
+  return timeoutMs;
+}
 
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
 
@@ -44,6 +54,15 @@ const IMMEDIATE_REJECT_MS = 5_000;
  *   repoRoot: string,
  *   packetId?: string|null,
  *   timeoutMs?: number,
+ *   progressIntervalMs?: number,
+ *   onProgress?: (event: {
+ *     status: 'active',
+ *     product: Product,
+ *     mode: 'new'|'resume',
+ *     elapsedMs: number,
+ *     timeoutMs: number,
+ *     pid: number|null,
+ *   }) => void,
  *   bin?: string,
  *   env?: NodeJS.ProcessEnv,
  *   resumeSupported?: boolean,
@@ -53,31 +72,43 @@ const IMMEDIATE_REJECT_MS = 5_000;
  * }} opts
  */
 export function createAdapter(product, opts) {
-  const p = String(product || '').toLowerCase();
-  if (p !== 'codex' && p !== 'grok' && p !== 'claude') {
+  const p = String(product || "").toLowerCase();
+  if (p !== "codex" && p !== "grok" && p !== "claude") {
     throw new Error(`unknown product adapter: ${product}`);
   }
-  if (!opts?.repoRoot) throw new Error('createAdapter: repoRoot required');
+  if (!opts?.repoRoot) throw new Error("createAdapter: repoRoot required");
 
-  const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const timeoutMs = resolveTimeoutMs(opts.timeoutMs);
+  const progressIntervalMs =
+    opts.progressIntervalMs ?? DEFAULT_PROGRESS_INTERVAL_MS;
+  if (!Number.isFinite(progressIntervalMs) || progressIntervalMs <= 0) {
+    throw new Error("progressIntervalMs must be a positive finite number");
+  }
+  const onProgress = opts.onProgress;
   const bin = opts.bin ?? defaultBin(p);
   const resumeSupported = opts.resumeSupported !== false;
   const globalStopPath =
-    opts.globalStopPath ?? path.join(opts.repoRoot, '.review-handoff', 'STOP');
+    opts.globalStopPath ?? path.join(opts.repoRoot, ".review-handoff", "STOP");
   const packetStopPath =
-    opts.packetStopPath
-    ?? (opts.packetId
-      ? path.join(opts.repoRoot, '.review-handoff', 'runtime', opts.packetId, 'STOP')
-      : null);
-  const sessionStorePath =
-    opts.sessionStorePath
-    ?? (opts.packetId
+    opts.packetStopPath ??
+    (opts.packetId
       ? path.join(
           opts.repoRoot,
-          '.review-handoff',
-          'runtime',
+          ".review-handoff",
+          "runtime",
           opts.packetId,
-          'reviewer-session.json',
+          "STOP",
+        )
+      : null);
+  const sessionStorePath =
+    opts.sessionStorePath ??
+    (opts.packetId
+      ? path.join(
+          opts.repoRoot,
+          ".review-handoff",
+          "runtime",
+          opts.packetId,
+          "reviewer-session.json",
         )
       : null);
 
@@ -103,13 +134,15 @@ export function createAdapter(product, opts) {
     async newSession(prompt) {
       const result = await invokeProduct({
         product: state.product,
-        mode: 'new',
+        mode: "new",
         prompt,
         sessionId: null,
         repoRoot: opts.repoRoot,
         bin,
         env: opts.env,
         timeoutMs,
+        progressIntervalMs,
+        onProgress,
         globalStopPath,
         packetStopPath,
       });
@@ -135,7 +168,7 @@ export function createAdapter(product, opts) {
       if (!sid) {
         const r = await this.newSession(prompt);
         if (r.ok) {
-          return { ...r, degraded: true, reason: 'no_session_id' };
+          return { ...r, degraded: true, reason: "no_session_id" };
         }
         return r;
       }
@@ -144,41 +177,43 @@ export function createAdapter(product, opts) {
       if (!resumeSupported) {
         const r = await this.newSession(prompt);
         if (r.ok) {
-          return { ...r, degraded: true, reason: 'resume_unsupported' };
+          return { ...r, degraded: true, reason: "resume_unsupported" };
         }
         return r;
       }
 
       const result = await invokeProduct({
         product: state.product,
-        mode: 'resume',
+        mode: "resume",
         prompt,
         sessionId: sid,
         repoRoot: opts.repoRoot,
         bin,
         env: opts.env,
         timeoutMs,
+        progressIntervalMs,
+        onProgress,
         globalStopPath,
         packetStopPath,
       });
 
       // Whitelist (c): CLI immediately rejects with session-not-found class error
       // Must be mechanical proof the model call never started — not gray-zone mid-flight text.
-      const errText = result.error || '';
+      const errText = result.error || "";
       const immediate =
         result.elapsedMs == null || result.elapsedMs <= IMMEDIATE_REJECT_MS;
       if (
-        !result.ok
-        && result.code === DELIVERY_UNKNOWN
-        && SESSION_NOT_FOUND_RE.test(errText)
-        && !GRAY_ZONE_RE.test(errText)
-        && !result.timedOut
-        && !result.stopped
-        && immediate
+        !result.ok &&
+        result.code === DELIVERY_UNKNOWN &&
+        SESSION_NOT_FOUND_RE.test(errText) &&
+        !GRAY_ZONE_RE.test(errText) &&
+        !result.timedOut &&
+        !result.stopped &&
+        immediate
       ) {
         const r = await this.newSession(prompt);
         if (r.ok) {
-          return { ...r, degraded: true, reason: 'session_not_found' };
+          return { ...r, degraded: true, reason: "session_not_found" };
         }
         return r;
       }
@@ -200,9 +235,9 @@ export function createAdapter(product, opts) {
 }
 
 function defaultBin(product) {
-  if (product === 'codex') return 'codex';
-  if (product === 'grok') return 'grok';
-  return 'claude';
+  if (product === "codex") return "codex";
+  if (product === "grok") return "grok";
+  return "claude";
 }
 
 /**
@@ -210,44 +245,51 @@ function defaultBin(product) {
  * @param {{ product: Product, mode: 'new'|'resume', prompt: string, sessionId: string|null, outFile?: string }} args
  */
 export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
-  if (product === 'codex') {
+  if (product === "codex") {
     // codex exec -s read-only --skip-git-repo-check -o <file> [resume <uuid>] "<prompt>"
-    const argv = ['exec', '-s', 'read-only', '--skip-git-repo-check'];
-    if (outFile) argv.push('-o', outFile);
-    if (mode === 'resume') {
-      if (!sessionId) throw new Error('codex resume requires sessionId');
-      argv.push('resume', sessionId, prompt);
+    const argv = ["exec", "-s", "read-only", "--skip-git-repo-check"];
+    if (outFile) argv.push("-o", outFile);
+    if (mode === "resume") {
+      if (!sessionId) throw new Error("codex resume requires sessionId");
+      argv.push("resume", sessionId, prompt);
     } else {
       argv.push(prompt);
     }
     return argv;
   }
 
-  if (product === 'grok') {
+  if (product === "grok") {
     // grok [-r id] -p "<prompt>" --output-format json --sandbox read-only
     const argv = [];
-    if (mode === 'resume') {
-      if (!sessionId) throw new Error('grok resume requires sessionId');
-      argv.push('-r', sessionId);
+    if (mode === "resume") {
+      if (!sessionId) throw new Error("grok resume requires sessionId");
+      argv.push("-r", sessionId);
     }
-    argv.push('-p', prompt, '--output-format', 'json', '--sandbox', 'read-only');
+    argv.push(
+      "-p",
+      prompt,
+      "--output-format",
+      "json",
+      "--sandbox",
+      "read-only",
+    );
     return argv;
   }
 
   // claude -p [ --resume id ] --allowedTools ... --disallowedTools ... --output-format json "<prompt>"
   // T0: allowedTools alone failed write isolation; disallowedTools required.
-  const argv = ['-p'];
-  if (mode === 'resume') {
-    if (!sessionId) throw new Error('claude resume requires sessionId');
-    argv.push('--resume', sessionId);
+  const argv = ["-p"];
+  if (mode === "resume") {
+    if (!sessionId) throw new Error("claude resume requires sessionId");
+    argv.push("--resume", sessionId);
   }
   argv.push(
-    '--allowedTools',
-    'Read,Grep,Glob',
-    '--disallowedTools',
-    'Write,Edit,MultiEdit,NotebookEdit,Bash',
-    '--output-format',
-    'json',
+    "--allowedTools",
+    "Read,Grep,Glob",
+    "--disallowedTools",
+    "Write,Edit,MultiEdit,NotebookEdit,Bash",
+    "--output-format",
+    "json",
     prompt,
   );
   return argv;
@@ -263,6 +305,15 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
  *   bin: string,
  *   env?: NodeJS.ProcessEnv,
  *   timeoutMs: number,
+ *   progressIntervalMs: number,
+ *   onProgress?: (event: {
+ *     status: 'active',
+ *     product: Product,
+ *     mode: 'new'|'resume',
+ *     elapsedMs: number,
+ *     timeoutMs: number,
+ *     pid: number|null,
+ *   }) => void,
  *   globalStopPath: string,
  *   packetStopPath: string|null,
  * }} cfg
@@ -275,13 +326,13 @@ export function invokeProduct(cfg) {
 
     // F6: refuse to spawn if STOP already present
     if (
-      fs.existsSync(cfg.globalStopPath)
-      || (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
+      fs.existsSync(cfg.globalStopPath) ||
+      (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
     ) {
       resolve({
         ok: false,
         code: DELIVERY_UNKNOWN,
-        error: 'STOP interrupt (pre-spawn)',
+        error: "STOP interrupt (pre-spawn)",
         exitCode: null,
         timedOut: false,
         stopped: true,
@@ -290,18 +341,20 @@ export function invokeProduct(cfg) {
       return;
     }
 
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'review-loop-adapter-'));
-    const outFile = path.join(tmpDir, 'out.txt');
+    const tmpDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "review-loop-adapter-"),
+    );
+    const outFile = path.join(tmpDir, "out.txt");
     const argv = buildArgv({
       product: cfg.product,
       mode: cfg.mode,
       prompt: cfg.prompt,
       sessionId: cfg.sessionId,
-      outFile: cfg.product === 'codex' ? outFile : undefined,
+      outFile: cfg.product === "codex" ? outFile : undefined,
     });
 
-    let stdout = '';
-    let stderr = '';
+    let stdout = "";
+    let stderr = "";
     let settled = false;
     let timedOut = false;
     let stopped = false;
@@ -310,18 +363,39 @@ export function invokeProduct(cfg) {
     const child = spawn(cfg.bin, argv, {
       cwd: cfg.repoRoot,
       env: { ...process.env, ...(cfg.env ?? {}) },
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: ["ignore", "pipe", "pipe"],
       detached: true,
     });
 
-    child.stdout.on('data', (buf) => {
-      stdout += buf.toString('utf8');
+    const reportProgress = () => {
+      if (!cfg.onProgress) return;
+      try {
+        cfg.onProgress({
+          status: "active",
+          product: cfg.product,
+          mode: cfg.mode,
+          elapsedMs: elapsed(),
+          timeoutMs: cfg.timeoutMs,
+          pid: child.pid ?? null,
+        });
+      } catch {
+        // Observability must not change delivery semantics.
+      }
+    };
+    reportProgress();
+    const progressPoll = cfg.onProgress
+      ? setInterval(reportProgress, cfg.progressIntervalMs)
+      : null;
+    progressPoll?.unref?.();
+
+    child.stdout.on("data", (buf) => {
+      stdout += buf.toString("utf8");
     });
-    child.stderr.on('data', (buf) => {
-      stderr += buf.toString('utf8');
+    child.stderr.on("data", (buf) => {
+      stderr += buf.toString("utf8");
     });
 
-    const killChild = (signal = 'SIGTERM') => {
+    const killChild = (signal = "SIGTERM") => {
       if (!child.pid) return;
       try {
         process.kill(-child.pid, signal);
@@ -336,16 +410,16 @@ export function invokeProduct(cfg) {
 
     const timer = setTimeout(() => {
       timedOut = true;
-      killChild('SIGKILL');
+      killChild("SIGKILL");
     }, cfg.timeoutMs);
 
     const stopPoll = setInterval(() => {
       if (
-        fs.existsSync(cfg.globalStopPath)
-        || (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
+        fs.existsSync(cfg.globalStopPath) ||
+        (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
       ) {
         stopped = true;
-        killChild('SIGTERM');
+        killChild("SIGTERM");
       }
     }, 200);
     stopPoll.unref?.();
@@ -355,6 +429,7 @@ export function invokeProduct(cfg) {
       settled = true;
       clearTimeout(timer);
       clearInterval(stopPoll);
+      if (progressPoll) clearInterval(progressPoll);
       try {
         fs.rmSync(tmpDir, { recursive: true, force: true });
       } catch {
@@ -363,7 +438,7 @@ export function invokeProduct(cfg) {
       resolve({ ...result, elapsedMs: result.elapsedMs ?? elapsed() });
     };
 
-    child.on('error', (err) => {
+    child.on("error", (err) => {
       finish({
         ok: false,
         code: DELIVERY_UNKNOWN,
@@ -374,17 +449,17 @@ export function invokeProduct(cfg) {
       });
     });
 
-    child.on('close', (exitCode) => {
+    child.on("close", (exitCode) => {
       // F6: re-check STOP at close to cover race with poll interval
       if (
-        stopped
-        || fs.existsSync(cfg.globalStopPath)
-        || (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
+        stopped ||
+        fs.existsSync(cfg.globalStopPath) ||
+        (cfg.packetStopPath && fs.existsSync(cfg.packetStopPath))
       ) {
         finish({
           ok: false,
           code: DELIVERY_UNKNOWN,
-          error: 'STOP interrupt',
+          error: "STOP interrupt",
           exitCode,
           timedOut: false,
           stopped: true,
@@ -404,21 +479,21 @@ export function invokeProduct(cfg) {
       }
 
       const combined = `${stdout}\n${stderr}`;
-      let text = '';
+      let text = "";
       let sessionId = null;
 
       try {
-        if (cfg.product === 'codex') {
+        if (cfg.product === "codex") {
           if (fs.existsSync(outFile)) {
-            text = fs.readFileSync(outFile, 'utf8');
+            text = fs.readFileSync(outFile, "utf8");
           }
           if (!text.trim()) text = stdout;
           const sidLine = combined.match(/session id:\s*([0-9a-f-]{36})/i);
           sessionId = sidLine?.[1] ?? cfg.sessionId;
-        } else if (cfg.product === 'grok') {
+        } else if (cfg.product === "grok") {
           const json = tryParseJson(stdout) ?? tryParseJson(combined);
           if (json) {
-            text = String(json.text ?? json.result ?? json.output ?? '');
+            text = String(json.text ?? json.result ?? json.output ?? "");
             sessionId = json.sessionId ?? json.session_id ?? cfg.sessionId;
           } else {
             text = stdout;
@@ -428,7 +503,7 @@ export function invokeProduct(cfg) {
           // claude
           const json = tryParseJson(stdout) ?? tryParseJson(combined);
           if (json) {
-            text = String(json.result ?? json.text ?? '');
+            text = String(json.result ?? json.text ?? "");
             sessionId = json.session_id ?? json.sessionId ?? cfg.sessionId;
           } else {
             text = stdout;
@@ -463,7 +538,7 @@ export function invokeProduct(cfg) {
         finish({
           ok: false,
           code: DELIVERY_UNKNOWN,
-          error: 'empty output',
+          error: "empty output",
           exitCode,
           timedOut: false,
           stopped: false,
@@ -481,7 +556,7 @@ export function invokeProduct(cfg) {
 }
 
 function tryParseJson(s) {
-  const t = String(s ?? '').trim();
+  const t = String(s ?? "").trim();
   if (!t) return null;
   // Prefer last JSON object in the stream
   try {
@@ -489,8 +564,8 @@ function tryParseJson(s) {
   } catch {
     /* fall through */
   }
-  const start = t.indexOf('{');
-  const end = t.lastIndexOf('}');
+  const start = t.indexOf("{");
+  const end = t.lastIndexOf("}");
   if (start >= 0 && end > start) {
     try {
       return JSON.parse(t.slice(start, end + 1));
@@ -510,7 +585,7 @@ function loadSessionRecord(storePath) {
     return { sessionId: null, product: null };
   }
   try {
-    const data = JSON.parse(fs.readFileSync(storePath, 'utf8'));
+    const data = JSON.parse(fs.readFileSync(storePath, "utf8"));
     return {
       sessionId: data.sessionId ?? data.session_id ?? null,
       product: data.product ?? null,
@@ -523,29 +598,36 @@ function loadSessionRecord(storePath) {
 function persistSession(storePath, payload) {
   if (!storePath) return;
   fs.mkdirSync(path.dirname(storePath), { recursive: true });
-  fs.writeFileSync(storePath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(storePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
 /** Test helper: assert sandbox flags always present in argv. */
 export function assertSandboxHardcoded(product, argv) {
-  if (product === 'codex') {
-    const i = argv.indexOf('-s');
-    if (i === -1 || argv[i + 1] !== 'read-only') {
-      throw new Error('codex sandbox flag missing');
+  if (product === "codex") {
+    const i = argv.indexOf("-s");
+    if (i === -1 || argv[i + 1] !== "read-only") {
+      throw new Error("codex sandbox flag missing");
     }
-  } else if (product === 'grok') {
-    if (!argv.includes('--sandbox') || argv[argv.indexOf('--sandbox') + 1] !== 'read-only') {
-      throw new Error('grok sandbox flag missing');
+  } else if (product === "grok") {
+    if (
+      !argv.includes("--sandbox") ||
+      argv[argv.indexOf("--sandbox") + 1] !== "read-only"
+    ) {
+      throw new Error("grok sandbox flag missing");
     }
-  } else if (product === 'claude') {
-    if (!argv.includes('--allowedTools') || !argv.includes('--disallowedTools')) {
-      throw new Error('claude isolation flags missing');
+  } else if (product === "claude") {
+    if (
+      !argv.includes("--allowedTools") ||
+      !argv.includes("--disallowedTools")
+    ) {
+      throw new Error("claude isolation flags missing");
     }
-    const allowed = argv[argv.indexOf('--allowedTools') + 1];
-    const denied = argv[argv.indexOf('--disallowedTools') + 1];
-    if (!String(allowed).includes('Read')) throw new Error('claude allowedTools incomplete');
-    if (!String(denied).includes('Write') || !String(denied).includes('Bash')) {
-      throw new Error('claude disallowedTools incomplete');
+    const allowed = argv[argv.indexOf("--allowedTools") + 1];
+    const denied = argv[argv.indexOf("--disallowedTools") + 1];
+    if (!String(allowed).includes("Read"))
+      throw new Error("claude allowedTools incomplete");
+    if (!String(denied).includes("Write") || !String(denied).includes("Bash")) {
+      throw new Error("claude disallowedTools incomplete");
     }
   }
 }

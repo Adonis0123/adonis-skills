@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing review comments, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
 metadata:
   author: adonis
-  version: "3.3.4"
+  version: "3.3.5"
 ---
 
 # Agentic Review Handoff
@@ -56,8 +56,17 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 | Reviewer | Headless, read-only sandbox (flags hardcoded in adapters)                                                  |
 | Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |
 | Rounds   | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate)             |
+| Timeout  | 20 minutes per Reviewer invocation; advanced override: `REVIEW_LOOP_TIMEOUT_MS`                            |
+| Progress | Immediate liveness line, then every 30 seconds while the Reviewer process is alive                         |
 | STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                            |
 | Sandbox  | Cannot be disabled via CLI flags                                                                           |
+
+**A quiet Reviewer is not a failed Reviewer.** Product CLIs commonly return
+structured stdout only when the model finishes. While the child process is
+alive, do not kill it, retry it, or start a second Reviewer because stdout is
+silent. Trust the adapter's progress line and deadline; use STOP only when the
+user intentionally cancels. A real timeout remains `DELIVERY_UNKNOWN` with no
+automatic retry, because delivery state is ambiguous.
 
 Contract details: `references/auto-loop-contract.md`.
 

@@ -18,6 +18,12 @@ review-loop close --repo <root> --packet <path> --reason accept-concerns
 review-loop consult --repo <root> --peer codex|grok|claude --question-file <md>
 ```
 
+Each Reviewer invocation has a 20-minute default deadline. Set
+`REVIEW_LOOP_TIMEOUT_MS` to a positive finite millisecond value only when an
+advanced runtime integration needs a different budget. The CLI writes an
+immediate liveness line to stderr and repeats it every 30 seconds while the
+Reviewer process remains alive; final stdout stays machine-readable JSON.
+
 ## Reviewer prompt obligations
 
 ### Round 1 — Review Findings
@@ -108,6 +114,11 @@ User-only terminal path when lifecycle is `awaiting_user_decision` after `PASS_W
 
 ## Delivery / stop semantics
 
+- Stdout silence is not failure. A living Reviewer may be reasoning without
+  partial output; do not manually kill, retry, or start a second Reviewer
+  before the configured deadline.
+- The adapter owns the only automatic invocation deadline. STOP remains the
+  explicit user cancellation path.
 - Non-zero / empty / timeout / STOP → `DELIVERY_UNKNOWN` (no retry).
 - Resume degrades to newSession only for: missing session id, T0 resume unsupported, CLI "session not found".
 - Gray-zone connection failures do **not** degrade (would double-review).

@@ -20,6 +20,21 @@ function print(obj) {
   process.stdout.write(`${JSON.stringify(obj, null, 2)}\n`);
 }
 
+function formatDuration(ms) {
+  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function printReviewerProgress(event) {
+  process.stderr.write(
+    `[review-loop] reviewer=${event.product} status=${event.status}` +
+      ` elapsed=${formatDuration(event.elapsedMs)}` +
+      ` timeout=${formatDuration(event.timeoutMs)}\n`,
+  );
+}
+
 function fail(err, code = 1) {
   print({ ok: false, error: err?.message ?? String(err) });
   process.exit(code);
@@ -74,6 +89,8 @@ function help() {
         "single visible Fixer; headless read-only Reviewer; zero mid-loop human",
       reviewer: "codex|grok|claude",
       rounds: 3,
+      reviewerTimeout: "20 minutes (REVIEW_LOOP_TIMEOUT_MS override)",
+      reviewerProgress: "every 30 seconds while the process is alive",
       sandbox: "hardcoded in adapters; cannot be disabled via CLI",
     },
   };
@@ -155,6 +172,9 @@ async function main() {
           scopeSlug: args.scope ?? args["scope-slug"],
           packetPath: base.packetPath,
           paths: args.paths ?? args.path,
+          adapterOpts: {
+            onProgress: printReviewerProgress,
+          },
         });
         break;
       }

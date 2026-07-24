@@ -173,6 +173,13 @@
       "prompt": "auto loop 终态 budget_exhausted，请给用户终态汇报。${MOCK_REPO}。",
       "expected_output": "status=budget_exhausted、双方立场/未决项、推荐 --rounds +N；不调用 board/summary。",
       "files": []
+    },
+    {
+      "id": 11,
+      "name": "scenario-K-healthy-silent-reviewer",
+      "prompt": "Grok reviewer 已经 5 分钟没有 stdout，但 review-loop 的 progress 仍显示进程 active，deadline 还没到。现在是不是应该 kill 后重试？${MOCK_REPO}。",
+      "expected_output": "继续等待同一 Reviewer；stdout 静默不是失败，不手工 kill、不重试、不启动第二个 Reviewer。只在 STOP、进程退出或 adapter deadline 到达后按 DELIVERY_UNKNOWN 处理。",
+      "files": []
     }
   ]
 }

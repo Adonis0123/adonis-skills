@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { execFileSync, spawn } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import * as repo from "../review-loop/repositories.mjs";
 import { freezeRoundEvidence } from "../review-loop/evidence.mjs";
@@ -72,6 +72,62 @@ function passText() {
 PASS
 `;
 }
+
+describe("CLI reviewer progress", () => {
+  it("prints liveness and the configured deadline to stderr", () => {
+    const dir = initTempRepo();
+    const binDir = path.join(dir, "bin");
+    fs.mkdirSync(binDir);
+    const grokBin = path.join(binDir, "grok");
+    const response = JSON.stringify({
+      text: passText(),
+      session_id: "019f0000-0000-0000-0000-000000000055",
+    });
+    fs.writeFileSync(
+      grokBin,
+      `#!/usr/bin/env node
+setTimeout(() => process.stdout.write(${JSON.stringify(`${response}\n`)}), 80);
+`,
+      { mode: 0o755 },
+    );
+    const cliPath = fileURLToPath(
+      new URL("../review-loop.mjs", import.meta.url),
+    );
+
+    const result = spawnSync(
+      process.execPath,
+      [
+        cliPath,
+        "run",
+        "--repo",
+        dir,
+        "--reviewer",
+        "grok",
+        "--base",
+        "HEAD",
+        "--rounds",
+        "1",
+      ],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
+          REVIEW_LOOP_TIMEOUT_MS: "1000",
+        },
+        timeout: 5_000,
+      },
+    );
+
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.match(
+      result.stderr,
+      /\[review-loop\] reviewer=grok status=active elapsed=00:00 timeout=00:01/,
+    );
+    assert.equal(JSON.parse(result.stdout).ok, true);
+  });
+});
 
 function blockedText(id = "F1") {
   return `Found a bug.

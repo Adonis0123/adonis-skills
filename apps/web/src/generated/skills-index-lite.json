@@ -18,7 +18,7 @@
     "description": "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing review comments, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review).",
     "metadata": {
       "author": "adonis",
-      "version": "3.3.4"
+      "version": "3.3.5"
     },
     "files": {
       "hasReferences": true,
@@ -37,7 +37,8 @@
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-07-24T04:05:30.000Z"
   },
   {
     "slug": "branch-creator",
@@ -172,7 +173,8 @@
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-07-24T04:05:30.000Z"
   },
   {
     "slug": "lingui-next-init",
