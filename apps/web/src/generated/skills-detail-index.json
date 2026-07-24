@@ -135,6 +135,91 @@
     ]
   },
   {
+    "slug": "architecture-hardening-loop",
+    "sections": [
+      {
+        "raw": "把一次调用编排成可停止的架构加固闭环。目标不是让扫描报告再提不出建议，而是在用户指定范围内消除**现在值得修**的问题。\n\n常见触发说法（含中文）：架构加固、把架构问题修干净、scan-fix-review 直到没有可修项、review 完再扫、在指定模块里自主加固。\n\n扫描器几乎总会再吐出候选项；若不加门槛，循环永远不会结束。本 Skill 的价值是：**证据门槛 + 固定顺序 + 独立 Grok 复核 + 明确终态**。",
+        "heading": "Architecture Hardening Loop",
+        "level": 1
+      },
+      {
+        "raw": "调用必须给出明确审查范围（目录、模块、包或文件集合），并尽量带上排除项，例如“只看 `packages/core`，不看 React bridge”。\n\n- 范围缺失或无法判断：只问一个范围问题并停止。不要默认全仓库，也不要根据扫描结果自行扩大范围。\n- 一次调用 = 用户预授权：在范围内选择、修改、验证，无需为普通工程判断反复请示。",
+        "heading": "必需输入",
+        "level": 2
+      },
+      {
+        "raw": "本 Skill 是薄编排，**不复制**底层逻辑。公开 catalog 中的硬依赖必须同时可安装：\n\n| 依赖 | 用途 | 公开路径 |\n|---|---|---|\n| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告 | `skills/improve-codebase-architecture/` |\n| `agentic-review-handoff` | Grok consult 与 review-fix-re-review | `skills/agentic-review-handoff/` |\n| `goal-gate` | 有 Fix 时创建/沿用 Goal | `skills/goal-gate/` |\n\n干净环境推荐安装（catalog 完整集合，缺一不可）：\n\n```bash\nnpx skills add adonis0123/adonis-skills --skill architecture-hardening-loop\nnpx skills add adonis0123/adonis-skills --skill improve-codebase-architecture\nnpx skills add adonis0123/adonis-skills --skill agentic-review-handoff\nnpx skills add adonis0123/adonis-skills --skill goal-gate\n```\n\n扫描路径依赖闭包：`improve-codebase-architecture` 的 **Explore + HTML 报告** 阶段自包含，不需要 `codebase-design` / `grilling` / `domain-modeling`。本编排只调用该阶段，并在报告后停止底层 Skill（不进 grilling）。那些 companion skill 仅在有人单独做完整 interactive grilling 时才相关，**不是**本 Skill 的硬依赖。",
+        "heading": "硬依赖与安装",
+        "level": 2
+      },
+      {
+        "raw": "开始扫描前：\n\n1. 确认当前目录属于 Git 仓库；记录仓库根与现有工作区状态。\n2. 解析三个直接依赖是否可用（读其 `SKILL.md` 路径或已安装 skill 列表）：\n   - `improve-codebase-architecture`\n   - `agentic-review-handoff`\n   - `goal-gate`\n3. 任一缺失 → 输出 `MISSING_DEPENDENCIES` 与准确名称，然后停止。不要静默降级，不要复制缺失 Skill 的逻辑，不要把「先装依赖再继续」当作本轮成功结果（可在报告中附上上方安装命令，但仍以 `MISSING_DEPENDENCIES` 结束本轮）。\n4. 冻结调用时的范围；后续每轮复用同一范围。\n5. 保留用户已有改动；不重置、不覆盖、不整理范围外内容。",
+        "heading": "前置检查",
+        "level": 2
+      },
+      {
+        "raw": "```text\n明确范围\n  → 扫描候选项（仅扫描+报告）\n  → Fix / Backlog / Reject\n  → 零 Fix？→ Grok consult 复核终态 → NO_ACTIONABLE_FINDINGS\n  → 有 Fix → Grok 事前 consult\n  → Goal Gate\n  → 最小修改与测试\n  → Grok review-fix-re-review\n  → 原范围重新扫描\n  → （有 Fix 则下一轮；否则终态 consult）→ NO_ACTIONABLE_FINDINGS\n```",
+        "heading": "闭环",
+        "level": 2
+      },
+      {
+        "raw": "调用 `improve-codebase-architecture`，**只执行探索 + 候选 HTML 报告**（该阶段零额外 skill 依赖）：\n\n- 把用户范围直接传给扫描器；禁止走“根据 Git 热点推断范围”的默认分支。\n- 允许写临时 HTML 报告。\n- **停在报告之后**：不进入候选选择、`grilling`、领域文档写入。后续判断由本 Skill 负责。\n- 报告里的 `Strong` / `Worth exploring` / `Speculative` 只是候选强度，不是修改命令。\n- 若底层 Skill 因缺少 optional companion 而拒绝扫描，视为实现错误：扫描阶段必须自包含。\n\n扫描器发现机会；**它不决定循环是否结束**。",
+        "heading": "1. 扫描候选项",
+        "level": 3
+      },
+      {
+        "raw": "对每个候选项独立分类：\n\n| 分类 | 条件 | 后续 |\n|---|---|---|\n| `Fix` | 问题真实存在；在范围内；收益大于新增复杂度；有最小方案；结果可验证 | 本轮可改 |\n| `Backlog` | 问题真实，但收益低、超出范围、依赖未来需求、或暂时无法安全验证 | 记录理由，不阻塞完成 |\n| `Reject` | 纯风格、重复抽象、推测性扩展、缺证据、违反有效决策、或只追求理论优雅 | 记录反证，不再循环提出 |\n\n每个 `Fix` 必须写齐四项，缺一不可：\n\n- `Evidence`：代码路径、测试、运行结果或变更传播路径\n- `Impact`：当前错误、理解成本或修改成本\n- `Minimal change`：最小可行修改（不顺手重构）\n- `Verification`：改后跑什么测试或观察什么信号\n\n不要因为报告更长、Reviewer 更强势、或同一建议重复出现就抬高优先级。单实现却强加接口、为“未来多租户/多存储”加总线、纯六边形洁癖——默认 `Reject` 或 `Backlog`，除非有可复现的当前伤害。\n\n同一轮只处理一个最小内聚批次：共享同一根因的 `Fix` 可合并；无关问题分轮。",
+        "heading": "2. 证据门槛分类",
+        "level": 3
+      },
+      {
+        "raw": "**零 Fix（首轮或复扫后）：**\n\n1. 调用 Grok `consult`，只复核终态分类（范围冻结、`Backlog`/`Reject` 理由、是否漏掉真实 `Fix`）。\n2. Grok 若提出新问题，仍须通过同一证据门槛；不得绕过门槛直接扩大修改。\n3. 仍无通过门槛的 `Fix` → `NO_ACTIONABLE_FINDINGS`。此时**不创建 Goal**（报告里 `Goal: not-created`），直接出完成报告。\n\n**有 Fix：** 进入步骤 4–7。",
+        "heading": "3. 分支：零 Fix vs 有 Fix",
+        "level": 3
+      },
+      {
+        "raw": "修改前调用 `agentic-review-handoff` 的 DecisionConsult / `review-loop consult`，peer/Reviewer 固定为 **Grok**。提供：\n\n- 冻结的审查范围\n- 候选项与代码证据\n- `Fix / Backlog / Reject` 与理由\n- 本轮最小修改\n- 验证方案\n\nConsult 是独立意见，不是投票。编排者必须核对 Grok 主张；普通分歧用证据收敛，不甩给用户代替工程判断。Grok 新提出的范围内问题同样过证据门槛。",
+        "heading": "4. Grok 事前 consult",
+        "level": 3
+      },
+      {
+        "raw": "仅在**确认至少有一个 `Fix` 要实施**之后调用 `goal-gate`：\n\n- 无活动 Goal 且安全闸门通过 → 创建覆盖本次范围、验证与终态的 Goal\n- 已有 Goal → 严格遵循 `goal-gate` 活动 Goal 规则；不嵌套、不静默替换\n- Done 条件必须是本 Skill 的 `NO_ACTIONABLE_FINDINGS`，并要求实际测试证据",
+        "heading": "5. Goal Gate",
+        "level": 3
+      },
+      {
+        "raw": "只实施已确认的 `Fix`：\n\n- 每一行修改追溯到本轮某个 `Fix`\n- 不添加当前问题不需要的扩展点、配置、层级或通用框架\n- 行为变化：补或改回归测试；纯结构变化：用现有测试或最小特征测试证明公共行为不变\n- 先跑针对性验证，再按影响面跑相关测试 / typecheck / build\n- 命令未实际执行 → 写 `UNVERIFIED`，不得宣称通过",
+        "heading": "6. 最小修改与验证",
+        "level": 3
+      },
+      {
+        "raw": "调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**：\n\n| 结果 | 动作 |\n|---|---|\n| `PASS` | 进入原范围重新扫描 |\n| `BLOCKED` | 只修经证据验证的有效发现 → 记 fix completion → 继续复审 |\n| `PASS_WITH_CONCERNS` | 再套证据门槛：仍是 `Fix` 则继续改；其余进 `Backlog`/`Reject` 并写理由后才可接受 |\n| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE` |\n\nReviewer 的风格偏好与无证据建议不构成阻塞。",
+        "heading": "7. Grok 复审修改",
+        "level": 3
+      },
+      {
+        "raw": "对**完全相同**的范围再跑扫描：\n\n1. 新候选项再过证据门槛\n2. 有 `Fix` → Grok consult → 下一轮（计入外层轮次）\n3. 无 `Fix` → Grok consult 复核终态分类\n4. Grok 未提出通过门槛的 `Fix` → `NO_ACTIONABLE_FINDINGS`\n\n`Backlog` 与 `Reject` 可以留在完成报告里。它们不是失败，也不要求为“清零报告”继续改。",
+        "heading": "8. 原范围重新扫描",
+        "level": 3
+      },
+      {
+        "raw": "默认最多 **3** 个外层加固轮次。以下情况暂停并交给用户：\n\n- 破坏性、不可逆、生产数据、认证、计费或外部发布\n- 候选项要求扩大原始范围\n- 同一问题连续两轮无新证据\n- 3 轮后仍有通过门槛的 `Fix`\n- 依赖、凭证或环境使完成条件无法验证\n- 底层 review loop 报告 delivery / hash / deadlock / 预算异常\n\n暂停时输出 `HUMAN_GATE`、现有证据、已尝试内容、以及**唯一**需要用户决定的问题。",
+        "heading": "循环预算与 Human Gate",
+        "level": 2
+      },
+      {
+        "raw": "| 失败模式 | 正确行为 |\n|---|---|\n| 把扫描强度当修改优先级 | 只认证据门槛四项 |\n| 范围外“顺手”修 | `Backlog` 或 `HUMAN_GATE`，不改 |\n| 依赖缺失仍继续 | `MISSING_DEPENDENCIES` 并停 |\n| 为理论优雅重写 | `Reject`/`Backlog`，除非有可复现当前伤害 |\n| 未跑命令却写通过 | `UNVERIFIED` |\n| 报告还有建议就继续轮 | 无 `Fix` 即终态；不必清零报告 |",
+        "heading": "反漂移（常见失败）",
+        "level": 2
+      },
+      {
+        "raw": "```text\nArchitecture Hardening Result\n- Scope: <原始范围>\n- Iterations: <完成外层轮数>\n- Result: NO_ACTIONABLE_FINDINGS | HUMAN_GATE | MISSING_DEPENDENCIES\n- Fixed: <问题、文件与验证>\n- Backlog: <真实但当前不处理的问题及理由，或 none>\n- Rejected: <无证据或过度设计项及理由，或 none>\n- Grok evidence: <consult 与最终 review 结果>\n- Verification: <实际命令与结果，或 UNVERIFIED>\n- Goal: <completed | active | not-created>\n```\n\n只有 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、且没有未处理的 `Fix` 时，才能把 Goal 标为 completed。",
+        "heading": "完成报告",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "branch-creator",
     "sections": [
       {
@@ -771,6 +856,41 @@
         "raw": "Read `references/examples.md` when you need worked examples for Grok tooling, Grok slash, Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.\n\nRead `references/copy-ready-goals.md` when you need to write a polished, direct-copy `/goal` prompt, especially for vague Chinese requests, default-first MVP goals, unknown domains, option lists, and prompt linting. The same `/goal` shape is valid for Grok, Codex, and Claude Code; only the runtime action after the prompt differs.\n\nUse `scripts/lint-goal-prompt.py` when a generated prompt exists as a file or needs deterministic linting.",
         "heading": "References",
         "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "improve-codebase-architecture",
+    "sections": [
+      {
+        "raw": "Surface architectural friction and propose **deepening opportunities** — refactors that turn shallow modules into deep ones. The aim is testability and AI-navigability.",
+        "heading": "Improve Codebase Architecture",
+        "level": 1
+      },
+      {
+        "raw": "| Phase | Required? | Extra skills | Clean-env install of this skill alone |\n|---|---|---|---|\n| **1. Explore + HTML report** | Always | **None** — self-contained | Fully runnable |\n| **2. Grilling a chosen candidate** | Optional | `grilling`, optionally `domain-modeling` / `codebase-design` if installed | Skip or stop after report if companions missing |\n\n`architecture-hardening-loop` only invokes **phase 1**. Do not refuse phase 1 because optional companion skills are absent.",
+        "heading": "Public phases (dependency closure)",
+        "level": 2
+      },
+      {
+        "raw": "Use these terms exactly in every suggestion — do not drift into vague \"component,\" \"service,\" or \"API\" labels when you mean the following:\n\n| Term | Meaning |\n|---|---|\n| **module** | A unit with a clear interface and implementation |\n| **interface** | What callers must know to use the module |\n| **depth** | Much behavior behind a small interface (deep = good) |\n| **shallow** | Interface nearly as complex as the implementation |\n| **seam** | A place you can change one side without rewriting the other |\n| **adapter** | Implementation behind a seam |\n| **leverage** | How many future changes one deepening pays for |\n| **locality** | Related decisions live together; bugs not scattered |\n\n**Deletion test:** would deleting this unit concentrate complexity, or just move it? \"Concentrates\" supports a deepening candidate.\n\n**Adapter rule of thumb:** one adapter = hypothetical seam; two real adapters = real seam.\n\nIf `codebase-design` is installed, you may read it for richer vocabulary — **optional**, never a gate for phase 1.\n\nDomain language: prefer names from `CONTEXT.md` when present. ADRs in `docs/adr/` record decisions not to re-litigate without strong friction.",
+        "heading": "Built-in design vocabulary (no external skill required)",
+        "level": 2
+      },
+      {
+        "raw": "**Scope before you scan — YAGNI.** Deepening pays off on code that changes, so weight recently changed areas:\n\n- If the user named a direction — a module, subsystem, or pain point — take it and skip hot-spot inference.\n- Otherwise, walk a stretch of `git log --oneline` for hot spots; if changes are scattered, widen the net.\n\nRead `CONTEXT.md` and nearby ADRs when they exist (skip if absent — do not fail).\n\nExplore the codebase (subagent Explore when available). Note friction:\n\n- Understanding one concept requires bouncing across many small modules\n- Modules are **shallow**\n- Pure functions extracted for tests while real bugs sit in call wiring (no **locality**)\n- Tightly coupled modules leak across **seams**\n- Hard-to-test surfaces through the current interface\n\nApply the **deletion test** to suspected shallow units.",
+        "heading": "1. Explore (required, self-contained)",
+        "level": 3
+      },
+      {
+        "raw": "Write a self-contained HTML file under the OS temp dir so nothing lands in the repo. Resolve `$TMPDIR`, else `/tmp` (or `%TEMP%` on Windows). Write `<tmpdir>/architecture-review-<timestamp>.html`. Open it for the user (`open` / `xdg-open` / `start`) and print the absolute path.\n\nUse Tailwind via CDN and Mermaid via CDN where graph-shaped diagrams help. Each candidate gets a before/after visualisation.\n\nFor each candidate card:\n\n- **Files** — modules involved\n- **Problem** — current architectural friction\n- **Solution** — plain English change\n- **Benefits** — locality, leverage, testability\n- **Before / After diagram**\n- **Recommendation strength** — `Strong` | `Worth exploring` | `Speculative`\n\nEnd with **Top recommendation**. Prefer domain terms from `CONTEXT.md` when available.\n\n**ADR conflicts:** only surface candidates that contradict an ADR when friction is strong enough to reopen it; mark the card clearly.\n\nSee [HTML-REPORT.md](HTML-REPORT.md) for scaffold and styling.\n\nDo **not** invent interfaces in the report. After the file is written:\n\n- If this run is **scan-and-report only** (e.g. called by `architecture-hardening-loop`): stop here. Return the report path and candidate list. Do not ask the user to pick, and do not enter grilling.\n- If this is a **standalone interactive** run: ask \"Which of these would you like to explore?\" then continue only if phase 2 companions allow.",
+        "heading": "2. Present candidates as an HTML report (required, self-contained)",
+        "level": 3
+      },
+      {
+        "raw": "Only after the user picks a candidate **and** phase 2 is wanted:\n\n1. If `grilling` is **not** installed: report that phase 1 is complete, list the chosen candidate, and state that interactive grilling requires installing `grilling` (and optionally `domain-modeling` / `codebase-design`). Do **not** invent a substitute grilling protocol and do not fail phase 1 retroactively.\n2. If `grilling` is installed: run it for constraints, dependencies, deepened shape, seam contents, and surviving tests.\n3. If `domain-modeling` is installed: keep `CONTEXT.md` current as names crystallize. If absent: apply obvious in-file naming updates only when the user already uses domain docs; otherwise skip.\n4. If `codebase-design` is installed and the user wants alternative interfaces: use its design-it-twice pattern. If absent: skip.\n\nSide effects when companions are present:\n\n- New domain term → update `CONTEXT.md` (create lazily only if the project already uses that convention)\n- Load-bearing rejection → offer an ADR when a future explorer would otherwise re-suggest the same idea",
+        "heading": "3. Grilling loop (optional)",
+        "level": 3
       }
     ]
   },

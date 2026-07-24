@@ -24,7 +24,20 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-23T04:30:31.000Z"
+    "updatedAt": "2026-07-23T06:21:41.000Z"
+  },
+  {
+    "slug": "architecture-hardening-loop",
+    "name": "architecture-hardening-loop",
+    "description": "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, triage, minimal fix, test, Grok review, and rescan cycle until no actionable findings remain. Use for architecture cleanup, architecture hardening, DDD or high-cohesion reviews that include implementation, scan-fix-review-until-clean, clean up architecture issues in a loop, review-again-until-no-actionable-findings, or autonomous improve-review-fix cycles. Do not use for one-shot read-only reviews, ordinary feature work, pure design discussion without implementation, or requests without an explicit scope.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.1.0"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false
+    }
   },
   {
     "slug": "branch-creator",
@@ -147,6 +160,19 @@
       "hasSrc": false
     },
     "updatedAt": "2026-07-17T08:37:29.000Z"
+  },
+  {
+    "slug": "improve-codebase-architecture",
+    "name": "improve-codebase-architecture",
+    "description": "Scan a codebase for deepening opportunities and present them as a visual HTML report. Optionally grill a chosen candidate when companion skills are installed. Use when the user asks to improve architecture, deepen modules, find shallow modules, or run an architecture review report. Prefer explicit invocation; architecture-hardening-loop may call only the scan-and-report phase.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.1.0"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false
+    }
   },
   {
     "slug": "lingui-next-init",

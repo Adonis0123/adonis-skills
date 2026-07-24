@@ -1,0 +1,6 @@
+interface:
+  display_name: "Architecture Hardening Loop"
+  short_description: "Run a bounded architecture scan-fix-review loop"
+  # Hard deps (install all four for a clean environment):
+  # architecture-hardening-loop, improve-codebase-architecture,
+  # agentic-review-handoff, goal-gate

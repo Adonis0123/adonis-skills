@@ -1,0 +1,50 @@
+{
+  "skill_name": "architecture-hardening-loop",
+  "evals": [
+    {
+      "id": 1,
+      "name": "scope-boundary-and-order",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、不要真的调用外部 Reviewer。请使用 architecture-hardening-loop 处理这个场景并输出你会执行的分类与流程：审查范围明确限定为 `packages/video-editor/core/**`，排除 `packages/video-editor/editor/**` 和 `packages/video-editor/renderer/**`。扫描器给出三个候选：A）core 的 command handler 同时负责校验、修改和 React 通知；B）editor 的 React bridge 缺少 selector；C）renderer 的缓存策略可以抽象。请说明哪些候选能进入本轮、后续严格顺序以及终态条件。",
+      "expected_output": "结果应冻结 core 范围，不把 editor/renderer 候选带入修改；对范围内候选套用证据门槛；后续顺序为 Grok consult、Goal Gate、最小修改和测试、Grok review、原范围复扫；终态是 NO_ACTIONABLE_FINDINGS。",
+      "files": [],
+      "expectations": [
+        "明确冻结审查范围为 packages/video-editor/core/**，并排除 editor 和 renderer",
+        "不把候选 B 或 C 归为当前 Fix，也不建议扩大范围",
+        "候选 A 只有在 Evidence、Impact、Minimal change、Verification 齐全时才能归为 Fix",
+        "流程顺序包含 Grok consult 在 Goal Gate 和实施之前",
+        "实施后包含 Grok review 以及对原始范围的重新扫描",
+        "完成条件使用 NO_ACTIONABLE_FINDINGS，而不是没有任何建议"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "reject-overdesign",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、不要真的调用外部 Reviewer。范围是 `src/order/**`。已有测试证明当前同步 OrderService 在 20ms 内稳定完成，只有一个调用方，也没有第二种存储实现。扫描报告建议：A）立刻拆成六边形架构并增加 Repository 接口；B）为未来多租户加入事件总线；C）`cancelOrder` 会先落库再检查状态，非法取消会留下错误数据，现有测试可以复现。请按 architecture-hardening-loop 分类，并给出本轮最小修改和验证。",
+      "expected_output": "A 和 B 应因单实现、未来假设和新增复杂度被 Reject 或 Backlog，不能为理论优雅而改；C 有可复现行为证据，应归为 Fix，最小修改是调整校验与落库顺序并添加或修正回归测试。",
+      "files": [],
+      "expectations": [
+        "A 不被归为 Fix，并引用只有一个调用方或没有第二实现作为反过度设计证据",
+        "B 不被归为 Fix，并指出未来多租户属于推测性需求",
+        "C 被归为 Fix，因为存在可复现的数据正确性问题",
+        "最小修改聚焦于 cancelOrder 的校验与落库顺序，不扩展为架构重写",
+        "验证包含非法取消不写入错误数据的回归测试",
+        "明确指出当前仍有 Fix C，不能宣称 NO_ACTIONABLE_FINDINGS，并把未执行的修改与测试标为 UNVERIFIED"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "missing-dependency-fail-closed",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、不要真的调用外部 Reviewer。用户已明确范围为 `packages/core/**`。当前可用 Skill 清单只有 `improve-codebase-architecture` 和 `goal-gate`，`agentic-review-handoff` 不存在。请使用 architecture-hardening-loop 给出结果。不要假设可以安装依赖。",
+      "expected_output": "应在扫描和修改前 fail closed，输出 MISSING_DEPENDENCIES，并准确列出 agentic-review-handoff；不得静默跳过 Grok、复制 review 逻辑、安装依赖、创建 Goal 或开始修改。",
+      "files": [],
+      "expectations": [
+        "结果包含 MISSING_DEPENDENCIES",
+        "准确列出缺失的 agentic-review-handoff",
+        "不把 improve-codebase-architecture 或 goal-gate 误报为缺失",
+        "在扫描、Goal 创建和任何修改之前停止",
+        "不建议静默降级、复制 review 逻辑或自行安装依赖",
+        "保留用户给出的 packages/core/** 范围"
+      ]
+    }
+  ]
+}
