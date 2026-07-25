@@ -3,7 +3,7 @@ name: architecture-hardening-loop
 description: "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, triage, minimal fix, test, Grok review, and rescan cycle until no actionable findings remain. Use for architecture cleanup, architecture hardening, DDD or high-cohesion reviews that include implementation, scan-fix-review-until-clean, clean up architecture issues in a loop, review-again-until-no-actionable-findings, or autonomous improve-review-fix cycles. Do not use for one-shot read-only reviews, ordinary feature work, pure design discussion without implementation, or requests without an explicit scope."
 metadata:
   author: adonis
-  version: "1.1.0"
+  version: "1.2.0"
 ---
 
 # Architecture Hardening Loop
@@ -21,37 +21,34 @@ metadata:
 - 范围缺失或无法判断：只问一个范围问题并停止。不要默认全仓库，也不要根据扫描结果自行扩大范围。
 - 一次调用 = 用户预授权：在范围内选择、修改、验证，无需为普通工程判断反复请示。
 
-## 硬依赖与安装
+## 硬依赖（本机可用即可）
 
-本 Skill 是薄编排，**不复制**底层逻辑。公开 catalog 中的硬依赖必须同时可安装：
+本 Skill 是薄编排，**不复制**底层逻辑。硬依赖**不要求**都在本仓库 catalog 里；只要求当前 agent 运行时本机已安装、可解析到对应 skill 名。
 
-| 依赖                            | 用途                                 | 公开路径                                |
-| ------------------------------- | ------------------------------------ | --------------------------------------- |
-| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | `skills/improve-codebase-architecture/` |
-| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | `skills/agentic-review-handoff/`        |
-| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | `skills/goal-gate/`                     |
+| 依赖                            | 用途                                 | 本机检查方式                       | 缺失时的安装提示（仅提示，不代装）                                               |
+| ------------------------------- | ------------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------- |
+| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装 skill 列表或本地 `SKILL.md` | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |
+| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 同上                               | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |
+| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | 同上                               | 本仓：`npx skills add adonis0123/adonis-skills --skill goal-gate`                |
 
-干净环境推荐安装（catalog 完整集合，缺一不可）：
+本 Skill 自身：
 
 ```bash
 npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop
-npx skills add adonis0123/adonis-skills --skill improve-codebase-architecture
-npx skills add adonis0123/adonis-skills --skill agentic-review-handoff
-npx skills add adonis0123/adonis-skills --skill goal-gate
 ```
 
-扫描路径依赖闭包：`improve-codebase-architecture` 的 **Explore + HTML 报告** 阶段自包含，不需要 `codebase-design` / `grilling` / `domain-modeling`。本编排只调用该阶段，并在报告后停止底层 Skill（不进 grilling）。那些 companion skill 仅在有人单独做完整 interactive grilling 时才相关，**不是**本 Skill 的硬依赖。
+扫描阶段只调用 `improve-codebase-architecture` 的 **Explore + HTML 报告**，并在报告后停止（不进候选选择 / grilling / 领域文档写入）。`codebase-design` / `grilling` / `domain-modeling` **不是**本 Skill 的硬依赖；扫描器若自带 companion 约定，由扫描器自己处理，本编排不代装、不复制。
 
 ## 前置检查
 
 开始扫描前：
 
 1. 确认当前目录属于 Git 仓库；记录仓库根与现有工作区状态。
-2. 解析三个直接依赖是否可用（读其 `SKILL.md` 路径或已安装 skill 列表）：
+2. **只做本机解析**：在当前 agent 已加载 / 已安装的 skill 列表中查找下列名称是否存在（常见路径如 `~/.agents/skills/<name>/SKILL.md`、项目 `.agents/skills/`、`.claude/skills/` 等；以运行时可解析为准）：
    - `improve-codebase-architecture`
    - `agentic-review-handoff`
    - `goal-gate`
-3. 任一缺失 → 输出 `MISSING_DEPENDENCIES` 与准确名称，然后停止。不要静默降级，不要复制缺失 Skill 的逻辑，不要把「先装依赖再继续」当作本轮成功结果（可在报告中附上上方安装命令，但仍以 `MISSING_DEPENDENCIES` 结束本轮）。
+3. 任一缺失 → 输出 `MISSING_DEPENDENCIES` 与准确名称，然后停止。不要静默降级，不要复制缺失 Skill 的逻辑，不要代装依赖，不要把「先装依赖再继续」当作本轮成功结果（可附安装提示，仍以 `MISSING_DEPENDENCIES` 结束本轮）。
 4. 冻结调用时的范围；后续每轮复用同一范围。
 5. 保留用户已有改动；不重置、不覆盖、不整理范围外内容。
 
@@ -72,13 +69,13 @@ npx skills add adonis0123/adonis-skills --skill goal-gate
 
 ### 1. 扫描候选项
 
-调用 `improve-codebase-architecture`，**只执行探索 + 候选 HTML 报告**（该阶段零额外 skill 依赖）：
+调用本机已解析的 `improve-codebase-architecture`，**只执行探索 + 候选 HTML 报告**：
 
 - 把用户范围直接传给扫描器；禁止走“根据 Git 热点推断范围”的默认分支。
 - 允许写临时 HTML 报告。
 - **停在报告之后**：不进入候选选择、`grilling`、领域文档写入。后续判断由本 Skill 负责。
 - 报告里的 `Strong` / `Worth exploring` / `Speculative` 只是候选强度，不是修改命令。
-- 若底层 Skill 因缺少 optional companion 而拒绝扫描，视为实现错误：扫描阶段必须自包含。
+- 不因扫描器 companion 缺失而在本 Skill 内复制扫描逻辑；若扫描器本身无法跑完报告阶段，记原因并 `HUMAN_GATE` 或停在可复现失败信息上。
 
 扫描器发现机会；**它不决定循环是否结束**。
 
