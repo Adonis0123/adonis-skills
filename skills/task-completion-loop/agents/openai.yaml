@@ -1,0 +1,6 @@
+interface:
+  display_name: "Task Completion Loop"
+  short_description: "Run explicit multi-agent completion loops with evidence-fresh gates"
+  # Core dependencies: goal-gate, agentic-review-handoff,
+  # architecture-hardening-loop, and callable real Grok Build / Claude Code runtimes.
+  # grill-with-docs is conditional on unresolved user-owned decisions or explicit use.

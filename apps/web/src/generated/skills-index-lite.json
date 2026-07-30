@@ -32,13 +32,13 @@
     "description": "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, triage, minimal fix, test, Grok review, and rescan cycle until no actionable findings remain. Use for architecture cleanup, architecture hardening, DDD or high-cohesion reviews that include implementation, scan-fix-review-until-clean, clean up architecture issues in a loop, review-again-until-no-actionable-findings, or autonomous improve-review-fix cycles. Do not use for one-shot read-only reviews, ordinary feature work, pure design discussion without implementation, or requests without an explicit scope.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.0"
+      "version": "1.2.1"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-24T04:05:30.000Z"
+    "updatedAt": "2026-07-25T08:32:21.000Z"
   },
   {
     "slug": "branch-creator",
@@ -214,6 +214,19 @@
       "hasSrc": false
     },
     "updatedAt": "2026-03-09T16:14:12.000Z"
+  },
+  {
+    "slug": "task-completion-loop",
+    "name": "task-completion-loop",
+    "description": "Orchestrate the explicit full completion of an existing plan, spec, or unfinished non-trivial coding task through a scoped work ledger, real host plus Grok Build plus Claude Code convergence, Goal Gate, implementation and runtime verification, agentic review-fix-re-review, bounded architecture hardening, and a fresh read-only Claude Code blind audit. Use when the user explicitly asks for task-completion-loop, a full multi-agent finish sequence, three-agent convergence before implementation, a full completion loop, or autonomous implementation reviewed until clean. Do not trigger for an ordinary implement-and-test request, quick edits, one-shot tests, read-only reviews, open-ended design, or destructive work whose scope is not approved.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.2.0"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false
+    }
   },
   {
     "slug": "weekly-report",

@@ -3,7 +3,7 @@ name: architecture-hardening-loop
 description: "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, triage, minimal fix, test, Grok review, and rescan cycle until no actionable findings remain. Use for architecture cleanup, architecture hardening, DDD or high-cohesion reviews that include implementation, scan-fix-review-until-clean, clean up architecture issues in a loop, review-again-until-no-actionable-findings, or autonomous improve-review-fix cycles. Do not use for one-shot read-only reviews, ordinary feature work, pure design discussion without implementation, or requests without an explicit scope."
 metadata:
   author: adonis
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # Architecture Hardening Loop
@@ -144,14 +144,14 @@ Consult 是独立意见，不是投票。编排者必须核对 Grok 主张；普
 
 调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**：
 
-| 结果                                                     | 动作                                                                            |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| `PASS`                                                   | 进入原范围重新扫描                                                              |
-| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                         |
-| `PASS_WITH_CONCERNS`                                     | 再套证据门槛：仍是 `Fix` 则继续改；其余进 `Backlog`/`Reject` 并写理由后才可接受 |
-| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                    |
+| 结果                                                     | 动作                                                                                                                        |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `PASS`                                                   | 进入原范围重新扫描                                                                                                          |
+| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                                                                     |
+| `PASS_WITH_CONCERNS`                                     | `awaiting_user_decision` 时返回 `HUMAN_GATE`；用户 `run --continue` 则续同一 packet，用户 Decision Closure 后进入原范围复扫 |
+| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                                                                |
 
-Reviewer 的风格偏好与无证据建议不构成阻塞。
+Reviewer 的风格偏好与无证据建议不构成 `Fix`，但编排 agent 仍不得代用户关闭 `PASS_WITH_CONCERNS` packet、把 verdict 改写为 `PASS`，或在 `awaiting_user_decision` 时进入复扫。只有用户执行 `close --reason accept-concerns`，且证据显示 Decision Closure 已归档、没有 open Fix，才能从步骤 8 恢复；原始 verdict 保持 `PASS_WITH_CONCERNS`。
 
 ### 8. 原范围重新扫描
 
@@ -173,20 +173,22 @@ Reviewer 的风格偏好与无证据建议不构成阻塞。
 - 同一问题连续两轮无新证据
 - 3 轮后仍有通过门槛的 `Fix`
 - 依赖、凭证或环境使完成条件无法验证
+- 底层 review loop 返回尚无用户 Decision Closure 的 `PASS_WITH_CONCERNS` / `awaiting_user_decision`
 - 底层 review loop 报告 delivery / hash / deadlock / 预算异常
 
 暂停时输出 `HUMAN_GATE`、现有证据、已尝试内容、以及**唯一**需要用户决定的问题。
 
 ## 反漂移（常见失败）
 
-| 失败模式               | 正确行为                                 |
-| ---------------------- | ---------------------------------------- |
-| 把扫描强度当修改优先级 | 只认证据门槛四项                         |
-| 范围外“顺手”修         | `Backlog` 或 `HUMAN_GATE`，不改          |
-| 依赖缺失仍继续         | `MISSING_DEPENDENCIES` 并停              |
-| 为理论优雅重写         | `Reject`/`Backlog`，除非有可复现当前伤害 |
-| 未跑命令却写通过       | `UNVERIFIED`                             |
-| 报告还有建议就继续轮   | 无 `Fix` 即终态；不必清零报告            |
+| 失败模式                   | 正确行为                                   |
+| -------------------------- | ------------------------------------------ |
+| 把扫描强度当修改优先级     | 只认证据门槛四项                           |
+| 范围外“顺手”修             | `Backlog` 或 `HUMAN_GATE`，不改            |
+| 依赖缺失仍继续             | `MISSING_DEPENDENCIES` 并停                |
+| 为理论优雅重写             | `Reject`/`Backlog`，除非有可复现当前伤害   |
+| 代用户接受 review concerns | `HUMAN_GATE`；只交出 continue / close 命令 |
+| 未跑命令却写通过           | `UNVERIFIED`                               |
+| 报告还有建议就继续轮       | 无 `Fix` 即终态；不必清零报告              |
 
 ## 完成报告
 
@@ -198,9 +200,9 @@ Architecture Hardening Result
 - Fixed: <问题、文件与验证>
 - Backlog: <真实但当前不处理的问题及理由，或 none>
 - Rejected: <无证据或过度设计项及理由，或 none>
-- Grok evidence: <consult 与最终 review 结果>
+- Grok evidence: <consult；若实施过 Fix：最终 review verdict、packet 与 lifecycle，若有 Decision Closure 则记录用户命令；零 Fix：review not-run + 终态 consult>
 - Verification: <实际命令与结果，或 UNVERIFIED>
 - Goal: <completed | active | not-created>
 ```
 
-只有 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、且没有未处理的 `Fix` 时，才能把 Goal 标为 completed。
+只有 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、且没有未处理的 `Fix` 时，才能把 Goal 标为 completed。若实施过 Fix，最终 review 还必须为 `PASS` / `NO_FINDINGS`，或是由用户 Decision Closure 收口且已归档的 `PASS_WITH_CONCERNS`；不得存在 `awaiting_user_decision` packet。零 Fix 分支不虚构 review。

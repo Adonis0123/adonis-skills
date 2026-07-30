@@ -45,6 +45,36 @@
         "不建议静默降级、复制 review 逻辑或自行安装依赖",
         "保留用户给出的 packages/core/** 范围"
       ]
+    },
+    {
+      "id": 4,
+      "name": "pass-with-concerns-stops-before-rescan",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 review CLI。architecture-hardening-loop 已完成一个 Fix 和验证，底层 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision；剩余 concern 经工程证据分类为 Backlog，不是 Fix。用户尚未选择继续 review 或接受 concerns。请给出当前结果、允许的下一步，以及能否进入原范围复扫或完成 Goal。",
+      "expected_output": "应返回 HUMAN_GATE。即使剩余 concern 只是 Backlog，也只有用户能选择 run --continue 或 close --reason accept-concerns；编排 agent 不得代关 packet、改写为 PASS、进入复扫、返回 NO_ACTIONABLE_FINDINGS 或完成 Goal。",
+      "files": [],
+      "expectations": [
+        "识别 PASS_WITH_CONCERNS 对应 awaiting_user_decision",
+        "结果包含 HUMAN_GATE",
+        "明确仅用户可选择 run --continue 或 close --reason accept-concerns",
+        "不因 concern 被分类为 Backlog 就自动接受或关闭 packet",
+        "用户决定前不进入原范围复扫或输出 NO_ACTIONABLE_FINDINGS",
+        "不把 Goal 标为 completed"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "user-decision-closure-resumes-rescan",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 review CLI。architecture-hardening-loop 的底层 review 曾返回 PASS_WITH_CONCERNS；用户随后亲自执行 close --reason accept-concerns。证据显示 Decision Closure 已记录，packet lifecycle_state 是 archived，没有 open Fix，但原始 verdict 仍是 PASS_WITH_CONCERNS。请说明能否恢复、从哪一步继续，以及最终完成条件。",
+      "expected_output": "应承认用户 Decision Closure 已合法收口，不因原始 verdict 仍是 PASS_WITH_CONCERNS 而再次 HUMAN_GATE。记录已接受 concerns 后从原范围复扫继续；只有复扫和终态 consult 均无 Fix、验证通过且没有 awaiting_user_decision packet 时，才能返回 NO_ACTIONABLE_FINDINGS 并完成 Goal。",
+      "files": [],
+      "expectations": [
+        "识别 Decision Closure 由用户执行且 packet 已 archived",
+        "不把原始 PASS_WITH_CONCERNS verdict 改写为 PASS",
+        "不再次返回 HUMAN_GATE 或要求用户重复关闭",
+        "从原范围重新扫描继续，而不是跳过 architecture 终态门禁",
+        "复扫与终态 consult 无 Fix 后才输出 NO_ACTIONABLE_FINDINGS",
+        "没有 awaiting_user_decision packet 且验证通过后才完成 Goal"
+      ]
     }
   ]
 }

@@ -148,7 +148,7 @@
         "level": 2
       },
       {
-        "raw": "本 Skill 是薄编排，**不复制**底层逻辑。硬依赖**不要求**都在本仓库 catalog 里；只要求当前 agent 运行时本机已安装、可解析到对应 skill 名。\n\n| 依赖                            | 用途                                 | 本机检查方式                         | 缺失时的安装提示（仅提示，不代装） |\n| ------------------------------- | ------------------------------------ | ------------------------------------ | ---------------------------------- |\n| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装 skill 列表或本地 `SKILL.md`   | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |\n| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 同上                                 | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff` |\n| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | 同上                                 | 本仓：`npx skills add adonis0123/adonis-skills --skill goal-gate` |\n\n本 Skill 自身：\n\n```bash\nnpx skills add adonis0123/adonis-skills --skill architecture-hardening-loop\n```\n\n扫描阶段只调用 `improve-codebase-architecture` 的 **Explore + HTML 报告**，并在报告后停止（不进候选选择 / grilling / 领域文档写入）。`codebase-design` / `grilling` / `domain-modeling` **不是**本 Skill 的硬依赖；扫描器若自带 companion 约定，由扫描器自己处理，本编排不代装、不复制。",
+        "raw": "本 Skill 是薄编排，**不复制**底层逻辑。硬依赖**不要求**都在本仓库 catalog 里；只要求当前 agent 运行时本机已安装、可解析到对应 skill 名。\n\n| 依赖                            | 用途                                 | 本机检查方式                       | 缺失时的安装提示（仅提示，不代装）                                               |\n| ------------------------------- | ------------------------------------ | ---------------------------------- | -------------------------------------------------------------------------------- |\n| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装 skill 列表或本地 `SKILL.md` | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |\n| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 同上                               | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |\n| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | 同上                               | 本仓：`npx skills add adonis0123/adonis-skills --skill goal-gate`                |\n\n本 Skill 自身：\n\n```bash\nnpx skills add adonis0123/adonis-skills --skill architecture-hardening-loop\n```\n\n扫描阶段只调用 `improve-codebase-architecture` 的 **Explore + HTML 报告**，并在报告后停止（不进候选选择 / grilling / 领域文档写入）。`codebase-design` / `grilling` / `domain-modeling` **不是**本 Skill 的硬依赖；扫描器若自带 companion 约定，由扫描器自己处理，本编排不代装、不复制。",
         "heading": "硬依赖（本机可用即可）",
         "level": 2
       },
@@ -193,7 +193,7 @@
         "level": 3
       },
       {
-        "raw": "调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**：\n\n| 结果                                                     | 动作                                                                            |\n| -------------------------------------------------------- | ------------------------------------------------------------------------------- |\n| `PASS`                                                   | 进入原范围重新扫描                                                              |\n| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                         |\n| `PASS_WITH_CONCERNS`                                     | 再套证据门槛：仍是 `Fix` 则继续改；其余进 `Backlog`/`Reject` 并写理由后才可接受 |\n| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                    |\n\nReviewer 的风格偏好与无证据建议不构成阻塞。",
+        "raw": "调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**：\n\n| 结果                                                     | 动作                                                                            |\n| -------------------------------------------------------- | ------------------------------------------------------------------------------- |\n| `PASS`                                                   | 进入原范围重新扫描                                                              |\n| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                         |\n| `PASS_WITH_CONCERNS`                                     | `awaiting_user_decision` 时返回 `HUMAN_GATE`；用户 `run --continue` 则续同一 packet，用户 Decision Closure 后进入原范围复扫 |\n| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                    |\n\nReviewer 的风格偏好与无证据建议不构成 `Fix`，但编排 agent 仍不得代用户关闭 `PASS_WITH_CONCERNS` packet、把 verdict 改写为 `PASS`，或在 `awaiting_user_decision` 时进入复扫。只有用户执行 `close --reason accept-concerns`，且证据显示 Decision Closure 已归档、没有 open Fix，才能从步骤 8 恢复；原始 verdict 保持 `PASS_WITH_CONCERNS`。",
         "heading": "7. Grok 复审修改",
         "level": 3
       },
@@ -203,17 +203,17 @@
         "level": 3
       },
       {
-        "raw": "默认最多 **3** 个外层加固轮次。以下情况暂停并交给用户：\n\n- 破坏性、不可逆、生产数据、认证、计费或外部发布\n- 候选项要求扩大原始范围\n- 同一问题连续两轮无新证据\n- 3 轮后仍有通过门槛的 `Fix`\n- 依赖、凭证或环境使完成条件无法验证\n- 底层 review loop 报告 delivery / hash / deadlock / 预算异常\n\n暂停时输出 `HUMAN_GATE`、现有证据、已尝试内容、以及**唯一**需要用户决定的问题。",
+        "raw": "默认最多 **3** 个外层加固轮次。以下情况暂停并交给用户：\n\n- 破坏性、不可逆、生产数据、认证、计费或外部发布\n- 候选项要求扩大原始范围\n- 同一问题连续两轮无新证据\n- 3 轮后仍有通过门槛的 `Fix`\n- 依赖、凭证或环境使完成条件无法验证\n- 底层 review loop 返回尚无用户 Decision Closure 的 `PASS_WITH_CONCERNS` / `awaiting_user_decision`\n- 底层 review loop 报告 delivery / hash / deadlock / 预算异常\n\n暂停时输出 `HUMAN_GATE`、现有证据、已尝试内容、以及**唯一**需要用户决定的问题。",
         "heading": "循环预算与 Human Gate",
         "level": 2
       },
       {
-        "raw": "| 失败模式               | 正确行为                                 |\n| ---------------------- | ---------------------------------------- |\n| 把扫描强度当修改优先级 | 只认证据门槛四项                         |\n| 范围外“顺手”修         | `Backlog` 或 `HUMAN_GATE`，不改          |\n| 依赖缺失仍继续         | `MISSING_DEPENDENCIES` 并停              |\n| 为理论优雅重写         | `Reject`/`Backlog`，除非有可复现当前伤害 |\n| 未跑命令却写通过       | `UNVERIFIED`                             |\n| 报告还有建议就继续轮   | 无 `Fix` 即终态；不必清零报告            |",
+        "raw": "| 失败模式               | 正确行为                                 |\n| ---------------------- | ---------------------------------------- |\n| 把扫描强度当修改优先级 | 只认证据门槛四项                         |\n| 范围外“顺手”修         | `Backlog` 或 `HUMAN_GATE`，不改          |\n| 依赖缺失仍继续         | `MISSING_DEPENDENCIES` 并停              |\n| 为理论优雅重写         | `Reject`/`Backlog`，除非有可复现当前伤害 |\n| 代用户接受 review concerns | `HUMAN_GATE`；只交出 continue / close 命令 |\n| 未跑命令却写通过       | `UNVERIFIED`                             |\n| 报告还有建议就继续轮   | 无 `Fix` 即终态；不必清零报告            |",
         "heading": "反漂移（常见失败）",
         "level": 2
       },
       {
-        "raw": "```text\nArchitecture Hardening Result\n- Scope: <原始范围>\n- Iterations: <完成外层轮数>\n- Result: NO_ACTIONABLE_FINDINGS | HUMAN_GATE | MISSING_DEPENDENCIES\n- Fixed: <问题、文件与验证>\n- Backlog: <真实但当前不处理的问题及理由，或 none>\n- Rejected: <无证据或过度设计项及理由，或 none>\n- Grok evidence: <consult 与最终 review 结果>\n- Verification: <实际命令与结果，或 UNVERIFIED>\n- Goal: <completed | active | not-created>\n```\n\n只有 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、且没有未处理的 `Fix` 时，才能把 Goal 标为 completed。",
+        "raw": "```text\nArchitecture Hardening Result\n- Scope: <原始范围>\n- Iterations: <完成外层轮数>\n- Result: NO_ACTIONABLE_FINDINGS | HUMAN_GATE | MISSING_DEPENDENCIES\n- Fixed: <问题、文件与验证>\n- Backlog: <真实但当前不处理的问题及理由，或 none>\n- Rejected: <无证据或过度设计项及理由，或 none>\n- Grok evidence: <consult；若实施过 Fix：最终 review verdict、packet 与 lifecycle，若有 Decision Closure 则记录用户命令；零 Fix：review not-run + 终态 consult>\n- Verification: <实际命令与结果，或 UNVERIFIED>\n- Goal: <completed | active | not-created>\n```\n\n只有 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、且没有未处理的 `Fix` 时，才能把 Goal 标为 completed。若实施过 Fix，最终 review 还必须为 `PASS` / `NO_FINDINGS`，或是由用户 Decision Closure 收口且已归档的 `PASS_WITH_CONCERNS`；不得存在 `awaiting_user_decision` packet。零 Fix 分支不虚构 review。",
         "heading": "完成报告",
         "level": 2
       }
@@ -1065,6 +1065,81 @@
       {
         "raw": "执行本 skill 时，始终输出：\n1. 目标项目识别结果（layout、styles、package manager）\n2. 将写入/已写入文件列表\n3. 依赖安装命令（按所选包管理器）\n4. `@source` 与 `@reference` 的建议片段\n5. 验证清单（至少 3 条可执行检查项）",
         "heading": "输出约束",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "task-completion-loop",
+    "sections": [
+      {
+        "raw": "把已有 plan / spec / 半成品收敛为**同一份最终代码快照上的可验证终态**。\n\n本 Skill 是薄编排：依赖 skill 拥有内部协议；本 Skill 只管理任务账本、调用顺序、证据新鲜度、授权边界和停止条件。",
+        "heading": "Task Completion Loop",
+        "level": 1
+      },
+      {
+        "raw": "同时具备才启动：\n\n1. Git 仓库，以及命名 plan/spec 或可从当前代码确定的明确范围。\n2. 明确的完整闭环实现请求；不是普通实现、纯讨论、纯 review 或只读诊断。\n\n先从文档与代码解析范围。仍无法安全确定时，只问一个范围问题并停止。禁止默认全仓库。\n\n实现请求授权修改冻结范围内的 working tree；除非用户明确要求只读或禁止编辑。它不授权：\n\n- `git add`、commit、push、merge、rebase、branch/worktree 创建；\n- PR、issue、评论、消息、任务、API 数据、部署、生产写；\n- 排除路径或冻结范围外修改。\n\n`agentic-review-handoff` 所需的 `.review-handoff/**` 与幂等 `$GIT_COMMON_DIR/info/exclude` 条目是本闭环的本地协议产物，不是交付动作；预检时披露，完成报告中记录。用户明确禁止 `.git/**` 写时，在源码修改前返回 `HUMAN_GATE`。",
+        "heading": "入口与授权",
+        "level": 2
+      },
+      {
+        "raw": "始终要求：\n\n| 能力 | 用途 |\n|---|---|\n| `goal-gate` | Goal 决策与运行时激活 |\n| `agentic-review-handoff` | 独立 review-fix-re-review |\n| `architecture-hardening-loop` | 有界扫描、修复、复核、复扫 |\n| 真实 Grok Build 会话 | 独立立场与交叉质疑 |\n| 真实 Claude Code 会话 | 独立立场与终局盲审 |\n\n仅在用户显式要求 `grill-with-docs`，或预检发现仍有用户拥有的产品/领域决策时，要求并调用 `grill-with-docs`。\n\n在讨论、Goal、源码修改前：\n\n1. 解析每个 skill 及其传递硬依赖。特别检查 `architecture-hardening-loop` 的 scanner 等嵌套能力，以及其嵌套 review 是否把 `PASS_WITH_CONCERNS` 映射为 `HUMAN_GATE`；合同不兼容视为缺少可用能力。不要等实现后才发现缺失。\n2. 为 Grok / Claude 解析真实产品身份、创建方式、可恢复句柄和消息交换能力；Claude 还要有可验证的只读审查方式。只有名字、catalog 条目或 CLI 文件存在不算可用。\n3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。\n\n缺少始终要求的能力，或缺少本轮实际需要的条件能力：\n\n```text\nTask Completion Result\n- Result: MISSING_DEPENDENCIES\n- Missing: <exact skill, dependency chain, or runtime capability>\n- Stop point: before discussion, Goal activation, and source changes\n- Substitution/install: none; no generic agent impersonation, copied skill logic, or automatic install\n- Work started: no\n```\n\n禁止用通用 subagent 冒充 Grok/Claude、伪造会话、复制缺失 skill 逻辑或未经授权代装依赖。",
+        "heading": "能力预检",
+        "level": 2
+      },
+      {
+        "raw": "```text\n预检与任务账本\n  -> 三方交叉质疑\n  -> 条件式 grill-with-docs 用户决策门\n  -> Goal Gate\n  -> 实现全部 PENDING + 验证\n  -> agentic-review-handoff\n  -> architecture-hardening-loop = NO_ACTIONABLE_FINDINGS\n  -> 全新只读 Claude 盲审\n       -> Fix：修、验、重跑下游门禁、再盲审\n       -> 仅 Backlog / Reject：完成 Goal\n  -> COMPLETED\n```",
+        "heading": "状态机",
+        "level": 2
+      },
+      {
+        "raw": "1. 读取仓库指令、plan/spec、直接关联决策、当前代码与测试。\n2. 记录仓库根、分支、HEAD、working tree；保留既有改动，不 reset / clean 无关内容。\n3. 给原始计划的每项工作标记：\n\n| 状态 | 证据 |\n|---|---|\n| `VERIFIED_DONE` | 当前代码与本轮可复现验证证明已交付 |\n| `PENDING` | 本次仍须实现或修复 |\n| `OBSOLETE` | 被有效决策或新契约取代，并引用来源 |\n| `EXCLUDED` | 用户或有效文档明确排除 |\n| `HUMAN_DECISION` | 选择会改变产品行为、契约、数据归属、安全或范围 |\n\n冻结范围包含本轮全部 `PENDING` 及必要测试/文档。可按依赖顺序拆成内聚批次，但不得只完成第一个容易批次就声称 plan 已完成。\n\n原始 `PENDING` 不能被 reviewer 建议偷换成 `Backlog`；它只能完成、被有效决策取代、明确排除或进入 `HUMAN_DECISION`。\n\n把 `HEAD + tracked diff + 相关 untracked 内容` 视为 evidence id。优先复用依赖 skill 的冻结证据。任何范围内代码或测试修改都会使旧快照的下游 test/review/audit 结论过期。",
+        "heading": "Phase 0：任务账本与证据",
+        "level": 2
+      },
+      {
+        "raw": "宿主、真实 Grok Build、真实 Claude Code 分别读取同一组文档、代码和任务账本。每方写清范围、归属、假设、风险、排除项和可证伪验证。保留 Grok / Claude 可恢复句柄。",
+        "heading": "A. 独立立场",
+        "level": 3
+      },
+      {
+        "raw": "- 把宿主 + Claude 立场交给 Grok；把宿主 + Grok 立场交给 Claude。\n- 双方攻击对方最强论点，并允许依据证据改口。\n- 宿主独立打开引用路径、核对当前行为，再综合证据。\n\n三份平行评论不算收敛。",
+        "heading": "B. 交叉质疑",
+        "level": 3
+      },
+      {
+        "raw": "- 权威文档已决定且代码证据一致：不要重新提问。\n- 仍有 `HUMAN_DECISION`，或用户显式要求 `grill-with-docs`：加载它及委托的 skill；事实先查环境，决策一次只问一个，并给推荐答案。\n- 调用前解析仓库认可的领域文档位置，把 `domain-modeling` 可能写入的 glossary / ADR 路径纳入冻结写边界；不能安全写入时返回 `HUMAN_GATE`。\n- Agent 一致不能替用户决定。用户确认 shared understanding 前返回 `HUMAN_GATE`，不创建 Goal、不改源码。\n\n记录：\n\n```text\nThree-party Convergence\n- Decision:\n- Why:\n- Work ledger:\n- Frozen scope / exclusions:\n- Ownership and dependency direction:\n- Verification:\n- Grok session:\n- Claude session:\n- Remaining decisions: none | <list>\n```",
+        "heading": "C. 用户拥有的决策",
+        "level": 3
+      },
+      {
+        "raw": "收敛后调用 `goal-gate`，严格服从其 `Decision` / `Next`：\n\n- `wait for user /goal`、`ask approval` 或 `defer`：返回 `HUMAN_GATE` 并停止。生成 prompt 不代表 Goal 已激活。\n- 已有 Goal：按依赖协议先问继续、完成或替换；不嵌套、不静默复用。\n- 可激活或采用时，Goal 覆盖任务账本、冻结范围、验证、三道终态门禁、协议写和外部写边界。\n\nDone condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道门禁覆盖同一最终 evidence id；最后才完成 Goal。",
+        "heading": "Phase 2：Goal Gate",
+        "level": 2
+      },
+      {
+        "raw": "按依赖顺序处理全部 `PENDING`：\n\n1. 转成可观察成功标准；行为变更可行时先展示失败复现。\n2. 做最小内聚改动，不顺手做相邻 backlog 或投机抽象。\n3. 先跑定向检查，再跑相关包/仓检查。\n4. 对外可见行为使用浏览器、CLI、日志、渲染或请求/响应等真实 runtime 信号。\n5. 证据通过后才标记 `VERIFIED_DONE`，并同步 plan / 现状文档。\n\n未运行、失败或已过期的必需证据记 `UNVERIFIED`，不能算通过。",
+        "heading": "Phase 3：实现与验证",
+        "level": 2
+      },
+      {
+        "raw": "调用 `agentic-review-handoff` 自动闭环；默认 reviewer 为 Grok，用户另指定则从其。透传其原生终态，不复制 packet 状态机：\n\n- `PASS` / `NO_FINDINGS`：记录 packet、session、命令和 evidence id，继续。\n- `BLOCKED`：按依赖协议修复、验证、续同一 packet。\n- `PASS_WITH_CONCERNS` 且 lifecycle 为 `awaiting_user_decision`：返回 `HUMAN_GATE`。只有用户能选择 `run --continue` 或 `close --reason accept-concerns`，本 Skill 不代关。前者按依赖协议续同一 packet；后者只有在用户 Decision Closure 已记录且 packet 归档后才算收口，继续时保留原始 verdict，不改写为 `PASS`。\n- delivery/hash/deadlock/budget 异常：返回 `HUMAN_GATE`。",
+        "heading": "1. Agentic review",
+        "level": 3
+      },
+      {
+        "raw": "对同一冻结范围与排除项调用 `architecture-hardening-loop`。只接受：\n\n```text\nResult: NO_ACTIONABLE_FINDINGS\n```\n\n当前依赖若发现 `Fix`，会对 active parent Goal 再调用 `goal-gate`；该合同要求 `defer`。此时如实返回 `HUMAN_GATE`，只问是否在兼容的现有 Goal 下继续该 Fix。用户确认后恢复同一 Goal，不创建嵌套 Goal。\n\n若依赖实施过 Fix 或调用了自动 review，其完成报告的 Grok evidence 必须包含最终 review verdict、packet 和 lifecycle；零 Fix 分支应记录 review `not-run` 与终态 consult。lifecycle 仍为 `awaiting_user_decision`，或 `PASS_WITH_CONCERNS` 没有用户 Decision Closure 证据时，返回 `HUMAN_GATE`，仅把 `run --continue` 与 `close --reason accept-concerns` 交给用户；本 Skill 与依赖均不得代关。若用户 Decision Closure 已记录、packet 已归档且没有 open Fix，可保留原始 `PASS_WITH_CONCERNS` 并继续。需要 review 却缺少可核对的终态证据时返回 `UNVERIFIED`，不得仅凭 `NO_ACTIONABLE_FINDINGS` 继续。\n\n若 loop 修改代码，旧 review 与验证随 evidence id 失效。只有它内部的 `agentic-review-handoff` 已覆盖最终 evidence id 时才能复用；否则重跑 Agentic review。刷新必要验证后再继续。",
+        "heading": "2. Architecture hardening",
+        "level": 3
+      },
+      {
+        "raw": "前两道门禁和验证均覆盖当前 evidence id 后，开启新的 Claude Code 会话；禁止 resume 前期讨论或 review 会话。\n\n- 给原始目标、冻结范围、排除项和 evidence id；不给先前 reviewer 结论。\n- 审当前 tracked diff、相关 untracked 文件与真实 `file:line`。\n- 只允许仓库读取和非变更验证；禁止编辑、Git 控制面、部署和外部写。\n- 每条 finding 给影响、最小修法、验证与实际命令。\n\n记录 fresh session、实际命令和所审 evidence id。没有覆盖当前快照，等同未审。\n\n宿主独立核对 finding：\n\n| 分类 | 条件 |\n|---|---|\n| `Fix` | 真实、范围内、收益值得复杂度、可最小修、可验证 |\n| `Backlog` | 真实但低价值、超范围、依赖未来或暂不可安全验证 |\n| `Reject` | 偏好、理论扩张、重复抽象、过期证据或被当前行为反证 |\n\n严重度不单独决定分类。有证据的 P3 可以是 `Fix`；无当前证据的 P1 可以是 `Reject`。\n\n终局 `Fix` 使旧门禁失效：保持 Goal active，补最近回归测试，最小修复，重跑验证、Agentic review、同范围 Architecture hardening，再对新 evidence id 开全新 Claude 盲审。\n\n一次“盲审发现 Fix → 修复 → 重跑门禁 → 新盲审”算一轮。最多 2 轮；仍有范围内 `Fix` 时返回 `HUMAN_GATE`。",
+        "heading": "3. 全新 Claude Code 盲审",
+        "level": 3
+      },
+      {
+        "raw": "| Result | 使用条件 |\n|---|---|\n| `COMPLETED` | 账本无未决项；必需验证通过；三道门禁覆盖同一最终 evidence id；最终盲审无范围内 `Fix`；Goal 最后完成 |\n| `HUMAN_GATE` | 等待决策、Goal 激活/续用、review concern 接受、权限、凭证、外部状态、范围扩张或预算 |\n| `MISSING_DEPENDENCIES` | 预检缺少始终要求或本轮实际需要的能力；源码尚未修改 |\n| `UNVERIFIED` | 实现可能存在，但必需证据未运行、失败或已过期；Goal 不得完成 |\n\n时间或 token 见底不是完成理由。\n\n```text\nTask Completion Result\n- Scope / exclusions:\n- Work ledger:\n- Three-party decision:\n- Goal:\n- Final evidence id:\n- Implemented:\n- Verification:\n- Agentic review: <packet/session + evidence id>\n- Architecture hardening: <result + evidence id>\n- Final Claude audit: <fresh session + evidence id>\n- Fixed / Backlog / Rejected:\n- Protocol, Git, and external actions:\n- Result: COMPLETED | HUMAN_GATE | MISSING_DEPENDENCIES | UNVERIFIED\n```",
+        "heading": "终态与报告",
         "level": 2
       }
     ]

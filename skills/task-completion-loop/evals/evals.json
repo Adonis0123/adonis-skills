@@ -1,0 +1,129 @@
+{
+  "skill_name": "task-completion-loop",
+  "evals": [
+    {
+      "id": 1,
+      "name": "full-loop-keeps-final-evidence-fresh",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件，也不要真的启动 Grok、Claude、Goal 或 review loop。用户明确要求对 `docs/plans/project-persistence.md` 走完整 task-completion-loop。所有始终要求的能力与传递依赖都可用；plan 已有权威产品决策，代码证据一致，没有需要用户决定的分支。任务账本有一个 VERIFIED_DONE 和两个 PENDING。假设三方交叉质疑已收敛、Goal 已 Active、两个 PENDING 都实现并通过定向/全包/浏览器验证、agentic review 为 PASS、architecture hardening 零 Fix 并返回 NO_ACTIONABLE_FINDINGS。最终 fresh Claude 提出一个可复现、范围内的 P3 生命周期问题；修复后两道门禁再次通过，新的 Claude 盲审无 finding。请说明完整顺序、grill-with-docs 是否需要、证据如何失效，以及何时完成 Goal。用户没有授权 stage、commit、push、PR 或外部消息。",
+      "expected_output": "已有权威决策时不应强制调用 grill-with-docs；完整账本必须处理完。P3 按证据归为 Fix 后，旧 evidence 失效，需重跑验证、agentic review、同范围 architecture hardening 和新的只读 Claude 盲审。只有所有门禁覆盖同一最终 evidence id 且账本无未决项时才完成 Goal；不得执行未授权 Git 或外部动作。",
+      "files": [],
+      "expectations": [
+        "明确已有权威决策且无 HUMAN_DECISION 时不调用 grill-with-docs",
+        "账本中的两个 PENDING 都必须完成，不能只完成一个批次",
+        "三方至少交换一次立场并 cross-challenge",
+        "Goal 已 Active 后才实现，且最终盲审前不完成 Goal",
+        "P3 不因严重度低而忽略，按证据归为 Fix",
+        "P3 修复产生新 evidence id，使旧验证和门禁结论失效",
+        "重跑验证、agentic review、同范围 architecture hardening 和全新只读 Claude 盲审",
+        "只有账本无未决项且所有证据覆盖同一最终 evidence id 时才完成 Goal",
+        "不执行 stage、commit、push、PR 或外部消息"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ai-consensus-does-not-own-product-decision",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或调用外部 agent。用户明确要求对一个支付迁移 plan 走完整 task-completion-loop。Codex、Grok Build 和 Claude Code 交叉质疑后都同意直接切生产写流量并重写账本表，但现有文档没有支付 owner 决策，选择会改变生产数据真相源和回滚方式。`grill-with-docs` 及其委托 skill 均可用，用户尚未确认 shared understanding。请输出此时怎么走。",
+      "expected_output": "AI 共识不能代替 owner 决策。应进入 grill-with-docs，一次只问一个带推荐答案的决策问题，并返回 HUMAN_GATE；用户确认前不得创建 Goal、修改源码、切生产流量、review、部署或交付。",
+      "files": [],
+      "expectations": [
+        "明确 AI 三方一致不能替代支付 owner 的产品或数据决策",
+        "识别生产数据真相源、账本表和回滚为 HUMAN_DECISION",
+        "调用条件式 grill-with-docs 而不是把它当作每次必跑",
+        "一次只提出一个带推荐答案的问题",
+        "结果包含 HUMAN_GATE",
+        "用户确认 shared understanding 前不创建 Goal或修改源码",
+        "不启动 review、architecture hardening、部署、commit 或 push"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "preflight-catches-nested-dependency",
+      "prompt": "这是一次只读 Skill 行为验收，不要安装依赖或真的执行任务。用户明确要求对 `packages/core/**` 走完整 task-completion-loop。goal-gate、agentic-review-handoff、architecture-hardening-loop、真实 Grok Build 和真实 Claude Code 都可用；plan 没有未决产品决策，所以不需要 grill-with-docs。但 architecture-hardening-loop 的硬依赖 improve-codebase-architecture 不存在。请给出结果。",
+      "expected_output": "总预检应递归识别 improve-codebase-architecture 缺失，在讨论、Goal 与源码修改前返回 MISSING_DEPENDENCIES；不得误报可用能力，不得因为 grill-with-docs 未列出而失败，也不得自行安装或复制 scanner。",
+      "files": [],
+      "expectations": [
+        "结果包含 MISSING_DEPENDENCIES",
+        "准确列出 architecture-hardening-loop -> improve-codebase-architecture 的缺失链",
+        "不误报 goal-gate、agentic-review-handoff、architecture-hardening-loop、Grok Build 或 Claude Code",
+        "明确本场景不需要 grill-with-docs，因此不把它报为缺失",
+        "停止点在三方讨论、Goal 和源码修改之前",
+        "不自动安装或复制缺失 scanner"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "grok-goal-activation-pauses-loop",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或真的调用 Goal / reviewer。用户明确要求走完整 task-completion-loop；能力预检和三方收敛都已通过，没有 HUMAN_DECISION。当前宿主是 Grok tooling，只暴露 update_goal，产品 Goal 尚未 Active。请说明 Goal Gate 后的下一步以及本轮能否进入实现。",
+      "expected_output": "应输出完整可复制的 /goal 合同并设置 Next: wait for user /goal，返回 HUMAN_GATE 后停止。不得调用 update_goal、虚构 create_goal/get_goal、声称 Goal 已 Active、进入实现或启动 review。",
+      "files": [],
+      "expectations": [
+        "识别当前为 grok-tooling 且 Goal 尚未 Active",
+        "输出可复制的 /goal 合同并写 Next: wait for user /goal",
+        "结果包含 HUMAN_GATE",
+        "明确仅生成 Goal prompt 不代表 Goal 已激活",
+        "不调用 update_goal，也不虚构 create_goal 或 get_goal",
+        "不进入实现、agentic review、architecture hardening 或最终盲审"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "architecture-fix-defers-on-parent-goal",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或真的运行 review。用户明确要求完整 task-completion-loop；主任务 Goal 已 Active，计划实现与 agentic review 已完成。architecture-hardening-loop 在同一冻结范围发现一个真实 Fix，因此按自身合同调用 goal-gate；goal-gate 看到 active parent Goal 后返回 Decision: defer。用户还没有确认是否继续。请给出此时结果与下一步。",
+      "expected_output": "不得覆盖依赖合同或创建嵌套 Goal。应返回 HUMAN_GATE，只问用户是否在兼容的现有 Goal 下继续该 architecture Fix；用户确认前不得修改、继续扫描或完成 Goal。",
+      "files": [],
+      "expectations": [
+        "识别 active parent Goal 会让 architecture-hardening-loop 的 goal-gate 返回 defer",
+        "结果包含 HUMAN_GATE",
+        "只提出是否在兼容现有 Goal 下继续 Fix 这一个问题",
+        "不创建嵌套 Goal，也不静默替换或复用 active Goal",
+        "用户确认前不实施 architecture Fix 或继续下游盲审",
+        "不把主任务 Goal 标为 complete"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "pass-with-concerns-is-user-only",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。用户明确要求完整 task-completion-loop。实现与验证已完成，agentic-review-handoff 返回 PASS_WITH_CONCERNS，所有剩余 concern 都是非阻塞项，packet lifecycle_state 是 awaiting_user_decision。用户尚未选择继续 review 还是接受 concerns。请给出此时结果。",
+      "expected_output": "应以 agentic-review-handoff 的权威 auto-loop 合同为准，返回 HUMAN_GATE。只有用户能选择 run --continue 或 close --reason accept-concerns；task-completion-loop 不得自动关闭 packet、把 verdict 改为 PASS、进入 architecture hardening 或完成 Goal。",
+      "files": [],
+      "expectations": [
+        "识别 PASS_WITH_CONCERNS 对应 awaiting_user_decision",
+        "结果包含 HUMAN_GATE",
+        "明确只有用户能选择 run --continue 或 close --reason accept-concerns",
+        "不自动调用 close，也不把 verdict 改写为 PASS",
+        "不进入 architecture hardening 或最终 Claude 盲审",
+        "不把 Goal 标为 complete"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "nested-architecture-pass-with-concerns-is-user-only",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。完整 task-completion-loop 的直接 agentic review 已 PASS；随后 architecture-hardening-loop 完成 Fix 和验证，但其内部 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision。剩余 concern 不是 Fix，用户尚未选择继续或接受。architecture-hardening-loop 还没有有效的用户 Decision Closure。请给出 task-completion-loop 此时结果。",
+      "expected_output": "应在 architecture 阶段返回 HUMAN_GATE。即使 concern 不是 Fix，只有用户能选择 run --continue 或 close --reason accept-concerns；不得由外层或内层编排代关 packet、接受 concern、把 architecture 结果当作 NO_ACTIONABLE_FINDINGS、进入最终 Claude 盲审或完成 Goal。",
+      "files": [],
+      "expectations": [
+        "识别 architecture-hardening-loop 内部 PASS_WITH_CONCERNS 仍受 user-only 合同约束",
+        "结果包含 HUMAN_GATE",
+        "明确仅用户可选择 run --continue 或 close --reason accept-concerns",
+        "外层 task-completion-loop 与内层 architecture-hardening-loop 都不得代关 packet",
+        "用户决定前不接受 NO_ACTIONABLE_FINDINGS 或进入最终 Claude 盲审",
+        "不把 Goal 标为 complete"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "nested-user-decision-closure-allows-resume",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。task-completion-loop 的 architecture 阶段曾因内部 PASS_WITH_CONCERNS 返回 HUMAN_GATE。用户随后亲自执行 close --reason accept-concerns；完成报告证据显示 Decision Closure 已记录，packet 已 archived，没有 open Fix，但原始 verdict 仍是 PASS_WITH_CONCERNS。architecture-hardening-loop 已从原范围复扫恢复并返回 NO_ACTIONABLE_FINDINGS。请说明 task-completion-loop 能否继续以及仍需哪些门禁。",
+      "expected_output": "应承认用户 Decision Closure 已合法收口，不因历史 PASS_WITH_CONCERNS 字符串再次 HUMAN_GATE，也不把 verdict 改写为 PASS。确认 architecture 终态证据后刷新受影响验证，再进入全新只读 Claude 盲审；只有最终 evidence id 的全部门禁通过且账本无未决项时才完成 Goal。",
+      "files": [],
+      "expectations": [
+        "识别用户 Decision Closure、archived lifecycle 和无 open Fix",
+        "不因原始 verdict 仍是 PASS_WITH_CONCERNS 再次返回 HUMAN_GATE",
+        "不把原始 verdict 改写为 PASS",
+        "确认 architecture-hardening-loop 已完成原范围复扫并返回 NO_ACTIONABLE_FINDINGS",
+        "继续前刷新受影响验证并运行全新只读 Claude 盲审",
+        "最终 evidence id 的全部门禁通过后才完成 Goal"
+      ]
+    }
+  ]
+}
