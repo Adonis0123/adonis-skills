@@ -76,7 +76,7 @@
     "should_trigger": false
   },
   {
-    "query": "写一份支付重试策略的 design doc，比较指数退避和固定间隔，不需要代码 review packet。",
+    "query": "帮我写一个 prompt，让另一个 AI review 当前 staged diff；只生成可复制提示词，不要现在执行 review、不要开 packet loop。",
     "should_trigger": false
   }
 ]

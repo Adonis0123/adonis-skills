@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing review comments, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
+description: "Use for validating pasted review findings before fixes; explicit auto review-fix-re-review; same-session implementation closure; fresh-eyes git diff review via Review Intake; DecisionConsult with another AI; review-loop session resume; manual packet continuation; or first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing comments, prompt-only requests that should use review-prompt-composer, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
 metadata:
   author: adonis
-  version: "3.3.5"
+  version: "3.4.0"
 ---
 
 # Agentic Review Handoff
@@ -12,7 +12,8 @@ Persistent packet protocol for review→fix→re-review. **Preferred path (v2): 
 
 ## Fast Path
 
-- **same-session dual AI review closed loop / auto loop / zero mid-loop human / ordinary "review" or "audit this diff"** → `review-loop run` (below)
+- **explicit auto loop / review-fix-re-review / zero mid-loop human / verified same-session implementer closure** → `review-loop run` (below)
+- **fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake
 - **decision consult / ask another AI for stance** → `review-loop consult`
 - **resume a past reviewer session ("给我 codex/grok/claude 恢复对话的命令")** → `review-loop sessions`
 - **classic compatibility path** (prompt-protocol only, **no script guarantees**) — only for: Review Intake (reviewer-initiated live review), feedback validation of pasted findings, or manual packet continuation → Classic section below
@@ -42,6 +43,9 @@ node "$RL" run --continue --repo "$REPO" --packet "$PACKET"
 # After PASS_WITH_CONCERNS: accept remaining concerns and archive (no re-review)
 node "$RL" close --repo "$REPO" --packet "$PACKET" --reason accept-concerns
 
+# Recompute current worktree identity before an outer workflow reuses a verdict
+node "$RL" evidence --repo "$REPO" --base "$BASE_SHA" [--paths=a,b]
+
 # Advisory decision consult (not part of Verdict machine)
 node "$RL" consult --repo "$REPO" --peer=codex --question-file /tmp/q.md
 
@@ -69,6 +73,8 @@ user intentionally cancels. A real timeout remains `DELIVERY_UNKNOWN` with no
 automatic retry, because delivery state is ambiguous.
 
 Contract details: `references/auto-loop-contract.md`.
+
+Successful parsed rounds return `evidence = { baseSha, pathFilter, digest, coveredPaths, sourceRound }`. Equality uses only `baseSha + pathFilter + digest`; `coveredPaths` is audit metadata. Outer workflows must run `review-loop evidence` with the returned base/filter before reusing a verdict. A mismatch, missing legacy identity, or non-success status makes the review non-reusable and requires a new review or `UNVERIFIED` report.
 
 Tests:
 
@@ -109,7 +115,7 @@ These survive every path (auto loop and classic). Each line is an accident-backe
 
 **Why not auto for these:** auto `createPacketFile` always seeds implementer `# Review Handoff` — routing reviewer-initiated Intake into auto would forge Handoff and break the evidence boundary. Also, auto budget exit (`budget_exhausted` on final BLOCKED round, including `--rounds 1`) is not the same as classic "stop at Fix Handoff and wait for a human fixer."
 
-Ordinary "review this" / "second pair of eyes" / "audit this diff" **defaults to auto loop**, not classic.
+Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without verified current-session implementer context defaults to classic `intake`. Explicit auto-loop intent, review-fix-re-review intent, or visible same-session implementation context uses auto. If context is ambiguous, choose Intake so the protocol never fabricates an implementer Handoff.
 
 Steps when classic is correct:
 

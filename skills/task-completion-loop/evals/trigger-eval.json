@@ -1,0 +1,82 @@
+[
+  {
+    "query": "Use task-completion-loop on docs/plans/project-persistence.md: reconcile every ledger item with real Grok and Claude, manage one Goal, implement all PENDING work, run review, architecture hardening, and a fresh final Claude audit.",
+    "should_trigger": true
+  },
+  {
+    "query": "对已经批准的 docs/specs/payments-migration.md 走完整 completion loop；三方先交叉质疑，然后实现、真实运行验收、review-fix、架构复扫和最终盲审。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个 persistence plan 做了一半。我需要完整 task-completion-loop，把 VERIFIED_DONE/PENDING 账本对齐，同一个 Goal 下把所有剩余项和三道终态门禁做完。",
+    "should_trigger": true
+  },
+  {
+    "query": "I am stepping away. Finish the named auth RFC through the whole host + Grok Build + Claude Code convergence pipeline, not just implementation, and prove the final evidence is clean.",
+    "should_trigger": true
+  },
+  {
+    "query": "把 docs/plans/video-export.md 的所有 pending item 收口；要求 Goal、浏览器/runtime 验收、Grok auto review、同 scope architecture hardening 和新的 Claude 只读终审。",
+    "should_trigger": true
+  },
+  {
+    "query": "请显式执行 task-completion-loop，范围是 packages/core/** 和 plan 中列出的必要测试；没有授权 commit/push/deploy，其他门禁全部跑到最终证据一致。",
+    "should_trigger": true
+  },
+  {
+    "query": "现有 checkout rewrite spec 已决定产品行为，但代码只完成一半。用三 agent convergence + work ledger + Goal + implementation + review + architecture + blind audit 完整交付。",
+    "should_trigger": true
+  },
+  {
+    "query": "Run the explicit full completion loop for docs/rfcs/042-search-index.md, including transitive dependency preflight and a fresh hard-read-only Claude audit after every final fix.",
+    "should_trigger": true
+  },
+  {
+    "query": "对 unfinished release checklist 走整套多 agent finish sequence：先核对 plan 和现状，处理全部 PENDING，最终只有同一 evidence id 的测试与三道审查都通过才完成 Goal。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个任务之前停在 architecture checkpoint 的用户 Decision Closure；现在按 task-completion-loop 恢复同一个 parent Goal，继续复扫、刷新验证并完成 fresh Claude audit。",
+    "should_trigger": true
+  },
+  {
+    "query": "按 docs/specs/signup-validation.md 实现 Zod 校验并跑单测，改动只有两个文件；不需要多 agent convergence 或终局盲审。",
+    "should_trigger": false
+  },
+  {
+    "query": "给 Codex 设一个 Goal，把 PLAN.md 做到 pnpm test 和 pnpm build 通过；不用 Grok、Claude 或 architecture hardening。",
+    "should_trigger": false
+  },
+  {
+    "query": "review 当前 PR，发现问题就修并 re-review 到 PASS；不要做三方方案收敛、Goal 或 architecture rescan。",
+    "should_trigger": false
+  },
+  {
+    "query": "把范围冻在 packages/core/**，只跑 architecture scan-fix-review-rescan 直到 NO_ACTIONABLE_FINDINGS，不需要完成某个 plan。",
+    "should_trigger": false
+  },
+  {
+    "query": "先只读检查 docs/plans/persistence.md 还有哪些项目没做，给状态报告，不要启动实现或外部 agent。",
+    "should_trigger": false
+  },
+  {
+    "query": "我们要不要从 REST 换 GraphQL？产品和 API owner 还没决定，先把 tradeoff 和领域边界讨论清楚，不写代码。",
+    "should_trigger": false
+  },
+  {
+    "query": "删掉生产数据库旧账本表并直接切换写流量；scope 和回滚还没批准，但请自动做完。",
+    "should_trigger": false
+  },
+  {
+    "query": "修一下 README 的命令 typo，然后告诉我改了哪一行；不要跑完整测试。",
+    "should_trigger": false
+  },
+  {
+    "query": "CI 的 login.test.ts 只在 Ubuntu 偶发失败，先系统定位根因和修复，不需要三 agent completion pipeline。",
+    "should_trigger": false
+  },
+  {
+    "query": "把我飞书任务清单里今天未完成的个人待办都标记完成；这不是 coding plan，也没有 Git 仓库。",
+    "should_trigger": false
+  }
+]

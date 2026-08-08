@@ -268,6 +268,121 @@
         "Does not call or invent create_goal or get_goal",
         "Does not call update_goal while the goal is inactive"
       ]
+    },
+    {
+      "id": 17,
+      "name": "codex-complete-active-goal-with-status-schema",
+      "prompt": "I'm in Codex. get_goal shows the current PLAN.md goal is active, every acceptance criterion is satisfied, and fresh `pnpm test` plus `pnpm build` output both exit 0. The available update_goal schema accepts only status: complete or blocked. Close the goal correctly.",
+      "expected_output": "Recognizes Codex tooling from get_goal/create_goal family, verifies that the active objective's done condition is proven, then calls Codex update_goal with status: complete. It does not use Grok message/completed/blocked_reason fields and does not create or replace a goal.",
+      "files": [],
+      "expectations": [
+        "Decision is set-now with Next 'report via update_goal' (same-goal completion is management, not a conflicting replacement)",
+        "Runtime is codex-tooling, not grok-tooling",
+        "Confirms the active goal's done condition from surfaced test/build evidence before closure",
+        "Calls or instructs update_goal with status exactly 'complete'",
+        "Does not use Grok-only fields such as message, completed:true, or blocked_reason",
+        "Does not call create_goal or replace the active goal"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "codex-blocked-only-after-three-goal-turns",
+      "prompt": "I'm in Codex with an active goal. For three consecutive goal turns the same missing production credential has prevented every in-scope verification step, safe alternatives are exhausted, and no meaningful progress is possible. update_goal accepts only status: complete or blocked. Report the terminal state.",
+      "expected_output": "Uses Codex update_goal with status: blocked because the identical blocker persisted for at least three consecutive goal turns and the agent is at an impasse. It must not mark complete, invent Grok fields, or treat ordinary incompleteness as blocking.",
+      "files": [],
+      "expectations": [
+        "Runtime is codex-tooling",
+        "Calls or instructs update_goal with status exactly 'blocked'",
+        "Cites the same blocker persisting for at least three consecutive goal turns and no remaining meaningful progress",
+        "Does not mark the goal complete",
+        "Does not use Grok-only fields such as blocked_reason, message, or completed"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "workflow-challenge-pending-thesis-does-not-autoset",
+      "prompt": "Workflow Gate already returned Route: Challenge, Runtime skill: grilling, Thesis: agent-strawman, Next: draft the strawman and wait for user confirmation. Codex get_goal shows no active goal. Should goal-gate auto-create a durable implementation goal now?",
+      "expected_output": "Does not auto-set while the Challenge thesis and user decision are unresolved. Decision is defer with Goal fit: low, completing the Challenge confirmation first and re-evaluating a goal only after a resolved spec or implementation objective exists.",
+      "files": [],
+      "expectations": [
+        "Decision is exactly defer with Goal fit: low; does not call create_goal",
+        "Recognizes Challenge with agent-strawman as unresolved decision/thesis work",
+        "Routes back to confirming and completing Challenge before durable implementation",
+        "Says to re-evaluate goal fit after the thesis/spec is resolved"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "architecture-diagnose-only-is-not-strong-goal-signal",
+      "prompt": "Workflow Gate returned Route: Architecture, Runtime skill: improve-codebase-architecture, user-intent: ideate, with a stop-after-report constraint. Codex get_goal shows no active goal, and the user did not ask for one. Decide goal fit.",
+      "expected_output": "Treats diagnose-only Architecture as exploration rather than an automatic durable implementation goal. Decision is none with Goal fit: low; it preserves stop-after-report and re-evaluates only if the user later freezes a scope and asks to implement or harden.",
+      "files": [],
+      "expectations": [
+        "Decision is exactly none with Goal fit: low; does not call create_goal",
+        "Distinguishes improve-codebase-architecture diagnose/report from architecture-hardening-loop implementation",
+        "Preserves the stop-after-report constraint",
+        "Re-evaluates only after an explicit scoped implement/harden objective appears"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "codex-continue-same-active-goal-without-terminal-update",
+      "prompt": "I'm in Codex. get_goal shows an active goal whose objective and frozen scope exactly match the current PLAN.md completion loop. The user explicitly said to continue that same goal, but its done condition is not met yet. update_goal only accepts status: complete or blocked. Continue correctly.",
+      "expected_output": "Recognizes this as explicit continuation of the same active Codex goal. Decision is set-now with Next: continue active goal; it keeps working without create_goal, replacement, or terminal update_goal. It reserves status: complete for proven completion and status: blocked for the three-turn persistent-blocker contract.",
+      "files": [],
+      "expectations": [
+        "Decision is set-now with Next exactly 'continue active goal'",
+        "Runtime is codex-tooling",
+        "Recognizes the objective and frozen scope as the same active Goal rather than a replacement",
+        "Does not call create_goal or replace the active Goal",
+        "Does not call update_goal while the Goal is still making progress and its done condition is unmet",
+        "Reserves status complete for proven completion and status blocked for a persistent blocker satisfying the three-goal-turn rule"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "grok-continue-same-active-goal-uses-progress-schema",
+      "prompt": "I'm in Grok Build with only Grok-style update_goal available. The product Goal is already Active for the exact same architecture-hardening objective and the user explicitly said to continue it. The done condition is not met yet. Continue correctly.",
+      "expected_output": "Recognizes explicit continuation of the same active Grok Goal. Decision is set-now with Next: continue active goal; it may use update_goal message for checkpoints, does not emit another /goal or invent create_goal/get_goal, and reserves completed: true for the proven done condition.",
+      "files": [],
+      "expectations": [
+        "Decision is set-now with Next exactly 'continue active goal'",
+        "Runtime is grok-tooling",
+        "Does not emit or require a second /goal activation",
+        "Does not invent create_goal or get_goal",
+        "Uses only Grok-style message for progress checkpoints while work remains",
+        "Does not send completed true before the done condition is proven"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "codex-contained-checkpoint-continues-parent-without-completing",
+      "prompt": "I'm in Codex. get_goal shows an active release-plan Goal whose objective, frozen scope, and Done condition explicitly include the current packages/core architecture-hardening checkpoint plus a later fresh Claude audit. The user already authorized the full parent pipeline. Continue the checkpoint; the audit is not done yet.",
+      "expected_output": "Treats the architecture checkpoint as a compatible-contained continuation of the same parent Goal. Decision is set-now with Next: continue active goal; it does not create, replace, narrow, or terminally update the Goal. The parent owner completes only after the later fresh Claude audit and all other Done conditions pass.",
+      "files": [],
+      "expectations": [
+        "Decision is set-now with Next exactly 'continue active goal'",
+        "Uses objective, frozen scope, Done condition, and explicit parent authorization as compatibility evidence",
+        "Does not call create_goal, replace the Goal, or narrow its Done condition",
+        "Does not call Codex update_goal while only the contained checkpoint is complete",
+        "Leaves parent completion to the parent Goal owner after the fresh Claude audit",
+        "Would defer instead if containment or ownership were unclear"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "grok-completes-exact-same-active-goal-with-terminal-schema",
+      "prompt": "I'm in Grok Build with only Grok-style update_goal. The active product Goal exactly matches this task, the user explicitly continued it, and the full Done condition now has fresh verification evidence. Close it correctly.",
+      "expected_output": "Decision is set-now with Next: report via update_goal. It uses Grok update_goal with completed: true and a concise evidence message; it does not emit another /goal, invent create_goal/get_goal, or use Codex status: complete.",
+      "files": [],
+      "expectations": [
+        "Decision is set-now and recognizes the exact same active Grok Goal",
+        "Uses Grok update_goal completed true only after the Done condition is proven",
+        "Includes a concise evidence-bearing message",
+        "Does not emit a second /goal",
+        "Does not invent create_goal or get_goal",
+        "Does not use Codex status complete schema"
+      ]
     }
   ]
 }

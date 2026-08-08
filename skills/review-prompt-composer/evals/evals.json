@@ -6,13 +6,14 @@
       "id": 1,
       "name": "all-uncommitted-project-local-prompt",
       "prompt": "同一项目里的另一个审核团队可以直接读取当前工作区。请生成提示词审核全部未提交改动。仓库同时有 staged、unstaged 和 untracked 文件。",
-      "expected_output": "采用 all-uncommitted；创建 .review-handoff/prompts/active/<branch_slug>/<local_minute>-all-uncommitted.md；正文包含真实仓库根、HEAD、完整状态清单、明确范围和 Review-Prompt-ID 回显要求；不生成 patch、tar、manifest 或 checksum。",
+      "expected_output": "采用 all-uncommitted；创建 format_version 2 prompt；正文包含真实仓库根、HEAD、完整状态清单、scope_digest、只读 --verify-prompt 命令、明确范围和 Review-Prompt-ID 回显要求；不生成 patch、tar 或源码副本。",
       "files": [],
       "expectations": [
         "Scope includes staged, unstaged tracked, and untracked changes",
         "Writes one ignored Markdown prompt under the repository root prompt inbox",
         "Requires reviewer feedback to echo Review-Prompt-ID exactly",
-        "Does not generate portable payload or integrity artifacts"
+        "Persists a canonical scope_digest and same-algorithm read-only verifier",
+        "Does not generate a portable payload or separate checksum manifest"
       ]
     },
     {
@@ -72,6 +73,19 @@
         "Blocks before final prompt creation",
         "Never prints the credential value",
         "Does not weaken the gate because the reviewer shares the working tree"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "same-path-content-drift-invalidates-prompt",
+      "prompt": "提示词生成后 HEAD 没变，git status 里的路径也没变，但同一个 staged 文件又修改并重新 stage 了。reviewer 现在准备按旧 prompt 开审。",
+      "expected_output": "writer 必须持久化 canonical scope_digest 并生成同算法的只读 --verify-prompt 命令。即使 HEAD 和状态路径相同，同一路径重新 stage 不同内容也必须得到 scope_digest_mismatch、退出非零并停止审核。",
+      "files": [],
+      "expectations": [
+        "Does not use matching HEAD and status paths as sufficient freshness evidence",
+        "Requires current full-scope diff reconciliation against the inventory",
+        "Black-box writer verification detects same-path restaging as scope_digest_mismatch",
+        "Stops and reports a stale prompt when same-path content changed"
       ]
     }
   ]

@@ -1,6 +1,7 @@
 interface:
   display_name: "Architecture Hardening Loop"
   short_description: "Run a bounded architecture scan-fix-review loop"
-  # Hard deps = must exist on the local agent skill list (not necessarily this catalog):
-  # improve-codebase-architecture (upstream e.g. mattpocock/skills),
-  # agentic-review-handoff, goal-gate
+  default_prompt: "Use $architecture-hardening-loop on my explicit code scope to preflight callable scanner, delegation, Goal, and real Grok capabilities; triage evidence-backed Fix/Backlog/Reject items; make minimal verified fixes; review them; and rescan the same scope until no actionable findings remain."
+  # Transitive runtime requirements include improve-codebase-architecture,
+  # codebase-design, callable read-only delegation, agentic-review-handoff,
+  # goal-gate, and a real Grok adapter/session.

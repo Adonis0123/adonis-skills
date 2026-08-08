@@ -1,0 +1,82 @@
+[
+  {
+    "query": "给 Codex 创建一个 durable goal：按 docs/PLAN.md 完成迁移，直到 pnpm test 和 pnpm build 都通过。这个 goal 的 token budget 设为 50000。",
+    "should_trigger": true
+  },
+  {
+    "query": "把这个仓库里所有过期的 ESLint disable 清完，范围只限 apps/web，结束条件是 pnpm lint 零 warning；我先离开，你设个 goal 做到闭环。",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我写一个能直接复制到 Grok 的 /goal，按 RFC 完成数据库迁移，每一步都要展示 rollback 测试证据。",
+    "should_trigger": true
+  },
+  {
+    "query": "Should I set a durable goal for this multi-checkpoint refactor, or is it small enough to keep in one turn?",
+    "should_trigger": true
+  },
+  {
+    "query": "当前 Codex goal 的验收证据已经齐了，请检查后把同一个 goal 标成 complete。",
+    "should_trigger": true
+  },
+  {
+    "query": "给 Claude Code 写一个 /goal：实现 docs/design.md 的全部验收项，失败时最多迭代五轮，并明确何时暂停问我。",
+    "should_trigger": true
+  },
+  {
+    "query": "Set up a goal to improve prompts/support-agent.md until the support-agent eval score reaches 0.92, without changing fixtures.",
+    "should_trigger": true
+  },
+  {
+    "query": "我下线两个小时。把 auth flaky test 的根因找出来并修到 CI 重跑通过；这是长调试任务，帮我用 goal 管起来。",
+    "should_trigger": true
+  },
+  {
+    "query": "把支付 provider 重构计划做完，包含实现、测试、迁移文档和最终全量验证；先判断是否适合 set-now goal。",
+    "should_trigger": true
+  },
+  {
+    "query": "Make a portable coding-agent goal contract with exact write boundaries, checkpoints, verification, and pause conditions for this release cleanup.",
+    "should_trigger": true
+  },
+  {
+    "query": "把 Codex 的 goal token budget 从 30000 改成 50000，任务内容不要动。",
+    "should_trigger": false
+  },
+  {
+    "query": "以后有空把前端 typo、后端慢查询、README 翻译、设计稿整理和旧分支删除都处理一下，没有固定范围和结束时间。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 README 里的 recieve 改成 receive，其他都不要动。",
+    "should_trigger": false
+  },
+  {
+    "query": "运行一次 pnpm test，把失败结果告诉我。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮产品团队制定下季度 OKR，目标是提升留存率。",
+    "should_trigger": false
+  },
+  {
+    "query": "每周五提醒我看一次项目进度。",
+    "should_trigger": false
+  },
+  {
+    "query": "根据这个 staged diff 写一条 Conventional Commit message。",
+    "should_trigger": false
+  },
+  {
+    "query": "先开放探索一下整个仓库的架构问题，不用设范围，也不需要停止条件。",
+    "should_trigger": false
+  },
+  {
+    "query": "这个 UI 重设计应该走 Challenge、Discuss 还是 Plan？只帮我选 workflow。",
+    "should_trigger": false
+  },
+  {
+    "query": "把这段产品需求改写成一句目标说明，给周报用；不需要 coding agent 持续执行、验证或创建 durable goal。",
+    "should_trigger": false
+  }
+]

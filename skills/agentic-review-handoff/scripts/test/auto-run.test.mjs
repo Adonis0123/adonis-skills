@@ -25,6 +25,7 @@ import {
 } from "../review-loop/stage-writer.mjs";
 import {
   cmdRun,
+  cmdEvidence,
   cmdAppendFixCompletion,
   cmdClose,
   withPacketLock,
@@ -317,6 +318,57 @@ describe("frozen evidence includes untracked", () => {
     assert.ok(fs.existsSync(ev.evidencePath));
     assert.match(ev.diffText, /UNIQUE_UNTRACKED_MARK/);
   });
+
+  it("hashes newline, tab, and non-ASCII untracked paths without quoting loss", () => {
+    const dir = initTempRepo();
+    const newlinePath = "line\nbreak.ts";
+    const tabPath = "tab\tname.ts";
+    const unicodePath = "你好.ts";
+    fs.writeFileSync(path.join(dir, newlinePath), "export const value = 1;\n");
+    fs.writeFileSync(path.join(dir, tabPath), "export const tab = 1;\n");
+    fs.writeFileSync(path.join(dir, unicodePath), "export const hi = 1;\n");
+
+    const before = cmdEvidence({ repoRoot: dir, base: "HEAD" });
+    assert.deepEqual(before.evidence.coveredPaths, [
+      newlinePath,
+      tabPath,
+      unicodePath,
+    ]);
+
+    fs.writeFileSync(path.join(dir, newlinePath), "export const value = 2;\n");
+    const after = cmdEvidence({ repoRoot: dir, base: "HEAD" });
+    assert.notEqual(after.evidence.digest, before.evidence.digest);
+  });
+
+  it("changes digest when an untracked broken symlink target changes", () => {
+    const dir = initTempRepo();
+    const link = path.join(dir, "broken-link");
+    fs.symlinkSync("missing-one", link);
+
+    const before = cmdEvidence({ repoRoot: dir, base: "HEAD" });
+    fs.unlinkSync(link);
+    fs.symlinkSync("missing-two", link);
+    const after = cmdEvidence({ repoRoot: dir, base: "HEAD" });
+
+    assert.deepEqual(before.evidence.coveredPaths, ["broken-link"]);
+    assert.notEqual(after.evidence.digest, before.evidence.digest);
+  });
+
+  it("changes digest when an untracked directory symlink target changes", () => {
+    const dir = initTempRepo();
+    fs.mkdirSync(path.join(dir, "target-one"));
+    fs.mkdirSync(path.join(dir, "target-two"));
+    const link = path.join(dir, "directory-link");
+    fs.symlinkSync("target-one", link);
+
+    const before = cmdEvidence({ repoRoot: dir, base: "HEAD" });
+    fs.unlinkSync(link);
+    fs.symlinkSync("target-two", link);
+    const after = cmdEvidence({ repoRoot: dir, base: "HEAD" });
+
+    assert.ok(before.evidence.coveredPaths.includes("directory-link"));
+    assert.notEqual(after.evidence.digest, before.evidence.digest);
+  });
 });
 
 describe("auto-run happy paths", () => {
@@ -333,12 +385,53 @@ describe("auto-run happy paths", () => {
     assert.equal(result.ok, true);
     assert.equal(result.status, "archived");
     assert.equal(result.verdict, "PASS");
+    assert.equal(result.evidence.baseSha.length, 40);
+    assert.equal(result.evidence.pathFilter, null);
+    assert.deepEqual(result.evidence.coveredPaths, ["a.ts"]);
+    assert.equal(result.evidence.sourceRound, 1);
+    assert.equal(result.evidence.digest.length, 64);
     assert.ok(
       String(result.packetPath).includes(`${path.sep}archive${path.sep}`),
     );
     const text = fs.readFileSync(result.packetPath, "utf8");
     assert.match(text, /# Review Findings/);
     assert.match(text, /lifecycle_state: archived/);
+  });
+
+  it("recomputes evidence and detects same-HEAD scoped worktree drift", async () => {
+    const dir = initTempRepo();
+    fs.writeFileSync(path.join(dir, "a.ts"), "export const a = 1;\n");
+    fs.writeFileSync(
+      path.join(dir, "outside.ts"),
+      "export const outside = 1;\n",
+    );
+    const { factory } = makeFakeAdapterFactory([passText()]);
+    const result = await cmdRun({
+      repoRoot: dir,
+      reviewer: "codex",
+      scopeSlug: "evidence-drift",
+      paths: ["a.ts"],
+      adapterFactory: factory,
+    });
+    const before = cmdEvidence({
+      repoRoot: dir,
+      base: result.evidence.baseSha,
+      paths: result.evidence.pathFilter,
+    });
+    assert.deepEqual(before.evidence, {
+      ...result.evidence,
+      sourceRound: null,
+    });
+
+    fs.writeFileSync(path.join(dir, "a.ts"), "export const a = 2;\n");
+    const after = cmdEvidence({
+      repoRoot: dir,
+      base: result.evidence.baseSha,
+      paths: result.evidence.pathFilter,
+    });
+    assert.equal(after.evidence.baseSha, result.evidence.baseSha);
+    assert.deepEqual(after.evidence.pathFilter, ["a.ts"]);
+    assert.notEqual(after.evidence.digest, result.evidence.digest);
   });
 
   it("BLOCKED → fix completion → re-review PASS (two rounds, fresh OS process continue)", async () => {
@@ -533,6 +626,7 @@ describe("DELIVERY_UNKNOWN", () => {
     });
     assert.equal(r.ok, false);
     assert.equal(r.status, "DELIVERY_UNKNOWN");
+    assert.equal(Object.hasOwn(r, "evidence"), false);
     const text = fs.readFileSync(r.packetPath, "utf8");
     assert.doesNotMatch(text, /# Review Findings/);
   });
@@ -858,6 +952,7 @@ loop: on
 describe("close accept-concerns", () => {
   it("archives PWC packet with Decision Closure without rewriting Verdict", async () => {
     const dir = initTempRepo();
+    fs.writeFileSync(path.join(dir, "a.ts"), "export const a = 1;\n");
     const concerns = `Style nits only.
 
 | ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
@@ -880,6 +975,7 @@ PASS_WITH_CONCERNS
       (r.concerns || []).map((c) => c.id),
       ["C1"],
     );
+    fs.writeFileSync(path.join(dir, "a.ts"), "export const a = 2;\n");
     const closed = await cmdClose({
       repoRoot: dir,
       packetPath: r.packetPath,
@@ -889,6 +985,13 @@ PASS_WITH_CONCERNS
     assert.equal(closed.status, "archived");
     assert.equal(closed.originalVerdict, "PASS_WITH_CONCERNS");
     assert.deepEqual(closed.acceptedConcernIds, ["C1"]);
+    assert.deepEqual(closed.evidence, r.evidence);
+    const current = cmdEvidence({
+      repoRoot: dir,
+      base: closed.evidence.baseSha,
+      paths: closed.evidence.pathFilter,
+    });
+    assert.notEqual(current.evidence.digest, closed.evidence.digest);
     assert.ok(
       String(closed.packetPath).includes(`${path.sep}archive${path.sep}`),
     );

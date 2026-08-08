@@ -1,0 +1,82 @@
+[
+  {
+    "query": "把范围冻在 packages/video-editor/core/**，跑一轮 architecture scan、证据分类、最小修复、测试、Grok review 和同范围 rescan，直到 NO_ACTIONABLE_FINDINGS。",
+    "should_trigger": true
+  },
+  {
+    "query": "Use architecture-hardening-loop on apps/web/src/features/billing/**. Fix only evidence-backed module-boundary issues, review every batch, and rescan the same scope until clean.",
+    "should_trigger": true
+  },
+  {
+    "query": "scanner 已经给出 packages/core 的候选报告；现在按 Fix/Backlog/Reject 过证据门槛，把值得修的做掉，验完让 Grok 复审，再扫原目录。",
+    "should_trigger": true
+  },
+  {
+    "query": "对 src/order/** 做高内聚低耦合加固，不要只给建议：有当前伤害的才最小修，拒绝未来式抽象，并循环 review/rescan 到没有 actionable finding。",
+    "should_trigger": true
+  },
+  {
+    "query": "我们把 scope 限定在 packages/payments/providers/**。请自主做 DDD boundary hardening、回归测试和独立 review，最多三轮，不要碰 checkout UI。",
+    "should_trigger": true
+  },
+  {
+    "query": "clean up the architecture in src/editor/timeline/** in a bounded improve-review-fix cycle; preserve public behavior and stop only after a same-scope rescan finds no Fix.",
+    "should_trigger": true
+  },
+  {
+    "query": "只看 services/catalog 与 services/search 的依赖方向，把可复现的循环依赖修掉，每批跑测试、Grok review，再重新扫描这两个模块。",
+    "should_trigger": true
+  },
+  {
+    "query": "对 packages/shared-auth/** 做 scan-fix-review-until-clean；明确 Reject 纯六边形洁癖，任何 scope 扩张都停下来问我。",
+    "should_trigger": true
+  },
+  {
+    "query": "I want an implementation-inclusive architecture review of lib/persistence/**: evidence, impact, minimal change, verification, peer review, then rescan until no actionable findings remain.",
+    "should_trigger": true
+  },
+  {
+    "query": "在 modules/notifications/** 自主加固架构，修复真实传播成本问题并补测试；每轮保持同一 scope，最终报告 Backlog/Reject 和 NO_ACTIONABLE_FINDINGS。",
+    "should_trigger": true
+  },
+  {
+    "query": "只读分析 packages/video-editor/core/** 的模块边界，生成一份 architecture report；不要修改、不要进入 fix loop。",
+    "should_trigger": false
+  },
+  {
+    "query": "在 apps/web 增加一个已定稿的 Share modal，按 docs/share-modal-spec.md 直接实现和测试，不需要架构扫描。",
+    "should_trigger": false
+  },
+  {
+    "query": "review 一下当前 staged diff，发现问题就修，继续 re-review 到 PASS；不需要 architecture scanner 或同范围 rescan。",
+    "should_trigger": false
+  },
+  {
+    "query": "请 fresh eyes 看 feature/billing-redesign 的 diff，只做一次只读 code review，把 findings 按严重度列出来。",
+    "should_trigger": false
+  },
+  {
+    "query": "对 docs/plans/project-persistence.md 走完整三 agent completion：实现所有 PENDING、Goal、review、architecture gate 和 fresh Claude audit。",
+    "should_trigger": false
+  },
+  {
+    "query": "Use architecture-hardening-loop to clean this repository, but I haven't chosen any path, package, module, or exclusions yet.",
+    "should_trigger": false
+  },
+  {
+    "query": "先讨论订单域应该怎么拆 aggregate、Repository 接口是否需要；现在没有实现 scope，也不要改代码。",
+    "should_trigger": false
+  },
+  {
+    "query": "packages/core 的测试在 CI 偶发超时但本地正常，先定位根因并修复，不要做架构清理。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 src/order/cancel.ts 里的重复校验提成一个 helper，行为和签名都已经给定，只改这个文件并跑单测。",
+    "should_trigger": false
+  },
+  {
+    "query": "profile 一下 editor playback 为什么掉帧，先给 flamegraph 和根因，不要改模块边界或进入 scan-fix loop。",
+    "should_trigger": false
+  }
+]

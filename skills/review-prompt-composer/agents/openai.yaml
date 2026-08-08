@@ -1,4 +1,4 @@
 interface:
   display_name: "Review Prompt Composer"
   short_description: "Create project-local Git review prompts"
-  default_prompt: "Use $review-prompt-composer to create one repository-local, copy-ready Markdown review prompt for my requested Git scope, require Review-Prompt-ID echoing, and keep the shared working tree as the only source of reviewed code."
+  default_prompt: "Use $review-prompt-composer to create one repository-local, copy-ready Markdown prompt for my requested Git scope, persist a canonical scope digest with a read-only freshness verifier, require Review-Prompt-ID echoing, and do not execute or send the review."

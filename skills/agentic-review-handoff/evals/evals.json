@@ -1,6 +1,6 @@
 {
   "skill_name": "agentic-review-handoff",
-  "description": "v2 auto-loop trigger evals (10 pos / 10 neg) + behavioral scenarios. Public claim: do NOT advertise auto-trigger 100% accuracy. Latest honest Skill-only evidence (description v3.3.3 slim): positives 10/10 scenarios / 29/30 hits; negatives UNVERIFIED (Claude 429). v3.3.4 (664 chars, copy-edit negative restored) not remeasured yet. Historical baseline only: old description 75% -> intermediate 95% under older full 20-query run — do not cite as current v3.3.x acceptance.",
+  "description": "Auto/classic routing, protocol lifecycle, and trigger regressions. Public claim: do NOT advertise trigger accuracy until the current description is remeasured; historical v3.3.x measurements are not evidence for v3.4.0.",
   "trigger_evals": [
     {
       "id": "pos-auto-loop-zh",
@@ -98,8 +98,8 @@
       "should_trigger": false
     },
     {
-      "id": "neg-design-doc",
-      "query": "写一份支付重试策略的 design doc，比较指数退避和固定间隔，不需要代码 review packet。",
+      "id": "neg-prompt-only-composer",
+      "query": "帮我写一个 prompt，让另一个 AI review 当前 staged diff；只生成可复制提示词，不要现在执行 review、不要开 packet loop。",
       "should_trigger": false
     }
   ],
@@ -150,14 +150,14 @@
       "id": 7,
       "name": "scenario-G-first-pass-pass-archive",
       "prompt": "只 rename const DATE_FMT_ISO → DATE_FORMAT_ISO_8601，请 review。${MOCK_REPO} 分支 feat/rename-const。",
-      "expected_output": "PASS/NO_FINDINGS 时无 Fix Handoff 并归档；golden path first-pass terminal。",
+      "expected_output": "这是无可验证 implementer context 的 fresh-eyes review，走 classic intake；packet 从 # Review Intake 开始。PASS/NO_FINDINGS 时无 Fix Handoff 并归档。",
       "files": []
     },
     {
       "id": 8,
       "name": "scenario-H-subdir-cwd",
       "prompt": "cwd 在 ${MOCK_REPO}/apps/web/src/components/auth/，对 staged RegisterForm 密码校验改动做 review。",
-      "expected_output": "git rev-parse --show-toplevel → packet 只写在 repo root .review-handoff/，不在 apps/web 下。",
+      "expected_output": "无 implementer context 时走 classic intake；git rev-parse --show-toplevel → packet 只写在 repo root .review-handoff/，不在 apps/web 下。",
       "files": []
     },
     {
@@ -179,6 +179,20 @@
       "name": "scenario-K-healthy-silent-reviewer",
       "prompt": "Grok reviewer 已经 5 分钟没有 stdout，但 review-loop 的 progress 仍显示进程 active，deadline 还没到。现在是不是应该 kill 后重试？${MOCK_REPO}。",
       "expected_output": "继续等待同一 Reviewer；stdout 静默不是失败，不手工 kill、不重试、不启动第二个 Reviewer。只在 STOP、进程退出或 adapter deadline 到达后按 DELIVERY_UNKNOWN 处理。",
+      "files": []
+    },
+    {
+      "id": 12,
+      "name": "scenario-L-same-session-implementer-auto",
+      "prompt": "你刚在当前会话实现并验证了 apps/api/cart-handler.ts。现在继续做 review-fix-re-review 到 PASS，中途不用问我。仓库 ${MOCK_REPO}。",
+      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走 review-loop run auto；允许创建 implementer Review Handoff，不误路由到 classic Intake。",
+      "files": []
+    },
+    {
+      "id": 13,
+      "name": "scenario-M-source-prompt-v2-digest-mismatch",
+      "prompt": "反馈回显了一个 format_version 2 Review-Prompt-ID，但 prompt 的 --verify-prompt 现在返回 scope_digest_mismatch；HEAD 和 status 路径仍相同。请开始 review。${MOCK_REPO}。",
+      "expected_output": "把 source prompt 判为 stale，停止按旧 prompt 开审并要求重新生成/明确新范围；不因 HEAD/status 路径相同继续，不 backfill digest，也不把 prompt 摘要当当前证据。",
       "files": []
     }
   ]

@@ -45,15 +45,20 @@ Read the whole prompt and require:
 
 ```yaml
 artifact_type: review_prompt
-format_version: 1
+format_version: 1 | 2
 prompt_id: <exact requested ID>
 head: <40-character Git SHA>
 scope: <canonical scope>
+scope_digest: <64-character SHA-256; required for format_version 2>
+scope_base: <resolved SHA or empty; required key for format_version 2>
+scope_target: <resolved SHA or empty; required key for format_version 2>
 expires_at: <timezone-aware ISO 8601 timestamp>
 lifecycle_state: active | expired
 ```
 
 An active candidate must live under `prompts/active/`, have `lifecycle_state: active`, and not be past `expires_at`. An archived candidate must live under `prompts/archive/` and have `lifecycle_state: expired`.
+
+`format_version: 1` is legacy provenance and has no content-freshness claim. `format_version: 2` must pass the prompt's generated read-only `--verify-prompt` command before review starts; mismatch makes the prompt stale. Do not backfill or guess a digest for v1.
 
 Expired prompts are valid historical provenance only when explicitly identified, echoed in feedback, or already recorded by a packet. Never choose an expired prompt through the unique-current-branch fallback.
 
@@ -65,7 +70,10 @@ Copy only these values into packet frontmatter:
 source_prompt_id: feat-auth/2026-07-15_14-30-all-uncommitted
 source_prompt_head: 78b4382b19abd651a2274b5f6f188849cbec845d
 source_prompt_scope: all-uncommitted
+source_prompt_scope_digest: 7a9d...<64 hex>
 ```
+
+Copy `source_prompt_scope_digest` only for format v2. It is provenance metadata, not a replacement for the auto-loop review evidence identity.
 
 If a packet already contains provenance, require a newly resolved prompt to match its `source_prompt_id`. Stop and ask on mismatch; never silently replace provenance.
 

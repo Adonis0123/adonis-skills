@@ -1,0 +1,82 @@
+[
+  {
+    "query": "帮我为当前 staged diff 写一份可复制的 review prompt，另一个 AI 能直接读同一个仓库；只生成提示词，不要执行 review。",
+    "should_trigger": true
+  },
+  {
+    "query": "Compose a repository-local prompt for another reviewer to inspect all uncommitted changes in this shared working tree. Do not run the review or tests.",
+    "should_trigger": true
+  },
+  {
+    "query": "给审核团队生成 current branch 相对 main 的 review 提示词，保存到 .review-handoff/prompts，要求回显 Review-Prompt-ID。",
+    "should_trigger": true
+  },
+  {
+    "query": "同一个 Git 工作区里有 staged、unstaged 和 untracked 文件。只写 prompt 让另一个 agent 审全部未提交内容，不要打包代码。",
+    "should_trigger": true
+  },
+  {
+    "query": "请为 staged-only 范围生成审核提示词，明确排除 unstaged 和 untracked；receiver 能直接读取当前 index。",
+    "should_trigger": true
+  },
+  {
+    "query": "只需要一份 reviewer prompt 审某个 commit range，不要现在启动 agentic review，也不要修改或测试代码。",
+    "should_trigger": true
+  },
+  {
+    "query": "我 cwd 在 monorepo 子目录，但请从 repo root 创建 branch-aware 的 review prompt artifact，范围是 unstaged-only。",
+    "should_trigger": true
+  },
+  {
+    "query": "为 untracked-only 文件清单写一个同工作区审核任务，提示 reviewer 逐个读文件，并持久化 24 小时有效的 prompt。",
+    "should_trigger": true
+  },
+  {
+    "query": "Write, but do not send, one copy-ready Markdown prompt for a teammate to audit the current Git changes and echo a stable prompt ID.",
+    "should_trigger": true
+  },
+  {
+    "query": "生成 prompt-only 的安全审查任务，先检查是否会把 token 或 credential-bearing URL 写进提示词；不要执行审查。",
+    "should_trigger": true
+  },
+  {
+    "query": "直接 review 当前 staged diff，发现问题就写 packet 并修到 PASS。",
+    "should_trigger": false
+  },
+  {
+    "query": "团队返回了一组 review findings，请验证每条是否真实并整理 Fix Handoff。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 review-loop consult 问 Grok 这个数据模型选择是否合理，只要 advisory stance。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我润色这段英文 code review comment，让语气更礼貌。",
+    "should_trigger": false
+  },
+  {
+    "query": "把当前 diff 导出成 patch 和 tar.gz 发给无法访问仓库的外部团队。",
+    "should_trigger": false
+  },
+  {
+    "query": "实现 docs/specs/signup.md，跑测试并完成 review-fix-re-review。",
+    "should_trigger": false
+  },
+  {
+    "query": "只口头看一眼 git diff 有没有 typo，不要写任何文件或 packet。",
+    "should_trigger": false
+  },
+  {
+    "query": "给我一份本周代码审核工作总结，不需要查看当前 Git working tree。",
+    "should_trigger": false
+  },
+  {
+    "query": "另一个 reviewer 无法访问本地仓库，请把全部源代码复制进消息里让它审核。",
+    "should_trigger": false
+  },
+  {
+    "query": "恢复上次 headless Claude reviewer 会话并继续 re-review。",
+    "should_trigger": false
+  }
+]

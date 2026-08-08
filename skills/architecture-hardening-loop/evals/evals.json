@@ -75,6 +75,221 @@
         "复扫与终态 consult 无 Fix 后才输出 NO_ACTIONABLE_FINDINGS",
         "没有 awaiting_user_decision packet 且验证通过后才完成 Goal"
       ]
+    },
+    {
+      "id": 6,
+      "name": "exact-same-active-goal-can-complete",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或调用 Goal 工具。Codex get_goal 显示当前 active Goal 的完整 objective 就是加固 `packages/core/**` 直到 NO_ACTIONABLE_FINDINGS；用户明确要求继续同一个 Goal。现在复扫和终态 consult 都无 Fix，必要验证通过，最终 review 为 PASS。请给出 Goal 关系、下一步与终态。",
+      "expected_output": "应识别 exact-same-goal，使用 Next: continue active goal，不创建或替换 Goal；因为本 Loop 拥有该完整目标且全部 done condition 已证明，可在终态使用 Codex status: complete。",
+      "files": [],
+      "expectations": [
+        "Goal 关系是 exact-same-goal，Next 是 continue active goal",
+        "不调用 create_goal，不替换或嵌套 Goal",
+        "在 done condition 未证明前不调用 terminal update_goal",
+        "确认 NO_ACTIONABLE_FINDINGS、必要验证和最终 PASS 覆盖当前证据",
+        "终态可由本 Loop 使用 Codex update_goal status complete",
+        "不使用 Grok-only completed、message 或 blocked_reason 字段"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "broader-compatible-parent-goal-stays-active",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或调用 Goal 工具。active parent Goal 是完成整个 release plan；其冻结范围和 Done condition 明确包含 `packages/core/**` 的 architecture-hardening-loop，以及后续 fresh Claude audit。当前 architecture 复扫已返回 NO_ACTIONABLE_FINDINGS，验证与内部 review 都通过，但 fresh Claude audit 尚未运行。请给出 Goal 关系和完成报告。",
+      "expected_output": "应识别 broader-compatible parent Goal，把 architecture 作为 checkpoint 直接继续且不创建嵌套 Goal。完成报告 Result 可为 NO_ACTIONABLE_FINDINGS，但 Goal 必须是 active-checkpoint；不得完成或收窄父 Goal，因为 fresh Claude audit 尚未满足。",
+      "files": [],
+      "expectations": [
+        "Goal 关系是 broader-compatible，Next 是 continue active goal",
+        "不创建、替换或嵌套 Goal",
+        "Architecture Result 可为 NO_ACTIONABLE_FINDINGS",
+        "完成报告 Goal 是 active-checkpoint",
+        "不调用任何 runtime 的 Goal completion 动作",
+        "明确父编排器仍需完成 fresh Claude audit 等剩余 Done condition"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "conflicting-active-goal-defers",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或调用 Goal 工具。当前 active Goal 只负责 `apps/mobile/**` 的支付修复；用户现在要求 architecture-hardening-loop 修改 `packages/core/**`，现有 Goal 的 objective、冻结范围和 Done condition 都不包含该工作。请给出结果。",
+      "expected_output": "应识别 conflicting Goal，服从 goal-gate 的 Decision: defer，返回 HUMAN_GATE / deferred-conflict；不得把 core 工作塞进现有 Goal、创建嵌套 Goal、替换或完成 active Goal。",
+      "files": [],
+      "expectations": [
+        "Goal 关系是 conflicting 或明确归类为不兼容",
+        "goal-gate Decision 是 defer，结果返回 HUMAN_GATE 或 deferred-conflict",
+        "只询问如何处理冲突 Goal 或 scope 归属",
+        "不继续 architecture 修改或复扫",
+        "不创建嵌套 Goal，不替换 active Goal",
+        "不完成 active Goal"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "grok-exact-same-active-goal-keeps-runtime-schema",
+      "prompt": "这是一次只读 Skill 行为验收，不要调用 Goal 工具。Grok Build 只有 Grok-style update_goal，产品 Goal 已 Active，objective 与当前 `src/order/**` architecture-hardening-loop 完全相同，用户明确要求继续；当前仍有一个 Fix 未实施。请给出 Goal Gate 下一步与允许的进度动作。",
+      "expected_output": "应识别 exact-same active Grok Goal，Decision: set-now、Next: continue active goal；不重复输出 /goal、不虚构 create_goal/get_goal。工作仍在进行时只允许 Grok message checkpoint，不能 completed:true。",
+      "files": [],
+      "expectations": [
+        "Goal 关系是 exact-same-goal，Decision set-now，Next continue active goal",
+        "不要求再次粘贴 /goal",
+        "不虚构 create_goal 或 get_goal",
+        "允许使用 Grok update_goal message 报告 checkpoint",
+        "仍有 Fix 时不发送 completed true",
+        "不使用 Codex status complete 或 status blocked schema"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "first-scan-zero-fix-exact-goal-completes",
+      "prompt": "这是一次只读 Skill 行为验收，不要调用 Goal 工具。Codex get_goal 显示 active Goal 的完整 objective 是检查并加固 `packages/core/**` 直到 NO_ACTIONABLE_FINDINGS。首轮扫描没有任何 Fix；终态 Grok consult 确认 Backlog/Reject 分类无遗漏，必要验证通过。请说明是否创建 Goal、完成报告和终态动作。",
+      "expected_output": "应在扫描前把关系记录为 exact-same-goal。zero-Fix 不创建新 Goal，但已有 Goal 的完整 Done condition 已证明，因此报告 NO_ACTIONABLE_FINDINGS，并可使用 Codex status: complete；不得误报 not-created。",
+      "files": [],
+      "expectations": [
+        "在扫描前记录 Goal 关系为 exact-same-goal",
+        "首轮 zero-Fix 不调用 create_goal",
+        "确认终态 consult、必要验证和 NO_ACTIONABLE_FINDINGS 覆盖完整 Done condition",
+        "完成报告不写 Goal not-created 或 active-checkpoint",
+        "允许使用 Codex update_goal status complete",
+        "不使用 Grok-only message、completed 或 blocked_reason 字段"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "installed-but-invocation-disabled-scanner-fails-preflight",
+      "prompt": "这是只读行为验收。improve-codebase-architecture 的 SKILL.md 文件存在，但 disable-model-invocation=true 且 allow_implicit_invocation=false；用户只点名 architecture-hardening-loop，没有显式点名 scanner，当前 host catalog 也不能加载它。请给出预检结果。",
+      "expected_output": "文件存在不等于可调用。应在扫描、Goal 与源码修改前返回 MISSING_DEPENDENCIES，点明 scanner invocation policy；不得复制 scanner 逻辑或自行降级扫描。",
+      "files": [],
+      "expectations": [
+        "返回 MISSING_DEPENDENCIES",
+        "明确 installed file does not prove invocation eligibility",
+        "指出 disable-model-invocation / allow_implicit_invocation policy",
+        "停止点早于 scanner、Goal 和源码修改",
+        "不复制或冒充 scanner"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "transitive-scanner-or-grok-capability-missing",
+      "prompt": "这是只读行为验收。scanner 名可解析，但 codebase-design 不可调用，host 不能启动 scanner 要求的独立只读 exploration worker，agentic-review-handoff 也无法创建真实 Grok consult/review session。请给出预检结果。",
+      "expected_output": "应把 codebase-design、read-only delegation worker 和 real Grok adapter/session 都视为传递硬能力，在扫描前返回 MISSING_DEPENDENCIES 并列出依赖链。",
+      "files": [],
+      "expectations": [
+        "返回 MISSING_DEPENDENCIES",
+        "列出 codebase-design 缺失",
+        "列出独立只读 delegation capability 缺失",
+        "列出真实 Grok adapter/session capability 缺失",
+        "不因顶层 skill 文件存在而通过预检"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "protocol-git-write-boundary-human-gate",
+      "prompt": "这是只读行为验收。用户允许修改 packages/core/**，但明确禁止任何 .git/** 写；仓库的 $GIT_COMMON_DIR/info/exclude 还没有 /.review-handoff/ 条目。请给出 architecture-hardening-loop 的启动结果。",
+      "expected_output": "应先披露 .review-handoff/** 与 info/exclude 协议写，并因首次配置需要受禁止的 .git 写而在扫描和源码修改前返回 HUMAN_GATE；不得把协议路径混入代码 scan scope。",
+      "files": [],
+      "expectations": [
+        "返回 HUMAN_GATE",
+        "指出所需 $GIT_COMMON_DIR/info/exclude 写入",
+        "停止点早于扫描和源码修改",
+        "代码 scope 仍是 packages/core/**",
+        "不静默写 .git 或扩大代码 scope"
+      ]
+    },
+    {
+      "id": 14,
+      "name": "caller-parent-contract-proves-compatible-without-native-getter",
+      "prompt": "这是只读行为验收。当前 host 没有 native Goal getter，但 task-completion-loop 调用方传入了可核对的 parent contract：objective、冻结范围与 Done condition 明确包含 packages/core/** architecture checkpoint，completion owner 是 parent，后面还有 fresh Claude audit。当前 architecture 已 NO_ACTIONABLE_FINDINGS。",
+      "expected_output": "native getter 不是唯一证据源。应识别 broader-compatible，继续同一 parent Goal，不创建或完成它；报告 Goal: active-checkpoint。",
+      "files": [],
+      "expectations": [
+        "接受可核对 caller parent contract 作为 ownership evidence",
+        "识别 broader-compatible",
+        "不创建、替换或完成 parent Goal",
+        "报告 Goal active-checkpoint",
+        "保留 fresh Claude audit 给 parent owner"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "pwc-user-continue-pass-needs-no-decision-closure",
+      "prompt": "这是只读行为验收。内部 review 曾 PASS_WITH_CONCERNS 并 awaiting_user_decision；用户选择 run --continue，同一 packet 后续得到 PASS、archived、无 open Fix。没有 Decision Closure。请说明是否能恢复原范围复扫。",
+      "expected_output": "应接受 user run --continue 后的同 packet PASS archived 路径，直接恢复复扫；不得要求 Decision Closure，也不得把历史 PWC 当作仍在等待用户。",
+      "files": [],
+      "expectations": [
+        "识别 user run --continue 是合法恢复路径",
+        "确认同一 packet 最终 PASS 且 archived",
+        "不要求或伪造 Decision Closure",
+        "允许恢复原范围复扫",
+        "不改写历史 PWC 记录"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "review-evidence-content-drift-fails-reuse",
+      "prompt": "这是只读行为验收。内部 review 返回 PASS 与 evidence {baseSha, pathFilter, digest, coveredPaths, sourceRound}。随后同一 HEAD、同一路径集合下 packages/core/a.ts 内容又变了，review-loop evidence 重算 digest 不同。请给出完成结果。",
+      "expected_output": "相同 HEAD 和路径不足以复用 verdict。应拒绝完成与复扫收口，重跑 review；无法重跑时报告 UNVERIFIED。coveredPaths 只审计，不替代 baseSha + pathFilter + digest 比较。",
+      "files": [],
+      "expectations": [
+        "比较 baseSha + pathFilter + digest",
+        "识别 digest mismatch",
+        "不复用旧 PASS 或完成 Goal",
+        "要求重跑 review 或报告 UNVERIFIED",
+        "不把 coveredPaths 当作相等性替代"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "grok-zero-fix-exact-goal-terminal-completion",
+      "prompt": "这是只读行为验收，不调用工具。Grok Build 产品 Goal 已 Active，完整 objective 正是加固 src/order/** 到 NO_ACTIONABLE_FINDINGS。首轮 zero-Fix，终态 consult 与必要验证都通过。请给出终态 Goal 动作。",
+      "expected_output": "应识别 exact-same-goal，不创建新 /goal；完整 Done condition 已证明时使用 Grok update_goal completed:true，可附 message，不使用 Codex status schema。",
+      "files": [],
+      "expectations": [
+        "识别 exact-same-goal",
+        "不输出或要求第二个 /goal",
+        "确认 zero-Fix、consult 与验证满足完整 Done condition",
+        "使用 Grok completed true 终态 schema",
+        "不使用 Codex status complete"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "scanner-report-only-suppresses-selection-question",
+      "prompt": "这是只读行为验收。improve-codebase-architecture 已生成 HTML candidate report；它的 standalone 流程通常接着问 Which candidate，但本次由 architecture-hardening-loop 编排。请说明 handoff。",
+      "expected_output": "父编排明确使用 scanner 的 report-only 模式并停在 HTML 报告；抑制 standalone candidate-selection 问题，不进入 grilling/domain docs，由 architecture-hardening-loop 自己核验证据并分 Fix/Backlog/Reject。",
+      "files": [],
+      "expectations": [
+        "明确 report-only composition",
+        "不向用户提出 scanner standalone selection question",
+        "不进入 grilling 或 domain-modeling",
+        "由父 Loop 独立验证候选证据",
+        "输出 Fix Backlog Reject 分类"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "zero-fix-scan-evidence-drift-forces-rescan",
+      "prompt": "这是只读行为验收。冻结 packages/core/** 后，扫描前 review-loop evidence 记录 E1；scanner 报告与终态 consult 都认为 zero-Fix，但期间同一 HEAD、同一路径集合下 a.ts 内容变化，按原 baseSha/pathFilter 重算 digest 得到 E2 != E1。请给出结果。",
+      "expected_output": "zero-Fix 也必须有匹配的 scan evidence identity。应拒绝 NO_ACTIONABLE_FINDINGS 与 Goal completion，重新扫描同一范围；无法重扫时报告 UNVERIFIED。不得因 sourceRound 为 null 或没有 review round 就跳过 freshness gate。",
+      "files": [],
+      "expectations": [
+        "扫描前建立 review-loop evidence identity",
+        "终态 consult 后按同一 baseSha pathFilter 重算",
+        "识别 digest mismatch",
+        "不报告 NO_ACTIONABLE_FINDINGS 或完成 Goal",
+        "要求同范围重扫或报告 UNVERIFIED"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "post-fix-rescan-uses-current-scan-evidence",
+      "prompt": "这是只读行为验收。初扫前 evidence 为 E1；随后实施 Fix，Grok review PASS 并返回 E2，复扫前按同一 baseSha/pathFilter 重算仍为 E2。该轮复扫 zero-Fix，终态 consult 后重算仍为 E2。请给出结果，并说明若 consult 期间漂移成 E3 怎么处理。",
+      "expected_output": "Fix 后必须把已重算确认的最终 review identity E2 作为本轮复扫 scanEvidence，不再与初扫 E1 比较。consult 后仍为 E2 时可按 Goal ownership 收口为 NO_ACTIONABLE_FINDINGS；若变成 E3，则拒绝收口并重扫同一范围，无法重扫时报告 UNVERIFIED。",
+      "files": [],
+      "expectations": [
+        "每次 scanner pass 使用独立 scanEvidence",
+        "Fix 后复扫前确认 current identity 与 review evidence E2 一致",
+        "复扫终态只与 E2 比较而不使用 E1",
+        "E2 匹配时允许 NO_ACTIONABLE_FINDINGS",
+        "E3 漂移时要求同范围重扫或报告 UNVERIFIED"
+      ]
     }
   ]
 }

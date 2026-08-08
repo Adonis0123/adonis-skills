@@ -15,10 +15,10 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Use this skill for feedback validation of pasted review findings before any fix; for auto review-fix-re-review or an ordinary review / second pair of eyes / audit of a git diff (continue after BLOCKED or PASS_WITH_CONCERNS); for DecisionConsult with another AI; for review-loop sessions (resume headless reviewers); for Review Intake or manual packet continuation; or for first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing review comments, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review).",
+    "description": "Use for validating pasted review findings before fixes; explicit auto review-fix-re-review; same-session implementation closure; fresh-eyes git diff review via Review Intake; DecisionConsult with another AI; review-loop session resume; manual packet continuation; or first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing comments, prompt-only requests that should use review-prompt-composer, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review).",
     "metadata": {
       "author": "adonis",
-      "version": "3.3.5"
+      "version": "3.4.0"
     },
     "files": {
       "hasReferences": true,
@@ -29,16 +29,16 @@
   {
     "slug": "architecture-hardening-loop",
     "name": "architecture-hardening-loop",
-    "description": "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, triage, minimal fix, test, Grok review, and rescan cycle until no actionable findings remain. Use for architecture cleanup, architecture hardening, DDD or high-cohesion reviews that include implementation, scan-fix-review-until-clean, clean up architecture issues in a loop, review-again-until-no-actionable-findings, or autonomous improve-review-fix cycles. Do not use for one-shot read-only reviews, ordinary feature work, pure design discussion without implementation, or requests without an explicit scope.",
+    "description": "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, evidence-based triage, minimal fixes, tests, Grok review, and same-scope rescan until no actionable findings remain. Use for scoped architecture cleanup, DDD or high-cohesion hardening with implementation, scan-fix-review-rescan-until-clean, or autonomous architecture improvement cycles. Do not use for diagnose-only architecture reports, ordinary feature work, pure design discussion, one-shot diff review or review-fix-re-review without a rescan, full plan/spec completion that needs task-completion-loop, or requests without an explicit path/module scope.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.1"
+      "version": "1.4.0"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-25T08:32:21.000Z"
+    "updatedAt": "2026-07-30T12:30:20.000Z"
   },
   {
     "slug": "branch-creator",
@@ -152,7 +152,7 @@
   {
     "slug": "goal-gate",
     "name": "goal-gate",
-    "description": "Use this skill when the user wants to decide, set, write, or use a durable coding-agent goal or /goal prompt for Grok Build, Codex, Claude Code, or another agent until a verifiable done condition is met. Gates autonomy and handles runtime differences: Codex create_goal vs Grok user-only /goal activation plus update_goal after Active. Writes copy-ready contracts (outcome, verification, constraints, write boundaries, delegation, iteration, pause). On Grok, /goal-gate is not product /goal: set-now emits a copy-ready /goal and waits for the user to paste it before durable work and update_goal. Trigger on 'should I set a goal?', durable goal setup, Grok/Codex/Claude /goal prompts, multi-checkpoint work, migrations, refactors, ports, spec implementations, eval loops, backlog cleanup, or stepping-away finish-it tasks. Do not use for single quick edits, one-shot tests, OKR/scrum goals, recurring reminders, or token-budget settings.",
+    "description": "Use when the user wants to decide, set, draft, or run a durable coding-agent goal or /goal until a verifiable done condition. Gates autonomy across Grok, Codex, Claude Code, and compatible agents: Codex get_goal/create_goal plus status closure; Grok user-run /goal plus progress after Active. Drafts copy-ready contracts with outcome, verification, constraints, write boundaries, delegation, iteration, and pause conditions. On Grok, /goal-gate is not product /goal: emit a copy-ready /goal and wait for activation. Trigger on 'should I set a goal?', durable goal setup, Grok/Codex/Claude /goal prompts, multi-checkpoint work, migrations, refactors, ports, spec implementations, eval loops, bounded backlog cleanup with one verifiable end state, or stepping-away finish-it tasks. Do not use for quick edits, one-shot tests, loose unrelated backlogs, OKR/scrum goals, reminders, or token-budget-only settings.",
     "metadata": {
       "author": "adonis"
     },
@@ -189,12 +189,25 @@
     "updatedAt": "2026-03-09T16:14:12.000Z"
   },
   {
-    "slug": "review-prompt-composer",
-    "name": "review-prompt-composer",
-    "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for committed ranges, staged changes, unstaged tracked changes, untracked files, or all uncommitted changes when the reviewer can read the same repository and index. Persist prompts under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID that agentic-review-handoff can resolve later. Prompt generation only: do not use when the receiver lacks working-tree access; do not run tests, modify reviewed code, commit, stage, stash, push, send the prompt, or duplicate reviewed code. Use agentic-review-handoff for returned-feedback validation and review-fix-re-review loops.",
+    "slug": "local-web-surface",
+    "name": "local-web-surface",
+    "description": "Build or extend a persistent macOS local web surface when the request includes a stable *.localhost URL, an existing loopback daemon/gateway, login startup, or a .app launcher. Once triggered, it can add file-backed CRUD or local/public content projections without changing public publishing. Covers domain ownership, exact Host routing, explicit access/threat boundaries, safe mutations, launchd lifecycle, TDD, curl checks, and desktop/mobile browser QA. Do not use for public hosting, production deployment, ordinary frontend/CRUD work on an existing dev server, merely opening or interacting with an existing URL, website audits, or native apps with no local HTTP surface.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.0"
+      "version": "1.3.0"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false
+    }
+  },
+  {
+    "slug": "review-prompt-composer",
+    "name": "review-prompt-composer",
+    "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops.",
+    "metadata": {
+      "author": "adonis",
+      "version": "2.1.0"
     },
     "files": {
       "hasReferences": false,
@@ -218,15 +231,16 @@
   {
     "slug": "task-completion-loop",
     "name": "task-completion-loop",
-    "description": "Orchestrate the explicit full completion of an existing plan, spec, or unfinished non-trivial coding task through a scoped work ledger, real host plus Grok Build plus Claude Code convergence, Goal Gate, implementation and runtime verification, agentic review-fix-re-review, bounded architecture hardening, and a fresh read-only Claude Code blind audit. Use when the user explicitly asks for task-completion-loop, a full multi-agent finish sequence, three-agent convergence before implementation, a full completion loop, or autonomous implementation reviewed until clean. Do not trigger for an ordinary implement-and-test request, quick edits, one-shot tests, read-only reviews, open-ended design, or destructive work whose scope is not approved.",
+    "description": "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline. Do not use for ordinary implement-and-test, Goal-only execution, review-fix-re-review alone, architecture hardening alone, quick edits, one-shot tests, read-only review, open-ended design, or destructive work without approved scope.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.0"
+      "version": "1.4.0"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-07-30T12:30:20.000Z"
   },
   {
     "slug": "weekly-report",
@@ -246,10 +260,10 @@
   {
     "slug": "workflow-gate",
     "name": "workflow-gate",
-    "description": "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Brainstorm; destructive or hard-to-reverse work to Discuss; unresolved decisions, planning, ship checks, unclear bugs, and fresh-eyes fix-then-re-review need this gate. Skip single-line read-only lookups, pure typo/formatting edits, trivial safe one-line fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, and Execution path.",
+    "description": "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Challenge (grilling; Thesis confirm when agent-strawman); named-option convergence and destructive or hard-to-reverse work to Discuss; architecture diagnose/harden to Architecture; planning, ship checks, unclear bugs, and fresh-eyes fix-then-re-review also need this gate. Hand off an explicit whole task-completion pipeline directly to task-completion-loop after safety overrides. Skip single-line read-only lookups, pure formatting, trivial safe fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, Execution path, and Thesis.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.1"
+      "version": "3.2.0"
     },
     "files": {
       "hasReferences": true,

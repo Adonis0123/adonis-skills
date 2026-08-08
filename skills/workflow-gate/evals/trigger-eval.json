@@ -1,0 +1,82 @@
+[
+  {
+    "query": "我要新增一个 checkout 页面但还没有 spec，先决定该走哪个 workflow。",
+    "should_trigger": true
+  },
+  {
+    "query": "Stripe 和 Lemon Squeezy 选哪个？选完再规划，先帮我路由。",
+    "should_trigger": true
+  },
+  {
+    "query": "CI 的 login.test.ts 偶发失败，应该先 debugging、planning 还是 review handoff？",
+    "should_trigger": true
+  },
+  {
+    "query": "对 packages/editor/** 做只读 architecture diagnose，先判断应该加载哪个 skill。",
+    "should_trigger": true
+  },
+  {
+    "query": "把 apps/api/auth/** 做 scan-fix-review-rescan until clean，请先过 workflow gate。",
+    "should_trigger": true
+  },
+  {
+    "query": "fresh eyes review 当前 diff，发现问题修完再 re-review，帮我选正确流程。",
+    "should_trigger": true
+  },
+  {
+    "query": "docs/specs/export.md 已定稿，现在需要拆成可执行计划；先选择 route。",
+    "should_trigger": true
+  },
+  {
+    "query": "我要 drop production table，但回滚和 scope 还没决定。先做 workflow safety routing。",
+    "should_trigger": true
+  },
+  {
+    "query": "Use task-completion-loop for the whole named-plan pipeline; apply safety overrides and hand off to the correct downstream owner.",
+    "should_trigger": true
+  },
+  {
+    "query": "这个行为改动会影响三个消费者，选 Challenge、Discuss 还是 Light？",
+    "should_trigger": true
+  },
+  {
+    "query": "现在几点？",
+    "should_trigger": false
+  },
+  {
+    "query": "把这句话改成标题大小写。",
+    "should_trigger": false
+  },
+  {
+    "query": "读取 package.json 里的 version，只返回一行。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 commit skill 为已经 staged 且审过的改动生成 commit message。",
+    "should_trigger": false
+  },
+  {
+    "query": "把下面 JSON 美化缩进，不改变任何值。",
+    "should_trigger": false
+  },
+  {
+    "query": "告诉我 README.md 是否存在，只读回答 yes/no。",
+    "should_trigger": false
+  },
+  {
+    "query": "翻译这句英文为中文：Build succeeded.",
+    "should_trigger": false
+  },
+  {
+    "query": "列出当前目录名，不要分析或修改。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 Markdown 表格两列对齐，内容和语义都不变。",
+    "should_trigger": false
+  },
+  {
+    "query": "调用 weekly-report skill 生成周报，输入范围和格式都已明确。",
+    "should_trigger": false
+  }
+]

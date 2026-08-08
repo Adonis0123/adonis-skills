@@ -15,6 +15,7 @@ review-loop run --repo <root> --reviewer codex|grok|claude [--base <sha>] [--rou
 review-loop run --continue --repo <root> [--packet <path>] [--rounds N]
 review-loop fix-completion --repo <root> --packet <path> --body-file <md>
 review-loop close --repo <root> --packet <path> --reason accept-concerns
+review-loop evidence --repo <root> --base <sha> [--paths a,b]
 review-loop consult --repo <root> --peer codex|grok|claude --question-file <md>
 ```
 
@@ -23,6 +24,29 @@ Each Reviewer invocation has a 20-minute default deadline. Set
 advanced runtime integration needs a different budget. The CLI writes an
 immediate liveness line to stderr and repeats it every 30 seconds while the
 Reviewer process remains alive; final stdout stays machine-readable JSON.
+
+## Review evidence identity
+
+Every successfully parsed `run` round returns and persists:
+
+```json
+{
+  "evidence": {
+    "baseSha": "<full sha>",
+    "pathFilter": ["optional/caller/scope"],
+    "digest": "<sha256 of the frozen UTF-8 diff text>",
+    "coveredPaths": ["actual/changed/path"],
+    "sourceRound": 2
+  }
+}
+```
+
+- Equality uses exactly `baseSha + normalized pathFilter + digest`. `pathFilter: null` means the full worktree relative to `baseSha`.
+- `coveredPaths` is sorted audit metadata; it is not a substitute for the caller's filter and does not participate in equality.
+- `digest` is SHA-256 of the same deterministic tracked-plus-untracked diff text written to `round-N.diff`.
+- `sourceRound` is the last successfully parsed Reviewer round. Decision Closure returns that persisted identity and does **not** re-attest the current worktree.
+- Before reusing a verdict, an outer workflow must run `review-loop evidence` with the returned `baseSha` and `pathFilter`, then compare the equality fields. Same HEAD and same path names are insufficient.
+- `DELIVERY_UNKNOWN`, malformed output, hash mismatch, recovery errors, and other runs without a successful parsed round do not return a reusable identity. Legacy terminal state without this object is non-reusable; do not guess or backfill a public identity.
 
 ## Reviewer prompt obligations
 

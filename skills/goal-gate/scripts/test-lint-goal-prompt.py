@@ -35,6 +35,17 @@ Pause if: credentials, production data, or destructive actions are required.
 """
 
 
+VALID_GOAL_EVAL_LOOP = """/goal Optimize prompts/support-agent.md until `pnpm eval:prompt -- --suite support-agent` reaches at least 0.92.
+Verification: Run `pnpm eval:prompt -- --suite support-agent` after each focused change; surface the score, failing cases reviewed, and final diff summary.
+Constraints: Keep prompt edits minimal; do not change eval fixtures, product behavior, or policy unless explicitly approved.
+Boundaries: Write only prompts/support-agent.md; treat eval fixtures and runner code as read-only.
+Execution strategy: Assess whether independent read-only eval analysis would reduce context pressure; delegate only when it does, serialize prompt edits, and keep final score/diff verification with the main agent.
+Iteration policy: Run at most 5 focused edit/eval rounds; after two rounds with no score improvement, inspect failure clusters and change the hypothesis before retrying.
+Stop when: The eval score reaches at least 0.92 with surfaced evidence, or no in-boundary prompt change can improve the remaining failures.
+Pause if: Reaching the target requires changing policy, product behavior, eval fixtures, credentials, or another file outside the write boundary.
+"""
+
+
 CASES = [
     {
         "name": "valid-goal",
@@ -45,6 +56,12 @@ CASES = [
     {
         "name": "valid-goal-english",
         "text": VALID_GOAL_EN,
+        "returncode": 0,
+        "stderr_contains": "",
+    },
+    {
+        "name": "valid-eval-improvement-loop",
+        "text": VALID_GOAL_EVAL_LOOP,
         "returncode": 0,
         "stderr_contains": "",
     },

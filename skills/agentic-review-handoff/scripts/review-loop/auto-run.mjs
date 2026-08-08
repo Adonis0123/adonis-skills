@@ -19,7 +19,12 @@ import {
   lastPhysicalH1,
 } from "./repositories.mjs";
 import { createAdapter, DELIVERY_UNKNOWN } from "./adapters.mjs";
-import { freezeRoundEvidence, resolveBaseSha } from "./evidence.mjs";
+import {
+  computeEvidenceIdentity,
+  freezeRoundEvidence,
+  normalizePathFilter,
+  resolveBaseSha,
+} from "./evidence.mjs";
 import {
   parseReviewFindings,
   parseReReview,
@@ -41,6 +46,18 @@ import {
 } from "./stage-writer.mjs";
 
 const DEFAULT_ROUNDS = 3;
+
+function reviewedEvidenceIdentity({ baseSha, evidence, sourceRound }) {
+  return {
+    baseSha,
+    pathFilter: normalizePathFilter(evidence.pathFilter),
+    digest: evidence.digest,
+    coveredPaths: Array.isArray(evidence.coveredPaths)
+      ? (normalizePathFilter(evidence.coveredPaths) ?? [])
+      : null,
+    sourceRound,
+  };
+}
 
 /**
  * Build Reviewer prompt for a round.
@@ -181,6 +198,24 @@ export async function cmdRun(opts) {
       isContinue,
     }),
   );
+}
+
+/**
+ * Recompute the current worktree identity without writing packet/runtime files.
+ * Callers compare baseSha + pathFilter + digest with a successful run result.
+ */
+export function cmdEvidence(opts) {
+  const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
+  const baseSha = resolveBaseSha(repoRoot, opts.base);
+  return {
+    ok: true,
+    status: "attested",
+    evidence: computeEvidenceIdentity({
+      repoRoot,
+      baseSha,
+      paths: normalizePathFilter(opts.paths ?? opts.path) ?? undefined,
+    }),
+  };
 }
 
 /**
@@ -359,6 +394,7 @@ async function runBody(ctx) {
         status: "already_archived",
         packetPath,
         state,
+        evidence: state.evidence ?? null,
         message: "Packet already archived",
       });
     }
@@ -396,16 +432,17 @@ async function runBody(ctx) {
   }
   if (
     (!pathFilter || !pathFilter.length) &&
-    Array.isArray(state.paths) &&
-    state.paths.length
+    (Array.isArray(state.pathFilter) || Array.isArray(state.paths))
   ) {
-    pathFilter = state.paths;
+    pathFilter = state.pathFilter || state.paths;
   }
+  pathFilter = normalizePathFilter(pathFilter) ?? undefined;
   if (pathFilter?.length) {
     // Paths live only in auto-run-state.json. Never rewrite packet + reseed hash here:
     // that would absorb external packet edits and defeat PACKET_HASH_MISMATCH (R1 #1).
     saveRunState(repoRoot, packetId, {
       ...loadRunState(repoRoot, packetId),
+      pathFilter,
       paths: pathFilter,
       baseSha,
       reviewer,
@@ -440,7 +477,17 @@ async function runBody(ctx) {
       evidencePath,
       diffText,
       lineCount: diffText.split("\n").length,
-      paths: pathFilter || state.paths || [],
+      paths:
+        state.evidence?.sourceRound === effectiveRound &&
+        Array.isArray(state.evidence.coveredPaths)
+          ? state.evidence.coveredPaths
+          : [],
+      pathFilter: pathFilter || state.pathFilter || state.paths || null,
+      coveredPaths:
+        state.evidence?.sourceRound === effectiveRound &&
+        Array.isArray(state.evidence.coveredPaths)
+          ? state.evidence.coveredPaths
+          : null,
       digest,
     };
   } else {
@@ -457,6 +504,7 @@ async function runBody(ctx) {
       [`evidenceRound${effectiveRound}`]: true,
       [`evidenceDigest${effectiveRound}`]: digest,
       evidencePath: evidence.evidencePath,
+      pathFilter: evidence.pathFilter,
       paths: pathFilter || state.paths || null,
       baseSha,
       reviewer,
@@ -464,6 +512,12 @@ async function runBody(ctx) {
     });
     evidence.digest = digest;
   }
+
+  const reviewEvidence = reviewedEvidenceIdentity({
+    baseSha,
+    evidence,
+    sourceRound: effectiveRound,
+  });
 
   const adapter = (adapterFactory || createAdapter)(reviewer, {
     repoRoot,
@@ -628,6 +682,7 @@ async function runBody(ctx) {
     lifecycle,
     evidencePath: evidence.evidencePath,
     lineCount: evidence.lineCount,
+    evidence: reviewEvidence,
   };
 
   // F1: after all Reviewer awaits (incl. one correction), still must match pre-await pin
@@ -737,6 +792,7 @@ async function runBody(ctx) {
       message:
         "BLOCKED — Fixer should address open blocking findings, append # Fix Completion, then: review-loop run --continue",
       warning: evidence.warning,
+      evidence: reviewEvidence,
       needsContinue: true,
     };
   }
@@ -754,6 +810,7 @@ async function runBody(ctx) {
       message:
         "PASS_WITH_CONCERNS — non-blocking concerns remain; user decides archive or another round",
       warning: evidence.warning,
+      evidence: reviewEvidence,
     };
   }
 
@@ -767,6 +824,7 @@ async function runBody(ctx) {
     packetId,
     message: `✅ auto loop complete — Verdict ${parsed.verdict} after ${effectiveRound} round(s)`,
     warning: evidence.warning,
+    evidence: reviewEvidence,
     report: {
       verdict: parsed.verdict,
       rounds: effectiveRound,
@@ -1665,6 +1723,7 @@ export async function cmdClose(opts) {
       lifecycleState: "archived",
       originalVerdict: "PASS_WITH_CONCERNS",
       acceptedConcernIds: concerns.map((c) => c.id),
+      evidence: state.evidence ?? null,
       message:
         "PASS_WITH_CONCERNS accepted as backlog — packet archived via Decision Closure (original Verdict not rewritten to PASS)",
       report: {
@@ -1674,6 +1733,7 @@ export async function cmdClose(opts) {
         closedAt,
         lastAnchor: reportMeta.lastAnchor,
         lifecycleState: reportMeta.lifecycleState,
+        evidence: state.evidence ?? null,
       },
     };
   });

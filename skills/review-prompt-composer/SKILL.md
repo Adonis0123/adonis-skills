@@ -1,9 +1,9 @@
 ---
 name: review-prompt-composer
-description: "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for committed ranges, staged changes, unstaged tracked changes, untracked files, or all uncommitted changes when the reviewer can read the same repository and index. Persist prompts under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID that agentic-review-handoff can resolve later. Prompt generation only: do not use when the receiver lacks working-tree access; do not run tests, modify reviewed code, commit, stage, stash, push, send the prompt, or duplicate reviewed code. Use agentic-review-handoff for returned-feedback validation and review-fix-re-review loops."
+description: "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops."
 metadata:
   author: adonis
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Review Prompt Composer
@@ -25,13 +25,13 @@ git status --short
 
 Map the request to exactly one scope:
 
-| User intent | Canonical scope | Includes | Excludes |
-|---|---|---|---|
-| current/local/all uncommitted changes | `all-uncommitted` | staged + unstaged tracked + untracked | nothing |
-| staged only | `staged-only` | index changes | unstaged + untracked |
-| unstaged only | `unstaged-only` | tracked working tree relative to index | staged + untracked |
-| untracked only | `untracked-only` | `git ls-files --others --exclude-standard` | tracked changes |
-| branch or commits | `ref-range` | resolved requested refs | other working-tree state |
+| User intent                           | Canonical scope   | Includes                                   | Excludes                 |
+| ------------------------------------- | ----------------- | ------------------------------------------ | ------------------------ |
+| current/local/all uncommitted changes | `all-uncommitted` | staged + unstaged tracked + untracked      | nothing                  |
+| staged only                           | `staged-only`     | index changes                              | unstaged + untracked     |
+| unstaged only                         | `unstaged-only`   | tracked working tree relative to index     | staged + untracked       |
+| untracked only                        | `untracked-only`  | `git ls-files --others --exclude-standard` | tracked changes          |
+| branch or commits                     | `ref-range`       | resolved requested refs                    | other working-tree state |
 
 Use the user's explicit scope without another confirmation. Ask only when different interpretations materially change the reviewed files. Do not fold untracked files into `unstaged-only`.
 
@@ -41,14 +41,14 @@ This skill requires the receiver to read the same repository and working tree. I
 
 Use read-only evidence:
 
-| Scope | Commands |
-|---|---|
+| Scope             | Commands                                                                                                           |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `all-uncommitted` | `git diff HEAD --stat`, `git diff HEAD --name-status`, `git diff HEAD`, `git ls-files --others --exclude-standard` |
-| `staged-only` | `git diff --cached --stat`, `git diff --cached --name-status`, `git diff --cached` |
-| `unstaged-only` | `git diff --stat`, `git diff --name-status`, `git diff` |
-| `untracked-only` | `git ls-files --others --exclude-standard`, then read each in-scope file |
-| branch range | `git log --oneline "$base".."$head"`, `git diff --find-renames "$base"..."$head" --stat`, full diff |
-| commits | `git show --find-renames --stat "$sha"` and full show for every resolved SHA |
+| `staged-only`     | `git diff --cached --stat`, `git diff --cached --name-status`, `git diff --cached`                                 |
+| `unstaged-only`   | `git diff --stat`, `git diff --name-status`, `git diff`                                                            |
+| `untracked-only`  | `git ls-files --others --exclude-standard`, then read each in-scope file                                           |
+| branch range      | `git log --oneline "$base".."$head"`, `git diff --find-renames "$base"..."$head" --stat`, full diff                |
+| commits           | `git show --find-renames --stat "$sha"` and full show for every resolved SHA                                       |
 
 If the selected scope is empty, stop without writing a prompt. Build an evidence-backed inventory with repository-relative paths, Git status, and concrete changes. Include rename, delete, binary, mode, and public-contract changes; do not invent intent.
 
@@ -71,7 +71,7 @@ Read applicable `AGENTS.md`, repository docs, package scripts, and CI configurat
 
 ### 5. Compose the prompt body
 
-Create this body with actual evidence. Include `{{REVIEW_PROMPT_ID}}` exactly once; the writer replaces it atomically.
+Create this body with actual evidence. Include `{{REVIEW_PROMPT_ID}}`, `{{SCOPE_DIGEST}}`, and `{{VERIFY_COMMAND}}` exactly once each; the writer replaces them atomically.
 
 ````markdown
 # 审核任务：<repository and change summary>
@@ -89,7 +89,15 @@ Create this body with actual evidence. Include `{{REVIEW_PROMPT_ID}}` exactly on
 <exact git status --short output>
 ```
 
-开始审核前运行：
+生成时 scope digest：`{{SCOPE_DIGEST}}`
+
+开始审核前先运行 writer 提供的只读 freshness check：
+
+```bash
+{{VERIFY_COMMAND}}
+```
+
+只有它返回 `status: fresh` 才继续。`legacy_prompt_has_no_scope_digest`、HEAD/branch 变化或 `scope_digest_mismatch` 都表示提示词已失效。随后运行：
 
 ```bash
 git rev-parse --show-toplevel
@@ -97,7 +105,7 @@ git rev-parse HEAD
 git status --short
 ```
 
-仓库、HEAD 或状态清单不一致时，停止并报告提示词已失效。
+仓库、HEAD 或状态清单不一致时，停止并报告提示词已失效。即使三者相同，也只有 `scope_digest` 重算匹配才证明生成时范围内容未漂移；仍须读取当前完整 diff / untracked 内容并逐项核对。
 
 ## 待验证目标
 
@@ -145,6 +153,8 @@ python3 <skill-directory>/scripts/write_review_prompt.py \
   --body-file "$temporary_body"
 ```
 
+`ref-range` 还必须传已解析的 `--base "$base_sha" --target "$target_sha"`；其他 scope 不传这两个参数。writer 按 scope 计算 canonical SHA-256：tracked/staged diff 使用 Git binary diff，相关 untracked 文件用 NUL-safe 路径、类型、mode 与原始内容 framing。禁止另写近似算法。
+
 Use the canonical scope from step 1. The script:
 
 - ensures `$GIT_COMMON_DIR/info/exclude` contains `/.review-handoff/` without duplicates;
@@ -154,6 +164,7 @@ Use the canonical scope from step 1. The script:
 - uses local `YYYY-MM-DD_HH-mm-<scope_slug>.md` names with collision suffixes;
 - writes UTC `created_at` and `expires_at` values with a 24-hour lifetime;
 - replaces the prompt ID token and verifies the artifact stays ignored;
+- replaces the digest / verify-command tokens, writes `format_version: 2` plus `scope_digest` / resolved range metadata, and provides a read-only `--verify-prompt` command using the same algorithm;
 - fails before final output on malformed bodies or high-confidence sensitive content.
 
 Read the JSON result, delete the temporary body, then read the final prompt file completely. Verify its path, ID, scope, HEAD, expiration, required headings, and absence of unresolved tokens before reporting success.
@@ -163,7 +174,7 @@ Read the JSON result, delete the temporary body, then read the final prompt file
 Do not duplicate the full prompt in chat. Return only:
 
 - a clickable absolute path to the authoritative Markdown file;
-- `prompt_id`, canonical scope, and expiration;
+- `prompt_id`, canonical scope, `scope_digest`, and expiration;
 - a short instruction to open and copy the file to the reviewer;
 - any non-destructive archive warnings from the writer.
 
@@ -177,3 +188,4 @@ When feedback returns, invoke `agentic-review-handoff`; it can resolve the echoe
 - Never overwrite an active or archived prompt; create a collision suffix.
 - Never delete expired or malformed prompts automatically.
 - Never assume a prompt summary proves a reviewer finding.
+- Never treat matching HEAD and status paths as content freshness. Require `--verify-prompt` to return `fresh`, then reconcile the current full scope diff with the inventory.

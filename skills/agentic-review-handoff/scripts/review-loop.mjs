@@ -77,6 +77,7 @@ function help() {
       "review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]",
       "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
       "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
+      "review-loop evidence --repo=PATH --base=SHA [--paths=a,b]",
       "review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH",
       "review-loop sessions --repo=PATH [--product=codex|grok|claude]",
     ],
@@ -192,6 +193,13 @@ async function main() {
           reason: args.reason,
         });
         break;
+      case "evidence":
+        result = autoRun.cmdEvidence({
+          ...base,
+          base: args.base,
+          paths: args.paths ?? args.path,
+        });
+        break;
       case "consult":
         result = await consult.cmdConsult({
           ...base,
@@ -208,7 +216,7 @@ async function main() {
         break;
       default:
         throw new Error(
-          `Unknown command: ${command}. Try: run | fix-completion | close | consult | sessions | help`,
+          `Unknown command: ${command}. Try: run | fix-completion | close | evidence | consult | sessions | help`,
         );
     }
     print(result);

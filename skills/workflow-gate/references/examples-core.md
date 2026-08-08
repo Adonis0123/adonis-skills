@@ -1,6 +1,6 @@
 # Worked examples (core) — workflow-gate
 
-At least one example per Route (Direct / Light / Brainstorm / Discuss / Plan / Review-Handoff). Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. For edge cases (tiebreakers, mismatches, Rule #2 negatives, re-gating, contradictory signals), see `examples-edge.md`.
+At least one example per Route (Direct / Light / Challenge / Discuss / Plan / Architecture / Review-Handoff). Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. For edge cases (tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory signals), see `examples-edge.md`.
 
 ## Direct — read-only question
 
@@ -12,6 +12,7 @@ Workflow Gate
 - Runtime skill: none
 - Fallback alias: none
 - Execution path: direct local work
+- Thesis: n/a
 - Goal: Report the line count of apps/web/src/App.tsx.
 - Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
 - Assumptions: none
@@ -28,26 +29,28 @@ Workflow Gate
 - Runtime skill: none
 - Fallback alias: none
 - Execution path: direct local work
+- Thesis: n/a
 - Goal: Apply the typo fix at apps/web/src/App.tsx:42.
 - Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
 - Assumptions: none
 - Next: Edit the line; no further verification beyond a re-read of the diff.
 ```
 
-## Brainstorm — open solution space
+## Challenge — open / stress a thesis (user-provided)
 
-User: "Design the sharing model for dashboards — link / invite / RBAC / workspace, what are the tradeoffs?"
+User: "Design the sharing model for dashboards — I want workspace-scoped invites by default; public links optional. Pressure-test that before code."
 
 ```
 Workflow Gate
-- Route: Brainstorm
-- Runtime skill: brainstorming
-- Fallback alias: superpowers:brainstorming
+- Route: Challenge
+- Runtime skill: grilling
+- Fallback alias: none
 - Execution path: n/a
-- Goal: Map the dashboard-sharing design space with tradeoffs across 4 candidate models.
+- Thesis: user-provided
+- Goal: Stress-test workspace-scoped-invite-default sharing thesis against link / RBAC / workspace alternatives.
 - Signals: scope=multi-module; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
 - Assumptions: none
-- Next: Load brainstorming; generate 3-5 candidate models with first-principles tradeoffs.
+- Next: Load grilling; walk the decision tree against the stated thesis.
 ```
 
 ## Discuss — unresolved decisions
@@ -60,6 +63,7 @@ Workflow Gate
 - Runtime skill: discuss-before-plan
 - Fallback alias: none
 - Execution path: n/a
+- Thesis: n/a
 - Goal: Align on billing provider and pricing tiers before any implementation plan.
 - Signals: scope=multi-module; risk=high; destructive=no; decisions=unresolved; user-intent=decide
 - Assumptions: none
@@ -76,26 +80,45 @@ Workflow Gate
 - Runtime skill: writing-plans
 - Fallback alias: none
 - Execution path: n/a
+- Thesis: n/a
 - Goal: Wire Google OAuth into apps/web per RFC-024.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=plan
 - Assumptions: RFC-024 is authoritative and current.
 - Next: Load writing-plans; produce a 5-8 task breakdown grounded in the RFC.
 ```
 
-## Plan — multi-bounded-context migration
+## Architecture — diagnose only
 
-User: "Migrate auth across api+web+mobile from session cookies to JWT, 30+ files."
+User: "Don't change code yet — diagnose module boundaries and dependency direction in `apps/web` and give an architecture candidate report."
 
 ```
 Workflow Gate
-- Route: Plan
-- Runtime skill: writing-plans
+- Route: Architecture
+- Runtime skill: improve-codebase-architecture
 - Fallback alias: none
 - Execution path: n/a
-- Goal: Migrate auth from session cookies to JWT across api, web, and mobile.
-- Signals: scope=multi-module; risk=high; destructive=no; decisions=resolved; user-intent=plan
-- Assumptions: JWT signing strategy already chosen; rollout phases to be detailed in the plan.
-- Next: Load writing-plans; structure the per-app tasks and return the plan to the user before implementation.
+- Thesis: n/a
+- Goal: Produce an architecture candidate report for apps/web without implementing fixes.
+- Signals: scope=multi-module; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
+- Assumptions: Scope is user-named apps/web; diagnose-only — do not enter hardening loop.
+- Next: Load improve-codebase-architecture; explore + HTML report, then stop.
+```
+
+## Architecture — scoped harden loop
+
+User: "Freeze scope to `apps/web/src/features/billing/**` and run the architecture harden loop until no actionable findings."
+
+```
+Workflow Gate
+- Route: Architecture
+- Runtime skill: architecture-hardening-loop
+- Fallback alias: none
+- Execution path: n/a
+- Thesis: n/a
+- Goal: Boundedly harden apps/web/src/features/billing until NO_ACTIONABLE_FINDINGS.
+- Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=implement
+- Assumptions: Path is explicit and implement/harden intent is explicit.
+- Next: Load architecture-hardening-loop with the frozen scope.
 ```
 
 ## Review-Handoff — fresh eyes
@@ -108,6 +131,7 @@ Workflow Gate
 - Runtime skill: agentic-review-handoff
 - Fallback alias: none
 - Execution path: n/a
+- Thesis: n/a
 - Goal: Get an independent cross-agent review of feature/billing-redesign with re-review after fixes.
 - Signals: scope=multi-module; risk=medium; destructive=no; decisions=resolved; user-intent=review
 - Assumptions: Repo is a git repo (agentic-review-handoff requires it).

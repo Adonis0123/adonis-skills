@@ -174,7 +174,7 @@ Goal Gate
 - Next: create goal
 ```
 
-Call `get_goal` first when available; with no active goal, call `create_goal` with the objective. Do not add a token budget unless the user asked for one.
+Call `get_goal` first when available; with no active goal, call `create_goal` with the objective. Do not add a token budget unless the user asked for one. After the work is proven complete, call Codex `update_goal({status: "complete"})` when that status-only schema is exposed. Use `status: "blocked"` only after the same blocker persists for at least three consecutive goal turns; never use Grok's `message`, `completed`, or `blocked_reason` fields in Codex.
 
 ## Codex tooling: explicit set-now
 
@@ -294,22 +294,33 @@ Goal Gate
 
 ## Codex slash: prompt for reuse
 
-User: "Give me a Codex /goal prompt for this eval improvement loop."
+User: "Give me a Codex /goal prompt to improve `prompts/support-agent.md` until `pnpm eval:prompt -- --suite support-agent` reaches at least 0.92."
 
 ```text
 Goal Gate
 - Decision: suggest
 - Runtime: codex-slash
 - Goal fit: high
-- Objective: Improve the prompt until the eval suite reaches the target score.
-- Done condition: The eval command reaches the target score or further changes require product guidance.
+- Objective: Improve prompts/support-agent.md until the support-agent eval reaches at least 0.92.
+- Done condition: `pnpm eval:prompt -- --suite support-agent` reaches 0.92, or further changes require product guidance.
 - Verification: Surface each eval command, score, failing cases reviewed, and final diff summary.
 - Constraints: Keep prompt edits minimal and do not change eval fixtures unless explicitly approved.
 - Execution strategy: Delegate independent eval analysis only when it reduces context pressure; keep prompt edits serialized and final score/diff verification with the main agent.
 - Checkpoints: Report after each eval run.
 - Stop or ask when: The target cannot be reached without changing policy, product behavior, or eval fixtures.
-- Prompt: /goal Optimize the prompts in [prompt file or directory] until [eval command] reaches [target score]. Execution strategy: Delegate only independent read-only eval analysis that reduces context pressure; serialize prompt edits and keep final score/diff verification with the main agent. After each change, run the eval, inspect failing cases, keep edits minimal, and surface scores and diffs. Stop when the target is met or when further changes require product or policy guidance.
+- Prompt: see Recommended /goal below
 - Next: provide prompt
+```
+
+```text
+/goal Optimize prompts/support-agent.md until `pnpm eval:prompt -- --suite support-agent` reaches at least 0.92.
+Verification: Run `pnpm eval:prompt -- --suite support-agent` after each focused change; surface the score, failing cases reviewed, and final diff summary.
+Constraints: Keep prompt edits minimal; do not change eval fixtures, product behavior, or policy unless explicitly approved.
+Boundaries: Write only prompts/support-agent.md; treat eval fixtures and runner code as read-only.
+Execution strategy: Assess whether independent read-only eval analysis would reduce context pressure; delegate only when it does, serialize prompt edits, and keep final score/diff verification with the main agent.
+Iteration policy: Run at most 5 focused edit/eval rounds; after two rounds with no score improvement, inspect failure clusters and change the hypothesis before retrying.
+Stop when: The eval score reaches at least 0.92 with surfaced evidence, or no in-boundary prompt change can improve the remaining failures.
+Pause if: Reaching the target requires changing policy, product behavior, eval fixtures, credentials, or another file outside the write boundary.
 ```
 
 The user asked for a prompt to copy, so this stays `suggest` even at high fit.
@@ -338,9 +349,9 @@ Capabilities are uncertain, so do not auto-execute even if fit were high.
 
 ## Workflow gate already ran
 
-Existing block says `Route: Full`, `scope=multi-module`, `user-intent=implement`, and `get_goal` shows no active goal.
+Existing block says `Route: Architecture`, `Runtime skill: architecture-hardening-loop`, `scope=multi-module`, `user-intent=implement`, and `get_goal` shows no active goal.
 
-`Route: Full` is a strong goal-fit signal; with the safety gate clear, auto-set.
+Scoped `architecture-hardening-loop` plus implement intent is a strong goal-fit signal; with the safety gate clear, auto-set.
 
 ```text
 Goal Gate

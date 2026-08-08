@@ -29,6 +29,12 @@ REVIEW_BODY = """# 审核任务：测试改动
 
 仓库与范围来自当前测试仓库。
 
+生成时 scope digest：`{{SCOPE_DIGEST}}`
+
+```bash
+{{VERIFY_COMMAND}}
+```
+
 ## 待验证目标
 
 验证行为没有回归。
@@ -95,6 +101,21 @@ class ReviewPromptWriterTest(unittest.TestCase):
             text=True,
         )
 
+    def run_verify(self, prompt_path: Path) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [
+                sys.executable,
+                str(WRITER),
+                "--repo",
+                str(self.repo),
+                "--verify-prompt",
+                str(prompt_path),
+            ],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+
     def dirty_tracked_file(self) -> None:
         (self.repo / "tracked.txt").write_text("changed\n", encoding="utf-8")
 
@@ -134,15 +155,80 @@ class ReviewPromptWriterTest(unittest.TestCase):
         )
         prompt = prompt_path.read_text(encoding="utf-8")
         self.assertIn("artifact_type: review_prompt", prompt)
+        self.assertIn("format_version: 2", prompt)
+        self.assertRegex(prompt, r'scope_digest: "[0-9a-f]{64}"')
         self.assertIn(f'prompt_id: "{payload["prompt_id"]}"', prompt)
         self.assertIn(f'Review-Prompt-ID: `{payload["prompt_id"]}`', prompt)
         self.assertNotIn("{{REVIEW_PROMPT_ID}}", prompt)
+        self.assertNotIn("{{SCOPE_DIGEST}}", prompt)
+        self.assertNotIn("{{VERIFY_COMMAND}}", prompt)
+        self.assertEqual(len(payload["scope_digest"]), 64)
         self.assertNotIn("tracked.patch", prompt)
         self.assertNotIn("manifest.md", prompt)
         created_at = datetime.fromisoformat(payload["created_at"].replace("Z", "+00:00"))
         expires_at = datetime.fromisoformat(payload["expires_at"].replace("Z", "+00:00"))
         self.assertEqual((expires_at - created_at).total_seconds(), 24 * 60 * 60)
         self.assertNotIn(".review-handoff", self.git("status", "--short").stdout)
+
+    def test_staged_same_path_content_drift_fails_digest_verification(self) -> None:
+        (self.repo / "tracked.txt").write_text("staged version one\n", encoding="utf-8")
+        self.git("add", "tracked.txt")
+        body_file = self.root / "body.md"
+        body_file.write_text(REVIEW_BODY, encoding="utf-8")
+        created = self.run_writer("staged-only", body_file)
+        self.assertEqual(created.returncode, 0, created.stderr)
+        prompt_path = Path(json.loads(created.stdout)["prompt_path"])
+
+        fresh = self.run_verify(prompt_path)
+        self.assertEqual(fresh.returncode, 0, fresh.stderr)
+        self.assertEqual(json.loads(fresh.stdout)["status"], "fresh")
+
+        (self.repo / "tracked.txt").write_text("staged version two\n", encoding="utf-8")
+        self.git("add", "tracked.txt")
+        stale = self.run_verify(prompt_path)
+        self.assertEqual(stale.returncode, 2, stale.stderr)
+        payload = json.loads(stale.stdout)
+        self.assertEqual(payload["status"], "stale")
+        self.assertEqual(payload["reason"], "scope_digest_mismatch")
+        self.assertNotEqual(payload["expected_digest"], payload["actual_digest"])
+
+    def test_untracked_newline_path_content_drift_fails_verification(self) -> None:
+        special_path = self.repo / "line\nbreak.txt"
+        special_path.write_text("first\n", encoding="utf-8")
+        artifact = WRITER_MODULE.create_review_prompt(
+            self.repo,
+            "untracked-only",
+            REVIEW_BODY,
+        )
+        self.assertEqual(self.run_verify(artifact.prompt_path).returncode, 0)
+
+        special_path.write_text("second\n", encoding="utf-8")
+        stale = self.run_verify(artifact.prompt_path)
+        self.assertEqual(stale.returncode, 2, stale.stderr)
+        self.assertEqual(json.loads(stale.stdout)["reason"], "scope_digest_mismatch")
+
+    def test_ref_range_requires_and_persists_resolved_refs(self) -> None:
+        (self.repo / "tracked.txt").write_text("second commit\n", encoding="utf-8")
+        self.git("add", "tracked.txt")
+        self.git("commit", "-m", "second")
+        with self.assertRaisesRegex(WRITER_MODULE.WriterError, "requires both"):
+            WRITER_MODULE.create_review_prompt(
+                self.repo,
+                "ref-range",
+                REVIEW_BODY,
+            )
+
+        artifact = WRITER_MODULE.create_review_prompt(
+            self.repo,
+            "ref-range",
+            REVIEW_BODY,
+            base="HEAD^",
+            target="HEAD",
+        )
+        self.assertRegex(artifact.scope_base, r"^[0-9a-f]{40}$")
+        self.assertRegex(artifact.scope_target, r"^[0-9a-f]{40}$")
+        self.assertNotEqual(artifact.scope_base, artifact.scope_target)
+        self.assertEqual(self.run_verify(artifact.prompt_path).returncode, 0)
 
     def test_archives_expired_prompt_without_changing_body(self) -> None:
         self.dirty_tracked_file()
@@ -237,6 +323,18 @@ class ReviewPromptWriterTest(unittest.TestCase):
             exclude_file.read_text(encoding="utf-8"),
             ".review-handoff/\n",
         )
+
+    def test_first_exclude_write_happens_before_scope_digest(self) -> None:
+        self.dirty_tracked_file()
+        protocol_file = self.repo / ".review-handoff/manual.txt"
+        protocol_file.parent.mkdir(parents=True)
+        protocol_file.write_text("protocol\n", encoding="utf-8")
+
+        artifact = self.create_direct(datetime.now(timezone.utc))
+
+        verified = self.run_verify(artifact.prompt_path)
+        self.assertEqual(verified.returncode, 0, verified.stderr)
+        self.assertEqual(json.loads(verified.stdout)["status"], "fresh")
 
     def test_sensitive_body_fails_without_printing_secret(self) -> None:
         self.dirty_tracked_file()

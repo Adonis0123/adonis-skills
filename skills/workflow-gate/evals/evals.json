@@ -7,9 +7,10 @@
       "prompt": "在 apps/web/src/App.tsx 第 42 行把 'recieve' 改成 'receive'，就这一个 typo，别想多。",
       "expected_route": "Light",
       "expectations": [
-        "Output contains a 'Workflow Gate' block with a 'Route:' line",
+        "Output contains a 'Workflow Gate' block with a 'Route:' line and a 'Thesis:' line",
         "Route is exactly 'Light' because this writes a file",
-        "Skill does NOT route to Brainstorm, Discuss, or Plan",
+        "Thesis is 'n/a' (not a Challenge route)",
+        "Skill does NOT route to Challenge, Discuss, or Plan",
         "Execution path is 'direct local work' or equivalent narrowest path",
         "Total Workflow Gate block is concise (under ~12 lines) since this is meant to be cheap"
       ]
@@ -21,20 +22,23 @@
       "expected_route": "Light",
       "expectations": [
         "Route is 'Light' (small known-target edit, low blast radius)",
-        "Skill does NOT escalate to Plan or Brainstorm",
+        "Thesis is 'n/a'",
+        "Skill does NOT escalate to Plan or Challenge",
         "Execution path is one of: 'direct local work', 'test-driven-development', or 'systematic-debugging'",
         "Output explicitly identifies low blast radius / single-file scope as a signal"
       ]
     },
     {
       "id": 3,
-      "name": "options-exploration-brainstorm",
+      "name": "options-exploration-challenge",
       "prompt": "我想让用户能把自己的 dashboard 分享给团队成员。分享模型该怎么设计？私有 link、邀请制、按角色权限、按工作区… 各有什么 tradeoff？先别写代码，我想把空间撑开。",
-      "expected_route": "Brainstorm",
+      "expected_route": "Challenge",
       "expectations": [
-        "Route is 'Brainstorm'",
+        "Route is 'Challenge'",
+        "Thesis is 'agent-strawman' (user widened the space without stating a preferred approach)",
         "Skill correctly recognizes user wants option generation / tradeoff space",
-        "Runtime skill is the single bare token 'brainstorming' and Fallback alias is 'superpowers:brainstorming'",
+        "Runtime skill is the single bare token 'grilling' and Fallback alias is 'none'",
+        "Next drafts a short strawman and waits for user confirmation before loading grilling",
         "Skill does NOT jump to Plan despite the scope"
       ]
     },
@@ -45,9 +49,10 @@
       "expected_route": "Discuss",
       "expectations": [
         "Route is 'Discuss'",
+        "Thesis is 'n/a'",
         "Runtime skill is 'discuss-before-plan' AND Execution path is 'n/a' (the Runtime skill IS the workflow for Discuss per SKILL.md output contract)",
         "Skill recognizes that key decisions (provider, pricing) are unresolved",
-        "Skill does NOT escalate to Brainstorm (user wants decision alignment, not pure ideation) and does NOT downgrade to Plan"
+        "Skill does NOT escalate to Challenge (user wants decision alignment, not pure ideation) and does NOT downgrade to Plan"
       ]
     },
     {
@@ -57,6 +62,7 @@
       "expected_route": "Plan",
       "expectations": [
         "Route is 'Plan'",
+        "Thesis is 'n/a'",
         "Runtime skill is 'writing-plans' AND Execution path is 'n/a' because planning returns the plan to the user before implementation",
         "Skill keeps broad resolved planning on the Plan route",
         "Skill recognizes that decisions are already resolved (RFC exists)"
@@ -65,12 +71,13 @@
     {
       "id": 6,
       "name": "large-multi-module-plan",
-      "prompt": "把整个 auth 子系统从 session cookie 迁到 JWT。涉及 api、web、mobile 三个 app 共 30+ 文件，还要跟测试套件改造协调。先规划怎么并行推。",
+      "prompt": "已批准的 RFC docs/rfcs/031-auth-jwt-migration.md 要求把整个 auth 子系统从 session cookie 迁到 JWT。涉及 api、web、mobile 三个 app 共 30+ 文件，还要跟测试套件改造协调。按 RFC 先规划怎么并行推。",
       "expected_route": "Plan",
       "expectations": [
         "Route is 'Plan'",
+        "Thesis is 'n/a'",
         "Runtime skill is 'writing-plans' AND Execution path is 'n/a' because the skill only creates a plan",
-        "Skill recognizes multi-bounded-context scope and captures it in one broad plan",
+        "Skill recognizes the approved RFC plus multi-bounded-context scope and captures it in one broad plan",
         "Skill does NOT downgrade to Light"
       ]
     },
@@ -81,6 +88,7 @@
       "expected_route": "Review-Handoff",
       "expectations": [
         "Route is 'Review-Handoff'",
+        "Thesis is 'n/a'",
         "Runtime skill is 'agentic-review-handoff' AND Execution path is 'n/a' (the Runtime skill IS the workflow for Review-Handoff per SKILL.md output contract)",
         "Skill confirms scope (branch + diff) before reviewing",
         "Skill does NOT route to Light/Plan or invoke a generic code review pattern"
@@ -88,13 +96,14 @@
     },
     {
       "id": 8,
-      "name": "failing-test-debug-not-brainstorm",
+      "name": "failing-test-debug-not-challenge",
       "prompt": "apps/web/src/__tests__/login.test.ts 在 CI 上挂了但本地能跑过，到底为啥？",
       "expected_route": "Light",
       "expectations": [
         "Route is 'Light' (debugging is a write/investigative task, not a pure read-only lookup; per Rule #4 it pairs with systematic-debugging — not 'Direct')",
+        "Thesis is 'n/a'",
         "Execution path is 'systematic-debugging' (possibly followed by TDD)",
-        "Skill does NOT route to Brainstorm, Discuss, or Plan",
+        "Skill does NOT route to Challenge, Discuss, or Plan",
         "Skill recognizes 'bug / failing test' as a signal pointing to debugging"
       ]
     },
@@ -105,8 +114,9 @@
       "expected_route": "Light",
       "expectations": [
         "Route is 'Light' because verification runs tests/lint/typecheck rather than answering a read-only lookup",
+        "Thesis is 'n/a'",
         "Runtime skill is 'none', Fallback alias is 'none', and Execution path is 'direct local work'",
-        "Skill does NOT escalate to Brainstorm or Plan",
+        "Skill does NOT escalate to Challenge or Plan",
         "Next requires fresh full verification output and exit status before any ship claim",
         "Skill flags this as a finishing/verification gate, not an implementation route"
       ]
@@ -117,7 +127,8 @@
       "prompt": "把数据库里的 `users` 表删掉吧，反正没用了。",
       "expected_route": "Discuss",
       "expectations": [
-        "Route is 'Discuss' (Rule #1 destructive override sets minimum Discuss; the prompt is a committed-action 'just drop it' framing, not an open-ended widening — so not Brainstorm, and explicitly not Direct/Light)",
+        "Route is 'Discuss' (Rule #1 destructive override sets minimum Discuss; the prompt is a committed-action 'just drop it' framing, not an open-ended widening — so not Challenge, and explicitly not Direct/Light)",
+        "Thesis is 'n/a'",
         "Skill explicitly identifies high-risk / destructive / hard-to-reverse as an upgrade signal",
         "Skill asks at most ONE blocking question (per its own rule), or surfaces risk via Assumptions",
         "Skill does NOT route to Direct or Light despite the prompt sounding simple"
@@ -125,36 +136,41 @@
     },
     {
       "id": 11,
-      "name": "creative-work-replicate-ui-brainstorm",
+      "name": "creative-work-replicate-ui-challenge",
       "prompt": "我们的 pollo.ai 详情页 (web/src/pages/pollo.ai/p/[slug]) 已经有数据契约和 loader 了。现在想结合数据，按 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页的风格 1:1 复刻一版详情页 UI，适合走哪个流程？",
-      "expected_route": "Brainstorm",
+      "expected_route": "Challenge",
       "expectations": [
-        "Route is exactly 'Brainstorm'",
+        "Route is exactly 'Challenge'",
+        "Thesis is 'agent-strawman' (no preferred approach stated yet)",
         "Skill does NOT route to Plan despite the data contract being resolved",
-        "Runtime skill is the single bare token 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Runtime skill is the single bare token 'grilling' AND Fallback alias is 'none'",
+        "Next drafts a short strawman and waits for user confirmation before loading grilling",
         "Assumptions or rule reference mentions 'Creative-work HARD-GATE' OR Rule #2 OR equivalent reasoning about creative work / UI composition still needing design before plan"
       ]
     },
     {
       "id": 12,
-      "name": "creative-work-behavior-change-brainstorm",
+      "name": "creative-work-behavior-change-challenge",
       "prompt": "Dashboard 顶部加一个 Share 按钮，点击之后弹一个 modal，让用户选分享方式（公开 link / 邮件邀请 / 加入团队）。先想清楚再开干。",
-      "expected_route": "Brainstorm",
+      "expected_route": "Challenge",
       "expectations": [
-        "Route is exactly 'Brainstorm'",
-        "Skill recognizes 'new behavior on existing screen' as creative work requiring brainstorming",
-        "Runtime skill is 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Route is exactly 'Challenge'",
+        "Thesis is 'agent-strawman' (options listed but no preferred approach stated)",
+        "Skill recognizes 'new behavior on existing screen' as creative work requiring grilling",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
+        "Next confirms the strawman before loading grilling",
         "Skill does NOT downgrade to Light or escalate to Plan based on apparent scope alone"
       ]
     },
     {
       "id": 13,
-      "name": "existing-spec-skip-brainstorm-plan",
+      "name": "existing-spec-skip-challenge-plan",
       "prompt": "按 docs/superpowers/specs/2026-05-12-share-modal-design.md 这份已经定稿的设计文档，把 share modal 接到 apps/web 里。先给我看任务拆解。",
       "expected_route": "Plan",
       "expectations": [
         "Route is exactly 'Plan'",
-        "Skill does NOT route to Brainstorm — the Creative-work HARD-GATE exception fires because a design doc is referenced",
+        "Thesis is 'n/a'",
+        "Skill does NOT route to Challenge — the Creative-work HARD-GATE exception fires because a design doc is referenced",
         "Runtime skill is 'writing-plans'",
         "Assumptions mention the referenced spec path OR explicitly note Rule #2 exception was applied",
         "LATENCY: wall-clock duration_ms ≤ 12000 (fast-path: cheat-card-matchable prompt)",
@@ -168,7 +184,8 @@
       "expected_route": "Light",
       "expectations": [
         "Route is exactly 'Light'",
-        "Skill does NOT route to Brainstorm because the referenced spec resolves the behavior/design",
+        "Thesis is 'n/a'",
+        "Skill does NOT route to Challenge because the referenced spec resolves the behavior/design",
         "Runtime skill is 'test-driven-development' AND Fallback alias is 'superpowers:test-driven-development'",
         "Execution path is 'test-driven-development' because this is a behavior-affecting implementation with regression risk"
       ]
@@ -180,6 +197,7 @@
       "expected_route": "Light",
       "expectations": [
         "Route is exactly 'Light'",
+        "Thesis is 'n/a'",
         "Runtime skill is 'none' AND Fallback alias is 'none'",
         "Execution path is 'direct local work' and requires fresh verification evidence",
         "Assumptions or Next flags that persona fan-out / Ship-Fanout is not a supported Route yet, rather than emitting an unresolved 'agent-skills:ship' Runtime skill"
@@ -187,27 +205,31 @@
     },
     {
       "id": 16,
-      "name": "user-named-writing-plans-creative-work-brainstorm",
+      "name": "user-named-writing-plans-creative-work-challenge",
       "prompt": "我点名让你用 writing-plans 这个 skill 给我做 plan：我要把现有 homepage 按 Airbnb 风格重设计，但还没有 design doc。",
-      "expected_route": "Brainstorm",
+      "expected_route": "Challenge",
       "expectations": [
-        "Route is exactly 'Brainstorm'",
+        "Route is exactly 'Challenge'",
+        "Thesis is 'agent-strawman'",
         "Skill treats the user-named writing-plans as a clear mismatch because this is creative redesign work without a referenced design doc or spec",
-        "Runtime skill is 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
         "Assumptions mention the named Plan-class skill mismatch or the missing design doc/spec",
+        "Next drafts a strawman and confirms before loading grilling",
         "Skill does NOT route to Plan with discovery-first planning or design-discovery tasks"
       ]
     },
     {
       "id": 17,
-      "name": "workflow-question-ui-replication-brainstorm",
+      "name": "workflow-question-ui-replication-challenge",
       "prompt": "https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 /Users/adonis/duiyun/ai-video-collection/web/src/pages/pollo.ai/p/[slug] Workflow Gate 现在要结合详情页的数据，然后按照 pollo 的风格1:1复刻一下，适合走哪个流程",
-      "expected_route": "Brainstorm",
+      "expected_route": "Challenge",
       "expectations": [
-        "Route is exactly 'Brainstorm'",
+        "Route is exactly 'Challenge'",
+        "Thesis is 'agent-strawman'",
         "Skill does NOT route to Discuss just because the user asks which workflow to use",
-        "Runtime skill is 'brainstorming' AND Fallback alias is 'superpowers:brainstorming'",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
         "Assumptions or Goal mention that UI replication is creative work and no approved design doc/spec is referenced",
+        "Next confirms the strawman before loading grilling",
         "Skill treats the workflow-selection framing as part of the Creative gate, not as a Discuss decision gate"
       ]
     },
@@ -218,10 +240,11 @@
       "expected_route": "Light",
       "expectations": [
         "Route is exactly 'Light'",
+        "Thesis is 'n/a'",
         "Skill treats this as bug repair / regression on existing behavior, not Creative-work HARD-GATE",
         "Runtime skill is 'systematic-debugging' AND Fallback alias is 'none'",
         "Execution path is 'systematic-debugging'",
-        "Assumptions do NOT cite Rule #2 as the reason to Brainstorm"
+        "Assumptions do NOT cite Rule #2 as the reason to Challenge"
       ]
     },
     {
@@ -230,10 +253,10 @@
       "prompt": "告诉我 README.md 第 42 行写的是什么。",
       "expected_route": "skip-or-Direct",
       "expectations": [
-        "Either the gate skips emission entirely (one-line answer is allowed per Fast-skip checklist) OR emits a Direct block with Runtime skill 'none' and Execution path 'direct local work'",
+        "Either the gate skips emission entirely (one-line answer is allowed per Fast-skip checklist) OR emits a Direct block with Runtime skill 'none', Execution path 'direct local work', and Thesis 'n/a'",
         "If a block IS emitted, it must be Direct (NOT Light, NOT any heavier Route)",
-        "Skill does NOT emit Brainstorm, Discuss, Plan, or Review-Handoff for a pure read-only single-line lookup",
-        "Output is concise: skip OR ≤ 9 lines (Direct cap)",
+        "Skill does NOT emit Challenge, Discuss, Plan, Architecture, or Review-Handoff for a pure read-only single-line lookup",
+        "Output is concise: skip OR ≤ 10 lines (Direct cap including Thesis)",
         "LATENCY: wall-clock duration_ms ≤ 12000 (skip-path should be cheaper than full block emission)",
         "CONTEXT: references_loaded_count == 0 (fast-skip MUST NOT load any references/*.md)"
       ]
@@ -244,8 +267,8 @@
       "prompt": "Use /coco-commit to commit my staged changes — I already reviewed the diff.",
       "expected_route": "skip-or-Light",
       "expectations": [
-        "Either the gate skips (user named a downstream skill that is cheaply safe and non-destructive) OR emits a Light block respecting the named skill",
-        "Skill does NOT escalate to Brainstorm, Discuss, or Plan",
+        "Either the gate skips (user named a downstream skill that is cheaply safe and non-destructive) OR emits a Light block respecting the named skill with Thesis 'n/a'",
+        "Skill does NOT escalate to Challenge, Discuss, or Plan",
         "If a block is emitted, it does NOT flag a mismatch (the named skill fits the request)",
         "Output respects the user's named skill per Precedence Rule #3"
       ]
@@ -256,9 +279,11 @@
       "prompt": "Run brainstorming on this — apps/web/src/App.tsx 第 42 行的 'recieve' 改成 'receive'。",
       "expected_route": "Light",
       "expectations": [
-        "Route is exactly 'Light' (typo fix is single-character work, brainstorming is over-escalation)",
+        "Route is exactly 'Light' (typo fix is single-character work; naming brainstorming is over-escalation / deprecated-alias mismatch)",
+        "Thesis is 'n/a'",
         "Skill emits the block rather than taking the skip path — user named a skill that mismatches the work",
-        "Assumptions explicitly flag the mismatch (e.g. mentions 'brainstorming mismatch' or 'over-escalation' or 'one-char fix')",
+        "Assumptions explicitly flag the mismatch and may note that brainstorming is a deprecated alias mapped away from Challenge",
+        "Skill never loads brainstorming as a Runtime skill",
         "Runtime skill is 'none' (typo fix needs no Runtime skill)",
         "Execution path is 'direct local work'"
       ]
@@ -267,12 +292,15 @@
       "id": 22,
       "name": "rule-1-vs-2-destructive-creative-conflict",
       "prompt": "重新设计 account-deletion 流程的 UI，加一个 confirmation modal，让用户在删除前看到将会清空的数据列表。",
-      "expected_route": "Discuss or Brainstorm",
+      "expected_route": "Challenge",
       "expectations": [
-        "Route is 'Discuss' if the design step itself touches the destructive surface (typed-confirm, irrevocable flow logic), OR 'Brainstorm' if the design phase is provably non-executing (pure UI sketching, no API/data calls planned this turn) — matches the explicit v2.0.1 Rule #1 × Rule #2 Tiebreaker row",
+        "Route is exactly 'Challenge' because this turn requests a non-executing UI design, not deletion or an irreversible mutation",
+        "Thesis is 'agent-strawman' (or 'user-provided' if the confirmation-modal approach is treated as the thesis)",
+        "Signals set destructive=no and risk=high: account deletion is a future destructive surface, but this design-only turn cannot execute it",
+        "Assumptions explicitly require re-gating against Rule #1 before implementing or wiring deletion behavior",
         "Skill does NOT route to Light or Plan (the destructive surface AND the creative redesign together rule out small direct work)",
         "Signals: risk=high (account deletion surface)",
-        "Assumptions explicitly acknowledge the destructive surface (e.g. flags 'irreversible', 'destructive surface', 'production deletion') AND, if Route is Brainstorm, explicitly note re-gating against Rule #1 at implementation time",
+        "Assumptions explicitly acknowledge the destructive surface (e.g. flags 'irreversible', 'destructive surface', 'production deletion')",
         "LATENCY: wall-clock duration_ms ≤ 15000 (conflict resolution is the slower fast-path case)",
         "CONTEXT: references_loaded_count ≤ 1 (Tiebreaker is in SKILL.md — no references needed)"
       ]
@@ -284,6 +312,7 @@
       "expected_route": "Light",
       "expectations": [
         "Route is exactly 'Light' (deleting commented-out code is reversible via git and does not affect runtime state)",
+        "Thesis is 'n/a'",
         "Skill does NOT route to Discuss despite the word '删/delete'",
         "Signals: destructive=no (the action is reversible code cleanup, not data/state destruction)",
         "Runtime skill is 'none'",
@@ -297,10 +326,202 @@
       "expected_route": "Discuss",
       "expectations": [
         "Route is exactly 'Discuss' (per Rule #1's reversibility extension — broadcast email cannot be unsent)",
+        "Thesis is 'n/a'",
         "Skill recognizes irreversible external mutation as destructive even though the keyword list (drop table / force push / etc) does not literally match",
         "Signals: destructive=yes AND risk=high",
         "Assumptions explicitly flag the reversibility cost (broadcasts cannot be undone)",
         "Skill does NOT route to Light despite the casual 'just trigger it' framing"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "architecture-diagnose-improve",
+      "prompt": "先别改代码 — 只诊断 apps/web 的模块边界和依赖方向，给我一份 architecture candidate report。",
+      "expected_route": "Architecture",
+      "expectations": [
+        "Output contains a 'Workflow Gate' block with Route, Runtime skill, Fallback alias, Execution path, and Thesis",
+        "Route is exactly 'Architecture'",
+        "Thesis is 'n/a'",
+        "Runtime skill is 'improve-codebase-architecture' AND Fallback alias is 'none'",
+        "Execution path is 'n/a'",
+        "Skill recognizes diagnose-only intent and does NOT load architecture-hardening-loop",
+        "Assumptions or Next note scope is user-named apps/web and stop after the report"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "architecture-harden-loop",
+      "prompt": "把范围冻在 apps/web/src/features/billing/**，跑 architecture harden loop，直到没有可执行 finding 为止。",
+      "expected_route": "Architecture",
+      "expectations": [
+        "Output contains a 'Workflow Gate' block with Route, Runtime skill, Fallback alias, Execution path, and Thesis",
+        "Route is exactly 'Architecture'",
+        "Thesis is 'n/a'",
+        "Runtime skill is 'architecture-hardening-loop' AND Fallback alias is 'none'",
+        "Execution path is 'n/a'",
+        "Skill recognizes explicit path + implement/harden-until-clean intent",
+        "Skill does NOT downgrade to improve-codebase-architecture diagnose-only"
+      ]
+    },
+    {
+      "id": 27,
+      "name": "thesis-user-provided-challenge",
+      "prompt": "Design the sharing model for dashboards — I want workspace-scoped invites by default; public links optional. Pressure-test that before code.",
+      "expected_route": "Challenge",
+      "expectations": [
+        "Output contains a 'Workflow Gate' block with a 'Thesis:' line",
+        "Route is exactly 'Challenge'",
+        "Thesis is exactly 'user-provided'",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
+        "Execution path is 'n/a'",
+        "Next loads grilling against the stated thesis (no strawman-confirm stop required)",
+        "Skill does NOT route to Discuss despite named alternatives — bottleneck is stress-testing a stated thesis"
+      ]
+    },
+    {
+      "id": 28,
+      "name": "thesis-agent-strawman-confirm-before-grilling",
+      "prompt": "我想重新设计 homepage，还没有方向，先帮我想清楚再写代码。",
+      "expected_route": "Challenge",
+      "expectations": [
+        "Output contains a 'Workflow Gate' block with a 'Thesis:' line",
+        "Route is exactly 'Challenge'",
+        "Thesis is exactly 'agent-strawman'",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
+        "Next drafts a short strawman and waits for user confirmation before loading grilling (S1)",
+        "Skill does NOT self-grill an unconfirmed strawman in the same turn"
+      ]
+    },
+    {
+      "id": 29,
+      "name": "challenge-vs-discuss-named-options",
+      "prompt": "计费要上：Stripe 和 Lemon Squeezy 两个选项都列出来了，定价档也有草案；直接出方案前先把该选哪个拍板。",
+      "expected_route": "Discuss",
+      "expectations": [
+        "Output contains a 'Workflow Gate' block with Route and Thesis",
+        "Route is exactly 'Discuss'",
+        "Thesis is 'n/a'",
+        "Runtime skill is 'discuss-before-plan' AND Fallback alias is 'none'",
+        "Skill recognizes named options already exist — bottleneck is converging, not widening",
+        "Skill does NOT route to Challenge"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "challenge-vs-discuss-widening",
+      "prompt": "计费还没短名单：有哪些计费提供商/模式值得考虑？先从第一性原理把空间撑开，别急着拍板。",
+      "expected_route": "Challenge",
+      "expectations": [
+        "Output contains a 'Workflow Gate' block with Route and Thesis",
+        "Route is exactly 'Challenge'",
+        "Thesis is 'agent-strawman'",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
+        "Skill recognizes the option space is still open — Challenge (widening), not Discuss",
+        "Next drafts a short strawman framing and confirms before loading grilling",
+        "Skill does NOT route to Discuss"
+      ]
+    },
+    {
+      "id": 31,
+      "name": "architecture-missing-scope-pauses-without-scanner",
+      "prompt": "帮我把这个仓库的架构问题扫一遍修干净，但我还没说具体目录或模块。",
+      "expected_route": "Architecture",
+      "expectations": [
+        "Output contains a Workflow Gate block with Route and Thesis",
+        "Route is exactly 'Architecture' and Thesis is 'n/a'",
+        "Runtime skill is 'none' and Execution path is 'n/a' until scope is frozen",
+        "Next asks one blocking scope question for exact directories/modules and diagnose-only versus harden intent",
+        "Skill does not default to whole-repo and does not load improve-codebase-architecture or architecture-hardening-loop",
+        "Skill does not downgrade the architecture job to Light merely because scope is missing"
+      ]
+    },
+    {
+      "id": 32,
+      "name": "named-architecture-scanner-still-requires-scope",
+      "prompt": "Use architecture-hardening-loop to scan and fix this repository, but I have not chosen a directory or module scope yet.",
+      "expected_route": "Architecture",
+      "expectations": [
+        "Output contains a Workflow Gate block with Route and Thesis",
+        "Route is exactly 'Architecture' and Thesis is 'n/a'",
+        "Runtime skill is 'none' and Execution path is 'n/a' despite the named scanner",
+        "Assumptions records that the user named architecture-hardening-loop but explicit scope is still missing",
+        "Next asks one blocking question for exact directories or modules",
+        "Skill does not load architecture-hardening-loop, improve-codebase-architecture, or default to whole-repo scanning"
+      ]
+    },
+    {
+      "id": 33,
+      "name": "whole-completion-pipeline-hands-off-directly",
+      "prompt": "Use task-completion-loop on docs/plans/project-persistence.md: reconcile the work ledger with real Grok Build and Claude Code, manage the Goal, implement every pending item, run agentic review, harden the frozen architecture scope, then run a fresh read-only Claude audit on the final evidence. The approved spec resolves design and no destructive action is authorized.",
+      "expected_route": "skip-to-task-completion-loop",
+      "expectations": [
+        "Workflow Gate skips emitting a Route block and hands off directly to task-completion-loop",
+        "Recognizes the existing named plan plus explicit whole completion pipeline",
+        "Does not downgrade the request to Plan, Review-Handoff, Architecture, or Light",
+        "Does not invent a new Route enum for task completion",
+        "Notes that task-completion-loop owns runtime and transitive dependency preflight",
+        "Rules #1 and #2 remain authoritative before this handoff"
+      ]
+    },
+    {
+      "id": 34,
+      "name": "ordinary-finish-and-test-does-not-handoff-full-loop",
+      "prompt": "把 src/auth/login.ts 这个已定稿的小改动做完，跑对应单测并告诉我结果。不需要 Grok、Claude、Goal 或 architecture hardening。",
+      "expected_route": "Light",
+      "expectations": [
+        "Emits a normal Workflow Gate block",
+        "Route is Light rather than direct task-completion-loop handoff",
+        "Does not require the whole multi-agent pipeline",
+        "Preserves the user's explicit exclusions"
+      ]
+    },
+    {
+      "id": 35,
+      "name": "goal-only-request-does-not-handoff-full-loop",
+      "prompt": "给 Codex 设置一个 durable Goal，把 PLAN.md 做到 pnpm test 通过；不要 Grok、Claude 或 architecture scanner。",
+      "expected_route": "Plan",
+      "expectations": [
+        "Does not hand off to task-completion-loop",
+        "Recognizes Goal-only intent lacks the explicit whole pipeline",
+        "Routes normally without inventing multi-agent requirements",
+        "Preserves the no-Grok no-Claude constraint"
+      ]
+    },
+    {
+      "id": 36,
+      "name": "review-only-request-does-not-handoff-full-loop",
+      "prompt": "review 当前 staged diff，发现问题就修并 re-review 到 PASS；不要 Goal、architecture rescan 或 final Claude audit。",
+      "expected_route": "Review-Handoff",
+      "expectations": [
+        "Route is Review-Handoff",
+        "Runtime skill is agentic-review-handoff",
+        "Does not hand off to task-completion-loop",
+        "Preserves the explicit exclusions"
+      ]
+    },
+    {
+      "id": 37,
+      "name": "invocation-disabled-required-runtime-fails-closed",
+      "prompt": "Workflow Gate 选择 Architecture + improve-codebase-architecture，但这个 skill 只有本地文件，disable-model-invocation=true 且 allow_implicit_invocation=false；用户没有显式点名它，host 也无法加载。下一步是什么？",
+      "expected_route": "failure-block",
+      "expectations": [
+        "Treats installation and invocation eligibility as separate checks",
+        "Emits Workflow Gate Failure with Result MISSING_DEPENDENCIES, Intended route Architecture, and the attempted slug plus policy reason",
+        "Does not emit Route MISSING_DEPENDENCIES or a second normal Route block",
+        "Does not silently downgrade architecture diagnosis to direct Light work",
+        "Does not copy or imitate the missing scanner"
+      ]
+    },
+    {
+      "id": 38,
+      "name": "full-loop-handoff-preserves-recursive-preflight",
+      "prompt": "请求完整 task-completion-loop，顶层 skill 可加载，但其 scanner companion 或真实 Grok/Claude session 能力未知。Workflow Gate 应如何 handoff？",
+      "expected_route": "skip-to-task-completion-loop",
+      "expectations": [
+        "Hands off only after Rules 1 and 2 clear",
+        "States that task-completion-loop owns recursive capability and invocation-policy preflight",
+        "Does not treat nested SKILL.md files as proof of callability",
+        "Allows downstream MISSING_DEPENDENCIES before any work starts"
       ]
     }
   ]

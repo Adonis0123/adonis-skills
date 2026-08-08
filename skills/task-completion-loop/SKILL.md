@@ -1,9 +1,9 @@
 ---
 name: task-completion-loop
-description: "Orchestrate the explicit full completion of an existing plan, spec, or unfinished non-trivial coding task through a scoped work ledger, real host plus Grok Build plus Claude Code convergence, Goal Gate, implementation and runtime verification, agentic review-fix-re-review, bounded architecture hardening, and a fresh read-only Claude Code blind audit. Use when the user explicitly asks for task-completion-loop, a full multi-agent finish sequence, three-agent convergence before implementation, a full completion loop, or autonomous implementation reviewed until clean. Do not trigger for an ordinary implement-and-test request, quick edits, one-shot tests, read-only reviews, open-ended design, or destructive work whose scope is not approved."
+description: "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline. Do not use for ordinary implement-and-test, Goal-only execution, review-fix-re-review alone, architecture hardening alone, quick edits, one-shot tests, read-only review, open-ended design, or destructive work without approved scope."
 metadata:
   author: adonis
-  version: "1.2.0"
+  version: "1.4.0"
 ---
 
 # Task Completion Loop
@@ -45,7 +45,7 @@ metadata:
 
 在讨论、Goal、源码修改前：
 
-1. 解析每个 skill 及其传递硬依赖。特别检查 `architecture-hardening-loop` 的 scanner 等嵌套能力，以及其嵌套 review 是否把 `PASS_WITH_CONCERNS` 映射为 `HUMAN_GATE`；合同不兼容视为缺少可用能力。不要等实现后才发现缺失。
+1. 解析每个 skill、传递硬依赖和 invocation policy。特别检查 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter 等嵌套能力，以及其嵌套 review 是否把 `PASS_WITH_CONCERNS` 映射为 `HUMAN_GATE`；`disable-model-invocation` / `allow_implicit_invocation: false` 且用户未显式点名、合同不兼容或只能找到文件但无法加载，都视为缺少本轮可用能力。不要等实现后才发现缺失。
 2. 为 Grok / Claude 解析真实产品身份、创建方式、可恢复句柄和消息交换能力；Claude 还要有可验证的只读审查方式。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
 
@@ -96,7 +96,7 @@ Task Completion Result
 
 原始 `PENDING` 不能被 reviewer 建议偷换成 `Backlog`；它只能完成、被有效决策取代、明确排除或进入 `HUMAN_DECISION`。
 
-把 `HEAD + tracked diff + 相关 untracked 内容` 视为 evidence id。优先复用依赖 skill 的冻结证据。任何范围内代码或测试修改都会使旧快照的下游 test/review/audit 结论过期。
+正式 evidence id 采用 `agentic-review-handoff` 的 `{ baseSha, pathFilter, digest, coveredPaths, sourceRound }`。相等性只比较 `baseSha + pathFilter + digest`；`coveredPaths` 仅供审计。优先复用依赖 skill 的冻结证据，但每道门禁前后必须用同一 base/filter 执行 `review-loop evidence` 重算；只拿到 verdict、packet path、相同 HEAD 或相同 `git status` 不足以证明快照相同。任何范围内代码或测试修改都会使旧快照的下游 test/review/audit 结论过期。
 
 ## Phase 1：三方收敛与决策门
 
@@ -115,9 +115,22 @@ Task Completion Result
 ### C. 用户拥有的决策
 
 - 权威文档已决定且代码证据一致：不要重新提问。
-- 仍有 `HUMAN_DECISION`，或用户显式要求 `grill-with-docs`：加载它及委托的 skill；事实先查环境，决策一次只问一个，并给推荐答案。
+- 仍有 `HUMAN_DECISION`，或用户显式要求 `grill-with-docs`：加载它及委托的 skill；事实先查环境，遵循 `grilling` 的 design-tree frontier rounds——同一轮可询问所有前置条件已满足且彼此不依赖的问题，每题给推荐答案；不要用本 Skill 的偏好覆盖依赖协议。
 - 调用前解析仓库认可的领域文档位置，把 `domain-modeling` 可能写入的 glossary / ADR 路径纳入冻结写边界；不能安全写入时返回 `HUMAN_GATE`。
 - Agent 一致不能替用户决定。用户确认 shared understanding 前返回 `HUMAN_GATE`，不创建 Goal、不改源码。
+
+每轮用户答复后由本 Skill 从实际对话和 working-tree diff 记录可消费的收敛产物；不要求第三方 wrapper 发明它没有定义的返回 schema：
+
+```text
+Human Decision Convergence
+- Resolved decisions:
+- Unresolved frontier:
+- User confirmation: pending | confirmed
+- Domain docs touched: <actual paths or none>
+- Scope / exclusions changed: <details or none>
+```
+
+只有 `Unresolved frontier: none`、用户已确认，并且 glossary / ADR 实际 touched paths 都落在预检写边界内，才能进入 Goal Gate。
 
 记录：
 
@@ -139,10 +152,19 @@ Three-party Convergence
 收敛后调用 `goal-gate`，严格服从其 `Decision` / `Next`：
 
 - `wait for user /goal`、`ask approval` 或 `defer`：返回 `HUMAN_GATE` 并停止。生成 prompt 不代表 Goal 已激活。
-- 已有 Goal：按依赖协议先问继续、完成或替换；不嵌套、不静默复用。
+- 已有 Goal：从 native 工具、产品状态或调用方传入的可核对 parent contract 比较 objective、冻结范围、Done condition 与 completion owner；native getter 不是唯一证据源。按下表确定 ownership，冲突或证据不足才 `defer`。
 - 可激活或采用时，Goal 覆盖任务账本、冻结范围、验证、三道终态门禁、协议写和外部写边界。
 
-Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道门禁覆盖同一最终 evidence id；最后才完成 Goal。
+Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道门禁覆盖同一最终 evidence id。只有本 Skill 拥有完成权时，才在这些条件满足后完成 Goal。
+
+| Goal relationship     | Behavior                                                                                             | Completion owner                     |
+| --------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `none`                | Create this Loop's Goal after the safety gate clears                                                 | `created-by-loop`                    |
+| `exact-same-goal`     | `Decision: set-now`, `Next: continue active goal`; do not ask again, create, or replace              | this Skill                           |
+| `broader-compatible`  | The parent objective, scope, and Done condition explicitly contain this Loop checkpoint; continue it | parent orchestrator; checkpoint only |
+| `conflicting/unclear` | `Decision: defer`; return `HUMAN_GATE`                                                               | none                                 |
+
+只有 `created-by-loop` / `exact-same-goal` 由本 Skill 完成。`broader-compatible` 即使本 Loop 已完成，也保持父 Goal active，并报告 `Goal: active-checkpoint`。
 
 ## Phase 3：实现与验证
 
@@ -162,7 +184,7 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 
 调用 `agentic-review-handoff` 自动闭环；默认 reviewer 为 Grok，用户另指定则从其。透传其原生终态，不复制 packet 状态机：
 
-- `PASS` / `NO_FINDINGS`：记录 packet、session、命令和 evidence id，继续。
+- `PASS` / `NO_FINDINGS`：核对返回的 `baseSha + pathFilter + digest`，并用 `review-loop evidence` 对当前 worktree 重算一致后才继续；缺字段或 mismatch 时重跑，不得仅凭 verdict 复用。
 - `BLOCKED`：按依赖协议修复、验证、续同一 packet。
 - `PASS_WITH_CONCERNS` 且 lifecycle 为 `awaiting_user_decision`：返回 `HUMAN_GATE`。只有用户能选择 `run --continue` 或 `close --reason accept-concerns`，本 Skill 不代关。前者按依赖协议续同一 packet；后者只有在用户 Decision Closure 已记录且 packet 归档后才算收口，继续时保留原始 verdict，不改写为 `PASS`。
 - delivery/hash/deadlock/budget 异常：返回 `HUMAN_GATE`。
@@ -175,7 +197,12 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 Result: NO_ACTIONABLE_FINDINGS
 ```
 
-当前依赖若发现 `Fix`，会对 active parent Goal 再调用 `goal-gate`；该合同要求 `defer`。此时如实返回 `HUMAN_GATE`，只问是否在兼容的现有 Goal 下继续该 Fix。用户确认后恢复同一 Goal，不创建嵌套 Goal。
+若依赖发现 `Fix`，先核对它是否属于 parent Goal 已冻结的范围与 Done condition：
+
+- **兼容且用户已显式要求完整闭环**：`goal-gate` 视为同一 active Goal 的继续，采用 `Decision: set-now`、`Next: continue active goal`。直接在同一 Goal 下完成 Fix；不创建嵌套 Goal，不暂停询问，也不由内层 architecture loop 完成父 Goal。
+- **冲突或归属不明**：服从 `goal-gate` 的 `Decision: defer`，返回 `HUMAN_GATE`，只问如何处理冲突或 scope 归属；不把新工作静默塞进 parent Goal。
+
+`architecture-hardening-loop` 成功时必须返回 `Goal: active-checkpoint` 和可重算的 `Evidence id`，把 `NO_ACTIONABLE_FINDINGS` 作为父 Goal 的一个 checkpoint。只有本 Skill 本身拥有当前 Goal 时，才在 fresh Claude audit 与全部最终 evidence 门禁完成后执行 completion；若本 Skill 也是更大 parent Goal 的 `broader-compatible` checkpoint，则继续由更外层 owner 完成。
 
 若依赖实施过 Fix 或调用了自动 review，其完成报告的 Grok evidence 必须包含最终 review verdict、packet 和 lifecycle；零 Fix 分支应记录 review `not-run` 与终态 consult。lifecycle 仍为 `awaiting_user_decision`，或 `PASS_WITH_CONCERNS` 没有用户 Decision Closure 证据时，返回 `HUMAN_GATE`，仅把 `run --continue` 与 `close --reason accept-concerns` 交给用户；本 Skill 与依赖均不得代关。若用户 Decision Closure 已记录、packet 已归档且没有 open Fix，可保留原始 `PASS_WITH_CONCERNS` 并继续。需要 review 却缺少可核对的终态证据时返回 `UNVERIFIED`，不得仅凭 `NO_ACTIONABLE_FINDINGS` 继续。
 
@@ -208,12 +235,12 @@ Result: NO_ACTIONABLE_FINDINGS
 
 ## 终态与报告
 
-| Result                 | 使用条件                                                                                            |
-| ---------------------- | --------------------------------------------------------------------------------------------------- |
-| `COMPLETED`            | 账本无未决项；必需验证通过；三道门禁覆盖同一最终 evidence id；最终盲审无范围内 `Fix`；Goal 最后完成 |
-| `HUMAN_GATE`           | 等待决策、Goal 激活/续用、review concern 接受、权限、凭证、外部状态、范围扩张或预算                 |
-| `MISSING_DEPENDENCIES` | 预检缺少始终要求或本轮实际需要的能力；源码尚未修改                                                  |
-| `UNVERIFIED`           | 实现可能存在，但必需证据未运行、失败或已过期；Goal 不得完成                                         |
+| Result                 | 使用条件                                                                                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `COMPLETED`            | 账本无未决项；必需验证通过；三道门禁覆盖同一最终 evidence id；最终盲审无范围内 `Fix`；owned Goal 已完成，或 parent Goal 保持 active-checkpoint |
+| `HUMAN_GATE`           | 等待决策、Goal 激活/续用、review concern 接受、权限、凭证、外部状态、范围扩张或预算                                                            |
+| `MISSING_DEPENDENCIES` | 预检缺少始终要求或本轮实际需要的能力；源码尚未修改                                                                                             |
+| `UNVERIFIED`           | 实现可能存在，但必需证据未运行、失败或已过期；Goal 不得完成                                                                                    |
 
 时间或 token 见底不是完成理由。
 
@@ -222,7 +249,7 @@ Task Completion Result
 - Scope / exclusions:
 - Work ledger:
 - Three-party decision:
-- Goal:
+- Goal: <completed | active-checkpoint | not-created | deferred-conflict>
 - Final evidence id:
 - Implemented:
 - Verification:
