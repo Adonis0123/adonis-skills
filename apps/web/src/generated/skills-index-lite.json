@@ -24,7 +24,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-24T11:43:54.000Z"
+    "updatedAt": "2026-08-08T13:02:41.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -38,7 +38,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-30T12:30:20.000Z"
+    "updatedAt": "2026-08-08T13:02:41.000Z"
   },
   {
     "slug": "branch-creator",
@@ -160,7 +160,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-17T08:37:29.000Z"
+    "updatedAt": "2026-08-08T13:02:41.000Z"
   },
   {
     "slug": "lingui-next-init",
@@ -213,7 +213,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-16T01:35:45.000Z"
+    "updatedAt": "2026-08-08T13:02:41.000Z"
   },
   {
     "slug": "tailwindcss-next-init",
@@ -240,7 +240,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-30T12:30:20.000Z"
+    "updatedAt": "2026-08-08T13:02:41.000Z"
   },
   {
     "slug": "weekly-report",
@@ -269,7 +269,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-13T11:11:11.000Z"
+    "updatedAt": "2026-08-08T13:02:41.000Z"
   },
   {
     "slug": "zustand-store-scaffold",

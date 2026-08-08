@@ -1,0 +1,82 @@
+[
+  {
+    "query": "给现有 loopback gateway 增加 metrics.localhost，复用 17333 listener，要求 exact Host 路由、登录自启和 curl 验收。",
+    "should_trigger": true
+  },
+  {
+    "query": "todo.localhost 已经由 macOS LaunchAgent 常驻提供只读页面，现在给 YAML todo 补安全 CRUD、ETag 和并发写保护。",
+    "should_trigger": true
+  },
+  {
+    "query": "Build a persistent notes.localhost surface on macOS with a loopback-only daemon and a thin .app launcher.",
+    "should_trigger": true
+  },
+  {
+    "query": "把 blog.localhost 接进现有共享 listener，本地可看 draft，但 public sync 只能发布 visibility=true 的文章。",
+    "should_trigger": true
+  },
+  {
+    "query": "现有本地 dashboard 每次重启 Mac 就没了，请把它改成 launchd 管理的 127.0.0.1 服务，并保留稳定 localhost URL。",
+    "should_trigger": true
+  },
+  {
+    "query": "给 skills.localhost 增加第二个只读 catalog surface，要求未知 Host fail closed，不能走 default admin fallback。",
+    "should_trigger": true
+  },
+  {
+    "query": "我要一个双击就能打开 reports.localhost 的 macOS .app，后端复用已有 loopback daemon，不要复制业务逻辑。",
+    "should_trigger": true
+  },
+  {
+    "query": "审查这个 persistent localhost 文件管理器的 access boundary、Origin guard、atomic rename 和 LaunchAgent 生命周期，然后修掉问题。",
+    "should_trigger": true
+  },
+  {
+    "query": "docs.localhost 和 search.localhost 现在各跑一个后台 Node 进程，请合并到同一个 loopback listener，同时保持两个 surface 的 Host 隔离。",
+    "should_trigger": true
+  },
+  {
+    "query": "为现有 files.localhost 增加 JSON 文件写入 API，要求 canonical Origin、If-Match、atomic rename 和独立测试数据目录。",
+    "should_trigger": true
+  },
+  {
+    "query": "给 Next.js 开发服务器上的 admin 页面加普通 CRUD，继续用 pnpm dev，不需要固定 localhost 子域、常驻 daemon 或登录自启。",
+    "should_trigger": false
+  },
+  {
+    "query": "metrics.localhost 已经正常运行，帮我打开页面切到 Errors、看 console 并截一张移动端图，不要改服务。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 Lighthouse 和 SEO 工具 audit https://example.com，列出可访问性与性能问题。",
+    "should_trigger": false
+  },
+  {
+    "query": "把这个 Next.js 应用部署到 Vercel production，并配置公开域名。",
+    "should_trigger": false
+  },
+  {
+    "query": "做一个完全原生的 SwiftUI 菜单栏计时器，不需要 HTTP server、localhost URL 或 webview。",
+    "should_trigger": false
+  },
+  {
+    "query": "临时运行一次 python3 -m http.server 看 docs 目录，用完就关，不需要稳定 URL 或后台常驻。",
+    "should_trigger": false
+  },
+  {
+    "query": "给线上 api.example.com 增加多租户 Host routing 和 Kubernetes ingress。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我修改本地 index.html 的颜色，直接双击文件查看，不需要 localhost server。",
+    "should_trigger": false
+  },
+  {
+    "query": "检查一个已经运行的 localhost 页面为什么按钮点不动，只做浏览器复现和 console/network 诊断。",
+    "should_trigger": false
+  },
+  {
+    "query": "写一个 Node CLI，把 YAML 文件里的 todo 标记为完成，不提供网页、不常驻、不绑定 HTTP 端口。",
+    "should_trigger": false
+  }
+]

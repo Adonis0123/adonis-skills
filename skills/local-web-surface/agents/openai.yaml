@@ -1,0 +1,4 @@
+interface:
+  display_name: "Local Web Surface"
+  short_description: "Build persistent macOS localhost surfaces"
+  default_prompt: "Use $local-web-surface only when this task needs a persistent macOS localhost identity, loopback service lifecycle, login startup, shared gateway, or .app launcher; define access and publication boundaries before implementation."

@@ -1,0 +1,131 @@
+{
+  "skill_name": "local-web-surface",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "reuse-one-daemon-for-todo-and-blog",
+      "prompt": "这是一次只读方案验收，不要改文件或启动服务。现有 macOS 工具在 127.0.0.1:17333 上由 com.example.skills-web LaunchAgent 提供 skills.localhost。另一个仓库拥有 todos/todos.yaml、posts/、raw/、notes/ 和 digests/。用户要求新增 todo.localhost（完整 CRUD）和个人使用的 blog.localhost；本地 Blog 要展示 posts 中显式 public:true 与 public:false 的成文，支持目录分类、frontmatter tags、all/public/private 组合筛选，但公共 sync 仍只能发布 public:true，raw/notes/digests 不能混入文章列表。还要登录自启，以及两个可从 Spotlight 打开的 app。请给出最实用的架构、依赖方向、最小实施顺序和验收证据。",
+      "expected_output": "复用一个 loopback listener，以 exact Host 路由三种 surface；Todo/Blog domain 留在数据仓库，通过窄 handler value contract 接入 gateway；Todo repository 是唯一写入口并使用 ETag、串行写和 atomic rename，只有不可消除的多进程 writer 才加跨进程 lock；Blog 把 local catalog 与 public projection 分开，本地只扫描 posts 并接纳显式 true/false，公共 sync 只接纳 true，缺失/非法状态 fail closed，raw/notes/digests 排除；明确 local-only/private 是发布状态而非保密，记录 access/threat boundary，必要时增加认证；投影 visibility、目录分类和 tags 并组合筛选；两个 app 是薄 opener；给出 TDD、curl、launchctl、桌面/移动浏览器和临时 public sync 隔离验收。",
+      "files": [],
+      "expectations": [
+        "明确推荐复用单一 127.0.0.1 listener，而不是为 Todo 和 Blog 各起一个 daemon",
+        "使用 exact Host allowlist，并让未知 Host 返回 421、跨 surface 路由不可见",
+        "把 Todo/Blog domain 和数据规则留在数据仓库，gateway 只依赖窄 request/response handler contract",
+        "Todo 唯一写入口包含 strong ETag/If-Match、进程内串行、同目录 temp file 和 atomic rename；只有多个 OS 进程必须直接写时才增加跨进程 lock",
+        "明确分开 local catalog 与 public projection：本地 posts 列表/详情包含显式 public:true 和 public:false，公共 sync 仍只包含 public:true",
+        "缺失或非布尔 public fail closed，并明确排除 raw、notes、digests 等非文章域",
+        "本地 Reader 投影目录 category、frontmatter tags 和 visibility，并支持 all/public/private 的组合筛选与 private deep link",
+        "明确 private/local-only 只表示不进入 public projection，不是保密保证；记录 access/threat boundary，并在同机调用者不可信时要求认证/授权或停止暴露",
+        "两个 macOS app 是薄 opener，并复用同一个 LaunchAgent",
+        "验收同时包含 tests/typecheck、curl、launchctl/lsof、桌面与移动浏览器对私密筛选/deep link 的验证，以及临时公共 sync 排除 public:false"
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "safe-file-backed-crud-and-browser-qa",
+      "prompt": "这是一次只读设计评审，不要修改真实 todo。现有 macOS loopback daemon 已通过 todo.localhost 提供只读 YAML todo 页面；现在要补增删改查。CLI、网页和 Agent 都会操作同一文件；浏览器可能开两个标签页；页面要在手机上也能用。请说明数据模型、API guard、并发策略、TDD 用例和如何在不污染真实用户数据的前提下完成浏览器验收。",
+      "expected_output": "建立唯一 service/repository writer 和严格 schema，让 CLI、网页和 Agent 都调用它而不是直接写文件；GET 返回 ETag，mutation 要求 If-Match、Origin、JSON、app header 和 body limit；唯一 writer 用串行队列、revision recheck、sync+rename 防覆盖，只有证据证明多个 OS 进程必须直接写时才增加 crash-recoverable lock；冲突 412 保留输入；完整 CRUD 与桌面/移动验收使用临时 fixture，真实页面只读检查。",
+      "files": [],
+      "expectations": [
+        "明确 CLI、网页和 Agent 统一调用一个唯一 service/repository writer，禁止直接拼接或编辑 YAML",
+        "写请求检查 canonical Origin、application/json、应用标记 header、body 上限和 If-Match",
+        "并发方案包含 strong ETag、412 stale conflict、唯一 writer 内串行、revision recheck 和 atomic rename",
+        "仅当无法消除多个 OS 进程直接写时才增加 crash-recoverable lock；此时使用成熟 heartbeat/stale/compromise 协议或 owner identity，并防止旧 owner 删除 replacement lock",
+        "列出 create/read-update-delete、完成/重开、非法字段/日期/状态和冲突测试；仅在多进程 writer 场景增加 lock timeout、崩溃恢复、live lock 不接管和 replacement lock 不误删测试",
+        "说明 412 时 UI 保留用户输入并提示 reload/retry",
+        "浏览器验收覆盖桌面和移动 viewport，自动化 CRUD 使用临时 fixture，不改真实用户 todo"
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "diagnose-orphan-listener-after-reinstall",
+      "prompt": "这是一次只读故障分析，不要 kill 进程。一个 KeepAlive LaunchAgent 的 ProgramArguments 指向 shell 脚本，脚本 exec node_modules/.bin/tsx cli.ts web。每次 install-launcher 做 bootout/bootstrap 后，launchctl 显示新 job last exit code 1，error.log 是 EADDRINUSE；lsof 发现旧 node --require tsx loader 仍监听端口，而且它的父进程已经退出。请给出根因、最小永久修复和可证伪的验证步骤。",
+      "expected_output": "识别 launchd 只跟踪 tsx wrapper 而长期 listener 是其子进程，bootout 后孤儿子进程占端口；让 launchd 直接拥有最终 Node listener（plist 直接 node --import tsx，或 exec-only shell 最后 exec node），一次性只停止已验证归属的旧 listener，随后连续重装两次，确认 launchctl tracked PID 等于 lsof listener、单 listener、无 EADDRINUSE，且各 Host 正常。",
+      "files": [],
+      "expectations": [
+        "根因指向 LaunchAgent 跟踪短命 tsx wrapper、长期 server 子进程在 bootout 后成为孤儿",
+        "永久修复让 launchd 直接拥有最终 Node listener，例如 plist 直接 node --import tsx，或 exec-only shell 最后 exec node；不得再经过会派生子进程的 tsx CLI wrapper",
+        "不建议关闭 KeepAlive、换随机端口或粗暴 kill 所有 node 进程",
+        "一次性清理前要求核对 listener PID、父子关系和完整命令，只停止已验证属于该服务的进程",
+        "连续 install 至少两次，并验证 launchctl tracked PID 等于 lsof listener PID、只有一个 listener、error log 无 EADDRINUSE",
+        "回归验收包含 canonical Hosts、未知 Host 421 和应用页面/API"
+      ]
+    },
+    {
+      "id": 4,
+      "eval_name": "single-repo-read-only-dashboard",
+      "prompt": "这是一次只读方案验收，不要改文件或启动服务。一个单仓库工具已经有 127.0.0.1:17333 的 loopback daemon；用户只想给现有只读运行指标加 metrics.localhost 别名和一个可选 macOS app。没有 Todo、文章、文件写入或公开发布管线。请给出最小设计、实施顺序和验收证据。",
+      "expected_output": "在同一仓库复用现有 listener，增加 exact Host 到只读 metrics handler 的窄映射，并按需生成薄 app opener；只覆盖 Host 隔离、只读 handler、launchd 幂等、curl 和桌面/移动浏览器验收，不引入 Todo、Reader、CRUD、第二个仓库或公共 sync。",
+      "files": [],
+      "expectations": [
+        "复用现有 loopback listener，并增加 metrics.localhost 的 exact Host 映射",
+        "数据与 handler 留在当前单一仓库，gateway 只依赖窄 request/response contract",
+        "明确 Write boundary 为 none，不引入 repository、ETag、If-Match、lock 或 CRUD",
+        "不引入 Todo、Reader、Blog、第二个仓库或公共发布 sync",
+        "可选 macOS app 只是打开 canonical URL 的薄 opener，不启动第二个 daemon",
+        "验收包含适用的 tests/typecheck、未知 Host 421、launchctl/lsof、curl 以及桌面和移动浏览器"
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "private-content-on-shared-mac-needs-access-control",
+      "prompt": "这是只读安全评审，不要启动服务。我要在共享 Mac 上把 private-notes/ 通过 notes.localhost 展示出来。服务只监听 127.0.0.1，我打算用 exact Host 和 Origin 检查，但同机还有不受信任的本地账户和自动化进程。请判断是否足够安全，并给出最小可接受方案。",
+      "expected_output": "明确 loopback、Host 和 Origin 都不是身份认证，服务可能成为读取文件的 confused deputy；private/local-only 只表示不发布，不能保证机密性。要求定义 access/threat boundary，并在展示机密内容前加入真实认证/授权，或停止暴露；Origin/app header 只能作为浏览器写入 guard 的一部分。",
+      "files": [],
+      "expectations": [
+        "明确 127.0.0.1、exact Host 和 Origin 不构成调用者身份认证",
+        "指出同机其他账户或进程可以直接构造 HTTP 请求，服务可能代其读取原本受文件权限保护的内容",
+        "说明 private/local-only 是发布投影状态，不是保密保证",
+        "要求定义 access/threat boundary，并选择真实认证/授权或停止暴露机密内容",
+        "不把自定义应用 header 当作认证"
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "ordinary-dev-server-crud-is-out-of-scope",
+      "prompt": "一个现有 Vite 应用已经用普通 dev server 跑起来了。我只想给当前页面加一个内存态 CRUD 表格，不需要 *.localhost 别名、登录自启、共享 daemon、launchd 或 macOS app。请直接实现。",
+      "expected_output": "识别缺少持久 local surface 信号，因此不套用 local-web-surface 的 gateway/launchd/launcher 流程；转给普通 frontend 与适用的 TDD 工作流，不引入 Host routing、LaunchAgent 或文件锁。",
+      "files": [],
+      "expectations": [
+        "明确当前请求不适用 local-web-surface",
+        "不引入 *.localhost、gateway、LaunchAgent、macOS app 或文件锁",
+        "建议使用普通 frontend 实现和适用的 test-driven-development 流程"
+      ]
+    },
+    {
+      "id": 7,
+      "eval_name": "browser-only-existing-url-is-out-of-scope",
+      "prompt": "metrics.localhost 已经正常运行。帮我打开页面，切换到 Errors 筛选，看看 console，然后截一张移动端图。不要改服务。",
+      "expected_output": "识别这是现有 URL 的浏览器交互/QA，不是构建持久 surface；使用 Browser 或 agent-browser，不修改 daemon、Host routing、launchd 或 launcher。",
+      "files": [],
+      "expectations": [
+        "明确当前请求不适用 local-web-surface 的构建流程",
+        "转给 Browser 或 agent-browser 完成页面交互、console 检查和截图",
+        "不修改 daemon、Host routing、LaunchAgent 或 macOS app"
+      ]
+    },
+    {
+      "id": 8,
+      "eval_name": "implement-host-routed-surface-in-fixture",
+      "prompt": "把随附的最小 loopback gateway fixture 当作只读输入。先用 mktemp -d 创建本次 run 独占的工作目录并复制全部 fixture 文件，只修改这个副本；报告副本路径且不要删除，禁止改原始输入。然后在副本中实现 metrics.localhost：先读现有测试并按 TDD 增加失败用例，再修改 server.mjs；保留 skills.localhost 首页；只允许 exact Host skills.localhost:17333 与 metrics.localhost:17333；未知 Host 返回 421；cross-surface 路径返回 404；GET /api/metrics 只在 metrics host 返回 JSON；CLI 默认只绑定 127.0.0.1。运行 npm test（或 node --test），再用临时 listener 端口配合 curl -H Host 验证 200、421、404，并在结果中给出命令、exit code 和关键响应。用 trap 或等价方式记录本 run 启动的 PID；curl 后只停止该 PID、wait 回收，并报告 kill -0 已确认进程不存在。不要安装或重启真实 LaunchAgent，不要读写真实用户数据。",
+      "expected_output": "在 mktemp 创建的 run-specific 副本中做真实实现而非只给设计，并保留、报告副本路径：先添加 Host/路径/loopback 回归测试，再收紧 server.mjs；保留 skills surface；metrics API 仅由 metrics host 提供；未知 Host 为 421，cross-surface 为 404；默认 bind 是 127.0.0.1。展示测试与 curl 的可复现证据，并证明只清理了本 run 的 listener PID；不改原始 fixture，不触碰真实 launchd 或用户数据。",
+      "files": [
+        "evals/fixtures/minimal-loopback-gateway/package.json",
+        "evals/fixtures/minimal-loopback-gateway/server.mjs",
+        "evals/fixtures/minimal-loopback-gateway/server.test.mjs"
+      ],
+      "expectations": [
+        "先用 mktemp -d 创建独占工作目录，把输入 fixture 复制过去，并只修改副本中的 server.mjs 和测试",
+        "报告 run-specific 副本路径并保留产物供检查；原始输入 fixture 保持不变",
+        "先增加覆盖 exact Host、未知 Host、cross-surface 路径和 metrics API 的失败测试",
+        "保留 skills.localhost 首页，并让 metrics.localhost:17333/api/metrics 返回 JSON 200",
+        "未知 Host 返回 421，skills host 请求 metrics API 或 metrics host 请求 skills 首页返回 404",
+        "CLI 默认监听地址是 127.0.0.1，而不是 0.0.0.0",
+        "运行 npm test 或 node --test，并报告命令、exit code 与通过结果",
+        "用临时端口和 curl -H Host 提供 200、421、404 的关键响应证据",
+        "记录本 run 启动的 listener PID，使用 trap 或等价清理，curl 后只停止并 wait 该 PID，且报告 kill -0 确认进程不存在",
+        "不安装或重启真实 LaunchAgent，不修改真实用户数据，不扩展 run-specific 副本之外的写边界"
+      ]
+    }
+  ]
+}
