@@ -1,9 +1,9 @@
 ---
 name: architecture-hardening-loop
-description: "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, evidence-based triage, minimal fixes, tests, Grok review, and same-scope rescan until no actionable findings remain. Use for scoped architecture cleanup, DDD or high-cohesion hardening with implementation, scan-fix-review-rescan-until-clean, or autonomous architecture improvement cycles. Do not use for diagnose-only architecture reports, ordinary feature work, pure design discussion, one-shot diff review or review-fix-re-review without a rescan, full plan/spec completion that needs task-completion-loop, or requests without an explicit path/module scope."
+description: "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, evidence-based triage, minimal fixes, tests, Grok review, and same-scope rescan until no actionable findings remain. Use for scoped architecture cleanup, DDD or high-cohesion hardening with implementation, scan-fix-review-rescan-until-clean, or autonomous architecture improvement cycles. Do not use for diagnose-only architecture reports, ordinary feature or bug work, pure design discussion, one-shot diff review or review-fix-re-review without a rescan, full plan/spec completion that needs task-completion-loop, or requests without an explicit path/module scope."
 metadata:
   author: adonis
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Architecture Hardening Loop
@@ -12,7 +12,7 @@ metadata:
 
 常见触发说法（含中文）：架构加固、把架构问题修干净、scan-fix-review 直到没有可修项、review 完再扫、在指定模块里自主加固。
 
-扫描器几乎总会再吐出候选项；若不加门槛，循环永远不会结束。本 Skill 的价值是：**证据门槛 + 固定顺序 + 独立 Grok 复核 + 明确终态**。
+扫描器几乎总会再吐出候选项；若不加门槛，循环永远不会结束。本 Skill 的价值是：**候选准入 + 固定顺序 + 独立 Grok 复核 + 明确终态**。`0` 个架构深化候选是有效结果；不要为了让报告“有内容”而制造重构。
 
 ## 必需输入
 
@@ -22,6 +22,18 @@ metadata:
 - 一次调用 = 用户预授权：在范围内选择、修改、验证，无需为普通工程判断反复请示。
 
 `agentic-review-handoff` 会写入被 Git 忽略的 `.review-handoff/**`，首次使用还可能幂等更新 `$GIT_COMMON_DIR/info/exclude`。这些是协议产物，不属于代码扫描范围，也不是交付动作；开始前必须披露并纳入写边界。用户禁止 `.git/**` 写且 exclude 尚未配置时，在扫描前返回 `HUMAN_GATE`。
+
+## 加固契约
+
+扫描前先写下本次不可漂移的 `Hardening Contract`；它是后续筛选与停止的依据，不是新设计文档：
+
+- `Scope / Exclusions`：允许读取、修改与明确排除的路径。
+- `Failure invariants`：当前必须保持或修复的可观察行为；未知时写 `none observed`，不要虚构。
+- `Decision constraints`：有效 ADR、项目规则，以及每项 Deferred 决策的重考虑触发器。
+- `Write boundary`：源码、测试、临时报告与 review packet 各自允许的写范围。
+- `Round budget`：默认最多 3 个实施轮次；零 `Fix` 可以在首轮结束。
+
+工作树中的批量重命名、文件移动、未提交迁移和变更条目数只用于解释扫描噪声。除非它们直接造成可复现失败或跨范围传播成本，否则不能作为 `Fix` 证据。
 
 ## 硬依赖与 runtime 能力
 
@@ -57,14 +69,15 @@ npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop
 5. 检查 `.review-handoff/**` 与 `$GIT_COMMON_DIR/info/exclude` 协议写是否允许；若用户禁止且当前状态需要写，返回 `HUMAN_GATE`。
 6. 冻结调用时的代码范围；后续每轮复用同一范围。**每一次 scanner pass 前**都为本轮建立或选定 `scanEvidence`。初扫用当前 `HEAD` 与该 path filter 执行 `review-loop evidence`，记录 E1；实施过 `Fix` 时，先确认当前 identity 与最终 review evidence 一致，再把该 identity（如 E2）作为下一次复扫的 `scanEvidence`。协议产物单独记录，不混入 scanner scope。
 7. 从 native Goal 工具、产品状态，或调用方显式传入且可核对的 parent contract（objective、冻结范围、Done condition、completion owner）读取 ownership evidence，记录 `none` / `exact-same-goal` / `broader-compatible` / `conflicting/unclear`。native getter 不是唯一证据源；没有足够证据时归为 `conflicting/unclear`。这是只读 ownership 检查，不创建 Goal；冲突或不明立即服从 `goal-gate` 的 `defer` 并在扫描前返回 `HUMAN_GATE`。
-8. 保留用户已有改动；不重置、不覆盖、不整理范围外内容。
+8. 记录 `Hardening Contract` 和空的 `Candidate Ledger`；保留用户已有改动，不重置、不覆盖、不整理范围外内容。
 
 ## 闭环
 
 ```text
 明确范围
   → 扫描候选项（仅扫描+报告）
-  → Fix / Backlog / Reject
+  → Candidate Ledger 去重
+  → Architecture Fix / Local Fix / Backlog / Reject
   → 零 Fix？→ Grok consult 复核终态 → NO_ACTIONABLE_FINDINGS
   → 有 Fix → Grok 事前 consult
   → Goal Gate
@@ -86,15 +99,30 @@ npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop
 
 扫描器发现机会；**它不决定循环是否结束**。
 
-### 2. 证据门槛分类
+### 2. 候选准入与 Candidate Ledger
 
 对每个候选项独立分类：
 
-| 分类      | 条件                                                                 | 后续                   |
-| --------- | -------------------------------------------------------------------- | ---------------------- |
-| `Fix`     | 问题真实存在；在范围内；收益大于新增复杂度；有最小方案；结果可验证   | 本轮可改               |
-| `Backlog` | 问题真实，但收益低、超出范围、依赖未来需求、或暂时无法安全验证       | 记录理由，不阻塞完成   |
-| `Reject`  | 纯风格、重复抽象、推测性扩展、缺证据、违反有效决策、或只追求理论优雅 | 记录反证，不再循环提出 |
+| 分类               | 条件                                                                                            | 后续                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `Architecture Fix` | 当前架构摩擦通过下述五项准入；修改会深化 Module、缩小 Interface 或把知识放回正确 Seam           | 本轮可改，计入 architecture fixed        |
+| `Local Fix`        | 有可复现正确性问题，但最小修复留在现有 Implementation 内；不需要新 Module、Interface 或 Adapter | 本轮可改，单独报告，不拿它证明架构应扩大 |
+| `Backlog`          | 问题真实，但收益低、超出范围、依赖未来需求、ADR 触发器未满足或暂时无法安全验证                  | 记录重考虑触发器，不阻塞完成             |
+| `Reject`           | 纯风格、重复抽象、推测性扩展、缺证据、违反有效决策、或只追求理论优雅                            | 记录反证；没有新证据时不再进入后续轮次   |
+
+`Local Fix` 不是降级标签。它只覆盖有效架构扫描中顺带发现的普通 bug，不把本 Skill 扩张成通用 bugfix 编排；把 bug 留在已有 Implementation 内，通常比为 bug 发明新架构更正确。
+
+#### Architecture Fix 五项准入
+
+架构候选必须同时通过五项；任一缺失只能 `Backlog` 或 `Reject`：
+
+1. **当前伤害**：有可观察失败、已发生的理解/修改传播成本、测试困难、知识泄漏，或可证伪的不变量；“文件长”“参数多”“以后可能”不算。
+2. **真实复杂度或变化**：已有第二消费者、重复生命周期/调用顺序、同一知识实际分叉，或单一调用方已经承担多个必须协同修改和验证的状态/分支/顺序。只有拟议可替换 Adapter/Seam 时才强制要求两个合理 Adapter（通常为 production + test）；猜测中的未来调用方不算。
+3. **删除测试**：删除拟议 Module 后，状态、分支、顺序或领域知识会真实回流 owner、调用方或测试；不要求多个 owner。若复杂度反而消失，它是 pass-through。
+4. **决策允许**：不违反有效 ADR；若 ADR 给了启动条件，必须拿出条件已经发生的证据。
+5. **复杂度净下降**：最小方案减少调用方必须知道的事实，不靠新增 `mode`、policy flag、Provider、cache、registry、bus 或配置层掩盖语义差异。
+
+`Local Fix` 必须通过第 1、4、5 项，并证明修复不需要改变现有 Interface。若后来出现真实第二消费者或知识传播，再作为新的架构候选重新准入；不要在本次 bugfix 中预付抽象成本。
 
 每个 `Fix` 必须写齐四项，缺一不可：
 
@@ -102,6 +130,16 @@ npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop
 - `Impact`：当前错误、理解成本或修改成本
 - `Minimal change`：最小可行修改（不顺手重构）
 - `Verification`：改后跑什么测试或观察什么信号
+
+#### Candidate Ledger
+
+每次 scanner pass 后先与 ledger 对账，再讨论优先级：
+
+- `Fingerprint` 使用“失败不变量或传播成本 + 领域 owner + 拟议 Seam/最小修正”；不要使用 scanner 标题或措辞。
+- 记录 `First seen`、当前 `Disposition`、证据/反证、`Reconsider when` 和最后核验轮次。
+- scanner 改名、换类比、换文件切入点但 fingerprint 相同，视为同一候选；没有新证据不得重开，也不产生新的实施轮次。
+- `Backlog` 只在 `Reconsider when` 触发后重开；`Reject` 只在原反证失效、ADR 修订或出现新的当前伤害后重开。
+- 新发现若只是已实施 `Fix` 的预期内部细节，先判断是否同一根因；不要把“修一层后看见下一层”自动当成新的架构问题。
 
 不要因为报告更长、Reviewer 更强势、或同一建议重复出现就抬高优先级。单实现却强加接口、为“未来多租户/多存储”加总线、纯六边形洁癖——默认 `Reject` 或 `Backlog`，除非有可复现的当前伤害。
 
@@ -111,9 +149,9 @@ npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop
 
 **零 Fix（首轮或复扫后）：**
 
-1. 调用 Grok `consult`，只复核终态分类（范围冻结、`Backlog`/`Reject` 理由、是否漏掉真实 `Fix`）。
+1. 调用 Grok `consult`，只复核终态分类（`Hardening Contract`、ledger 去重、`Backlog`/`Reject` 理由、是否漏掉真实 `Fix`）。
 2. Grok 若提出新问题，仍须通过同一证据门槛；不得绕过门槛直接扩大修改。
-3. 仍无通过门槛的 `Fix` 时，按**本轮** `scanEvidence` 的 `baseSha` / `pathFilter` 再执行 `review-loop evidence`。只有 digest 与本轮 scanner pass 前的 identity 一致，才进入 `NO_ACTIONABLE_FINDINGS`；mismatch 说明 scanner/consult 证据已过期，必须重新扫描同一范围，无法重扫则报告 `UNVERIFIED`。Fix 后复扫只与复扫前选定的 E2 比较，绝不回退到初扫 E1。证据匹配后**不创建新 Goal**，按前置检查已记录的 Goal 关系收口：
+3. 仍无通过门槛的 `Fix` 时，按**本轮** `scanEvidence` 的 `baseSha` / `pathFilter` 再执行 `review-loop evidence`。只有 digest 与本轮 scanner pass 前的 identity 一致，才进入 `NO_ACTIONABLE_FINDINGS`；mismatch 说明 scanner/consult 证据已过期，必须重新扫描同一范围，无法重扫则报告 `UNVERIFIED`。证据匹配后立即停止，禁止为了信心再跑“最后一轮看看”。Fix 后复扫只与复扫前选定的 E2 比较，绝不回退到初扫 E1。证据匹配后**不创建新 Goal**，按前置检查已记录的 Goal 关系收口：
    - `none` → `Goal: not-created`；
    - `exact-same-goal` → 终态 consult、必要验证和完整 Done condition 都有证据后，按该 runtime 的 terminal schema 完成；
    - `broader-compatible` → `Goal: active-checkpoint`，保留父 Goal active；
@@ -126,8 +164,9 @@ npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop
 修改前调用 `agentic-review-handoff` 的 DecisionConsult / `review-loop consult`，peer/Reviewer 固定为 **Grok**。提供：
 
 - 冻结的审查范围
+- `Hardening Contract` 与 Candidate Ledger
 - 候选项与代码证据
-- `Fix / Backlog / Reject` 与理由
+- `Architecture Fix / Local Fix / Backlog / Reject` 与理由
 - 本轮最小修改
 - 验证方案
 
@@ -153,6 +192,7 @@ Consult 是独立意见，不是投票。编排者必须核对 Grok 主张；普
 只实施已确认的 `Fix`：
 
 - 每一行修改追溯到本轮某个 `Fix`
+- `Architecture Fix` 才允许调整 Module、Interface 或 Seam；`Local Fix` 留在现有 Implementation
 - 不添加当前问题不需要的扩展点、配置、层级或通用框架
 - 行为变化：补或改回归测试；纯结构变化：用现有测试或最小特征测试证明公共行为不变
 - 先跑针对性验证，再按影响面跑相关测试 / typecheck / build
@@ -177,10 +217,11 @@ Evidence id 在 zero-Fix 与 Fix 分支都必须存在。每个 scanner pass 都
 
 对**完全相同**的范围再跑扫描：
 
-1. 新候选项再过证据门槛
-2. 有 `Fix` → Grok consult → 下一轮（计入外层轮次）
-3. 无 `Fix` → Grok consult 复核终态分类
-4. Grok 未提出通过门槛的 `Fix` → `NO_ACTIONABLE_FINDINGS`
+1. 先按 fingerprint 与 Candidate Ledger 对账；重复措辞不是新候选
+2. 只有新 fingerprint 或已满足 `Reconsider when` 的候选才重新过证据门槛
+3. 有 `Fix` → Grok consult → 下一轮（计入外层轮次）
+4. 无 `Fix` → Grok consult 复核终态分类
+5. Grok 未提出通过门槛的 `Fix` → `NO_ACTIONABLE_FINDINGS`，停止；不再追加确认性扫描
 
 `Backlog` 与 `Reject` 可以留在完成报告里。它们不是失败，也不要求为“清零报告”继续改。
 
@@ -190,7 +231,7 @@ Evidence id 在 zero-Fix 与 Fix 分支都必须存在。每个 scanner pass 都
 
 - 破坏性、不可逆、生产数据、认证、计费或外部发布
 - 候选项要求扩大原始范围
-- 同一问题连续两轮无新证据
+- 同一已验证 `Fix` 连续两次实施或验证仍失败
 - 3 轮后仍有通过门槛的 `Fix`
 - 依赖、凭证或环境使完成条件无法验证
 - 底层 review loop 返回尚无用户 Decision Closure 的 `PASS_WITH_CONCERNS` / `awaiting_user_decision`
@@ -202,24 +243,33 @@ Evidence id 在 zero-Fix 与 Fix 分支都必须存在。每个 scanner pass 都
 
 | 失败模式                   | 正确行为                                   |
 | -------------------------- | ------------------------------------------ |
-| 把扫描强度当修改优先级     | 只认证据门槛四项                           |
+| 把扫描强度当修改优先级     | 只认五项准入与 Local Fix 条件              |
+| 把代码形状当当前伤害       | 用五项准入；允许零 Architecture Fix        |
+| 用局部 bug 证明需要新架构  | 归 `Local Fix`，在现有 Implementation 内修 |
+| scanner 改名后重开候选     | 按 fingerprint 查 ledger；无新证据不重开   |
+| 批量迁移条目数当严重度     | 只作噪声背景，不作 `Fix` 证据              |
 | 范围外“顺手”修             | `Backlog` 或 `HUMAN_GATE`，不改            |
 | 依赖缺失仍继续             | `MISSING_DEPENDENCIES` 并停                |
 | 为理论优雅重写             | `Reject`/`Backlog`，除非有可复现当前伤害   |
 | 代用户接受 review concerns | `HUMAN_GATE`；只交出 continue / close 命令 |
 | 未跑命令却写通过           | `UNVERIFIED`                               |
 | 报告还有建议就继续轮       | 无 `Fix` 即终态；不必清零报告              |
+| zero-Fix 后再扫一轮求安心  | consult + evidence 新鲜即停止              |
 
 ## 完成报告
 
 ```text
 Architecture Hardening Result
 - Scope: <原始范围>
+- Hardening Contract: <scope/exclusions、invariants、decision constraints、write boundary、round budget>
 - Iterations: <完成外层轮数>
-- Result: NO_ACTIONABLE_FINDINGS | HUMAN_GATE | MISSING_DEPENDENCIES
-- Fixed: <问题、文件与验证>
+- Result: NO_ACTIONABLE_FINDINGS | HUMAN_GATE | MISSING_DEPENDENCIES | UNVERIFIED
+- Architecture Fixed: <深化的 Module / Interface / Seam 与验证，或 none>
+- Local Fixed: <留在现有 Implementation 的正确性修复与验证，或 none>
 - Backlog: <真实但当前不处理的问题及理由，或 none>
 - Rejected: <无证据或过度设计项及理由，或 none>
+- Candidate Ledger: <fingerprint、disposition、reconsider trigger>
+- Stop reason: <zero-fix-first-pass | post-fix-rescan-zero | duplicate-only | human-gate | missing-dependencies | evidence-drift>
 - Grok evidence: <consult；若实施过 Fix：最终 review verdict、packet 与 lifecycle，若有 Decision Closure 则记录用户命令；零 Fix：review not-run + 终态 consult>
 - Evidence id: <baseSha + pathFilter + digest；另列 coveredPaths 与 sourceRound>
 - Verification: <实际命令与结果，或 UNVERIFIED>

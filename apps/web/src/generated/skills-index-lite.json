@@ -29,10 +29,10 @@
   {
     "slug": "architecture-hardening-loop",
     "name": "architecture-hardening-loop",
-    "description": "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, evidence-based triage, minimal fixes, tests, Grok review, and same-scope rescan until no actionable findings remain. Use for scoped architecture cleanup, DDD or high-cohesion hardening with implementation, scan-fix-review-rescan-until-clean, or autonomous architecture improvement cycles. Do not use for diagnose-only architecture reports, ordinary feature work, pure design discussion, one-shot diff review or review-fix-re-review without a rescan, full plan/spec completion that needs task-completion-loop, or requests without an explicit path/module scope.",
+    "description": "Orchestrate a bounded architecture hardening loop when the user names a code scope and wants an independent scan, evidence-based triage, minimal fixes, tests, Grok review, and same-scope rescan until no actionable findings remain. Use for scoped architecture cleanup, DDD or high-cohesion hardening with implementation, scan-fix-review-rescan-until-clean, or autonomous architecture improvement cycles. Do not use for diagnose-only architecture reports, ordinary feature or bug work, pure design discussion, one-shot diff review or review-fix-re-review without a rescan, full plan/spec completion that needs task-completion-loop, or requests without an explicit path/module scope.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.0"
+      "version": "1.5.0"
     },
     "files": {
       "hasReferences": false,
@@ -199,7 +199,8 @@
     "files": {
       "hasReferences": false,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-08-08T13:07:09.000Z"
   },
   {
     "slug": "review-prompt-composer",

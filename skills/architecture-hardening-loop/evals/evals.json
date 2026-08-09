@@ -290,6 +290,81 @@
         "E2 匹配时允许 NO_ACTIONABLE_FINDINGS",
         "E3 漂移时要求同范围重扫或报告 UNVERIFIED"
       ]
+    },
+    {
+      "id": 21,
+      "name": "zero-candidate-validity",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、调用外部 Reviewer 或创建 Goal。冻结范围为 web/src/editor/**。当前工作树正进行大规模 Plugin→Panel 重命名，有 380 个变更条目。scanner 提出：A）Timeline 文件 778 行，但 ADR 规定只有真实功能突破 800、出现参数误接回归或 preview/commit 几何差异才启动拆分，当前均未发生；B）Product 与 Lab 的 Timeline config 雷同，但 ADR 明确允许两者语义分叉；C）现有 useEpisodeStorySnapshot 已隐藏 load→subscribe→reload→cleanup，Shell 与 Debug 是两个消费者，但其内部存在可复现的旧 load 晚到覆盖新 load 的竞态。请按 architecture-hardening-loop 分类，并说明修完 C 后何时必须停止。",
+      "expected_output": "A 与 B 不进入 Fix；C 是现有 Implementation 内的 Local Fix，不升级架构。允许零 Architecture Fix；修复、验证和同范围 zero-Fix 复扫后，经终态 consult 与 evidence freshness 立即停止。",
+      "files": [],
+      "expectations": [
+        "明确允许本轮有 0 个新的架构深化 Fix",
+        "把 C 归为现有 Module 内的局部正确性 Fix，不新增 Provider、cache、Context 或公共 Interface",
+        "A 因 ADR 启动条件未满足而进入 Backlog 或 Reject，不因 778 行本身升级",
+        "B 因有效 ADR 和不同 consumer 语义而 Reject，不抽共享 preset",
+        "大规模重命名和工作树条目数只算扫描噪声，不算候选证据",
+        "修完 C、验证、同范围复扫与终态 consult 均无 Fix且证据新鲜后立即 NO_ACTIONABLE_FINDINGS，不再多扫一轮"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "candidate-ledger",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、调用 Reviewer 或 Goal。范围固定为 src/story/**。第一轮 scanner 建议建立全局 Story Provider/cache；因没有可观察性能或一致性失败、没有共享 cache 语义且会新增 invalidation/ownership/concurrency 规则，被 Reject。第二轮 scanner 把同一建议改名为 Story observer coordinator，没有新调用方或新失败。另有 Scene 顺序投影进入 Backlog，唯一重考虑触发器是产品接入 multi-Scene Episode 或出现顺序回归；当前仍是单 Scene。请说明第二轮如何识别、是否重开、是否计为新轮次，以及如何收口。",
+      "expected_output": "Candidate Ledger 应按不变量、owner 和拟议 Seam 识别同一候选；改名不重开 Reject，Backlog 只在触发器满足后重开。重复项不产生实施轮次；zero-Fix 经终态 consult 和 freshness 后停止。",
+      "files": [],
+      "expectations": [
+        "按失败不变量、owner 和拟议 Seam 识别候选，而不是按 scanner 文案识别",
+        "把 observer coordinator 识别为已 Reject 的同一候选，没有新证据时不重开",
+        "Scene 顺序 Backlog 只有 multi-Scene 或顺序回归触发后才重考虑",
+        "记录每个候选的 disposition、反证和 reconsider trigger",
+        "重复候选不计为新的 actionable finding，也不消耗新的修复轮次",
+        "本轮零 Fix 时走一次终态 consult 与 evidence freshness 后停止"
+      ]
+    },
+    {
+      "id": 23,
+      "name": "admission-gates",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、调用 Reviewer 或 Goal。范围是 web/src/story/**。候选 A：两个真实 React consumer 都重复 load、subscribe、失败状态、取消迟到结果与 cleanup；删除共享读取 Module 会让这套顺序回流两个调用方，拟议 Interface 只有 snapshot/loading/failure。候选 B：create first version 与 append version 有相似代码，但前者部分成功、后者全失败；统一后必须增加 mode、partialWritePolicy、errorPolicy 参数。候选 C：A 已落地后的读取 Hook 内存在可复现的 reload 乱序覆盖。请分类，并明确哪些属于架构深化、哪些只是局部修复。",
+      "expected_output": "A 是通过五项准入的 Architecture Fix；B 因策略参数和事务语义不同而 Reject；C 是现有 Hook Implementation 内的 Local Fix，不重新发明架构。",
+      "files": [],
+      "expectations": [
+        "A 通过真实第二消费者和删除测试，可归为架构深化 Fix",
+        "A 的小 Interface 隐藏真实生命周期顺序，说明其有 Depth、Locality 与 Leverage",
+        "B 因事务语义不同且需要新增策略参数而 Reject，避免浅 Module",
+        "C 归为现有 Implementation 内的局部正确性 Fix，不再次发明架构",
+        "报告把 Architecture Fix 与 Local Fix 分开，但二者都要求 Evidence、Minimal change 和 Verification",
+        "分类使用可观察失败或传播成本、第二消费者、删除测试、ADR 触发器、无新增策略参数等准入闸门"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "completion-contract",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、调用 Reviewer 或 Goal。冻结范围为 web/src/story/**，排除 packages/**；必须保持现有公开 Hook Interface，默认最多三轮。第一轮 scanner 建议新增全局 Story Provider/cache，但没有性能或一致性失败，被拒绝；同时发现现有 Hook 内旧请求会覆盖新请求，已经用 request sequence 最小修复并通过竞态测试。第二轮 scanner 把已拒绝建议改名为 Story observer coordinator，没有新调用方、失败或决策变化；另一个 Timeline 拆分项因 ADR 触发器未满足而继续延后。终态 consult 确认没有 Fix，当前 evidence digest 与本轮扫描前一致。请输出 architecture-hardening-loop 的正式完成报告，并说明是否继续扫描。",
+      "expected_output": "按新版完成合同报告 Hardening Contract、Architecture Fixed、Local Fixed、Candidate Ledger 与 Stop reason；重复候选不重开，结果为 NO_ACTIONABLE_FINDINGS，并停止扫描。",
+      "files": [],
+      "expectations": [
+        "正式报告包含 Hardening Contract，并覆盖 scope/exclusions、failure invariant、decision constraint、write boundary 与 round budget",
+        "正式报告分开列出 Architecture Fixed: none 与 Local Fixed: request sequence 竞态修复",
+        "正式报告包含 Candidate Ledger，记录全局 cache 候选的 fingerprint、Reject 和重考虑条件",
+        "正式报告包含 Stop reason，值为 post-fix-rescan-zero 或 duplicate-only",
+        "重复改名的 observer coordinator 不被当作新的 actionable finding",
+        "Result 为 NO_ACTIONABLE_FINDINGS，并明确不继续追加确认性扫描"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "single-consumer-deep-module",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、调用 Reviewer 或 Goal。范围是 src/render/**。候选 A 目前只有一个 React consumer，但调用方必须按固定顺序协调 parse、normalize、resolve、layout、fallback 与 diagnostics 六步；测试只能穿透这些步骤 mock 内部状态，删除拟议 RenderPipeline Module 会把顺序和错误策略全部留在调用方。拟议 Interface 只有 render(input) -> result，不新增配置或策略参数。候选 B 只有一个远程实现，scanner 建议现在先定义可替换 StoragePort，未来也许会有第二供应商；当前没有测试 Adapter、第二实现或切换需求。请按 architecture-hardening-loop 分类并解释第二消费者/Adapter 条件。",
+      "expected_output": "A 可凭当前 locality/testability 伤害和删除测试成为 Architecture Fix，不要求第二 consumer；B 因可替换 Seam 只有一个 Adapter 且需求是假设而 Reject 或 Backlog。",
+      "files": [],
+      "expectations": [
+        "A 不因只有一个 consumer 被自动拒绝",
+        "A 以真实调用顺序、测试困难和知识泄漏证明当前伤害",
+        "A 的删除测试表明复杂度回流调用方，且小 Interface 带来 Depth 与 Locality",
+        "B 作为拟议可替换 Adapter 或 Port 必须有两个合理 Adapter",
+        "B 的未来第二供应商属于推测，当前进入 Reject 或带触发器的 Backlog",
+        "明确区分普通 Module 的单 consumer 可成立与可替换 Seam 的双 Adapter 条件"
+      ]
     }
   ]
 }
