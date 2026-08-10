@@ -1,0 +1,55 @@
+{
+  "skill_name": "chrome-dev-mcp",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-slash-readiness",
+      "prompt": "/chrome-dev-mcp",
+      "expected_output": "Treats the slash invocation as a readiness action, starts with a real chrome-devtools list_pages call, recovers only after failure, retries once, and returns CHROME_DEV_MCP_READY without page data.",
+      "files": [],
+      "expectations": [
+        "Treats /chrome-dev-mcp as an executable readiness request rather than documentation",
+        "Uses real list_pages as the success proof",
+        "Retries at most once after configured deterministic recovery",
+        "Returns only CHROME_DEV_MCP_READY on the healthy path"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "connection-recovery",
+      "prompt": "Chrome DevTools MCP 好像没有连到正确的 Chrome。请诊断并恢复共享连接，然后做一次只读 list_pages 验收；不要关闭或重启我现有的 Chrome，不要猜测或扫描其他端点。",
+      "expected_output": "Separates host discovery from endpoint identity, uses the configured safe wrapper and launcher once, then requires a real list_pages call before VERIFIED.",
+      "files": [],
+      "expectations": [
+        "Separates skill discovery, MCP discovery, endpoint identity, and real tool evidence",
+        "Fails closed on a wrong browser or profile",
+        "Does not scan endpoints or read DevToolsActivePort",
+        "Does not claim VERIFIED without a real list_pages call"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "native-browser-near-miss",
+      "prompt": "用我当前登录的 Chrome 打开内部设置页并填写表单。这个任务不需要 DOM、Console、Network、Performance 或 Lighthouse。",
+      "expected_output": "Routes ordinary logged-in navigation and form filling to the host-native Chrome capability.",
+      "files": [],
+      "expectations": [
+        "Does not invoke chrome-devtools for ordinary navigation and form filling",
+        "Routes to the host-native Chrome capability"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "uxc-safe-facade",
+      "prompt": "用 UXC 把 /chrome-dev-mcp 包成稳定 CLI；保留各宿主现有 MCP，不要输出页面 URL、标题或正文，并说明如何证明 daemon 复用。",
+      "expected_output": "Keeps native MCP registration authoritative, pins UXC, links only the safe wrapper, strips list_pages payloads, and distinguishes UXC transport proof from per-host acceptance.",
+      "files": [],
+      "expectations": [
+        "Keeps native host MCP registration unchanged",
+        "Uses the pinned official UXC release manifest",
+        "Links only the configured safe wrapper with a bounded idle TTL and exclusivity key",
+        "Requires separate real list_pages acceptance per host"
+      ]
+    }
+  ]
+}

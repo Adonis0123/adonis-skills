@@ -38,7 +38,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-08T13:02:41.000Z"
+    "updatedAt": "2026-08-09T01:16:47.000Z"
   },
   {
     "slug": "branch-creator",
@@ -53,6 +53,19 @@
       "hasSrc": false
     },
     "updatedAt": "2026-06-11T08:18:21.000Z"
+  },
+  {
+    "slug": "chrome-dev-mcp",
+    "name": "chrome-dev-mcp",
+    "description": "Use this skill whenever the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the registered connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   },
   {
     "slug": "code-inspector-init",
@@ -242,6 +255,19 @@
       "hasSrc": false
     },
     "updatedAt": "2026-08-08T13:02:41.000Z"
+  },
+  {
+    "slug": "uxc-facade",
+    "name": "uxc-facade",
+    "description": "Use this skill whenever the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing the native host or service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   },
   {
     "slug": "weekly-report",

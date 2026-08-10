@@ -57,6 +57,8 @@ pnpm dev
 ```bash
 npx skills add adonis0123/adonis-skills --skill weekly-report
 npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
+npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp
+npx skills add adonis0123/adonis-skills --skill uxc-facade
 ```
 
 如果仓库 owner 发生变化：
@@ -68,22 +70,22 @@ npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 
 下表解释 `package.json` 中每个 script 的用途。
 
-| 命令 | 实际执行 | 含义 / 何时使用 |
-| --- | --- | --- |
-| `pnpm dev` | `turbo run dev --filter=@adonis-skills/web` | 启动 Web 站点开发模式（仅运行 `apps/web`）。用于日常本地页面调试。 |
-| `pnpm build` | `turbo run build` | 执行 monorepo 构建任务。提交前用于确认仓库可构建。 |
-| `pnpm lint` | `turbo run lint` | 执行代码规范检查。修改 TS/JS 后使用。 |
-| `pnpm typecheck` | `turbo run typecheck` | 执行 TypeScript 类型检查。修改类型或 API 后使用。 |
-| `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | 交互式创建新 skill 的推荐入口。自动执行：初始化 -> 快速校验 -> 全量校验 -> 刷新索引。 |
-| `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | 对已创建/已复制到 `skills/*` 的 skill 执行标准收尾：`quick-validate` -> `validate` -> `index`。支持相对与绝对路径。 |
-| `pnpm skills:finalize:new [-- --dry-run]` | `node --experimental-strip-types ./scripts/finalize-new-skills.ts` | 自动模式：仅当 `skills/<slug>/SKILL.md` 处于新增状态（`A` 或 `??`）时识别为新 skill，逐个执行 finalize，并自动暂存相关文件（`skills/<slug>` 与已变更的 skills 索引）。若未发现新增 skill，会自动回退到 `skills:new` 创建后再重扫。 |
-| `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | 仅初始化 skill 目录与模板内容（手动模式）。当你不想走全自动流程时使用。 |
-| `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | 校验单个 skill（尤其是 frontmatter 合法性）。用于修改单个 skill 后的快速自检。 |
-| `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要 interface 元数据时使用。 |
-| `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | 仓库级 skills 校验。提交前/CI 前必跑。 |
-| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | 重新生成 `apps/web/src/generated/skills-index-lite.json` 与 `apps/web/src/generated/skills-detail-index.json`。新增或修改 skill 后用于刷新 Web 数据。 |
-| `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | 将 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。用于本地 agent 联调。 |
-| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再确保 `.claude/skills` 指向 `.agents/skills`。用于同时验证本机 Claude/Codex 运行场景。 |
+| 命令                                             | 实际执行                                                                       | 含义 / 何时使用                                                                                                                                                                                                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                       | `turbo run dev --filter=@adonis-skills/web`                                    | 启动 Web 站点开发模式（仅运行 `apps/web`）。用于日常本地页面调试。                                                                                                                                                                 |
+| `pnpm build`                                     | `turbo run build`                                                              | 执行 monorepo 构建任务。提交前用于确认仓库可构建。                                                                                                                                                                                 |
+| `pnpm lint`                                      | `turbo run lint`                                                               | 执行代码规范检查。修改 TS/JS 后使用。                                                                                                                                                                                              |
+| `pnpm typecheck`                                 | `turbo run typecheck`                                                          | 执行 TypeScript 类型检查。修改类型或 API 后使用。                                                                                                                                                                                  |
+| `pnpm skills:new`                                | `node --experimental-strip-types ./scripts/create-skill.ts`                    | 交互式创建新 skill 的推荐入口。自动执行：初始化 -> 快速校验 -> 全量校验 -> 刷新索引。                                                                                                                                              |
+| `pnpm skills:finalize -- <skill-path>`           | `node --experimental-strip-types ./scripts/finalize-skill.ts`                  | 对已创建/已复制到 `skills/*` 的 skill 执行标准收尾：`quick-validate` -> `validate` -> `index`。支持相对与绝对路径。                                                                                                                |
+| `pnpm skills:finalize:new [-- --dry-run]`        | `node --experimental-strip-types ./scripts/finalize-new-skills.ts`             | 自动模式：仅当 `skills/<slug>/SKILL.md` 处于新增状态（`A` 或 `??`）时识别为新 skill，逐个执行 finalize，并自动暂存相关文件（`skills/<slug>` 与已变更的 skills 索引）。若未发现新增 skill，会自动回退到 `skills:new` 创建后再重扫。 |
+| `pnpm skills:init <skill-name> --path skills`    | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py`            | 仅初始化 skill 目录与模板内容（手动模式）。当你不想走全自动流程时使用。                                                                                                                                                            |
+| `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py`        | 校验单个 skill（尤其是 frontmatter 合法性）。用于修改单个 skill 后的快速自检。                                                                                                                                                     |
+| `pnpm skills:openai-yaml <skill-dir>`            | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py`  | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要 interface 元数据时使用。                                                                                                                                 |
+| `pnpm skills:validate`                           | `turbo run skills:validate --filter=@adonis-skills/web`                        | 仓库级 skills 校验。提交前/CI 前必跑。                                                                                                                                                                                             |
+| `pnpm skills:index`                              | `turbo run skills:index --filter=@adonis-skills/web`                           | 重新生成 `apps/web/src/generated/skills-index-lite.json` 与 `apps/web/src/generated/skills-detail-index.json`。新增或修改 skill 后用于刷新 Web 数据。                                                                              |
+| `pnpm skills:install:local`                      | `node --experimental-strip-types ./scripts/install-local-skills.ts`            | 将 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。用于本地 agent 联调。                                                                                                                                |
+| `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再确保 `.claude/skills` 指向 `.agents/skills`。用于同时验证本机 Claude/Codex 运行场景。                                                                                                                                |
 
 补充：
 

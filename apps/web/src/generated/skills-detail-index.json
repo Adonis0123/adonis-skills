@@ -178,7 +178,7 @@
         "level": 3
       },
       {
-        "raw": "对每个候选项独立分类：\n\n| 分类               | 条件                                                                                           | 后续                                      |\n| ------------------ | ---------------------------------------------------------------------------------------------- | ----------------------------------------- |\n| `Architecture Fix` | 当前架构摩擦通过下述五项准入；修改会深化 Module、缩小 Interface 或把知识放回正确 Seam          | 本轮可改，计入 architecture fixed         |\n| `Local Fix`        | 有可复现正确性问题，但最小修复留在现有 Implementation 内；不需要新 Module、Interface 或 Adapter | 本轮可改，单独报告，不拿它证明架构应扩大  |\n| `Backlog`          | 问题真实，但收益低、超出范围、依赖未来需求、ADR 触发器未满足或暂时无法安全验证                  | 记录重考虑触发器，不阻塞完成              |\n| `Reject`           | 纯风格、重复抽象、推测性扩展、缺证据、违反有效决策、或只追求理论优雅                            | 记录反证；没有新证据时不再进入后续轮次    |\n\n`Local Fix` 不是降级标签。它只覆盖有效架构扫描中顺带发现的普通 bug，不把本 Skill 扩张成通用 bugfix 编排；把 bug 留在已有 Implementation 内，通常比为 bug 发明新架构更正确。\n\n#### Architecture Fix 五项准入\n\n架构候选必须同时通过五项；任一缺失只能 `Backlog` 或 `Reject`：\n\n1. **当前伤害**：有可观察失败、已发生的理解/修改传播成本、测试困难、知识泄漏，或可证伪的不变量；“文件长”“参数多”“以后可能”不算。\n2. **真实复杂度或变化**：已有第二消费者、重复生命周期/调用顺序、同一知识实际分叉，或单一调用方已经承担多个必须协同修改和验证的状态/分支/顺序。只有拟议可替换 Adapter/Seam 时才强制要求两个合理 Adapter（通常为 production + test）；猜测中的未来调用方不算。\n3. **删除测试**：删除拟议 Module 后，状态、分支、顺序或领域知识会真实回流 owner、调用方或测试；不要求多个 owner。若复杂度反而消失，它是 pass-through。\n4. **决策允许**：不违反有效 ADR；若 ADR 给了启动条件，必须拿出条件已经发生的证据。\n5. **复杂度净下降**：最小方案减少调用方必须知道的事实，不靠新增 `mode`、policy flag、Provider、cache、registry、bus 或配置层掩盖语义差异。\n\n`Local Fix` 必须通过第 1、4、5 项，并证明修复不需要改变现有 Interface。若后来出现真实第二消费者或知识传播，再作为新的架构候选重新准入；不要在本次 bugfix 中预付抽象成本。\n\n每个 `Fix` 必须写齐四项，缺一不可：\n\n- `Evidence`：代码路径、测试、运行结果或变更传播路径\n- `Impact`：当前错误、理解成本或修改成本\n- `Minimal change`：最小可行修改（不顺手重构）\n- `Verification`：改后跑什么测试或观察什么信号\n\n#### Candidate Ledger\n\n每次 scanner pass 后先与 ledger 对账，再讨论优先级：\n\n- `Fingerprint` 使用“失败不变量或传播成本 + 领域 owner + 拟议 Seam/最小修正”；不要使用 scanner 标题或措辞。\n- 记录 `First seen`、当前 `Disposition`、证据/反证、`Reconsider when` 和最后核验轮次。\n- scanner 改名、换类比、换文件切入点但 fingerprint 相同，视为同一候选；没有新证据不得重开，也不产生新的实施轮次。\n- `Backlog` 只在 `Reconsider when` 触发后重开；`Reject` 只在原反证失效、ADR 修订或出现新的当前伤害后重开。\n- 新发现若只是已实施 `Fix` 的预期内部细节，先判断是否同一根因；不要把“修一层后看见下一层”自动当成新的架构问题。\n\n不要因为报告更长、Reviewer 更强势、或同一建议重复出现就抬高优先级。单实现却强加接口、为“未来多租户/多存储”加总线、纯六边形洁癖——默认 `Reject` 或 `Backlog`，除非有可复现的当前伤害。\n\n同一轮只处理一个最小内聚批次：共享同一根因的 `Fix` 可合并；无关问题分轮。",
+        "raw": "对每个候选项独立分类：\n\n| 分类               | 条件                                                                                            | 后续                                     |\n| ------------------ | ----------------------------------------------------------------------------------------------- | ---------------------------------------- |\n| `Architecture Fix` | 当前架构摩擦通过下述五项准入；修改会深化 Module、缩小 Interface 或把知识放回正确 Seam           | 本轮可改，计入 architecture fixed        |\n| `Local Fix`        | 有可复现正确性问题，但最小修复留在现有 Implementation 内；不需要新 Module、Interface 或 Adapter | 本轮可改，单独报告，不拿它证明架构应扩大 |\n| `Backlog`          | 问题真实，但收益低、超出范围、依赖未来需求、ADR 触发器未满足或暂时无法安全验证                  | 记录重考虑触发器，不阻塞完成             |\n| `Reject`           | 纯风格、重复抽象、推测性扩展、缺证据、违反有效决策、或只追求理论优雅                            | 记录反证；没有新证据时不再进入后续轮次   |\n\n`Local Fix` 不是降级标签。它只覆盖有效架构扫描中顺带发现的普通 bug，不把本 Skill 扩张成通用 bugfix 编排；把 bug 留在已有 Implementation 内，通常比为 bug 发明新架构更正确。\n\n#### Architecture Fix 五项准入\n\n架构候选必须同时通过五项；任一缺失只能 `Backlog` 或 `Reject`：\n\n1. **当前伤害**：有可观察失败、已发生的理解/修改传播成本、测试困难、知识泄漏，或可证伪的不变量；“文件长”“参数多”“以后可能”不算。\n2. **真实复杂度或变化**：已有第二消费者、重复生命周期/调用顺序、同一知识实际分叉，或单一调用方已经承担多个必须协同修改和验证的状态/分支/顺序。只有拟议可替换 Adapter/Seam 时才强制要求两个合理 Adapter（通常为 production + test）；猜测中的未来调用方不算。\n3. **删除测试**：删除拟议 Module 后，状态、分支、顺序或领域知识会真实回流 owner、调用方或测试；不要求多个 owner。若复杂度反而消失，它是 pass-through。\n4. **决策允许**：不违反有效 ADR；若 ADR 给了启动条件，必须拿出条件已经发生的证据。\n5. **复杂度净下降**：最小方案减少调用方必须知道的事实，不靠新增 `mode`、policy flag、Provider、cache、registry、bus 或配置层掩盖语义差异。\n\n`Local Fix` 必须通过第 1、4、5 项，并证明修复不需要改变现有 Interface。若后来出现真实第二消费者或知识传播，再作为新的架构候选重新准入；不要在本次 bugfix 中预付抽象成本。\n\n每个 `Fix` 必须写齐四项，缺一不可：\n\n- `Evidence`：代码路径、测试、运行结果或变更传播路径\n- `Impact`：当前错误、理解成本或修改成本\n- `Minimal change`：最小可行修改（不顺手重构）\n- `Verification`：改后跑什么测试或观察什么信号\n\n#### Candidate Ledger\n\n每次 scanner pass 后先与 ledger 对账，再讨论优先级：\n\n- `Fingerprint` 使用“失败不变量或传播成本 + 领域 owner + 拟议 Seam/最小修正”；不要使用 scanner 标题或措辞。\n- 记录 `First seen`、当前 `Disposition`、证据/反证、`Reconsider when` 和最后核验轮次。\n- scanner 改名、换类比、换文件切入点但 fingerprint 相同，视为同一候选；没有新证据不得重开，也不产生新的实施轮次。\n- `Backlog` 只在 `Reconsider when` 触发后重开；`Reject` 只在原反证失效、ADR 修订或出现新的当前伤害后重开。\n- 新发现若只是已实施 `Fix` 的预期内部细节，先判断是否同一根因；不要把“修一层后看见下一层”自动当成新的架构问题。\n\n不要因为报告更长、Reviewer 更强势、或同一建议重复出现就抬高优先级。单实现却强加接口、为“未来多租户/多存储”加总线、纯六边形洁癖——默认 `Reject` 或 `Backlog`，除非有可复现的当前伤害。\n\n同一轮只处理一个最小内聚批次：共享同一根因的 `Fix` 可合并；无关问题分轮。",
         "heading": "2. 候选准入与 Candidate Ledger",
         "level": 3
       },
@@ -218,7 +218,7 @@
         "level": 2
       },
       {
-        "raw": "| 失败模式                   | 正确行为                                   |\n| -------------------------- | ------------------------------------------ |\n| 把扫描强度当修改优先级     | 只认五项准入与 Local Fix 条件               |\n| 把代码形状当当前伤害       | 用五项准入；允许零 Architecture Fix        |\n| 用局部 bug 证明需要新架构  | 归 `Local Fix`，在现有 Implementation 内修 |\n| scanner 改名后重开候选     | 按 fingerprint 查 ledger；无新证据不重开   |\n| 批量迁移条目数当严重度     | 只作噪声背景，不作 `Fix` 证据               |\n| 范围外“顺手”修             | `Backlog` 或 `HUMAN_GATE`，不改            |\n| 依赖缺失仍继续             | `MISSING_DEPENDENCIES` 并停                |\n| 为理论优雅重写             | `Reject`/`Backlog`，除非有可复现当前伤害   |\n| 代用户接受 review concerns | `HUMAN_GATE`；只交出 continue / close 命令 |\n| 未跑命令却写通过           | `UNVERIFIED`                               |\n| 报告还有建议就继续轮       | 无 `Fix` 即终态；不必清零报告              |\n| zero-Fix 后再扫一轮求安心  | consult + evidence 新鲜即停止               |",
+        "raw": "| 失败模式                   | 正确行为                                   |\n| -------------------------- | ------------------------------------------ |\n| 把扫描强度当修改优先级     | 只认五项准入与 Local Fix 条件              |\n| 把代码形状当当前伤害       | 用五项准入；允许零 Architecture Fix        |\n| 用局部 bug 证明需要新架构  | 归 `Local Fix`，在现有 Implementation 内修 |\n| scanner 改名后重开候选     | 按 fingerprint 查 ledger；无新证据不重开   |\n| 批量迁移条目数当严重度     | 只作噪声背景，不作 `Fix` 证据              |\n| 范围外“顺手”修             | `Backlog` 或 `HUMAN_GATE`，不改            |\n| 依赖缺失仍继续             | `MISSING_DEPENDENCIES` 并停                |\n| 为理论优雅重写             | `Reject`/`Backlog`，除非有可复现当前伤害   |\n| 代用户接受 review concerns | `HUMAN_GATE`；只交出 continue / close 命令 |\n| 未跑命令却写通过           | `UNVERIFIED`                               |\n| 报告还有建议就继续轮       | 无 `Fix` 即终态；不必清零报告              |\n| zero-Fix 后再扫一轮求安心  | consult + evidence 新鲜即停止              |",
         "heading": "反漂移（常见失败）",
         "level": 2
       },
@@ -280,6 +280,66 @@
       {
         "raw": "A good result is boring, fast, and short:\n\n- At most two shell commands total, and no network calls.\n- Slug is 1–3 words (prefer 2), under 20 characters, reusing project vocabulary when it exists.\n- The prefix communicates urgency correctly.\n- The proposal is 4 lines; the post-creation report is 1–2 lines.\n- The checkout never changes before the user has seen the name and command.",
         "heading": "Quality Bar",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "chrome-dev-mcp",
+    "sections": [
+      {
+        "raw": "Use the host's registered `chrome-devtools` MCP server for browser-internal evidence. Keep host registration authoritative; use bundled scripts only for deterministic recovery and optional UXC diagnostics.\n\nRequire a host-registered `chrome-devtools` MCP server. Optional deterministic recovery uses a locally configured safe wrapper and launcher; Chrome's optional UXC facade pins UXC 0.17.0.",
+        "heading": "Chrome Dev MCP",
+        "level": 1
+      },
+      {
+        "raw": "Let the user remember only `/chrome-dev-mcp`. Handle connection checks, recovery, profile gates, and UXC internally. With no additional task, return only `CHROME_DEV_MCP_READY` after the real tool call. On failure, report one failing layer and one required action.",
+        "heading": "Keep the user contract simple",
+        "level": 2
+      },
+      {
+        "raw": "Treat `/chrome-dev-mcp` as a readiness action.\n\n1. Call the registered `chrome-devtools` MCP `list_pages` tool immediately.\n2. On success, return `CHROME_DEV_MCP_READY` or continue the requested browser-internal work.\n3. If the tool is absent, diagnose host discovery. A shell helper cannot register a missing MCP tool.\n4. If server startup or `list_pages` fails, run `scripts/ensure-connection.zsh --recover` from this skill, then retry `list_pages` exactly once in the same host.\n5. Claim `VERIFIED` only after the real tool call completes. Never expose page URLs, titles, body text, cookies, tokens, or unrelated target data.\n\nUse `/chrome-dev-mcp` in Claude Code and Grok, `$chrome-dev-mcp` in Codex, and preload `chrome-dev-mcp` in Hermes when deterministic selection is needed.",
+        "heading": "Execute the slash entry",
+        "level": 2
+      },
+      {
+        "raw": "Keep one chain:\n\n```text\nhost-native chrome-devtools MCP\n  -> user-configured safe wrapper\n  -> identity-checked loopback Chrome\n  -> pinned chrome-devtools-mcp runtime\n```\n\nRequire the safe wrapper to validate its configured endpoint, WebSocket address, browser process, and intended profile before exposing the MCP runtime. Let the wrapper launch only the configured isolated profile when the endpoint is absent. Never scan ports, read `DevToolsActivePort`, attach to a remote endpoint, or silently fall back to another browser.\n\nTreat skill discovery, MCP discovery, server handshake, tool discovery, endpoint identity, and a real tool call as separate layers.",
+        "heading": "Preserve the runtime invariant",
+        "level": 2
+      },
+      {
+        "raw": "Use this skill for:\n\n- DOM or accessibility snapshots and in-page JavaScript evidence.\n- Console, Network, Performance, Lighthouse, or heap diagnostics.\n- Chrome DevTools MCP/CDP connectivity and correct-profile diagnosis.\n- Multi-host discovery and real-tool-call acceptance.\n\nUse the host's native Chrome/browser capability for ordinary navigation and form filling. Use native Computer Use for browser chrome, macOS windows, and cross-app work. Do not substitute Playwright, Computer Use, raw CDP, or another browser layer for missing DevTools MCP when the requested evidence is browser-internal.",
+        "heading": "Route by task semantics",
+        "level": 2
+      },
+      {
+        "raw": "1. Call `list_pages` before using any page index from an earlier turn.\n2. Select the target page from the current result. Ask only when the target cannot be resolved safely.\n3. Take a fresh text snapshot before element work.\n4. Collect only the requested internal signals.\n5. After interaction, take a new snapshot and refresh the relevant Console or Network evidence.\n\nDo not echo unrelated page data. A successful handshake is not proof of attachment; a completed `list_pages` call is the minimum runtime proof.",
+        "heading": "Start with runtime proof",
+        "level": 2
+      },
+      {
+        "raw": "Read [references/host-verification.md](references/host-verification.md). Repair host discovery before diagnosing the browser endpoint.",
+        "heading": "Tool absent",
+        "level": 3
+      },
+      {
+        "raw": "Run `scripts/ensure-connection.zsh --recover` from this skill, then retry the host's real `list_pages` once. The helper reads the one-time local configuration produced by `scripts/configure-local.zsh`; it does not depend on shell aliases or login-shell startup.\n\nIf identity validation reports the wrong browser or profile, fail closed. Read [references/profile-identity.md](references/profile-identity.md). Never close or restart an existing browser without explicit authorization.",
+        "heading": "Startup or tool call failed",
+        "level": 3
+      },
+      {
+        "raw": "Read [references/uxc-facade.md](references/uxc-facade.md) when the user explicitly asks for UXC or a failed native call needs transport isolation. UXC exposes the same wrapper as a deterministic JSON-first CLI and may reuse its stdio child through a local daemon. It does not replace host registration, correct-browser validation, or per-host `list_pages` acceptance.\n\nUse `uxc-facade` for the generic packaging contract. This skill remains the owner of Chrome identity, connection recovery, safe payload handling, and final `list_pages` acceptance.\n\nReuse `scripts/install-uxc.zsh` for the pinned UXC binary and its owner manifest. Keep Chrome-specific linking in `scripts/setup-uxc-link.zsh` and payload-stripping acceptance in `scripts/uxc-readiness.zsh`. Never execute an unowned `uxc`, accept a PATH fallback, or overwrite a managed link whose exact contract differs.",
+        "heading": "Use UXC only as a facade",
+        "level": 2
+      },
+      {
+        "raw": "Allow concurrent reads of the shared endpoint. Before any write, run `list_pages` and `select_page` again. Do not let two agents modify the same tab. Use separate isolated browsers for truly parallel write tasks.",
+        "heading": "Handle concurrency",
+        "level": 2
+      },
+      {
+        "raw": "For multi-host validation, report each host independently:\n\n| Host | MCP discovery | Tools discovered | Real `list_pages` | Result |\n| ---- | ------------- | ---------------- | ----------------- | ------ |\n\nUse `VERIFIED` only after the real tool call. Otherwise report `UNVERIFIED` or the explicit external blocker.",
+        "heading": "Report acceptance",
         "level": 2
       }
     ]
@@ -1230,6 +1290,61 @@
       {
         "raw": "| Result                 | 使用条件                                                                                                                                       |\n| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |\n| `COMPLETED`            | 账本无未决项；必需验证通过；三道门禁覆盖同一最终 evidence id；最终盲审无范围内 `Fix`；owned Goal 已完成，或 parent Goal 保持 active-checkpoint |\n| `HUMAN_GATE`           | 等待决策、Goal 激活/续用、review concern 接受、权限、凭证、外部状态、范围扩张或预算                                                            |\n| `MISSING_DEPENDENCIES` | 预检缺少始终要求或本轮实际需要的能力；源码尚未修改                                                                                             |\n| `UNVERIFIED`           | 实现可能存在，但必需证据未运行、失败或已过期；Goal 不得完成                                                                                    |\n\n时间或 token 见底不是完成理由。\n\n```text\nTask Completion Result\n- Scope / exclusions:\n- Work ledger:\n- Three-party decision:\n- Goal: <completed | active-checkpoint | not-created | deferred-conflict>\n- Final evidence id:\n- Implemented:\n- Verification:\n- Agentic review: <packet/session + evidence id>\n- Architecture hardening: <result + evidence id>\n- Final Claude audit: <fresh session + evidence id>\n- Fixed / Backlog / Rejected:\n- Protocol, Git, and external actions:\n- Result: COMPLETED | HUMAN_GATE | MISSING_DEPENDENCIES | UNVERIFIED\n```",
         "heading": "终态与报告",
+        "level": 2
+      }
+    ]
+  },
+  {
+    "slug": "uxc-facade",
+    "sections": [
+      {
+        "raw": "Use UXC as a protocol adapter and stable JSON CLI facade. Do not turn it into a second service runtime.\n\nThe native host stays authoritative for registration and the service-specific skill stays authoritative for endpoint identity, safety, and final acceptance. UXC success is transport proof, not native-host acceptance.",
+        "heading": "UXC Facade",
+        "level": 1
+      },
+      {
+        "raw": "When the user invokes `/uxc-facade` without naming a target, return the contract template from [references/facade-contract.md](references/facade-contract.md). Do not install UXC, create a link, import configuration, or mutate files until a concrete target is in scope.\n\nFor Chrome DevTools, CDP, `list_pages`, correct-Chrome identity, or `/chrome-dev-mcp`, hand the task to `chrome-dev-mcp`. Apply this method only as its generic UXC design layer.",
+        "heading": "Entry behavior",
+        "level": 2
+      },
+      {
+        "raw": "Use the facade when at least one condition holds:\n\n- repeated agent or automation calls need one stable command name and JSON envelope;\n- an MCP stdio child is expensive and measured session reuse is valuable;\n- multiple supported protocols need the same discovery and invocation workflow;\n- installation provenance, link ownership, and sanitized readiness need an explicit contract.\n\nSkip the facade when:\n\n- the request is a one-off API call that UXC can execute directly;\n- the native host registration already solves the complete task and no CLI consumer exists;\n- the interface has no usable schema or discovery surface;\n- a full SDK is required for streaming, callbacks, or protocol-specific features.",
+        "heading": "Decide whether a facade is justified",
+        "level": 2
+      },
+      {
+        "raw": "| Layer                  | Owns                                                                             | Must not claim                                     |\n| ---------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------- |\n| Native host or client  | Registration, permissions, lifecycle, native tool exposure                       | Service identity unless it validates it            |\n| Service-specific skill | Endpoint identity, auth boundary, recovery policy, safe output, final acceptance | Generic UXC installation for every service         |\n| UXC facade             | Protocol discovery, stable link, JSON envelope, optional daemon reuse            | Correct service instance or native-host acceptance |\n\nAuthentication stays with the native client, credential provider, or service-specific configuration. Never copy secrets into skill text, command examples, link metadata, test output, or readiness reports.",
+        "heading": "Keep ownership explicit",
+        "level": 2
+      },
+      {
+        "raw": "1. Name the native authority and the service-specific owner.\n2. Name the UXC binary owner, which is the sole installer and updater, and its install root.\n3. Select the least-privilege read operation and allowed output for readiness.\n4. Record the native acceptance action separately from UXC readiness.",
+        "heading": "Define the contract",
+        "level": 3
+      },
+      {
+        "raw": "1. Inspect the host and operation with UXC before linking.\n2. Pin an official release for automation; record provenance and verify published digests when downloading a standalone binary.\n3. Verify the configured install root before writing. Fail closed on a foreign binary or version conflict; never let two owner skills silently overwrite one shared `uxc` command.\n4. Choose one fixed link name and fail closed if an existing command or link has foreign ownership.\n\nIf several skills intentionally share one binary, name one binary owner. That owner is the sole installer and updater; consumers verify the version and digest but never install, replace, or update it. Otherwise, each owning skill uses a service-private install root and carries the exact pin, digest, platform policy, and readiness operation it tests.\n\nDo not add shared scripts or an ownerless installer merely because several skills use UXC. Keep link and readiness helpers in each service-specific skill. Keep a private binary installer there too, or, for an intentionally shared binary, keep only that installer with the named binary-owner skill.",
+        "heading": "Make execution deterministic",
+        "level": 3
+      },
+      {
+        "raw": "Include both ownership gates in every packaging answer so implementers cannot mistake an incomplete contract for permission to overwrite state:\n\n- Binary gate: fail closed on a symlink, foreign or unknown owner, digest mismatch, or version conflict.\n- Link gate: fail closed on a non-UXC command, foreign link owner, or owner/host target mismatch.\n\nKeep the facade `UNVERIFIED` until both gates can identify an existing target as owned and compatible.",
+        "heading": "State ownership gates in every design",
+        "level": 3
+      },
+      {
+        "raw": "Use daemon-backed exclusivity only when the endpoint owns shared mutable state, such as one stdio child. Give idle sessions a finite TTL unless retention is explicitly required and verified. Prove reuse with two sanitized readiness calls and daemon/session metadata, not timing alone.",
+        "heading": "Reuse only measured state",
+        "level": 3
+      },
+      {
+        "raw": "1. Prove UXC discovery for the intended operation.\n2. Prove one sanitized transport call through the fixed link.\n3. If reuse matters, prove the second call reused the intended daemon session.\n4. Run the native host's real tool call or service-specific acceptance separately.\n\nReturn bounded status fields only. Discard URLs, titles, body content, credentials, cookies, tokens, and raw tool payloads unless the user explicitly requested safe data from them.",
+        "heading": "Verify in layers",
+        "level": 3
+      },
+      {
+        "raw": "Use four statuses: `FACADE_READY`, `TRANSPORT_READY`, `SESSION_REUSED`, and `NATIVE_ACCEPTANCE`. Mark any unproved layer `UNVERIFIED` and name one next action. Never collapse them into one generic success claim.\n\nRead [references/facade-contract.md](references/facade-contract.md) for the reusable template, command skeleton, and update checklist. Use the [official UXC repository](https://github.com/holon-run/uxc) as the source of truth for current commands and supported protocols.",
+        "heading": "Report the result",
         "level": 2
       }
     ]

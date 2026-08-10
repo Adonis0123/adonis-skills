@@ -1,0 +1,91 @@
+{
+  "skill_name": "uxc-facade",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-method-contract",
+      "prompt": "/uxc-facade",
+      "expected_output": "Returns the reusable UXC Facade Contract without installing UXC, creating links, importing configuration, or mutating files.",
+      "files": [],
+      "expectations": [
+        "Treats the explicit invocation as a request for the generic method",
+        "Returns the contract fields needed to scope a target",
+        "Does not mutate state without a concrete target"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "mcp-stdio-packaging",
+      "prompt": "用 UXC 把一个已有的 MCP stdio wrapper 包成可复用 CLI。保留原生宿主注册，子进程很贵，需要证明 daemon 复用，并且 readiness 不能泄露工具结果。",
+      "expected_output": "Defines native and service ownership, a fixed managed link, pinned provenance, finite idle retention, sanitized two-call reuse proof, and separate native-host acceptance.",
+      "files": [],
+      "expectations": [
+        "Keeps native host registration authoritative",
+        "Uses a fixed owned link and pinned official UXC provenance",
+        "Names the binary owner as the sole installer and updater while the service skill owns link and readiness helpers",
+        "Defines a two-call daemon reuse proof using sanitized metadata rather than timing, and keeps reuse UNVERIFIED until it runs",
+        "Keeps runtime readiness statuses UNVERIFIED when no ownership gates or calls were executed",
+        "Separates UXC transport from native-host acceptance"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "openapi-link-packaging",
+      "prompt": "我们会反复调用一个有 schema 的 OpenAPI 服务。请用 UXC 设计固定 JSON CLI，但这个服务没有需要常驻复用的子进程。",
+      "expected_output": "Uses UXC discovery and a fixed managed link, keeps auth external, omits daemon exclusivity without shared mutable state, and defines a safe readiness operation.",
+      "files": [],
+      "expectations": [
+        "Inspects the schema and operation before linking",
+        "Does not add daemon exclusivity without measured shared state",
+        "Keeps credentials outside skill content and output"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "one-off-api-near-miss",
+      "prompt": "用 UXC 调一次公开 API，拿到结果就结束，不需要固定命令、daemon 或自动化维护。",
+      "expected_output": "Uses the ordinary UXC discovery and execution workflow directly instead of creating a facade contract, installer, or persistent link.",
+      "files": [],
+      "expectations": [
+        "Recognizes that a reusable facade is unnecessary",
+        "Does not create a persistent link or packaging layer"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "chrome-devtools-handoff",
+      "prompt": "用 UXC 包装 Chrome DevTools MCP，并确认连的是正确 Chrome，最后真实调用 list_pages。",
+      "expected_output": "Hands Chrome identity, recovery, and list_pages acceptance to chrome-dev-mcp while applying the generic facade contract only to the UXC adapter layer.",
+      "files": [],
+      "expectations": [
+        "Routes the task to chrome-dev-mcp",
+        "Does not treat UXC readiness as correct-Chrome proof",
+        "Keeps the native list_pages call as final acceptance"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "binary-pin-conflict",
+      "prompt": "两个业务 skill 都想安装 UXC：一个 pin 0.17，另一个需要不同版本，而且它们现在会写同一个 uxc 路径。请按通用方法决定怎么包装；不要为了复用而新建共享 installer。",
+      "expected_output": "Names the binary owner and install root, uses service-private roots or one explicit shared owner, fails closed on a foreign or mismatched binary, and keeps executable scripts in each owning skill.",
+      "files": [],
+      "expectations": [
+        "Does not allow two owner skills to overwrite one shared binary",
+        "Fails closed on a foreign owner, digest mismatch, or version conflict",
+        "Does not create a shared installer or shared runtime script dependency"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "multi-protocol-packaging",
+      "prompt": "我们有 GraphQL、gRPC 和 JSON-RPC 接口需要统一给 agent 使用。请说明怎样用 UXC facade 复用同一方法，同时保留每个服务自己的 auth、readiness 和验收。",
+      "expected_output": "Applies one discovery, ownership, link, and layered-evidence contract across supported protocols while leaving credentials, readiness operations, pins, and native acceptance with each owning skill.",
+      "files": [],
+      "expectations": [
+        "Uses the same facade method without pretending the protocols are identical",
+        "Keeps authentication and acceptance service-specific",
+        "Does not introduce a shared service runtime"
+      ]
+    }
+  ]
+}

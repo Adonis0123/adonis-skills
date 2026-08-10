@@ -57,6 +57,8 @@ Default repository identifier: `adonis0123/adonis-skills`
 ```bash
 npx skills add adonis0123/adonis-skills --skill weekly-report
 npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
+npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp
+npx skills add adonis0123/adonis-skills --skill uxc-facade
 ```
 
 If the repository owner changes:
@@ -68,22 +70,22 @@ If the repository owner changes:
 
 The table below explains each script in `package.json`.
 
-| Command | Actual Execution | Meaning / When to Use |
-| --- | --- | --- |
-| `pnpm dev` | `turbo run dev --filter=@adonis-skills/web` | Starts web site development mode (`apps/web` only). Use for daily local UI debugging. |
-| `pnpm build` | `turbo run build` | Runs monorepo build tasks. Use before submitting changes when you want to ensure the repo builds. |
-| `pnpm lint` | `turbo run lint` | Runs code style/lint checks. Use after TS/JS changes. |
-| `pnpm typecheck` | `turbo run typecheck` | Runs TypeScript type checks. Use after type/API changes. |
-| `pnpm skills:new` | `node --experimental-strip-types ./scripts/create-skill.ts` | Interactive entrypoint to create a new skill. Automatically does: init -> quick validate -> full validate -> index refresh. |
-| `pnpm skills:finalize -- <skill-path>` | `node --experimental-strip-types ./scripts/finalize-skill.ts` | Standard finalize flow for an existing/copied skill under `skills/*`: `quick-validate` -> `validate` -> `index`. Supports relative and absolute paths. |
-| `pnpm skills:finalize:new [-- --dry-run]` | `node --experimental-strip-types ./scripts/finalize-new-skills.ts` | Auto mode: detects newly added skills only when `skills/<slug>/SKILL.md` is `A` or `??`, runs finalize per slug, then stages related files (`skills/<slug>` and changed skills index). If nothing new is found, it falls back to `skills:new` and rescans. |
-| `pnpm skills:init <skill-name> --path skills` | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py` | Initializes only skill directory/template content (manual mode). Use when you do not want the full automated flow. |
-| `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py` | Validates a single skill (especially frontmatter validity). Use as fast local check after editing one skill. |
-| `pnpm skills:openai-yaml <skill-dir>` | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py` | Generates `agents/openai.yaml` for a skill (OpenAI skill interface metadata). Use when interface metadata is needed. |
-| `pnpm skills:validate` | `turbo run skills:validate --filter=@adonis-skills/web` | Repository-wide skills validation. Required before commit/CI. |
-| `pnpm skills:index` | `turbo run skills:index --filter=@adonis-skills/web` | Regenerates `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json`. Run after adding/updating skills so web data stays fresh. |
-| `pnpm skills:install:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts` | Installs skills from `skills/` into local `.agents/skills` (supports interactive selection, `--all`, `--skill`). Use for local agent testing. |
-| `pnpm skills:test:local` | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then ensures `.claude/skills` points at `.agents/skills`. Use when testing in local Claude/Codex runtime too. |
+| Command                                          | Actual Execution                                                               | Meaning / When to Use                                                                                                                                                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm dev`                                       | `turbo run dev --filter=@adonis-skills/web`                                    | Starts web site development mode (`apps/web` only). Use for daily local UI debugging.                                                                                                                                                                      |
+| `pnpm build`                                     | `turbo run build`                                                              | Runs monorepo build tasks. Use before submitting changes when you want to ensure the repo builds.                                                                                                                                                          |
+| `pnpm lint`                                      | `turbo run lint`                                                               | Runs code style/lint checks. Use after TS/JS changes.                                                                                                                                                                                                      |
+| `pnpm typecheck`                                 | `turbo run typecheck`                                                          | Runs TypeScript type checks. Use after type/API changes.                                                                                                                                                                                                   |
+| `pnpm skills:new`                                | `node --experimental-strip-types ./scripts/create-skill.ts`                    | Interactive entrypoint to create a new skill. Automatically does: init -> quick validate -> full validate -> index refresh.                                                                                                                                |
+| `pnpm skills:finalize -- <skill-path>`           | `node --experimental-strip-types ./scripts/finalize-skill.ts`                  | Standard finalize flow for an existing/copied skill under `skills/*`: `quick-validate` -> `validate` -> `index`. Supports relative and absolute paths.                                                                                                     |
+| `pnpm skills:finalize:new [-- --dry-run]`        | `node --experimental-strip-types ./scripts/finalize-new-skills.ts`             | Auto mode: detects newly added skills only when `skills/<slug>/SKILL.md` is `A` or `??`, runs finalize per slug, then stages related files (`skills/<slug>` and changed skills index). If nothing new is found, it falls back to `skills:new` and rescans. |
+| `pnpm skills:init <skill-name> --path skills`    | `python3 ./.agents/skills/repo-skill-creator/scripts/init_skill.py`            | Initializes only skill directory/template content (manual mode). Use when you do not want the full automated flow.                                                                                                                                         |
+| `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py`        | Validates a single skill (especially frontmatter validity). Use as fast local check after editing one skill.                                                                                                                                               |
+| `pnpm skills:openai-yaml <skill-dir>`            | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py`  | Generates `agents/openai.yaml` for a skill (OpenAI skill interface metadata). Use when interface metadata is needed.                                                                                                                                       |
+| `pnpm skills:validate`                           | `turbo run skills:validate --filter=@adonis-skills/web`                        | Repository-wide skills validation. Required before commit/CI.                                                                                                                                                                                              |
+| `pnpm skills:index`                              | `turbo run skills:index --filter=@adonis-skills/web`                           | Regenerates `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json`. Run after adding/updating skills so web data stays fresh.                                                                               |
+| `pnpm skills:install:local`                      | `node --experimental-strip-types ./scripts/install-local-skills.ts`            | Installs skills from `skills/` into local `.agents/skills` (supports interactive selection, `--all`, `--skill`). Use for local agent testing.                                                                                                              |
+| `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then ensures `.claude/skills` points at `.agents/skills`. Use when testing in local Claude/Codex runtime too.                                                                                                                      |
 
 Notes:
 
@@ -202,7 +204,7 @@ Why the i18n step is required:
 
 - compiled Lingui catalogs (`src/locales/**/*.mjs`) are intentionally ignored by git.
 - `src/i18n/catalog-manifest.ts` imports those `.mjs` files.
-- without pre-compiling catalogs in CI, `typecheck` can fail with `TS2307` ("Cannot find module .../src/locales/.../*.mjs").
+- without pre-compiling catalogs in CI, `typecheck` can fail with `TS2307` ("Cannot find module .../src/locales/.../\*.mjs").
 
 Common failure categories:
 
