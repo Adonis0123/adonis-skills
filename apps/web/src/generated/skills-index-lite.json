@@ -65,7 +65,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-08-10T09:42:36.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -147,6 +148,19 @@
       "hasSrc": false
     },
     "updatedAt": "2026-03-10T06:47:07.000Z"
+  },
+  {
+    "slug": "figma-mcp",
+    "name": "figma-mcp",
+    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, or Cursor. Keep registration account-neutral and each supported host's OAuth flow authoritative, verify readiness with a real read-only whoami call, and never copy OAuth tokens between hosts.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.1.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   },
   {
     "slug": "global-modal-scaffold",
@@ -267,7 +281,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-08-10T09:42:36.000Z"
   },
   {
     "slug": "weekly-report",

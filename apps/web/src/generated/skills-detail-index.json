@@ -800,6 +800,76 @@
     ]
   },
   {
+    "slug": "figma-mcp",
+    "sections": [
+      {
+        "raw": "Use the official remote Figma MCP server through each supported host's native registration. The endpoint is `https://mcp.figma.com/mcp`; authentication belongs to the host's OAuth flow.",
+        "heading": "Figma MCP",
+        "level": 1
+      },
+      {
+        "raw": "Let the user remember only `/figma-mcp`. Handle host discovery, OAuth state, account identity, and readiness internally. With no additional task, accept the host's currently authenticated Figma account and return only `FIGMA_MCP_READY` after a real `whoami` tool call. When the user names an account, require a private match before readiness. On failure, report one failing layer and one required action.\n\nUse `/figma-mcp` in Claude Code and Cursor, and `$figma-mcp` in Codex.",
+        "heading": "Keep the user contract simple",
+        "level": 2
+      },
+      {
+        "raw": "Treat an explicit invocation as a readiness request.\n\n1. Call the host-registered Figma MCP `whoami` tool once.\n2. Inspect the result privately. With no requested account, treat the current authenticated identity as the target. When the user named an account, require a private match. Do not reproduce names, emails, plan names, IDs, or other identity details.\n3. On success, return `FIGMA_MCP_READY` or continue the requested Figma work.\n4. If the tool is absent, diagnose native host discovery before changing authentication.\n5. If the server requires authentication, use the host's native login command or plugin UI. Let the user complete passwords, passkeys, Touch ID, 2FA, CAPTCHA, or any other credential challenge.\n6. Retry `whoami` exactly once after successful authentication.\n\nUse `VERIFIED` only after the real tool call. Server configuration, an OAuth browser page, a successful callback, and tool discovery are separate evidence layers.",
+        "heading": "Execute the readiness action",
+        "level": 2
+      },
+      {
+        "raw": "Keep one chain per host:\n\n```text\nsupported host's native Figma registration\n  -> https://mcp.figma.com/mcp\n  -> that host's OAuth grant\n  -> current or explicitly requested Figma account\n  -> real whoami call\n```\n\nThe endpoint and account may be common, but OAuth credentials remain per host. Never copy tokens, credential caches, cookies, or browser profiles between Codex, Claude Code, Cursor, or another client. Do not add a local proxy or shared wrapper merely to imitate a shared runtime.\n\nOnly clients listed in Figma's MCP Catalog may connect. Treat Grok, Hermes, WorkBuddy, and any other unlisted client as unsupported unless Figma's current official catalog explicitly includes it. Do not work around the catalog with a proxy or borrowed client identity.",
+        "heading": "Preserve the remote invariant",
+        "level": 2
+      },
+      {
+        "raw": "Share only the skill and official server registration. Never store a default Figma account, email, account alias, token, cookie, browser profile, or OAuth callback in the skill, MCP configuration, environment variables, or repository files.\n\n- With no account named, keep the existing OAuth grant and validate its current identity with `whoami`.\n- With an account named, compare privately and switch only when the current host is a mismatch.\n- Switching accounts must preserve the existing server identifier, endpoint, scope, and unrelated MCP entries.\n- App plugins and CLI registrations may have separate OAuth lifecycles even on the same machine. Switch and verify only the surface the user is actually using.\n\nAccount switching changes authentication state, not MCP configuration. Do not add a duplicate Figma server, rewrite the shared endpoint, or create one configuration per person merely to change accounts.",
+        "heading": "Keep registration account-neutral",
+        "level": 2
+      },
+      {
+        "raw": "Use this skill for:\n\n- Official Figma MCP installation, OAuth, connection recovery, and multi-host acceptance.\n- Readiness and private account-identity checks with `whoami`.\n- Diagnosing the difference between server discovery, tool discovery, authentication, and a real tool call.\n\nFor Figma design reads and writes, load the official task skill that owns the operation before calling its tool. In particular, load `figma-use` before every `use_figma` call and honor any stricter prerequisite named by a Figma tool. Test write workflows in a duplicate or disposable file, never an important working file.\n\nDo not use Figma MCP for ordinary web browsing, desktop navigation, generic screenshots, or non-Figma files.",
+        "heading": "Route by task semantics",
+        "level": 2
+      },
+      {
+        "raw": "Read [references/authentication.md](references/authentication.md) when login is required, the wrong account is connected, or the user explicitly asks to use Computer Use for the OAuth UI.\n\nPrefer the host's native OAuth command or plugin UI. Computer Use may assist only with already-visible, non-secret UI after the user explicitly authorizes the target account. It must stop for credential entry, passkeys, Touch ID, 2FA, CAPTCHA, consent ambiguity, or an account not clearly matching the requested identity.\n\nNever print `whoami` payloads in readiness reports. Reduce identity checks to `CURRENT`, `MATCH`, `MISMATCH`, or `UNVERIFIED`.",
+        "heading": "Authenticate safely",
+        "level": 2
+      },
+      {
+        "raw": "Read [references/host-verification.md](references/host-verification.md). Merge the official remote server into the host's native configuration; never replace the whole configuration.",
+        "heading": "Tool absent or server missing",
+        "level": 3
+      },
+      {
+        "raw": "Run only that host's native login flow, then retry `whoami` once. A login in one host does not prove another host is authenticated.",
+        "heading": "Authentication required",
+        "level": 3
+      },
+      {
+        "raw": "Read [references/authentication.md](references/authentication.md). If the user did not name a target account, do not switch automatically. With an explicit target account, fail closed on mismatch, clear only that host surface's Figma OAuth grant, authenticate again, and rerun `whoami`. Preserve the server registration and unrelated MCP entries. Do not sign out of the user's whole browser or Figma desktop session.",
+        "heading": "Switch account or recover from a mismatch",
+        "level": 3
+      },
+      {
+        "raw": "Recheck current host status and Figma's official known-issues guidance. Separate provider, plan, rate-limit, client compatibility, and file-permission failures from MCP registration failures.",
+        "heading": "Tool call failed after authentication",
+        "level": 3
+      },
+      {
+        "raw": "Allow concurrent `whoami` and unrelated read-only calls. Before a write, refresh the target file and node context. Do not let two agents modify the same Figma file or node concurrently unless the workflow has an explicit coordination mechanism and the user approved it.",
+        "heading": "Handle concurrency",
+        "level": 2
+      },
+      {
+        "raw": "For multi-host validation, report each host independently:\n\n| Host | Server discovered | Tools discovered | Real `whoami` | Account | Result |\n| ---- | ----------------- | ---------------- | -------------- | ------- | ------ |\n\nUse `CURRENT` in the Account column when no target was named and the real call completed. Use `MATCH` only after privately matching an explicit target. Otherwise report `MISMATCH`, `UNVERIFIED`, or the exact external blocker.",
+        "heading": "Report acceptance",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "global-modal-scaffold",
     "sections": [
       {

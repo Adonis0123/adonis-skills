@@ -1,0 +1,71 @@
+{
+  "skill_name": "figma-mcp",
+  "evals": [
+    {
+      "id": 1,
+      "name": "explicit-readiness",
+      "prompt": "/figma-mcp",
+      "expected_output": "Treats the invocation as a readiness action, completes a real Figma whoami call, keeps identity private, and returns only FIGMA_MCP_READY on the healthy path.",
+      "files": [],
+      "expectations": [
+        "Treats /figma-mcp as an executable readiness request rather than documentation",
+        "Uses a real whoami tool call as the success proof",
+        "Does not output names, emails, plans, IDs, or file data",
+        "Returns only FIGMA_MCP_READY on the healthy path"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "authentication-required",
+      "prompt": "Figma MCP 显示 requires authentication。请用我指定的账号完成登录并验收；如果出现密码、Touch ID、验证码或 CAPTCHA 就让我接管。",
+      "expected_output": "Uses the current host's native OAuth flow, stops for credential challenges, verifies privately with whoami, and does not share tokens or identity data.",
+      "files": [],
+      "expectations": [
+        "Uses the host-native OAuth command or plugin UI",
+        "Stops for passwords, passkeys, Touch ID, 2FA, CAPTCHA, or account ambiguity",
+        "Does not copy OAuth tokens, cookies, or credential caches between hosts",
+        "Requires whoami after authentication before VERIFIED"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "multi-host-acceptance",
+      "prompt": "把 Figma MCP 给 Codex、Claude Code、Cursor 都配好并逐个验证；照 chrome-dev-mcp 的分层证据方式做，但不要共享 token。",
+      "expected_output": "Uses the official remote endpoint with native registration and independent OAuth per supported host, rejects unsupported-client workarounds, and reports one real whoami result per host.",
+      "files": [],
+      "expectations": [
+        "Keeps each host's native registration authoritative",
+        "Uses independent OAuth grants instead of a shared token or proxy",
+        "Checks Figma's supported-client boundary",
+        "Reports server discovery, tool discovery, real whoami, CURRENT or a private account match, and result per host"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "write-workflow-handoff",
+      "prompt": "用 Figma MCP 直接修改我正在工作的设计文件，顺便验证连接。",
+      "expected_output": "Separates read-only readiness from writes, loads the required official Figma operation skill, refreshes file and node context, and avoids testing writes in an important working file.",
+      "files": [],
+      "expectations": [
+        "Uses whoami for read-only readiness rather than a write",
+        "Loads figma-use before use_figma and honors stricter tool prerequisites",
+        "Uses a duplicate or disposable file for write testing",
+        "Does not let concurrent agents write the same file or node without coordination"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "account-switch-reuses-registration",
+      "prompt": "我以后会换不同的 Figma 帐号。让同一份 Codex、Claude Code、Cursor 配置继续可用，不要把帐号写死，也不要复制 token。",
+      "expected_output": "Keeps the skill and official server registration account-neutral, accepts the current account when none is named, and switches only the active host surface's OAuth grant when an explicit target differs.",
+      "files": [],
+      "expectations": [
+        "Keeps one stable official endpoint and server registration instead of creating per-account entries",
+        "Does not persist a default account, email, alias, token, cookie, browser profile, or callback value",
+        "Accepts the current authenticated account after a real whoami call when no target is named",
+        "On an explicit mismatch, clears and replaces only the active host surface's OAuth grant",
+        "Stops for credentials, passkeys, Touch ID, 2FA, CAPTCHA, or an ambiguous account chooser"
+      ]
+    }
+  ]
+}
