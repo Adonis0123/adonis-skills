@@ -43,6 +43,7 @@ coverage
 .agents/skills/global-modal-scaffold/
 .agents/skills/goal-gate/
 .agents/skills/review-prompt-composer/
+.agents/skills/uxc-facade/
 .agents/skills/workflow-gate/
 .agents/skills/zustand-store-scaffold/
 
