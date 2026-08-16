@@ -1,11 +1,12 @@
+import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
-import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(import.meta.dirname, "../..");
+const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 
 test(
   "web production build does not require Google Fonts",

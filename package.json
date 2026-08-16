@@ -24,7 +24,7 @@
     "skills:install:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
     "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm",
     "skills:eval-grade": "node ./scripts/grade-skill-evals.mjs",
-    "test:web-offline-font-build": "node --experimental-strip-types --test ./scripts/__tests__/web-offline-font-build.test.mts"
+    "test:web-offline-font-build": "node --test ./scripts/__tests__/web-offline-font-build.test.mjs"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.9.0",
