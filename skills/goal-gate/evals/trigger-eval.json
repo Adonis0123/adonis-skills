@@ -24,6 +24,10 @@
     "should_trigger": true
   },
   {
+    "query": "我在 Cursor CLI 里，帮我设一个 goal 把 docs/PLAN.md 做完，直到测试和构建都通过；中断后要能从同一个 chat 继续。",
+    "should_trigger": true
+  },
+  {
     "query": "Set up a goal to improve prompts/support-agent.md until the support-agent eval score reaches 0.92, without changing fixtures.",
     "should_trigger": true
   },

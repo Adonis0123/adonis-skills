@@ -1,6 +1,6 @@
 ---
 name: goal-gate
-description: "Use when the user wants to decide, set, draft, or run a durable coding-agent goal or /goal until a verifiable done condition. Gates autonomy across Grok, Codex, Claude Code, and compatible agents: Codex get_goal/create_goal plus status closure; Grok user-run /goal plus progress after Active. Drafts copy-ready contracts with outcome, verification, constraints, write boundaries, delegation, iteration, and pause conditions. On Grok, /goal-gate is not product /goal: emit a copy-ready /goal and wait for activation. Trigger on 'should I set a goal?', durable goal setup, Grok/Codex/Claude /goal prompts, multi-checkpoint work, migrations, refactors, ports, spec implementations, eval loops, bounded backlog cleanup with one verifiable end state, or stepping-away finish-it tasks. Do not use for quick edits, one-shot tests, loose unrelated backlogs, OKR/scrum goals, reminders, or token-budget-only settings."
+description: "Use when the user wants to decide, set, draft, or run a durable coding-agent goal or /goal until a verifiable done condition. Gates autonomy across Cursor CLI, Grok, Codex, Claude Code, and compatible agents: Cursor soft-adopts the contract in a resumable chat without inventing /goal or goal APIs; Codex uses get_goal/create_goal plus status closure; Grok uses a user-run /goal plus progress after Active. Drafts copy-ready contracts with outcome, verification, constraints, write boundaries, delegation, iteration, and pause conditions. Trigger on 'should I set a goal?', durable goal setup, Cursor CLI goal prompts, Grok/Codex/Claude /goal prompts, multi-checkpoint work, migrations, refactors, ports, spec implementations, eval loops, bounded backlog cleanup with one verifiable end state, or stepping-away finish-it tasks. Do not use for quick edits, one-shot tests, loose unrelated backlogs, OKR/scrum goals, reminders, or token-budget-only settings."
 metadata:
   author: adonis
 ---
@@ -14,7 +14,7 @@ Use this skill to decide whether the current task deserves a durable goal and to
 - Gate autonomy: decide `none`, `suggest`, `set-now`, or `defer`.
 - Draft the contract: produce a concrete `/goal` or portable prompt with verification, boundaries, delegation, iteration, and pause conditions.
 
-**`/goal-gate` is not product `/goal`.** This skill writes and gates contracts. Only the host product can put a session into durable goal mode: Codex via `create_goal`, Grok via the user-run slash command `/goal <objective>`, Claude Code via user `/goal` plus transcript evaluation. Never imply that loading this skill alone activated Grok goal mode.
+**`/goal-gate` is not product `/goal`.** This skill writes and gates contracts. Only a host with a verified goal facility can put a session into product goal mode: Codex via `create_goal`, Grok via the user-run slash command `/goal <objective>`, Claude Code via user `/goal` plus transcript evaluation. Cursor CLI has no verified product `/goal` or goal API; it soft-adopts the contract in the current chat and relies on Cursor's native chat resume for continuity. Never imply that loading this skill activated a product Goal.
 
 This skill is independent from `workflow-gate`: consume a `Workflow Gate` block when one is already present, but do not require one.
 
@@ -38,9 +38,10 @@ Use explicit user intent before ambient tool availability:
 | `codex-slash`       | The user is in Codex and wants a slash-command prompt, or explicitly asks for Codex `/goal`.                                                                                    | Output a `/goal ...` prompt.                                                                                                                                                                                                                                         |
 | `claude-code-slash` | The user is in Claude Code, asks for Claude Code `/goal`, or asks for a Claude Code-compatible prompt.                                                                          | Output a `/goal ...` prompt tuned for Claude Code evaluation.                                                                                                                                                                                                        |
 | `codex-tooling`     | The session exposes Codex goal tools such as `get_goal` or `create_goal`, and the user did not explicitly ask for a slash-command prompt.                                       | Use `get_goal` / `create_goal` to activate; when exposed, use Codex's status-only `update_goal` to close a verified goal or report a persistent blocker.                                                                                                             |
+| `cursor-cli`        | The user explicitly names Cursor CLI, `cursor-agent`, or `cursor-cli`, or the host is known to be Cursor CLI.                                                                   | Soft-adopt the contract in the current or resumed Cursor chat. Do not emit `/goal` as an executable Cursor command and never invent `get_goal`, `create_goal`, or `update_goal`. Use Cursor's advertised chat resume options only for conversation continuity.       |
 | `unknown`           | The runtime cannot be inferred.                                                                                                                                                 | Output a portable contract, not an executable command.                                                                                                                                                                                                               |
 
-Disambiguation: `get_goal` / `create_goal` identify the Codex family even when a status-only `update_goal` is also present. `update_goal` without those tools is Grok only when its advertised schema supports Grok progress/completion fields. Never borrow one runtime's field names for the other. If both a slash prompt and tooling are requested, emit one block per runtime.
+Disambiguation: explicit Cursor CLI intent wins over the underlying model provider name; a Cursor session using a Grok or Claude model is still `cursor-cli`. Otherwise, `get_goal` / `create_goal` identify the Codex family even when a status-only `update_goal` is also present. `update_goal` without those tools is Grok only when its advertised schema supports Grok progress/completion fields. Never borrow one runtime's field names for the other. If both a slash prompt and tooling are requested, emit one block per runtime.
 
 If multiple runtimes are requested, emit one `Goal Gate` block per runtime. Keep each block executable or copyable on its own.
 
@@ -92,6 +93,7 @@ How `set-now` executes depends on the runtime:
   5. Soft-adopt exception: if the user explicitly declines durable mode ("just do the work, no `/goal`", "soft only", "不要原生 goal"), set `Next: adopt goal and continue`, work without waiting, and still **never** call `update_goal` until Active.
 - `grok-tooling` (goal already Active): if the user explicitly continues the exact objective or a demonstrably contained checkpoint, use `Decision: set-now`, `Next: continue active goal`, work the contract, and use Grok's progress `message` as above. Do not invent `create_goal` / `get_goal`. Do not silently clear or replace the active goal; a contained checkpoint leaves completion to the parent owner, and `completed: true` is allowed only after the full Goal done condition is proven.
 - `claude-code-slash` / `codex-slash`: there is no create-goal API to call, so adopt the goal contract yourself — keep working toward the done condition, reporting at the checkpoints, until it is met or a stop-or-ask condition fires. Still emit the `/goal` prompt so the user can re-run it as a durable goal in a fresh session.
+- `cursor-cli`: there is no verified product goal API or `/goal` command. For a high-fit executable request in a mode that permits the work, use `Decision: set-now`, `Next: adopt goal and continue`, emit no `/goal`, and work the contract in the current chat. Report checkpoints and terminal evidence in the transcript only. If the same Cursor chat is resumed and its transcript contains the exact adopted contract, use `Next: continue adopted goal`; do not draft a second contract or claim a product Goal is Active. Cursor's advertised chat commands restore conversation context, not product goal state: `cursor-agent --resume [chatId]` selects a chat (the supplied ID selects a specific one), `cursor-agent --continue` or `cursor-agent resume` restores the most recent chat, and `cursor-agent ls` opens chat selection. If the user asks only for text to review or copy, use `Decision: suggest`, `Next: provide prompt`, and provide a plain Cursor prompt without a slash prefix. If Ask/Plan mode blocks required writes, surface that runtime constraint and do not claim execution started.
 - `grok-slash`: user asked for a copyable Grok `/goal` (or only a slash prompt). Prefer `Decision: suggest` with `Next: provide prompt` when they only want text to copy. If they also authorized immediate execution without durable mode, soft-adopt is allowed; still never call `update_goal` until Active. Mention that `/goal` appears only when the goal feature is enabled and `update_goal` is in the toolset; management args are `status` / `pause` / `resume` / `clear`.
 - `unknown`: capabilities are uncertain, so do not auto-execute. Emit a portable contract with `Next: ask approval` and let the user start it.
 
@@ -114,7 +116,7 @@ A strong goal includes:
 - a done condition that proves completion;
 - pause conditions for credentials, payments, production data, destructive actions, legal/medical/financial judgment, copyrighted assets, unclear ownership, or repeated blockers.
 
-For Chinese-first users, write the primary copy-ready prompt in Chinese while keeping the executable command prefix `/goal`. Include a concise default reason when you made assumptions. Add numbered options only when a choice would materially change scope, risk, or direction. Include an English-compatible mirror only when the user asks for portability, English, Claude/Codex cross-use, or a complete bilingual draft.
+For Chinese-first users, write the primary copy-ready prompt in Chinese. Keep the executable command prefix `/goal` only for verified slash runtimes; for Cursor CLI, provide a plain prompt without `/goal`. Include a concise default reason when you made assumptions. Add numbered options only when a choice would materially change scope, risk, or direction. Include an English-compatible mirror only when the user asks for portability, English, Claude/Codex cross-use, or a complete bilingual draft.
 
 For unfamiliar or specialized domains, do not invent domain rules. Write a discovery-first goal that makes the agent inspect project docs, sample data, official references, and runtime evidence before implementation.
 
@@ -151,7 +153,7 @@ Emit this block:
 ```text
 Goal Gate
 - Decision: <none | suggest | set-now | defer>
-- Runtime: <grok-tooling | grok-slash | codex-tooling | codex-slash | claude-code-slash | unknown>
+- Runtime: <grok-tooling | grok-slash | codex-tooling | codex-slash | claude-code-slash | cursor-cli | unknown>
 - Goal fit: <low | medium | high>
 - Objective: <one durable objective or n/a>
 - Done condition: <verifiable stopping condition or n/a>
@@ -161,7 +163,7 @@ Goal Gate
 - Checkpoints: <progress reporting cadence or n/a>
 - Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>
 - Prompt: <runtime-specific goal prompt, "see Recommended /goal below", or none>
-- Next: <create goal | continue active goal | wait for user /goal | adopt goal and continue | report via update_goal | provide prompt | ask approval | continue without goal | route elsewhere>
+- Next: <create goal | continue active goal | wait for user /goal | adopt goal and continue | continue adopted goal | report via update_goal | provide prompt | ask approval | continue without goal | route elsewhere>
 ```
 
 Keep the block concise. If the prompt is longer than one short line, put `Prompt: see Recommended /goal below`, then emit the copy-ready prompt immediately below the block.
@@ -179,6 +181,15 @@ When emitting a copy-ready prompt for a Chinese-first user, use this order as ne
 Every executable copy-ready prompt must include an `执行编排：` or `Execution strategy:` line that carries the Delegation Policy. Keep it shorter than the task-specific outcome and verification unless delegation is the main risk.
 
 ## Prompt Rules
+
+For Cursor CLI:
+
+- Do not emit `/goal` as an executable Cursor command and do not invent goal-management tools. Cursor skills may be invoked from `/`, but that invokes the skill, not a product Goal.
+- For immediate high-fit work, soft-adopt the contract in the current chat and continue. For prompt-only requests, provide a plain copy-ready prompt without a slash prefix.
+- Treat advertised chat commands as continuity mechanisms only: `cursor-agent --resume [chatId]` selects a chat and uses the supplied ID when present, `cursor-agent --continue` or `cursor-agent resume` restores the most recent chat, and `cursor-agent ls` opens chat selection. Confirm installed help before promising any option. None creates, pauses, completes, or restores product goal state.
+- On an exact same-chat continuation, use the prior transcript contract and `Next: continue adopted goal`. In a new chat, draft a fresh contract instead of claiming an old goal is Active.
+- Surface checkpoint and completion evidence in the transcript. There is no `update_goal` progress or terminal channel to call.
+- Respect Cursor execution modes: Ask and Plan are read-only. If the contract requires writes in either mode, report the mode constraint instead of claiming implementation began.
 
 For Claude Code `/goal`, ensure the verification evidence will appear in the conversation, because the evaluator judges from surfaced transcript evidence rather than independently reading files or running commands.
 
@@ -224,8 +235,8 @@ If the user is actually asking which workflow to use, emit `Decision: defer` and
 
 ## References
 
-Read `references/examples.md` when you need worked examples for Grok tooling, Grok slash, Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.
+Read `references/examples.md` when you need worked examples for Cursor CLI, Grok tooling, Grok slash, Codex tooling, Codex slash, Claude Code slash, unknown runtime, or workflow-gate interactions.
 
-Read `references/copy-ready-goals.md` when you need to write a polished, direct-copy `/goal` prompt, especially for vague Chinese requests, default-first MVP goals, unknown domains, option lists, and prompt linting. The same `/goal` shape is valid for Grok, Codex, and Claude Code; only the runtime action after the prompt differs.
+Read `references/copy-ready-goals.md` when you need to write a polished direct-copy prompt, especially for vague Chinese requests, default-first MVP goals, unknown domains, option lists, and prompt linting. Use `/goal` for verified Grok, Codex, and Claude Code slash runtimes; use the plain Cursor prompt shape for Cursor CLI.
 
 Use `scripts/lint-goal-prompt.py` when a generated prompt exists as a file or needs deterministic linting.

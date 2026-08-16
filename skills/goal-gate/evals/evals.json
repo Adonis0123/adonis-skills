@@ -383,6 +383,55 @@
         "Does not invent create_goal or get_goal",
         "Does not use Codex status complete schema"
       ]
+    },
+    {
+      "id": 25,
+      "name": "cursor-cli-autoset-soft-adopt",
+      "prompt": "I'm in Cursor CLI Agent mode, using a Grok model. Use goal-gate to implement every task in docs/PLAN.md and keep working until `pnpm test` and `pnpm build` pass. Do not commit or push. Start now and explain how this Cursor runtime keeps the goal across an interruption.",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: cursor-cli. Explicit host intent wins over the Grok model label. Because Cursor has no verified product /goal or goal API, Next is 'adopt goal and continue': it emits no executable /goal, does not ask for approval merely because the API is absent, and does not invent get_goal/create_goal/update_goal. It explains that the contract persists in the chat transcript and the same chat can be continued with Cursor's advertised resume/continue commands, which restore context rather than product Goal state.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is set-now and Goal fit is high",
+        "Runtime is cursor-cli, not grok-tooling or unknown, even though the selected model is Grok",
+        "Next is exactly 'adopt goal and continue' and the agent starts the authorized work instead of asking the user to paste a prompt back",
+        "Does not emit /goal as an executable Cursor command",
+        "Does not call or invent get_goal, create_goal, or update_goal",
+        "Explains that checkpoints and completion evidence are reported in the chat transcript",
+        "Explains the advertised semantics accurately: --resume [chatId] selects a chat and uses the supplied ID when present, --continue or resume restores the most recent chat, and ls selects a chat; none activates or restores product Goal state",
+        "Preserves the no-commit/no-push constraint and keeps final integration verification with the main agent"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "cursor-cli-resume-same-adopted-goal",
+      "prompt": "I resumed this exact Cursor CLI chat with `cursor-agent --resume 1234`. The transcript already contains a soft-adopted PLAN.md goal with frozen scope and a pnpm test/build done condition. It is unfinished. Continue it correctly.",
+      "expected_output": "A Goal Gate block with Decision: set-now, Runtime: cursor-cli, and Next: continue adopted goal. It reuses the exact contract in the resumed transcript, does not draft a second prompt, does not emit /goal, and does not claim a product Goal became Active. It continues checkpoint work and reserves completion for surfaced evidence satisfying the prior done condition.",
+      "files": [],
+      "expectations": [
+        "Decision is set-now with Next exactly 'continue adopted goal'",
+        "Runtime is cursor-cli",
+        "Recognizes native chat resume as conversation continuity rather than product goal activation, including optional [chatId] semantics",
+        "Reuses the exact prior contract instead of drafting a second prompt",
+        "Does not emit /goal or invent goal-management APIs",
+        "Continues transcript checkpoints and requires the full prior done condition before claiming completion"
+      ]
+    },
+    {
+      "id": 27,
+      "name": "cursor-cli-prompt-only-no-slash-goal",
+      "prompt": "给我写一个能直接复制到 Cursor CLI 的 goal prompt，用来完成 docs/design.md；我先审核，不要现在执行。",
+      "expected_output": "A Goal Gate block with Decision: suggest, Runtime: cursor-cli, and Next: provide prompt, followed by a complete plain Cursor prompt. The prompt has no /goal prefix, includes verification, constraints, boundaries, execution strategy, iteration, done, and pause conditions, and states that resuming the same Cursor chat preserves context but is not product Goal activation.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block",
+        "Decision is suggest and Runtime is cursor-cli",
+        "Next is provide prompt because the user asked to review before execution",
+        "Provides a complete plain prompt without an executable /goal prefix",
+        "Includes verification, constraints, boundaries, execution strategy, iteration policy, done condition, and pause conditions",
+        "Does not invent get_goal, create_goal, update_goal, or product Goal activation",
+        "Describes same-chat resume as context continuity only"
+      ]
     }
   ]
 }

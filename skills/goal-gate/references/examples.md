@@ -270,6 +270,58 @@ Goal Gate
 
 Claude Code goal evaluators judge from surfaced conversation evidence, so the agent must print the commands and results it wants evaluated as it works.
 
+## Cursor CLI: auto-adopt in the current chat
+
+User: "I'm in Cursor CLI Agent mode. Implement docs/PLAN.md and keep going until `pnpm test` and `pnpm build` pass. Do not commit or push."
+
+Cursor CLI has no verified product `/goal` or goal API. Explicit Cursor intent wins even when the selected model is Grok or Claude. High fit and a clear safety gate still use `set-now`, but activation is a soft adoption in the current chat:
+
+```text
+Goal Gate
+- Decision: set-now
+- Runtime: cursor-cli
+- Goal fit: high
+- Objective: Implement every in-scope task in docs/PLAN.md until the named validation commands pass.
+- Done condition: Every PLAN.md acceptance criterion is implemented, `pnpm test` passes, and `pnpm build` succeeds.
+- Verification: Surface the PLAN.md task map, changed files, commands, exit codes, and relevant logs.
+- Constraints: Stay within PLAN.md scope; do not commit or push; do not claim product Goal activation.
+- Execution strategy: Assess dependencies, shared state, write overlap, and independent verification before delegation; keep final integration with the main agent.
+- Checkpoints: Report after plan inspection, each milestone, and final validation in this chat.
+- Stop or ask when: The plan is missing or ambiguous, credentials or destructive work are required, or verification cannot run.
+- Prompt: none
+- Next: adopt goal and continue
+```
+
+Continue the work immediately. Do not emit `/goal`, ask the user to paste a prompt back, or call `get_goal`, `create_goal`, or `update_goal`. The contract is durable only through the Cursor chat transcript.
+
+## Cursor CLI: resume the adopted contract
+
+User resumes the same chat with an installed CLI option: `cursor-agent --resume [chatId]` selects a chat and uses the supplied ID when present, `cursor-agent --continue` or `cursor-agent resume` restores the most recent chat, and `cursor-agent ls` opens chat selection. Then they ask to continue the unfinished PLAN.md work.
+
+```text
+Goal Gate
+- Decision: set-now
+- Runtime: cursor-cli
+- Goal fit: high
+- Objective: Continue the exact PLAN.md contract already present in this chat.
+- Done condition: The prior contract's full done condition is proven.
+- Verification: Continue surfacing checkpoint and terminal evidence in this chat.
+- Constraints: Preserve the prior scope and write boundaries; do not claim a product Goal is Active.
+- Execution strategy: Continue the prior strategy; reassess only if code or task dependencies changed.
+- Checkpoints: Continue the prior checkpoint cadence.
+- Stop or ask when: The resumed transcript lacks the contract, the requested objective conflicts, or a prior pause condition fires.
+- Prompt: none
+- Next: continue adopted goal
+```
+
+Chat resume restores conversation context; it does not create or restore product goal state. Do not draft a second contract when the exact one is already in the resumed transcript.
+
+## Cursor CLI: prompt only
+
+User: "Write a Cursor CLI goal prompt for docs/design.md. I want to review it before running."
+
+Use `Decision: suggest`, `Runtime: cursor-cli`, and `Next: provide prompt`. Provide a complete plain prompt with verification, constraints, boundaries, execution strategy, iteration, done, and pause conditions. Do **not** prefix it with `/goal`; Cursor's `/` skill invocation is not product goal activation.
+
 ## Claude Code slash: prompt only (user wants to review)
 
 User: "Generate a Claude Code /goal prompt for implementing docs/design.md. I want to review it before running."

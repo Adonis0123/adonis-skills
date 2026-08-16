@@ -1,6 +1,6 @@
 # Copy-Ready Goal Drafting
 
-Use this reference when `goal-gate` needs to produce a prompt the user may paste directly into Grok Build, Codex, Claude Code, or a compatible agent. The `/goal` body shape is shared; only the post-prompt runtime action differs (Grok: user activates with `/goal`, then Grok-style progress/completion updates; Codex tooling: `get_goal` / `create_goal`, then status-only completion or persistent-blocker closure; Claude Code: adopt + transcript evidence).
+Use this reference when `goal-gate` needs to produce a prompt the user may paste directly into Cursor CLI, Grok Build, Codex, Claude Code, or a compatible agent. Grok, Codex slash, and Claude Code use the `/goal` body shape. Cursor CLI uses the same contract fields as a plain prompt because it has no verified product `/goal` or goal API; its continuity comes from resuming the same chat.
 
 ## Default-First Strategy
 
@@ -76,6 +76,24 @@ Stop when: <evidence proves the result or skipped checks are explicit>.
 Pause if: <credentials, payment, production data, destructive actions, regulated judgment, copyright, ownership, or repeated blockers are required>.
 ```
 
+## Cursor CLI Shape
+
+Do not prefix a Cursor CLI prompt with `/goal`. Use a plain prompt that the agent can adopt in the current chat:
+
+```text
+Complete <one concrete outcome> and keep working until the done condition is proven.
+Verification: <commands, logs, screenshots, files, URLs, API checks, browser/simulator checks, or artifacts>.
+Constraints: <what must not change; safety and scope limits>.
+Boundaries: <allowed writes and forbidden paths/systems>.
+Execution strategy: <assess dependencies, shared context/state, write overlap, independent verification, coordination cost, and runtime support before choosing single-agent, delegated, or parallel execution; keep the main agent accountable and fall back to one agent when needed>.
+Iteration policy: <bounded retries based on evidence>.
+Stop when: <evidence proves the result or skipped checks are explicit>.
+Pause if: <credentials, payment, production data, destructive actions, regulated judgment, copyright, ownership, or repeated blockers are required>.
+Report each checkpoint and the terminal evidence in this chat. If interrupted, use an option advertised by the installed CLI to restore this same chat: `cursor-agent --resume [chatId]` selects a chat and uses the supplied ID when present, `cursor-agent --continue` or `cursor-agent resume` restores the most recent chat, and `cursor-agent ls` opens chat selection. Chat resume preserves context but does not activate a product Goal.
+```
+
+When the user requests immediate execution, do not make them paste this prompt back: emit the `Goal Gate` block, soft-adopt the contract, and continue in the same chat. Use the shape above only for prompt-only or review-first requests.
+
 ## Unknown Domain Strategy
 
 For unfamiliar, regulated, or specialized domains, make the goal discovery-first:
@@ -103,6 +121,7 @@ Naming the fields is not enough; each one fails in a predictable way, so write e
 Reject or revise a copy-ready goal when it:
 
 - uses `/目标` instead of `/goal`;
+- presents `/goal` as an executable Cursor CLI command;
 - leaves placeholders such as `[path]`, `<file>`, `TODO`, `TBD`, `待补充`, or `待定`;
 - says only `make it work`, `fix bugs`, `做得高级`, or `直到满意` as the done condition;
 - lacks concrete verification evidence;

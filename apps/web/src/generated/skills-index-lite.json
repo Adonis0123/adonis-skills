@@ -160,7 +160,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-08-15T07:26:15.000Z"
   },
   {
     "slug": "global-modal-scaffold",
@@ -179,7 +180,7 @@
   {
     "slug": "goal-gate",
     "name": "goal-gate",
-    "description": "Use when the user wants to decide, set, draft, or run a durable coding-agent goal or /goal until a verifiable done condition. Gates autonomy across Grok, Codex, Claude Code, and compatible agents: Codex get_goal/create_goal plus status closure; Grok user-run /goal plus progress after Active. Drafts copy-ready contracts with outcome, verification, constraints, write boundaries, delegation, iteration, and pause conditions. On Grok, /goal-gate is not product /goal: emit a copy-ready /goal and wait for activation. Trigger on 'should I set a goal?', durable goal setup, Grok/Codex/Claude /goal prompts, multi-checkpoint work, migrations, refactors, ports, spec implementations, eval loops, bounded backlog cleanup with one verifiable end state, or stepping-away finish-it tasks. Do not use for quick edits, one-shot tests, loose unrelated backlogs, OKR/scrum goals, reminders, or token-budget-only settings.",
+    "description": "Use when the user wants to decide, set, draft, or run a durable coding-agent goal or /goal until a verifiable done condition. Gates autonomy across Cursor CLI, Grok, Codex, Claude Code, and compatible agents: Cursor soft-adopts the contract in a resumable chat without inventing /goal or goal APIs; Codex uses get_goal/create_goal plus status closure; Grok uses a user-run /goal plus progress after Active. Drafts copy-ready contracts with outcome, verification, constraints, write boundaries, delegation, iteration, and pause conditions. Trigger on 'should I set a goal?', durable goal setup, Cursor CLI goal prompts, Grok/Codex/Claude /goal prompts, multi-checkpoint work, migrations, refactors, ports, spec implementations, eval loops, bounded backlog cleanup with one verifiable end state, or stepping-away finish-it tasks. Do not use for quick edits, one-shot tests, loose unrelated backlogs, OKR/scrum goals, reminders, or token-budget-only settings.",
     "metadata": {
       "author": "adonis"
     },
@@ -240,7 +241,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-08-16T06:16:35.000Z"
   },
   {
     "slug": "review-prompt-composer",

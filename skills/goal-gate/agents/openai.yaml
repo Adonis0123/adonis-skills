@@ -1,4 +1,4 @@
 interface:
   display_name: "Goal Gate"
   short_description: "Gate autonomy and draft durable cross-agent goals"
-  default_prompt: "Use $goal-gate to decide whether this task needs a durable Goal, distinguish exact-same or compatible-contained continuation from conflict, and apply the correct Grok, Codex, or Claude runtime lifecycle without nesting or prematurely completing a parent Goal."
+  default_prompt: "Use $goal-gate to decide whether this task needs a durable Goal, distinguish exact-same or compatible-contained continuation from conflict, and apply the correct Cursor CLI, Grok, Codex, or Claude lifecycle without inventing unsupported goal activation."
