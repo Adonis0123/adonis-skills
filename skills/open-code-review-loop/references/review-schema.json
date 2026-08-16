@@ -1,0 +1,128 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "reviewer",
+    "files",
+    "findings",
+    "verdict",
+    "block_reason"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "evidence_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "reviewer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["product", "session_id"],
+      "properties": {
+        "product": {
+          "type": "string",
+          "enum": ["codex", "claude-code", "grok-build", "cursor-cli"]
+        },
+        "session_id": {
+          "type": ["string", "null"]
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "status", "disposition", "reason"],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "disposition": {
+            "type": "string",
+            "enum": ["reviewed", "skipped"]
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "start_line",
+          "end_line",
+          "category",
+          "severity",
+          "content",
+          "required_fix",
+          "acceptance_check"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "start_line": {
+            "type": ["integer", "null"],
+            "minimum": 1
+          },
+          "end_line": {
+            "type": ["integer", "null"],
+            "minimum": 1
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "bug",
+              "security",
+              "performance",
+              "maintainability",
+              "test",
+              "style",
+              "documentation",
+              "other"
+            ]
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "content": {
+            "type": "string"
+          },
+          "required_fix": {
+            "type": "string"
+          },
+          "acceptance_check": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "verdict": {
+      "type": "string",
+      "enum": ["FINDINGS", "NO_FINDINGS", "BLOCKED"]
+    },
+    "block_reason": {
+      "type": ["string", "null"]
+    }
+  }
+}

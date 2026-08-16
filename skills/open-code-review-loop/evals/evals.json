@@ -1,0 +1,71 @@
+{
+  "skill_name": "open-code-review-loop",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "In this Git workspace, use Codex as the read-only reviewer and the current host as fixer. Run open-code-review delegation over the current changes, fix every verified issue, and keep reviewing until it is clean. Do not commit or push. Explain exactly what counts as clean.",
+      "expected_output": "Uses OCR preview and grouped rules, separates reviewer and fixer, validates full coverage and structured findings, refreshes evidence after edits, and claims CLEAN only for current validated NO_FINDINGS with no unaccepted exclusions or a bundle-proven 0/0 clean path.",
+      "files": [],
+      "assertions": [
+        "The response assigns Codex a read-only Reviewer role and the current host the sole Fixer role.",
+        "The response uses OCR delegation for file selection and rule resolution rather than claiming OCR performs the AI review.",
+        "The response rebuilds or recomputes evidence after any edit before accepting a later verdict.",
+        "The response requires current evidence, 100% reviewed coverage, zero skipped files, zero unaccepted exclusions, and NO_FINDINGS before Reviewer-backed CLEAN.",
+        "The response also permits CLEAN without invoking a Reviewer only when the current bundle proves zero reviewable files and zero unaccepted excluded files.",
+        "The response explicitly keeps commit and push out of scope."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use Claude Code for both review and repair of the workspace diff. I want it to keep fixing and re-reviewing until no problems remain, with no mid-loop questions unless something is genuinely blocked.",
+      "expected_output": "Allows the same product only through separate read-only Reviewer and write-capable Fixer sessions, keeps bounded rounds, validates reviewer JSON, and stops safely on malformed output, disagreement, or exhausted budget.",
+      "files": [],
+      "assertions": [
+        "The response creates separate Claude Code sessions for Reviewer and Fixer instead of letting one writer self-approve.",
+        "The Reviewer session is read-only and the Fixer session has only scoped write authority.",
+        "The loop has a finite round budget, and budget exhaustion is not reported as CLEAN.",
+        "Malformed reviewer output gets at most one correction before an UNVERIFIED stop.",
+        "Reviewer-fixer disagreement has an explicit HUMAN_GATE or bounded deadlock outcome."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Review commit abc123 with Cursor CLI, then have Cursor fix anything it finds and loop until open-code-review says there are no issues. If some files cannot be checked, just skip them and continue.",
+      "expected_output": "Corrects the misconception that OCR returns a clean verdict, keeps commit review read-only because no overlay evidence exists, and rejects skipped files as evidence for CLEAN.",
+      "files": [],
+      "assertions": [
+        "The response states that OCR selects files and rules but the validated AI Reviewer owns NO_FINDINGS.",
+        "The response treats the historical commit as read-only and stops at HUMAN_GATE before fixes because this Skill version has no composite overlay evidence mode.",
+        "The response does not accept skipped reviewable files as CLEAN.",
+        "The response does not accept OCR-excluded target files as CLEAN unless the exclusion was explicitly accepted.",
+        "Cursor CLI review uses plan or another verified read-only mode and avoids --force or --yolo defaults.",
+        "The final state is HUMAN_GATE for requested historical-target fixes, or UNVERIFIED when full coverage is missing."
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "Grok Build is the Fixer. It returned status FIXED and listed src/payment.ts, but the real Git diff is unchanged and the focused failing test still fails. Continue the OCR loop until clean without asking me unless necessary.",
+      "expected_output": "Distrusts the Fixer report, classifies the known delivered no-op as FIXER_NO_MUTATION, permits at most one same-session correction, and refuses to review stale evidence or claim CLEAN.",
+      "files": [],
+      "assertions": [
+        "The response derives mutations from real Git evidence rather than trusting status FIXED or changed_paths.",
+        "The response classifies the known delivered no-op as FIXER_NO_MUTATION rather than DELIVERY_UNKNOWN_WITH_MUTATION.",
+        "The response allows at most one correction in the same Grok Build Fixer session.",
+        "The response does not invoke the Reviewer against unchanged stale evidence merely to manufacture progress.",
+        "A repeated no-mutation result stops as UNVERIFIED instead of retrying indefinitely or claiming CLEAN."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "OCR preview reports no reviewable files. Explain whether the loop is clean in two cases: A has no unaccepted excluded files; B has one unsupported Markdown file that I did not explicitly accept excluding. Do not invoke an AI just to create a verdict.",
+      "expected_output": "Distinguishes bundle-proven 0/0 CLEAN from incomplete coverage and avoids a pointless Reviewer call.",
+      "files": [],
+      "assertions": [
+        "Case A is CLEAN from current bundle evidence with coverage 0/0 and no Reviewer invocation.",
+        "Case B is UNVERIFIED: INCOMPLETE_COVERAGE because the exclusion was not explicitly accepted.",
+        "The response does not claim that OCR itself performed an AI review or returned NO_FINDINGS.",
+        "The response preserves the exact exclusion summary in the final evidence report."
+      ]
+    }
+  ]
+}

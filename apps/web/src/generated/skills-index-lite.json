@@ -230,6 +230,19 @@
     "updatedAt": "2026-08-08T13:07:09.000Z"
   },
   {
+    "slug": "open-code-review-loop",
+    "name": "open-code-review-loop",
+    "description": "Run a bounded OCR delegation review-fix-re-review loop across Codex, Claude Code, Grok Build, or Cursor CLI. Use when the user wants a chosen AI reviewer and fixer to inspect an OCR-selected Git scope, apply verified fixes, refresh evidence after every edit, and continue until full coverage returns NO_FINDINGS. Fail closed on missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds. Do not use for one-shot review, non-Git work, or destructive delivery.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.3.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "review-prompt-composer",
     "name": "review-prompt-composer",
     "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops.",
