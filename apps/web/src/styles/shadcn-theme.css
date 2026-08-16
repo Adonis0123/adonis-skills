@@ -60,9 +60,9 @@
     var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.45);
   --shadow-clay-floating: var(--clay-shadow-card-hover);
 
-  --font-app-sans: var(--font-noto-sans-sc);
-  --font-app-heading: var(--font-noto-serif-sc);
-  --font-app-mono: var(--font-ibm-plex-mono);
+  --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
+  --font-app-heading: "Noto Serif SC Variable", "Songti SC", serif;
+  --font-app-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
 }
 
 .dark,

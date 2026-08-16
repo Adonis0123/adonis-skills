@@ -23,7 +23,8 @@
     "skills:validate": "turbo run skills:validate --filter=@adonis-skills/web",
     "skills:install:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
     "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm",
-    "skills:eval-grade": "node ./scripts/grade-skill-evals.mjs"
+    "skills:eval-grade": "node ./scripts/grade-skill-evals.mjs",
+    "test:web-offline-font-build": "node --experimental-strip-types --test ./scripts/__tests__/web-offline-font-build.test.mts"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.9.0",

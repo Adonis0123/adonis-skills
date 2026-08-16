@@ -1,44 +1,29 @@
-import '@/styles/globals.css'
-import '@/styles/custom.css'
-import { IBM_Plex_Mono, Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google'
-import { ThemeProvider } from '@/components/providers/theme-provider'
-import { resolveLocaleValue } from '@/i18n/config'
-
-const notoSansSC = Noto_Sans_SC({
-  variable: '--font-noto-sans-sc',
-  subsets: ['latin'],
-  weight: ['400', '500', '700'],
-})
-
-const notoSerifSC = Noto_Serif_SC({
-  variable: '--font-noto-serif-sc',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-})
-
-const ibmPlexMono = IBM_Plex_Mono({
-  variable: '--font-ibm-plex-mono',
-  subsets: ['latin'],
-  weight: ['400', '500'],
-})
+import "@fontsource-variable/noto-sans-sc/wght.css";
+import "@fontsource-variable/noto-serif-sc/wght.css";
+import "@fontsource/ibm-plex-mono/latin-400.css";
+import "@fontsource/ibm-plex-mono/latin-500.css";
+import "@/styles/globals.css";
+import "@/styles/custom.css";
+import { ThemeProvider } from "@/components/providers/theme-provider";
+import { resolveLocaleValue } from "@/i18n/config";
 
 type RootLayoutProps = Readonly<{
-  children: React.ReactNode
-  params: Promise<{ lang?: string } | undefined>
-}>
+  children: React.ReactNode;
+  params: Promise<{ lang?: string } | undefined>;
+}>;
 
 export default async function RootLayout({
   children,
   params,
 }: RootLayoutProps) {
-  const resolvedParams = await params
-  const locale = resolveLocaleValue(resolvedParams?.lang)
+  const resolvedParams = await params;
+  const locale = resolveLocaleValue(resolvedParams?.lang);
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${notoSansSC.variable} ${notoSerifSC.variable} ${ibmPlexMono.variable} antialiased`}>
+      <body className="antialiased">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
-  )
+  );
 }

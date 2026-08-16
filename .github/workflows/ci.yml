@@ -37,5 +37,8 @@ jobs:
       - name: Prepare i18n Catalogs
         run: pnpm --filter @adonis-skills/web run i18n -- --compile --strict
 
+      - name: Verify Offline Font Build
+        run: pnpm test:web-offline-font-build
+
       - name: Lint, Typecheck, Build
         run: pnpm turbo run lint typecheck build --filter=@adonis-skills/web
