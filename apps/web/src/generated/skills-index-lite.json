@@ -122,6 +122,19 @@
     "updatedAt": "2026-07-18T13:47:31.000Z"
   },
   {
+    "slug": "decision-first-technical-writing",
+    "name": "decision-first-technical-writing",
+    "description": "Create, rewrite, or review internal technical design documents that lead with decisions and progressively expose architecture, runtime flows, data models, API contracts, failure behavior, scope, and open questions. Use for design docs, architecture proposals, module plans, API or schema designs, and decision records. Do not use for tutorials, marketing copy, or code-only implementation plans.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
     "description": "Enforces 'decide then plan' discipline - the pre-planning decision gate. Use when the user asks for a plan or starts a change while key decisions are unresolved: architecture tradeoffs, data flow, public interfaces, unclear requirements, multi-module scope, or roughly 5+ files affected. Also triggers when the user explicitly wants to discuss, compare options, or review architecture before committing. Core job: reduce incorrect-execution cost by confirming decisions before producing executable plans.",

@@ -665,6 +665,41 @@
     ]
   },
   {
+    "slug": "decision-first-technical-writing",
+    "sections": [
+      {
+        "raw": "Write technical design documents for two reading passes: a reviewer should understand the decisions and boundaries quickly, while an implementer should be able to continue into exact behavior and contracts.",
+        "heading": "Decision-First Technical Writing",
+        "level": 1
+      },
+      {
+        "raw": "Infer the audience, decision to support, and scope from the request and available evidence. Ask only when missing information would materially change the document or when an unresolved product choice cannot be decided from the available context.\n\nBefore writing:\n\n- Separate verified facts, settled decisions, proposals, and open questions. Never present one category as another.\n- Preserve exact identifiers such as package names, types, fields, endpoints, error codes, and repository-relative paths.\n- Treat source material as evidence, not as a template to copy. Distill reusable structure and rewrite in the user's language.\n- Keep requirements, design, and implementation planning distinct. Link to source requirements when available instead of reproducing them.",
+        "heading": "Establish the document contract",
+        "level": 2
+      },
+      {
+        "raw": "- For a new document or substantial restructure, read [references/decision-first-design-doc.md](references/decision-first-design-doc.md) before drafting.\n- For a focused edit, use only the relevant rules from this file unless the request changes document structure.\n- For a review, report concrete contradictions, missing contracts, or hidden decisions; do not rewrite unless asked.\n\nDo not force every section into every document. Include a section only when it helps the target reader make or implement the decision.",
+        "heading": "Choose the depth",
+        "level": 2
+      },
+      {
+        "raw": "Organize information in this order when applicable:\n\n1. Inputs and core decisions.\n2. Scope, non-goals, and ownership boundaries.\n3. Static model and code landing points.\n4. Runtime behavior, including branches and failure paths.\n5. Exact data, API, and error contracts.\n6. Migration, rollback, validation, and unresolved decisions.\n\nLead each major section with its conclusion. Follow with the minimum reasoning and detail needed to make that conclusion reviewable.",
+        "heading": "Write in decision order",
+        "level": 2
+      },
+      {
+        "raw": "- Put only settled decisions in the opening decision summary. List pending choices separately.\n- Use one consistent vocabulary for lifecycle state, delivery scope, and decision certainty; do not blend these axes.\n- Use diagrams and tables only when they reduce explanation: structure for relationships, sequence for runtime branches, tables for repeated comparisons, and code blocks for exact contracts.\n- Repeat a decision only as a short local implication. Give each decision one primary detail section.\n- Remove draft residue such as stale strikethrough text, contradictory headings, duplicate explanations, and unresolved placeholders.",
+        "heading": "Preserve scanability",
+        "level": 2
+      },
+      {
+        "raw": "Before delivering, check that:\n\n- every summary decision has a detailed home;\n- ownership and scope remain consistent across prose, diagrams, schemas, and APIs;\n- every described runtime branch has an observable result or error;\n- field names and types agree across data and API contracts;\n- pending choices are not encoded as finalized behavior;\n- unverified claims are labeled rather than silently completed.",
+        "heading": "Verify the result",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "discuss-before-plan",
     "sections": [
       {
