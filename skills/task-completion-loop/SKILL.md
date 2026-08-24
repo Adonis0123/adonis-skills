@@ -1,9 +1,9 @@
 ---
 name: task-completion-loop
-description: "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline. Do not use for ordinary implement-and-test, Goal-only execution, review-fix-re-review alone, architecture hardening alone, quick edits, one-shot tests, read-only review, open-ended design, or destructive work without approved scope."
+description: "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline."
 metadata:
   author: adonis
-  version: "1.4.1"
+  version: "1.4.2"
 ---
 
 # Task Completion Loop
@@ -17,7 +17,7 @@ metadata:
 同时具备才启动：
 
 1. Git 仓库，以及命名 plan/spec 或可从当前代码确定的明确范围。
-2. 明确的完整闭环实现请求；不是普通实现、纯讨论、纯 review 或只读诊断。
+2. 明确的完整闭环实现请求。只要 Goal、只要 review-fix-re-review、只要架构加固、普通实现、纯讨论、纯 review 或只读诊断 → 不是本 Loop。
 
 先从文档与代码解析范围。仍无法安全确定时，只问一个范围问题并停止。禁止默认全仓库。
 

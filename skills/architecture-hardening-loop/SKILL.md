@@ -1,9 +1,9 @@
 ---
 name: architecture-hardening-loop
-description: "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement. Do not use for read-only diagnosis, ordinary feature or bug work, design-only discussion, one-shot review, full spec completion, or unspecified scope."
+description: "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement."
 metadata:
   author: adonis
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # Architecture Hardening Loop
@@ -16,6 +16,7 @@ metadata:
 
 ## Fast Path
 
+- **不是本 Loop**：只读诊断 / 只要报告；一次性 review 或 review-fix-re-review（无同范围复扫）；完整 plan/spec 收口。停止，不要开始 scan-fix。
 - **范围明确且依赖可解析**：写下 `Hardening Contract`，跑 scanner Explore + HTML 报告（report-only），按五项准入分类。只有即将创建/继续 Goal，或要复用 review verdict 时，才加载 `references/ownership-and-evidence.md`。
 - **范围缺失**：只问一个范围问题并停止。不要加载 references，不要默认全仓库。
 - **host 能力缺失**：`MISSING_DEPENDENCIES` 并停止。文件存在 ≠ 可调用。

@@ -1,9 +1,9 @@
 ---
 name: open-code-review-loop
-description: "Run a bounded open-code-review / ocr delegate review-fix-re-review loop. Use when the user wants OCR-delegation (ocr delegate file selection and rules, including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds. Do not use for packet-protocol, .review-handoff, review-loop run, or Grok consult (agentic-review-handoff); scoped architecture scan-fix-rescan (architecture-hardening-loop); one-shot review; non-Git work; commit, push, or deploy; or destructive delivery."
+description: "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
-  version: "1.4.0"
+  version: "1.4.1"
 ---
 
 # Open Code Review Loop

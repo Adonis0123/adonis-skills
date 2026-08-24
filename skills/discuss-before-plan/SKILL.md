@@ -1,9 +1,9 @@
 ---
 name: discuss-before-plan
-description: "Resolve a bounded design choice before planning. Use when the user presents alternatives, or a proposal with an implicit status-quo alternative, and asks to compare, recommend, or decide. Also use when they delegate the choice. Redirect open-ended option generation to grilling; skip fully specified execution. Safety-sensitive or irreversible choices still require explicit authorization."
+description: "Resolve a bounded design choice before planning. Use when the user presents alternatives, or a proposal with an implicit status-quo alternative, and asks to compare, recommend, or decide. Also use when they delegate the choice."
 metadata:
   author: adonis
-  version: "2.3.0"
+  version: "2.3.1"
 ---
 
 # Discuss Before Plan

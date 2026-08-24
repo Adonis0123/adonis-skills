@@ -1,4 +1,4 @@
 interface:
   display_name: "Agentic Review Handoff"
   short_description: "Route Git reviews and run evidence-bound loops"
-  default_prompt: "Use $agentic-review-handoff to route fresh-eyes review to classic Intake, explicit or same-session review-fix-re-review to the auto loop, and validate returned feedback against current repository evidence. Do not use it for prompt-only composition."
+  default_prompt: "Use $agentic-review-handoff to route fresh-eyes review to classic Intake, explicit or same-session review-fix-re-review to the auto loop, and validate returned feedback against current repository evidence."

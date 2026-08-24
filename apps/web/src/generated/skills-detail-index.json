@@ -58,7 +58,7 @@
         "level": 1
       },
       {
-        "raw": "Route first, then load only that route's references:\n\n- **Explicit auto loop / review-fix-re-review / same-session implementer closure** → `review-loop run`; read only this file plus `references/auto-loop-contract.md`. The script owns packet creation and lifecycle; do not load classic packet references.\n- **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.\n- **Fresh-eyes \"review this\" / \"second pair of eyes\" / \"audit this diff\" without implementer context** → classic `intake`; ambiguity defaults to Intake.\n- **Classic** (`intake` / `feedback_validation` / `manual_continuation`) → read `references/packet-anatomy.md` and `references/packet-addressing.md`. Add `references/source-prompt-addressing.md` only when source-prompt provenance exists, `references/review-contract.md` only for deep review, and `references/example-packet.md` only when diagnosing packet shape against a populated example.\n- **Maintainer-only protocol / state-machine / persistence or integrity-claim change** → `references/protocol-evolution-gate.md`. Ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`).\n- **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`",
+        "raw": "Route first, then load only that route's references:\n\n- **Wrong job** — stop; do not start a substitute loop. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.\n- **Explicit auto loop / review-fix-re-review / same-session implementer closure** → `review-loop run`; read only this file plus `references/auto-loop-contract.md`. The script owns packet creation and lifecycle; do not load classic packet references.\n- **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.\n- **Fresh-eyes \"review this\" / \"second pair of eyes\" / \"audit this diff\" without implementer context** → classic `intake`; ambiguity defaults to Intake.\n- **Classic** (`intake` / `feedback_validation` / `manual_continuation`) → read `references/packet-anatomy.md` and `references/packet-addressing.md`. Add `references/source-prompt-addressing.md` only when source-prompt provenance exists, `references/review-contract.md` only for deep review, and `references/example-packet.md` only when diagnosing packet shape against a populated example.\n- **Maintainer-only protocol / state-machine / persistence or integrity-claim change** → `references/protocol-evolution-gate.md`. Ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`).\n- **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`",
         "heading": "Fast Path",
         "level": 2
       },
@@ -148,7 +148,7 @@
         "level": 1
       },
       {
-        "raw": "- **范围明确且依赖可解析**：写下 `Hardening Contract`，跑 scanner Explore + HTML 报告（report-only），按五项准入分类。只有即将创建/继续 Goal，或要复用 review verdict 时，才加载 `references/ownership-and-evidence.md`。\n- **范围缺失**：只问一个范围问题并停止。不要加载 references，不要默认全仓库。\n- **host 能力缺失**：`MISSING_DEPENDENCIES` 并停止。文件存在 ≠ 可调用。",
+        "raw": "- **不是本 Loop**：只读诊断 / 只要报告；一次性 review 或 review-fix-re-review（无同范围复扫）；完整 plan/spec 收口。停止，不要开始 scan-fix。\n- **范围明确且依赖可解析**：写下 `Hardening Contract`，跑 scanner Explore + HTML 报告（report-only），按五项准入分类。只有即将创建/继续 Goal，或要复用 review verdict 时，才加载 `references/ownership-and-evidence.md`。\n- **范围缺失**：只问一个范围问题并停止。不要加载 references，不要默认全仓库。\n- **host 能力缺失**：`MISSING_DEPENDENCIES` 并停止。文件存在 ≠ 可调用。",
         "heading": "Fast Path",
         "level": 2
       },
@@ -1373,7 +1373,7 @@
         "level": 1
       },
       {
-        "raw": "同时具备才启动：\n\n1. Git 仓库，以及命名 plan/spec 或可从当前代码确定的明确范围。\n2. 明确的完整闭环实现请求；不是普通实现、纯讨论、纯 review 或只读诊断。\n\n先从文档与代码解析范围。仍无法安全确定时，只问一个范围问题并停止。禁止默认全仓库。\n\n实现请求授权修改冻结范围内的 working tree；除非用户明确要求只读或禁止编辑。它不授权：\n\n- `git add`、commit、push、merge、rebase、branch/worktree 创建；\n- PR、issue、评论、消息、任务、API 数据、部署、生产写；\n- 排除路径或冻结范围外修改。\n\n`agentic-review-handoff` 所需的 `.review-handoff/**` 与幂等 `$GIT_COMMON_DIR/info/exclude` 条目是本闭环的本地协议产物，不是交付动作；预检时披露，完成报告中记录。用户明确禁止 `.git/**` 写时，在源码修改前返回 `HUMAN_GATE`。",
+        "raw": "同时具备才启动：\n\n1. Git 仓库，以及命名 plan/spec 或可从当前代码确定的明确范围。\n2. 明确的完整闭环实现请求。只要 Goal、只要 review-fix-re-review、只要架构加固、普通实现、纯讨论、纯 review 或只读诊断 → 不是本 Loop。\n\n先从文档与代码解析范围。仍无法安全确定时，只问一个范围问题并停止。禁止默认全仓库。\n\n实现请求授权修改冻结范围内的 working tree；除非用户明确要求只读或禁止编辑。它不授权：\n\n- `git add`、commit、push、merge、rebase、branch/worktree 创建；\n- PR、issue、评论、消息、任务、API 数据、部署、生产写；\n- 排除路径或冻结范围外修改。\n\n`agentic-review-handoff` 所需的 `.review-handoff/**` 与幂等 `$GIT_COMMON_DIR/info/exclude` 条目是本闭环的本地协议产物，不是交付动作；预检时披露，完成报告中记录。用户明确禁止 `.git/**` 写时，在源码修改前返回 `HUMAN_GATE`。",
         "heading": "入口与授权",
         "level": 2
       },

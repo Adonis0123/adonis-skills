@@ -15,30 +15,30 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git. Do not select as the parent for architecture-hardening-loop or diagnose-only scans, ordinary implementation/test/copy-edit work, prompt-only or verbal review, weekly reports, or named alternatives (/codex:review, Grok /review).",
+    "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git.",
     "metadata": {
       "author": "adonis",
-      "version": "3.5.0"
+      "version": "3.5.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-08T13:02:41.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
     "name": "architecture-hardening-loop",
-    "description": "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement. Do not use for read-only diagnosis, ordinary feature or bug work, design-only discussion, one-shot review, full spec completion, or unspecified scope.",
+    "description": "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement.",
     "metadata": {
       "author": "adonis",
-      "version": "1.6.0"
+      "version": "1.6.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-09T01:16:47.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "branch-creator",
@@ -138,16 +138,16 @@
   {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
-    "description": "Resolve a bounded design choice before planning. Use when the user presents alternatives, or a proposal with an implicit status-quo alternative, and asks to compare, recommend, or decide. Also use when they delegate the choice. Redirect open-ended option generation to grilling; skip fully specified execution. Safety-sensitive or irreversible choices still require explicit authorization.",
+    "description": "Resolve a bounded design choice before planning. Use when the user presents alternatives, or a proposal with an implicit status-quo alternative, and asks to compare, recommend, or decide. Also use when they delegate the choice.",
     "metadata": {
       "author": "adonis",
-      "version": "2.3.0"
+      "version": "2.3.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-05-07T09:02:19.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "enforce-lf",
@@ -203,7 +203,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-16T06:20:52.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "lingui-next-init",
@@ -248,16 +248,16 @@
   {
     "slug": "open-code-review-loop",
     "name": "open-code-review-loop",
-    "description": "Run a bounded open-code-review / ocr delegate review-fix-re-review loop. Use when the user wants OCR-delegation (ocr delegate file selection and rules, including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds. Do not use for packet-protocol, .review-handoff, review-loop run, or Grok consult (agentic-review-handoff); scoped architecture scan-fix-rescan (architecture-hardening-loop); one-shot review; non-Git work; commit, push, or deploy; or destructive delivery.",
+    "description": "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.0"
+      "version": "1.4.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-16T06:16:35.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "review-prompt-composer",
@@ -289,16 +289,16 @@
   {
     "slug": "task-completion-loop",
     "name": "task-completion-loop",
-    "description": "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline. Do not use for ordinary implement-and-test, Goal-only execution, review-fix-re-review alone, architecture hardening alone, quick edits, one-shot tests, read-only review, open-ended design, or destructive work without approved scope.",
+    "description": "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.1"
+      "version": "1.4.2"
     },
     "files": {
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-08T13:02:41.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "uxc-facade",
@@ -341,7 +341,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-08T13:02:41.000Z"
+    "updatedAt": "2026-08-24T01:36:27.000Z"
   },
   {
     "slug": "zustand-store-scaffold",

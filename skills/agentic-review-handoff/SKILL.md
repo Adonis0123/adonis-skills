@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git. Do not select as the parent for architecture-hardening-loop or diagnose-only scans, ordinary implementation/test/copy-edit work, prompt-only or verbal review, weekly reports, or named alternatives (/codex:review, Grok /review)."
+description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
 metadata:
   author: adonis
-  version: "3.5.0"
+  version: "3.5.1"
 ---
 
 # Agentic Review Handoff
@@ -14,6 +14,7 @@ Persistent packet protocol for review→fix→re-review. **Preferred path (v2): 
 
 Route first, then load only that route's references:
 
+- **Wrong job** — stop; do not start a substitute loop. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.
 - **Explicit auto loop / review-fix-re-review / same-session implementer closure** → `review-loop run`; read only this file plus `references/auto-loop-contract.md`. The script owns packet creation and lifecycle; do not load classic packet references.
 - **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.
 - **Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake.
