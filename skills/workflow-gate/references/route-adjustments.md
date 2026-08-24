@@ -1,6 +1,6 @@
 # Route adjustments
 
-Use this only when the Route picked from the cheat card doesn't fit on closer inspection. Each rule names _why_ it exists so you can generalize when the literal trigger doesn't match.
+Fallback-only. Do not load this file for Architecture / Review-Handoff / Challenge / Discuss — those already live in SKILL.md precedence + tiebreakers. Use this only when the Route picked from the cheat card still doesn't fit on closer inspection. Each rule names _why_ it exists so you can generalize when the literal trigger doesn't match.
 
 ## Upgrade — smaller Route is unsafe
 

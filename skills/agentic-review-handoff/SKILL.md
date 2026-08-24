@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Use for validating pasted review findings before fixes; explicit auto review-fix-re-review; same-session implementation closure; fresh-eyes git diff review via Review Intake; DecisionConsult with another AI; review-loop session resume; manual packet continuation; or first-principles, DDD, high-cohesion review. Requires a git repository. Do not use for ordinary implementation, unit-test-only work, copy-editing comments, prompt-only requests that should use review-prompt-composer, brief verbal diff glances without a packet, non-git folders, weekly reports, or named alternatives (/codex:review, Grok /review)."
+description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git. Do not select as the parent for architecture-hardening-loop or diagnose-only scans, ordinary implementation/test/copy-edit work, prompt-only or verbal review, weekly reports, or named alternatives (/codex:review, Grok /review)."
 metadata:
   author: adonis
-  version: "3.4.0"
+  version: "3.5.0"
 ---
 
 # Agentic Review Handoff
@@ -12,17 +12,13 @@ Persistent packet protocol for review→fix→re-review. **Preferred path (v2): 
 
 ## Fast Path
 
-- **explicit auto loop / review-fix-re-review / zero mid-loop human / verified same-session implementer closure** → `review-loop run` (below)
-- **fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake
-- **decision consult / ask another AI for stance** → `review-loop consult`
-- **resume a past reviewer session ("给我 codex/grok/claude 恢复对话的命令")** → `review-loop sessions`
-- **classic compatibility path** (prompt-protocol only, **no script guarantees**) — only for: Review Intake (reviewer-initiated live review), feedback validation of pasted findings, or manual packet continuation → Classic section below
-- packet shape → `references/packet-anatomy.md`
-- lifecycle / archive / addressing algorithm → `references/packet-addressing.md`
-- stage defaults / mixed-stage → `references/packet-anatomy.md` § Stage Defaults
-- severity / verdict vocabulary → `references/review-contract.md`
-- auto loop contract → `references/auto-loop-contract.md`
-- **maintainer-only:** before protocol/state-machine/persistence changes, integrity/tamper/recovery/atomicity/durability/exactly-once claim changes, or DecisionConsult about evolving this protocol, read `references/protocol-evolution-gate.md`; ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`)
+Route first, then load only that route's references:
+
+- **Explicit auto loop / review-fix-re-review / same-session implementer closure** → `review-loop run`; read only this file plus `references/auto-loop-contract.md`. The script owns packet creation and lifecycle; do not load classic packet references.
+- **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.
+- **Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake.
+- **Classic** (`intake` / `feedback_validation` / `manual_continuation`) → read `references/packet-anatomy.md` and `references/packet-addressing.md`. Add `references/source-prompt-addressing.md` only when source-prompt provenance exists, `references/review-contract.md` only for deep review, and `references/example-packet.md` only when diagnosing packet shape against a populated example.
+- **Maintainer-only protocol / state-machine / persistence or integrity-claim change** → `references/protocol-evolution-gate.md`. Ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`).
 - **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`
 
 ## Auto loop (`review-loop run`) — preferred
@@ -93,7 +89,7 @@ This skill historically said "review/re-review are read-only by default; do not 
 
 - **Read-only still means**: do not modify the code, docs, tests, or configs being reviewed; do not commit / push / rebase.
 - **Packet artifact writes are part of the protocol, not a violation**: creating, appending to, renaming, and `mv`-ing files under `$repo_root/.review-handoff/**` is exactly what makes the cross-agent loop work. Treat these writes the same way you treat printing findings to the terminal.
-- **Before writing the first packet in a repo**, resolve `$GIT_COMMON_DIR` with `git rev-parse --git-common-dir` and ensure its `info/exclude` contains `/.review-handoff/` (the canonical root-anchored form). Treat the historical `.review-handoff/` form as already configured. See `references/packet-addressing.md` for the exact idempotent snippet.
+- **Before writing the first packet in a repo**, resolve `$GIT_COMMON_DIR` with `git rev-parse --git-common-dir` and ensure its `info/exclude` contains `/.review-handoff/` (the canonical root-anchored form). Treat the historical `.review-handoff/` form as already configured. Auto-loop scripts already bootstrap this line; classic writers who need the snippet load `packet-addressing.md` § Git common-dir `info/exclude`.
 
 ## Three non-negotiable invariants
 
@@ -150,7 +146,7 @@ Steps when classic is correct:
 
 - Standard review checks scope, correctness, regression risk, boundaries, verification, and security/privacy when relevant.
 - Feedback validation treats pasted feedback as a defect report, not ground truth; verify each claim and fix only valid / partially valid items.
-- Deep review is opt-in for DDD, high cohesion / low coupling, industry comparison, source-backed research, or architectural / cross-module risk. Use `references/review-contract.md` for the full rubric only when these details are needed.
+- Deep review is opt-in for DDD, high cohesion / low coupling, industry comparison, source-backed research, or architectural / cross-module risk. Auto loop already has severity / Verdict rules in `auto-loop-contract.md`; load `references/review-contract.md` only on classic / deep-opt-in when that rubric is the current step.
 
 ## Guardrails
 

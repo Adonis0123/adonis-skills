@@ -3,7 +3,7 @@ name: task-completion-loop
 description: "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline. Do not use for ordinary implement-and-test, Goal-only execution, review-fix-re-review alone, architecture hardening alone, quick edits, one-shot tests, read-only review, open-ended design, or destructive work without approved scope."
 metadata:
   author: adonis
-  version: "1.4.0"
+  version: "1.4.1"
 ---
 
 # Task Completion Loop
@@ -45,7 +45,7 @@ metadata:
 
 在讨论、Goal、源码修改前：
 
-1. 解析每个 skill、传递硬依赖和 invocation policy。特别检查 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter 等嵌套能力，以及其嵌套 review 是否把 `PASS_WITH_CONCERNS` 映射为 `HUMAN_GATE`；`disable-model-invocation` / `allow_implicit_invocation: false` 且用户未显式点名、合同不兼容或只能找到文件但无法加载，都视为缺少本轮可用能力。不要等实现后才发现缺失。
+1. 解析每个 skill、传递硬依赖和 invocation policy。特别检查 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter 等嵌套能力，以及其嵌套 review 是否把 `PASS_WITH_CONCERNS` 映射为 `HUMAN_GATE`。用户点名本 Loop 即授权始终要求的硬依赖（含 `architecture-hardening-loop` 及其声明 scanner）按用途嵌套调用，不要求用户再点名每个嵌套 skill。`disable-model-invocation` / `allow_implicit_invocation: false` 只禁止这些 skill 被孤立自动触发。仍视为缺少本轮可用能力：未安装、合同不兼容、或只能找到文件但 host 无法加载/执行。条件依赖 `grill-with-docs` 仍须用户显式要求或预检证明本轮需要它，且 host 能加载。不要等实现后才发现缺失。
 2. 为 Grok / Claude 解析真实产品身份、创建方式、可恢复句柄和消息交换能力；Claude 还要有可验证的只读审查方式。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
 

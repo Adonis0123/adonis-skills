@@ -40,6 +40,10 @@
     "should_trigger": true
   },
   {
+    "query": "architecture-hardening-loop 已完成扫描和证据分诊，现在按它的硬依赖显式调用 agentic-review-handoff，用 Grok 对已修复的冻结范围跑 review-fix-re-review；不要重跑架构 scanner。",
+    "should_trigger": true
+  },
+  {
     "query": "帮我在 apps/web 加一个 React 登录表单组件，用 Zod 校验 email/password，写好后 commit 就行，不需要 review。",
     "should_trigger": false
   },
@@ -77,6 +81,10 @@
   },
   {
     "query": "帮我写一个 prompt，让另一个 AI review 当前 staged diff；只生成可复制提示词，不要现在执行 review、不要开 packet loop。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 packages/billing 交给 architecture-hardening-loop：先独立扫描架构问题，证据分诊后再做最小修复和测试，Grok review 每一批，然后同范围复扫直到没有可修项。这是 parent scoped harden，不要开一次性 review-fix-re-review packet。",
     "should_trigger": false
   }
 ]

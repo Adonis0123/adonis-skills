@@ -432,6 +432,35 @@
         "Does not invent get_goal, create_goal, update_goal, or product Goal activation",
         "Describes same-chat resume as context continuity only"
       ]
+    },
+    {
+      "id": 28,
+      "name": "grok-prompt-only-wins-over-tooling",
+      "prompt": "I'm in Grok Build and update_goal is available, but I only want a copy-ready /goal that tells the agent to implement every task in PLAN.md. I will review the prompt text; do not activate a goal or start implementation.",
+      "expected_output": "Classifies the prompt-only request as grok-slash even though update_goal is available. Decision is suggest with Next: provide prompt. It emits a complete /goal for review, does not call update_goal, and does not claim product Goal is Active.",
+      "files": [],
+      "expectations": [
+        "Decision is suggest with Next exactly 'provide prompt'",
+        "Runtime is grok-slash because explicit prompt-only intent wins over ambient update_goal",
+        "Provides a complete copy-ready /goal prompt",
+        "Does not call update_goal or start implementation",
+        "Does not claim the product Goal is Active"
+      ]
+    },
+    {
+      "id": 29,
+      "name": "cursor-cli-validation-skips-slash-linter",
+      "prompt": "Validate my saved plain Cursor CLI goal prompt. It correctly has no /goal prefix and documents `cursor-agent --resume [chatId]`. I only want review; do not execute it.",
+      "expected_output": "Keeps Runtime cursor-cli and validates the plain contract directly. It does not run the slash-only prompt linter, add /goal, reject the documented [chatId] syntax as a placeholder, invent goal APIs, or begin execution.",
+      "files": [],
+      "expectations": [
+        "Decision is suggest and Runtime is cursor-cli",
+        "Treats this as validation or review, not execution",
+        "Does not run or recommend the slash-only lint-goal-prompt.py for the Cursor prompt",
+        "Does not add an executable /goal prefix",
+        "Preserves [chatId] as documented Cursor CLI resume syntax rather than an unresolved placeholder",
+        "Does not invent goal-management APIs or claim product Goal activation"
+      ]
     }
   ]
 }

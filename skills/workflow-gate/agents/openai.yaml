@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflow Gate"
   short_description: "Route tasks before heavier workflow skills"
-  default_prompt: "Use $workflow-gate to classify this request before invoking heavier workflow skills. Route unresolved creative work to Challenge, named-option convergence to Discuss, architecture diagnosis or hardening to Architecture, and fix-then-re-review to Review-Handoff. Hand off only an explicit whole completion pipeline to task-completion-loop, and fail closed when a required runtime is installed but not callable."
+  default_prompt: "Use $workflow-gate to choose the smallest safe workflow for this request. Preserve destructive and creative gates, require explicit scope for architecture scanners, and fail closed when a required runtime is not callable."

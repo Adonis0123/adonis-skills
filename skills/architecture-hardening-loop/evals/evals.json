@@ -153,16 +153,17 @@
     },
     {
       "id": 11,
-      "name": "installed-but-invocation-disabled-scanner-fails-preflight",
-      "prompt": "这是只读行为验收。improve-codebase-architecture 的 SKILL.md 文件存在，但 disable-model-invocation=true 且 allow_implicit_invocation=false；用户只点名 architecture-hardening-loop，没有显式点名 scanner，当前 host catalog 也不能加载它。请给出预检结果。",
-      "expected_output": "文件存在不等于可调用。应在扫描、Goal 与源码修改前返回 MISSING_DEPENDENCIES，点明 scanner invocation policy；不得复制 scanner 逻辑或自行降级扫描。",
+      "name": "installed-but-host-cannot-load-scanner-fails-preflight",
+      "prompt": "这是只读行为验收。用户已点名 architecture-hardening-loop，范围是 `packages/core/**`。improve-codebase-architecture 的 SKILL.md 文件存在，但当前 host catalog 无法加载或执行它。请给出预检结果。",
+      "expected_output": "文件存在不等于可调用。host 无法加载或执行时，在扫描、Goal 与源码修改前返回 MISSING_DEPENDENCIES。不要复制 scanner 逻辑，也不要把继续方式写成请用户再点名 scanner。",
       "files": [],
       "expectations": [
         "返回 MISSING_DEPENDENCIES",
         "明确 installed file does not prove invocation eligibility",
-        "指出 disable-model-invocation / allow_implicit_invocation policy",
+        "指出 host catalog 无法加载或执行 scanner",
         "停止点早于 scanner、Goal 和源码修改",
-        "不复制或冒充 scanner"
+        "不复制或冒充 scanner",
+        "继续方式不是要求用户再点名 improve-codebase-architecture"
       ]
     },
     {
@@ -364,6 +365,20 @@
         "B 作为拟议可替换 Adapter 或 Port 必须有两个合理 Adapter",
         "B 的未来第二供应商属于推测，当前进入 Reject 或带触发器的 Backlog",
         "明确区分普通 Module 的单 consumer 可成立与可替换 Seam 的双 Adapter 条件"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "parent-invocation-authorizes-nested-scanner",
+      "prompt": "这是只读行为验收。用户只写了 architecture-hardening-loop，范围为 `packages/core/**`，并说不用问意见、直接授权去改。improve-codebase-architecture 已安装且 host 可以加载执行；其 SKILL.md 为 disable-model-invocation=true / allow_implicit_invocation=false。codebase-design、agentic-review-handoff、goal-gate、只读 delegation 与真实 Grok adapter 也都可用。请给出预检结果，以及是否要先让用户再点名 scanner。",
+      "expected_output": "父 Loop 被点名即授权声明内的嵌套 scanner。预检通过并进入 Explore + HTML 报告；不得因用户未点名 improve-codebase-architecture 返回 MISSING_DEPENDENCIES，也不得要求用户确认或再点名依赖。",
+      "files": [],
+      "expectations": [
+        "不返回 MISSING_DEPENDENCIES",
+        "把父 Loop 点名视为对 improve-codebase-architecture 的嵌套授权",
+        "不要求用户再点名或确认 scanner",
+        "disable-model-invocation / allow_implicit_invocation 不单独构成阻塞",
+        "预检通过后进入 scanner 的 Explore + HTML 报告阶段"
       ]
     }
   ]

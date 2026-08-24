@@ -1,24 +1,26 @@
 ---
 name: workflow-gate
-description: "Use BEFORE heavier workflow skills when route choice matters. Route creative work without a design doc/spec to Challenge (grilling; Thesis confirm when agent-strawman); named-option convergence and destructive or hard-to-reverse work to Discuss; architecture diagnose/harden to Architecture; planning, ship checks, unclear bugs, and fresh-eyes fix-then-re-review also need this gate. Hand off an explicit whole task-completion pipeline directly to task-completion-loop after safety overrides. Skip single-line read-only lookups, pure formatting, trivial safe fixes, and clearly safe named-skill requests. Outputs Route, Runtime skill, Fallback alias, Execution path, and Thesis."
+description: "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and explicit full-completion pipelines. Skip trivial one-line read-only or formatting work and clearly matching safe named-skill requests. Emit one compact route block; fail closed when a required runtime is not callable."
 metadata:
   author: adonis
-  version: "3.2.0"
+  version: "3.3.0"
 ---
 
 # Workflow Gate
 
-A reflex-fast router. Over-escalating burns minutes on obvious work; under-escalating creates rework or outages. Budget: 60–90s.
+A reflex-fast router. Over-escalating burns time on obvious work; under-escalating creates rework or outages.
 
-> **Measured (2026-08-08, v3 migration):** six curated route cases, one run per current/old configuration: current skill 100% vs v2.0.1 snapshot 44%. Timing and token data were unavailable, so this is routing evidence, not performance evidence. Re-run broader evals before making general trigger or latency claims.
+**Fast path:** decide from the cheat card + precedence below and emit the block. A matching row or numbered rule is complete: load zero references.
 
-**Fast path (default — meet the reflex budget):** read THIS file only and emit the block. The cheat card, precedence rules, tiebreakers, output contract, and skill-name resolution table below are self-contained; for the vast majority of prompts you do NOT need to open any `references/*.md`. Target wall-clock ≤ 10s.
+**Slow path:** only when those rules still do not decide the result, load exactly one matching reference:
 
-**Slow path (load references only if):** (a) you genuinely cannot pick a Route from the cheat card + precedence rules, or (b) the prompt mentions cross-ecosystem terms (superpowers vs mattpocock vs addy/agent-skills) and you need the ecosystem boundary, or (c) you need a worked example whose closest match isn't obvious from the cheat card. Even then load at most ONE reference file. Loading all references for every prompt is the dominant speed regression — avoid it.
+- route fit changed on closer inspection → `references/route-adjustments.md`;
+- a worked output is genuinely needed → `references/examples-core.md` or `references/examples-edge.md`;
+- cross-ecosystem or phase boundary is the unresolved question → `references/workflow-systems.md`.
 
 ## Mandatory pre-routing overrides
 
-Before the fast-skip checklist, cheat card, or user-named-skill rule, check Rule #1 and Rule #2 below. If either fires, stop there. The full destructive / creative gate definitions live only in the Precedence rules section to avoid drift.
+Before Fast skip, the cheat card, or the user-named-skill rule, check Rules #1 and #2 below. If either fires, stop there. The full destructive / creative definitions live only in Precedence rules to avoid drift.
 
 ## Full-completion downstream handoff
 
@@ -26,18 +28,9 @@ After Rules #1 and #2 clear, skip this gate's Route block and load `task-complet
 
 Do not use this handoff for ordinary "finish and test it", Goal-only execution, review-fix-re-review alone, or architecture hardening alone; route those normally. `task-completion-loop` owns its recursive capability preflight and may return `MISSING_DEPENDENCIES`. A skill file on disk is not sufficient: invocation policy and real host capabilities must also permit every nested dependency.
 
-## Fast-skip checklist
+## Fast skip
 
-You may skip emitting the block **only** if all of these hold:
-
-1. The request matches one narrow skip case:
-   - single-line read-only lookup;
-   - pure-formatting edit with no behavior change;
-   - user named the exact downstream skill, AND that skill is (i) non-destructive per Rule #1, (ii) not a Plan-class skill named for creative-without-spec work per Rule #2, AND (iii) the request fits the named skill's stated scope (e.g. `coco-commit` for committing already-staged reviewed work, not `coco-commit` for "fix this bug and commit"). If any of (i)/(ii)/(iii) is uncertain in under 5 seconds, do not skip — emit the block.
-2. The destructive override (Rule #1, canonical below) does not fire. If you cannot cheaply rule out destructive impact, do not skip the gate.
-3. The answer fits in one line of prose.
-
-For anything else, emit the block. If the user named a skill that clearly mismatches the request (e.g. "use grilling for this typo fix" or legacy "use brainstorming for this typo fix"), do NOT take the skip path — emit the block, set the appropriate Route, and flag the mismatch in `Assumptions`.
+After Rules #1 and #2 clear, skip the block only when the answer fits in one line **and** the request is a single-line read-only lookup, a formatting-only edit, or an exact safe named-skill match. A named skill matches only when its scope covers the whole request; `coco-commit` fits reviewed staged work, not "fix this bug and commit". If safety or fit is not clear in five seconds, emit the block. For a mismatch, emit the correct Route and record the named skill in `Assumptions`.
 
 **Deprecated input alias:** if the user says `Brainstorm` / `brainstorming`, treat that as a request for **Challenge** (not as a Runtime skill to load). Record the alias in `Assumptions`. Never load `brainstorming` — it is not part of this gate's runtime.
 
@@ -53,7 +46,7 @@ For anything else, emit the block. If the user named a skill that clearly mismat
 | **Architecture**   | existing-code structure pain; diagnose vs bounded harden loop                                                                                                                            | `improve-codebase-architecture` _(diagnose)_ or `architecture-hardening-loop` _(scoped + implement intent)_ | `n/a`                  |
 | **Review-Handoff** | "fresh eyes / fix-then-re-review"                                                                                                                                                        | `agentic-review-handoff`                                                                                    | `n/a`                  |
 
-One row fits → emit the block. Multiple fire → use precedence below. Route adjustments live in `references/route-adjustments.md`. Use `references/workflow-systems.md` for ecosystem / phase boundaries among grilling (mattpocock), `discuss-before-plan`, obra debug/TDD/plan skills, and addyosmani/agent-skills.
+One row fits → emit the block. Multiple fire → use precedence below. These rows already decide ordinary Architecture, Review-Handoff, Challenge, and Discuss prompts; do not open a reference for them.
 
 ## Precedence rules — earlier overrides later
 
@@ -91,31 +84,22 @@ Light's default Execution path is `direct local work`. Upgrade the Execution pat
 - **Symptom-first investigation (bug / failing test / build error)** → `Runtime skill: systematic-debugging`, `Execution path: systematic-debugging`.
 - **"Done / ready to ship" claim** → `Runtime skill: none`, `Fallback alias: none`, `Execution path: direct local work`; fresh command output is still mandatory before any completion claim.
 
-### Tiebreakers — only the non-obvious pairs
+### Tiebreakers
 
-Rule #1 (destructive) is the canonical override and wins against every other rule when in conflict; the rows below cover the remaining non-obvious pairs.
-
-| When both fire                                                            | Pick                                                                                                                                                                                                                                                                                 | Why                                                                                                                    |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------- |
-| Future destructive surface and Rule #2 creative work                      | For a provably non-executing design turn, set `destructive=no; risk=high`, pick **Challenge**, and require an explicit Rule #1 re-gate before implementation. If this turn can execute or directly alter irreversible behavior, set `destructive=yes` and Rule #1 picks **Discuss**. | `destructive` describes the current authorized action; future blast radius stays visible through `risk` and re-gating. |
-| Rule #4 (bug) and Rule #5 (ship)                                          | Rule #4 first; ship re-fires after the bug closes.                                                                                                                                                                                                                                   | Don't ship a known-failing change.                                                                                     |
-| Rule #7 (Challenge widening) and Rule #8 (Discuss)                        | Challenge if options unknown / space still open; Discuss if named options exist and decisions are the bottleneck.                                                                                                                                                                    | Widening vs narrowing the space.                                                                                       |
-| Rule #3 (user named `writing-plans`) and Rule #2 (creative work, no spec) | Challenge. Record the named skill as a mismatch in `Assumptions`.                                                                                                                                                                                                                    | A Plan-class skill cannot substitute for the missing design gate.                                                      |
-| Rule #2 exception (spec referenced) and Light's behavior-risk upgrade     | Light + `test-driven-development` when the user says "directly implement" and the change is a few files.                                                                                                                                                                             | The spec only skips Challenge; it does not force a planning ceremony for a small implementation.                       |
-| Rule #1 (destructive) and any of #3 / #6 (user-named, Review-Handoff)     | Rule #1 always. Record the user's named skill or review intent in `Assumptions`; the review or named load happens after the destructive issue is resolved through Discuss.                                                                                                           | Outage / data loss can't be undone by reviewing or naming around it.                                                   |
-| Rule #9 (Architecture) and Rule #4 (bug)                                  | Rule #4 first.                                                                                                                                                                                                                                                                       | Fix the symptom before architecture loops.                                                                             |
-| Rule #9 (Architecture) and Rule #6 (Review-Handoff)                       | Rule #6 when the ask is fix-then-re-review of a diff; otherwise Architecture.                                                                                                                                                                                                        | Review packets are not architecture scanners.                                                                          |
-| Rule #9 diagnose vs harden                                                | After path/module scope is explicit, harden only when the user asked to implement/harden/loop-until-clean; otherwise diagnose. With missing scope, use Rule #9's `Architecture + Runtime skill: none` stop.                                                                          | Prevents accidental heavy loops and whole-repo scans.                                                                  |
+- A future destructive surface in a design-only turn is `destructive=no; risk=high` → **Challenge**, with Rule #1 re-gated before implementation. If this turn can perform the irreversible action, Rule #1 → **Discuss**.
+- **Challenge** widens or stress-tests a thesis; **Discuss** converges among named options.
+- A named skill never bypasses Rules #1 or #2. Record the mismatch in `Assumptions`.
+- A bug beats ship and Architecture; fix-then-re-review of a diff beats Architecture. Re-gate after the winning job closes.
 
 **Authority boundary:** this gate is advisory, not a runtime permission override. Higher-priority system/user instructions and downstream skills with true `MUST` triggers still apply. If a downstream `MUST` skill is required by the selected Route or by runtime trigger rules, name it as the Runtime skill and load it next instead of treating the gate result as permission to bypass it.
 
-## Budget
+## Execution contract
 
-- Reading this doc once should take ≤ 30 seconds; producing the block another ≤ 60. The gate must feel like a reflex.
-- Decide from the prompt alone; glance at one cheap repo signal only if it would flip the Route.
-- Do not load another skill while deciding the Route; after emitting the block, load the selected Runtime skill if it is not `none` **and** Thesis gates allow it (`agent-strawman` waits for confirm first).
-- Output cap: ≤ 10 lines for Direct, ≤ 14 lines otherwise.
-- Ask at most one blocking question. If the user said "don't ask", commit to the most likely Route and put the unverified premise in `Assumptions` — but still do not load grilling on an unconfirmed `agent-strawman` Thesis; put the strawman in `Next` and stop for confirm unless the user already waived thesis review explicitly.
+- Decide from the prompt; inspect one cheap repo signal only when it can flip the Route.
+- Emit ≤10 lines for Direct and ≤14 otherwise. Load no other skill while routing.
+- After the block, load the one selected Runtime skill unless it is `none` or an `agent-strawman` still awaits confirmation.
+- Ask at most one blocking question. If the user waived questions ("don't ask" / "不用问我" / "just decide"), choose the most likely Route, put uncertainty in `Assumptions`, and ask zero ordinary questions.
+- Waiving questions does not waive Thesis review. For unconfirmed `agent-strawman`, write `Next: Strawman — <one-sentence proposed thesis>. Confirm or revise it; grilling has not started.` Then stop. Only an explicit waiver of Thesis review skips this stop.
 
 ## Output format
 
@@ -132,11 +116,9 @@ Workflow Gate
 - Next: <what you will do immediately after this block>
 ```
 
-`Thesis` is `n/a` except on **Challenge** (required) and optionally noted when a Challenge re-gate is pending. `Route` and `Runtime skill` lead because every downstream reader acts on them. `Runtime skill` is the single skill to load next and must stay one bare token (`none` or one slug); `Fallback alias` is metadata for runtimes that cannot resolve that bare token. `Execution path` is the implementation pattern once code is being written (`n/a` when no code yet). They may match for skills that are both the workflow and the implementation pattern, such as `systematic-debugging` and `test-driven-development`. `risk` and `destructive` are separate enums because they answer different questions: blast-radius vs reversibility.
+Emit all nine fields in the shown order. `Thesis` is `n/a` outside Challenge; never omit it. `Runtime skill` is one bare slug or `none`; plugin names belong only in `Fallback alias`. `Execution path` is the implementation pattern and stays `n/a` before code work. `risk` measures blast radius; `destructive` measures reversibility.
 
-**Skill name resolution.** Most skills resolve as bare slugs in both Codex (`~/.agents/skills/`) and Claude Code (`~/.claude/skills/` + project mirror). One skill is intentionally not mirrored to `~/.claude/skills/` because it lives under the `superpowers:` plugin namespace. For that, keep `Runtime skill` as the bare slug and put the plugin name in `Fallback alias`. Codex should load `Runtime skill`; Claude Code should try `Runtime skill` first and, if it is unavailable, load `Fallback alias`.
-
-**Resolution / invocation failure.** Before loading the selected runtime, confirm both name resolution and invocation eligibility. `disable-model-invocation: true` or `allow_implicit_invocation: false` means unavailable for an implicit handoff unless the user explicitly named that dependency and the host permits it. If the Route's semantics depend on that skill (Challenge, Discuss, Plan, Architecture, Review-Handoff, or the full-completion handoff), emit the failure block below and stop; never silently imitate or downgrade the workflow to direct work. Only a Route already classified as optional Light tooling may re-gate to direct local work when doing so preserves the user's requested semantics.
+**Runtime preflight.** Before loading the selected runtime, verify name resolution and invocation eligibility. `disable-model-invocation: true` or `allow_implicit_invocation: false` blocks an implicit handoff unless the user explicitly named the dependency and the host permits it. A required Challenge, Discuss, Plan, Architecture, Review-Handoff, or full-completion runtime fails closed; optional Light tooling may re-gate to direct work only when semantics stay intact.
 
 ```text
 Workflow Gate Failure
@@ -147,20 +129,18 @@ Workflow Gate Failure
 - Next: <install/enable explicitly, or choose a different user-authorized workflow>
 ```
 
-`MISSING_DEPENDENCIES` is never a `Route` value. Do not emit a normal Route block after this failure block.
+`MISSING_DEPENDENCIES` is not a Route. Emit no normal block after the failure.
 
 | Bare slug                 | Plugin alias                          | Emit fields                                                                                      |
 | ------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `test-driven-development` | `superpowers:test-driven-development` | `Runtime skill: test-driven-development` + `Fallback alias: superpowers:test-driven-development` |
 
-All other skills (`grilling`, `grill-with-docs`, `discuss-before-plan`, `agentic-review-handoff`, `writing-plans`, `systematic-debugging`, `improve-codebase-architecture`, `architecture-hardening-loop`) are emitted as bare slugs with `Fallback alias: none` when the current host exposes them. Installation alone does not override invocation policy.
+All other runtimes use their bare slug with `Fallback alias: none`. Installation alone does not prove callability.
 
 ## Guardrails
 
-- Smallest Route that still protects correctness.
-- Route first, then load only the one Runtime skill you picked; use Fallback alias only if the current runtime cannot resolve that bare slug.
-- At most one blocking question (plus the Thesis confirm stop for `agent-strawman`).
-- Never create scripts, evals, references, or persistent artifacts from this skill alone — that belongs to the workflow that runs next.
+- Pick the smallest Route that protects correctness; the gate is advisory and never expands authority.
+- Create no persistent artifact from this skill alone. The selected workflow owns subsequent work.
 - Never load `brainstorming`.
 
-Worked output blocks live in two reference files: `references/examples-core.md` has one example per Route (Direct / Light / Challenge / Discuss / Plan / Architecture / Review-Handoff) and is the default lookup. `references/examples-edge.md` covers tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory-signal handling, and "don't ask me" — load it only when core doesn't cover the prompt.
+Worked output blocks live in two Slow-path files: `references/examples-core.md` has one example per Route; `references/examples-edge.md` covers tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory signals, and "don't ask me". Open either only when a worked output is genuinely needed — never after a cheat-card or numbered-rule match.

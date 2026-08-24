@@ -118,11 +118,13 @@ Naming the fields is not enough; each one fails in a predictable way, so write e
 
 ## Quality Checks
 
+The bundled `scripts/lint-goal-prompt.py` validates slash-runtime `/goal` prompts. Do not run it on Cursor CLI's plain prompt: it intentionally requires `/goal` and treats generic bracketed text as a placeholder. Validate Cursor prompts against this section directly, preserve the documented literal `[chatId]` resume syntax, and never add `/goal` to make the linter pass.
+
 Reject or revise a copy-ready goal when it:
 
 - uses `/目标` instead of `/goal`;
 - presents `/goal` as an executable Cursor CLI command;
-- leaves placeholders such as `[path]`, `<file>`, `TODO`, `TBD`, `待补充`, or `待定`;
+- leaves unresolved placeholders such as `[path]`, `<file>`, `TODO`, `TBD`, `待补充`, or `待定` (the documented Cursor CLI `[chatId]` syntax is not a placeholder);
 - says only `make it work`, `fix bugs`, `做得高级`, or `直到满意` as the done condition;
 - lacks concrete verification evidence;
 - lets the agent edit the whole repo or machine without reason;

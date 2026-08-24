@@ -44,6 +44,10 @@
     "should_trigger": true
   },
   {
+    "query": "Validate this plain Cursor CLI goal contract before I use it; keep the documented resume semantics and do not execute it.",
+    "should_trigger": true
+  },
+  {
     "query": "把 Codex 的 goal token budget 从 30000 改成 50000，任务内容不要动。",
     "should_trigger": false
   },
@@ -81,6 +85,10 @@
   },
   {
     "query": "把这段产品需求改写成一句目标说明，给周报用；不需要 coding agent 持续执行、验证或创建 durable goal。",
+    "should_trigger": false
+  },
+  {
+    "query": "Rewrite this customer-support system prompt for a friendlier tone; it is not a durable goal contract.",
     "should_trigger": false
   }
 ]

@@ -523,6 +523,42 @@
         "Does not treat nested SKILL.md files as proof of callability",
         "Allows downstream MISSING_DEPENDENCIES before any work starts"
       ]
+    },
+    {
+      "id": 39,
+      "name": "dont-ask-named-architecture-harden",
+      "prompt": "用 architecture-hardening-loop，范围冻在 packages/core/**。不用问我意见，直接授权去改，scan-fix-review until clean。",
+      "expected_route": "Architecture",
+      "expectations": [
+        "Output contains a Workflow Gate block with Route, Runtime skill, Fallback alias, Execution path, and Thesis",
+        "Route is exactly 'Architecture'",
+        "Thesis is 'n/a'",
+        "Runtime skill is 'architecture-hardening-loop' AND Fallback alias is 'none'",
+        "Execution path is 'n/a'",
+        "Skill asks zero blocking questions — user waived questions and already named path + harden-until-clean",
+        "Assumptions may note the waived-questions / don't-ask authorization",
+        "Next starts the architecture-hardening-loop (does NOT ask for scope)",
+        "Skill does NOT load grilling, discuss-before-plan, or improve-codebase-architecture",
+        "CONTEXT: references_loaded_count == 0 (do not open examples-edge.md or route-adjustments.md)"
+      ]
+    },
+    {
+      "id": 40,
+      "name": "dont-ask-does-not-waive-thesis",
+      "prompt": "我想重新设计 homepage，还没有方向。Don't ask，直接开干。",
+      "expected_route": "Challenge",
+      "expectations": [
+        "Output contains a Workflow Gate block with a 'Thesis:' line",
+        "Route is exactly 'Challenge'",
+        "Thesis is exactly 'agent-strawman'",
+        "Runtime skill is 'grilling' AND Fallback alias is 'none'",
+        "Execution path is 'n/a'",
+        "Next contains the actual one-sentence strawman and asks the user to confirm or revise it — 'don't ask' does not waive Thesis confirm",
+        "Skill does NOT load grilling yet (unconfirmed agent-strawman)",
+        "Skill does NOT treat 'don't ask' as permission to skip Challenge or start implementation",
+        "Ask zero blocking questions besides the Thesis confirm stop",
+        "CONTEXT: references_loaded_count == 0 (Cheat-card Challenge row + Thesis exception are in SKILL.md)"
+      ]
     }
   ]
 }
