@@ -3,7 +3,7 @@ name: open-code-review-loop
 description: "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
-  version: "1.4.1"
+  version: "1.4.2"
 ---
 
 # Open Code Review Loop
@@ -53,8 +53,9 @@ Resolve before the first model call:
 - Fixer: current visible host. An external Fixer needs a user-authorized
   isolated checkout that becomes `$REPO` before round 1
 - Paths/excludes: OCR preview; preserve user exclusions every round.
-  Accepted exclusions are `user_exclude` plus reasons the user accepts one
-  by one. OCR-internal exclusions do not prove coverage
+  `default_path` is OCR's built-in non-review scope and `user_exclude` records
+  a supplied selector, so neither needs a second confirmation. Any other
+  reason needs explicit acceptance one by one
 - Round budget / deadline: 3 rounds (a ceiling, not success permission);
   10 minutes per Reviewer/Fixer call
 - Background: user requirement or none; pass through preview/rule/prompt
@@ -76,12 +77,16 @@ never review one worktree while fixing another. No isolated target →
 `HUMAN_GATE` (no patch-transfer protocol). Do not auto-create a worktree.
 
 Record allowed source/test paths, prohibited Git/external actions, and
-explicitly accepted exclusion reasons. Unaccepted reasons (including
-`unsupported_ext`) are incomplete coverage even if every `reviewable_files`
-entry was reviewed. Partition sessions by repository, loop ID, role, and
-canonical product ID — never resume a Reviewer as a Fixer. Adapter cannot
-satisfy its role → `HUMAN_GATE`. Do not silently substitute another AI or
-let the Reviewer write the subject.
+explicitly accepted exclusion reasons. OCR `default_path` entries are not
+Reviewer coverage and do not need a user gate; keep them in the evidence
+report. Run relevant tests as host verification even when OCR excludes test
+files, but never count test execution as Reviewer coverage. Any other
+unaccepted reason (including `unsupported_ext`, `binary`, or a missing reason)
+is incomplete coverage even if every `reviewable_files` entry was reviewed.
+Partition sessions by repository, loop ID, role, and canonical product ID —
+never resume a Reviewer as a Fixer. Adapter cannot satisfy its role →
+`HUMAN_GATE`. Do not silently substitute another AI or let the Reviewer write
+the subject.
 
 ## Loop contract
 
@@ -124,11 +129,12 @@ Keep `ROUND_DIR` outside the repo so the next preview cannot select the
 bundle and permanently drift evidence. `--exclude` may be repeated; the
 script combines values into OCR's list and keeps that selection every
 round. `--allow-excluded-reason` is not authority: pass it only after
-recording the user's explicit acceptance of that exact reason. Zero
-reviewable files and zero unaccepted exclusions → `CLEAN` with `0/0`
-coverage. Any unaccepted exclusion (for example `unsupported_ext`) →
-`UNVERIFIED: INCOMPLETE_COVERAGE`. Do not invoke an AI just to manufacture
-a verdict.
+recording the user's explicit acceptance of that exact non-default reason.
+The builder accepts `default_path` and `user_exclude` automatically; do not
+pause at round 0 to reconfirm them. Zero reviewable files and zero unaccepted
+exclusions → `CLEAN` with `0/0` coverage. Any unaccepted exclusion (for example
+`unsupported_ext`) → `UNVERIFIED: INCOMPLETE_COVERAGE`. Do not invoke an AI
+just to manufacture a verdict.
 
 Builder already fail-closes on (do not re-implement; read
 `scripts/build_review_bundle.py` only if the builder fails):

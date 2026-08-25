@@ -40,6 +40,10 @@
     "should_trigger": true
   },
   {
+    "query": "packages/persistence/** 是一个范围清楚但只完成一半的非平凡编码任务；没有单独 plan/spec。请走完整 task-completion-loop：从当前代码建账本，在同一 Goal 下实现全部 PENDING，再做 agentic review、架构复扫和 fresh Claude audit。",
+    "should_trigger": true
+  },
+  {
     "query": "按 docs/specs/signup-validation.md 实现 Zod 校验并跑单测，改动只有两个文件；不需要多 agent convergence 或终局盲审。",
     "should_trigger": false
   },

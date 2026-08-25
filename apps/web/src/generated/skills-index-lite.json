@@ -24,7 +24,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
+    "updatedAt": "2026-08-24T01:40:24.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -38,7 +38,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
+    "updatedAt": "2026-08-24T01:40:24.000Z"
   },
   {
     "slug": "branch-creator",
@@ -111,12 +111,12 @@
   {
     "slug": "commit-push",
     "name": "commit-push",
-    "description": "Commit a focused local change set with an emoji Conventional Commit message, safely stage a clear unstaged scope when needed, then push the current branch to its remote. Use when the user asks to \"commit and push\", \"commit push\", \"submit and push\", \"push my committed change\", or wants a local commit finalized on the remote. Do not create pull requests, merge requests, releases, tags, rebases, or deployment changes.",
+    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits; excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
     "metadata": {
       "author": "adonis"
     },
     "files": {
-      "hasReferences": false,
+      "hasReferences": true,
       "hasSrc": false
     },
     "updatedAt": "2026-07-18T13:47:31.000Z"
@@ -147,7 +147,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
+    "updatedAt": "2026-08-24T01:40:24.000Z"
   },
   {
     "slug": "enforce-lf",
@@ -251,13 +251,13 @@
     "description": "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.1"
+      "version": "1.4.2"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
+    "updatedAt": "2026-08-24T01:40:24.000Z"
   },
   {
     "slug": "review-prompt-composer",
@@ -289,16 +289,16 @@
   {
     "slug": "task-completion-loop",
     "name": "task-completion-loop",
-    "description": "Orchestrate explicit full completion of an existing named plan/spec or clearly bounded unfinished non-trivial coding task through one work ledger, real host + Grok Build + Claude Code convergence, Goal Gate, implementation/runtime verification, agentic review, scoped architecture hardening, and a fresh read-only Claude audit on the final evidence. Use when the user explicitly requests task-completion-loop or that whole multi-agent finish pipeline.",
+    "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.2"
+      "version": "1.5.0"
     },
     "files": {
-      "hasReferences": false,
+      "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
+    "updatedAt": "2026-08-24T01:40:24.000Z"
   },
   {
     "slug": "uxc-facade",

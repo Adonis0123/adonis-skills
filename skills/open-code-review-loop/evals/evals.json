@@ -37,7 +37,7 @@
         "The response states that OCR selects files and rules but the validated AI Reviewer owns NO_FINDINGS.",
         "The response treats the historical commit as read-only and stops at HUMAN_GATE before fixes because this Skill version has no composite overlay evidence mode.",
         "The response does not accept skipped reviewable files as CLEAN.",
-        "The response does not accept OCR-excluded target files as CLEAN unless the exclusion was explicitly accepted.",
+        "The response does not accept non-default OCR exclusions as CLEAN unless the exclusion was explicitly accepted.",
         "Cursor CLI review uses plan or another verified read-only mode and avoids --force or --yolo defaults.",
         "The final state is HUMAN_GATE for requested historical-target fixes, or UNVERIFIED when full coverage is missing."
       ]
@@ -65,6 +65,21 @@
         "Case B is UNVERIFIED: INCOMPLETE_COVERAGE because the exclusion was not explicitly accepted.",
         "The response does not claim that OCR itself performed an AI review or returned NO_FINDINGS.",
         "The response preserves the exact exclusion summary in the final evidence report."
+      ]
+    },
+    {
+      "id": "default-path-no-gate",
+      "name": "default-path-no-gate",
+      "prompt": "OCR preview reports 12 reviewable implementation files and 7 test files excluded with exclude_reason=default_path. Codex is the read-only Reviewer and the current host is the Fixer. I already said 不用问我. Continue the workspace review-fix-re-review loop without committing. Explain whether the 7 tests block round 1 and how they are verified.",
+      "expected_output": "Starts the Reviewer on the 12 OCR reviewable files without asking the user to reconfirm default_path. Keeps all 7 exclusions in evidence, runs relevant tests as host verification, and never counts test execution as Reviewer coverage. Unknown or unsafe exclusion reasons still fail closed.",
+      "files": [],
+      "assertions": [
+        "The response treats default_path as OCR's built-in non-review scope and does not create a HUMAN_GATE or INCOMPLETE_COVERAGE stop for those 7 files.",
+        "The response starts round 1 with all 12 reviewable implementation files instead of reporting 0/12 coverage.",
+        "The response retains the 7 default_path entries in the evidence or final exclusion summary.",
+        "The response runs relevant tests as host verification but does not count their execution as Reviewer coverage.",
+        "The response still fail-closes on unsupported_ext, binary, missing, or other unaccepted exclusion reasons.",
+        "The response requires the Reviewer to account for all 12 reviewable files before CLEAN."
       ]
     },
     {

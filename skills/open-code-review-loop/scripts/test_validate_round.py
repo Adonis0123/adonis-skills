@@ -455,7 +455,7 @@ class ValidateRoundTest(unittest.TestCase):
             ["--from", "a" * 40, "--to", "b" * 40],
         )
 
-    def test_partition_exclusions_accepts_only_user_excludes_by_default(self) -> None:
+    def test_partition_exclusions_keeps_unsafe_reasons_unaccepted_by_default(self) -> None:
         excluded = [
             {"path": "generated.ts", "exclude_reason": "user_exclude"},
             {"path": "README.md", "exclude_reason": "unsupported_ext"},
@@ -464,10 +464,27 @@ class ValidateRoundTest(unittest.TestCase):
         accepted, unaccepted = build_review_bundle.partition_excluded_files(
             excluded, []
         )
-        self.assertEqual(accepted, ["user_exclude"])
+        self.assertEqual(accepted, ["default_path", "user_exclude"])
         self.assertEqual(
             [entry["path"] for entry in unaccepted],
             ["README.md", "unknown.txt"],
+        )
+
+    def test_partition_exclusions_accepts_ocr_default_paths_without_user_gate(self) -> None:
+        excluded = [
+            {"path": "src/example.test.ts", "exclude_reason": "default_path"},
+            {"path": "generated.ts", "exclude_reason": "user_exclude"},
+            {"path": "README.md", "exclude_reason": "unsupported_ext"},
+            {"path": "asset.png", "exclude_reason": "binary"},
+            {"path": "unknown.txt"},
+        ]
+        accepted, unaccepted = build_review_bundle.partition_excluded_files(
+            excluded, []
+        )
+        self.assertEqual(accepted, ["default_path", "user_exclude"])
+        self.assertEqual(
+            [entry["path"] for entry in unaccepted],
+            ["README.md", "asset.png", "unknown.txt"],
         )
 
     def test_partition_exclusions_allows_explicit_reason(self) -> None:
@@ -477,7 +494,9 @@ class ValidateRoundTest(unittest.TestCase):
         accepted, unaccepted = build_review_bundle.partition_excluded_files(
             excluded, ["unsupported_ext"]
         )
-        self.assertEqual(accepted, ["unsupported_ext", "user_exclude"])
+        self.assertEqual(
+            accepted, ["default_path", "unsupported_ext", "user_exclude"]
+        )
         self.assertEqual(unaccepted, [])
 
     def test_run_suppresses_failure_output_when_background_is_sensitive(self) -> None:

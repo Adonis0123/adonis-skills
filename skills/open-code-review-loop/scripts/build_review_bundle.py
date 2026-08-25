@@ -547,7 +547,9 @@ def file_evidence(
 def partition_excluded_files(
     excluded_files: list[dict[str, Any]], extra_allowed_reasons: list[str]
 ) -> tuple[list[str], list[dict[str, Any]]]:
-    accepted_reasons = sorted({"user_exclude", *extra_allowed_reasons})
+    accepted_reasons = sorted(
+        {"default_path", "user_exclude", *extra_allowed_reasons}
+    )
     unaccepted = [
         entry
         for entry in excluded_files
