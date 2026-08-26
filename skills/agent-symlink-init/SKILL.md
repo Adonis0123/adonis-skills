@@ -14,7 +14,7 @@ Set up or migrate a repository to the symlink-based agent-skill layout.
 - Make `.agents/skills` the source of truth.
 - Ensure `.claude/skills` points at the repository's `.agents/skills` directory.
 - Ensure `AGENTS.md` is a symlink to `CLAUDE.md` when `CLAUDE.md` exists.
-- Remove obsolete ruler or sync automation only when it is actually present.
+- Remove obsolete ruler or sync automation only when it is actually present and the user explicitly requested that migration.
 - Keep the migration idempotent and non-destructive.
 
 ## Detect Before Editing
@@ -37,11 +37,13 @@ Classify the work into these modules:
 1. `symlink-init`
    Run when `.claude/skills` is missing or does not point at the repository's `.agents/skills` directory, or when `AGENTS.md` should point to `CLAUDE.md` but does not.
 2. `migrate-from-ruler`
-   Run when a .ruler directory exists or `package.json` still contains ruler-related scripts or `postinstall` fragments.
+   Offer when a .ruler directory exists or `package.json` still contains ruler-related scripts or `postinstall` fragments. Run only when the user's request includes migrating/removing ruler.
 3. `migrate-from-sync`
-   Run when a sync-llm-skills.ts file exists under `scripts/` or `package.json` still contains `skills:sync:llm` or `--sync-llm`.
+   Offer when legacy copy-based sync automation exists. A `--sync-llm` flag alone is not proof: inspect the referenced script/function. If it only ensures `.claude/skills -> .agents/skills`, it already implements the target symlink model and must remain.
 
-Summarize the detected modules before making destructive changes. If the migration will delete the .ruler directory or sync scripts, tell the user exactly what will be removed.
+Detection identifies candidates; it does not authorize every module. Run `symlink-init` alone when that is all the user requested. Before deleting `.ruler`, sync scripts, or package scripts, require a request that clearly authorizes that migration and name the exact removal set. Preserve or back up untracked/otherwise hard-to-recover content before replacement or deletion.
+
+If the user explicitly names only one link, narrow `symlink-init` to that link. For example, “only initialize `.claude/skills`” must not create or replace `AGENTS.md`; report the other link as an optional follow-up instead.
 
 ## Execute `symlink-init`
 
@@ -66,7 +68,7 @@ mkdir -p .claude
 ln -sfn ../.agents/skills .claude/skills
 ```
 
-5. If `CLAUDE.md` exists, ensure `AGENTS.md` points to it:
+5. Unless the user narrowed the request to `.claude/skills` only, if `CLAUDE.md` exists, ensure `AGENTS.md` points to it:
    - If `AGENTS.md` is a regular file, back it up before replacing it
 
 ```bash
@@ -80,7 +82,7 @@ ln -sfn CLAUDE.md AGENTS.md
 
 ## Execute `migrate-from-ruler`
 
-Run this module only when ruler artifacts still exist.
+Run this module only when ruler artifacts still exist and the user requested ruler migration/removal.
 
 1. Remove the .ruler directory.
 2. Edit `package.json`:
@@ -94,7 +96,7 @@ Run this module only when ruler artifacts still exist.
 
 ## Execute `migrate-from-sync`
 
-Run this module only when legacy copy/sync automation is present.
+Run this module only when legacy copy/sync automation is present and the user requested sync migration/removal. Do not run it against a current symlink helper merely because its CLI flag is named `--sync-llm`.
 
 1. Remove the sync-llm-skills.ts file under `scripts/` if it exists.
 2. Edit `package.json`:

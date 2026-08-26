@@ -16,7 +16,7 @@ Fallback-only. Do not load this file for Architecture / Review-Handoff / Challen
 - _Challenge → Direct/Light:_ the request is not creative HARD-GATE work, or the prompt/spec already fixes the relevant design and behavior. _Why:_ re-challenging wastes their signal only after the design decision has been paid.
 - _Discuss → Light:_ one reasonable implementation; user supplied exact behavior. _Why:_ alignment is implicit.
 - _Plan → Light:_ one or two files, obvious task list. _Why:_ not a plan, just overhead.
-- _Architecture + missing scope → Architecture + `Runtime skill: none`:_ ask one scope question and do not load a scanner yet. _Why:_ the job is architectural, but scanners without a frozen path/module become whole-repo thrash.
+- _Architecture + unresolved scope → Architecture + `Runtime skill: none`:_ first try user-supplied attachment/reference/Git locators plus one cheap repo signal; only then ask one minimal scope question and do not load a scanner. _Why:_ scanners without a frozen file set become whole-repo thrash, while making users repeat already-resolvable scope wastes a full round trip.
 - _Architecture → Light/Discuss:_ the ask is really a bug symptom or product decision rather than structure work. _Why:_ bugs belong to systematic-debugging; named-option decisions belong to Discuss.
 - _architecture-hardening-loop → improve-codebase-architecture:_ user asked only for diagnosis/report. _Why:_ harden loops mutate code; diagnose must not silently upgrade.
 - _Review-Handoff → inline review:_ no git repo or no packet needed. _Why:_ `agentic-review-handoff` requires a git repo.

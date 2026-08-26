@@ -5,13 +5,15 @@ description: Create and maintain repository skills for adonis-skills. Use when u
 
 # Repo Skill Creator
 
-Create and maintain repository skills with a triple workflow: creation mode, path-finalize mode, and auto-discover finalize mode.
+Create and maintain repository skills with intent-specific workflows. Validation is read-only with respect to Git state; creation, finalization, staging, and runtime installation are separate actions.
 
 ## Trigger Rules
 
-1. If the user provides a `skills/*` path and indicates the skill is already generated/copied, run path-finalize mode directly without additional confirmation.
-2. If the user invokes this skill directly without providing a path, run auto-discover finalize mode (`skills:finalize:new`) first.
-3. If no new skill can be discovered during auto-discover mode, fall back to creation mode (`skills:new`) and then continue finalize.
+1. Classify the request as `create`, `finalize-path`, `validate`, or `finalize-and-stage` before running a command.
+2. If the user provides a `skills/*` path and indicates the skill is already generated/copied, run path-finalize mode directly without additional confirmation.
+3. A request to check, audit, or validate existing skills runs validation only. It must not create a skill or modify the Git index.
+4. Run auto-discover finalize-and-stage only when the user explicitly asks to prepare newly added skills for commit or to stage them.
+5. A bare invocation with no path or action defaults to validation. If exactly one new `skills/<slug>/SKILL.md` is discoverable, report it as the likely finalize target, but do not stage or create anything implicitly.
 
 ## Mode A: Create New Skill
 
@@ -49,9 +51,28 @@ Finalize pipeline is fixed and must run in order:
 2. `pnpm skills:validate`
 3. `pnpm skills:index`
 
-## Mode C: Auto Discover + Finalize + Stage
+This mode does not stage files.
 
-When user does not pass a `skills/*` path, run:
+## Mode C: Validate Existing Skills
+
+Use for “check”, “audit”, “validate”, or a bare invocation without a requested creation/finalize action:
+
+```bash
+pnpm skills:validate
+```
+
+When source changes already exist and generated index freshness is part of the check, also run:
+
+```bash
+pnpm skills:index
+git diff --check
+```
+
+Do not call `skills:new`, `skills:finalize:new`, or `git add` in this mode.
+
+## Mode D: Auto Discover + Finalize + Stage
+
+Run only when the user explicitly asks to finalize and stage newly added skills:
 
 ```bash
 pnpm skills:finalize:new
@@ -67,15 +88,16 @@ Behavior contract:
    - stop immediately on first failure
 3. Stage only related files after all finalize runs succeed:
    - `git add skills/<slug>` for each processed slug
-   - `git add apps/web/src/generated/skills-index.json` when changed
+   - `git add apps/web/src/generated/skills-index-lite.json apps/web/src/generated/skills-detail-index.json` for whichever generated index files changed
 4. If no new skill is discovered:
-   - auto-run `pnpm skills:new`
-   - re-scan for newly added skills and continue this mode
+   - report that no new skill was found
+   - do not create a skill unless the user also requested creation
 
 ## Scope Boundaries
 
 - Do not auto-run `pnpm skills:openai-yaml` unless explicitly requested.
 - Do not auto-run local install/sync (`skills:install:local`, `skills:test:local`) unless explicitly requested.
+- Do not stage in create, finalize-path, or validate mode. Staging requires an explicit `finalize-and-stage`/commit-preparation request.
 - Do not use `git add -A`; only stage skill-related files from this workflow.
 
 ## Output Contract
@@ -84,7 +106,7 @@ When executing this skill, always return:
 
 1. Commands executed (or planned commands in dry-run).
 2. Success/failure status.
-3. Detected/processed skill slugs and staged file paths.
+3. Detected/processed skill slugs and staged file paths, with `none` when the selected mode does not stage.
 4. Next-step suggestion only when useful (for example, local agent testing via `pnpm skills:test:local`).
 
 ## Skill Rules

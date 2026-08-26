@@ -17,6 +17,7 @@ import {
   latestActivePacket,
   validatePacketPath,
   lastPhysicalH1,
+  listPhysicalH1s,
 } from "./repositories.mjs";
 import { createAdapter, DELIVERY_UNKNOWN } from "./adapters.mjs";
 import {
@@ -119,15 +120,25 @@ Never place a literal pipe character in table cells. Use &#124; instead.`;
  * @param {string} [opts.packetPath]
  * @param {string} [opts.packetId]
  * @param {boolean} [opts.continue]
+ * @param {boolean} [opts.intake]
  * @param {string} [opts.scopeSlug]
  * @param {(cfg: object) => ReturnType<typeof createAdapter>} [opts.adapterFactory]
  * @param {object} [opts.adapterOpts] extra adapter options (bin, timeoutMs, ...)
  */
 export async function cmdRun(opts) {
   const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
+  const isContinue = Boolean(opts.continue || opts.cont);
+  const isIntake = opts.intake === true;
+  if (isIntake && isContinue) {
+    throw new Error("--intake cannot be combined with --continue");
+  }
+  if (isIntake && (opts.packetPath || opts.packetId)) {
+    throw new Error(
+      "--intake cannot be combined with a caller-provided packet",
+    );
+  }
   ensureReviewHandoffLayout(repoRoot);
   const branch = resolveBranch(repoRoot);
-  const isContinue = Boolean(opts.continue || opts.cont);
   // Resolve / create packet
   let packetPath = opts.packetPath || null;
   let packetId = opts.packetId || null;
@@ -155,6 +166,7 @@ export async function cmdRun(opts) {
       repoRoot,
       branch,
       opts.scopeSlug || "auto-loop",
+      isIntake ? "intake" : "handoff",
     );
     packetPath = created.packetPath;
     packetId = created.packetId;
@@ -170,6 +182,12 @@ export async function cmdRun(opts) {
   // First create path already under active; continue/explicit packet must stay active
   packetPath = validated.packetPath;
   packetId = validated.packetId;
+  const packetMeta = readPacketMeta(packetPath);
+  if (packetMeta.frontmatter.mode === "classic") {
+    throw new Error(
+      `review-loop run cannot take over a classic packet: ${packetPath}`,
+    );
+  }
 
   // Reviewer: explicit flag wins; else continue inherits prior; else default codex
   const priorState = loadRunState(repoRoot, packetId) ?? {};
@@ -367,21 +385,22 @@ async function runBody(ctx) {
   const nextRound = isContinue ? round + 1 : Math.max(round, 0) + 1;
 
   const metaNow = readPacketMeta(packetPath);
-  const physical = lastPhysicalH1(metaNow.text);
   if (!isContinue) {
     if (round > 0) {
       throw new Error(
         `packet already has round=${round} (lastVerdict=${state.lastVerdict ?? "n/a"}); use run --continue or a new packet`,
       );
     }
-    if (
-      physical &&
-      physical.anchor !== "review_handoff" &&
-      metaNow.lastAnchor &&
-      metaNow.lastAnchor !== "review_handoff"
-    ) {
+    const physical = listPhysicalH1s(metaNow.text);
+    const initialAnchor = physical.length === 1 ? physical[0].anchor : null;
+    const legalInitialPair =
+      (initialAnchor === "review_handoff" &&
+        metaNow.lastAnchor === "review_handoff") ||
+      (initialAnchor === "review_intake" &&
+        metaNow.lastAnchor === "review_intake");
+    if (!legalInitialPair) {
       throw new Error(
-        `packet already has stages (last_anchor=${metaNow.lastAnchor}); use run --continue or a new packet`,
+        `invalid initial packet anchors: physical=${physical.map((entry) => entry.anchor).join(",") || "none"}, last_anchor=${metaNow.lastAnchor ?? "none"}; expected one matched review_handoff or review_intake anchor`,
       );
     }
   }

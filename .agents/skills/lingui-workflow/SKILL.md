@@ -1,6 +1,8 @@
 ---
 name: lingui-workflow
 description: Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.
+metadata:
+  author: adonis
 ---
 
 # Lingui Workflow
@@ -46,6 +48,7 @@ pnpm --filter @your/web run i18n:compile
 ```
 
 高频补充命令：
+
 - 首次初始化：`pnpm --filter @your/web run i18n:bootstrap`
 - 仅重建 manifest：`pnpm --filter @your/web run i18n:manifest`
 - 一条命令串联：`pnpm --filter @your/web run i18n -- --compile`
@@ -53,16 +56,16 @@ pnpm --filter @your/web run i18n:compile
 
 ## Command Matrix
 
-| 命令 | 作用摘要 | 可用参数 |
-| --- | --- | --- |
-| `i18n:extract` | 提取源码文案到 `po` | — |
-| `i18n:translate` | 统计缺失翻译 | `--fill-source`, `--strict` |
-| `i18n:check` | 严格翻译检查，缺失即报错退出 | — |
-| `i18n:compile` | 编译 `po` 到 `mjs`，并自动执行 `i18n:manifest` | — |
-| `i18n:manifest` | 基于现有 `mjs` 生成 `catalog-manifest.ts` | — |
-| `i18n:sync` | 当前仅等价 `i18n:extract` | — |
-| `i18n:bootstrap` | 一次执行 `extract + compile(+manifest)` | — |
-| `i18n` | 组合入口；默认 `extract + translate`，加 `--compile` 才会编译 | `--compile`, `--fill-source`, `--no-translate`, `--strict` |
+| 命令             | 作用摘要                                                      | 可用参数                                                   |
+| ---------------- | ------------------------------------------------------------- | ---------------------------------------------------------- |
+| `i18n:extract`   | 提取源码文案到 `po`                                           | —                                                          |
+| `i18n:translate` | 统计缺失翻译                                                  | `--fill-source`, `--strict`                                |
+| `i18n:check`     | 严格翻译检查，缺失即报错退出                                  | —                                                          |
+| `i18n:compile`   | 编译 `po` 到 `mjs`，并自动执行 `i18n:manifest`                | —                                                          |
+| `i18n:manifest`  | 基于现有 `mjs` 生成 `catalog-manifest.ts`                     | —                                                          |
+| `i18n:sync`      | 当前仅等价 `i18n:extract`                                     | —                                                          |
+| `i18n:bootstrap` | 一次执行 `extract + compile(+manifest)`                       | —                                                          |
+| `i18n`           | 组合入口；默认 `extract + translate`，加 `--compile` 才会编译 | `--compile`, `--fill-source`, `--no-translate`, `--strict` |
 
 详细输入/输出/副作用请看 `references/i18n-commands.md`。
 
@@ -71,12 +74,14 @@ pnpm --filter @your/web run i18n:compile
 When command semantics change, docs must be updated in the same change set.
 
 Trigger files:
+
 1. `apps/web/scripts/i18n/index.ts`
 2. `apps/web/scripts/i18n/manifest.ts`
 3. `apps/web/scripts/i18n/cli.ts`
 4. `packages/i18n/src/lingui-config.ts`
 
 Required doc sync:
+
 1. `references/i18n-commands.md`
 2. `references/workflow-daily.md` (if execution sequence changed)
 3. `references/maintenance-playbook.md` (if maintenance workflow changed)
@@ -84,16 +89,16 @@ Required doc sync:
 ## Common Misconceptions
 
 1. `i18n` 默认会 compile。  
-实际：默认不会，必须显式传 `--compile`。
+   实际：默认不会，必须显式传 `--compile`。
 
 2. `i18n:sync` 是全量同步命令。  
-实际：当前实现仅执行 extract。
+   实际：当前实现仅执行 extract。
 
 3. `i18n:manifest` 可替代 `i18n:compile`。  
-实际：manifest 依赖已有 `.mjs`，不会自行生成编译产物。
+   实际：manifest 依赖已有 `.mjs`，不会自行生成编译产物。
 
 4. 只在 `[lang]/layout.tsx` 做初始化就够了。  
-实际：在 Next App Router / RSC 下，服务端 `page.tsx` 也应在使用 `t` 或生成 metadata 前初始化 locale。
+   实际：在 Next App Router / RSC 下，服务端 `page.tsx` 也应在使用 `t` 或生成 metadata 前初始化 locale。
 
 ## Runtime Locale Error Checklist
 

@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
 metadata:
   author: adonis
-  version: "3.5.1"
+  version: "3.6.0"
 ---
 
 # Agentic Review Handoff
@@ -15,7 +15,8 @@ Persistent packet protocol for review→fix→re-review. **Preferred path (v2): 
 Route first, then load only that route's references:
 
 - **Wrong job** — stop; do not start a substitute loop. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.
-- **Explicit auto loop / review-fix-re-review / same-session implementer closure** → `review-loop run`; read only this file plus `references/auto-loop-contract.md`. The script owns packet creation and lifecycle; do not load classic packet references.
+- **Same-session implementer closure** → `review-loop run`; the verified implementer context permits the default `# Review Handoff` origin.
+- **Explicit auto loop / review-fix-re-review without verified implementer context** → `review-loop run --intake`; the script starts truthfully from `# Review Intake` while retaining the auto lifecycle.
 - **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.
 - **Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake.
 - **Classic** (`intake` / `feedback_validation` / `manual_continuation`) → read `references/packet-anatomy.md` and `references/packet-addressing.md`. Add `references/source-prompt-addressing.md` only when source-prompt provenance exists, `references/review-contract.md` only for deep review, and `references/example-packet.md` only when diagnosing packet shape against a populated example.
@@ -30,8 +31,11 @@ Human intervenes only at: **initiate**, **terminal report**, **exception** (DELI
 RL="<skill-dir>/scripts/review-loop.mjs"
 REPO="$(git rev-parse --show-toplevel)"
 
-# Start (pins base SHA, freezes evidence, headless Reviewer, writes packet stages)
+# Start after this session implemented the change (default Review Handoff origin)
 node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--base <sha>] [--rounds 3]
+
+# Start an explicit auto loop without verified implementer context (Review Intake origin)
+node "$RL" run --intake --repo "$REPO" --reviewer=codex|grok|claude [--base <sha>] [--rounds 3]
 
 # After BLOCKED: Fixer edits code, then records completion, then continue
 node "$RL" fix-completion --repo "$REPO" --packet "$PACKET" --body-file /tmp/fix.md
@@ -55,6 +59,7 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 | -------- | ---------------------------------------------------------------------------------------------------------- |
 | Fixer    | Visible session — sole worktree + packet writer                                                            |
 | Reviewer | Headless, read-only sandbox (flags hardcoded in adapters)                                                  |
+| Origin   | First H1 only: default `Review Handoff`; explicit `--intake` uses `Review Intake`; later rounds inherit it |
 | Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |
 | Rounds   | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate)             |
 | Timeout  | 20 minutes per Reviewer invocation; advanced override: `REVIEW_LOOP_TIMEOUT_MS`                            |
@@ -80,6 +85,7 @@ Tests:
 node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
   skills/agentic-review-handoff/scripts/test/auto-run.test.mjs \
   skills/agentic-review-handoff/scripts/test/auto-run-negatives.test.mjs \
+  skills/agentic-review-handoff/scripts/test/intake-run.test.mjs \
   skills/agentic-review-handoff/scripts/test/consult.test.mjs \
   skills/agentic-review-handoff/scripts/test/sessions.test.mjs
 ```
@@ -104,15 +110,15 @@ These survive every path (auto loop and classic). Each line is an accident-backe
 
 **Compatibility path — prompt-protocol only (no script guarantees).** Use only when auto loop cannot express the intent:
 
-| `classic_reason`      | When                                                                                                       |
-| --------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `intake`              | Reviewer-initiated live review that must start with `# Review Intake` (not implementer `# Review Handoff`) |
-| `feedback_validation` | User pasted reviewer/team feedback to validate as a defect report before fix                               |
-| `manual_continuation` | User continues an existing classic packet without `review-loop run`                                        |
+| `classic_reason`      | When                                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------------------- |
+| `intake`              | Reviewer-initiated review-only packet or packet-plus-fix brief that does not need the auto lifecycle |
+| `feedback_validation` | User pasted reviewer/team feedback to validate as a defect report before fix                         |
+| `manual_continuation` | User continues an existing classic packet without `review-loop run`                                  |
 
-**Why not auto for these:** auto `createPacketFile` always seeds implementer `# Review Handoff` — routing reviewer-initiated Intake into auto would forge Handoff and break the evidence boundary. Also, auto budget exit (`budget_exhausted` on final BLOCKED round, including `--rounds 1`) is not the same as classic "stop at Fix Handoff and wait for a human fixer."
+**Why classic for these:** classic is still the prompt-protocol path for review-only packets, pasted feedback validation, and manual packet continuation. It can stop at a portable Fix Handoff without authorizing the auto loop. Auto budget exit (`budget_exhausted` on final BLOCKED round, including `--rounds 1`) is not the same as classic "stop at Fix Handoff and wait for a human fixer."
 
-Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without verified current-session implementer context defaults to classic `intake`. Explicit auto-loop intent, review-fix-re-review intent, or visible same-session implementation context uses auto. If context is ambiguous, choose Intake so the protocol never fabricates an implementer Handoff.
+Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without an explicit closed-loop request defaults to classic `intake`. Explicit auto-loop or review-fix-re-review intent without verified implementer context uses `review-loop run --intake`. Visible same-session implementation context uses default `review-loop run`. If context is ambiguous, choose an Intake origin so the protocol never fabricates an implementer Handoff.
 
 Steps when classic is correct:
 

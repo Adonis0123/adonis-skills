@@ -380,6 +380,49 @@
         "disable-model-invocation / allow_implicit_invocation 不单独构成阻塞",
         "预检通过后进入 scanner 的 Explore + HTML 报告阶段"
       ]
+    },
+    {
+      "id": 27,
+      "name": "resolve-attached-commit-selection-before-asking",
+      "prompt": "这是只读行为验收，不要修改文件、调用 Reviewer、Goal 或 scanner。用户正文只说：对附件里的这几个 commit 做 architecture-hardening-loop，改完验证，当前未提交代码也纳入。附件是一张清晰可读的 Source Control 截图，只显示三个提交标题：`fix(skills): eliminate redundant workflow gates`、`refactor(skills): drop cross-skill notes from descriptions`、`feat(skills): slim workflow contracts and nested-loop auth`，没有在正文重复 hash。当前仓库可用 Git 按标题唯一匹配出这些提交，工作树还有 staged、unstaged 和 untracked 改动。请说明是否还要用户提供 hash 或目录，以及如何冻结 scanner 的文件范围。",
+      "expected_output": "不得再次索要 hash 或目录。先用附件内容和 Git 唯一解析提交集合，将这些提交触及且当前存在的文件，加上 staged、unstaged 和相关 untracked 文件，冻结为具体 path set；记录提交选择器与未提交选择器作为 provenance，然后进入预检。",
+      "files": [],
+      "expectations": [
+        "不要求用户把截图中已有的提交信息重复写成 hash 或路径",
+        "先用附件内容与 git log/rev-parse/show 等只读信号解析用户给出的选择器",
+        "把已解析 commit 触及且当前存在的文件转换为 scanner 的具体 path set",
+        "把用户明确要求的 staged、unstaged 和相关 untracked 文件纳入范围",
+        "将已删除路径保留为变更上下文而不是把不存在的文件交给 scanner",
+        "记录原始 commit/working-tree 选择器与解析结果，便于用户核对",
+        "解析唯一且非空时问零个阻塞问题并继续预检"
+      ]
+    },
+    {
+      "id": 28,
+      "name": "resolve-relative-git-selector-without-round-trip",
+      "prompt": "这是只读行为验收。用户说：用 architecture-hardening-loop 检查当前仓库最近 3 个 commit，加上我现在还没提交的改动，直接修到没有可修项。仓库、HEAD 和工作树均可读取，`HEAD~3..HEAD` 可唯一解析且能导出非空文件集合。不要真的修改或调用依赖；只说明入口行为。",
+      "expected_output": "把“最近 3 个 commit”解析为当前仓库的明确提交集合，再把 commit touched paths 与 working-tree paths 冻结为文件集合；回显解析出的 commit 与范围，不追问用户 hash/目录，然后进入依赖预检。",
+      "files": [],
+      "expectations": [
+        "将相对 Git 选择器作为用户提供的范围定位信息，而不是范围缺失",
+        "用当前仓库与 HEAD 解析最近三个提交并回显结果",
+        "从提交和工作树导出具体文件集合后才调用 scanner",
+        "不默认全仓库，不根据 scanner 结果反推或扩大范围",
+        "解析成功时不向用户追加确认问题"
+      ]
+    },
+    {
+      "id": 29,
+      "name": "ask-only-after-attachment-resolution-fails",
+      "prompt": "这是只读行为验收。用户说“用 architecture-hardening-loop 检查附件里的这些提交”，但当前 host 拿不到附件原图，只看到不可读缩略图；Git 历史里还有多个可能匹配的提交组，无法唯一还原用户选择。不要修改或调用依赖；说明是否询问以及询问前后要报告什么。",
+      "expected_output": "先尝试读取附件并用 Git 历史匹配；因为附件不可读且匹配不唯一，才问一个最小范围问题。问题必须说明已尝试的解析和失败原因，并只请求可唯一消歧的信息，例如 commit hash/range；不得猜测或默认全仓库。",
+      "files": [],
+      "expectations": [
+        "先尝试附件读取与 Git 匹配，而不是立即把解析工作退回用户",
+        "明确报告附件不可读且多个候选组导致无法唯一解析",
+        "只问一个能消歧的 commit hash/range 问题",
+        "不猜测选择器，不默认全仓库，不启动 scanner"
+      ]
     }
   ]
 }

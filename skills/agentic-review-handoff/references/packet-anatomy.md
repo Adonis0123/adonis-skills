@@ -36,10 +36,10 @@ source_prompt_scope: all-uncommitted
 
 ### Classic observability fields (classic path only)
 
-| Field            | Required when                | Closed values                                              | Meaning                                                                     |
-| ---------------- | ---------------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `mode`           | classic prompt-protocol path | `classic`                                                  | Marks packet as classic (not auto loop). Auto path does not set this field. |
-| `classic_reason` | `mode: classic`              | `intake` \| `feedback_validation` \| `manual_continuation` | Why classic was chosen instead of auto                                      |
+| Field            | Required when                | Closed values                                              | Meaning                                                                                  |
+| ---------------- | ---------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `mode`           | classic prompt-protocol path | `classic`                                                  | Marks packet as classic (not auto loop). Auto may set `mode: auto` after a parsed round. |
+| `classic_reason` | `mode: classic`              | `intake` \| `feedback_validation` \| `manual_continuation` | Why classic was chosen instead of auto                                                   |
 
 - `intake` — reviewer-initiated `# Review Intake` start
 - `feedback_validation` — pasted feedback validated as defect report
@@ -342,19 +342,20 @@ Infer path and stage from the user's signal. `SKILL.md` only points here.
 
 ### Default to auto loop (`review-loop run`)
 
-| User signal                                                                                                                               | Path                                                                        | Required output                                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| "review", "second pair of eyes", "audit this diff", same-session dual-AI closed loop, auto loop, review-fix-re-review zero mid-loop human | **auto** `review-loop run`                                                  | Script-driven stages; headless Reviewer; terminal report          |
-| "review this then fix it" / ordinary mixed review-then-fix **without** pasted feedback or classic packet                                  | **auto** `review-loop run` then Fixer + `fix-completion` + `run --continue` | Do **not** hand-write classic H1 stages for ordinary mixed review |
-| "fix it" / "修一下" after auto BLOCKED or PASS_WITH_CONCERNS with Fix Completion ready                                                    | **auto** `run --continue`                                                   | Re-review via auto loop                                           |
+| User signal                                                                            | Path                                                                       | Required output                                                   |
+| -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Same-session implementation context + dual-AI closed loop / auto loop                  | **auto** `review-loop run`                                                 | Default implementer `# Review Handoff`; script-driven stages      |
+| Explicit auto loop / review-fix-re-review **without verified implementer context**     | **auto** `review-loop run --intake`                                        | Truthful `# Review Intake`; headless Reviewer; terminal report    |
+| "review this then fix it" without pasted feedback or a classic packet                  | **auto** `run` with verified implementer context, otherwise `run --intake` | Do **not** hand-write classic H1 stages for ordinary mixed review |
+| "fix it" / "修一下" after auto BLOCKED or PASS_WITH_CONCERNS with Fix Completion ready | **auto** `run --continue`                                                  | Re-review via auto loop; origin inherits without `--intake`       |
 
 ### Classic compatibility path only (prompt-protocol; no script guarantees)
 
-Do **not** route these into auto: auto seeds implementer `# Review Handoff` and budget-exhaust exits differ from classic "stop at Fix Handoff."
+Use classic when the requested artifact is a review-only packet / portable Fix Handoff, pasted feedback validation, or a manual classic continuation. Classic budget and handoff semantics differ from the auto loop.
 
 | User signal                                                                                                                                                                                                                                                                | Stage                         | Required output                                                                                           |
 | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------------------------- |
-| Reviewer-initiated live review that needs `# Review Intake` (no implementer handoff context)                                                                                                                                                                               | classic `intake`              | `# Review Intake` → `# Review Findings` → (conditional) `# Fix Handoff`                                   |
+| Reviewer-initiated review-only packet or packet-plus-fix brief that needs `# Review Intake` but not an automatic fix/re-review lifecycle                                                                                                                                   | classic `intake`              | `# Review Intake` → `# Review Findings` → (conditional) `# Fix Handoff`                                   |
 | Pasted team/reviewer feedback to validate as defect report before fixing                                                                                                                                                                                                   | classic `feedback_validation` | Findings validation + optional `# Fix Handoff`                                                            |
 | Explicit manual continuation of an existing classic packet without `review-loop run`                                                                                                                                                                                       | classic `manual_continuation` | Append next stage per last_anchor                                                                         |
 | "give this back to the implementer", "send context to the fixing AI", or asks for a repair brief                                                                                                                                                                           | fix handoff                   | Append `# Fix Handoff`                                                                                    |
@@ -365,7 +366,7 @@ Do **not** route these into auto: auto seeds implementer `# Review Handoff` and 
 
 **Route first by path:**
 
-1. **Ordinary mixed** ("review this then fix it" on a git diff, no pasted feedback, no existing classic packet) → **auto loop** (`review-loop run`). The Fixer session repairs after BLOCKED, then `fix-completion` + `run --continue`. Do not invent classic stages for this case.
+1. **Ordinary mixed** ("review this then fix it" on a git diff, no pasted feedback, no existing classic packet) → **auto loop**. Use `review-loop run` when this session has verified implementer context; otherwise use `review-loop run --intake`. The Fixer session repairs after BLOCKED, then `fix-completion` + `run --continue`. Do not invent classic stages for this case.
 2. **Classic mixed** only when the review half is already classic-only semantics — e.g. "validate this pasted feedback and apply the valid parts" (`feedback_validation`), or continuing an existing classic packet (`manual_continuation`). Then execute stages sequentially:
    1. Finish review or feedback validation: append `# Review Findings` with verdict. Then branch:
       - Verdict in `BLOCKED` / `PASS_WITH_CONCERNS` → append `# Fix Handoff`, then fix stage.

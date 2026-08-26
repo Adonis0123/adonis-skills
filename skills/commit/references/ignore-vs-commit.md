@@ -6,13 +6,13 @@ Before staging any path, classify every candidate — especially `??` untracked 
 
 Do **not** stage. If the pattern is missing from `.gitignore` (and is not intentionally tracked by this repo), append a **minimal** pattern and leave the file unstaged.
 
-| Category | Typical patterns |
-| --- | --- |
-| Secrets / private | `.env`, `.env.*` (except `.env.example` / `.env*.example`), `*.pem`, `*.key`, credentials, tokens, cookies, private keys, certificates with secrets |
-| Dependencies | `node_modules/`, `.venv/`, `venv/`, `vendor/`, `__pycache__/`, `.pnpm-store/` |
-| Build / cache | `dist/`, `build/`, `.next/`, `out/`, `coverage/`, `.turbo/`, `.cache/`, `*.tsbuildinfo`, `*.log` |
-| OS / editor noise | `.DS_Store`, `Thumbs.db`, `*.swp` |
-| Local-only runtime | Machine-local agent/session state that is not project source |
+| Category           | Typical patterns                                                                                                                                    |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Secrets / private  | `.env`, `.env.*` (except `.env.example` / `.env*.example`), `*.pem`, `*.key`, credentials, tokens, cookies, private keys, certificates with secrets |
+| Dependencies       | `node_modules/`, `.venv/`, `venv/`, `vendor/`, `__pycache__/`, `.pnpm-store/`                                                                       |
+| Build / cache      | `dist/`, `build/`, `.next/`, `out/`, `coverage/`, `.turbo/`, `.cache/`, `*.tsbuildinfo`, `*.log`                                                    |
+| OS / editor noise  | `.DS_Store`, `Thumbs.db`, `*.swp`                                                                                                                   |
+| Local-only runtime | Machine-local agent/session state that is not project source                                                                                        |
 
 Prefer patterns that match the **class** of file (e.g. `.env*` with an exception for examples) over one-off absolute paths, unless the repo already uses path-specific ignores.
 
@@ -23,7 +23,7 @@ Stage with an explicit path when the path is in the chosen commit scope:
 - Source, tests, docs, and shared team configs
 - Updates to `.gitignore` / `.gitattributes` themselves
 - Lockfiles when the repo already tracks them (`pnpm-lock.yaml`, `package-lock.json`, etc.)
-- Generated files **only if** this repo already tracks that path by convention (e.g. a committed `skills-index.json`)
+- Generated files **only if** this repo already tracks those paths by convention (e.g. committed generated skill indexes)
 
 ## Ask when ambiguous
 

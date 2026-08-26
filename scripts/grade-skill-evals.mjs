@@ -10,10 +10,10 @@
  *   <outputs-dir>/eval-<id>/with_skill/run-*\/outputs/output.txt
  *
  * For each collected (eval, run), extracts the emitted "Workflow Gate" block
- * (or any skill-defined Route format), asserts the Route matches the eval's
- * expected_route, and rolls up a pass-rate report. Missing eval directories are
- * reported but allowed so a workspace can grade a focused subset. Exits
- * non-zero on zero collected runs or any route regression.
+ * (or any skill-defined Route format), asserts the Route and optional Runtime
+ * skill match the eval contract, and rolls up a pass-rate report. Missing eval
+ * directories are reported but allowed so a workspace can grade a focused
+ * subset. Exits non-zero on zero collected runs or any regression.
  *
  * Designed for skills with a structured `Route:` field; gracefully reports
  * "no Route field" for skills that emit free-form output.
@@ -28,11 +28,19 @@ const repoRoot = path.resolve(__dirname, "..");
 
 const [, , skillSlug, outputsDir] = process.argv;
 if (!skillSlug || !outputsDir) {
-  console.error("Usage: node scripts/grade-skill-evals.mjs <skill-slug> <outputs-dir>");
+  console.error(
+    "Usage: node scripts/grade-skill-evals.mjs <skill-slug> <outputs-dir>",
+  );
   process.exit(2);
 }
 
-const evalsPath = path.join(repoRoot, "skills", skillSlug, "evals", "evals.json");
+const evalsPath = path.join(
+  repoRoot,
+  "skills",
+  skillSlug,
+  "evals",
+  "evals.json",
+);
 if (!fs.existsSync(evalsPath)) {
   console.error(`evals.json not found: ${evalsPath}`);
   process.exit(2);
@@ -50,6 +58,11 @@ function parseRoute(text) {
   // Accept either "SKIPPED" sentinel or a "- Route: X" line within a block.
   if (skipSentinel.test(text.trim().split("\n")[0])) return "SKIPPED";
   const m = text.match(/^\s*-\s+Route:\s*(.+?)\s*$/m);
+  return m ? m[1].trim() : null;
+}
+
+function parseRuntimeSkill(text) {
+  const m = text.match(/^\s*-\s+Runtime skill:\s*(.+?)\s*$/m);
   return m ? m[1].trim() : null;
 }
 
@@ -71,12 +84,19 @@ function matches(actual, expectedList) {
   return expectedList.some((e) => e.toLowerCase() === actual.toLowerCase());
 }
 
+function matchesOptionalField(actual, expected) {
+  if (expected === undefined || expected === null) return true;
+  if (!actual) return false;
+  return actual.toLowerCase() === String(expected).trim().toLowerCase();
+}
+
 const results = [];
 let totalRuns = 0;
 let totalPass = 0;
 
 for (const ev of evals) {
   const expectedList = normalizeExpected(ev.expected_route);
+  const expectedRuntimeSkill = ev.expected_runtime_skill;
   const evalDir = path.join(outputsDir, `eval-${ev.id}`, "with_skill");
   if (!fs.existsSync(evalDir)) {
     results.push({ id: ev.id, name: ev.name, status: "MISSING", runs: 0 });
@@ -93,8 +113,21 @@ for (const ev of evals) {
     if (!fs.existsSync(outputFile)) continue;
     const text = fs.readFileSync(outputFile, "utf8");
     const actual = parseRoute(text);
-    const ok = matches(actual, expectedList);
-    runResults.push({ run: runDir, actual: actual ?? "<unparseable>", ok });
+    const actualRuntimeSkill = parseRuntimeSkill(text);
+    const routeOk = matches(actual, expectedList);
+    const runtimeOk = matchesOptionalField(
+      actualRuntimeSkill,
+      expectedRuntimeSkill,
+    );
+    const ok = routeOk && runtimeOk;
+    runResults.push({
+      run: runDir,
+      actual: actual ?? "<unparseable>",
+      actualRuntimeSkill: actualRuntimeSkill ?? "<unparseable>",
+      routeOk,
+      runtimeOk,
+      ok,
+    });
     totalRuns += 1;
     if (ok) totalPass += 1;
   }
@@ -103,6 +136,7 @@ for (const ev of evals) {
     id: ev.id,
     name: ev.name,
     expected: ev.expected_route,
+    expectedRuntimeSkill,
     runs: runResults.length,
     passed,
     rate: runResults.length ? passed / runResults.length : 0,
@@ -117,8 +151,12 @@ const missingEvals = results.filter((r) => r.status === "MISSING").length;
 
 console.log(`Skill: ${skillSlug}`);
 console.log(`Outputs dir: ${outputsDir}`);
-console.log(`Evals defined: ${evals.length}, evals with runs: ${evalsWithRuns}, missing: ${missingEvals}`);
-console.log(`Runs collected: ${totalRuns}, passed: ${totalPass} (${(overallRate * 100).toFixed(1)}%)`);
+console.log(
+  `Evals defined: ${evals.length}, evals with runs: ${evalsWithRuns}, missing: ${missingEvals}`,
+);
+console.log(
+  `Runs collected: ${totalRuns}, passed: ${totalPass} (${(overallRate * 100).toFixed(1)}%)`,
+);
 console.log("");
 
 for (const r of results) {
@@ -127,9 +165,18 @@ for (const r of results) {
     continue;
   }
   const tag = r.passed === r.runs ? "PASS" : "FAIL";
-  console.log(`  eval-${r.id} [${r.name}] ${tag} ${r.passed}/${r.runs} expected=${r.expected}`);
+  const runtimeExpectation =
+    r.expectedRuntimeSkill === undefined
+      ? ""
+      : ` expected_runtime=${r.expectedRuntimeSkill}`;
+  console.log(
+    `  eval-${r.id} [${r.name}] ${tag} ${r.passed}/${r.runs} expected=${r.expected}${runtimeExpectation}`,
+  );
   for (const f of r.failures) {
-    console.log(`    × ${f.run}: emitted Route=${f.actual}`);
+    const runtimeFailure = f.runtimeOk
+      ? ""
+      : ` Runtime skill=${f.actualRuntimeSkill} expected=${r.expectedRuntimeSkill}`;
+    console.log(`    × ${f.run}: emitted Route=${f.actual}${runtimeFailure}`);
   }
 }
 
@@ -139,7 +186,9 @@ if (totalRuns === 0) {
 }
 
 // Exit non-zero if any collected eval failed any run (regression gate).
-const regressions = results.filter((r) => r.runs > 0 && r.passed < r.runs).length;
+const regressions = results.filter(
+  (r) => r.runs > 0 && r.passed < r.runs,
+).length;
 if (regressions > 0) {
   console.error(`\n${regressions} eval(s) regressed.`);
   process.exit(1);

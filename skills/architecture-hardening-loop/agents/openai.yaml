@@ -1,7 +1,7 @@
 interface:
   display_name: "Architecture Hardening Loop"
   short_description: "Run a bounded architecture scan-fix-review loop"
-  default_prompt: "Use $architecture-hardening-loop on my explicit code scope. Freeze the Hardening Contract; preflight callable scanner, delegation, Goal ownership, and real Grok; deduplicate candidates; admit only evidence-backed Architecture or Local Fixes; make the smallest verified change; review and rescan the same scope; stop on fresh zero-Fix evidence. Parent invocation authorizes declared nested dependencies."
+  default_prompt: "Use $architecture-hardening-loop on my explicit code scope or on user-supplied attachment/Git selectors that can be resolved to concrete paths. Resolve existing selectors before asking for hashes or paths; then freeze the Hardening Contract, preflight callable scanner, delegation, Goal ownership, and real Grok, deduplicate candidates, admit only evidence-backed Architecture or Local Fixes, make the smallest verified change, review and rescan the same scope, and stop on fresh zero-Fix evidence. Parent invocation authorizes declared nested dependencies."
   # Transitive runtime requirements include improve-codebase-architecture,
   # codebase-design, callable read-only delegation, agentic-review-handoff,
   # goal-gate, and a real Grok adapter/session.

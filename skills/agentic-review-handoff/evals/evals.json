@@ -1,6 +1,6 @@
 {
   "skill_name": "agentic-review-handoff",
-  "description": "Auto/classic routing, protocol lifecycle, and trigger regressions. Public claim: do NOT advertise trigger accuracy until the current description is remeasured; historical v3.3.x measurements are not evidence for v3.5.0.",
+  "description": "Auto/classic routing, truthful Intake/Handoff origin, protocol lifecycle, and trigger regressions. Public claim: do NOT advertise trigger accuracy until the current description is remeasured; historical measurements are not evidence for v3.6.0.",
   "trigger_evals": [
     {
       "id": "pos-auto-loop-zh",
@@ -118,7 +118,7 @@
       "id": 1,
       "name": "scenario-A-auto-loop-start",
       "prompt": "在 git 仓库 ${MOCK_REPO}（分支 feat/cart-patch）对 staged 的 apps/api/cart-handler.ts 发起 auto loop：review-loop run --reviewer=codex，中间零人工，直到终态。diff 摘要：PATCH /api/cart 缺 quantity=0 边界。",
-      "expected_output": "调用/说明 review-loop run（非 open/bind）；钉死 base；冻结 evidence；headless reviewer；packet 落在 ${MOCK_REPO}/.review-handoff/active/feat-cart-patch/；BLOCKED 时有 Fix Handoff 或 blocked 状态机出口。",
+      "expected_output": "无可验证 implementer context，调用/说明 review-loop run --intake（非 open/bind），packet 首个 H1 是 # Review Intake；钉死 base；冻结 evidence；headless reviewer；BLOCKED 时有 Fix Handoff 或 blocked 状态机出口。",
       "files": []
     },
     {
@@ -195,7 +195,7 @@
       "id": 12,
       "name": "scenario-L-same-session-implementer-auto",
       "prompt": "你刚在当前会话实现并验证了 apps/api/cart-handler.ts。现在继续做 review-fix-re-review 到 PASS，中途不用问我。仓库 ${MOCK_REPO}。",
-      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走 review-loop run auto；允许创建 implementer Review Handoff，不误路由到 classic Intake。",
+      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走默认 review-loop run auto；允许创建 implementer Review Handoff，不添加 --intake，也不误路由到 classic Intake。",
       "files": []
     },
     {

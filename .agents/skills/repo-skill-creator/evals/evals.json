@@ -1,0 +1,35 @@
+{
+  "skill_name": "repo-skill-creator",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Use repo-skill-creator to validate the existing skills in this repository. There is no new skill to create. Do not stage anything.",
+      "expected_output": "Runs repository skill validation without calling skills:new, skills:finalize:new, or git add.",
+      "files": [],
+      "expectations": [
+        "Classifies the request as validation rather than creation.",
+        "Does not create a skill or modify the Git index."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Finalize skills/example-skill, but leave all files unstaged.",
+      "expected_output": "Runs the path-finalize pipeline for the named skill and does not stage files.",
+      "files": [],
+      "expectations": [
+        "Uses the explicitly named skill path.",
+        "Does not run git add."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Prepare all newly added skills for commit: finalize them and stage only their files plus the generated skill indexes.",
+      "expected_output": "Uses finalize-and-stage mode and recognizes both current generated index files.",
+      "files": [],
+      "expectations": [
+        "Stages only discovered skill directories and changed generated index files.",
+        "Uses skills-index-lite.json and skills-detail-index.json, not the removed skills-index.json."
+      ]
+    }
+  ]
+}

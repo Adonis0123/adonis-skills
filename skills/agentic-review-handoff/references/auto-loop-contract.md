@@ -11,13 +11,21 @@ Authoritative machine + Reviewer contract for `review-loop run`.
 ## CLI
 
 ```text
-review-loop run --repo <root> --reviewer codex|grok|claude [--base <sha>] [--rounds 3] [--packet <path>]
+review-loop run --repo <root> --reviewer codex|grok|claude [--base <sha>] [--rounds 3] [--intake]
 review-loop run --continue --repo <root> [--packet <path>] [--rounds N]
 review-loop fix-completion --repo <root> --packet <path> --body-file <md>
 review-loop close --repo <root> --packet <path> --reason accept-concerns
 review-loop evidence --repo <root> --base <sha> [--paths a,b]
 review-loop consult --repo <root> --peer codex|grok|claude --question-file <md>
 ```
+
+Origin rules are fail-closed:
+
+- A new default run starts from `# Review Handoff`; use it only with verified implementer context.
+- A new `run --intake` starts from `# Review Intake` without inventing implementation claims.
+- `--intake` is creation-only. It is incompatible with `--continue`, `--packet`, and caller-supplied packet IDs. Later rounds inherit the packet's original first H1 and do not repeat the flag.
+- Before invoking the Reviewer, round 1 requires exactly one physical H1 and a matched pair: `review_handoff` + `# Review Handoff`, or `review_intake` + `# Review Intake`.
+- The first H1 is the only origin truth. Do not add another frontmatter/runtime field or overload `mode` to encode Handoff versus Intake; auto state may still use `mode: auto` for protocol ownership.
 
 Each Reviewer invocation has a 20-minute default deadline. Set
 `REVIEW_LOOP_TIMEOUT_MS` to a positive finite millisecond value only when an

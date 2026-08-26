@@ -1,0 +1,26 @@
+{
+  "skill_name": "agent-symlink-init",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Only initialize .claude/skills -> .agents/skills. package.json has skills:test:local with --sync-llm, and that script only ensures the same symlink. A .ruler directory also exists. Do not migrate or delete anything else.",
+      "expected_output": "Runs only symlink-init, preserves the current symlink helper and .ruler, and reports migration candidates without treating detection as authorization.",
+      "files": [],
+      "expectations": [
+        "Does not remove --sync-llm when it already implements the target symlink model.",
+        "Does not delete .ruler or run migration modules that the user did not request.",
+        "Does not create or replace AGENTS.md when the user explicitly requested only the .claude/skills link."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Migrate this repository away from its legacy copy-based sync script. Inspect it first, name what will be removed, preserve unrelated scripts, and keep .agents/skills intact.",
+      "expected_output": "Runs the explicitly requested sync migration only after verifying the implementation is legacy copy-based automation.",
+      "files": [],
+      "expectations": [
+        "Inspects semantics instead of classifying by flag name alone.",
+        "Limits removals to the verified legacy sync implementation."
+      ]
+    }
+  ]
+}

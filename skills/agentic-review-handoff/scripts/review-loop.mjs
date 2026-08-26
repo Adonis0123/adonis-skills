@@ -73,7 +73,7 @@ function help() {
     skillScriptsDir: __dirname,
     mode: "auto-loop",
     usage: [
-      "review-loop run --repo=PATH --reviewer=codex|grok|claude [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
+      "review-loop run --repo=PATH --reviewer=codex|grok|claude [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
       "review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]",
       "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
       "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
@@ -162,6 +162,11 @@ async function main() {
             "sandbox flags are hardcoded in adapters and cannot be disabled",
           );
         }
+        if (args.intake !== undefined && typeof args.intake !== "boolean") {
+          throw new Error(
+            "--intake is a boolean flag and does not accept a value",
+          );
+        }
         result = await autoRun.cmdRun({
           ...base,
           reviewer: args.reviewer ?? args["product-reviewer"],
@@ -170,6 +175,7 @@ async function main() {
           rounds: args.rounds,
           continue: args.continue === true || args.cont === true,
           cont: args.continue === true || args.cont === true,
+          intake: args.intake === true,
           scopeSlug: args.scope ?? args["scope-slug"],
           packetPath: base.packetPath,
           paths: args.paths ?? args.path,

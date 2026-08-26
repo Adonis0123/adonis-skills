@@ -559,6 +559,35 @@
         "Ask zero blocking questions besides the Thesis confirm stop",
         "CONTEXT: references_loaded_count == 0 (Cheat-card Challenge row + Thesis exception are in SKILL.md)"
       ]
+    },
+    {
+      "id": 41,
+      "name": "attached-commit-selection-is-resolvable-architecture-scope",
+      "prompt": "用户点名 architecture-hardening-loop，正文只说对附件里的这几个 commit 做架构优化，改完验证，当前未提交代码也纳入。附件是清晰可读的 Source Control 截图，只显示 `fix(skills): eliminate redundant workflow gates`、`refactor(skills): drop cross-skill notes from descriptions`、`feat(skills): slim workflow contracts and nested-loop auth` 三个提交标题，正文没有 hash。Git 可按标题唯一匹配这些提交并导出非空 touched paths。",
+      "expected_route": "Architecture",
+      "expected_runtime_skill": "architecture-hardening-loop",
+      "expectations": [
+        "Route is exactly Architecture with Runtime skill architecture-hardening-loop",
+        "Treats the user-supplied attachment and Git selectors as resolvable scope locators",
+        "Uses one cheap repo inspection to resolve selectors to a concrete file set before handoff",
+        "Asks zero blocking questions because the selectors resolve uniquely",
+        "Does not require the user to repeat hashes or manually translate commits into paths",
+        "Does not default to a whole-repository scan"
+      ]
+    },
+    {
+      "id": 42,
+      "name": "unreadable-attachment-asks-after-resolution-attempt",
+      "prompt": "用户点名 architecture-hardening-loop，说范围是附件里的这些 commit；但 host 只能看到不可读缩略图，Git 历史存在多个可能的提交组，cheap inspection 后仍不能唯一解析。",
+      "expected_route": "Architecture",
+      "expected_runtime_skill": "none",
+      "expectations": [
+        "Route is exactly Architecture with Runtime skill none and Execution path n/a",
+        "Attempts attachment and cheap Git resolution before declaring scope missing",
+        "Assumptions states why the selector could not be resolved uniquely",
+        "Next asks one minimal commit hash/range question",
+        "Does not load a scanner, guess a commit group, or default to the whole repository"
+      ]
     }
   ]
 }

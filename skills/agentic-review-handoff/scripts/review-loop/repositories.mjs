@@ -349,7 +349,12 @@ function extractReassessmentRows(sections) {
   return out;
 }
 
-export function createPacketFile(repoRoot, branch, scopeSlug = "review-loop") {
+export function createPacketFile(
+  repoRoot,
+  branch,
+  scopeSlug = "review-loop",
+  initialAnchor = "handoff",
+) {
   // Contract: 1–3 kebab-case words, max 24 chars (packet-addressing.md)
   if (
     !/^[a-z0-9]+(?:-[a-z0-9]+){0,2}$/.test(scopeSlug) ||
@@ -357,6 +362,11 @@ export function createPacketFile(repoRoot, branch, scopeSlug = "review-loop") {
   ) {
     throw new Error(
       `invalid packet scope slug: ${scopeSlug} (need 1–3 kebab-case words, max 24 chars)`,
+    );
+  }
+  if (!new Set(["handoff", "intake"]).has(initialAnchor)) {
+    throw new Error(
+      `invalid initial anchor: ${initialAnchor} (need handoff|intake)`,
     );
   }
   ensureReviewHandoffLayout(repoRoot);
@@ -392,19 +402,28 @@ export function createPacketFile(repoRoot, branch, scopeSlug = "review-loop") {
 
   const now = new Date().toISOString();
   const packetId = packetIdFromParts(branch, base);
-  const body = `---
-packet_id: ${packetId}
-branch: ${branch}
-scope: ${scopeSlug}
-created: ${now}
-updated: ${now}
-last_anchor: review_handoff
-lifecycle_state: in_progress
-round: 1
-loop: on
----
+  const initialStage =
+    initialAnchor === "intake"
+      ? {
+          anchor: "review_intake",
+          markdown: `# Review Intake
 
-# Review Handoff
+## Scope reviewed
+- Scope type: working tree / loop orchestration
+- Repository: ${repoRoot}
+- Branch: ${branch}
+- Files inspected: pending frozen Git evidence
+
+## Verification
+- Commands run this session: repository and branch resolution by review-loop
+- Tools used: review-loop Git adapter
+
+## Inferred Goal
+- Review the selected Git diff; provenance: explicit reviewer-initiated intake`,
+        }
+      : {
+          anchor: "review_handoff",
+          markdown: `# Review Handoff
 
 ## Goal
 - User request: review-loop auto loop handoff
@@ -414,8 +433,8 @@ loop: on
 ## Review Scope
 - Scope type: working tree / loop orchestration
 - Repository: ${repoRoot}
-- Branch: ${branch}
-`;
+- Branch: ${branch}`,
+        };
   // Exclusive create (wx) to close TOCTOU window (F2)
   // Exclusive create with multi-retry against active/archive/runtime (F2)
   for (let attempt = 0; attempt < 20; attempt += 1) {
@@ -432,33 +451,19 @@ loop: on
     ) {
       continue;
     }
-    const tryBody = body
-      .replace(packetId, tryId)
-      .replace(`scope: ${scopeSlug}`, `scope: ${scopeSlug}`);
-    // ensure packet_id line correct
     const bodyFinal = `---
 packet_id: ${tryId}
 branch: ${branch}
 scope: ${scopeSlug}
 created: ${now}
 updated: ${now}
-last_anchor: review_handoff
+last_anchor: ${initialStage.anchor}
 lifecycle_state: in_progress
 round: 1
 loop: on
 ---
 
-# Review Handoff
-
-## Goal
-- User request: review-loop auto loop handoff
-- Intended behavior: packet-driven Fixer + headless Reviewer loop
-- Non-goals: dual-window coordination; profile=deep blind review
-
-## Review Scope
-- Scope type: working tree / loop orchestration
-- Repository: ${repoRoot}
-- Branch: ${branch}
+${initialStage.markdown}
 `;
     try {
       const fd = fs.openSync(tryFile, "wx");

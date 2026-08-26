@@ -67,7 +67,9 @@ Run this every time before writing packet output.
      · Only after selecting a classic packet (or creating one) may you write
        `mode: classic` + `classic_reason`.
    - **If this stage is auto** (`review-loop run`): operate only on packets the CLI creates/continues;
-     never require `mode: classic`.
+     never require `mode: classic`. A new default run starts from `# Review Handoff`; a new
+     `run --intake` starts from `# Review Intake`. The first H1 is the origin truth; do not encode
+     Handoff versus Intake in `mode` or another frontmatter field.
    - Exists (and mode-allowed) → read the whole file; last H1 + frontmatter decide next stage
      (see Stage Defaults in packet-anatomy.md).
      · lifecycle_state in {in_progress, blocked} → continue normally based on last_anchor.
@@ -79,9 +81,10 @@ Run this every time before writing packet output.
      · implementer-initiated (user/agent just finished writing code and is asking for review)
        → start with # Review Handoff (implementer fills Goal / Implementation Summary /
          Open Questions etc.)
-     · reviewer-initiated (user is directly asking the reviewer to look at a staged/working-tree
-       diff with no implementer handoff) → start with # Review Intake (scope, verification,
-       inferred goal labelled inferred from diff), then # Review Findings.
+     · reviewer-initiated review-only / portable fix-brief request → classic # Review Intake.
+     · reviewer-initiated explicit auto / review-fix-re-review request → `review-loop run --intake`,
+       which starts with # Review Intake (scope, verification, inferred goal labelled inferred from
+       diff), then lets the auto state machine append # Review Findings.
        **Whether to write # Fix Handoff after # Review Findings depends on the Verdict**
        (see Lifecycle and Archive Trigger 1 below):
        - Verdict in {BLOCKED, PASS_WITH_CONCERNS} → append # Fix Handoff
@@ -112,7 +115,7 @@ Selecting a creation path does not authorize an early write. Resolve optional so
 | `source_prompt_id`    | string, optional             | source resolver                                                    | Stable repository-local prompt identity. Must be present with both other `source_prompt_*` fields.                                           |
 | `source_prompt_head`  | 40-char SHA, optional        | source resolver                                                    | HEAD recorded by the validated source prompt. Provenance only, not current-code evidence.                                                    |
 | `source_prompt_scope` | string, optional             | source resolver                                                    | Canonical scope copied from the validated source prompt.                                                                                     |
-| `mode`                | enum, classic path only      | classic writer                                                     | Set to `classic` on classic prompt-protocol packets. Auto loop leaves this unset.                                                            |
+| `mode`                | enum                         | protocol writer                                                    | Classic sets `classic`; auto may set `auto` after a parsed round. Never encode Handoff versus Intake here; the first H1 is the origin truth. |
 | `classic_reason`      | enum, classic path only      | classic writer                                                     | Required when `mode: classic`. Closed set: `intake` \| `feedback_validation` \| `manual_continuation`.                                       |
 
 ### `last_anchor` values

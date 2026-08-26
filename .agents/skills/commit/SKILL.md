@@ -1,6 +1,6 @@
 ---
 name: commit
-description: Generate emoji-prefixed Conventional Commit messages and focused local commits from staged changes or a single clear unstaged change.
+description: Generate read-only emoji-prefixed Conventional Commit messages or create focused local commits from staged changes or a clear user-authorized unstaged scope.
 metadata:
   author: adonis
 ---
@@ -15,6 +15,13 @@ metadata:
 - 用户请求生成提交信息
 - 用户需要帮助编写符合规范的 commit message
 
+## 先分流模式
+
+开始时先区分两种模式，避免“只写消息”意外修改 Git 状态：
+
+- **message-only**：用户只要求生成、推荐或改写 commit message。只读 `git status`、`git diff --cached`、`git diff` 和必要文件；禁止 `git add`、`git commit`、修改 `.gitignore` 或其他工作树/index 写入。优先分析 staged changes；没有 staged 时，使用用户点名或当前轮唯一明确的变更范围。范围仍不唯一时，只说明需要选择哪组变更。
+- **execute-commit**：用户明确要求执行本地提交。才进入下面的 stage、Ignore vs Commit 和 commit 流程。
+
 ## 工作流程
 
 ### 1. 检查 Git 状态和提交范围
@@ -25,7 +32,7 @@ metadata:
 git status --short --branch
 ```
 
-先判断这次提交的来源：
+以下规则只用于 **execute-commit**。先判断这次提交的来源：
 
 - 如果已经有 staged changes，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。
 - 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。
@@ -54,28 +61,29 @@ git status --short --branch
 根据分析结果生成符合规范的提交信息。
 
 **消息格式：**
+
 ```
 type(scope): subject
 ```
 
 **允许的类型和对应 emoji：**
 
-| 类型 | Emoji | 说明 | 示例 |
-|------|-------|------|------|
-| feat | ✨ | 新功能 | `✨ feat: add user authentication` |
-| fix | 🐛 | Bug 修复 | `🐛 fix: resolve login timeout` |
-| docs | 📝 | 文档变更 | `📝 docs: update API documentation` |
-| style | 🎨 | 代码风格 | `🎨 style: format code with prettier` |
-| refactor | ♻️ | 代码重构 | `♻️ refactor: extract common utils` |
-| perf | ⚡️ | 性能优化 | `⚡️ perf: optimize database queries` |
-| test | ✅ | 测试相关 | `✅ test: add unit tests for auth` |
-| build | 🏗️ | 构建系统 | `🏗️ build: update webpack config` |
-| ci | 👷 | CI 配置 | `👷 ci: add GitHub Actions workflow` |
-| chore | 🔧 | 其他变更 | `🔧 chore: update dependencies` |
+| 类型     | Emoji | 说明     | 示例                                  |
+| -------- | ----- | -------- | ------------------------------------- |
+| feat     | ✨    | 新功能   | `✨ feat: add user authentication`    |
+| fix      | 🐛    | Bug 修复 | `🐛 fix: resolve login timeout`       |
+| docs     | 📝    | 文档变更 | `📝 docs: update API documentation`   |
+| style    | 🎨    | 代码风格 | `🎨 style: format code with prettier` |
+| refactor | ♻️    | 代码重构 | `♻️ refactor: extract common utils`   |
+| perf     | ⚡️    | 性能优化 | `⚡️ perf: optimize database queries`  |
+| test     | ✅    | 测试相关 | `✅ test: add unit tests for auth`    |
+| build    | 🏗️    | 构建系统 | `🏗️ build: update webpack config`     |
+| ci       | 👷    | CI 配置  | `👷 ci: add GitHub Actions workflow`  |
+| chore    | 🔧    | 其他变更 | `🔧 chore: update dependencies`       |
 
 ### 4. 执行提交
 
-如果用户只要求“生成 commit message”，只输出候选消息，不执行提交。
+如果用户只要求“生成 commit message”，应已在 message-only 分支完成；只输出候选消息，不执行任何 Git 或文件写入。
 
 如果用户要求执行提交，使用 HEREDOC 格式执行 git commit：
 
@@ -136,6 +144,7 @@ git log -1 --oneline
 ## 参考资源
 
 详细的提交规范和项目配置，参考：
+
 - **`references/ignore-vs-commit.md`** - 忽略 vs 提交门禁（`.gitignore` 与 stage 决策）
 - **`references/commit-convention.md`** - 完整的提交规范文档
 - **`references/commit-examples.md`** - 提交信息示例
