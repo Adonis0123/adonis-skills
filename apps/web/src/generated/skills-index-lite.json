@@ -10,7 +10,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-17T06:35:01.000Z"
+    "updatedAt": "2026-08-26T08:46:46.000Z"
   },
   {
     "slug": "agentic-review-handoff",
@@ -24,7 +24,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:40:24.000Z"
+    "updatedAt": "2026-08-26T08:46:46.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -38,7 +38,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:40:24.000Z"
+    "updatedAt": "2026-08-26T08:46:46.000Z"
   },
   {
     "slug": "branch-creator",
@@ -57,10 +57,10 @@
   {
     "slug": "chrome-dev-mcp",
     "name": "chrome-dev-mcp",
-    "description": "Use this skill whenever the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the registered connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required.",
+    "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "files": {
       "hasReferences": true,
@@ -106,7 +106,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-07-18T13:47:31.000Z"
+    "updatedAt": "2026-08-26T08:46:46.000Z"
   },
   {
     "slug": "commit-push",
@@ -229,7 +229,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-08-26T08:46:46.000Z"
   },
   {
     "slug": "local-web-surface",
@@ -341,7 +341,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
+    "updatedAt": "2026-08-26T08:46:46.000Z"
   },
   {
     "slug": "zustand-store-scaffold",

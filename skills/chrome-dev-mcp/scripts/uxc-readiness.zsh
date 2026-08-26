@@ -11,9 +11,9 @@ source "$script_dir/lib/uxc-link-contract.zsh"
 
 report_error() {
   print -- "STATUS=ERROR"
-  print -- "UXC_TRANSPORT=FAIL"
+  print -- "SHARED_TRANSPORT=FAIL"
   print -- "ERROR_CLASS=$1"
-  print -- "NATIVE_HOST_ACCEPTANCE=NOT_PROVEN"
+  print -- "NATIVE_COMPAT=NOT_USED"
   exit 69
 }
 
@@ -45,7 +45,7 @@ trap cleanup EXIT INT TERM
 
 cd "$skill_dir" || report_error "fixed_cwd_missing"
 exit_code=0
-PATH="$link_dir:${PATH:-/usr/bin:/bin}" "$link_path" --timeout-ms 15000 list_pages \
+PATH="$link_dir:${PATH:-/usr/bin:/bin}" "$link_path" --timeout-ms 45000 list_pages \
   >"$tmp_dir/stdout" 2>"$tmp_dir/stderr" || exit_code=$?
 
 if ! /usr/bin/jq -e . "$tmp_dir/stdout" >/dev/null 2>&1; then
@@ -73,6 +73,6 @@ case "$reuse" in
 esac
 
 print -- "STATUS=READY"
-print -- "UXC_TRANSPORT=OK"
+print -- "SHARED_TRANSPORT=OK"
 print -- "DAEMON_SESSION_REUSED=$reuse_label"
-print -- "NATIVE_HOST_ACCEPTANCE=NOT_PROVEN"
+print -- "NATIVE_COMPAT=NOT_USED"

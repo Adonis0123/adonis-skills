@@ -1,6 +1,6 @@
 # UXC stdio facade
 
-Read this reference only when the user explicitly asks about UXC or a failed native MCP call needs transport isolation.
+Read this reference for the Chrome skill's default shared transport, installation ownership, and acceptance contract.
 
 Use the `uxc-facade` skill for the generic decision and packaging contract. This reference contains only the Chrome-specific ownership, pin, link, and acceptance details.
 
@@ -8,7 +8,7 @@ Use the `uxc-facade` skill for the generic decision and packaging contract. This
 
 [UXC](https://github.com/holon-run/uxc) provides one discovery and invocation interface across OpenAPI, MCP, GraphQL, gRPC, and JSON-RPC. For MCP stdio, it can expose a fixed linked command, return a JSON envelope, and reuse the child session through its local daemon.
 
-UXC is an adapter, not a browser, CDP implementation, second Chrome runtime, or host-registration replacement.
+UXC is an adapter, not a browser or CDP implementation. In this skill it replaces eager per-host registration as the default execution path while preserving native registration only for explicit compatibility and rollback.
 
 ```text
 linked CLI
@@ -21,13 +21,14 @@ linked CLI
 
 UXC also publishes a generic `chrome-devtools-mcp-skill` that favors package `@latest`, browser auto-connect, and optional fallbacks. Those defaults are useful for general discovery, but they do not prove a specific wrapper, runtime version, endpoint, or profile identity.
 
-Keep this skill host-first and fail-closed:
+Keep this skill shared-first and fail-closed:
 
-- preserve native MCP registration for every host;
+- disable eager native MCP registration host by host only after shared acceptance; preserve a documented rollback;
 - link UXC only to the same safe wrapper;
 - never use `@latest`, auto-connect, alternate endpoint discovery, or isolated fallback inside this facade;
-- treat UXC success as transport evidence, not native-host acceptance;
-- require a separate real `list_pages` call in each host.
+- require explicit `pageId` routing for every page-scoped operation;
+- never fall back to native MCP automatically;
+- treat sanitized readiness as shared transport evidence and the requested CLI operation as task acceptance.
 
 ## Reusable provenance
 
@@ -51,8 +52,17 @@ After the user authorizes local installation:
 2. Run `scripts/setup-uxc-link.zsh`.
 3. Run `scripts/uxc-readiness.zsh` twice from the installed skill.
 
-The first readiness call may create a daemon session. The immediate second call should report `DAEMON_SESSION_REUSED=YES`. The helper discards the `list_pages` payload and prints only bounded status fields.
+The first readiness call may create a daemon session and can spend up to 45 seconds attaching to a busy existing Chrome. The immediate second call should report `DAEMON_SESSION_REUSED=YES`. The helper discards the `list_pages` payload and prints only bounded status fields.
 
 Use a finite idle TTL so an unused MCP child is reaped. Treat the configured daemon-exclusive key as an ownership boundary, not session identity; UXC's lifecycle contract defines stdio identity from endpoint, auth fingerprint, injected environment fingerprint, and runtime family.
 
-Never log raw linked-command output for `list_pages`. `STATUS=READY` proves only the facade; it does not prove native-host acceptance.
+Never log raw linked-command output for readiness `list_pages`. `STATUS=READY` proves shared transport and correct-browser attachment; verify each requested DevTools operation separately. Native-host acceptance is optional compatibility evidence, not the default success condition.
+
+Discover exact parameters before calling a page-scoped operation:
+
+```bash
+chrome-dev-mcp-cli <operation> -h
+chrome-dev-mcp-cli take_snapshot pageId=<fresh-numeric-page-id> filePath=<os-temp-path>
+```
+
+Obtain the numeric page ID from a fresh `list_pages` result. Never copy a page ID from an earlier turn.

@@ -5,11 +5,12 @@
       "id": 1,
       "name": "explicit-slash-readiness",
       "prompt": "/chrome-dev-mcp",
-      "expected_output": "Treats the slash invocation as a readiness action, starts with a real chrome-devtools list_pages call, recovers only after failure, retries once, and returns CHROME_DEV_MCP_READY without page data.",
+      "expected_output": "Treats the slash invocation as a readiness action, starts with sanitized shared UXC readiness backed by a real list_pages call, recovers only after failure, retries once, and returns CHROME_DEV_MCP_READY without page data.",
       "files": [],
       "expectations": [
         "Treats /chrome-dev-mcp as an executable readiness request rather than documentation",
-        "Uses real list_pages as the success proof",
+        "Uses the shared managed CLI and a real list_pages call as the success proof",
+        "Does not silently fall back to host-native MCP",
         "Retries at most once after configured deterministic recovery",
         "Returns only CHROME_DEV_MCP_READY on the healthy path"
       ]
@@ -18,10 +19,10 @@
       "id": 2,
       "name": "connection-recovery",
       "prompt": "Chrome DevTools MCP 好像没有连到正确的 Chrome。请诊断并恢复共享连接，然后做一次只读 list_pages 验收；不要关闭或重启我现有的 Chrome，不要猜测或扫描其他端点。",
-      "expected_output": "Separates host discovery from endpoint identity, uses the configured safe wrapper and launcher once, then requires a real list_pages call before VERIFIED.",
+      "expected_output": "Separates shared transport discovery from endpoint identity, uses the configured safe wrapper and launcher once, then requires a real shared list_pages call before VERIFIED.",
       "files": [],
       "expectations": [
-        "Separates skill discovery, MCP discovery, endpoint identity, and real tool evidence",
+        "Separates skill discovery, shared transport discovery, endpoint identity, and real tool evidence",
         "Fails closed on a wrong browser or profile",
         "Does not scan endpoints or read DevToolsActivePort",
         "Does not claim VERIFIED without a real list_pages call"
@@ -41,14 +42,27 @@
     {
       "id": 4,
       "name": "uxc-safe-facade",
-      "prompt": "用 UXC 把 /chrome-dev-mcp 包成稳定 CLI；保留各宿主现有 MCP，不要输出页面 URL、标题或正文，并说明如何证明 daemon 复用。",
-      "expected_output": "Keeps native MCP registration authoritative, pins UXC, links only the safe wrapper, strips list_pages payloads, and distinguishes UXC transport proof from per-host acceptance.",
+      "prompt": "把 /chrome-dev-mcp 默认切到共享 UXC；不要关闭现有会话，不要输出页面 URL、标题或正文，并说明如何证明 daemon 复用以及如何显式回滚到 native。",
+      "expected_output": "Makes the managed UXC facade the default, keeps native MCP explicit rather than automatic, pins UXC, links only the safe wrapper, requires pageId routing, and strips readiness list_pages payloads.",
       "files": [],
       "expectations": [
-        "Keeps native host MCP registration unchanged",
+        "Uses shared UXC as the default and native MCP only as explicit compatibility or rollback",
         "Uses the pinned official UXC release manifest",
         "Links only the configured safe wrapper with a bounded idle TTL and exclusivity key",
-        "Requires separate real list_pages acceptance per host"
+        "Requires a fresh pageId for every page-scoped operation",
+        "Never performs silent native fallback"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "shared-page-isolation",
+      "prompt": "两个 agent 同时检查不同标签页的 Console，并各自点击一个元素。请避免页面上下文串线。",
+      "expected_output": "Refreshes list_pages, passes the target's fresh numeric pageId to every page-scoped read and write, routes different pages safely, and stops same-tab multi-step writes as UNVERIFIED when ownership is unclear.",
+      "files": [],
+      "expectations": [
+        "Does not rely on shared select_page state",
+        "Passes pageId to snapshots, Console operations, and clicks",
+        "Does not claim a same-tab transaction lock exists and reports unclear ownership UNVERIFIED"
       ]
     }
   ]
