@@ -45,68 +45,68 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.author
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:133
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:196
 msgid "skillDetail.meta.author"
 msgstr "{0}"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:96
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:133
 msgid "skillDetail.cta.back"
 msgstr "返回技能列表"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:169
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:256
 msgid "skillDetail.complexity.basic"
 msgstr "基础"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:164
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:244
 msgid "skillDetail.complexity.title"
 msgstr "复杂度"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:208
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:317
 msgid "skillDetail.docs.title"
 msgstr "文档"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:167
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:248
 msgid "skillDetail.complexity.fullToolkit"
 msgstr "完整工具集"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:150
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:226
 msgid "skillDetail.install.title"
 msgstr "安装"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:139
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:207
 msgid "skillDetail.updatedAt"
 msgstr "最后更新：{0}"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:38
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:49
 msgid "skillDetail.meta.notFoundTitle"
 msgstr "未找到技能"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:190
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:292
 msgid "skillDetail.source.title"
 msgstr "源码"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:168
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:253
 msgid "skillDetail.complexity.standard"
 msgstr "标准"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:175
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:267
 msgid "skillDetail.tools.title"
 msgstr "使用工具"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.version
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:113
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:159
 msgid "skillDetail.badge.version"
 msgstr "版本 {0}"

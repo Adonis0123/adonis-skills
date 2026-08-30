@@ -1533,7 +1533,7 @@
         "level": 3
       },
       {
-        "raw": "Read `{{skill_path}}/references/measurement-playbook.md`, then select the smallest matrix that can falsify the current hypotheses. A complex editor usually needs:\n\n| Axis | Minimum comparison |\n| --- | --- |\n| Lifecycle | cold first-open vs warm return |\n| Activity | idle/paused vs playback/animation active |\n| Device | normal CPU vs one throttled run such as 4× CPU slowdown |\n| Scale | current representative dataset; larger scale only if available |\n| Repetition | single interaction vs 10 representative cycles plus recovery wait |\n| Instrumentation | clean baseline vs Recorder/React Scan run |\n| Build | development vs production-equivalent when production claims matter |\n\nUse negative controls: pause the media, close the panel, disable optional instrumentation, or wait for recovery. A negative result is valuable and belongs in the report.",
+        "raw": "Read `{{skill_path}}/references/measurement-playbook.md`, then select the smallest matrix that can falsify the current hypotheses. A complex editor usually needs:\n\n| Axis            | Minimum comparison                                                 |\n| --------------- | ------------------------------------------------------------------ |\n| Lifecycle       | cold first-open vs warm return                                     |\n| Activity        | idle/paused vs playback/animation active                           |\n| Device          | normal CPU vs one throttled run such as 4× CPU slowdown            |\n| Scale           | current representative dataset; larger scale only if available     |\n| Repetition      | single interaction vs 10 representative cycles plus recovery wait  |\n| Instrumentation | clean baseline vs Recorder/React Scan run                          |\n| Build           | development vs production-equivalent when production claims matter |\n\nUse negative controls: pause the media, close the panel, disable optional instrumentation, or wait for recovery. A negative result is valuable and belongs in the report.",
         "heading": "3. Run a bounded measurement matrix",
         "level": 3
       },
@@ -1562,7 +1562,135 @@
         "heading": "Boundary with nearby skills",
         "level": 2
       }
-    ]
+    ],
+    "showcase": {
+      "hero": {
+        "title": "Performance audit in action",
+        "badge": "Synthetic, evidence-safe demo",
+        "summary": "This is not a Lighthouse screenshot. The agent freezes 16 interaction surfaces, replays the same journey while changing one condition, separates product cost from instrumentation noise, and turns the evidence into a retestable backlog. Every number below is synthetic and exists only to demonstrate the workflow.",
+        "keyMoments": [
+          "Reconcile 16/16 primary and nested surfaces instead of treating one screenshot as coverage",
+          "Compare the same click at 82ms, 184ms, and 296ms to isolate playback and constrained-device risk",
+          "Discard instrumented timing when React Scan changes the result, while retaining localization value",
+          "Attach an equivalent retest, success criterion, and stop condition to every recommendation"
+        ]
+      },
+      "sections": [
+        {
+          "id": "lock-the-scene",
+          "title": "Scope · freeze all 16 interaction surfaces",
+          "intro": "Lock the exact target, representative data, initial state, and coverage fingerprint before collecting numbers so another engineer can replay the audit.",
+          "messages": [
+            {
+              "role": "user",
+              "content": "This media workspace is large. Audit Media, Text, Elements, Library, and every\nnested tab with Chrome DevTools, Recorder, Computer Use, and React Scan.\nKeep the audit read-only and do not change code."
+            },
+            {
+              "role": "assistant",
+              "content": "**Audit contract**\n\n| Field | Frozen value |\n| --- | --- |\n| Dataset | 47:30 synthetic media workspace |\n| Initial state | Synced · Paused · Media / Video · Timeline collapsed |\n| Coverage | 4 primary tabs + 12 nested states |\n| Boundary | Read-only · no save · no generation · no configuration changes |",
+              "toolCalls": [
+                {
+                  "name": "Browser",
+                  "summary": "Reconcile visual navigation, the DOM/accessibility tree, and the page manifest",
+                  "result": "16/16 surfaces matched; source order and state fingerprint frozen"
+                },
+                {
+                  "name": "Chrome DevTools",
+                  "summary": "Capture an idle baseline without Recorder or React Scan",
+                  "result": "Clean baseline captured; no temporary probe left behind"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "controlled-replay",
+          "title": "Replay · change one condition at a time",
+          "intro": "Recorder fixes the journey while DevTools measures it. Paused, playing, and CPU-throttled runs stay separate so correlation is not promoted to causation.",
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "**Synthetic median for the same Library → Media click**\n\n| Comparison | Click duration | Long tasks | Interpretation |\n| --- | ---: | ---: | --- |\n| Paused · normal CPU | 82ms | 0 | clean baseline |\n| Playing · normal CPU | 184ms | 3 | playback contention |\n| Playing · 4× CPU slowdown | 296ms | 5 | constrained-device risk |",
+              "toolCalls": [
+                {
+                  "name": "Chrome Recorder",
+                  "summary": "Record and replay the same 12-second tab journey",
+                  "result": "Replay passed 3/3 times with the same final-state assertion"
+                },
+                {
+                  "name": "Chrome DevTools",
+                  "summary": "Capture Event Timing, tasks, Network, and recovered heap signals",
+                  "result": "Synthetic playback window was 52% main-thread busy; the paused control recovered"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "isolate-attribution",
+          "title": "Attribution · separate product cost from measurement noise",
+          "intro": "Tool output is not automatically product evidence. Start with a clean trace, then localize React work, media resources, and third-party scripts without merging incompatible signals.",
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "**Three signals, three different claims**\n\n- `VERIFIED`: synthetic playback occupied about half of the main thread in a repeatable 12-second window.\n- `INFERENCE`: 19 offscreen source images imply a 64.8MiB nominal RGBA8 proxy, not decoded or GPU residency.\n- `MEASUREMENT_POLLUTION`: React Scan changed the same action by 31%, so its timing is discarded.",
+              "toolCalls": [
+                {
+                  "name": "React Scan",
+                  "summary": "Replay only the slowest interaction to localize repeated React work",
+                  "result": "Three high-frequency commit subtrees found; instrumented timing excluded"
+                },
+                {
+                  "name": "Source inspection",
+                  "summary": "Verify ownership of playback ticks, panel lifecycle, and subscriptions",
+                  "result": "Three source locations aligned with runtime signals; all other causes remain unverified"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "bootstrap-capabilities",
+          "title": "Missing tools · use a fallback before asking to install",
+          "intro": "The skill does not assume an MCP server, extension, debugging port, or browser profile. Configuration is not considered ready until discovery, handshake, and a harmless call all pass.",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Chrome DevTools MCP and Computer Use are unavailable. Do not install anything yet."
+            },
+            {
+              "role": "assistant",
+              "content": "**Continue now:** use the structured browser for reachable controls and a supported\nPerformanceObserver probe for Event Timing, Long Tasks, and resources. Mark trace call trees,\nMemory, Recorder UI, and visual-only controls as `UNVERIFIED`.\n\n**Install only if the gap blocks the goal:** show the official source, affected client\nconfiguration, browser-data exposure, download/restart impact, and the three-part acceptance test.",
+              "toolCalls": [
+                {
+                  "name": "Capability discovery",
+                  "summary": "Discover browser, DevTools, visual-control, and script capabilities on this host",
+                  "result": "2 available · 2 unavailable · 0 silent installations"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "decision-ready-report",
+          "title": "Delivery · produce a backlog that can prove its own value",
+          "intro": "The output should answer what to improve first, how to prove the improvement, and when to stop. Running many tools is not itself a deliverable.",
+          "messages": [
+            {
+              "role": "assistant",
+              "content": "**Decision-ready backlog**\n\n| Priority | Evidence signal | Smallest direction | Retest / stop condition |\n| --- | --- | --- | --- |\n| P0 | Playback keeps the main thread busy | Separate renderer, timeline tick, React, and decode cost | Stop if production does not reproduce |\n| P1 | Tab switch worsens during playback | Pause inactive subscriptions without losing state | Stop if state breaks or gain is noise-sized |\n| P1 | Offscreen source pixels are excessive | Verify currentSrc and residency before variants/windowing | Stop if resources are not resident |\n| P2 | 79 third-party requests | Compare production tracking on/off | Do not claim UX gain if only count changes |\n\n**Restoration:** Recorder, React Scan, and CPU throttling are off. The page is back to\nSynced, Paused, and the initial Media state. Nothing was saved, generated, or edited.",
+              "toolCalls": [
+                {
+                  "name": "Python ledger",
+                  "summary": "Validate coverage, evidence semantics, retests, stop conditions, and restoration",
+                  "result": "Ledger valid · 16/16 covered · 0 fabricated metrics · state restored"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
   },
   {
     "slug": "weekly-report",
