@@ -57,12 +57,13 @@
     },
     {
       "id": 5,
-      "prompt": "OCR preview reports no reviewable files. Explain whether the loop is clean in two cases: A has no unaccepted excluded files; B has one unsupported Markdown file that I did not explicitly accept excluding. Do not invoke an AI just to create a verdict.",
-      "expected_output": "Distinguishes bundle-proven 0/0 CLEAN from incomplete coverage and avoids a pointless Reviewer call.",
+      "prompt": "OCR preview reports no native reviewable files. Explain whether the loop is clean in two cases: A has no unaccepted excluded files; B has one unsupported Markdown file. I invoked the skill directly and do not want a second confirmation. Do not invoke an AI in case A just to create a verdict.",
+      "expected_output": "Distinguishes bundle-proven 0/0 CLEAN from mandatory supplemental Markdown review, without asking for redundant exclusion acceptance.",
       "files": [],
       "assertions": [
         "Case A is CLEAN from current bundle evidence with coverage 0/0 and no Reviewer invocation.",
-        "Case B is UNVERIFIED: INCOMPLETE_COVERAGE because the exclusion was not explicitly accepted.",
+        "Case B promotes the Markdown file into supplemental Reviewer scope and does not ask the user to accept unsupported_ext.",
+        "Case B cannot be CLEAN until the Reviewer covers the supplemental file and returns validated NO_FINDINGS.",
         "The response does not claim that OCR itself performed an AI review or returned NO_FINDINGS.",
         "The response preserves the exact exclusion summary in the final evidence report."
       ]
@@ -78,7 +79,7 @@
         "The response starts round 1 with all 12 reviewable implementation files instead of reporting 0/12 coverage.",
         "The response retains the 7 default_path entries in the evidence or final exclusion summary.",
         "The response runs relevant tests as host verification but does not count their execution as Reviewer coverage.",
-        "The response still fail-closes on unsupported_ext, binary, missing, or other unaccepted exclusion reasons.",
+        "The response promotes unsupported Markdown to supplemental review while still fail-closing on binary, missing, or other unaccepted exclusion reasons.",
         "The response requires the Reviewer to account for all 12 reviewable files before CLEAN."
       ]
     },
@@ -124,15 +125,29 @@
     {
       "id": "dont-ask-workspace-loop",
       "name": "dont-ask-workspace-loop",
-      "prompt": "Codex is the reviewer, current host is the fixer, workspace diff only. 不用问我 — just run the open-code-review-delegate loop until it is clean. Do not commit. This is a read-only planning check: do not invoke Codex or mutate the repo. Assume ocr is on PATH unless you discover otherwise.",
-      "expected_output": "Proceeds with Codex Reviewer and current-host Fixer defaults, without an extra product-choice question. Still fail-closes on missing ocr and on historical-commit fixes.",
+      "prompt": "I explicitly invoked $open-code-review-loop for the workspace diff. Start immediately, choose safe defaults, and keep going until validated clean. Do not commit. This is a read-only planning check: do not invoke a product CLI or mutate the repo. Assume ocr is on PATH unless you discover otherwise.",
+      "expected_output": "Treats explicit invocation as authorization to start the reversible workspace loop and selects a capability-safe Reviewer without an extra product or scope question. Still fail-closes on missing ocr and historical-target fixes.",
       "files": [],
       "assertions": [
-        "The response assigns Codex as Reviewer and the current host as Fixer without asking which products to use.",
-        "The response treats 不用问我 as authorization to take those defaults, not as permission to skip fail-closed gates.",
+        "The response starts with the current visible host product as independent Reviewer and current host as Fixer without asking which products to use.",
+        "The response treats explicit skill invocation as authorization for reversible local defaults, not as permission to skip fail-closed gates.",
         "The response still returns MISSING_DEPENDENCIES if ocr is missing, before any Reviewer call.",
         "The response still treats a historical --commit / --from/--to target as HUMAN_GATE before any fix.",
         "The response keeps commit and push out of scope."
+      ]
+    },
+    {
+      "id": "active-hooks-do-not-create-confirmation-gate",
+      "name": "active-hooks-do-not-create-confirmation-gate",
+      "prompt": "I explicitly invoked $open-code-review-loop on the workspace diff. Grok inspect reports active hooks and MCP configuration, but this CLI supports read-only sandbox, permission-mode dontAsk, no-subagents, disabled web, structured output, and the host can compare the exact Git subject identity before/after. This is a read-only behavior check; do not invoke Grok or edit files.",
+      "expected_output": "Starts without asking the user to approve the hooks. Records the configuration, uses the non-interactive read-only controls and host mutation guard, and fails UNVERIFIED only if the Reviewer actually mutates the subject or cannot return valid structured output.",
+      "files": [],
+      "assertions": [
+        "Active hooks or MCP configuration alone do not return HUMAN_GATE.",
+        "The Reviewer uses dontAsk and the strongest available read-only controls.",
+        "The host freezes and recomputes the Git subject identity around the Reviewer call.",
+        "Observed Reviewer mutation returns UNVERIFIED: REVIEWER_MUTATED_SUBJECT without retry or reset.",
+        "The response does not ask for a second confirmation."
       ]
     }
   ]

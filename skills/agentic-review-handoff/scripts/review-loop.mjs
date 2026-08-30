@@ -73,7 +73,7 @@ function help() {
     skillScriptsDir: __dirname,
     mode: "auto-loop",
     usage: [
-      "review-loop run --repo=PATH --reviewer=codex|grok|claude [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
+      "review-loop run --repo=PATH [--reviewer=codex|grok|claude] [--completion=review|pass] [--until-pass] [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
       "review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]",
       "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
       "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
@@ -88,7 +88,9 @@ function help() {
     defaults: {
       autoLoop:
         "single visible Fixer; headless read-only Reviewer; zero mid-loop human",
-      reviewer: "codex|grok|claude",
+      reviewer: "codex (explicit codex|grok|claude wins; never prompts)",
+      completion:
+        "pass (auto-fix PASS_WITH_CONCERNS without a second confirmation; use review to park concerns)",
       rounds: 3,
       reviewerTimeout: "20 minutes (REVIEW_LOOP_TIMEOUT_MS override)",
       reviewerProgress: "every 30 seconds while the process is alive",
@@ -173,6 +175,10 @@ async function main() {
           base: args.base,
           // Pass raw string so --rounds +N stays additive (do not Number() early)
           rounds: args.rounds,
+          completion:
+            args.completion ??
+            (args["until-pass"] === true ? "pass" : undefined),
+          untilPass: args["until-pass"] === true,
           continue: args.continue === true || args.cont === true,
           cont: args.continue === true || args.cont === true,
           intake: args.intake === true,

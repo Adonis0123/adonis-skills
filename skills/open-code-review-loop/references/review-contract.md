@@ -42,18 +42,22 @@ schema.
 ## Invariants
 
 1. `evidence_id` must equal the supplied bundle ID.
-2. `files` must account for every OCR `(path, status)` identity exactly once.
+2. The selected review set is the union of `reviewable_files` and
+   `supplemental_reviewable_files`. `files` must account for every selected
+   `(path, status)` identity exactly once, applying both `rules` and
+   `supplemental_rules`.
 3. `NO_FINDINGS` requires an empty findings list, 100% reviewed coverage, and
    zero skipped files. The host additionally rejects clean when the bundle has
    any `unaccepted_excluded_files`.
 4. `FINDINGS` requires at least one actionable finding and full file coverage.
 5. `BLOCKED` requires a concrete reason. It is not a clean verdict.
-6. Every finding path must belong to the OCR reviewable set. Nearby context may
+6. Every finding path must belong to the selected review set. Nearby context may
    support a finding but does not silently expand the writable scope.
 7. Do not report preferences, speculative redesigns, or unverified external
    claims. A low-severity item is still expected to be worth fixing now.
-8. The Reviewer is read-only. It may run non-mutating checks but must not edit
-   source, tests, configs, Git state, or the bundle.
+8. The Reviewer is read-only. It may run checks that require no writes, but must
+   not edit source, tests, configs, Git state, the bundle, or temporary paths.
+   The host runs tests that need caches or temporary directories.
 9. The visible host replaces `reviewer.product` and `reviewer.session_id` with
    the canonical selected product and the recorded product session. Never
    trust model-authored identity fields.

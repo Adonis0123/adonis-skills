@@ -15,10 +15,10 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git.",
+    "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git.",
     "metadata": {
       "author": "adonis",
-      "version": "3.6.0"
+      "version": "3.7.0"
     },
     "files": {
       "hasReferences": true,
@@ -32,7 +32,7 @@
     "description": "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement.",
     "metadata": {
       "author": "adonis",
-      "version": "1.6.2"
+      "version": "1.7.0"
     },
     "files": {
       "hasReferences": true,
@@ -66,7 +66,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-10T09:42:36.000Z"
+    "updatedAt": "2026-08-26T09:46:55.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -248,10 +248,10 @@
   {
     "slug": "open-code-review-loop",
     "name": "open-code-review-loop",
-    "description": "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds.",
+    "description": "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with codex, claude-code, grok-build, or cursor-cli, iterating until validated NO_FINDINGS. Explicit invocation starts immediately with no-prompt product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, observed reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.2"
+      "version": "1.6.0"
     },
     "files": {
       "hasReferences": true,
@@ -292,7 +292,7 @@
     "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.5.0"
+      "version": "1.6.0"
     },
     "files": {
       "hasReferences": true,

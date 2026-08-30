@@ -1,15 +1,15 @@
 ---
 name: open-code-review-loop
-description: "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with a named product reviewer (codex, claude-code, grok-build, or cursor-cli) and a fixer, iterating until validated NO_FINDINGS. Fail closed on missing ocr, missing adapters, skipped files, malformed output, stale evidence, or exhausted rounds."
+description: "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with codex, claude-code, grok-build, or cursor-cli, iterating until validated NO_FINDINGS. Explicit invocation starts immediately with no-prompt product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, observed reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
-  version: "1.4.2"
+  version: "1.6.0"
 ---
 
 # Open Code Review Loop
 
 `ocr delegate` is LLM-free: it selects files and resolves rules. Only a
-validated reviewer result with full OCR coverage may produce `NO_FINDINGS`.
+validated reviewer result with full selected coverage may produce `NO_FINDINGS`.
 OCR never decides that code is clean.
 
 ## Fast Path
@@ -33,7 +33,7 @@ Do these in order. Later references stay closed until a step needs them.
 ## Trigger and exclusions
 
 Use this Skill for an OCR-delegation loop (`ocr delegate` / open-code-review)
-on a Git workspace with a named product reviewer (`codex`, `claude-code`,
+on a Git workspace with a supported reviewer (`codex`, `claude-code`,
 `grok-build`, `cursor-cli`) and a fixer until validated `NO_FINDINGS`. Skip
 one-shot review, non-Git files, commit/push/deploy, and destructive work.
 
@@ -49,22 +49,29 @@ Resolve before the first model call:
 
 - Repository: current Git root; never infer a broader repo
 - Target: workspace changes; also OCR `--from/--to` and `--commit`
-- Reviewer: user-selected product; a real read-only product session
+- Reviewer: user-selected product, or the current visible host product when
+  none is named; always use a real independent read-only product session
 - Fixer: current visible host. An external Fixer needs a user-authorized
   isolated checkout that becomes `$REPO` before round 1
 - Paths/excludes: OCR preview; preserve user exclusions every round.
   `default_path` is OCR's built-in non-review scope and `user_exclude` records
-  a supplied selector, so neither needs a second confirmation. Any other
-  reason needs explicit acceptance one by one
+  a supplied selector, so neither needs a second confirmation. OCR-excluded
+  `.md`/`.mdx` files become mandatory supplemental Reviewer scope. Other
+  reasons remain unaccepted unless the user already accepted that exact reason
 - Round budget / deadline: 3 rounds (a ceiling, not success permission);
   10 minutes per Reviewer/Fixer call
 - Background: user requirement or none; pass through preview/rule/prompt
 
-One named product without roles → that product is Reviewer, current host is
-Fixer. If the user also says not to ask (`不用问我` / proceed), take those
-defaults and skip a product-choice question. Missing `ocr` and
-historical-commit fix still fail closed. Same product in both roles → two
-independent sessions; Reviewer stays read-only.
+Explicit skill invocation authorizes the reversible local workspace loop. Do
+not ask whether to start, reconfirm OCR scope, choose a product, or accept
+supplemental Markdown review. One named product without roles → that product is
+Reviewer, current host is Fixer. No named product → use the current visible
+host product as Reviewer and Fixer in two independent sessions. If that
+auto-selected Reviewer cannot satisfy the read-only adapter, try the next
+installed capability-safe product and record the fallback; never replace a
+product the user explicitly named. Missing `ocr`, historical-target fixes,
+external actions, and destructive or security-sensitive choices still fail
+closed. Same product in both roles always means separate sessions.
 
 ## Capability preflight
 
@@ -76,17 +83,24 @@ holds the intended snapshot, freeze that Git root as the only `$REPO`, and
 never review one worktree while fixing another. No isolated target →
 `HUMAN_GATE` (no patch-transfer protocol). Do not auto-create a worktree.
 
-Record allowed source/test paths, prohibited Git/external actions, and
-explicitly accepted exclusion reasons. OCR `default_path` entries are not
-Reviewer coverage and do not need a user gate; keep them in the evidence
-report. Run relevant tests as host verification even when OCR excludes test
-files, but never count test execution as Reviewer coverage. Any other
-unaccepted reason (including `unsupported_ext`, `binary`, or a missing reason)
-is incomplete coverage even if every `reviewable_files` entry was reviewed.
+Record allowed source/test paths, prohibited Git/external actions, and already
+accepted exclusion reasons. OCR `default_path` entries are not Reviewer
+coverage and do not need a user gate; keep them in the evidence report. Run
+relevant tests as host verification even when OCR excludes test files, but
+never count test execution as Reviewer coverage. The builder promotes
+`unsupported_ext` Markdown to `supplemental_reviewable_files`, captures its
+content, and applies `supplemental_rules`; it remains visible in raw OCR
+exclusions but no longer needs a question. Other unsupported extensions,
+`binary`, or a missing reason remain incomplete coverage.
 Partition sessions by repository, loop ID, role, and canonical product ID —
-never resume a Reviewer as a Fixer. Adapter cannot satisfy its role →
-`HUMAN_GATE`. Do not silently substitute another AI or let the Reviewer write
-the subject.
+never resume a Reviewer as a Fixer. Reviewer invocations use the strongest
+available read-only controls plus `dontAsk`; configured hooks/MCPs or lack of
+an OS-perfect sandbox do not alone create a user gate. Freeze the subject Git
+identity immediately before the call and recompute it afterward. Any mutation
+caused during review returns `UNVERIFIED: REVIEWER_MUTATED_SUBJECT`, with the
+actual diff reported and no automatic reset or retry. If a named product lacks
+structured output or cannot run non-interactively, return `HUMAN_GATE`; an
+automatic selection tries the next installed product without asking.
 
 ## Loop contract
 
@@ -130,11 +144,13 @@ bundle and permanently drift evidence. `--exclude` may be repeated; the
 script combines values into OCR's list and keeps that selection every
 round. `--allow-excluded-reason` is not authority: pass it only after
 recording the user's explicit acceptance of that exact non-default reason.
-The builder accepts `default_path` and `user_exclude` automatically; do not
-pause at round 0 to reconfirm them. Zero reviewable files and zero unaccepted
-exclusions → `CLEAN` with `0/0` coverage. Any unaccepted exclusion (for example
-`unsupported_ext`) → `UNVERIFIED: INCOMPLETE_COVERAGE`. Do not invoke an AI
-just to manufacture a verdict.
+The builder accepts `default_path` and `user_exclude` automatically and routes
+Markdown `unsupported_ext` entries into mandatory supplemental scope; do not
+pause at round 0 to reconfirm either behavior. Zero OCR reviewable files, zero
+supplemental reviewable files, and zero unaccepted exclusions → `CLEAN` with
+`0/0` coverage. Any remaining unaccepted exclusion →
+`UNVERIFIED: INCOMPLETE_COVERAGE`. Do not invoke an AI just to manufacture a
+verdict when the combined selected scope is empty.
 
 Builder already fail-closes on (do not re-implement; read
 `scripts/build_review_bundle.py` only if the builder fails):
@@ -153,9 +169,12 @@ editing bundle content while keeping an old `evidence_id` also fails closed.
 
 Give the Reviewer the frozen contract, background, whole `bundle.json`
 (including `evidence_id`), nearby read-only context, non-mutating checks,
-and the JSON contract from Fast Path step 4. Every `(path, status)` in
-`reviewable_files` appears exactly once as `reviewed` or `skipped`. Emit
-only evidence-backed, actionable findings.
+and the JSON contract from Fast Path step 4. The selected review set is the
+union of `reviewable_files` and `supplemental_reviewable_files`; apply both
+`rules` and `supplemental_rules`. Every selected `(path, status)` appears
+exactly once as `reviewed` or `skipped`. Emit only evidence-backed, actionable
+findings. Tests that need temporary writes belong to host verification and are
+not a reason to weaken the Reviewer sandbox.
 
 A fresh `evidence_id` consumes one round; one same-evidence schema
 correction does not. Drift creates a new ID, so the next Reviewer call
@@ -232,11 +251,11 @@ Resume the Reviewer when the product supports reliable session recovery;
 otherwise start a fresh read-only session with the finding ledger and new
 bundle. The Fixer never supplies the terminal verdict.
 
-- `CLEAN`: validated `NO_FINDINGS` with 100% coverage, zero skipped files,
-  zero unaccepted exclusions, and no drift; **or** the bundle proves
-  `reviewable_files` and `unaccepted_excluded_files` are both empty (no
-  Reviewer invoked).
-- `HUMAN_GATE`: product decision, writable-target choice, permission,
+- `CLEAN`: validated `NO_FINDINGS` with 100% combined OCR + supplemental
+  coverage, zero skipped files, zero unaccepted exclusions, and no drift; **or**
+  the bundle proves `reviewable_files`, `supplemental_reviewable_files`, and
+  `unaccepted_excluded_files` are all empty (no Reviewer invoked).
+- `HUMAN_GATE`: real product decision, writable-target choice, unavailable non-interactive capability,
   repeated disagreement, or round extension.
 - `MISSING_DEPENDENCIES`: OCR or a required product capability unavailable
   before edits.
@@ -256,7 +275,7 @@ OCR Review Loop Result
 - Reviewer / Fixer:
 - Rounds used / budget:
 - Final evidence id:
-- Coverage: <reviewed>/<reviewable>; skipped: <count>; unaccepted excluded: <count>
+- Coverage: <reviewed>/<OCR + supplemental>; skipped: <count>; unaccepted excluded: <count>
 - Fixed / Rejected / Open findings:
 - Verification:
 - Sessions / recovery:
@@ -264,7 +283,8 @@ OCR Review Loop Result
 ```
 
 Reviewer-backed `CLEAN` includes the final `validate_round.py` result and
-the same-evidence comparison. Zero-file `CLEAN` includes the bundle
-summary proving both lists empty; no review response exists on that path.
+the same-evidence comparison. Zero-file `CLEAN` includes the bundle summary
+proving OCR scope, supplemental scope, and unaccepted exclusions are all
+empty; no review response exists on that path.
 Every other state names the exact stop point and does not claim OCR or the
 AI approved the current code.

@@ -41,6 +41,7 @@ EVIDENCE_MATERIAL = {
             "deletions": 0,
         },
     ],
+    "supplemental_reviewable_files": [],
     "excluded_files": [],
     "accepted_exclusion_reasons": ["user_exclude"],
     "unaccepted_excluded_files": [],
@@ -57,6 +58,7 @@ EVIDENCE_MATERIAL = {
             }
         ],
     },
+    "supplemental_rules": {"schema_version": "1", "groups": []},
     "files": [
         {
             "path": "src/example.ts",
@@ -123,6 +125,53 @@ def finding_review() -> dict:
     return review
 
 
+def bundle_with_supplemental_markdown() -> tuple[dict, dict]:
+    material = deepcopy(EVIDENCE_MATERIAL)
+    material["supplemental_reviewable_files"] = [
+        {
+            "path": "docs/plan.md",
+            "status": "modified",
+            "insertions": 2,
+            "deletions": 0,
+            "exclude_reason": "unsupported_ext",
+        }
+    ]
+    material["supplemental_rules"] = {
+        "schema_version": "1",
+        "groups": [
+            {
+                "group_id": "supplemental-markdown",
+                "source": "host",
+                "pattern": "**/*.{md,mdx}",
+                "files": ["docs/plan.md"],
+                "rule": "Review Markdown correctness and consistency with the implementation.",
+            }
+        ],
+    }
+    material["files"].append(
+        {
+            "path": "docs/plan.md",
+            "status": "modified",
+            "insertions": 2,
+            "deletions": 0,
+            "empty_file": False,
+            "content": "+# Plan\n+Keep the behavior safe.\n",
+        }
+    )
+    evidence_id = "sha256:" + hashlib.sha256(
+        json.dumps(
+            material,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    current_bundle = {**material, "evidence_id": evidence_id}
+    review = clean_review()
+    review["evidence_id"] = evidence_id
+    return current_bundle, review
+
+
 class ValidateRoundTest(unittest.TestCase):
     def test_accepts_full_coverage_no_findings(self) -> None:
         result = validate_round.validate(bundle(), clean_review())
@@ -141,6 +190,31 @@ class ValidateRoundTest(unittest.TestCase):
             "NO_FINDINGS requires 100% reviewed coverage and zero skipped files",
             result["errors"],
         )
+
+    def test_requires_reviewer_coverage_for_supplemental_markdown(self) -> None:
+        current_bundle, review = bundle_with_supplemental_markdown()
+        result = validate_round.validate(current_bundle, review)
+        self.assertFalse(result["valid"])
+        self.assertIn(
+            "files must account for every selected review (path, status) identity exactly once",
+            result["errors"],
+        )
+
+    def test_accepts_reviewed_supplemental_markdown_as_clean(self) -> None:
+        current_bundle, review = bundle_with_supplemental_markdown()
+        review["files"].append(
+            {
+                "path": "docs/plan.md",
+                "status": "modified",
+                "disposition": "reviewed",
+                "reason": "Reviewed the plan against the frozen implementation evidence.",
+            }
+        )
+        result = validate_round.validate(current_bundle, review)
+        self.assertTrue(result["valid"], result["errors"])
+        self.assertTrue(result["clean"])
+        self.assertEqual(result["ocr_reviewable_files"], 1)
+        self.assertEqual(result["supplemental_reviewable_files"], 1)
 
     def test_rejects_stale_evidence(self) -> None:
         review = clean_review()
@@ -427,7 +501,7 @@ class ValidateRoundTest(unittest.TestCase):
         result = validate_round.validate(current_bundle, review)
         self.assertFalse(result["valid"])
         self.assertIn(
-            "files must account for every OCR (path, status) identity exactly once",
+            "files must account for every selected review (path, status) identity exactly once",
             result["errors"],
         )
 
@@ -461,13 +535,59 @@ class ValidateRoundTest(unittest.TestCase):
             {"path": "README.md", "exclude_reason": "unsupported_ext"},
             {"path": "unknown.txt"},
         ]
-        accepted, unaccepted = build_review_bundle.partition_excluded_files(
+        accepted, supplemental, unaccepted = build_review_bundle.partition_excluded_files(
             excluded, []
         )
         self.assertEqual(accepted, ["default_path", "user_exclude"])
+        self.assertEqual([entry["path"] for entry in supplemental], ["README.md"])
         self.assertEqual(
             [entry["path"] for entry in unaccepted],
-            ["README.md", "unknown.txt"],
+            ["unknown.txt"],
+        )
+
+    def test_partition_exclusions_promotes_markdown_for_supplemental_review(self) -> None:
+        excluded = [
+            {"path": "README.md", "status": "modified", "exclude_reason": "unsupported_ext"},
+            {"path": "docs/plan.mdx", "status": "added", "exclude_reason": "unsupported_ext"},
+            {"path": "config.yaml", "status": "modified", "exclude_reason": "unsupported_ext"},
+            {"path": "asset.png", "status": "modified", "exclude_reason": "binary"},
+        ]
+        accepted, supplemental, unaccepted = (
+            build_review_bundle.partition_excluded_files(excluded, [])
+        )
+        self.assertEqual(accepted, ["default_path", "user_exclude"])
+        self.assertEqual(
+            [entry["path"] for entry in supplemental],
+            ["README.md", "docs/plan.mdx"],
+        )
+        self.assertEqual(
+            [entry["path"] for entry in unaccepted],
+            ["config.yaml", "asset.png"],
+        )
+
+    def test_partition_exclusions_keeps_same_identity_binary_unaccepted(self) -> None:
+        excluded = [
+            {
+                "path": "README.md",
+                "status": "modified",
+                "exclude_reason": "unsupported_ext",
+            },
+            {
+                "path": "README.md",
+                "status": "modified",
+                "exclude_reason": "binary",
+            },
+        ]
+        _, supplemental, unaccepted = build_review_bundle.partition_excluded_files(
+            excluded, []
+        )
+        self.assertEqual(
+            [entry["exclude_reason"] for entry in supplemental],
+            ["unsupported_ext"],
+        )
+        self.assertEqual(
+            [entry["exclude_reason"] for entry in unaccepted],
+            ["binary"],
         )
 
     def test_partition_exclusions_accepts_ocr_default_paths_without_user_gate(self) -> None:
@@ -478,25 +598,27 @@ class ValidateRoundTest(unittest.TestCase):
             {"path": "asset.png", "exclude_reason": "binary"},
             {"path": "unknown.txt"},
         ]
-        accepted, unaccepted = build_review_bundle.partition_excluded_files(
+        accepted, supplemental, unaccepted = build_review_bundle.partition_excluded_files(
             excluded, []
         )
         self.assertEqual(accepted, ["default_path", "user_exclude"])
+        self.assertEqual([entry["path"] for entry in supplemental], ["README.md"])
         self.assertEqual(
             [entry["path"] for entry in unaccepted],
-            ["README.md", "asset.png", "unknown.txt"],
+            ["asset.png", "unknown.txt"],
         )
 
     def test_partition_exclusions_allows_explicit_reason(self) -> None:
         excluded = [
             {"path": "README.md", "exclude_reason": "unsupported_ext"},
         ]
-        accepted, unaccepted = build_review_bundle.partition_excluded_files(
+        accepted, supplemental, unaccepted = build_review_bundle.partition_excluded_files(
             excluded, ["unsupported_ext"]
         )
         self.assertEqual(
             accepted, ["default_path", "unsupported_ext", "user_exclude"]
         )
+        self.assertEqual([entry["path"] for entry in supplemental], ["README.md"])
         self.assertEqual(unaccepted, [])
 
     def test_run_suppresses_failure_output_when_background_is_sensitive(self) -> None:

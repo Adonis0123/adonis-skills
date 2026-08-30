@@ -9,6 +9,7 @@ apps/web/.vercel
 
 coverage
 *.log
+__pycache__/
 
 /.claude/settings.local.json
 

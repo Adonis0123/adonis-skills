@@ -84,7 +84,7 @@
     {
       "id": 6,
       "name": "pass-with-concerns-is-user-only",
-      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。用户明确要求完整 task-completion-loop。实现与验证已完成，agentic-review-handoff 返回 PASS_WITH_CONCERNS，所有剩余 concern 都是非阻塞项，packet lifecycle_state 是 awaiting_user_decision。用户尚未选择继续 review 还是接受 concerns。请给出此时结果。",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。用户明确要求完整 task-completion-loop，并额外明确选择 review-only 模式。实现与验证已完成，agentic-review-handoff 返回 PASS_WITH_CONCERNS，所有剩余 concern 都是非阻塞项，packet lifecycle_state 是 awaiting_user_decision。用户尚未选择继续 review 还是接受 concerns。请给出此时结果。",
       "expected_output": "应以 agentic-review-handoff 的权威 auto-loop 合同为准，返回 HUMAN_GATE。只有用户能选择 run --continue 或 close --reason accept-concerns；task-completion-loop 不得自动关闭 packet、把 verdict 改为 PASS、进入 architecture hardening 或完成 Goal。",
       "files": [],
       "expectations": [
@@ -99,7 +99,7 @@
     {
       "id": 7,
       "name": "nested-architecture-pass-with-concerns-is-user-only",
-      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。完整 task-completion-loop 的直接 agentic review 已 PASS；随后 architecture-hardening-loop 完成 Fix 和验证，但其内部 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision。剩余 concern 不是 Fix，用户尚未选择继续或接受。architecture-hardening-loop 还没有有效的用户 Decision Closure。请给出 task-completion-loop 此时结果。",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。用户为嵌套 review 明确选择了 review-only 模式。完整 task-completion-loop 的直接 agentic review 已 PASS；随后 architecture-hardening-loop 完成 Fix 和验证，但其内部 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision。剩余 concern 不是 Fix，用户尚未选择继续或接受。architecture-hardening-loop 还没有有效的用户 Decision Closure。请给出 task-completion-loop 此时结果。",
       "expected_output": "应在 architecture 阶段返回 HUMAN_GATE。即使 concern 不是 Fix，只有用户能选择 run --continue 或 close --reason accept-concerns；不得由外层或内层编排代关 packet、接受 concern、把 architecture 结果当作 NO_ACTIONABLE_FINDINGS、进入最终 Claude 盲审或完成 Goal。",
       "files": [],
       "expectations": [
@@ -251,6 +251,20 @@
         "核对最终 evidence identity",
         "刷新必要验证",
         "继续 fresh Claude audit 而非再次 HUMAN_GATE"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "default-pwc-auto-fixes-without-human-gate",
+      "prompt": "这是只读行为验收。用户显式调用完整 task-completion-loop，没有选择 review-only。实现验证后 agentic-review-handoff 返回 PASS_WITH_CONCERNS，concern 均在冻结范围内、可逆且预算未耗尽。请说明下一步。",
+      "expected_output": "默认 completion=pass，把 concern 作为普通范围内工作自动修复、验证、写 Fix Completion 并继续同一 packet，直到 PASS/NO_FINDINGS 或真实异常；不返回 HUMAN_GATE，不问用户是否继续，也不自动接受 concern。",
+      "files": [],
+      "expectations": [
+        "识别默认 completion=pass",
+        "自动修复并 run --continue",
+        "不返回 HUMAN_GATE 或 awaiting_user_decision",
+        "不要求用户二次确认",
+        "不自动 close 或把 PWC 改写为 PASS"
       ]
     }
   ]

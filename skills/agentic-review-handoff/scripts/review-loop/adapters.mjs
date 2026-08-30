@@ -246,8 +246,15 @@ function defaultBin(product) {
  */
 export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
   if (product === "codex") {
-    // codex exec -s read-only --skip-git-repo-check -o <file> [resume <uuid>] "<prompt>"
-    const argv = ["exec", "-s", "read-only", "--skip-git-repo-check"];
+    // codex -a never exec -s read-only --skip-git-repo-check -o <file> [resume <uuid>] "<prompt>"
+    const argv = [
+      "-a",
+      "never",
+      "exec",
+      "-s",
+      "read-only",
+      "--skip-git-repo-check",
+    ];
     if (outFile) argv.push("-o", outFile);
     if (mode === "resume") {
       if (!sessionId) throw new Error("codex resume requires sessionId");
@@ -259,7 +266,7 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
   }
 
   if (product === "grok") {
-    // grok [-r id] -p "<prompt>" --output-format json --sandbox read-only
+    // grok [-r id] -p "<prompt>" --output-format json --sandbox read-only --permission-mode dontAsk
     const argv = [];
     if (mode === "resume") {
       if (!sessionId) throw new Error("grok resume requires sessionId");
@@ -272,13 +279,25 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
       "json",
       "--sandbox",
       "read-only",
+      "--permission-mode",
+      "dontAsk",
+      "--no-subagents",
+      "--disable-web-search",
     );
     return argv;
   }
 
-  // claude -p [ --resume id ] --allowedTools ... --disallowedTools ... --output-format json "<prompt>"
+  // claude --safe-mode --permission-mode dontAsk -p [ --resume id ] --tools ... --output-format json "<prompt>"
   // T0: allowedTools alone failed write isolation; disallowedTools required.
-  const argv = ["-p"];
+  const argv = [
+    "--safe-mode",
+    "--permission-mode",
+    "dontAsk",
+    "--strict-mcp-config",
+    "--tools",
+    "Read,Grep,Glob",
+    "-p",
+  ];
   if (mode === "resume") {
     if (!sessionId) throw new Error("claude resume requires sessionId");
     argv.push("--resume", sessionId);
@@ -287,7 +306,7 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
     "--allowedTools",
     "Read,Grep,Glob",
     "--disallowedTools",
-    "Write,Edit,MultiEdit,NotebookEdit,Bash",
+    "Write,Edit,MultiEdit,NotebookEdit,Bash,Agent,WebFetch,WebSearch",
     "--output-format",
     "json",
     prompt,
@@ -608,12 +627,20 @@ export function assertSandboxHardcoded(product, argv) {
     if (i === -1 || argv[i + 1] !== "read-only") {
       throw new Error("codex sandbox flag missing");
     }
+    const approval = argv.indexOf("-a");
+    if (approval === -1 || argv[approval + 1] !== "never") {
+      throw new Error("codex no-prompt approval flag missing");
+    }
   } else if (product === "grok") {
     if (
       !argv.includes("--sandbox") ||
       argv[argv.indexOf("--sandbox") + 1] !== "read-only"
     ) {
       throw new Error("grok sandbox flag missing");
+    }
+    const permission = argv.indexOf("--permission-mode");
+    if (permission === -1 || argv[permission + 1] !== "dontAsk") {
+      throw new Error("grok dontAsk permission flag missing");
     }
   } else if (product === "claude") {
     if (
@@ -628,6 +655,13 @@ export function assertSandboxHardcoded(product, argv) {
       throw new Error("claude allowedTools incomplete");
     if (!String(denied).includes("Write") || !String(denied).includes("Bash")) {
       throw new Error("claude disallowedTools incomplete");
+    }
+    const permission = argv.indexOf("--permission-mode");
+    if (permission === -1 || argv[permission + 1] !== "dontAsk") {
+      throw new Error("claude dontAsk permission flag missing");
+    }
+    if (!argv.includes("--safe-mode")) {
+      throw new Error("claude safe-mode flag missing");
     }
   }
 }

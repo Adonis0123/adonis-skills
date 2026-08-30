@@ -922,11 +922,14 @@ function validateLifecycleTuple({ meta, location, sections }) {
     return;
   }
   if (anchor === "re_review") {
+    const strictConcerns =
+      verdict === "PASS_WITH_CONCERNS" &&
+      String(meta.frontmatter?.completion || "").toLowerCase() === "pass";
     const expected =
       verdict === "PASS" || verdict === "NO_FINDINGS"
         ? ["archived", "archive"]
         : verdict === "PASS_WITH_CONCERNS"
-          ? ["awaiting_user_decision", "active"]
+          ? [strictConcerns ? "blocked" : "awaiting_user_decision", "active"]
           : verdict === "BLOCKED"
             ? ["blocked", "active"]
             : null;

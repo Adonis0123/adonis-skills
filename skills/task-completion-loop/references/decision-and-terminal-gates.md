@@ -35,7 +35,8 @@ Invoke `agentic-review-handoff` and preserve its packet lifecycle:
 
 - `PASS` / `NO_FINDINGS`: verify the returned `baseSha + pathFilter + digest`, then recompute with `review-loop evidence`. Missing or mismatched identity requires a rerun.
 - `BLOCKED`: fix and verify under the dependency protocol, then continue the same packet.
-- `PASS_WITH_CONCERNS` with `awaiting_user_decision`: return `HUMAN_GATE`. Only the user chooses `run --continue` or `close --reason accept-concerns`; neither the outer nor a nested loop may close it.
+- Default `PASS_WITH_CONCERNS` returns `concerns_require_fix`: treat actionable in-scope concerns as ordinary work, fix and verify, append Fix Completion, and continue the same packet without asking the user.
+- `PASS_WITH_CONCERNS` with `awaiting_user_decision` is legal only after the user explicitly selected review-only mode. Then return `HUMAN_GATE`; neither the outer nor a nested loop may accept concerns automatically.
 - `run --continue` may later end in an archived `PASS`; this path needs no Decision Closure.
 - `close --reason accept-concerns` may resume only after the user's Decision Closure is recorded, the packet is archived, and no open `Fix` remains. Preserve the original verdict; never rewrite it to `PASS`.
 - Delivery, evidence-hash, deadlock, or required-capability failures stop under the dependency's native result. Do not invent a successful terminal state.
@@ -55,7 +56,7 @@ When it finds a `Fix`:
 
 The completion report must include `Goal: active-checkpoint` and a recomputable evidence id. If the loop changed source or tests, all earlier evidence for the old digest expires. Reuse its internal agentic review only when that review covers the final evidence; otherwise rerun the direct review and affected verification.
 
-If architecture invoked automated review, require final verdict, packet, lifecycle, and evidence identity. A zero-Fix path records review `not-run` plus its terminal consult. A nested `awaiting_user_decision` remains a user-only gate even when the concern is not a Fix. After a valid user continue-to-PASS or accept-concerns Decision Closure, resume the original-scope rescan; do not gate forever on a historical verdict string.
+If architecture invoked automated review, require final verdict, packet, lifecycle, and evidence identity. A zero-Fix path records review `not-run` plus its terminal consult. Default review concerns are repaired and re-reviewed automatically. A nested `awaiting_user_decision` is a user gate only when review-only mode was explicitly selected. After a valid user continue-to-PASS or accept-concerns Decision Closure, resume the original-scope rescan; do not gate forever on a historical verdict string.
 
 ## Fresh Claude audit
 

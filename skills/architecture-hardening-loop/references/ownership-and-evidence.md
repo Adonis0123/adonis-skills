@@ -46,7 +46,7 @@ Zero-Fix after a matching evidence identity does **not** create a new Goal. Clos
 - `broader-compatible` → `Goal: active-checkpoint`; keep the parent Goal active
 - `conflicting/unclear` already stopped at `HUMAN_GATE` and must not reach this branch
 
-Only this Loop may mark a Goal completed, and only when it owns completion, `Result: NO_ACTIONABLE_FINDINGS`, required verification passed, and no open `Fix` remains. After a Fix, the final review must cover the same Evidence id in the report and be `PASS` / `NO_FINDINGS`, or a user Decision Closure that archived `PASS_WITH_CONCERNS`. No `awaiting_user_decision` packet may remain. A `broader-compatible` parent is always `active-checkpoint`; the parent orchestrator closes remaining Done conditions. The zero-Fix branch does not invent a review.
+Only this Loop may mark a Goal completed, and only when it owns completion, `Result: NO_ACTIONABLE_FINDINGS`, required verification passed, and no open `Fix` remains. After a Fix, default `completion=pass` requires the final review to cover the same Evidence id and be `PASS` / `NO_FINDINGS`; a Decision Closure is valid only when the user explicitly selected review-only mode. No `awaiting_user_decision` packet may remain. A `broader-compatible` parent is always `active-checkpoint`; the parent orchestrator closes remaining Done conditions. The zero-Fix branch does not invent a review.
 
 ## `scanEvidence` identity
 

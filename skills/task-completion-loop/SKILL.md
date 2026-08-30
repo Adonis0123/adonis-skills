@@ -3,7 +3,7 @@ name: task-completion-loop
 description: "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review."
 metadata:
   author: adonis
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Task Completion Loop
@@ -45,7 +45,7 @@ metadata:
 
 在讨论、Goal、源码修改前：
 
-1. 解析每个 skill、传递硬依赖和 invocation policy。特别检查 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter 等嵌套能力，以及其嵌套 review 是否把 `PASS_WITH_CONCERNS` 映射为 `HUMAN_GATE`。用户点名本 Loop 即授权始终要求的硬依赖（含 `architecture-hardening-loop` 及其声明 scanner）按用途嵌套调用，不要求用户再点名每个嵌套 skill。`disable-model-invocation` / `allow_implicit_invocation: false` 只禁止这些 skill 被孤立自动触发。仍视为缺少本轮可用能力：未安装、合同不兼容、或只能找到文件但 host 无法加载/执行。条件依赖 `grill-with-docs` 仍须用户显式要求或预检证明本轮需要它，且 host 能加载。不要等实现后才发现缺失。
+1. 解析每个 skill、传递硬依赖和 invocation policy。特别检查 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter 等嵌套能力。用户点名本 Loop 即授权始终要求的硬依赖（含 `architecture-hardening-loop` 及其声明 scanner）按用途嵌套调用，不要求用户再点名每个嵌套 skill。`disable-model-invocation` / `allow_implicit_invocation: false` 只禁止孤立自动触发；若 host 仅因此不暴露入口但依赖文件可读，按依赖 Loop 的父会话执行路径继续，不返回缺失。仍视为缺少本轮可用能力：未安装/不可读、合同不兼容或实际 worker/工具无法执行。条件依赖 `grill-with-docs` 仍须用户显式要求或预检证明本轮需要它，且 host 能加载。不要等实现后才发现缺失。
 2. 为 Grok / Claude 解析真实产品身份、创建方式、可恢复句柄和消息交换能力；Claude 还要有可验证的只读审查方式。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
 
@@ -170,7 +170,7 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 
 开始或恢复本阶段前，读 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的三份 terminal contract；依赖拥有内部状态机，本 Skill 只核对终态、证据身份和父 Goal ownership。
 
-1. `agentic-review-handoff`：只在 `PASS` / `NO_FINDINGS` 覆盖当前 evidence 时继续。`PASS_WITH_CONCERNS + awaiting_user_decision` 必须返回 `HUMAN_GATE`；只有用户能 continue 或 accept，本 Skill 与嵌套流程都不能代关。
+1. `agentic-review-handoff`：使用默认 `completion=pass`。`BLOCKED` 或 `concerns_require_fix` 都由本 Loop 在冻结范围内修复、验证、记 Fix Completion 并自动续审；只在最终 `PASS` / `NO_FINDINGS` 覆盖当前 evidence 时继续。只有用户显式选择 review-only 模式后出现的 `awaiting_user_decision` 才返回 `HUMAN_GATE`。
 2. `architecture-hardening-loop`：同范围运行，只接受 `NO_ACTIONABLE_FINDINGS`。已冻结范围内的 Fix 在同一 Goal 下自行继续；范围或 ownership 冲突才 `defer`。它修改文件会使旧 evidence 失效。
 3. 全新 Claude 盲审：使用新的可验证只读会话审最终 evidence。范围内 `Fix` 触发最小修复和全部下游门禁重跑；最多 2 轮。
 
@@ -179,7 +179,7 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 | Result                 | 使用条件                                                                                                                                       |
 | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | `COMPLETED`            | 账本无未决项；必需验证通过；三道门禁覆盖同一最终 evidence id；最终盲审无范围内 `Fix`；owned Goal 已完成，或 parent Goal 保持 active-checkpoint |
-| `HUMAN_GATE`           | 等待用户拥有的决策、Goal 激活/冲突、review concern 接受、权限、凭证、外部状态或范围扩张                                                        |
+| `HUMAN_GATE`           | 等待用户拥有的产品/领域决策、Goal 激活/冲突、权限、凭证、外部状态、范围扩张，或显式 review-only 决策                                           |
 | `MISSING_DEPENDENCIES` | 预检缺少始终要求或本轮实际需要的能力；源码尚未修改                                                                                             |
 | `UNVERIFIED`           | 实现可能存在，但必需证据未运行、失败或已过期；Goal 不得完成                                                                                    |
 

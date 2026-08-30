@@ -620,10 +620,17 @@ export function assertNoInjectedH1(text, label = "section") {
 
 /**
  * Convert parsed first-round findings into packet markdown stages.
- * @param {{ verdict: string, findings: ReturnType<typeof findingFromRow>[], reviewer: string, baseSha: string, evidencePath: string }} parsed
+ * @param {{ verdict: string, findings: ReturnType<typeof findingFromRow>[], reviewer: string, baseSha: string, evidencePath: string, requireFixHandoff?: boolean }} parsed
  */
 export function formatReviewFindingsStage(parsed) {
-  const { verdict, findings, reviewer, baseSha, evidencePath } = parsed;
+  const {
+    verdict,
+    findings,
+    reviewer,
+    baseSha,
+    evidencePath,
+    requireFixHandoff = false,
+  } = parsed;
   const rows =
     findings.length === 0
       ? "| (none) | — | No findings | — | — | — | — |"
@@ -658,8 +665,8 @@ ${rows}
 ${verdict}
 `;
 
-  // Plan T2: Fix Handoff only for BLOCKED (PWC parks as awaiting_user_decision without handoff)
-  if (verdict === "BLOCKED") {
+  // completion=pass treats non-blocking concerns as work, so it also needs a handoff.
+  if (verdict === "BLOCKED" || requireFixHandoff) {
     const handoffRows = findings
       .map(
         (f) =>

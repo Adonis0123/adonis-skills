@@ -372,6 +372,31 @@ describe("frozen evidence includes untracked", () => {
 });
 
 describe("auto-run happy paths", () => {
+  it("omitted reviewer starts with codex without asking the user", async () => {
+    const dir = initTempRepo();
+    let selectedProduct = null;
+    const result = await cmdRun({
+      repoRoot: dir,
+      scopeSlug: "default-reviewer",
+      adapterFactory: (product) => {
+        selectedProduct = product;
+        return {
+          product,
+          getSessionId: () => null,
+          async newSession() {
+            return { ok: true, text: passText(), sessionId: "s" };
+          },
+          async resume() {
+            return { ok: true, text: passText(), sessionId: "s" };
+          },
+        };
+      },
+    });
+
+    assert.equal(selectedProduct, "codex");
+    assert.equal(result.status, "archived");
+  });
+
   it("1-round PASS archives packet", async () => {
     const dir = initTempRepo();
     fs.writeFileSync(path.join(dir, "a.ts"), "export const a = 1;\n");
@@ -521,7 +546,7 @@ process.stdout.write(JSON.stringify(r));
     assert.match(text, /# Re-review/);
   });
 
-  it("PASS_WITH_CONCERNS → awaiting_user_decision (no Fix Handoff)", async () => {
+  it("completion=review keeps PASS_WITH_CONCERNS as an explicit user decision", async () => {
     const dir = initTempRepo();
     const concerns = `Style nits only.
 
@@ -537,6 +562,7 @@ PASS_WITH_CONCERNS
     const r = await cmdRun({
       repoRoot: dir,
       reviewer: "grok",
+      completion: "review",
       scopeSlug: "concerns",
       adapterFactory: factory,
     });
@@ -548,6 +574,73 @@ PASS_WITH_CONCERNS
     assert.equal(meta.lastAnchor, "review_findings");
     const text = fs.readFileSync(r.packetPath, "utf8");
     assert.doesNotMatch(text, /# Fix Handoff/);
+  });
+
+  it("default completion turns PASS_WITH_CONCERNS into an automatic fix handoff", async () => {
+    const dir = initTempRepo();
+    const concerns = `Style nits only.
+
+| ID | 严重度 | 标题 | 证据 | Target files | Required fix | Acceptance check |
+|---|---|---|---|---|---|---|
+| C1 | [非阻塞] | naming | style | a.ts | rename | focused test |
+
+## Verdict
+
+PASS_WITH_CONCERNS
+`;
+    const { factory } = makeFakeAdapterFactory([
+      concerns,
+      reReviewPwc({
+        resolved: [],
+        openConcerns: [{ id: "C1", title: "naming" }],
+      }),
+    ]);
+    const r = await cmdRun({
+      repoRoot: dir,
+      scopeSlug: "concerns-until-pass",
+      adapterFactory: factory,
+    });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.status, "concerns_require_fix");
+    assert.equal(r.needsContinue, true);
+    assert.equal(r.completion, "pass");
+    const meta = repo.readPacketMeta(r.packetPath);
+    assert.equal(meta.lifecycleState, "blocked");
+    assert.equal(meta.lastAnchor, "fix_handoff");
+    assert.match(fs.readFileSync(r.packetPath, "utf8"), /# Fix Handoff/);
+    assert.equal(loadRunState(dir, r.packetId).completion, "pass");
+
+    await cmdAppendFixCompletion({
+      repoRoot: dir,
+      packetPath: r.packetPath,
+      body: `# Fix Completion
+
+## Fix Conclusion
+- renamed the symbol
+
+## Original Findings Snapshot
+- C1 naming
+
+## Finding Status
+- C1 fixed
+
+## Verification
+- focused test
+
+## Re-review Instructions
+- continue until PASS
+`,
+    });
+    const r2 = await cmdRun({
+      repoRoot: dir,
+      continue: true,
+      packetPath: r.packetPath,
+      adapterFactory: factory,
+    });
+    assert.equal(r2.status, "concerns_require_fix");
+    assert.equal(r2.completion, "pass");
+    assert.equal(repo.readPacketMeta(r2.packetPath).lifecycleState, "blocked");
   });
 });
 
@@ -967,6 +1060,7 @@ PASS_WITH_CONCERNS
     const r = await cmdRun({
       repoRoot: dir,
       reviewer: "codex",
+      completion: "review",
       scopeSlug: "close-pwc",
       adapterFactory: factory,
     });
@@ -1026,6 +1120,7 @@ PASS_WITH_CONCERNS
     const r1 = await cmdRun({
       repoRoot: dir,
       reviewer: "codex",
+      completion: "review",
       scopeSlug: "pwc-rr",
       adapterFactory: factory,
       rounds: 3,
@@ -1354,6 +1449,7 @@ PASS_WITH_CONCERNS
     const r1 = await cmdRun({
       repoRoot: dir,
       reviewer: "codex",
+      completion: "review",
       scopeSlug: "legacy",
       adapterFactory: factory,
       rounds: 3,

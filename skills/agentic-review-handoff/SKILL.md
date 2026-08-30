@@ -1,9 +1,9 @@
 ---
 name: agentic-review-handoff
-description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets, including PASS_WITH_CONCERNS; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
+description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
 metadata:
   author: adonis
-  version: "3.6.0"
+  version: "3.7.0"
 ---
 
 # Agentic Review Handoff
@@ -25,23 +25,24 @@ Route first, then load only that route's references:
 
 ## Auto loop (`review-loop run`) — preferred
 
-Human intervenes only at: **initiate**, **terminal report**, **exception** (DELIVERY_UNKNOWN / hash mismatch / budget / deadlock).
+Explicit invocation starts immediately. Human intervenes only at: **initiate**, **terminal report**, or a real exception (DELIVERY_UNKNOWN / hash mismatch / budget / deadlock / scope or external-action decision). Reviewer selection and ordinary findings are not confirmation gates.
 
 ```bash
 RL="<skill-dir>/scripts/review-loop.mjs"
 REPO="$(git rev-parse --show-toplevel)"
 
 # Start after this session implemented the change (default Review Handoff origin)
-node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--base <sha>] [--rounds 3]
+node "$RL" run --repo "$REPO" [--reviewer=codex|grok|claude] [--base <sha>] [--rounds 3]
 
 # Start an explicit auto loop without verified implementer context (Review Intake origin)
-node "$RL" run --intake --repo "$REPO" --reviewer=codex|grok|claude [--base <sha>] [--rounds 3]
+node "$RL" run --intake --repo "$REPO" [--reviewer=codex|grok|claude] [--base <sha>] [--rounds 3]
 
-# After BLOCKED: Fixer edits code, then records completion, then continue
+# After BLOCKED or concerns_require_fix: Fixer edits code, records completion, then continues
 node "$RL" fix-completion --repo "$REPO" --packet "$PACKET" --body-file /tmp/fix.md
 node "$RL" run --continue --repo "$REPO" --packet "$PACKET"
 
-# After PASS_WITH_CONCERNS: accept remaining concerns and archive (no re-review)
+# Optional review-only mode: park PASS_WITH_CONCERNS for an explicit accept/continue decision
+node "$RL" run --repo "$REPO" --completion=review
 node "$RL" close --repo "$REPO" --packet "$PACKET" --reason accept-concerns
 
 # Recompute current worktree identity before an outer workflow reuses a verdict
@@ -58,14 +59,16 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 | Concept  | Rule                                                                                                       |
 | -------- | ---------------------------------------------------------------------------------------------------------- |
 | Fixer    | Visible session — sole worktree + packet writer                                                            |
-| Reviewer | Headless, read-only sandbox (flags hardcoded in adapters)                                                  |
+| Reviewer | Headless; omitted product defaults to Codex; adapters use read-only + `dontAsk` controls                   |
 | Origin   | First H1 only: default `Review Handoff`; explicit `--intake` uses `Review Intake`; later rounds inherit it |
 | Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |
 | Rounds   | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate)             |
 | Timeout  | 20 minutes per Reviewer invocation; advanced override: `REVIEW_LOOP_TIMEOUT_MS`                            |
 | Progress | Immediate liveness line, then every 30 seconds while the Reviewer process is alive                         |
 | STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                            |
-| Sandbox  | Cannot be disabled via CLI flags                                                                           |
+| Sandbox  | Best available read-only controls are fixed in adapters; no permission prompt is shown                     |
+
+Default `completion=pass` treats `PASS_WITH_CONCERNS` as more work: the visible Fixer repairs each actionable in-scope concern, appends Fix Completion, and re-reviews within budget. It never asks the user whether to continue. Only explicit `--completion=review` parks concerns in `awaiting_user_decision`; this is the opt-in escape hatch for review-only judgment, not the loop default.
 
 **A quiet Reviewer is not a failed Reviewer.** Product CLIs commonly return
 structured stdout only when the model finishes. While the child process is

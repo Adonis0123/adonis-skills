@@ -2,7 +2,7 @@
  * review-loop auto run — single-writer Fixer-driven loop with headless Reviewer.
  *
  * Commands (via cmdRun / cmdContinue):
- *   run --repo --reviewer [--base] [--rounds 3] [--packet]
+ *   run --repo [--reviewer] [--completion pass|review] [--base] [--rounds 3] [--packet]
  *   run --continue --repo [--packet] [--rounds]
  */
 import fs from "node:fs";
@@ -102,6 +102,7 @@ Never place a literal pipe character in table cells. Use &#124; instead.`;
     `Round: ${round}`,
     round <= 1 ? schemaRound1 : schemaRoundN,
     "Do not modify any files. Do not write the packet. Stdout only.",
+    "Do not block merely because a useful check would write caches or temporary files; report that check for the visible Fixer/host to run.",
   ];
   if (correctionNote) {
     parts.push(`CORRECTION (previous output was malformed): ${correctionNote}`);
@@ -114,9 +115,11 @@ Never place a literal pipe character in table cells. Use &#124; instead.`;
  * @param {object} opts
  * @param {string} [opts.repoRoot]
  * @param {string} [opts.cwd]
- * @param {string} opts.reviewer  codex|grok|claude
+ * @param {string} [opts.reviewer]  codex|grok|claude; defaults to codex
  * @param {string} [opts.base]
  * @param {number} [opts.rounds]
+ * @param {'review'|'pass'} [opts.completion]
+ * @param {boolean} [opts.untilPass]
  * @param {string} [opts.packetPath]
  * @param {string} [opts.packetId]
  * @param {boolean} [opts.continue]
@@ -189,7 +192,8 @@ export async function cmdRun(opts) {
     );
   }
 
-  // Reviewer: explicit flag wins; else continue inherits prior; else default codex
+  // Reviewer: explicit flag wins; else continue inherits prior; else default codex.
+  // This is deterministic by design: never ask the user to select a Reviewer.
   const priorState = loadRunState(repoRoot, packetId) ?? {};
   let reviewer = opts.reviewer || opts.productReviewer || null;
   if (!reviewer && isContinue && priorState.reviewer) {
@@ -198,6 +202,17 @@ export async function cmdRun(opts) {
   reviewer = String(reviewer || "codex").toLowerCase();
   if (!["codex", "grok", "claude"].includes(reviewer)) {
     throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
+  }
+
+  // completion=pass means every actionable in-scope concern is fixed and
+  // re-reviewed within budget. Continue inherits the original authorization.
+  let completion = opts.completion ?? (opts.untilPass ? "pass" : null);
+  if (!completion && isContinue && priorState.completion) {
+    completion = priorState.completion;
+  }
+  completion = String(completion || "pass").toLowerCase();
+  if (!["review", "pass"].includes(completion)) {
+    throw new Error(`--completion must be review|pass, got ${completion}`);
   }
 
   // F4: continue inherits persisted roundsBudget unless explicit --rounds.
@@ -212,6 +227,7 @@ export async function cmdRun(opts) {
       packetPath,
       packetId,
       reviewer,
+      completion,
       roundsBudget,
       isContinue,
     }),
@@ -332,6 +348,7 @@ async function runBody(ctx) {
     packetPath: initialPacketPath,
     packetId,
     reviewer,
+    completion,
     roundsBudget,
     isContinue,
     base,
@@ -373,6 +390,7 @@ async function runBody(ctx) {
     ...state,
     baseSha,
     reviewer,
+    completion,
     packetHash: roundStartPacketHash,
     roundStartPacketHash,
     pendingStage: null, // clear stale journal if present after explicit fail-closed above
@@ -654,13 +672,16 @@ async function runBody(ctx) {
     };
   }
 
-  // Lifecycle matches auto-loop contract (plan T2 §6):
-  // PASS/NO_FINDINGS → archived; PWC → awaiting_user_decision; BLOCKED → blocked.
-  // Fix Handoff is only for BLOCKED (not PWC).
-  const lifecycle = lifecycleForVerdict(
-    effectiveRound <= 1 ? "review_findings" : "re_review",
-    parsed.verdict,
-  );
+  const concernsRequireFix =
+    parsed.verdict === "PASS_WITH_CONCERNS" && completion === "pass";
+  // Default review mode keeps PWC as a user choice. Explicit completion=pass
+  // turns it into ordinary in-scope work and avoids a second confirmation.
+  const lifecycle = concernsRequireFix
+    ? "blocked"
+    : lifecycleForVerdict(
+        effectiveRound <= 1 ? "review_findings" : "re_review",
+        parsed.verdict,
+      );
 
   let sectionMarkdown;
   let lastAnchor;
@@ -671,10 +692,13 @@ async function runBody(ctx) {
       reviewer,
       baseSha,
       evidencePath: evidence.evidencePath,
+      requireFixHandoff: concernsRequireFix,
     });
-    // Plan T2: first-round Fix Handoff only when BLOCKED
+    // First-round strict PWC gets the same actionable handoff as BLOCKED.
     lastAnchor =
-      parsed.verdict === "BLOCKED" ? "fix_handoff" : "review_findings";
+      parsed.verdict === "BLOCKED" || concernsRequireFix
+        ? "fix_handoff"
+        : "review_findings";
   } else {
     sectionMarkdown = formatReReviewStage({
       verdict: parsed.verdict,
@@ -693,6 +717,7 @@ async function runBody(ctx) {
     round: effectiveRound,
     roundsBudget,
     reviewer,
+    completion,
     lastVerdict: parsed.verdict,
     findingIds,
     findingCatalog,
@@ -734,6 +759,7 @@ async function runBody(ctx) {
         reviewer,
         round: String(effectiveRound),
         mode: "auto",
+        completion,
       },
       nextLedger,
       priorState: loadRunState(repoRoot, packetId) ?? state,
@@ -817,6 +843,33 @@ async function runBody(ctx) {
   }
 
   if (parsed.verdict === "PASS_WITH_CONCERNS") {
+    if (concernsRequireFix) {
+      if (effectiveRound >= roundsBudget && !finalState.budgetOverride) {
+        return budgetExhaustedReport({
+          packetPath,
+          state: finalState,
+          roundsBudget,
+          openConcerns,
+          findings: concernRows,
+        });
+      }
+      return {
+        ok: true,
+        status: "concerns_require_fix",
+        verdict: parsed.verdict,
+        completion,
+        round: effectiveRound,
+        packetPath,
+        packetId,
+        openConcerns,
+        concerns: concernRows,
+        message:
+          "PASS_WITH_CONCERNS under completion=pass — Fixer should address the concerns, append # Fix Completion, then run --continue; no user confirmation needed",
+        warning: evidence.warning,
+        evidence: reviewEvidence,
+        needsContinue: true,
+      };
+    }
     return {
       ok: true,
       status: "awaiting_user_decision",
@@ -958,10 +1011,13 @@ function budgetExhaustedReport({
   state,
   roundsBudget,
   openBlocking,
+  openConcerns,
   findings,
   reassessments,
 }) {
-  const unresolved = openBlocking || state.openBlocking || [];
+  const unresolvedBlocking = openBlocking || state.openBlocking || [];
+  const unresolvedConcerns = openConcerns || state.openConcerns || [];
+  const unresolved = [...unresolvedBlocking, ...unresolvedConcerns];
   const fixerStance = extractLatestFixCompletionStance(packetPath);
   const unresolvedReassessments = Array.isArray(reassessments)
     ? reassessments
@@ -990,9 +1046,10 @@ function budgetExhaustedReport({
   return {
     ok: false,
     status: "budget_exhausted",
-    message: `Round budget (${roundsBudget}) exhausted with unresolved blockers`,
+    message: `Round budget (${roundsBudget}) exhausted with unresolved review findings`,
     packetPath,
-    openBlocking: unresolved,
+    openBlocking: unresolvedBlocking,
+    openConcerns: unresolvedConcerns,
     unresolved,
     lastVerdict: state.lastVerdict || "BLOCKED",
     roundsUsed: state.round,
@@ -1001,7 +1058,8 @@ function budgetExhaustedReport({
     positions: {
       reviewer: {
         lastVerdict: state.lastVerdict || "BLOCKED",
-        openBlocking: unresolved,
+        openBlocking: unresolvedBlocking,
+        openConcerns: unresolvedConcerns,
         findingIds: state.findingIds || [],
         // New findings this round (may be empty when only prior blockers remain)
         findings: findings || [],
@@ -1350,10 +1408,15 @@ export function reconcileRuntimeState({
   if (needsLedgerRebuild(s, meta, text)) {
     try {
       const rebuilt = rebuildLedgerFromPacketText(text);
-      const lifecycle = lifecycleForVerdict(
-        rebuilt.round <= 1 ? "review_findings" : "re_review",
-        rebuilt.lastVerdict || "BLOCKED",
-      );
+      const completion =
+        s.completion || meta.frontmatter?.completion || "review";
+      const lifecycle =
+        rebuilt.lastVerdict === "PASS_WITH_CONCERNS" && completion === "pass"
+          ? "blocked"
+          : lifecycleForVerdict(
+              rebuilt.round <= 1 ? "review_findings" : "re_review",
+              rebuilt.lastVerdict || "BLOCKED",
+            );
       s = {
         ...s,
         findingCatalog: rebuilt.findingCatalog,
@@ -1362,6 +1425,7 @@ export function reconcileRuntimeState({
         openConcerns: rebuilt.openConcerns,
         round: rebuilt.round,
         lastVerdict: rebuilt.lastVerdict,
+        completion,
         lifecycle,
         packetHash: currentHash,
         packetPath: pathNow,
@@ -1759,7 +1823,7 @@ export async function cmdClose(opts) {
 }
 
 /**
- * Fixer helper: append Fix Completion stage (claim-free) after addressing BLOCKED findings.
+ * Fixer helper: append Fix Completion after addressing blockers or strict concerns.
  */
 export async function cmdAppendFixCompletion(opts) {
   const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
@@ -1780,7 +1844,7 @@ export async function cmdAppendFixCompletion(opts) {
   if (meta.lifecycleState === "archived") {
     throw new Error("fix-completion refuses lifecycle_state=archived");
   }
-  // F3: legal stage gate — must follow Fix Handoff or blocked re-review
+  // F3: legal stage gate — must follow Fix Handoff or a re-review that needs fixes
   const last = lastPhysicalH1(meta.text);
   const okPrior =
     last &&
@@ -1790,7 +1854,7 @@ export async function cmdAppendFixCompletion(opts) {
       last.anchor === "fix_completion");
   if (!okPrior) {
     throw new Error(
-      `fix-completion refuses last_anchor=${meta.lastAnchor ?? last?.anchor ?? "none"} (need fix_handoff or re_review after BLOCKED)`,
+      `fix-completion refuses last_anchor=${meta.lastAnchor ?? last?.anchor ?? "none"} (need fix_handoff or re_review with unresolved work)`,
     );
   }
   const body =

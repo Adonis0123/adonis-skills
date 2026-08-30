@@ -8,8 +8,10 @@ truth because flags and output envelopes can change between versions.
 - Canonical IDs are `codex`, `claude-code`, `grok-build`, and `cursor-cli`.
 - Reviewer and Fixer are separate sessions, even when they use the same
   product.
-- Reviewer mode must prevent writes. Prompt-only instructions are insufficient
-  when the product exposes a real read-only sandbox or plan mode.
+- Reviewer mode uses the strongest available read-only controls and a
+  non-interactive `dontAsk` policy. Prompt-only instructions are insufficient,
+  but an OS-perfect sandbox is not required when the host also freezes and
+  recomputes the exact Git subject identity around the call.
 - External Fixer mode must use a user-authorized isolated writable checkout
   that was frozen as the authoritative `$REPO` before round 1. Whole-workspace
   sandboxes plus a later diff check do not prove path-scoped writes. This
@@ -35,6 +37,11 @@ truth because flags and output envelopes can change between versions.
   contain it; the extractor makes product/session identity host-authoritative.
 - Do not hard-code a model ID. A user-selected model is adapter input and must
   be checked against the installed CLI rather than silently substituted.
+- Active hooks, plugins, or MCP configuration are host-owned risk signals, not
+  automatic confirmation gates. Disable them per invocation when supported.
+  Always compare the frozen subject identity after Reviewer exit; mutation is
+  `UNVERIFIED: REVIEWER_MUTATED_SUBJECT`, never a successful review. Report the
+  diff and do not retry or reset user changes.
 
 ## Codex
 
@@ -43,6 +50,9 @@ Current CLIs commonly expose `codex exec`, `--sandbox read-only`,
 `exec resume`. Confirm them with `codex exec --help` before use.
 
 - Reviewer: use `codex exec` with the read-only sandbox and an output schema.
+- A read-only sandbox may reject test frameworks that create caches or temporary
+  directories. Keep the sandbox; let the host run those checks and give the
+  Reviewer their results as evidence.
 - Send the prompt on stdin. Use `--output-last-message` as the extractor input;
   `--json` stdout is an event stream used to record the exact thread ID, not
   the final review object.
@@ -112,6 +122,9 @@ Confirm the exact spelling and accepted sandbox profiles with `grok --help`.
   private `0600` prompt file. The bundle lives outside `$REPO`, and Grok's
   read-only file tool must not be expected to open that path through the
   repository sandbox.
+- Never give Grok only the outside-repository bundle path and never weaken the
+  sandbox to expose `ROUND_DIR`; the prompt file must already contain the bundle
+  bytes before invocation.
 - Combine the sandbox with an explicit read-only tool allowlist and disable
   MCP, subagents, memory, and web access unless the review contract needs them.
   Treat a sandbox-enforcement warning as a hard failure.
@@ -126,13 +139,12 @@ Confirm the exact spelling and accepted sandbox profiles with `grok --help`.
   failure. A separate user hook warning is noisy configuration, not proof of a
   sandbox failure; still require the sandbox plus tool allowlist as independent
   controls.
-- Preflight `grok inspect --json`. Hooks and plugin components can still load
-  independently of the model tool allowlist. Every active hook must be proven
-  compatible with the Reviewer boundary. If a hook can execute, rewrite tool
-  input, write files, or cause an external side effect and that compatibility
-  cannot be proven, return `HUMAN_GATE`; do not assume `--tools` disabled the
-  hook. User acceptance alone is not proof that a write-capable hook is
-  read-only.
+- Preflight `grok inspect --json` and record active hooks/plugin components.
+  They can load independently of the model tool allowlist, so use the verified
+  read-only sandbox, `dontAsk`, no subagents/web, and the narrowest supported
+  tools. Their mere presence does not stop the loop. The host-owned before/after
+  Git identity is the enforcement check; observed mutation fails closed without
+  a second Reviewer call.
 
 Verified Reviewer capability shape:
 
@@ -141,7 +153,7 @@ grok --cwd "$REPO" --prompt-file "$PROMPT_FILE" \
   --sandbox read-only --permission-mode dontAsk \
   --tools read_file,grep,list_dir \
   --disallowed-tools Agent --no-subagents \
-  --disable-web-search --no-memory --deny 'MCPTool(*)' \
+  --disable-web-search --deny 'MCPTool(*)' \
   --output-format json \
   --json-schema "$(jq -c . "$SKILL_DIR/references/review-schema.json")"
 ```
@@ -167,16 +179,16 @@ Current CLIs commonly expose `--print`, `--mode plan`, `--mode ask`,
   accepts piped input. Do not put a sensitive whole bundle in argv. Do not use
   `--add-dir "$ROUND_DIR"`: current headless builds can stop for interactive
   workspace trust, and `--trust` is prohibited.
-- Require no configured MCPs, or an already-present project permission policy
+- Prefer no configured MCPs, or an already-present project permission policy
   that denies `Mcp(*)`, shell, and writes for the Reviewer. Do not edit user or
-  project Cursor settings as an implicit preflight step. Without an enforceable
-  boundary, return `HUMAN_GATE`.
+  project Cursor settings as an implicit preflight step. Use non-interactive
+  ask/plan mode and the host Git identity guard when settings cannot prove a
+  perfect boundary.
 - Audit user, project, and managed [Cursor Hooks](https://cursor.com/docs/hooks)
   before starting the Reviewer. Hooks are spawned processes and are not made
-  read-only by agent tool permission tokens. If any active hook can execute,
-  rewrite input, write files, or cause an external side effect and cannot be
-  proven compatible with the Reviewer boundary, return `HUMAN_GATE`. User
-  acceptance alone is not proof that a write-capable hook is read-only.
+  read-only by agent tool permission tokens. Record them and rely on the same
+  before/after subject identity guard; their presence alone is not a reason to
+  ask the user again.
 - Fixer: current headless versions may require `--force` to write. Do not use
   it by default. Require explicit Cursor-Fixer authorization plus an isolated
   writable target and sandbox/permission preflight; otherwise return
@@ -229,10 +241,12 @@ skip the per-run help/capability preflight.
 
 ## Missing or incompatible capability
 
-Return `HUMAN_GATE` when the requested product exists but cannot enforce its
-assigned role. Return `MISSING_DEPENDENCIES` when the explicitly required
-product is absent before edits. Never silently map one product ID to another
-or reuse a session ID across products.
+Return `HUMAN_GATE` when the requested product cannot run its assigned role
+non-interactively or cannot emit a validateable result. Lack of an OS-perfect
+Reviewer sandbox alone is not a user decision when read-only/dontAsk controls
+and the host mutation guard are available. Return `MISSING_DEPENDENCIES` when
+the explicitly required product is absent before edits. Never silently map one
+product ID to another or reuse a session ID across products.
 
 A Fixer timeout or delivery loss may leave mutations behind. Recompute the Git
 diff, report `DELIVERY_UNKNOWN_WITH_MUTATION`, and stop without retry or reset.

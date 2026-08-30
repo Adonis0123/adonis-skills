@@ -18,6 +18,7 @@ from typing import Any
 
 
 SENSITIVE_VALUE_FLAGS = {"--background", "--background-file"}
+SUPPLEMENTAL_MARKDOWN_SUFFIXES = {".md", ".mdx"}
 RULE_GROUP_FIELDS = {"group_id", "source", "pattern", "files", "rule"}
 
 
@@ -544,18 +545,48 @@ def file_evidence(
     }
 
 
+def is_supplemental_markdown(entry: dict[str, Any]) -> bool:
+    return (
+        entry.get("exclude_reason") == "unsupported_ext"
+        and isinstance(entry.get("path"), str)
+        and Path(str(entry["path"])).suffix.lower() in SUPPLEMENTAL_MARKDOWN_SUFFIXES
+    )
+
+
 def partition_excluded_files(
     excluded_files: list[dict[str, Any]], extra_allowed_reasons: list[str]
-) -> tuple[list[str], list[dict[str, Any]]]:
+) -> tuple[list[str], list[dict[str, Any]], list[dict[str, Any]]]:
     accepted_reasons = sorted(
         {"default_path", "user_exclude", *extra_allowed_reasons}
     )
+    supplemental = [entry for entry in excluded_files if is_supplemental_markdown(entry)]
     unaccepted = [
         entry
         for entry in excluded_files
         if entry.get("exclude_reason") not in accepted_reasons
+        and not is_supplemental_markdown(entry)
     ]
-    return accepted_reasons, unaccepted
+    return accepted_reasons, supplemental, unaccepted
+
+
+def supplemental_rules(entries: list[dict[str, Any]]) -> dict[str, Any]:
+    if not entries:
+        return {"schema_version": "1", "groups": []}
+    return {
+        "schema_version": "1",
+        "groups": [
+            {
+                "group_id": "supplemental-markdown",
+                "source": "host",
+                "pattern": "**/*.{md,mdx}",
+                "files": [str(entry["path"]) for entry in entries],
+                "rule": (
+                    "Review Markdown for correctness, internal consistency, and "
+                    "alignment with the frozen implementation and stated requirements."
+                ),
+            }
+        ],
+    }
 
 
 def parse_args() -> argparse.Namespace:
@@ -635,7 +666,14 @@ def main() -> int:
             rules = parse_json_object(run(rule_command, repo), "OCR rules")
         validate_rules(rules, entries)
 
+        accepted_reasons, supplemental_reviewable_files, unaccepted_excluded_files = (
+            partition_excluded_files(excluded_files, args.allow_excluded_reason)
+        )
         files = [file_evidence(repo, preview, entry) for entry in entries]
+        files.extend(
+            file_evidence(repo, preview, entry)
+            for entry in supplemental_reviewable_files
+        )
         snapshot_after = repository_snapshot(repo)
         require_stable_snapshot(snapshot_before, snapshot_after)
         refs = {
@@ -645,9 +683,6 @@ def main() -> int:
         }
         base_sha = snapshot_after["head"]
         ocr_version = first_output_line(run(["ocr", "--version"], repo), "ocr --version")
-        accepted_reasons, unaccepted_excluded_files = partition_excluded_files(
-            excluded_files, args.allow_excluded_reason
-        )
         material = {
             "schema_version": "1",
             "mode": preview.get("mode"),
@@ -655,11 +690,13 @@ def main() -> int:
             "ocr_version": ocr_version,
             "refs": refs,
             "reviewable_files": entries,
+            "supplemental_reviewable_files": supplemental_reviewable_files,
             "excluded_files": excluded_files,
             "accepted_exclusion_reasons": accepted_reasons,
             "unaccepted_excluded_files": unaccepted_excluded_files,
             "background": background_text,
             "rules": rules,
+            "supplemental_rules": supplemental_rules(supplemental_reviewable_files),
             "files": files,
         }
         digest = hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
@@ -677,6 +714,10 @@ def main() -> int:
                     "evidence_id": bundle["evidence_id"],
                     "mode": bundle["mode"],
                     "reviewable_files": len(files),
+                    "ocr_reviewable_files": len(entries),
+                    "supplemental_reviewable_files": len(
+                        supplemental_reviewable_files
+                    ),
                     "excluded_files": len(bundle["excluded_files"]),
                     "unaccepted_excluded_files": len(
                         bundle["unaccepted_excluded_files"]

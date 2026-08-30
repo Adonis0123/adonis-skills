@@ -71,6 +71,7 @@ describe("buildArgv sandbox hardcoding", () => {
     });
     assertSandboxHardcoded("codex", argv);
     assert.ok(argv.includes("exec"));
+    assert.deepEqual(argv.slice(0, 2), ["-a", "never"]);
   });
 
   it("grok always includes --sandbox read-only", () => {
@@ -81,6 +82,10 @@ describe("buildArgv sandbox hardcoding", () => {
       sessionId: null,
     });
     assertSandboxHardcoded("grok", argv);
+    assert.ok(argv.includes("--permission-mode"));
+    assert.equal(argv[argv.indexOf("--permission-mode") + 1], "dontAsk");
+    assert.ok(argv.includes("--no-subagents"));
+    assert.ok(argv.includes("--disable-web-search"));
   });
 
   it("claude always includes allowedTools + disallowedTools", () => {
@@ -91,6 +96,10 @@ describe("buildArgv sandbox hardcoding", () => {
       sessionId: null,
     });
     assertSandboxHardcoded("claude", argv);
+    assert.ok(argv.includes("--safe-mode"));
+    assert.ok(argv.includes("--strict-mcp-config"));
+    assert.equal(argv[argv.indexOf("--permission-mode") + 1], "dontAsk");
+    assert.equal(argv[argv.indexOf("--tools") + 1], "Read,Grep,Glob");
   });
 
   it("codex resume includes resume <uuid>", () => {

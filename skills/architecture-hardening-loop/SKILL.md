@@ -3,7 +3,7 @@ name: architecture-hardening-loop
 description: "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement."
 metadata:
   author: adonis
-  version: "1.6.2"
+  version: "1.7.0"
 ---
 
 # Architecture Hardening Loop
@@ -49,16 +49,16 @@ metadata:
 
 ## 硬依赖与 runtime 能力
 
-本 Skill 是薄编排，**不复制**底层逻辑。硬依赖不必都在本仓 catalog，但必须已安装、可解析，且 host 能实际执行本次**声明内嵌套调用**；文件或 slug 存在不构成充分条件。
+本 Skill 是薄编排，**不复制**底层逻辑。硬依赖不必都在本仓 catalog，但必须已安装、可读且其执行能力可用。若 host 仅因 `disable-model-invocation` / `allow_implicit_invocation: false` 不提供嵌套调用入口，父 Loop 直接读取该依赖的完整 `SKILL.md` 与必需 references，并在当前父会话执行其声明的 report-only 阶段；这属于显式父调用，不是隐式触发，也不是复制实现。
 
 用户点名本 Loop（slash / `$skill` / 明确 skill 名），或 `workflow-gate` 把 `Runtime skill` 设为本 Loop，即授权下表依赖按其声明用途被嵌套调用。`disable-model-invocation` / `allow_implicit_invocation: false` 只禁止这些 skill 在没有父编排时被孤立自动触发；**不要求**用户再点名每个嵌套 skill，也不要把“请同时点名 scanner”写成继续方式。
 
-| 依赖                            | 用途                                 | 本机检查                         | 缺失时提示（仅提示，不代装）                                                     |
-| ------------------------------- | ------------------------------------ | -------------------------------- | -------------------------------------------------------------------------------- |
-| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装且 host 能执行声明嵌套调用 | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |
-| `codebase-design`               | scanner Explore 的强制词汇与门槛     | 已安装且 scanner 可调用          | 第三方 scanner companion；按其来源安装                                           |
-| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 已安装且真实 Grok adapter 可调用 | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |
-| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | 已安装且当前 runtime 可解析      | 本仓：`npx skills add adonis0123/adonis-skills --skill goal-gate`                |
+| 依赖                            | 用途                                 | 本机检查                                     | 缺失时提示（仅提示，不代装）                                                     |
+| ------------------------------- | ------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------- |
+| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装、可读，且嵌套调用或父会话执行能力可用 | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |
+| `codebase-design`               | scanner Explore 的强制词汇与门槛     | 已安装且 scanner 可调用                      | 第三方 scanner companion；按其来源安装                                           |
+| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 已安装且真实 Grok adapter 可调用             | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |
+| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | 已安装且当前 runtime 可解析                  | 本仓：`npx skills add adonis0123/adonis-skills --skill goal-gate`                |
 
 本 Skill：`npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop`
 
@@ -67,9 +67,9 @@ metadata:
 ## 前置检查
 
 1. 确认当前目录属于 Git 仓库；记录仓库根与工作区状态。若用户给的是附件/引用/Git 定位信息，先按“必需输入”解析并回显 commit identity 与最终 path set；解析成功不再索要 hash/路径。
-2. **解析可调用能力，不只查文件存在**：本 Loop 已被调用时，下表依赖的 `disable-model-invocation` / `allow_implicit_invocation: false` **不等于**本轮不可调用。把父调用当作声明依赖的授权，再检查 host **能否实际加载并执行**：`improve-codebase-architecture`、`codebase-design`、`agentic-review-handoff`、`goal-gate`。仍不可调用：未安装、无法解析、host catalog 拒绝加载/执行、或用户明确禁止。不要因为用户没点名嵌套 skill 而停。
+2. **解析执行能力，不把 frontmatter 当门禁**：本 Loop 已被调用时，`disable-model-invocation` / `allow_implicit_invocation: false` **不等于**本轮不可用。优先使用 host 的嵌套调用；若 host 仅因此不暴露入口，但依赖文件可读，就完整读取依赖并由父会话执行声明内阶段。仍不可用：未安装/不可读、所需 worker/工具无法执行、合同不兼容或用户明确禁止。不要因为 catalog 未注入或用户没点名嵌套 skill 而停。
 3. host 须能启动 scanner 要求的独立只读 exploration worker；`agentic-review-handoff` 须能创建或恢复真实 Grok consult/review 并返回可核对结果。只有 CLI 文件或 skill 名存在不算可用。
-4. 任一 skill 未安装、host 无法执行、delegation 或 Grok capability 缺失 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不要静默降级、复制逻辑、冒充产品或代装。继续方式是安装、启用或补齐运行时能力；禁止写成“请再点名 `improve-codebase-architecture` 或其它已声明嵌套依赖”。
+4. 任一 skill 未安装/不可读、实际 worker/工具无法执行、delegation 或 Grok capability 缺失 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不要静默降级、复制逻辑、冒充产品或代装。`disable-model-invocation` 本身不满足此条件；禁止把继续方式写成“请再点名 scanner”或“请修改第三方 frontmatter”。
 5. 检查 `.review-handoff/**` 与 `$GIT_COMMON_DIR/info/exclude` 协议写；用户禁止且当前需要写 → `HUMAN_GATE`。
 6. 冻结调用时的代码范围。协议产物不混入 scanner scope。每次 scanner pass 前选定本轮 `scanEvidence`（初扫 E1；Fix 后用已确认的 review identity 作复扫 E2）。细节 → `references/ownership-and-evidence.md`。
 7. 只读核对 Goal 关系：`none` / `exact-same-goal` / `broader-compatible` / `conflicting/unclear`。证据可来自 native getter **或**调用方可核对的 parent contract；native getter 不是唯一证据源。本步不创建 Goal。`conflicting/unclear` 服从 `goal-gate` 的 `defer`，扫描前 `HUMAN_GATE`。
@@ -93,7 +93,7 @@ metadata:
 
 ### 1. 扫描候选项
 
-调用已解析的 `improve-codebase-architecture`，**只做探索 + 候选 HTML 报告**：
+调用已解析的 `improve-codebase-architecture`，或按上述父会话执行路径完整读取后执行，**只做探索 + 候选 HTML 报告**：
 
 - 把用户范围直接传给扫描器；禁止走“按 Git 热点推断范围”的默认分支。
 - 允许写临时 HTML 报告。
@@ -164,14 +164,14 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**：
 
-| 结果                                                     | 动作                                                                                                                          |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `PASS`                                                   | 进入原范围重新扫描                                                                                                            |
-| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                                                                       |
-| `PASS_WITH_CONCERNS`                                     | `awaiting_user_decision` 时返回 `HUMAN_GATE`；用户二选一：`run --continue` 续同一 packet，或用 Decision Closure 接受 concerns |
-| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                                                                  |
+| 结果                                                     | 动作                                                                                          |
+| -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `PASS`                                                   | 进入原范围重新扫描                                                                            |
+| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                                       |
+| `PASS_WITH_CONCERNS` / `concerns_require_fix`            | 默认 `completion=pass`：把范围内 concern 当普通 Fix，记 Fix Completion 后自动续审；不询问用户 |
+| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                                  |
 
-不得代用户关闭 `PASS_WITH_CONCERNS` packet、把 verdict 改写为 `PASS`，或在 `awaiting_user_decision` 时进入复扫。恢复步骤 8 两条互斥路径：用户 `run --continue` 后同一 packet 取得最终 `PASS` / `NO_FINDINGS` 且 archived（不要求 Decision Closure）；或用户 `close --reason accept-concerns`，Decision Closure 已记录、packet 已 archived 且没有 open Fix（保留原始 `PASS_WITH_CONCERNS`）。
+本 Loop 使用默认 `completion=pass`，不得因普通 `PASS_WITH_CONCERNS` 生成二次确认；修复并续审到 `PASS` / `NO_FINDINGS` 或预算/真实异常终态。只有用户明确要求 `completion=review` 时，才允许 `awaiting_user_decision` 与 Decision Closure；不得自动接受 concern 或把 verdict 改写为 `PASS`。
 
 每个 scanner pass 都有独立 `scanEvidence`。相等性只比 `baseSha + pathFilter + digest`；`coveredPaths` 仅供审计。缺字段、无法重算或 digest 不一致时，旧 review 不可复用，必须重跑或 `UNVERIFIED`。E1 / E2 / E3 与 Decision Closure 的 `sourceRound` → `references/ownership-and-evidence.md`。
 
@@ -181,26 +181,26 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 ## 循环预算与 Human Gate
 
-默认最多 **3** 个外层轮次。暂停并交给用户：破坏性/不可逆/生产数据/认证/计费/外部发布；候选项要求扩大原始范围；同一已验证 `Fix` 连续两次实施或验证仍失败；3 轮后仍有门槛内 `Fix`；依赖/凭证/环境使完成条件无法验证；底层 review 返回尚无用户 Decision Closure 的 `PASS_WITH_CONCERNS` / `awaiting_user_decision`；delivery / hash / deadlock / 预算异常。
+默认最多 **3** 个外层轮次。暂停并交给用户：破坏性/不可逆/生产数据/认证/计费/外部发布；候选项要求扩大原始范围；同一已验证 `Fix` 连续两次实施或验证仍失败；3 轮后仍有门槛内 `Fix`；依赖/凭证/环境使完成条件无法验证；用户显式选择 `completion=review` 后的 `awaiting_user_decision`；delivery / hash / deadlock / 预算异常。默认 review concern 不停门。
 
 暂停时输出 `HUMAN_GATE`、现有证据、已尝试内容、以及**唯一**需要用户决定的问题。
 
 ## 反漂移（常见失败）
 
-| 失败模式                   | 正确行为                                   |
-| -------------------------- | ------------------------------------------ |
-| 把扫描强度当修改优先级     | 只认五项准入与 Local Fix 条件              |
-| 把代码形状当当前伤害       | 用五项准入；允许零 Architecture Fix        |
-| 用局部 bug 证明需要新架构  | 归 `Local Fix`，在现有 Implementation 内修 |
-| scanner 改名后重开候选     | 按 fingerprint 查 ledger；无新证据不重开   |
-| 批量迁移条目数当严重度     | 只作噪声背景，不作 `Fix` 证据              |
-| 范围外“顺手”修             | `Backlog` 或 `HUMAN_GATE`，不改            |
-| 依赖缺失仍继续             | `MISSING_DEPENDENCIES` 并停                |
-| 为理论优雅重写             | `Reject`/`Backlog`，除非有可复现当前伤害   |
-| 代用户接受 review concerns | `HUMAN_GATE`；只交出 continue / close 命令 |
-| 未跑命令却写通过           | `UNVERIFIED`                               |
-| 报告还有建议就继续轮       | 无 `Fix` 即终态；不必清零报告              |
-| zero-Fix 后再扫一轮求安心  | consult + evidence 新鲜即停止              |
+| 失败模式                     | 正确行为                                                   |
+| ---------------------------- | ---------------------------------------------------------- |
+| 把扫描强度当修改优先级       | 只认五项准入与 Local Fix 条件                              |
+| 把代码形状当当前伤害         | 用五项准入；允许零 Architecture Fix                        |
+| 用局部 bug 证明需要新架构    | 归 `Local Fix`，在现有 Implementation 内修                 |
+| scanner 改名后重开候选       | 按 fingerprint 查 ledger；无新证据不重开                   |
+| 批量迁移条目数当严重度       | 只作噪声背景，不作 `Fix` 证据                              |
+| 范围外“顺手”修               | `Backlog` 或 `HUMAN_GATE`，不改                            |
+| 依赖缺失仍继续               | `MISSING_DEPENDENCIES` 并停                                |
+| 为理论优雅重写               | `Reject`/`Backlog`，除非有可复现当前伤害                   |
+| 普通 review concern 二次确认 | 默认修复并 continue；只有显式 review-only 模式才交用户决定 |
+| 未跑命令却写通过             | `UNVERIFIED`                                               |
+| 报告还有建议就继续轮         | 无 `Fix` 即终态；不必清零报告                              |
+| zero-Fix 后再扫一轮求安心    | consult + evidence 新鲜即停止                              |
 
 ## 完成报告
 
@@ -222,4 +222,4 @@ Architecture Hardening Result
 - Goal: <completed | active-checkpoint | not-created | deferred-conflict>
 ```
 
-只有本 Loop 拥有完成权，且 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、没有未处理的 `Fix` 时，才能把 Goal 标为 completed。若实施过 Fix，最终 review 还必须覆盖报告中的同一 Evidence id，并为 `PASS` / `NO_FINDINGS`，或是由用户 Decision Closure 收口且已归档的 `PASS_WITH_CONCERNS`；不得存在 `awaiting_user_decision` packet。`broader-compatible` 的父 Goal 始终报告 `active-checkpoint`。零 Fix 分支不虚构 review。Codex/Grok 终态字段见 `references/ownership-and-evidence.md`。
+只有本 Loop 拥有完成权，且 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、没有未处理的 `Fix` 时，才能把 Goal 标为 completed。若实施过 Fix，默认模式的最终 review 必须覆盖报告中的同一 Evidence id，并为 `PASS` / `NO_FINDINGS`；仅当用户显式选择 review-only 模式时，才接受已归档的 Decision Closure。不得存在 `awaiting_user_decision` packet。`broader-compatible` 的父 Goal 始终报告 `active-checkpoint`。零 Fix 分支不虚构 review。Codex/Grok 终态字段见 `references/ownership-and-evidence.md`。

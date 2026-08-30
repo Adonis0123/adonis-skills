@@ -11,7 +11,7 @@ Authoritative machine + Reviewer contract for `review-loop run`.
 ## CLI
 
 ```text
-review-loop run --repo <root> --reviewer codex|grok|claude [--base <sha>] [--rounds 3] [--intake]
+review-loop run --repo <root> [--reviewer codex|grok|claude] [--completion pass|review] [--base <sha>] [--rounds 3] [--intake]
 review-loop run --continue --repo <root> [--packet <path>] [--rounds N]
 review-loop fix-completion --repo <root> --packet <path> --body-file <md>
 review-loop close --repo <root> --packet <path> --reason accept-concerns
@@ -89,11 +89,14 @@ Missing any section (including Verdict) is **malformed**. Auto loop asks for one
 
 This table is the auto-loop source of truth (scripts enforce it). Do **not** apply the classic lifecycle table in `packet-addressing.md` to auto packets.
 
-| Verdict                | lifecycle_state          | Typical `last_anchor`                                                   | Action                                                                                        |
-| ---------------------- | ------------------------ | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `PASS` / `NO_FINDINGS` | `archived`               | `review_findings` or `re_review`                                        | Archive packet; terminal report                                                               |
-| `PASS_WITH_CONCERNS`   | `awaiting_user_decision` | first round: `review_findings` (no Fix Handoff); re-review: `re_review` | Terminal report lists concerns; user `close --reason accept-concerns` **or** `run --continue` |
-| `BLOCKED`              | `blocked`                | first round: `fix_handoff`; re-review: `re_review`                      | Return structured blockers; Fixer fixes + `fix-completion` + `run --continue`                 |
+| Mode / Verdict                           | lifecycle_state          | Typical `last_anchor`                                  | Action                                                                                           |
+| ---------------------------------------- | ------------------------ | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| any / `PASS` or `NO_FINDINGS`            | `archived`               | `review_findings` or `re_review`                       | Archive packet; terminal report                                                                  |
+| default `pass` / `PASS_WITH_CONCERNS`    | `blocked`                | first round: `fix_handoff`; re-review: `re_review`     | Return `concerns_require_fix`; Fixer fixes + `fix-completion` + `run --continue`, without asking |
+| explicit `review` / `PASS_WITH_CONCERNS` | `awaiting_user_decision` | first round: `review_findings`; re-review: `re_review` | User may `close --reason accept-concerns` or `run --continue`                                    |
+| any / `BLOCKED`                          | `blocked`                | first round: `fix_handoff`; re-review: `re_review`     | Return blockers; Fixer fixes + `fix-completion` + `run --continue`                               |
+
+Omitting Reviewer selects Codex deterministically. An explicit product wins. Neither path asks the user to choose a product. `completion` and Reviewer persist across `run --continue`.
 
 ### Finding ledger (runtime `auto-run-state.json`)
 
@@ -123,14 +126,14 @@ Verdict invariants (fail-closed before write):
 
 ### Decision Closure (`close --reason accept-concerns`)
 
-User-only terminal path when lifecycle is `awaiting_user_decision` after `PASS_WITH_CONCERNS`:
+Opt-in review-only terminal path when lifecycle is `awaiting_user_decision` after `PASS_WITH_CONCERNS`:
 
 - Requires packet lock + content-hash guard (same as other auto stage writes).
 - Reads `findingCatalog` + non-empty `openConcerns` from runtime state under the lock; missing/corrupt ledger → **fail closed** (no Markdown reverse-parse for re-review packets).
 - Appends `# Decision Closure` with reason, original Verdict `PASS_WITH_CONCERNS`, accepted concern IDs, and timestamp.
 - Sets `last_anchor=decision_closure`, `lifecycle_state=archived`, `mv` to `archive/` under the **packet_id slug** (no path rewrite).
 - Does **not** rewrite the original Verdict to `PASS`, does **not** invent Fix Completion, and does **not** trigger re-review.
-- Auto loop must never call `close` by itself.
+- Default `completion=pass` never calls `close`; it fixes and re-reviews. `close` is available only after explicit `completion=review` parked the packet.
 
 ## Convergence rules (8+1)
 

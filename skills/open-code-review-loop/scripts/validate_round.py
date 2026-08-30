@@ -33,11 +33,13 @@ BUNDLE_MATERIAL_FIELDS = (
     "ocr_version",
     "refs",
     "reviewable_files",
+    "supplemental_reviewable_files",
     "excluded_files",
     "accepted_exclusion_reasons",
     "unaccepted_excluded_files",
     "background",
     "rules",
+    "supplemental_rules",
     "files",
 )
 REVIEW_FIELDS = {
@@ -118,7 +120,8 @@ def parse_args() -> argparse.Namespace:
 def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
     errors: list[str] = []
     reject_unknown_fields(errors, "review", review, REVIEW_FIELDS)
-    expected_entries = bundle.get("reviewable_files")
+    ocr_expected_entries = bundle.get("reviewable_files")
+    supplemental_expected_entries = bundle.get("supplemental_reviewable_files")
     files = review.get("files")
     findings = review.get("findings")
     reviewer = review.get("reviewer")
@@ -148,9 +151,13 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
         errors.append("review.evidence_id must be a canonical sha256 digest")
     if review_evidence_id != bundle_evidence_id:
         errors.append("evidence_id does not match the bundle")
-    if not isinstance(expected_entries, list):
+    if not isinstance(ocr_expected_entries, list):
         errors.append("bundle.reviewable_files must be an array")
-        expected_entries = []
+        ocr_expected_entries = []
+    if not isinstance(supplemental_expected_entries, list):
+        errors.append("bundle.supplemental_reviewable_files must be an array")
+        supplemental_expected_entries = []
+    expected_entries = [*ocr_expected_entries, *supplemental_expected_entries]
     if not isinstance(files, list):
         errors.append("files must be an array")
         files = []
@@ -185,9 +192,22 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
         unaccepted_excluded = []
 
     expected_counter = Counter(identity(entry) for entry in expected_entries)
+    bundle_files = bundle.get("files")
+    if not isinstance(bundle_files, list):
+        errors.append("bundle.files must be an array")
+        bundle_files = []
+    bundle_file_counter = Counter(
+        identity(entry) for entry in bundle_files if isinstance(entry, dict)
+    )
+    if expected_counter != bundle_file_counter:
+        errors.append(
+            "bundle.files must capture every selected review (path, status) identity exactly once"
+        )
     actual_counter = Counter(identity(entry) for entry in files if isinstance(entry, dict))
     if expected_counter != actual_counter:
-        errors.append("files must account for every OCR (path, status) identity exactly once")
+        errors.append(
+            "files must account for every selected review (path, status) identity exactly once"
+        )
 
     reviewed = 0
     skipped = 0
@@ -231,7 +251,7 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
                 errors.append(f"duplicate finding id: {finding_id}")
             finding_ids.add(finding_id)
         if finding.get("path") not in expected_paths:
-            errors.append(f"findings[{index}].path is outside the OCR reviewable set")
+            errors.append(f"findings[{index}].path is outside the selected review set")
         category = finding.get("category")
         if not isinstance(category, str) or category not in CATEGORIES:
             errors.append(f"findings[{index}].category is invalid")
@@ -280,6 +300,8 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
         "verdict": verdict,
         "evidence_id": bundle.get("evidence_id"),
         "total_files": total,
+        "ocr_reviewable_files": len(ocr_expected_entries),
+        "supplemental_reviewable_files": len(supplemental_expected_entries),
         "reviewed_files": reviewed,
         "skipped_files": skipped,
         "coverage_rate": coverage_rate,

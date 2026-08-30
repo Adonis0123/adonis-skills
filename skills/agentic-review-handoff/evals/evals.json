@@ -1,6 +1,6 @@
 {
   "skill_name": "agentic-review-handoff",
-  "description": "Auto/classic routing, truthful Intake/Handoff origin, protocol lifecycle, and trigger regressions. Public claim: do NOT advertise trigger accuracy until the current description is remeasured; historical measurements are not evidence for v3.6.0.",
+  "description": "Auto/classic routing, no-confirm completion, truthful Intake/Handoff origin, protocol lifecycle, and trigger regressions. Public claim: do NOT advertise trigger accuracy until the current description is remeasured; historical measurements are not evidence for v3.7.0.",
   "trigger_evals": [
     {
       "id": "pos-auto-loop-zh",
@@ -195,7 +195,7 @@
       "id": 12,
       "name": "scenario-L-same-session-implementer-auto",
       "prompt": "你刚在当前会话实现并验证了 apps/api/cart-handler.ts。现在继续做 review-fix-re-review 到 PASS，中途不用问我。仓库 ${MOCK_REPO}。",
-      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走默认 review-loop run auto；允许创建 implementer Review Handoff，不添加 --intake，也不误路由到 classic Intake。",
+      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走默认 review-loop run auto；允许创建 implementer Review Handoff，不添加 --intake。默认 completion=pass，Reviewer 未指定则自动选 Codex，PASS_WITH_CONCERNS 也自动修复续审，不询问用户。",
       "files": []
     },
     {
@@ -203,6 +203,13 @@
       "name": "scenario-M-source-prompt-v2-digest-mismatch",
       "prompt": "反馈回显了一个 format_version 2 Review-Prompt-ID，但 prompt 的 --verify-prompt 现在返回 scope_digest_mismatch；HEAD 和 status 路径仍相同。请开始 review。${MOCK_REPO}。",
       "expected_output": "把 source prompt 判为 stale，停止按旧 prompt 开审并要求重新生成/明确新范围；不因 HEAD/status 路径相同继续，不 backfill digest，也不把 prompt 摘要当当前证据。",
+      "files": []
+    },
+    {
+      "id": 14,
+      "name": "scenario-N-default-pwc-needs-no-confirmation",
+      "prompt": "显式调用 agentic-review-handoff 跑当前 diff，没有指定 reviewer。首轮返回 PASS_WITH_CONCERNS，两个 concern 都在冻结范围内且可逆，预算还有两轮。不要真的运行 CLI，只说明默认状态机。${MOCK_REPO}。",
+      "expected_output": "默认自动选择 Codex 且 completion=pass。返回 concerns_require_fix/blocked 和 Fix Handoff，Fixer 修复、验证、写 Fix Completion 后 run --continue；不进入 awaiting_user_decision，不问用户是否继续，也不自动接受 concern。",
       "files": []
     }
   ]

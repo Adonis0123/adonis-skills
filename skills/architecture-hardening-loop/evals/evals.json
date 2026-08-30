@@ -49,7 +49,7 @@
     {
       "id": 4,
       "name": "pass-with-concerns-stops-before-rescan",
-      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 review CLI。architecture-hardening-loop 已完成一个 Fix 和验证，底层 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision；剩余 concern 经工程证据分类为 Backlog，不是 Fix。用户尚未选择继续 review 或接受 concerns。请给出当前结果、允许的下一步，以及能否进入原范围复扫或完成 Goal。",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 review CLI。用户先前明确选择了 review-only 模式。architecture-hardening-loop 已完成一个 Fix 和验证，底层 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision；剩余 concern 经工程证据分类为 Backlog，不是 Fix。用户尚未选择继续 review 或接受 concerns。请给出当前结果、允许的下一步，以及能否进入原范围复扫或完成 Goal。",
       "expected_output": "应返回 HUMAN_GATE。即使剩余 concern 只是 Backlog，也只有用户能选择 run --continue 或 close --reason accept-concerns；编排 agent 不得代关 packet、改写为 PASS、进入复扫、返回 NO_ACTIONABLE_FINDINGS 或完成 Goal。",
       "files": [],
       "expectations": [
@@ -422,6 +422,20 @@
         "明确报告附件不可读且多个候选组导致无法唯一解析",
         "只问一个能消歧的 commit hash/range 问题",
         "不猜测选择器，不默认全仓库，不启动 scanner"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "frontmatter-only-host-refusal-uses-parent-execution",
+      "prompt": "这是只读行为验收。用户显式调用 architecture-hardening-loop 并给出 packages/core/**。improve-codebase-architecture 已安装且 SKILL.md 与必需 reference 都可读，独立只读 exploration worker 和所需工具也可用；host 只因 disable-model-invocation=true 不提供嵌套 Skill 调用入口。其它依赖均可用。请给出预检结果。",
+      "expected_output": "不得返回 MISSING_DEPENDENCIES，也不得要求用户修改第三方 frontmatter 或再次点名 scanner。完整读取 scanner 指令和必需 reference，由父会话执行声明内的 Explore + HTML report-only 阶段，然后继续父 Loop。",
+      "files": [],
+      "expectations": [
+        "把 disable-model-invocation 识别为隐式触发策略而非执行能力缺失",
+        "不返回 MISSING_DEPENDENCIES 或 HUMAN_GATE",
+        "不要求用户修改第三方 skill 或再次确认",
+        "完整读取依赖指令而不是复制或猜测 scanner 逻辑",
+        "由父会话执行 Explore + HTML report-only 阶段"
       ]
     }
   ]

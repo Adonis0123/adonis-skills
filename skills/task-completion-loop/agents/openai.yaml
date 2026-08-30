@@ -1,5 +1,5 @@
 interface:
   display_name: "Task Completion Loop"
   short_description: "Run evidence-fresh multi-agent completion loops"
-  default_prompt: "Use $task-completion-loop only for an explicit whole named-plan/spec completion pipeline. Preflight callable transitive skills plus real Grok and hard-read-only Claude sessions, preserve parent Goal ownership, and require every terminal gate to cover one recomputed final evidence identity."
+  default_prompt: "Use $task-completion-loop for this whole named plan/spec, invoke declared dependencies without asking again, auto-fix review concerns, preserve Goal ownership, and finish only when every gate covers one fresh evidence identity."
   # grill-with-docs is conditional on unresolved user-owned decisions or explicit use.
