@@ -1,0 +1,14 @@
+{
+  "target": "https://dashboard.example.test/operations",
+  "initial_state": "Overview; Last 30 days; default region; scroll top",
+  "tabs": ["Overview", "Orders", "Revenue", "Campaigns"],
+  "capabilities": {
+    "authenticated_browser": "available",
+    "computer_use": "available",
+    "chrome_devtools_mcp": "failed handshake twice",
+    "shell": "available",
+    "installation_allowed": false
+  },
+  "background": "account status polls every 30s and campaign data polls every 60s",
+  "boundary": "read-only; do not change filters permanently or export"
+}

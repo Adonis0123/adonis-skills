@@ -1,0 +1,4 @@
+interface:
+  display_name: "Web Performance Audit"
+  short_description: "Portable runtime audits with safe tool bootstrap"
+  default_prompt: "Use $web-performance-audit to audit this web application read-only, discover available browser capabilities, and provide safe official setup guidance for any evidence-critical tool that is missing."

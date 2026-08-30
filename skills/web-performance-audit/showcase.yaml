@@ -1,0 +1,122 @@
+hero:
+  summary: >-
+    这不是一次 Lighthouse 截图，而是一场可重放的性能侦查：AI 先锁定 16 个交互面，
+    再用同一动作对比暂停、播放和 4× CPU slowdown，最后把产品成本、工具污染、
+    优化方向和停止条件放进同一份证据账本。以下数字均为 synthetic demo。
+  keyMoments:
+    - 16/16 个主 tab 与嵌套状态逐项对账，不用一张截图冒充覆盖
+    - 同一点击从 82ms → 184ms → 296ms，清楚展示播放与低性能设备的叠加风险
+    - React Scan 改变了动作耗时，因此只保留组件定位，剔除被污染的性能数字
+    - 每条发现都带复测、成功判据和停止条件，能直接拆成后续优化任务
+
+sections:
+  - id: lock-the-scene
+    title: 现场 · 先锁死 16 个交互面
+    intro: >-
+      先确认真实页面、代表性数据、初始状态和覆盖清单；没有这一步，后面的数字无法复现。
+    messages:
+      - role: user
+        content: |-
+          这个媒体工作区内容很多。Media、Text、Elements、Library 和里面每个 tab 都要看；
+          用 Chrome DevTools、Recorder、Computer Use、React Scan，只读审计，不要改代码。
+      - role: assistant
+        content: |-
+          **审计契约已建立**
+
+          | 项目 | 锁定值 |
+          | --- | --- |
+          | 数据 | 47:30 大型 synthetic media workspace |
+          | 初始状态 | Synced · Paused · Media / Video · Timeline collapsed |
+          | 覆盖 | 4 个主 tab + 12 个嵌套状态 |
+          | 边界 | Read-only · 不保存 · 不生成 · 不改配置 |
+        toolCalls:
+          - name: Browser
+            summary: 对账视觉导航、DOM/无障碍树和页面 manifest
+            result: 16/16 surfaces matched；顺序与状态指纹已冻结
+          - name: Chrome DevTools
+            summary: 建立无 Recorder、无 React Scan 的 idle 基线
+            result: Clean baseline captured；0 个临时探针残留
+
+  - id: controlled-replay
+    title: 录制 · 同一动作只改一个变量
+    intro: >-
+      Recorder 固定旅程，DevTools 负责定量；暂停、播放和 CPU 节流分开跑，避免把相关性写成因果。
+    messages:
+      - role: assistant
+        content: |-
+          **同一 Library → Media 点击，3 次 synthetic 中位数**
+
+          | 对照 | Click duration | Long tasks | 判读 |
+          | --- | ---: | ---: | --- |
+          | Paused · normal CPU | 82ms | 0 | clean baseline |
+          | Playing · normal CPU | 184ms | 3 | playback contention |
+          | Playing · 4× CPU slowdown | 296ms | 5 | low-end risk |
+        toolCalls:
+          - name: Chrome Recorder
+            summary: 录制并回放 12 秒代表性 tab 旅程
+            result: Replay passed 3/3；最终状态断言一致
+          - name: Chrome DevTools
+            summary: 采集 Event Timing、Task/Script、Long Task、Network 和恢复后 heap
+            result: 播放窗口主线程 busy 约 52%；暂停负对照恢复到低占用
+
+  - id: isolate-attribution
+    title: 归因 · 产品成本和测量污染分账
+    intro: >-
+      工具输出不是天然的产品证据。先做干净 trace，再把 React 定位、图片资源和第三方脚本逐层核实。
+    messages:
+      - role: assistant
+        content: |-
+          **三条证据，三种不同结论**
+
+          - `VERIFIED`：播放 12 秒持续占用约一半主线程，是可复现的用户体验放大器。
+          - `INFERENCE`：Library 有 19 个离屏原图元素，64.8MiB 只是 nominal RGBA8 proxy，不能冒充 decoded/GPU 常驻。
+          - `MEASUREMENT_POLLUTION`：React Scan 开启后同一动作耗时改变 31%，这次 timing 不进入产品基线。
+        toolCalls:
+          - name: React Scan
+            summary: 只重放最慢交互，定位重复 render 的子树
+            result: 找到 3 个高频 commit 子树；instrumented timing 已剔除
+          - name: Source inspection
+            summary: 只读核实播放 tick、面板生命周期和资源订阅归属
+            result: 3 个代码落点与 runtime signal 对齐；其余保持 UNVERIFIED
+
+  - id: bootstrap-capabilities
+    title: 缺工具 · 能降级就继续，真阻塞才安装
+    intro: >-
+      Skill 不假设 MCP、扩展、端口或浏览器 profile 已存在；配置文件里有名字也不等于工具真的可用。
+    messages:
+      - role: user
+        content: 当前客户端没有 Chrome DevTools MCP，也没有 Computer Use，先不要替我安装。
+      - role: assistant
+        content: |-
+          **现在仍可继续**：结构化浏览器覆盖可访问控件，PerformanceObserver 记录受支持的
+          Event Timing、Long Task 和资源信号；trace call tree、Memory、Recorder UI 标为 `UNVERIFIED`。
+
+          **确实阻塞时才给安装卡**：官方来源、将修改的 client 配置、浏览器数据暴露范围、
+          是否需要下载/重启，以及安装后的 discovery → handshake → harmless call 三层验收。
+        toolCalls:
+          - name: Capability discovery
+            summary: 发现当前 host 的浏览器、MCP、视觉控制和脚本能力
+            result: 2 项 available · 2 项 unavailable · 0 项静默安装
+
+  - id: decision-ready-report
+    title: 交付 · 结论可以直接拆成优化任务
+    intro: >-
+      最后的价值不是“跑了很多工具”，而是知道先做什么、如何证明有效，以及什么时候停止。
+    messages:
+      - role: assistant
+        content: |-
+          **Decision-ready backlog**
+
+          | 优先级 | 证据信号 | 最小方向 | 等价复测 / 停止条件 |
+          | --- | --- | --- | --- |
+          | P0 | 播放持续占用主线程 | 分账 renderer、timeline tick、React、decode | production 不复现就停止 |
+          | P1 | 切 tab 在播放/节流下放大 | inactive 面板暂停订阅，不一刀切卸载 | 状态丢失或收益小于波动就停止 |
+          | P1 | 离屏原图像素过量 | 先核实 currentSrc、decoded/resident，再选变体或 windowing | 资源与交互未改善就停止 |
+          | P2 | 79 条第三方请求 | production tracker on/off 对照 | 只少请求、交互不变则不宣称 UX 改善 |
+
+          **收尾**：Recorder / React Scan / CPU throttle 已关闭；页面恢复到 Synced、Paused、
+          Media 初始状态。未保存、未生成、未改代码。
+        toolCalls:
+          - name: Python ledger
+            summary: 校验覆盖、证据语义、建议、复测和恢复字段
+            result: Ledger valid · 16/16 covered · 0 fabricated metrics · state restored

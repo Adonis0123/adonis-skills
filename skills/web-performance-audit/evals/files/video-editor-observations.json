@@ -1,0 +1,20 @@
+{
+  "target": "https://app.example.test/editor/large-project",
+  "video_duration_display": "0:00.00 / 47:30.00",
+  "initial_state": "Synced; paused; Media > Video; Timeline collapsed",
+  "primary_tabs": ["Media", "Text", "Elements", "Library"],
+  "nested_tabs": {
+    "Media": ["Video", "Images", "Audio", "Uploads"],
+    "Text": ["Basic", "Presets"],
+    "Elements": ["Shapes", "Stickers"],
+    "Library": ["All", "Video", "Image", "Audio"]
+  },
+  "requested_tools": [
+    "authenticated browser",
+    "Chrome DevTools",
+    "Computer Use",
+    "Chrome Recorder",
+    "React Scan"
+  ],
+  "boundary": "read-only; do not generate, save, export, or edit code"
+}

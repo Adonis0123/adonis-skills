@@ -1,0 +1,86 @@
+[
+  {
+    "query": "逐个检查这个已登录视频编辑器的所有 tab，Chrome Recorder、React Scan 和 Performance trace 都要用，但先不要改代码",
+    "should_trigger": true
+  },
+  {
+    "query": "This dashboard becomes slower after twenty filter switches. Audit the live page read-only and separate browser evidence from hypotheses.",
+    "should_trigger": true
+  },
+  {
+    "query": "用 Computer Use 操作 DevTools Recorder，把播放中切 Library 的性能问题记录成可复测报告",
+    "should_trigger": true
+  },
+  {
+    "query": "Chrome DevTools MCP 连不上，但浏览器登录态还在；继续做性能排查并写清哪些数据没验证",
+    "should_trigger": true
+  },
+  {
+    "query": "React 页面切换面板时卡顿，先用干净基线，再开 React Scan 看是不是广泛重渲染",
+    "should_trigger": true
+  },
+  {
+    "query": "Profile every mode of this authenticated canvas editor, including cold/warm, playback, throttling, memory recovery, and restoration.",
+    "should_trigger": true
+  },
+  {
+    "query": "这个长列表滚动和视频播放会互相影响吗？用浏览器运行时证据核实，不要直接给优化代码",
+    "should_trigger": true
+  },
+  {
+    "query": "录制一个可重放的 Chrome Recorder 流程，并把 Recorder 开销和产品耗时隔离开",
+    "should_trigger": true
+  },
+  {
+    "query": "我怀疑 tab 来回切十次会泄漏，先只读测 post-GC retained growth 和 negative control",
+    "should_trigger": true
+  },
+  {
+    "query": "给这个复杂 SPA 做一份有 coverage matrix、negative findings、retest 和 stop condition 的性能审计",
+    "should_trigger": true
+  },
+  {
+    "query": "审计这个已登录工作区；如果缺 Chrome DevTools MCP 先给我官方安装卡和安全降级方案，不要直接改全局配置",
+    "should_trigger": true
+  },
+  {
+    "query": "Run Lighthouse once on this public landing page for SEO, accessibility, best practices, and Core Web Vitals.",
+    "should_trigger": false
+  },
+  {
+    "query": "这个按钮点击后 500，直接帮我加 React.memo 并提交代码",
+    "should_trigger": false
+  },
+  {
+    "query": "给登录流程补 Playwright E2E，断言能跳到 dashboard",
+    "should_trigger": false
+  },
+  {
+    "query": "Review this React hook for correctness and fix the stale closure bug.",
+    "should_trigger": false
+  },
+  {
+    "query": "把 Chrome DevTools MCP 安装到代码编辑器并排查为什么 server 握手失败",
+    "should_trigger": false
+  },
+  {
+    "query": "分析 production bundle 并直接拆包，把首屏 JS 减少 30%",
+    "should_trigger": false
+  },
+  {
+    "query": "检查这个页面的 WCAG 对比度、键盘导航和 aria-label",
+    "should_trigger": false
+  },
+  {
+    "query": "页面已经有 trace 结论了，请按 finding F-003 实现虚拟列表并写测试",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我做一次 API 压测，找数据库慢查询和服务端 P99",
+    "should_trigger": false
+  },
+  {
+    "query": "录一段产品操作视频用于培训，不需要性能分析",
+    "should_trigger": false
+  }
+]

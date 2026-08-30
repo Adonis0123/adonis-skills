@@ -1,0 +1,73 @@
+{
+  "skill_name": "web-performance-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "请只读审计附件中的大型媒体工作区。媒体实际时长以附件观测为准；Media、Text、Elements、Library 以及每个嵌套 tab 都要看。要用 Chrome DevTools、Chrome Recorder 和 React Scan，但不要改代码。根据附件先给出可执行审计方案和报告骨架。",
+      "expected_output": "输出应保留精确媒体时长与表面名称，建立逐 tab 的冷开/热切/播放/节流矩阵，把 Recorder 和 React Scan 放进隔离对照，明确证据语义、建议复测和状态恢复。",
+      "files": ["evals/files/video-editor-observations.json"],
+      "assertions": [
+        "输出使用附件中的 47:30.00，而不是擅自改写成约 48 分钟",
+        "输出覆盖 Media、Text、Elements、Library 以及附件列出的嵌套 tab，并为未覆盖路径保留 blocked/skipped 状态",
+        "输出先做无 Recorder/React Scan 的干净基线，再做开启工具的等价动作对照",
+        "输出说明 Recorder 用于可重放旅程和生成 Performance trace，Computer Use 只为 Recorder/DevTools UI 或视觉控件提供操作与视觉证据",
+        "输出不会把单次 click duration 称为 INP，不会把 decoded surface estimate 称为 JS heap 或 GPU 常驻",
+        "每条拟定发现都有建议方向、等价复测、成功判据和停止条件，并包含最终状态恢复",
+        "输出不会用 3 个样本报告 p95；少量重复只报告 median 和 range，并明确不能据此声称统计置信度",
+        "React Scan 只用于浏览器 trace 已定位的最小高风险交互窗口，不要求对每个 tab 全量开启"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "审计一个已登录运营 dashboard 的所有 tab。当前只有能复用登录态的浏览器插件和 Computer Use，Chrome DevTools MCP 握手失败；不能安装新工具，也不能修改页面。请根据附件输出审计执行单，不要假装已经测到 trace。",
+      "expected_output": "输出应在缺少 DevTools MCP 时继续用可用能力做降级审计，严格限制视觉证据的结论，并明确哪些定量项仍为 UNVERIFIED。",
+      "files": ["evals/files/dashboard-capabilities.json"],
+      "assertions": [
+        "输出不会因为 Chrome DevTools MCP 不可用就停止整个审计，也不会声称已经获取 Performance trace",
+        "输出把 Browser/Computer Use 观察与 Event Timing、Long Task、heap 等未取得的定量证据分开",
+        "输出覆盖 Overview、Orders、Revenue、Campaigns 以及各自 cold/warm 和 10 次代表性往返",
+        "输出把后台 polling 作为噪声/潜在成本单独记录，而不是自动归因给 tab click",
+        "输出给出恢复初始 Overview、日期范围和无临时 instrumentation 的收尾要求"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "这个公开营销落地页只需要跑一次 Lighthouse，检查 SEO、可访问性和首屏 Core Web Vitals，不涉及登录、复杂交互、长会话、tab 或运行时卡顿。请直接做最合适的审计。",
+      "expected_output": "输出应识别这是 Lighthouse/Web Quality 边界任务，建议或切换到更合适的通用质量审计，而不是强行执行复杂应用运行时矩阵。",
+      "files": [],
+      "assertions": [
+        "输出明确说明该请求更适合 Lighthouse/Web Quality 审计，而非复杂应用运行时性能流程",
+        "输出不会强制要求 Chrome Recorder、React Scan、10 次 tab 循环或媒体播放矩阵",
+        "输出仍保持不伪造 Lighthouse 结果的证据边界"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "附件里显示 4x CPU 时一次 click 是 300ms、切换 10 轮后 JS heap 增加 80MiB、图片 surface 估算 120MiB、development Coverage unused 96%。请给出性能结论和建议。",
+      "expected_output": "输出应把 4x 明确为 4× CPU slowdown，并拒绝把这些观测直接命名为 field INP、内存泄漏、GPU 常驻或 production bundle 浪费，同时提出能证伪的补测。",
+      "files": ["evals/files/ambiguous-metrics.json"],
+      "assertions": [
+        "输出不会把 300ms 单次 lab click 称为 INP，只能称 Event Timing/click duration 或待核实观测",
+        "输出把 4x 明确写成 4× CPU slowdown，不把它理解为性能提升四倍",
+        "输出不会把 pre-GC 80MiB heap 增长称为泄漏，并要求 recovery/GC 后的重复趋势或 retainer 证据",
+        "输出把 120MiB 降级为 nominal RGBA8 proxy，且不会冒充 JS heap、decoded/resident 实测或 GPU 常驻",
+        "输出不会用 development Coverage 96% 直接下 production bundle 结论",
+        "输出为每项给出一变量对照、复测判据和停止条件"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "我要审计一个已登录的复杂 SPA，但当前客户端没有 Chrome DevTools MCP，也没有 Computer Use。先不要替我安装或改全局配置；请判断还能怎么继续，并在确实需要时给出适合当前客户端的安装引导和验收方法。",
+      "expected_output": "输出应先发现能力而不是猜工具名；给出无安装降级路径。如果定量 trace 确实被阻塞，应提供官方来源、变更范围、隐私风险、授权门和安装后的真实无害调用验收，且不包含任何用户机器路径、固定调试端口或 profile 假设。",
+      "files": [],
+      "assertions": [
+        "输出先区分能力 discovery、handshake 和真实 harmless call，不把配置存在当成可用",
+        "输出在无 DevTools/Computer Use 时仍提供 PerformanceObserver、用户驱动 Recorder、结构化浏览器或 source inspection 等诚实降级路径",
+        "安装建议引用当前官方文档或宿主原生 MCP/plugin 入口，并在给命令前识别当前客户端",
+        "输出不包含用户 home 路径、浏览器可执行文件、固定 debugging port、profile 名或凭证位置",
+        "输出在安装、改 client 配置、装扩展、开启 remote debugging 或重启共享浏览器前要求明确授权",
+        "安装后的验收包含 tool discovery、handshake 和一次真实无害调用；失败时回到 UNVERIFIED 而不是声称已接入"
+      ]
+    }
+  ]
+}

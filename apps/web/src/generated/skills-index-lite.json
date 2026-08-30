@@ -315,6 +315,19 @@
     "updatedAt": "2026-08-10T09:42:36.000Z"
   },
   {
+    "slug": "web-performance-audit",
+    "name": "web-performance-audit",
+    "description": "Run a read-only, evidence-led runtime performance audit of a real web application, especially authenticated editors, dashboards, media tools, long-lived SPAs, and pages with many tabs or states. Use when the user asks to profile slowness, inspect every tab, use Chrome DevTools or Chrome Recorder, run React Scan, compare normal and throttled interactions, find memory or rendering risks, or produce a performance report and recommendations without changing code. Discover available browser capabilities, guide the user through official installation when an important capability is missing, route to validated fallbacks, isolate measurement pollution, and distinguish measured facts from screen observations, hypotheses, and unverified paths. Do not use for a Lighthouse-only SEO/accessibility audit, tool installation with no audit goal, or when the user already wants a specific optimization implemented.",
+    "metadata": {
+      "author": "Adonis",
+      "version": "1.2.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
     "slug": "weekly-report",
     "name": "weekly-report",
     "description": "Generate structured weekly reports from Git commit history across one or multiple repositories. Use when you need concise, project-grouped progress summaries for status reporting.",

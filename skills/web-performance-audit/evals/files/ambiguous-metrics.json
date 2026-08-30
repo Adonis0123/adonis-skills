@@ -1,0 +1,18 @@
+{
+  "build_mode": "development",
+  "runs": 1,
+  "cpu_throttle": "4x",
+  "click_duration_ms": 300,
+  "heap_delta_mib": 80,
+  "heap_measurement": "immediately after ten cycles; no GC or recovery wait",
+  "decoded_rgba_surface_estimate_mib": 120,
+  "coverage_unused_percent": 96,
+  "coverage_scope": "precise function coverage during one short development flow",
+  "missing": [
+    "normal CPU control",
+    "instrumentation-off control",
+    "post-GC trend",
+    "production build",
+    "trace attribution"
+  ]
+}

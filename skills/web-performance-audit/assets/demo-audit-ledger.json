@@ -1,0 +1,238 @@
+{
+  "schema_version": "1.1",
+  "audit": {
+    "title": "Synthetic editor performance audit demo",
+    "target_url": "https://app.example.test/editor/sanitized-project",
+    "target_url_identity_safe": true,
+    "target_url_redaction_notes": "Synthetic route; no account, query, fragment, or private project identifier is recorded.",
+    "scope": "Synthetic fixture demonstrating the report contract; not a live product claim",
+    "requested_surfaces": [
+      {
+        "id": "media-video",
+        "label": "Media / Video",
+        "required_states": ["cold first-open", "warm switch during playback"]
+      },
+      {
+        "id": "library-all",
+        "label": "Library / All",
+        "required_states": [
+          "cold first-open",
+          "warm return",
+          "10-cycle recovery"
+        ]
+      }
+    ],
+    "build_mode": "development",
+    "browser": "Sanitized Chrome trace fixture",
+    "viewport": "1440 x 900; DPR 2",
+    "initial_state": "Paused on Media; instrumentation off",
+    "restored_state": "Paused on Media; instrumentation and throttle off",
+    "write_boundary": "read-only",
+    "privacy": {
+      "content_trust": "trusted",
+      "sensitive_data": "absent",
+      "browser_profile": "isolated",
+      "performance_crux": "not_applicable",
+      "usage_statistics": "not_applicable",
+      "network_headers": "redacted",
+      "browser_tooling_used": false,
+      "browser_access_authorized": false,
+      "target_class": "internal",
+      "risk_decision": "not_applicable",
+      "notes": "Synthetic fixture contains no real URL, account, token, customer data, or response body."
+    },
+    "started_at": "2026-08-30T00:00:00+00:00",
+    "finished_at": "2026-08-30T00:05:00+00:00",
+    "tools": [
+      {
+        "name": "Sanitized trace fixture",
+        "version": "1",
+        "status": "available",
+        "role": "Demonstrate trace, DOM, network, and recovery evidence fields",
+        "caveat": "Synthetic values demonstrate output semantics and are not current product measurements.",
+        "proof": {
+          "discovery": {
+            "performed": true,
+            "evidence": "assets/demo-audit-ledger.json loaded"
+          },
+          "handshake": {
+            "performed": true,
+            "evidence": "schema_version 1.1 recognized"
+          },
+          "harmless_call": {
+            "performed": true,
+            "evidence": "validator and renderer completed without product access"
+          }
+        }
+      }
+    ],
+    "restoration": {
+      "initial_state_restored": true,
+      "instrumentation_removed": true,
+      "throttling_removed": true,
+      "media_stopped": true,
+      "product_data_changed": false,
+      "code_changed": false,
+      "notes": "Synthetic demo did not open or mutate a product page."
+    }
+  },
+  "coverage": [
+    {
+      "surface_id": "media-video",
+      "surface": "Media / Video",
+      "state": "cold first-open",
+      "conditions": "synthetic fixture; normal CPU; instrumentation off",
+      "status": "covered",
+      "evidence": ["TRACE-DEMO-000"],
+      "notes": ""
+    },
+    {
+      "surface_id": "media-video",
+      "surface": "Media / Video",
+      "state": "warm switch during playback",
+      "conditions": "synthetic fixture; 4× CPU slowdown; instrumentation off",
+      "status": "covered",
+      "evidence": ["TRACE-DEMO-001"],
+      "notes": ""
+    },
+    {
+      "surface_id": "library-all",
+      "surface": "Library / All",
+      "state": "cold first-open",
+      "conditions": "synthetic 48-item fixture; normal CPU; paused",
+      "status": "covered",
+      "evidence": ["DOM-DEMO-001", "NET-DEMO-001"],
+      "notes": ""
+    },
+    {
+      "surface_id": "library-all",
+      "surface": "Library / All",
+      "state": "warm return",
+      "conditions": "synthetic 48-item fixture; normal CPU; paused",
+      "status": "covered",
+      "evidence": ["DOM-DEMO-002"],
+      "notes": ""
+    },
+    {
+      "surface_id": "library-all",
+      "surface": "Library / All",
+      "state": "10-cycle recovery",
+      "conditions": "synthetic 48-item fixture; normal CPU; fixed recovery",
+      "status": "covered",
+      "evidence": ["MEM-DEMO-001"],
+      "notes": ""
+    }
+  ],
+  "findings": [
+    {
+      "id": "F-001",
+      "priority": "P2",
+      "confidence": "VERIFIED",
+      "title": "Synthetic playback switch records a 296 ms lab click duration",
+      "surface_id": "media-video",
+      "surface": "Media / Video",
+      "conditions": "synthetic fixture; playback active; 4× CPU slowdown; instrumentation off; three equivalent runs",
+      "user_impact": "The fixture records a 296 ms lab interaction; it does not establish a product budget violation, regression, or visible delay.",
+      "causal_status": "measured",
+      "caveats": "This is a lab click duration, not field INP and not a current product result.",
+      "evidence": [
+        {
+          "signal": "click duration median",
+          "value": "296",
+          "unit": "ms",
+          "conditions": "three synthetic equivalent runs; playback; 4× CPU slowdown",
+          "source": "trace",
+          "tool": "Sanitized trace fixture"
+        }
+      ],
+      "recommendation": {
+        "direction": "Use a real trace to split renderer, media, framework, and third-party work before choosing an implementation.",
+        "retest": "Repeat the same playback switch with normal CPU and 4× CPU slowdown, instrumentation off, after any authorized change.",
+        "success_criterion": "Meet a product-approved interaction budget with improvement larger than run-to-run variation and no media regression.",
+        "stop_condition": "Stop if a production-equivalent clean run does not reproduce the delay or the difference falls inside run-to-run variation."
+      }
+    },
+    {
+      "id": "F-002",
+      "priority": "P2",
+      "confidence": "INFERENCE",
+      "title": "Offscreen mounted originals are a decode-pressure hypothesis",
+      "surface_id": "library-all",
+      "surface": "Library / All",
+      "conditions": "synthetic 48-item Library DOM inventory; 14 cards visible",
+      "user_impact": "If the mounted originals are loaded and decoded, they may compete with scrolling and playback resources.",
+      "causal_status": "correlated",
+      "caveats": "Mounted is not loaded, decoded, or resident; the nominal RGBA8 proxy is not JS heap or GPU residency.",
+      "evidence": [
+        {
+          "signal": "offscreen mounted original-image elements",
+          "value": "19",
+          "unit": "elements",
+          "conditions": "synthetic 48-item Library DOM inventory",
+          "source": "dom",
+          "tool": "Sanitized trace fixture"
+        }
+      ],
+      "recommendation": {
+        "direction": "First verify loaded, decoded, and resident states plus interaction impact; only then consider card variants or windowing.",
+        "retest": "Measure the same list with resource metadata, decoded-state evidence, a fixed scroll, and playback negative control.",
+        "success_criterion": "Demonstrate less decode/resource pressure and a material interaction improvement without blank cards.",
+        "stop_condition": "Stop if offscreen resources are not decoded/resident or the interaction signal does not improve."
+      }
+    },
+    {
+      "id": "F-003",
+      "priority": "P3",
+      "confidence": "VERIFIED",
+      "title": "The fixture contains repeated third-party requests",
+      "surface_id": "library-all",
+      "surface": "Library / All",
+      "conditions": "synthetic tab-exploration window",
+      "user_impact": "No user-visible performance impact is established by request count alone.",
+      "causal_status": "measured",
+      "caveats": "Request count is not bandwidth, main-thread cost, privacy impact, or causal attribution.",
+      "evidence": [
+        {
+          "signal": "third-party request count",
+          "value": "79",
+          "unit": "requests",
+          "conditions": "synthetic tab-exploration window",
+          "source": "network",
+          "tool": "Sanitized trace fixture"
+        }
+      ],
+      "recommendation": {
+        "direction": "Attribute transfer and main-thread work before changing tracker lifecycle.",
+        "retest": "Compare an equivalent product-approved tracker-on/off or isolated initiator trace.",
+        "success_criterion": "Show a reproducible user-facing or resource improvement without losing required analytics.",
+        "stop_condition": "Stop if the requests are cached/idle and have no material transfer, task, or interaction cost."
+      }
+    }
+  ],
+  "negative_findings": [
+    {
+      "confidence": "VERIFIED",
+      "causal_status": "measured",
+      "claim": "The synthetic 10-cycle fixture does not show monotonic post-recovery DOM growth.",
+      "conditions": "ten equivalent cycles plus fixed recovery",
+      "scope_limit": "Does not cover a long editing session or media decoder resources.",
+      "evidence": [
+        {
+          "signal": "post-recovery DOM node delta",
+          "value": "-10",
+          "unit": "nodes",
+          "conditions": "synthetic ten-cycle fixture",
+          "source": "browser_metric",
+          "tool": "Sanitized trace fixture"
+        }
+      ]
+    }
+  ],
+  "unverified": [
+    {
+      "path": "production-equivalent product behavior",
+      "reason": "This artifact is a synthetic showcase, not a live browser run.",
+      "needed_evidence": "Run the same contract against the authorized exact target with clean production-equivalent traces."
+    }
+  ]
+}
