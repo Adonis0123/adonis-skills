@@ -3,7 +3,7 @@ name: web-performance-audit
 description: Run a read-only, evidence-led runtime performance audit of a real web application, especially authenticated editors, dashboards, media tools, long-lived SPAs, and pages with many tabs or states. Use when the user asks to profile slowness, inspect every tab, use Chrome DevTools or Chrome Recorder, run React Scan, compare normal and throttled interactions, find memory or rendering risks, or produce a performance report and recommendations without changing code. Discover available browser capabilities, guide the user through official installation when an important capability is missing, route to validated fallbacks, isolate measurement pollution, and distinguish measured facts from screen observations, hypotheses, and unverified paths. Do not use for a Lighthouse-only SEO/accessibility audit, tool installation with no audit goal, or when the user already wants a specific optimization implemented.
 metadata:
   author: Adonis
-  version: "1.2.0"
+  version: "1.2.1"
 ---
 
 # Web Performance Audit
@@ -46,7 +46,7 @@ If the user supplied a large or representative dataset, preserve it. If a danger
 
 Read `{{skill_path}}/references/tool-routing.md` before the first browser action. Here and below, `{{skill_path}}` is a documentation placeholder for the directory containing this loaded `SKILL.md`; replace it with the resolved directory before opening a file or running a command. Never pass the literal braces to a shell. Discover available capabilities; do not assume product-specific tool names.
 
-If a requested or evidence-critical capability is unavailable, failed, or only present in configuration, also read `{{skill_path}}/references/capability-bootstrap.md`. Continue with safe fallbacks when they can answer the question. When the missing layer materially blocks the requested result, provide the installation card from that reference and wait for authorization before changing client configuration, installing packages/extensions, or restarting a shared browser.
+If a requested or evidence-critical capability is unavailable, failed, or only present in configuration, also read `{{skill_path}}/references/capability-bootstrap.md`. A service-specific browser Skill already installed in the host owns connection, profile identity, page selection, and recovery; follow it before proposing a second adapter. Continue with safe fallbacks when they can answer the question. When the missing layer materially blocks the requested result, provide the installation card from that reference and wait for authorization before changing client configuration, installing packages/extensions, or restarting a shared browser.
 
 Preferred layers:
 

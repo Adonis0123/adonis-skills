@@ -8,20 +8,20 @@ Three workflow ecosystems show up in the runtime: `mattpocock` (grilling / archi
 
 ### Challenge + grilling — the creative-work HARD-GATE
 
-Creative work without a paid design/spec routes to **Challenge**, not to a deleted `brainstorming` skill. Runtime is `grilling` (or `grill-with-docs` when durable ADR/glossary writes are requested).
+Creative work with unresolved product/design choices and no paid design/spec routes to **Challenge**, not to a deleted `brainstorming` skill. Runtime is `grilling` (or `grill-with-docs` when the same request explicitly requires durable ADR/glossary writes).
 
 Challenge requires a thesis:
 
 - `Thesis: user-provided` — user already stated the preferred approach; load grilling next.
-- `Thesis: agent-strawman` — draft a short strawman, **confirm with the user**, then load grilling (S1). Self-grilling an unconfirmed strawman is a net downgrade of the old creative gate.
+- `Thesis: agent-strawman` — draft a short strawman. Confirm when product/taste direction remains user-owned; when the user explicitly delegates the reversible direction, adopt it, record the assumption, and load grilling without another confirmation.
 
-A request to **replicate an existing UI**, **add a new screen**, **compose a page from a design system**, or **change product/UI behavior** counts as creative work even when the data contract is fully specified. Rule #2 closes that gap. Exact technical behavior specified in the prompt (for example a named exported function with a full signature and semantics) can still use Rule #2's Light + TDD exception.
+A request to **replicate an existing UI**, **add a new screen**, **compose a page from a design system**, or **change product/UI behavior** counts as creative work when visible behavior or product direction still has unresolved what/why choices. A fully specified component state, copy change, interaction, function, or API contract is spec-in-prompt and can use Rule #2's Light exception.
 
-Exception: when the user references an existing design doc or spec by path, the design gate has already been paid. Route to Plan (or Light + TDD for small direct implementation) and record the spec path in `Assumptions`.
+Exception: when the user references an existing design doc or spec by path, the design gate has already been paid. Route by the immediate request: **Plan** only for task breakdown, or **Light** for direct implementation regardless of scope. Add TDD when behavior has regression risk, and record the spec path in `Assumptions`.
 
 ### discuss-before-plan — the decision gate, not a Challenge substitute
 
-Activates when **named options exist and the bottleneck is picking one**: Stripe vs Lemon Squeezy, monolith vs microservices, sync vs async. It surfaces tradeoffs, locks decisions in a Decision Summary, then asks whether to persist a spec.
+Activates when **named options exist and the bottleneck is picking one**: Stripe vs Lemon Squeezy, monolith vs microservices, sync vs async. It surfaces tradeoffs and locks decisions in a Decision Summary. Persistence is optional and requested only when the user, repository rules, or cross-session handoff needs it.
 
 It does not replace Challenge. Challenge pressure-tests a thesis / opens a still-wide space; `discuss-before-plan` closes among named options. Tiebreaker: Challenge when widening or thesis-stressing; Discuss when narrowing.
 
@@ -50,20 +50,21 @@ Partitions the lifecycle into phases (`idea-refine` / `spec-driven-development` 
 
 Tag the prompt's phase before committing to a Route. The Phase column is never part of the output block.
 
-| Phase                                            | Internal label  | Best-fit Route                                    | Runtime skill (bare slug)                 |
-| ------------------------------------------------ | --------------- | ------------------------------------------------- | ----------------------------------------- |
-| Ideation / thesis stress / creative without spec | `define-design` | Challenge                                         | `grilling` or `grill-with-docs`           |
-| Named options, pick one                          | `decide`        | Discuss                                           | `discuss-before-plan`                     |
-| Spec or RFC exists, break into tasks             | `plan`          | Plan                                              | `writing-plans`                           |
-| Broad or multi-context task breakdown            | `build-plan`    | Plan                                              | `writing-plans`                           |
-| Existing-code structure diagnose                 | `arch-diagnose` | Architecture                                      | `improve-codebase-architecture`           |
-| Scoped architecture harden loop                  | `arch-harden`   | Architecture                                      | `architecture-hardening-loop`             |
-| Sequential or context-heavy implementation       | `build`         | Light or Plan                                     | direct local work after user approval     |
-| Symptom / bug / failing test                     | `verify-bug`    | Light                                             | `systematic-debugging`                    |
-| Claim of done / ready-to-ship                    | `verify-ship`   | Light                                             | direct verification with fresh evidence   |
-| Cross-agent review / fix-then-re-review          | `review`        | Review-Handoff                                    | `agentic-review-handoff`                  |
-| Explicit whole named-plan completion pipeline    | `full-complete` | direct downstream handoff (no Route enum)         | `task-completion-loop`                    |
-| Pre-launch checklist with persona fan-out        | `ship`          | Light (flag unsupported fan-out in `Assumptions`) | direct verification with available checks |
+| Phase                                             | Internal label  | Best-fit Route                                    | Runtime skill (bare slug)                 |
+| ------------------------------------------------- | --------------- | ------------------------------------------------- | ----------------------------------------- |
+| Read-only lookup                                  | `lookup`        | Direct                                            | `none`                                    |
+| Ideation / thesis stress / creative without spec  | `define-design` | Challenge                                         | `grilling` or `grill-with-docs`           |
+| Named options, pick one                           | `decide`        | Discuss                                           | `discuss-before-plan`                     |
+| Spec or RFC exists, break into tasks              | `plan`          | Plan                                              | `writing-plans`                           |
+| Broad or multi-context task breakdown             | `build-plan`    | Plan                                              | `writing-plans`                           |
+| Existing-code structure diagnose                  | `arch-diagnose` | Architecture                                      | `improve-codebase-architecture`           |
+| Scoped architecture harden loop                   | `arch-harden`   | Architecture                                      | `architecture-hardening-loop`             |
+| Sequential or context-heavy direct implementation | `build`         | Light                                             | direct local work or TDD                  |
+| Symptom / bug / failing test                      | `verify-bug`    | Light                                             | `systematic-debugging`                    |
+| Claim of done / ready-to-ship                     | `verify-ship`   | Light                                             | direct verification with fresh evidence   |
+| Cross-agent review / fix-then-re-review           | `review`        | Review-Handoff                                    | `agentic-review-handoff`                  |
+| Explicit whole named-plan completion pipeline     | `full-complete` | direct downstream handoff (no Route enum)         | `task-completion-loop`                    |
+| Pre-launch checklist with persona fan-out         | `ship`          | Light (flag unsupported fan-out in `Assumptions`) | direct verification with available checks |
 
 If the phase maps to a Route the gate supports, emit it. If it maps to a phase the gate does not yet model cleanly (today: persona-fan-out `ship`), route to the nearest existing Route and surface the gap in `Assumptions`.
 

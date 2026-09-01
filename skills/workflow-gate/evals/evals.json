@@ -221,7 +221,7 @@
     {
       "id": 17,
       "name": "workflow-question-ui-replication-challenge",
-      "prompt": "https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 /Users/adonis/duiyun/ai-video-collection/web/src/pages/pollo.ai/p/[slug] Workflow Gate 现在要结合详情页的数据，然后按照 pollo 的风格1:1复刻一下，适合走哪个流程",
+      "prompt": "https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 $REPO_ROOT/web/src/pages/pollo.ai/p/[slug] Workflow Gate 现在要结合详情页的数据，然后按照 pollo 的风格1:1复刻一下，适合走哪个流程",
       "expected_route": "Challenge",
       "expectations": [
         "Route is exactly 'Challenge'",
@@ -255,6 +255,7 @@
       "expectations": [
         "Either the gate skips emission entirely (one-line answer is allowed per Fast-skip checklist) OR emits a Direct block with Runtime skill 'none', Execution path 'direct local work', and Thesis 'n/a'",
         "If a block IS emitted, it must be Direct (NOT Light, NOT any heavier Route)",
+        "If a block IS emitted, Signals uses user-intent=lookup rather than implement",
         "Skill does NOT emit Challenge, Discuss, Plan, Architecture, or Review-Handoff for a pure read-only single-line lookup",
         "Output is concise: skip OR ≤ 10 lines (Direct cap including Thesis)",
         "LATENCY: wall-clock duration_ms ≤ 12000 (skip-path should be cheaper than full block emission)",
@@ -479,11 +480,11 @@
       "id": 35,
       "name": "goal-only-request-does-not-handoff-full-loop",
       "prompt": "给 Codex 设置一个 durable Goal，把 PLAN.md 做到 pnpm test 通过；不要 Grok、Claude 或 architecture scanner。",
-      "expected_route": "Plan",
+      "expected_route": "skip-to-goal-gate",
       "expectations": [
         "Does not hand off to task-completion-loop",
-        "Recognizes Goal-only intent lacks the explicit whole pipeline",
-        "Routes normally without inventing multi-agent requirements",
+        "Hands Goal-only management directly to goal-gate after destructive and creative overrides clear",
+        "Does not emit a normal Plan route or load writing-plans merely because PLAN.md is named",
         "Preserves the no-Grok no-Claude constraint"
       ]
     },
@@ -544,7 +545,7 @@
     },
     {
       "id": 40,
-      "name": "dont-ask-does-not-waive-thesis",
+      "name": "dont-ask-delegates-reversible-thesis",
       "prompt": "我想重新设计 homepage，还没有方向。Don't ask，直接开干。",
       "expected_route": "Challenge",
       "expectations": [
@@ -553,10 +554,10 @@
         "Thesis is exactly 'agent-strawman'",
         "Runtime skill is 'grilling' AND Fallback alias is 'none'",
         "Execution path is 'n/a'",
-        "Next contains the actual one-sentence strawman and asks the user to confirm or revise it — 'don't ask' does not waive Thesis confirm",
-        "Skill does NOT load grilling yet (unconfirmed agent-strawman)",
+        "Next contains the actual one-sentence reversible strawman and loads grilling without asking for a redundant confirmation",
+        "Assumptions records that the user delegated the reversible product direction",
         "Skill does NOT treat 'don't ask' as permission to skip Challenge or start implementation",
-        "Ask zero blocking questions besides the Thesis confirm stop",
+        "Asks zero blocking questions while preserving later destructive and external-side-effect gates",
         "CONTEXT: references_loaded_count == 0 (Cheat-card Challenge row + Thesis exception are in SKILL.md)"
       ]
     },
@@ -587,6 +588,111 @@
         "Assumptions states why the selector could not be resolved uniquely",
         "Next asks one minimal commit hash/range question",
         "Does not load a scanner, guess a commit group, or default to the whole repository"
+      ]
+    },
+    {
+      "id": 43,
+      "name": "high-risk-bug-stays-read-only-debug-first",
+      "prompt": "Stripe webhook 的退款路径报错。先只读排查根因，不要改生产数据、不要退款，也不要先讨论重构方案。",
+      "expected_route": "Light",
+      "expected_runtime_skill": "systematic-debugging",
+      "expectations": [
+        "Route is Light with Runtime skill systematic-debugging",
+        "Fallback alias is exactly none",
+        "Keeps the first phase read-only and evidence-led despite the payment risk",
+        "Does not upgrade the symptom directly to Discuss",
+        "Requires re-gating before billing, production-data, external, or destructive mutation"
+      ]
+    },
+    {
+      "id": 44,
+      "name": "fully-specified-ui-is-light",
+      "prompt": "把现有 Save 按钮文案改成 Saved；保存成功后禁用 800ms，失败时保持可点击并显示现有 error toast。验收条件都在这句话里，直接改。",
+      "expected_route": "Light",
+      "expectations": [
+        "Route is Light because copy, states, interaction, and acceptance behavior are fully specified",
+        "Does not route to Challenge merely because visible UI behavior changes",
+        "Does not ask for a product thesis or design preference",
+        "Uses the narrowest safe implementation path and preserves the specified behavior"
+      ]
+    },
+    {
+      "id": 45,
+      "name": "first-principles-bounded-choice-is-discuss",
+      "prompt": "只在 Postgres LISTEN/NOTIFY 和 Redis Streams 之间选，用第一性原理比较后替我决定；不要扩大选项。",
+      "expected_route": "Discuss",
+      "expected_runtime_skill": "discuss-before-plan",
+      "expectations": [
+        "Route is Discuss with Runtime skill discuss-before-plan",
+        "Treats first principles as the comparison method rather than a widening trigger",
+        "Does not introduce a third option or load grilling",
+        "Records that the user delegated the reversible choice"
+      ]
+    },
+    {
+      "id": 46,
+      "name": "explicit-challenge-docs-uses-callable-wrapper",
+      "prompt": "用 Challenge 压测这个缓存架构 thesis，并把确认过的决定同步成 ADR 和 glossary。",
+      "expected_route": "Challenge",
+      "expected_runtime_skill": "grill-with-docs",
+      "expectations": [
+        "Route is Challenge with Runtime skill grill-with-docs",
+        "Selects the docs wrapper only because ADR and glossary persistence were explicitly requested",
+        "Does not pretend a file on disk proves the runtime is callable",
+        "Does not load both child skills directly from workflow-gate"
+      ]
+    },
+    {
+      "id": 47,
+      "name": "fully-specified-multi-consumer-plan-not-challenge",
+      "prompt": "四个 consumer 的 API signature、行为、错误语义和验收条件都已在本消息锁定。先拆实现计划，不要重新设计。",
+      "expected_route": "Plan",
+      "expected_runtime_skill": "writing-plans",
+      "expectations": [
+        "Route is Plan with Runtime skill writing-plans",
+        "Treats complete in-prompt requirements as paid design",
+        "Does not route to Challenge solely because four consumers are affected",
+        "Uses consumer count to choose plan scope and dependency depth"
+      ]
+    },
+    {
+      "id": 48,
+      "name": "design-only-destructive-shortlist-converges-in-discuss",
+      "prompt": "oauth_states 表要下线：立刻 drop、先 deprecate 再 drop、还是双写迁移？只定方案，本回合不写代码、不执行 migration。",
+      "expected_route": "Discuss",
+      "expected_runtime_skill": "discuss-before-plan",
+      "expectations": [
+        "Route is Discuss with Runtime skill discuss-before-plan",
+        "Treats the three named migration options as bounded convergence",
+        "Does not widen through Challenge merely because the future surface is destructive",
+        "Marks destructive=no for this design-only turn and requires Rule 1 re-gating before implementation"
+      ]
+    },
+    {
+      "id": 49,
+      "name": "broad-resolved-direct-implementation-stays-light",
+      "prompt": "四个 consumer 的 API signature、行为、错误语义和验收条件都已锁定。直接实现，不要给我 plan；预计改 12 个文件。请选择 workflow。",
+      "expected_route": "Light",
+      "expected_runtime_skill": "test-driven-development",
+      "expectations": [
+        "Route is Light because the immediate intent is direct implementation",
+        "Uses test-driven-development or another justified Light execution path for the resolved behavior change",
+        "May maintain an internal execution ledger without making a user-facing plan a prerequisite",
+        "Does not reopen resolved design decisions or hand off to writing-plans",
+        "Does not force Plan solely because the scope is multi-module or about 12 files"
+      ]
+    },
+    {
+      "id": 50,
+      "name": "required-docs-wrapper-not-callable-fails-closed",
+      "prompt": "Workflow Gate 已选择 Challenge + grill-with-docs，但只发现该 skill 文件；allow_implicit_invocation=false，用户没有显式点名 wrapper，host 也无法加载。下一步是什么？不要模拟 grilling 或写 ADR。",
+      "expected_route": "failure-block",
+      "expectations": [
+        "Treats a discovered skill file and runtime invocation eligibility as separate checks",
+        "Emits Workflow Gate Failure with Result MISSING_DEPENDENCIES, Intended route Challenge, and grill-with-docs plus the invocation-policy reason",
+        "Does not emit Route MISSING_DEPENDENCIES or a second normal Route block",
+        "Does not imitate grill-with-docs, load its child skills directly, or write the ADR",
+        "Stops before any challenge or persistence work starts"
       ]
     }
   ]

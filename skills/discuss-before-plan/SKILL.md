@@ -1,9 +1,9 @@
 ---
 name: discuss-before-plan
-description: "Resolve a bounded design choice before planning. Use when the user presents alternatives, or a proposal with an implicit status-quo alternative, and asks to compare, recommend, or decide. Also use when they delegate the choice."
+description: "Resolve a bounded design choice before planning. Use when the user presents named alternatives, a proposal with an implicit status-quo alternative, or delegates a decision and asks to compare, recommend, or decide. Do not use for open-ended option generation, a fully specified implementation, or a ready spec that only needs task planning."
 metadata:
   author: adonis
-  version: "2.3.1"
+  version: "2.5.0"
 ---
 
 # Discuss Before Plan
@@ -15,16 +15,17 @@ Converge on a bounded choice, record it, then plan only when requested. This ski
 - If a new decision appears during Planning, stop and return to Deliberation.
 - A Decision Summary in chat is enough to lock a choice; a file is optional.
 - “You decide” delegates a choice, not authorization for destructive, production, auth, billing, external-message, or otherwise hard-to-reverse action.
+- A design-only choice about a future sensitive or hard-to-reverse action may converge here. Its Summary must state that implementation is not authorized and requires a fresh safety gate.
 </HARD-GATE>
 
 ## Route First
 
 First match wins:
 
-1. **Safety hold** — the requested choice would authorize a sensitive or hard-to-reverse action. Ask the single blocking authorization question or defer. Do not mark the action `agent-committed`.
+1. **Safety hold** — this turn would execute a sensitive or hard-to-reverse action, directly authorize its execution, or make an external commitment. Ask the single blocking authorization question or defer. Do not mark the action `agent-committed`. A design-only comparison of future destructive options is not a hold: converge without executing, and record the required implementation re-gate in the Summary.
 2. **Skip** — the interface and behavior are already specified, or this is typo / formatting / mechanical execution with no remaining choice. Do the work; do not manufacture a Decision Summary.
-3. **Redirect widening** — the user wants first-principles exploration, alternative generation, or says there is no shortlist / preferred approach. Point to Challenge (`grilling`) and stop. Do not impersonate its interview.
-4. **Persist only** — the choice is already locked and the user asks for a spec, ADR, or plan file. Skip Deliberation and use [references/doc-conventions.md](references/doc-conventions.md).
+3. **Redirect widening** — the user wants to expand the option space, generate alternatives, or has no shortlist / thesis. Point to Challenge (`grilling`) and stop. “First principles” alone is an analysis method, not proof that widening is needed.
+4. **Already locked** — skip Deliberation. If the user wants to pressure-test the locked thesis, hand off to `grilling`. For a requested Spec/ADR, use [references/doc-conventions.md](references/doc-conventions.md). For an implementation plan, hand off to `writing-plans`; do not maintain a second planning contract here.
 5. **Decide now** — the choice is bounded and the user says “you decide”, “don't ask”, or equivalent. Use the fast path below.
 6. **Deliberate** — the user wants to participate in the bounded choice. Choose light or standard mode below.
 
@@ -32,14 +33,14 @@ A proposal may have an implicit alternative: “replace polling with WebSocket�
 
 ## Decide-now Fast Path
 
-Gather cheap facts from code, configuration, and docs when they could change the recommendation. Do not ask the user for facts you can inspect. If facts remain unavailable, state the decision-relevant assumptions instead of adding a confirmation round.
+Gather the cheapest code, configuration, doc, or history evidence that could overturn the recommendation, then stop searching. Do not ask the user for facts you can inspect. If facts remain unavailable, state the decision-relevant assumptions instead of adding a confirmation round.
 
 In one turn:
 
 1. Pick one option and give the decisive reason plus the rejected alternative.
 2. Emit a Decision Summary with `commitment: agent-committed`.
 3. Skip the persist question and second confirmation. Default to chat-only.
-4. If the user also requested a plan, write it against the Summary. Otherwise stop after the decision.
+4. If the user also requested a plan, hand the locked Summary to `writing-plans` without a persistence or confirmation round. Otherwise stop after the decision.
 
 Write a file only when the user requested one or repository rules require it.
 
@@ -47,7 +48,7 @@ Write a file only when the user requested one or repository rules require it.
 
 Use **light mode** for one local decision with two alternatives (including proposal vs status quo), small impact, and no architecture-level consequence. Recommend one option, explain the rejected alternative, then ask one confirmation question. Aim to finish in 1–2 rounds.
 
-Use **standard mode** for multiple dependent decisions, three or more credible alternatives, cross-module/public-interface impact, or architecture-level consequence.
+Use **standard mode** for multiple dependent decisions, three or more credible alternatives, cross-module/public-interface impact, or architecture-level consequence. Ask the current independent frontier together, capped at three questions per round; defer questions that depend on answers in the same round.
 
 ### 1. Establish the decision
 
@@ -57,7 +58,13 @@ Inspect relevant code, configuration, docs, and history. Keep these distinct:
 - **Assumptions** — inferred and still falsifiable
 - **Open decisions** — require a choice, not more lookup
 
-Ask only the unresolved question that most changes downstream choices. Do not ask the user for discoverable facts. Pair the question with a provisional recommendation and say which answer would overturn it; a question-only turn needlessly returns the whole decision burden. If the missing fact makes any recommendation irresponsible, say that explicitly instead of guessing.
+Classify each unresolved item before asking:
+
+- **Fact** — inspect it locally or through an appropriate read-only source.
+- **Agent decision** — choose a reversible, low-risk implementation default when the user delegated the decision or no product preference is involved.
+- **User decision** — ask only for safety/external-side-effect authorization, a hard-to-reverse choice with substantive tradeoffs, product/taste preference, or a fact only the user can provide.
+
+Ask the current user-owned frontier, not every open detail. Pair each question with a provisional recommendation and say which answer would overturn it; a question-only turn needlessly returns the whole decision burden. If a missing fact makes any recommendation irresponsible, say that explicitly instead of guessing.
 
 ### 2. Compare one decision
 
@@ -90,21 +97,19 @@ For user-confirmed deliberation, walk the Summary once. For Decide-now, emit it 
 
 ## Persistence
 
-The in-chat Summary is the commitment for this session. A Spec / Decision Record preserves it across sessions.
+The in-chat Summary is the default commitment for this session. A Spec / Decision Record is optional persistence, not a planning prerequisite.
 
-- If the user did not waive questions, ask once whether to persist before Planning; do not repeatedly chase an unanswered preference.
-- If they waived, default to chat-only and do not ask.
+- Persist only when the user asks, repository rules require it, or cross-session handoff makes a durable record materially necessary. In the last case, recommend it once without blocking an already requested plan.
+- Otherwise default to chat-only and do not ask.
 - If persistence is requested or required, read [references/doc-conventions.md](references/doc-conventions.md), resolve the repository profile, and write there. Do not duplicate its templates here.
 
-## Planning
+## Planning handoff
 
 Planning begins only after a Decision Summary exists.
 
-- If the user already requested a plan, write it; otherwise ask whether to proceed.
-- Each task names affected files, executable steps, and verification.
-- Tasks reference locked choices and introduce no new what/why decisions.
-- If a new blocking decision surfaces, stop Planning and return to Deliberation.
-- Resolve the documentation profile only when the plan must be written to disk.
+- If the user requested a plan, load `writing-plans` with the locked Summary and continue without another confirmation. If it is unavailable or not callable, report `MISSING_DEPENDENCIES`; do not imitate a second plan format.
+- If the user requested only a decision, stop after the Summary. Ask whether to plan only when the next action is genuinely unclear.
+- `writing-plans` owns task structure, documentation placement, execution waves, and verification. A new blocking what/why decision returns here for Deliberation.
 
 ## Stop Conditions
 
@@ -113,6 +118,6 @@ Stop immediately when one of these is true:
 - the route is Skip, Redirect widening, or Safety hold;
 - one blocking question is waiting on the user;
 - the user requested only a decision and the Summary is complete;
-- the requested plan is complete and introduces no new decision.
+- the requested planning handoff is complete and introduces no new decision.
 
 Do not add another confirmation, persistence prompt, phase recap, or option after the applicable stop condition.

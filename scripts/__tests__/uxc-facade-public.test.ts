@@ -45,7 +45,7 @@ test("public uxc-facade source is portable and contains no local runtime contrac
   }
 });
 
-test("uxc-facade owns generic packaging while chrome-dev-mcp owns Chrome acceptance", async () => {
+test("uxc-facade owns generic packaging while chrome-dev-mcp owns task acceptance", async () => {
   const facade = await readFile(path.join(skillDir, "SKILL.md"), "utf8");
   const chrome = await readFile(
     path.join(repoRoot, "skills/chrome-dev-mcp/SKILL.md"),
@@ -54,8 +54,10 @@ test("uxc-facade owns generic packaging while chrome-dev-mcp owns Chrome accepta
 
   assert.match(facade, /one-off API calls/i);
   assert.match(facade, /chrome-dev-mcp/);
-  assert.match(facade, /native (?:host|client).*authoritative/i);
+  assert.match(facade, /service-specific skill stays authoritative/i);
   assert.match(facade, /transport proof/i);
+  assert.match(facade, /TASK_ACCEPTANCE/);
+  assert.match(facade, /NATIVE_COMPAT/);
   assert.match(facade, /binary owner/i);
   assert.match(facade, /sole installer and updater/i);
   assert.match(facade, /link and readiness/i);
@@ -63,7 +65,8 @@ test("uxc-facade owns generic packaging while chrome-dev-mcp owns Chrome accepta
   assert.match(facade, /version conflict/i);
   assert.match(facade, /fail closed/i);
   assert.match(chrome, /UXC packaging for Chrome DevTools/);
-  assert.match(chrome, /Chrome's optional UXC facade pins UXC 0\.17\.0/);
+  assert.match(chrome, /pinned UXC 0\.17\.0 facade/);
+  assert.match(chrome, /explicit compatibility and rollback path/);
   assert.doesNotMatch(
     chrome.split("\n").find((line) => line.startsWith("description:")) ?? "",
     /, UXC packaging,/,
@@ -91,4 +94,11 @@ test("uxc-facade evals cover explicit use, reusable packaging, near miss, and Ch
       "multi-protocol-packaging",
     ]),
   );
+
+  const triggers = JSON.parse(
+    await readFile(path.join(skillDir, "evals/trigger-eval.json"), "utf8"),
+  ) as Array<{ query: string; should_trigger: boolean }>;
+  assert.equal(triggers.length, 20);
+  assert.ok(triggers.some((entry) => entry.should_trigger));
+  assert.ok(triggers.some((entry) => !entry.should_trigger));
 });

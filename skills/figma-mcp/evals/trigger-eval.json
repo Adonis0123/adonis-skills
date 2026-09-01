@@ -1,0 +1,82 @@
+[
+  {
+    "query": "/figma-mcp",
+    "should_trigger": true
+  },
+  {
+    "query": "$figma-mcp 用当前账号只读读取这个文件的指定节点，只在 Codex 当前 host 验收。",
+    "should_trigger": true
+  },
+  {
+    "query": "Figma MCP requires authentication，帮我走当前 host 的官方 OAuth，出现 Touch ID 或验证码就停。",
+    "should_trigger": true
+  },
+  {
+    "query": "把官方 Figma MCP 配到 Codex、Claude Code、Cursor，并逐个做真实 whoami 验收。",
+    "should_trigger": true
+  },
+  {
+    "query": "Cursor 的 Figma MCP 找不到工具，请检查 cursor-agent 或 cursor-cli 的注册和登录状态。",
+    "should_trigger": true
+  },
+  {
+    "query": "把当前 Figma MCP 切到我指定的另一个账号，保留同一个 server entry，不要复制 token。",
+    "should_trigger": true
+  },
+  {
+    "query": "Figma server 能发现但 whoami 工具没有暴露，请分层判断是 host discovery 还是 tool discovery。",
+    "should_trigger": true
+  },
+  {
+    "query": "OAuth callback 成功了但 Figma MCP 仍调用失败，只恢复当前 Codex surface。",
+    "should_trigger": true
+  },
+  {
+    "query": "检查 Codex app 和 Codex CLI 的 Figma 授权是不是各自独立，不要假设一个登录能覆盖另一个。",
+    "should_trigger": true
+  },
+  {
+    "query": "把官方 https://mcp.figma.com/mcp 合并进 Claude Code 现有配置，保留其他 MCP server。",
+    "should_trigger": true
+  },
+  {
+    "query": "读取这个 Figma 节点并实现成 React 页面，连接已经正常，不需要安装、登录、恢复或验收 MCP。",
+    "should_trigger": false
+  },
+  {
+    "query": "在当前 Figma 文件里把按钮改成蓝色，官方插件已经登录。",
+    "should_trigger": false
+  },
+  {
+    "query": "打开 Figma 网页并截一张图，不需要 MCP。",
+    "should_trigger": false
+  },
+  {
+    "query": "把这张 PNG 转成 SVG 图标。",
+    "should_trigger": false
+  },
+  {
+    "query": "用浏览器检查 figma.com 的 Network 请求为什么失败。",
+    "should_trigger": false
+  },
+  {
+    "query": "给我设计一个登录页，不需要读取或修改 Figma 文件。",
+    "should_trigger": false
+  },
+  {
+    "query": "根据这个 Figma URL 生成 SwiftUI，MCP 已正常连接且账号正确。",
+    "should_trigger": false
+  },
+  {
+    "query": "审查这个 Figma 组件库的命名和 variants，不需要处理连接或账号。",
+    "should_trigger": false
+  },
+  {
+    "query": "在 Figma 里生成一套 design system，插件和权限都已经可用。",
+    "should_trigger": false
+  },
+  {
+    "query": "导出当前 Figma frame 为 PNG，连接状态已经验证过。",
+    "should_trigger": false
+  }
+]

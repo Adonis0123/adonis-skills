@@ -1,0 +1,82 @@
+[
+  {
+    "query": "把这个 MCP stdio server 通过 UXC 包成固定 JSON CLI，并证明 daemon session 复用。",
+    "should_trigger": true
+  },
+  {
+    "query": "设计一个可重复安装的 uxc link，要求 pin 版本、校验 digest 和 link owner。",
+    "should_trigger": true
+  },
+  {
+    "query": "两个 Skill 需要不同 UXC 版本，帮我设计 binary ownership 和隔离安装根。",
+    "should_trigger": true
+  },
+  {
+    "query": "用 UXC 为 OpenAPI 服务做长期自动化使用的稳定命令和脱敏 readiness。",
+    "should_trigger": true
+  },
+  {
+    "query": "把 GraphQL、gRPC 和 JSON-RPC 接口统一成可发现、可调用的 UXC facade。",
+    "should_trigger": true
+  },
+  {
+    "query": "审查现有 uxc facade 是否会覆盖 foreign binary 或错误 owner 的 link。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个昂贵的 stdio child 要复用，给 UXC daemon exclusivity、TTL 和验收合同。",
+    "should_trigger": true
+  },
+  {
+    "query": "迁移已有 MCP config 到 UXC 前先做 dry-run，并保留原生兼容路径。",
+    "should_trigger": true
+  },
+  {
+    "query": "为另一个 Skill 设计 UXC packaging contract，区分 transport、task acceptance 和 native compatibility。",
+    "should_trigger": true
+  },
+  {
+    "query": "/uxc-facade",
+    "should_trigger": true
+  },
+  {
+    "query": "用 UXC 调一次公开 API，拿到 JSON 就结束，不需要固定命令或维护。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 Chrome DevTools 检查当前页面的 Network，并确认连接的是正确 Chrome。",
+    "should_trigger": false
+  },
+  {
+    "query": "普通 curl 调一下本地 REST endpoint，返回 status code。",
+    "should_trigger": false
+  },
+  {
+    "query": "给现有 TypeScript API 写一个完整 SDK，包含 streaming 和 callbacks。",
+    "should_trigger": false
+  },
+  {
+    "query": "在 Cursor 里安装并登录官方 Figma MCP。",
+    "should_trigger": false
+  },
+  {
+    "query": "打开浏览器填写表单，不需要 DOM、Console 或 Network。",
+    "should_trigger": false
+  },
+  {
+    "query": "修复一个 failing Vitest，先定位根因。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 README 的一句话改得更清楚。",
+    "should_trigger": false
+  },
+  {
+    "query": "创建一个普通 Node CLI，不接 MCP、OpenAPI、GraphQL、gRPC 或 JSON-RPC。",
+    "should_trigger": false
+  },
+  {
+    "query": "部署公开网站到生产环境并配置域名。",
+    "should_trigger": false
+  }
+]

@@ -1,9 +1,9 @@
 ---
 name: local-web-surface
-description: "Build or extend a persistent macOS local web surface when the request includes a stable *.localhost URL, an existing loopback daemon/gateway, login startup, or a .app launcher. Once triggered, it can add file-backed CRUD or local/public content projections without changing public publishing. Covers domain ownership, exact Host routing, explicit access/threat boundaries, safe mutations, launchd lifecycle, TDD, curl checks, and desktop/mobile browser QA. Do not use for public hosting, production deployment, ordinary frontend/CRUD work on an existing dev server, merely opening or interacting with an existing URL, website audits, or native apps with no local HTTP surface."
+description: "Build or extend a persistent macOS local web surface when the request includes a stable *.localhost URL, an existing loopback daemon/gateway, login startup, or a thin .app launcher that opens or wakes a persistent local HTTP surface. Once triggered, it can add file-backed CRUD or local/public content projections without changing public publishing. Covers domain ownership, exact Host routing, explicit access/threat boundaries, safe mutations, launchd lifecycle, TDD, curl checks, and proportional browser QA. Do not use for public or remote URL launchers, public hosting, production deployment, ordinary frontend/CRUD work on an existing dev server, merely opening or interacting with an existing URL, website audits, or native apps with no local HTTP surface."
 metadata:
   author: adonis
-  version: "1.3.0"
+  version: "1.4.0"
 ---
 
 # Local Web Surface
@@ -14,7 +14,7 @@ metadata:
 
 ## 适用性门槛
 
-请求至少要包含一个持久 surface 信号：稳定 `*.localhost` 身份、loopback daemon/gateway、登录自启、共享 listener，或 macOS `.app` launcher。普通 dev server 上的页面/CRUD 实现不使用本 Skill；只需打开、操作或截图现有 URL 时交给 Browser/`agent-browser`，站点扫描与修复交给 `audit-website`。
+请求至少要包含一个持久 surface 信号：稳定 `*.localhost` 身份、loopback daemon/gateway、登录自启、共享 listener，或为持久本地 HTTP surface 提供唤醒/打开能力的 macOS `.app` launcher。只包装 `https://...` 公网或内网页面的 `.app` 不属于本 Skill。普通 dev server 上的页面/CRUD 实现不使用本 Skill；只需打开、操作或截图现有 URL 时交给 Browser/`agent-browser`。站点扫描与修复应交给当前环境中已安装且匹配的审计流程；不要硬路由到未验证存在的 Skill。
 
 ## 先定义可验证结果
 
@@ -31,7 +31,7 @@ Local Web Surface Contract
 - Write boundary: <none or exact mutations>
 - Access/threat boundary: <trusted local user/processes, or exact authentication/authorization>
 - Launcher: <none or App name>
-- Done signals: <tests + curl + launchctl + browser>
+- Done signals: <evidence selected by Change surfaces; Host/handler-only = focused tests + diff scope + curl 200/421/404>
 ```
 
 若用户已授权自主完成，可从代码和本机状态解析这些值，不重复询问。若选择会改变数据真相源、公开范围、访问/认证边界或占用未知服务端口，先停在一个决策问题上。
@@ -64,15 +64,29 @@ Local Web Surface Contract
 
 高内聚体现在：一个数据变更的校验、并发和持久化都留在 repository；低耦合体现在：新增 surface 只增加 Host 映射、handler 入口和 launcher spec，不修改其他 surface 的业务分支。
 
+## Change surfaces（变更面）
+
+先按实际 diff 选择最小验收面，不因 Skill 覆盖完整产品生命周期就默认执行所有检查：
+
+| 变更面             | 典型改动                                                 | 最小必需证据                                                                                          |
+| ------------------ | -------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Host/handler-only  | exact Host 映射、只读 handler、跨 surface 路由           | focused gateway/handler tests、diff scope、`curl` 的 canonical `200`/未知 Host `421`/跨 surface `404` |
+| Lifecycle/launcher | listener 启动方式、LaunchAgent、installer、`.app` opener | 加做 plist、tracked PID、单 listener、重复安装和 launcher 参数验收                                    |
+| UI                 | 页面结构、交互、响应式                                   | 加做合同相关的真实浏览器、Console、桌面与移动 viewport                                                |
+| Write/data         | mutation、repository、文件持久化                         | 加做 schema、ETag、并发、atomic write、临时 fixture 与失败路径                                        |
+| Public projection  | local/public catalog 或 sync                             | 加做临时 public sync 与 private/local-only 排除                                                       |
+
+Host/handler-only 仅在现有 listener 与生命周期不变、没有 UI/写入/发布改动时成立；不要为它重装 LaunchAgent、重复查 PID、跑双 viewport 或执行全仓验证。每轮改动后重新看 diff；一旦跨入其他行，就只补对应行的证据。仓库自身明确要求的检查仍然优先。
+
 ## 前置检查
 
 编辑前完成：
 
 1. 读取每个涉及仓库的 `AGENTS.md` 和架构/测试文档。
 2. 分别记录 `git status --short`；保留现有 dirty changes，禁止重置或顺手整理。
-3. 用 `lsof -nP -iTCP:<port> -sTCP:LISTEN`、`launchctl print`、进程命令和现有 launcher 代码确认真实生命周期。
-4. 从 `package.json`、lockfile 与本机二进制确认 Node、runner、依赖版本。
-5. 查已有 server、CLI、`.app`、LaunchAgent、数据文件、写入 skill 和发布过滤；优先扩展现有模块。
+3. 先分类 `Change surfaces`。只有涉及 lifecycle/launcher 时，才用 `lsof -nP -iTCP:<port> -sTCP:LISTEN`、`launchctl print`、进程命令和 launcher 代码确认真实生命周期。
+4. 只有依赖或 runner 相关改动时，才从 `package.json`、lockfile 与本机二进制确认 Node、runner、依赖版本。
+5. 只查当前变更面会触及的现有 server、handler、CLI、`.app`、LaunchAgent、数据文件、writer 或发布过滤；优先扩展现有模块。
 6. 对版本敏感 API 查官方文档或项目锁定版本的文档，并用运行结果验证。
 
 ## 设计门禁
@@ -116,8 +130,9 @@ Local Web Surface Contract
 2. **Mutation/concurrency tests（条件）**：仅当 `Write boundary` 非 `none` 时覆盖强 ETag、缺 `If-Match`、stale revision、同进程串行、revision 重检和临时文件清理。只有不可消除的多个 OS 进程会直接写同一文件时，才增加跨进程 lock、崩溃恢复、活 owner 检查和 replacement-lock 测试。
 3. **Catalog tests（条件）**：仅当读取发布型内容时分别覆盖 local catalog 与 public projection、稳定 ID、排序、分类/tags/visibility、frontmatter 错误不泄露正文、Markdown XSS、图片 traversal/symlink escape。
 4. **Handler tests**：页面 shell、合同列出的用例、跨 surface 404、安全 guard、稳定错误码。
-5. **Gateway tests**：Host allowlist、bridge failure closed、合同需要的 body limit、launcher specs、重装生命周期。
-6. **Runtime checks**：只有适用于该合同的上述测试通过后才安装/重启真实服务。
+5. **Gateway tests**：Host allowlist、bridge failure closed，以及合同需要的 body limit。
+6. **Lifecycle/launcher tests（条件）**：只有对应变更面存在时才覆盖 launcher specs、plist、tracked PID 与重复安装生命周期。
+7. **Runtime checks**：只有适用于该合同的上述测试通过后才安装/重启真实服务。
 
 不要先写整套实现再补快照测试。每个发现的运行时 bug 先补能失败的回归测试，再改实现。
 
@@ -161,16 +176,18 @@ macOS 登录服务遵守：
 
 ## 真实验收
 
-按风险从小到大执行：
+先按 `Change surfaces` 选择证据。Host/handler-only 的完整默认验收只有三项：focused gateway/handler tests；`git diff --check` 与范围核对；临时或既有安全 listener 上用 `curl --noproxy '*'` 证明 canonical Host `200`、未知 Host `421`、跨 surface 路由 `404`。这类改动默认不要求 full tests/typecheck/build、LaunchAgent 重装、PID/lsof、浏览器或 public sync。
 
-1. 所有涉及仓库各自的 focused tests、full tests、typecheck/build；单仓库任务不得虚构第二个仓库。
+diff 扩大后，按新增变更面补充以下检查，不机械执行无关项：
+
+1. 所有变更都跑涉及仓库的 focused tests；只有仓库规则要求或 diff 涉及共享类型、构建、依赖时才加 full tests、typecheck/build。单仓库任务不得虚构第二个仓库。
 2. `git diff --check`，确认没有范围外文件、secret、临时 lock 或 fixture。
-3. `plutil -lint` 所有 plist；检查每个 `.app/Contents/MacOS/launcher` 的 surface 参数。
-4. `launchctl print gui/<uid>/<label>`：`state = running` 且有唯一 tracked PID。
-5. `lsof`：目标端口只有一个 loopback listener；tracked PID 就是 listener PID，而非短命 wrapper。
-6. `curl --noproxy '*'`：每个 canonical Host 返回正确页面/API；未知 Host `421`；跨 surface 路由不泄露；超大 body 稳定 `413`。
-7. 用真实浏览器打开每个 URL，按合同检查 console/快照与功能；只有合同包含搜索/deep link 或 CRUD 时才验收它们；同时检查桌面与移动 viewport。
-8. 仅对发布型仓库跑临时 target sync，证明 `public:false` 与合同列出的其他本地内容没有进入公共产物；若本地 reader 允许私密内容，再用 API 和浏览器分别证明它们确实进入本地列表、详情、搜索/筛选与 deep link。
+3. Lifecycle/launcher：`plutil -lint` 涉及的 plist；检查每个变更的 `.app/Contents/MacOS/launcher` 的 surface 参数。
+4. Lifecycle/launcher：`launchctl print gui/<uid>/<label>` 显示 `state = running` 且有唯一 tracked PID。
+5. Lifecycle/launcher：`lsof` 证明目标端口只有一个 loopback listener，且 tracked PID 就是 listener PID，而非短命 wrapper。
+6. `curl --noproxy '*'`：每个 canonical Host 返回正确页面/API；未知 Host `421`；跨 surface 路由不泄露；合同包含 body guard 时再证明超大 body 稳定 `413`。
+7. UI：用真实浏览器打开变更的 URL，按合同检查 Console、快照与功能；只有合同包含搜索/deep link 或 CRUD 时才验收它们；同时检查桌面与移动 viewport。
+8. Public projection：仅对发布型改动跑临时 target sync，证明 `public:false` 与合同列出的其他本地内容没有进入公共产物；若本地 reader 允许私密内容，再用 API 和浏览器分别证明它们确实进入本地列表、详情、搜索/筛选与 deep link。
 
 若 UI CRUD 已由临时 repository/handler 集成测试覆盖，真实浏览器验收可以只读；不要用“为了验收”作为改动用户数据的理由。
 
@@ -189,10 +206,10 @@ macOS 登录服务遵守：
 ```text
 Local Web Surface Result
 - URLs: <canonical URLs>
-- Launchers: <apps + LaunchAgent>
+- Launchers: <none | apps + LaunchAgent when that change surface exists>
 - Data ownership: <source of truth + only writer>
 - Security boundaries: <Host/Origin/access-auth/local visibility/publication/path controls>
-- Verification: <exact tests, curl, launchctl, browser results>
+- Verification: <exact evidence selected by Change surfaces>
 - User data touched during QA: no | <explicit details>
 - UNVERIFIED: none | <blocked check and reason>
 ```

@@ -3,16 +3,17 @@
   "evals": [
     {
       "id": 0,
-      "name": "autoset-codex-tooling",
+      "name": "implicit-work-does-not-create-codex-goal",
       "prompt": "I'm in Codex and goal tooling is available (get_goal / create_goal). There's no goal active right now. Work through PLAN.md and implement every task in it, and don't stop until `pnpm test` passes and `pnpm build` succeeds. Just get it done and tell me when it's actually finished.",
-      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: codex-tooling that auto-creates the goal: the task is high fit, the safety gate is clear, so it does not stop to ask permission. Next is 'create goal' (call get_goal then create_goal with the objective), with a verifiable done condition (pnpm test passing + pnpm build succeeding) and an execution strategy that assesses whether independent plan tasks merit subagents while keeping final integration with the main agent.",
+      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: codex-tooling. The task is high fit and work is authorized, so it adopts the verifiable contract in the transcript and continues, but it does not call create_goal because the user did not explicitly request Goal state. Next is 'adopt goal and continue', with pnpm test + build as the Done condition and final integration owned by the main agent.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block (contains a line starting with 'Goal Gate' and a '- Decision:' field)",
-        "Decision is set-now (auto-set fires; not suggest)",
+        "Decision is suggest because native Goal state was not explicitly requested",
         "Runtime is codex-tooling",
         "Goal fit is high",
-        "Next is 'create goal' (calls/says to call create_goal, optionally after get_goal), not 'ask approval'",
+        "Next is exactly 'adopt goal and continue', and implementation continues without a redundant approval round",
+        "Does not call or recommend create_goal or update_goal and does not claim product Goal is Active",
         "Done condition references the verification signal (pnpm test passing and/or pnpm build succeeding)",
         "Execution strategy assesses task dependencies, shared context, write overlap, or independent verification before deciding whether to use subagents",
         "Keeps the main agent responsible for reviewing delegated work and final integration verification, with a single-agent fallback",
@@ -189,22 +190,22 @@
     },
     {
       "id": 12,
-      "name": "autoset-grok-tooling",
+      "name": "implicit-work-does-not-request-grok-goal",
       "prompt": "I'm in Grok Build and the session exposes the update_goal tool. No goal is active right now. Work through PLAN.md and implement every task in it, and don't stop until `pnpm test` passes and `pnpm build` succeeds. Just get it done and tell me when it's actually finished.",
-      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: grok-tooling. Because Grok has no create_goal/get_goal and no goal is Active, Next is 'wait for user /goal' (not create goal, not silent adopt-and-implement). Emits a runnable /goal prompt immediately and stops without calling update_goal or starting PLAN.md work. Clarifies /goal-gate is not /goal. Mentions update_goal only after Active.",
+      "expected_output": "A Goal Gate block with Decision: suggest and Runtime: grok-tooling. Work is authorized but native Goal state was not requested, so Next is 'adopt goal and continue': it starts PLAN.md work under the transcript contract, emits no executable /goal, does not call update_goal while inactive, and does not claim the product Goal is Active.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block (contains a line starting with 'Goal Gate' and a '- Decision:' field)",
-        "Decision is set-now (auto-set fires; not suggest)",
+        "Decision is suggest because native Goal state was not explicitly requested",
         "Runtime is grok-tooling",
         "Goal fit is high",
-        "Next is 'wait for user /goal' (or clearly waits for the user to paste /goal), not 'create goal' and not silent full adopt-and-implement",
-        "Provides a runnable /goal prompt for durable Grok goal mode",
-        "Does not start implementing PLAN.md or claim the durable goal is already active in this turn",
+        "Next is exactly 'adopt goal and continue', and implementation starts without a redundant approval round",
+        "Does not emit or require a runnable /goal prompt",
+        "Does not claim the durable product Goal is active in this turn",
         "Does not call update_goal (message/completed/blocked) while the goal is inactive",
         "Done condition references pnpm test and/or pnpm build",
         "Does not call or invent create_goal or get_goal",
-        "States or implies that /goal-gate is not the same as product /goal activation",
+        "States or implies that transcript adoption is not product /goal activation",
         "Execution strategy assesses decomposability before subagents and keeps main-agent final verification"
       ]
     },
@@ -243,14 +244,14 @@
       "id": 15,
       "name": "disambiguate-update-goal-is-grok",
       "prompt": "This coding-agent session only has the update_goal tool for goals (no get_goal, no create_goal). Keep implementing docs/PLAN.md until the test suite is green. I'm stepping away — finish it.",
-      "expected_output": "Correctly classifies runtime as grok-tooling (update_goal alone is Grok, not Codex). set-now with Next wait for user /goal (or soft-adopt only if declined), not create_goal. Emits /goal and does not invent create_goal.",
+      "expected_output": "Correctly classifies runtime as grok-tooling (update_goal alone is Grok, not Codex). Because native Goal state was not requested, Decision is suggest with Next adopt goal and continue. It emits no /goal, starts the authorized work under the transcript contract, and does not invent create_goal.",
       "files": [],
       "expectations": [
         "Runtime is grok-tooling (not codex-tooling)",
-        "Decision is set-now",
+        "Decision is suggest because native Goal state was not explicitly requested",
         "Does not claim create_goal or get_goal will be called",
-        "Next is wait for user /goal (preferred) or adopt only with explicit soft path — not create goal",
-        "Mentions a /goal prompt appropriate for Grok; update_goal only after Active"
+        "Next is adopt goal and continue — not create goal or wait for user /goal",
+        "Does not emit /goal; update_goal is unavailable until a Goal is actually Active"
       ]
     },
     {

@@ -1,4 +1,4 @@
 interface:
   display_name: "Discuss Before Plan"
   short_description: "Converge on a choice before planning."
-  default_prompt: "Use $discuss-before-plan to resolve a bounded choice, record the decision, and plan only if requested."
+  default_prompt: "Use $discuss-before-plan to resolve a bounded choice, record it in chat by default, and hand any requested implementation plan to writing-plans without redundant confirmation."

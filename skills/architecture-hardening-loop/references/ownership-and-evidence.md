@@ -1,6 +1,6 @@
 # Goal ownership and evidence freshness
 
-Load this file only when you are about to create or continue a Goal, close a Goal, or reuse a review verdict. Classification, contract writing, and report-only scanning do not need it.
+Load this file only when the user explicitly requested Goal creation/management, an active Goal or caller parent contract must be reconciled, a Goal must be closed, or a review verdict may be reused. Classification, contract writing, and report-only scanning do not need its Goal sections.
 
 ## Ownership evidence
 
@@ -12,14 +12,14 @@ Compatibility must be proven by objective, frozen scope, and Done condition. “
 
 ## Goal 关系
 
-`goal-gate` has two phases here: a read-only relation check before scan, then Goal creation only after at least one `Fix` is confirmed and the relation is `none`. `exact-same-goal` / `broader-compatible` continue the existing Goal. Never create a nested Goal.
+`goal-gate` is conditional here: reconcile an existing/parent Goal before scan, or honor an explicit user request to create one only after at least one `Fix` is confirmed. `exact-same-goal` / `broader-compatible` continue the existing Goal. Merely invoking the architecture Loop does not authorize Goal creation. Never create a nested Goal.
 
-| Goal 关系             | 行为                                                                                                                                             | 完成所有权                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
-| `none`                | 安全闸门通过后创建覆盖本次范围、验证与 `NO_ACTIONABLE_FINDINGS` 的 Goal                                                                          | `created-by-loop`                   |
-| `exact-same-goal`     | 用户明确继续同一 architecture-hardening 目标；`Next: continue active goal`，不创建或替换                                                         | 本 Loop 可在全部条件满足后完成      |
-| `broader-compatible`  | 本 Loop 是 active parent Goal 冻结范围与 Done condition 中的一个 checkpoint；`Next: continue active goal`，不创建、不替换、不收窄 Done condition | 父编排器；本 Loop 只上报 checkpoint |
-| `conflicting/unclear` | 服从 `goal-gate` 的 `Decision: defer`，返回 `HUMAN_GATE`，只问如何处理冲突或归属                                                                 | none                                |
+| Goal 关系             | 行为                                                                                                                                             | 完成所有权                              |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------- |
+| `none`                | 用户明确要求 Goal 且安全闸门通过时，创建覆盖本次范围、验证与 `NO_ACTIONABLE_FINDINGS` 的 Goal；否则继续 Hardening Contract 并报告 `not-created`  | 显式创建时 `created-by-loop`，否则 none |
+| `exact-same-goal`     | 用户明确继续同一 architecture-hardening 目标；`Next: continue active goal`，不创建或替换                                                         | 本 Loop 可在全部条件满足后完成          |
+| `broader-compatible`  | 本 Loop 是 active parent Goal 冻结范围与 Done condition 中的一个 checkpoint；`Next: continue active goal`，不创建、不替换、不收窄 Done condition | 父编排器；本 Loop 只上报 checkpoint     |
+| `conflicting/unclear` | 服从 `goal-gate` 的 `Decision: defer`，返回 `HUMAN_GATE`，只问如何处理冲突或归属                                                                 | none                                    |
 
 ## Codex / Grok 完成合同
 

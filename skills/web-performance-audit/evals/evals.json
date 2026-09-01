@@ -68,6 +68,20 @@
         "输出在安装、改 client 配置、装扩展、开启 remote debugging 或重启共享浏览器前要求明确授权",
         "安装后的验收包含 tool discovery、handshake 和一次真实无害调用；失败时回到 UNVERIFIED 而不是声称已接入"
       ]
+    },
+    {
+      "id": 6,
+      "prompt": "已登录 TEST Chrome 正在正确项目页，host 已安装并暴露 chrome-dev-mcp；本轮要检查 Network 和 Performance。不要安装、重启、切 profile 或新开登录页。若现有连接失败，请说明怎么处理。",
+      "expected_output": "把 chrome-dev-mcp 作为连接/profile/page identity 的唯一 owner，按其真实 readiness/recovery 合同验证 list_pages 和目标身份。失败时保持 UNVERIFIED，不用 npx 新起 MCP、不切到 Playwright 或新 profile 冒充原登录态。",
+      "files": [],
+      "assertions": [
+        "输出优先调用已安装的 chrome-dev-mcp，而不是给出新的安装命令",
+        "输出要求真实 list_pages 或等价 harmless call，并核对 profile/page identity",
+        "输出不运行或建议 npx chrome-devtools-mcp@latest",
+        "输出不把 Playwright 当作 Network/Performance internals 或登录态替代",
+        "连接失败时把相关指标标为 UNVERIFIED，并遵循 managed skill 的恢复合同",
+        "输出不重启共享浏览器、不切 profile、不发明 pageId"
+      ]
     }
   ]
 }

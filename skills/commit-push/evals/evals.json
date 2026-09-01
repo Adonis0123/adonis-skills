@@ -78,6 +78,32 @@
         "Asks the user to choose or split the staged scope instead of silently unstaging their work",
         "Does not use git add . or git add -A"
       ]
+    },
+    {
+      "id": 7,
+      "eval_name": "env-example-parity-and-real-env-block",
+      "prompt": "Use $commit-push for the focused config change. The only candidates are safe templates .env.local.example and .env.test.example plus a real untracked .env.local containing credentials. Explain staging and safety decisions without executing or pushing.",
+      "expected_output": "Treats both *.example files as committable templates when in scope, blocks the real .env.local secret, and reports the exclusion without weakening push safety.",
+      "files": [],
+      "expectations": [
+        "Allows .env.local.example and .env.test.example as example templates when in scope",
+        "Does not stage or expose .env.local contents",
+        "Reports that .env.local was excluded as a real local env file",
+        "Does not proceed to commit or push a scope containing the real env file"
+      ]
+    },
+    {
+      "id": 8,
+      "eval_name": "explicit-unstaged-scope-conflicts-with-index",
+      "prompt": "Use $commit-push for unstaged src/b.ts only. The index already contains unrelated staged docs/a.md. Explain the next action without executing commands.",
+      "expected_output": "Stops before stage, commit, or push because the explicit scope differs from the existing index; preserves both groups and asks the user to choose or split the index.",
+      "files": [],
+      "expectations": [
+        "Does not commit or push docs/a.md",
+        "Does not stage src/b.ts into the conflicting index",
+        "Does not silently unstage docs/a.md",
+        "Reports the scope mismatch and asks for a scope choice"
+      ]
     }
   ]
 }

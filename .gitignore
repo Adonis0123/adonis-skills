@@ -44,7 +44,9 @@ __pycache__/
 .agents/skills/global-modal-scaffold/
 .agents/skills/goal-gate/
 .agents/skills/review-prompt-composer/
+.agents/skills/task-completion-loop/
 .agents/skills/uxc-facade/
+.agents/skills/web-performance-audit/
 .agents/skills/workflow-gate/
 .agents/skills/zustand-store-scaffold/
 

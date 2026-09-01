@@ -19,7 +19,7 @@ metadata:
 
 开始时先区分两种模式，避免“只写消息”意外修改 Git 状态：
 
-- **message-only**：用户只要求生成、推荐或改写 commit message。只读 `git status`、`git diff --cached`、`git diff` 和必要文件；禁止 `git add`、`git commit`、修改 `.gitignore` 或其他工作树/index 写入。优先分析 staged changes；没有 staged 时，使用用户点名或当前轮唯一明确的变更范围。范围仍不唯一时，只说明需要选择哪组变更。
+- **message-only**：用户只要求生成、推荐或改写 commit message。只读 `git status`、`git diff --cached`、`git diff` 和必要文件；禁止 `git add`、`git commit`、修改 `.gitignore` 或其他工作树/index 写入。用户未点名其他范围时优先分析 staged changes；若用户明确点名另一组 unstaged/untracked 变更，只分析该范围并说明现有 staged 内容被排除。范围仍不唯一时，只说明需要选择哪组变更。
 - **execute-commit**：用户明确要求执行本地提交。才进入下面的 stage、Ignore vs Commit 和 commit 流程。
 
 ## 工作流程
@@ -34,7 +34,8 @@ git status --short --branch
 
 以下规则只用于 **execute-commit**。先判断这次提交的来源：
 
-- 如果已经有 staged changes，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。
+- 如果已经有 staged changes，且用户没有点名不同范围，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。
+- 如果已经有 staged changes，但用户明确授权的是另一组 unstaged/untracked 路径，立即停止并报告范围错位。不要提交已有 staged 内容，不要 stage 新范围，也不要替用户 unstage；请用户先选择或拆分 index。
 - 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。
 - 如果没有 staged changes，且存在多个 unstaged/untracked 文件，只有在用户明确说“全部提交”或明确点名文件时才 stage 对应路径。否则停止并列出最小的 `git add -- <path>` 建议，让用户选择提交范围。
 - 如果既没有 staged changes，也没有 unstaged/untracked changes，告诉用户当前没有可提交内容。

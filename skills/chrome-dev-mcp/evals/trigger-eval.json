@@ -1,0 +1,82 @@
+[
+  {
+    "query": "/chrome-dev-mcp",
+    "should_trigger": true
+  },
+  {
+    "query": "$chrome-dev-mcp 检查共享连接是否真的能调用 list_pages，不要输出页面列表。",
+    "should_trigger": true
+  },
+  {
+    "query": "Chrome DevTools MCP 连错 profile 了，按已配置端点恢复后做一次真实只读验收。",
+    "should_trigger": true
+  },
+  {
+    "query": "用 CDP 看当前标签页的 Console 和 Network 失败请求，需要浏览器内部证据。",
+    "should_trigger": true
+  },
+  {
+    "query": "两个 agent 要检查不同标签页的 DOM snapshot，请用 fresh pageId 避免 select_page 串线。",
+    "should_trigger": true
+  },
+  {
+    "query": "跑一次 Chrome Performance trace 和 Lighthouse，确认页面主线程瓶颈。",
+    "should_trigger": true
+  },
+  {
+    "query": "页面运行十分钟后内存不断涨，请用 Chrome heap snapshot 找保留对象。",
+    "should_trigger": true
+  },
+  {
+    "query": "当前页 CSP 报错但 UI 没提示，请从 Console 和 Network 收集真实失败证据。",
+    "should_trigger": true
+  },
+  {
+    "query": "确认 Service Worker 是否返回了旧缓存，需要看 Chrome DevTools 的请求 initiator 和 response headers。",
+    "should_trigger": true
+  },
+  {
+    "query": "分别在 Codex 和 Claude Code 验证共享 Chrome DevTools transport，但不要为每个 host 启一个新 runtime。",
+    "should_trigger": true
+  },
+  {
+    "query": "用我当前登录的 Chrome 打开设置页并填表，不需要 DOM、Console、Network 或 Performance。",
+    "should_trigger": false
+  },
+  {
+    "query": "打开这个网页，滚到价格表并截图。",
+    "should_trigger": false
+  },
+  {
+    "query": "抓取公开商品列表并导出 CSV，不需要浏览器内部调试信号。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我点击 macOS Chrome 窗口右上角的个人资料按钮。",
+    "should_trigger": false
+  },
+  {
+    "query": "这个按钮点不动，请先用普通浏览器复现；暂时不需要 DevTools 证据。",
+    "should_trigger": false
+  },
+  {
+    "query": "写一个 Playwright 测试覆盖登录表单。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 Chrome 搜索三家酒店，整理价格和取消政策。",
+    "should_trigger": false
+  },
+  {
+    "query": "在浏览器里登录后台并下载本月账单，不需要调试信号。",
+    "should_trigger": false
+  },
+  {
+    "query": "安装一个 Chrome 扩展并固定到工具栏，这是桌面 UI 操作。",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我写 Selenium WebDriver 初始化代码，不连接当前浏览器。",
+    "should_trigger": false
+  }
+]

@@ -1,0 +1,65 @@
+{
+  "skill_name": "decision-first-technical-writing",
+  "evals": [
+    {
+      "id": 1,
+      "name": "settled-decision-record",
+      "prompt": "我们已经决定公开 API 统一用 RFC 9457 problem details。请把现有散乱笔记改成内部 decision record，明确范围、错误字段、失败行为和验证。",
+      "expected_output": "Writes a decision-first internal record from the settled choice, preserves exact contracts, and does not reopen the selected error format.",
+      "files": [],
+      "expectations": [
+        "Treats RFC 9457 problem details as a settled decision",
+        "Leads with the decision and separates scope, contracts, failure behavior, and verification",
+        "Does not invent unresolved alternatives or implementation task lists"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "named-options-route-to-discussion",
+      "prompt": "请写架构文档，先帮我在 Kafka 和 SQS 之间选一个，选完就把它写成最终方案。",
+      "expected_output": "Routes the unresolved named-option choice to discuss-before-plan and does not write either option as a finalized design decision yet.",
+      "files": [],
+      "expectations": [
+        "Identifies Kafka versus SQS as unresolved named-option convergence",
+        "Routes the choice to discuss-before-plan",
+        "Does not present a preferred option as a confirmed decision before convergence"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "ready-spec-route-to-plan",
+      "prompt": "docs/specs/session-refresh.md 已定稿。请按文件、测试和提交步骤拆成可以直接执行的 implementation plan。",
+      "expected_output": "Routes the ready-spec task breakdown to writing-plans instead of generating a competing plan format in this skill.",
+      "files": [],
+      "expectations": [
+        "Recognizes the specification is ready and the requested output is an implementation task breakdown",
+        "Routes the request to writing-plans",
+        "Does not produce a second decision-document planning format"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "proposal-and-open-question-labels",
+      "prompt": "把这份 API 设计草稿整理得能评审。认证方式还没定，幂等键只是团队的建议，其他字段已经确认。",
+      "expected_output": "Writes the reviewable design while keeping confirmed fields settled, authentication open, and idempotency explicitly proposed.",
+      "files": [],
+      "expectations": [
+        "Labels authentication as an open question",
+        "Labels the idempotency-key behavior as a proposal",
+        "Does not place either uncertain item in the settled decision summary"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "review-only-contradiction-report",
+      "prompt": "只审这份内部 schema design，不要重写。摘要说 user_id 必填，字段表却说 nullable；请检查还有没有这类隐藏决定和契约冲突。",
+      "expected_output": "Reports concrete contradictions and hidden decisions without rewriting the document or inventing resolutions.",
+      "files": [],
+      "expectations": [
+        "Reports the user_id contradiction as a concrete contract issue",
+        "Separates discovered facts from proposed resolutions",
+        "Does not rewrite the document because the user requested review only"
+      ]
+    }
+  ]
+}

@@ -1,9 +1,9 @@
 ---
 name: goal-gate
-description: "Gate whether a coding-agent task needs a durable, verifiable goal, then draft, validate, start, continue, or close the correct contract for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
+description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
 metadata:
   author: adonis
-  version: "2.0.0"
+  version: "2.0.1"
 ---
 
 # Goal Gate
@@ -18,7 +18,7 @@ Read **this file only** by default. Load **at most one** reference.
 
 1. Detect runtime with the ordered rules below. Explicit Cursor CLI intent wins over the model-provider name.
 2. Classify Goal Fit, then run the Safety Gate.
-3. Pick one Decision from the Auto-Set table and emit one `Goal Gate` block per selected runtime.
+3. Determine whether the user or system explicitly requested a Goal action, then pick one Decision from the Auto-Set table and emit one `Goal Gate` block per selected runtime.
 4. If `set-now`, execute the compact runtime action in the table. Load `references/runtime-actions.md` only when that row is not enough to act.
 5. Load `references/copy-ready-goals.md` only when drafting a user-copyable prompt. Load `references/examples.md` only when a worked example is needed.
 
@@ -58,15 +58,23 @@ The gate exists because an auto-started goal hands the agent a long leash. That 
 
 High-risk work can still receive a goal draft, but the draft must be discovery-first or approval-first. Do not present a production write, destructive migration, auth rewrite, billing change, or regulated-domain decision as an immediately executable action.
 
+## Goal authorization
+
+Creating, replacing, completing, or blocking a native product Goal is a separate state change from doing the underlying task. Treat it as authorized only when the user or system explicitly asks to use, set, create, continue, complete, or block a Goal; invokes `$goal-gate` or `/goal-gate`; or invokes a parent workflow whose declared contract explicitly owns a Goal. A merely large, autonomous, or high-fit task does **not** authorize `create_goal`, `update_goal`, or a user-run `/goal` by itself.
+
+When work is authorized but native Goal state is not, adopt the checkable contract in the current transcript and continue the work. Report `Decision: suggest` with `Next: adopt goal and continue`; do not stop for a redundant approval round and do not claim product Goal state became Active.
+
 ## Auto-Set
 
-When the safety gate is clear and goal fit is `high`, treat the goal as authorized and start it now — do not stop to ask "should I set a goal?" The high-fit bar is itself the signal that autonomy will help rather than hurt. Hold auto-set for `medium` fit: the medium boundary is fuzzy enough that a quick nod is worth more than the saved round-trip. `low` fit is `none`.
+When the safety gate is clear and goal fit is `high`, start the authorized work under a transcript contract. This does not by itself authorize native Goal state. Hold auto-adoption for `medium` fit: the medium boundary is fuzzy enough that a quick nod is worth more than the saved round-trip. `low` fit is `none`.
 
-`set-now` is reached two ways: the user explicitly asks for a goal action, or the task clears the safety gate at high fit. An explicit exact-same or compatible-contained continuation uses `set-now` with `Next: continue active goal`; it does not create, replace, narrow, or terminally update the Goal. A contained checkpoint reports progress but leaves completion to the parent Goal owner. Same-goal complete/block uses `Next: report via update_goal` only after its terminal preconditions are proven. If an active goal conflicts with a new objective or the desired action is unclear, emit `Decision: defer` and ask; never call either runtime's completion action or tell the user to clear a goal merely to make replacement convenient.
+Native `set-now` requires explicit Goal authorization or an already-authorized exact-same / compatible-contained continuation. A high-fit task without that authorization uses `suggest` plus `adopt goal and continue` on a native-capable runtime; transcript-only runtimes may use `set-now` because no product state is mutated. Both start the task without claiming a native Goal became Active. A contained checkpoint reports progress but leaves completion to the parent Goal owner. Same-goal complete/block uses `Next: report via update_goal` only after its terminal preconditions are proven. If an active goal conflicts with a new objective or the desired action is unclear, emit `Decision: defer` and ask; never call either runtime's completion action or tell the user to clear a goal merely to make replacement convenient.
 
 | Situation                                                                                | Decision             | Next                                                      |
 | ---------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------- |
-| High fit, safety clear, executable work                                                  | `set-now`            | Runtime action below                                      |
+| High fit, native-capable runtime, no explicit Goal action                                | `suggest`            | `adopt goal and continue`; no native Goal mutation        |
+| High fit, transcript-only runtime, no explicit Goal action                               | `set-now`            | `adopt goal and continue`; no product Goal claim          |
+| Explicit Goal action, high fit, safety clear                                             | `set-now`            | Runtime action below                                      |
 | Medium fit, safety clear                                                                 | `suggest`            | `provide prompt` or `ask approval`                        |
 | Safety tripped (auth, destructive, production-data, irreversible, billing, unverifiable) | `suggest` or `defer` | `ask approval` (or `route elsewhere`); do not auto-create |
 | Conflicting or unchosen active goal                                                      | `defer`              | Ask continue / complete / block / pause / clear / replace |
@@ -84,17 +92,17 @@ When the safety gate is clear and goal fit is `high`, treat the goal as authoriz
 | Runtime                                      | Next                                                                  | Do now                                                                                                                                                                                                                                                                                                                                       |
 | -------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `cursor-cli`                                 | `adopt goal and continue`; same-chat resume → `continue adopted goal` | No `/goal`. No `get_goal` / `create_goal` / `update_goal`. Work in this chat; report evidence in the transcript. Resume commands restore chat context only (see Runtime Detection). Prompt-only → `suggest` / `provide prompt` with a plain prompt. Ask/Plan are read-only — surface the mode constraint instead of claiming writes started. |
-| `grok-tooling` (not Active)                  | `wait for user /goal`                                                 | Emit the block and a full copy-ready `/goal` first, then **stop**. No implementation. No `update_goal`. `/goal-gate` ≠ `/goal`. Soft-opt-out ("no `/goal`", "soft only") → `adopt goal and continue`, still no `update_goal` until Active.                                                                                                   |
+| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                                 | Emit the block and a full copy-ready `/goal` first, then **stop**. No implementation. No `update_goal`. `/goal-gate` ≠ `/goal`. Without explicit Goal authorization → `suggest` / `adopt goal and continue`, still no `update_goal` until Active.                                                                                            |
 | `grok-tooling` (Active, same/contained)      | `continue active goal`                                                | Work the contract. Checkpoint with Grok `message`. Do not emit a second `/goal`. Do not invent `create_goal` / `get_goal`. `completed: true` only after the full parent Done condition is proven.                                                                                                                                            |
 | `grok-tooling` (Active, Done proven)         | `report via update_goal`                                              | Grok `completed: true` plus a concise evidence `message`. Never Codex `status`.                                                                                                                                                                                                                                                              |
 | `grok-slash`                                 | usually `provide prompt`                                              | Copy-ready `/goal`. Soft-adopt only if the user also authorized execution without durable mode.                                                                                                                                                                                                                                              |
-| `codex-tooling` (no active goal)             | `create goal`                                                         | `get_goal` then `create_goal` with the `Objective`. No token budget unless the user asked.                                                                                                                                                                                                                                                   |
+| `codex-tooling` (no active, explicit Goal)   | `create goal`                                                         | `get_goal` then `create_goal` with the `Objective`. No token budget unless the user asked. Without explicit Goal authorization → `suggest` / `adopt goal and continue`; do not call `create_goal`.                                                                                                                                           |
 | `codex-tooling` (same/contained, not done)   | `continue active goal`                                                | Keep working. No `create_goal`, no replacement, no terminal `update_goal`. A contained checkpoint cannot complete the parent.                                                                                                                                                                                                                |
 | `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                              | Codex `status: "complete"` after evidence, or `status: "blocked"` only after the same blocker persists ≥3 consecutive goal turns. Never Grok `message` / `completed` / `blocked_reason`.                                                                                                                                                     |
 | `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                             | Self-adopt and keep working. Still emit `/goal` for reuse. Claude: surface verification in the transcript — the evaluator does not independently read files or run commands.                                                                                                                                                                 |
 | `unknown`                                    | `ask approval`                                                        | Portable contract only.                                                                                                                                                                                                                                                                                                                      |
 
-Why Grok waits: Codex `create_goal` can activate from the agent; Grok cannot. A false Active session is what produces `Goal is not Active` failures.
+Why an explicitly requested Grok Goal waits: Codex `create_goal` can activate from the agent; Grok cannot. A false Active session is what produces `Goal is not Active` failures.
 
 ## Goal Drafting
 

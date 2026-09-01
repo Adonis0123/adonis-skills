@@ -2,6 +2,7 @@ interface:
   display_name: "Architecture Hardening Loop"
   short_description: "Run a bounded architecture scan-fix-review loop"
   default_prompt: "Use $architecture-hardening-loop on my explicit or resolvable code scope, execute declared scanner dependencies without asking me to invoke them again, fix evidence-backed items, auto-review concerns to PASS, and rescan to fresh zero-Fix evidence."
-  # Transitive runtime requirements include improve-codebase-architecture,
+  # Runtime requirements include improve-codebase-architecture,
   # codebase-design, callable read-only delegation, agentic-review-handoff,
-  # goal-gate, and a real Grok adapter/session.
+  # and a real Grok adapter/session. goal-gate is conditional on an explicit
+  # Goal request or a compatible active/parent Goal.

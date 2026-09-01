@@ -71,7 +71,7 @@
       "id": 6,
       "name": "light-mode-one-confirm-not-full-deliberation",
       "prompt": "src/lib/cache.ts 这一个文件，本地开发缓存用 Map 还是用现成的 lru-cache 包？没有架构影响。你先推荐，我来确认，确认完如果需要再 plan。",
-      "expected_output": "Light mode: 1-2 rounds. Recommend one of the two named options and ask a single confirm question. Do not walk Establish / Compare / Lock, persist, and plan as an essay. After they confirm, a Decision Summary is enough; the persist question may be asked once because they did not waive, but do not write a plan until they ask.",
+      "expected_output": "Light mode: 1-2 rounds. Recommend one of the two named options and ask a single confirm question. Do not walk Establish / Compare / Lock, persist, and plan as an essay. After they confirm, a Decision Summary is enough; default to chat-only unless they request persistence or repository rules require it. Do not write a plan until they ask.",
       "expectations": [
         "Recognizes light mode (2 named options, ~1 file, no architecture)",
         "Recommends one option and asks one decision/confirm question",
@@ -97,13 +97,13 @@
       "id": 8,
       "name": "dont-ask-then-plan-no-second-confirm",
       "prompt": "同步 webhook 还是队列异步消费？你决定，不用问我。选完直接给我一份实现计划。",
-      "expected_output": "Decide-now then Planning: pick one named option, emit commitment: agent-committed Decision Summary, skip the persist question, and write the implementation plan in the same flow without a second confirm. Chat-only unless they asked for a spec.",
+      "expected_output": "Decide-now then planning handoff: pick one named option, emit commitment: agent-committed Decision Summary, skip the persist question, and load writing-plans with the locked Summary without a second confirm. Chat-only unless they asked for a spec.",
       "expectations": [
         "Recommends one of sync webhook vs async queue with a short why and the rejected alternative",
         "Emits a Decision Summary with commitment: agent-committed before the plan tasks",
         "Does NOT ask the persist-doc question",
-        "Does NOT wait for a second confirm before writing the plan (they already asked for the plan)",
-        "Plan tasks reference the locked choice and do not introduce a new what/why decision",
+        "Does NOT wait for a second confirm before handing off to writing-plans",
+        "Hands writing-plans the locked choice and does not maintain a second plan format inside discuss-before-plan",
         "Does NOT write a spec/ADR file unless they asked for one"
       ]
     },
@@ -119,6 +119,55 @@
         "Asks at most one blocking decision question if the recommendation could still reverse",
         "Does NOT invent a third transport merely to widen the comparison",
         "Does NOT write an implementation plan before a Decision Summary exists"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "independent-user-frontier-batched",
+      "prompt": "有两个互不依赖的选择：本地缓存 Map vs lru-cache；日志 JSON vs plain text。我参与决定，每题给推荐，一轮把当前可回答的问题问完。",
+      "expected_output": "Standard deliberation asks both independent user-owned decisions in one bounded frontier round, with a recommendation for each. It does not serialize independent questions across two turns.",
+      "expectations": [
+        "Asks both independent choices in the same round",
+        "Provides one recommendation per question",
+        "Does not ask for discoverable repository facts",
+        "Keeps dependent questions out of the current frontier",
+        "Does not exceed three user-owned questions in the round"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "first-principles-method-does-not-force-widening",
+      "prompt": "只比较 Postgres LISTEN/NOTIFY 和 Redis Streams，范围不要扩大。请用第一性原理分析并替我决定，然后交给 writing-plans。",
+      "expected_output": "Treats first principles as an analysis method inside bounded convergence, uses decide-now, then hands the Decision Summary to writing-plans. It does not redirect to Challenge.",
+      "expectations": [
+        "Stays in discuss-before-plan despite the phrase first principles",
+        "Does not introduce a third option",
+        "Makes an agent-committed choice because the user delegated it",
+        "Hands the locked Decision Summary to writing-plans without a persistence question"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "locked-thesis-stress-hands-to-grilling",
+      "prompt": "Redis 已经锁定；显式用 discuss-before-plan 压测这个 thesis，不要 plan，也不要重新选 provider。",
+      "expected_output": "Skip deliberation and hand the locked Redis thesis to grilling for pressure-testing. Do not reopen named-option convergence or emit a plan.",
+      "expectations": [
+        "Recognizes the choice is already locked",
+        "Hands thesis stress to grilling",
+        "Does not reopen provider selection",
+        "Does not emit an implementation plan"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "design-only-destructive-choice-converges-with-regate",
+      "prompt": "只做设计决策，不执行 migration：oauth_states 表应该立刻 drop、先 deprecate 再 drop，还是双写迁移？请用第一性原理替我拍板，不要扩大选项。",
+      "expected_output": "Treat this as bounded design-only convergence, not authorization to mutate data. Choose one named option, emit a Decision Summary, and state that implementation requires a fresh destructive/production-data safety gate.",
+      "expectations": [
+        "Does not enter Safety hold merely because a future implementation may be destructive",
+        "Chooses among the three named migration options without widening",
+        "Emits a Decision Summary while performing no migration or production-data mutation",
+        "States that the Summary does not authorize implementation and that execution requires a fresh safety re-gate"
       ]
     }
   ]

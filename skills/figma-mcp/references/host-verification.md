@@ -40,15 +40,27 @@ Claude may also expose a managed `claude.ai Figma` connector. Use the exact iden
 
 Prefer Figma's official Cursor plugin by running `/add-plugin figma` in Cursor Agent chat. For an existing manual server, use the exact identifier from the native status command:
 
-```bash
-agent mcp list
-agent mcp login <exact-figma-identifier>
-agent mcp list-tools <exact-figma-identifier>
+```zsh
+if command -v cursor-agent >/dev/null 2>&1; then
+  figma_cursor_cli="$(command -v cursor-agent)"
+elif command -v cursor-cli >/dev/null 2>&1; then
+  figma_cursor_cli="$(command -v cursor-cli)"
+else
+  print -u2 -- "Cursor CLI not found"
+fi
+
+if [[ -n "$figma_cursor_cli" ]]; then
+  "$figma_cursor_cli" mcp list
+  "$figma_cursor_cli" mcp login <exact-figma-identifier>
+  "$figma_cursor_cli" mcp list-tools <exact-figma-identifier>
+fi
 ```
 
-Cursor may expose the CLI as `cursor-cli` while its help text names the executable `agent`. Use the installed command without changing its MCP configuration schema. Merge the official URL into the existing user or workspace configuration; never replace other servers.
+Resolve only the installed `cursor-agent` or `cursor-cli` executable. Do not assume a bare `agent` alias exists merely because help text uses that name. Use the resolved command without changing its MCP configuration schema. Merge the official URL into the existing user or workspace configuration; never replace other servers.
 
 ## Run the real acceptance
+
+This section is for readiness-only, recovery, and multi-host acceptance, so identity is part of the proof. Do not add it before a current-account, single-host, read-only file or node task; that path uses the first requested official read as `REQUESTED_READ`, as defined by the main skill.
 
 When no account was named, use one fresh read-only session per host with this prompt:
 

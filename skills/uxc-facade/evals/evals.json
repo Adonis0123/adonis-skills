@@ -17,7 +17,7 @@
       "id": 2,
       "name": "mcp-stdio-packaging",
       "prompt": "用 UXC 把一个已有的 MCP stdio wrapper 包成可复用 CLI。保留原生宿主注册，子进程很贵，需要证明 daemon 复用，并且 readiness 不能泄露工具结果。",
-      "expected_output": "Defines native and service ownership, a fixed managed link, pinned provenance, finite idle retention, sanitized two-call reuse proof, and separate native-host acceptance.",
+      "expected_output": "Defines native and service ownership, a fixed managed link, pinned provenance, finite idle retention, sanitized two-call reuse proof, and separate task and native-host acceptance.",
       "files": [],
       "expectations": [
         "Keeps native host registration authoritative",
@@ -25,7 +25,7 @@
         "Names the binary owner as the sole installer and updater while the service skill owns link and readiness helpers",
         "Defines a two-call daemon reuse proof using sanitized metadata rather than timing, and keeps reuse UNVERIFIED until it runs",
         "Keeps runtime readiness statuses UNVERIFIED when no ownership gates or calls were executed",
-        "Separates UXC transport from native-host acceptance"
+        "Separates UXC transport from task acceptance and native-host acceptance"
       ]
     },
     {
@@ -55,12 +55,12 @@
       "id": 5,
       "name": "chrome-devtools-handoff",
       "prompt": "用 UXC 包装 Chrome DevTools MCP，并确认连的是正确 Chrome，最后真实调用 list_pages。",
-      "expected_output": "Hands Chrome identity, recovery, and list_pages acceptance to chrome-dev-mcp while applying the generic facade contract only to the UXC adapter layer.",
+      "expected_output": "Hands Chrome identity, recovery, shared list_pages acceptance, and explicit native compatibility policy to chrome-dev-mcp while applying the generic facade contract only to the UXC adapter layer.",
       "files": [],
       "expectations": [
         "Routes the task to chrome-dev-mcp",
-        "Does not treat UXC readiness as correct-Chrome proof",
-        "Keeps the native list_pages call as final acceptance"
+        "Does not treat schema discovery alone as correct-Chrome proof",
+        "Uses the shared list_pages call as default acceptance and native only as explicit compatibility"
       ]
     },
     {

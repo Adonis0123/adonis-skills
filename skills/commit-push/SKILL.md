@@ -27,7 +27,8 @@ Stop if the directory is not a Git repository.
 
 Determine the commit scope:
 
-- If staged changes already exist, use only the staged changes. Do not automatically add remaining unstaged changes; report them at the end if they remain.
+- If staged changes already exist and the user did not name a different scope, use only the staged changes. Do not automatically add remaining unstaged changes; report them at the end if they remain.
+- If staged changes already exist but the user explicitly authorized a different unstaged/untracked scope, stop before staging, committing, or pushing. Report the mismatch and ask the user to choose or split the index; do not commit the existing index, add the new scope, or silently unstage user work.
 - If there are no staged changes but there is exactly one clear unstaged or untracked file, inspect that file first, then stage it with `git add -- <path>` when it is safe.
 - If there are no staged changes and the user named specific files, or the current agent turn just produced a clearly related set of files with no unrelated dirty files, inspect those paths and stage them with `git add -- <path>...`.
 - If there are no staged changes and the unstaged/untracked files look ambiguous, unrelated, or broader than the active task, stop and ask which files to stage. Provide exact `git add -- <path>` suggestions.

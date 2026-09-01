@@ -1,0 +1,73 @@
+[
+  {
+    "query": "Stripe 还是 Lemon Squeezy？比较后推荐一个，选定再计划。",
+    "should_trigger": true
+  },
+  {
+    "query": "把轮询改成 WebSocket 还是维持现状？先替我拍板。",
+    "should_trigger": true
+  },
+  { "query": "Redis 和进程内缓存二选一，我参与确认。", "should_trigger": true },
+  {
+    "query": "只比较 Postgres LISTEN/NOTIFY 与 Redis Streams，用第一性原理替我决定。",
+    "should_trigger": true
+  },
+  {
+    "query": "这个 ADR 提议删 REST 改 GraphQL，请和维持 REST 的现状比较并给结论。",
+    "should_trigger": true
+  },
+  {
+    "query": "同步 webhook 还是异步队列？你决定，不要问，选完交给 writing-plans。",
+    "should_trigger": true
+  },
+  {
+    "query": "两种日志格式都可行，先给推荐和取舍，不要开始实现。",
+    "should_trigger": true
+  },
+  {
+    "query": "monolith vs microservices 已经是最终候选，先把架构选择锁定。",
+    "should_trigger": true
+  },
+  {
+    "query": "oauth_states 以后要下线，只比较立即 drop、deprecate 后 drop、双写迁移；本回合不执行，先拍板。",
+    "should_trigger": true
+  },
+  {
+    "query": "我提议把 polling 换成 WebSocket；请与维持现状比较后决定，不要扩展方案。",
+    "should_trigger": true
+  },
+  {
+    "query": "还没有候选方案，先从第一性原理尽可能扩展支付模式。",
+    "should_trigger": false
+  },
+  {
+    "query": "docs/rfc/cache.md 已定稿，直接拆 implementation plan。",
+    "should_trigger": false
+  },
+  { "query": "把 README 里的 recieve 改成 receive。", "should_trigger": false },
+  { "query": "CI test 偶发失败，先找根因。", "should_trigger": false },
+  {
+    "query": "把现有 Save 按钮文案改为 Saved，行为都已指定。",
+    "should_trigger": false
+  },
+  {
+    "query": "review 当前 staged diff，修完再 re-review。",
+    "should_trigger": false
+  },
+  {
+    "query": "给 Codex 创建一个 durable Goal 做完 PLAN.md。",
+    "should_trigger": false
+  },
+  {
+    "query": "按现成 spec 实现 API handler，接口和验收条件都在文档里。",
+    "should_trigger": false
+  },
+  {
+    "query": "problem+json 已经定了，把决定整理成 ADR，不要重新讨论。",
+    "should_trigger": false
+  },
+  {
+    "query": "RFC 已定稿，直接按现有要求拆文件级实现计划。",
+    "should_trigger": false
+  }
+]

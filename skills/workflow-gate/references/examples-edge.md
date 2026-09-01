@@ -74,23 +74,23 @@ Workflow Gate
 - Next: Load discuss-before-plan; ask once for env + disuse evidence + safe-deprecation alternative before any DROP.
 ```
 
-## Contradictory signals — "quick fix" on payment code
+## High-risk bug still starts with diagnosis
 
 User: "Just a quick fix to the Stripe webhook handler — it's choking on refunds. Don't overthink it."
 
-Rule #4 upgrades a high-risk payment bug to Discuss; Rule #10 surfaces the contradiction with the casual "quick fix" framing. The current request is diagnosis/repair, not an authorized irreversible payment mutation, so `destructive=no`.
+Rule #4 keeps a high-risk payment bug on the debugging route. Risk changes the evidence and mutation gates, not the first diagnostic step. The current request is diagnosis/repair, not an authorized irreversible payment mutation, so `destructive=no`; re-gate before any billing or production-data mutation.
 
 ```
 Workflow Gate
-- Route: Discuss
-- Runtime skill: discuss-before-plan
+- Route: Light
+- Runtime skill: systematic-debugging
 - Fallback alias: none
-- Execution path: n/a
+- Execution path: systematic-debugging
 - Thesis: n/a
-- Goal: Decide the safe way to fix the Stripe webhook refund path.
-- Signals: scope=few-files; risk=high; destructive=no; decisions=unresolved; user-intent=debug
-- Assumptions: User framed this as "quick" but the surface area is payments; one wrong edit could lose money or refund the wrong customer.
-- Next: Load discuss-before-plan; ask once for the failing payload + intended refund semantics before touching the handler.
+- Goal: Diagnose why the Stripe webhook refund path fails before choosing a repair.
+- Signals: scope=few-files; risk=high; destructive=no; decisions=resolved; user-intent=debug
+- Assumptions: User framed this as "quick" but the surface area is payments; keep reproduction and evidence gathering read-only, then re-gate before any billing or production-data mutation.
+- Next: Load systematic-debugging; reproduce the failing refund payload and trace the handler without changing external state.
 ```
 
 ## Re-gate trigger — destructive surfaces mid-Plan
@@ -114,7 +114,7 @@ Workflow Gate (re-gate)
 
 User: "Run grilling on this — there's a typo on line 42 of App.tsx."
 
-The user named `grilling`, but the work is a one-character typo fix. That's a clear Challenge-vs-Light mismatch. The gate flags the mismatch and asks one clarifying question (or, if "don't ask" was active, picks the most likely Route and records the user-named skill in `Assumptions`).
+The user named `grilling`, but the work is a one-character typo fix. That's a clear Challenge-vs-Light mismatch. The gate selects the smallest correct route and records the mismatch; it does not add a confirmation round for a reversible edit.
 
 ```
 Workflow Gate
@@ -125,15 +125,15 @@ Workflow Gate
 - Thesis: n/a
 - Goal: Apply the typo fix on apps/web/src/App.tsx:42 (mismatch flag: user named `grilling`).
 - Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
-- Assumptions: User-named `grilling` doesn't fit a single-character fix; defaulting to Light and surfacing the mismatch before applying.
-- Next: Confirm with one sentence ("This is a one-char fix; running grilling on it would be over-escalation — want me to just apply it?") and then edit.
+- Assumptions: User-named `grilling` doesn't fit a single-character fix; defaulting to Light and preserving the requested file scope.
+- Next: Apply the one-character edit and verify the diff.
 ```
 
 Legacy mismatch: user says "use brainstorming for this typo" → same Light route; Assumptions note deprecated alias `brainstorming` mapped away (never load it).
 
 ## Challenge — replicate an existing UI (Creative-work HARD-GATE positive)
 
-User: "结合 /Users/me/duiyun/.../pollo.ai/p/[slug] 的数据契约，把 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页按 Pollo 风格 1:1 复刻一下，适合走哪个流程？"
+User: "结合 `$REPO_ROOT/web/src/pages/pollo.ai/p/[slug]` 的数据契约，把 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页按 Pollo 风格 1:1 复刻一下，适合走哪个流程？"
 
 Even though the data contract exists and the visual target is concrete, this is creative UI work. Rule #2 fires: Challenge, not Plan. No thesis yet → agent-strawman + confirm before grilling.
 
@@ -181,7 +181,7 @@ Workflow Gate
 - Goal: Establish and stress-test homepage redesign direction before creating an implementation plan.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
 - Assumptions: User named `writing-plans`, but this is creative redesign work and no design doc/spec is referenced; treating the named Plan-class skill as a mismatch under Rule #2.
-- Next: Draft strawman thesis; confirm with user; then load grilling before any writing-plans handoff.
+- Next: Draft the strawman thesis; confirm it unless the user explicitly delegated the reversible direction; then load grilling before any writing-plans handoff.
 ```
 
 ## Challenge vs Discuss — named options converge to Discuss
@@ -218,9 +218,9 @@ Workflow Gate
 - Next: Draft a short strawman framing of candidate dimensions; confirm; then load grilling.
 ```
 
-## Plan — existing spec referenced (Rule #2 exception)
+## Plan — task breakdown from an existing spec (Rule #2 exception)
 
-User: "按 docs/superpowers/specs/2026-05-12-share-modal-design.md 把 share modal 接到 apps/web。"
+User: "按 docs/superpowers/specs/2026-05-12-share-modal-design.md，先给我一份把 share modal 接到 apps/web 的任务拆解，不要实现。"
 
 ```
 Workflow Gate
@@ -229,9 +229,9 @@ Workflow Gate
 - Fallback alias: none
 - Execution path: n/a
 - Thesis: n/a
-- Goal: Wire the share modal into apps/web per the referenced design doc.
+- Goal: Break the referenced share-modal implementation into tasks.
 - Signals: scope=few-files; risk=low; destructive=no; decisions=resolved; user-intent=plan
-- Assumptions: docs/superpowers/specs/2026-05-12-share-modal-design.md is authoritative; Rule #2 exception fires (existing spec referenced) → skip Challenge.
+- Assumptions: docs/superpowers/specs/2026-05-12-share-modal-design.md is authoritative; the user explicitly asks for task breakdown, so Rule #2 skips Challenge and routes to Plan.
 - Next: Load writing-plans; produce a task breakdown grounded in the design doc.
 ```
 
@@ -303,4 +303,4 @@ Workflow Gate
 - Next: Implement chosen reading; show the diff and flag the alternative so the user can redirect cheaply.
 ```
 
-Note: "don't ask" does **not** waive Thesis confirm for Challenge `agent-strawman` unless the user explicitly waived thesis review. Put the strawman in Next and stop.
+Note: "don't ask" delegates a reversible product/design direction, so Challenge may adopt an `agent-strawman` and proceed without a redundant thesis confirmation. It never waives destructive, external-side-effect, production, auth, billing, or other hard-to-reverse gates.

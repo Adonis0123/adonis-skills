@@ -54,16 +54,17 @@
     {
       "id": 4,
       "eval_name": "single-repo-read-only-dashboard",
-      "prompt": "这是一次只读方案验收，不要改文件或启动服务。一个单仓库工具已经有 127.0.0.1:17333 的 loopback daemon；用户只想给现有只读运行指标加 metrics.localhost 别名和一个可选 macOS app。没有 Todo、文章、文件写入或公开发布管线。请给出最小设计、实施顺序和验收证据。",
-      "expected_output": "在同一仓库复用现有 listener，增加 exact Host 到只读 metrics handler 的窄映射，并按需生成薄 app opener；只覆盖 Host 隔离、只读 handler、launchd 幂等、curl 和桌面/移动浏览器验收，不引入 Todo、Reader、CRUD、第二个仓库或公共 sync。",
+      "prompt": "这是一次只读方案验收，不要改文件或启动服务。一个单仓库工具已经有稳定的 127.0.0.1:17333 loopback daemon；用户这次只想给现有只读运行指标加 metrics.localhost 别名。diff 只允许 Host 映射、只读 handler 和 focused tests，不改 UI、LaunchAgent、launcher、写入或公开发布。请给出最小设计、实施顺序和验收证据。",
+      "expected_output": "在同一仓库复用现有 listener，增加 exact Host 到只读 metrics handler 的窄映射；把本次工作分类为 Host/handler-only，只要求 focused gateway/handler tests、diff scope 和 curl 200/421/404，不引入 full repo、launchd/lsof、双 viewport、Todo、Reader、CRUD、第二个仓库或公共 sync；若实际 diff 扩大，再补对应变更面的验收。",
       "files": [],
       "expectations": [
         "复用现有 loopback listener，并增加 metrics.localhost 的 exact Host 映射",
         "数据与 handler 留在当前单一仓库，gateway 只依赖窄 request/response contract",
         "明确 Write boundary 为 none，不引入 repository、ETag、If-Match、lock 或 CRUD",
         "不引入 Todo、Reader、Blog、第二个仓库或公共发布 sync",
-        "可选 macOS app 只是打开 canonical URL 的薄 opener，不启动第二个 daemon",
-        "验收包含适用的 tests/typecheck、未知 Host 421、launchctl/lsof、curl 以及桌面和移动浏览器"
+        "把本次工作明确分类为 Host/handler-only，不引入或验收 macOS app 与 LaunchAgent",
+        "验收只要求 focused gateway/handler tests、diff scope，以及 curl 的 canonical 200、未知 Host 421、跨 surface 404",
+        "不默认要求 full tests/typecheck/build、launchctl/lsof 或桌面/移动浏览器；只有实际 diff 扩大时才补对应变更面的证据"
       ]
     },
     {
@@ -125,6 +126,18 @@
         "用临时端口和 curl -H Host 提供 200、421、404 的关键响应证据",
         "记录本 run 启动的 listener PID，使用 trap 或等价清理，curl 后只停止并 wait 该 PID，且报告 kill -0 确认进程不存在",
         "不安装或重启真实 LaunchAgent，不修改真实用户数据，不扩展 run-specific 副本之外的写边界"
+      ]
+    },
+    {
+      "id": 9,
+      "eval_name": "remote-url-app-wrapper-is-out-of-scope",
+      "prompt": "给 https://intranet.example.com 做一个双击打开的 macOS .app，只包装这个远程 URL；不要创建 localhost、HTTP listener、daemon、LaunchAgent 或本地业务逻辑。",
+      "expected_output": "Recognizes that a remote-URL-only app wrapper has no persistent local HTTP surface and does not invoke local-web-surface; routes to a generic macOS launcher workflow only if one is actually available, without inventing a dependency.",
+      "files": [],
+      "expectations": [
+        "明确当前请求不适用 local-web-surface，因为没有持久本地 HTTP surface",
+        "不引入 localhost、loopback listener、gateway、LaunchAgent 或第二份服务生命周期",
+        "只在当前环境确实存在匹配能力时转给通用 macOS launcher 流程，不硬编码未验证存在的 Skill"
       ]
     }
   ]

@@ -40,6 +40,18 @@
     "should_trigger": true
   },
   {
+    "query": "四个 consumer 的合同都已锁定，直接实现不要 plan；显式用 workflow-gate 选路由。",
+    "should_trigger": true
+  },
+  {
+    "query": "显式用 workflow-gate：只读 README.md 第 42 行，不要改文件，并输出 Route block。",
+    "should_trigger": true
+  },
+  {
+    "query": "显式用 workflow-gate：只比较立刻 drop、先 deprecate 再 drop 两种方案，本轮不执行 migration；判断该走哪个 route。",
+    "should_trigger": true
+  },
+  {
     "query": "现在几点？",
     "should_trigger": false
   },
@@ -77,6 +89,10 @@
   },
   {
     "query": "调用 weekly-report skill 生成周报，输入范围和格式都已明确。",
+    "should_trigger": false
+  },
+  {
+    "query": "直接用 goal-gate 创建 durable Goal，范围和验收都已明确，不需要帮我选择 workflow。",
     "should_trigger": false
   }
 ]

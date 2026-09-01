@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-26T08:46:46.000Z"
+    "updatedAt": "2026-08-30T03:51:50.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -33,13 +33,13 @@
     "description": "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement.",
     "metadata": {
       "author": "adonis",
-      "version": "1.7.0"
+      "version": "1.7.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-26T08:46:46.000Z"
+    "updatedAt": "2026-08-30T03:51:50.000Z"
   },
   {
     "slug": "branch-creator",
@@ -61,7 +61,7 @@
     "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "files": {
       "hasReferences": true,
@@ -126,10 +126,10 @@
   {
     "slug": "decision-first-technical-writing",
     "name": "decision-first-technical-writing",
-    "description": "Create, rewrite, or review internal technical design documents that lead with decisions and progressively expose architecture, runtime flows, data models, API contracts, failure behavior, scope, and open questions. Use for design docs, architecture proposals, module plans, API or schema designs, and decision records. Do not use for tutorials, marketing copy, or code-only implementation plans.",
+    "description": "Create, rewrite, or review internal technical design documents after decisions are settled or while proposals and open questions are explicitly labeled. Use for design docs, architecture proposals, module designs, API or schema designs, and decision records. Route unresolved named-option convergence to discuss-before-plan and ready-spec task breakdown to writing-plans. Do not use for tutorials, marketing copy, or code-only implementation plans.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "files": {
       "hasReferences": true,
@@ -140,10 +140,10 @@
   {
     "slug": "discuss-before-plan",
     "name": "discuss-before-plan",
-    "description": "Resolve a bounded design choice before planning. Use when the user presents alternatives, or a proposal with an implicit status-quo alternative, and asks to compare, recommend, or decide. Also use when they delegate the choice.",
+    "description": "Resolve a bounded design choice before planning. Use when the user presents named alternatives, a proposal with an implicit status-quo alternative, or delegates a decision and asks to compare, recommend, or decide. Do not use for open-ended option generation, a fully specified implementation, or a ready spec that only needs task planning.",
     "metadata": {
       "author": "adonis",
-      "version": "2.3.1"
+      "version": "2.5.0"
     },
     "files": {
       "hasReferences": true,
@@ -168,10 +168,10 @@
   {
     "slug": "figma-mcp",
     "name": "figma-mcp",
-    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, or Cursor. Keep registration account-neutral and each supported host's OAuth flow authoritative, verify readiness with a real read-only whoami call, and never copy OAuth tokens between hosts.",
+    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, or Cursor. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "files": {
       "hasReferences": true,
@@ -196,10 +196,10 @@
   {
     "slug": "goal-gate",
     "name": "goal-gate",
-    "description": "Gate whether a coding-agent task needs a durable, verifiable goal, then draft, validate, start, continue, or close the correct contract for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
+    "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.0"
+      "version": "2.0.1"
     },
     "files": {
       "hasReferences": true,
@@ -238,10 +238,10 @@
   {
     "slug": "local-web-surface",
     "name": "local-web-surface",
-    "description": "Build or extend a persistent macOS local web surface when the request includes a stable *.localhost URL, an existing loopback daemon/gateway, login startup, or a .app launcher. Once triggered, it can add file-backed CRUD or local/public content projections without changing public publishing. Covers domain ownership, exact Host routing, explicit access/threat boundaries, safe mutations, launchd lifecycle, TDD, curl checks, and desktop/mobile browser QA. Do not use for public hosting, production deployment, ordinary frontend/CRUD work on an existing dev server, merely opening or interacting with an existing URL, website audits, or native apps with no local HTTP surface.",
+    "description": "Build or extend a persistent macOS local web surface when the request includes a stable *.localhost URL, an existing loopback daemon/gateway, login startup, or a thin .app launcher that opens or wakes a persistent local HTTP surface. Once triggered, it can add file-backed CRUD or local/public content projections without changing public publishing. Covers domain ownership, exact Host routing, explicit access/threat boundaries, safe mutations, launchd lifecycle, TDD, curl checks, and proportional browser QA. Do not use for public or remote URL launchers, public hosting, production deployment, ordinary frontend/CRUD work on an existing dev server, merely opening or interacting with an existing URL, website audits, or native apps with no local HTTP surface.",
     "metadata": {
       "author": "adonis",
-      "version": "1.3.0"
+      "version": "1.4.0"
     },
     "files": {
       "hasReferences": false,
@@ -252,17 +252,17 @@
   {
     "slug": "open-code-review-loop",
     "name": "open-code-review-loop",
-    "description": "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with codex, claude-code, grok-build, or cursor-cli, iterating until validated NO_FINDINGS. Explicit invocation starts immediately with no-prompt product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, observed reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds.",
+    "description": "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request starts with safe product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds.",
     "metadata": {
       "author": "adonis",
-      "version": "1.6.0"
+      "version": "1.7.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-25T05:50:27.000Z"
+    "updatedAt": "2026-08-30T03:51:50.000Z"
   },
   {
     "slug": "review-prompt-composer",
@@ -270,7 +270,7 @@
     "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops.",
     "metadata": {
       "author": "adonis",
-      "version": "2.1.0"
+      "version": "2.1.1"
     },
     "files": {
       "hasReferences": false,
@@ -299,21 +299,21 @@
     "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.6.0"
+      "version": "1.6.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-25T05:50:27.000Z"
+    "updatedAt": "2026-08-30T03:51:50.000Z"
   },
   {
     "slug": "uxc-facade",
     "name": "uxc-facade",
-    "description": "Use this skill whenever the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing the native host or service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp.",
+    "description": "This skill should be used when the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "files": {
       "hasReferences": true,
@@ -327,14 +327,14 @@
     "description": "Run a read-only, evidence-led runtime performance audit of a real web application, especially authenticated editors, dashboards, media tools, long-lived SPAs, and pages with many tabs or states. Use when the user asks to profile slowness, inspect every tab, use Chrome DevTools or Chrome Recorder, run React Scan, compare normal and throttled interactions, find memory or rendering risks, or produce a performance report and recommendations without changing code. Discover available browser capabilities, guide the user through official installation when an important capability is missing, route to validated fallbacks, isolate measurement pollution, and distinguish measured facts from screen observations, hypotheses, and unverified paths. Do not use for a Lighthouse-only SEO/accessibility audit, tool installation with no audit goal, or when the user already wants a specific optimization implemented.",
     "metadata": {
       "author": "Adonis",
-      "version": "1.2.0"
+      "version": "1.2.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-30T14:55:33.000Z"
+    "updatedAt": "2026-08-30T15:29:30.000Z"
   },
   {
     "slug": "weekly-report",
@@ -354,10 +354,10 @@
   {
     "slug": "workflow-gate",
     "name": "workflow-gate",
-    "description": "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and explicit full-completion pipelines. Skip trivial one-line read-only or formatting work and clearly matching safe named-skill requests. Emit one compact route block; fail closed when a required runtime is not callable.",
+    "description": "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, explicit Goal management, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and full-completion pipelines. Skip trivial one-line work and clearly matching safe named-skill requests. Treat first-principles analysis as a method, not a Challenge trigger unless the user is widening the option space.",
     "metadata": {
       "author": "adonis",
-      "version": "3.3.1"
+      "version": "3.5.0"
     },
     "files": {
       "hasReferences": true,

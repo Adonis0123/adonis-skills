@@ -3,7 +3,7 @@ name: task-completion-loop
 description: "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review."
 metadata:
   author: adonis
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # Task Completion Loop

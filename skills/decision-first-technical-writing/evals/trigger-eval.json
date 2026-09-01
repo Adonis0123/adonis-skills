@@ -1,0 +1,70 @@
+[
+  {
+    "query": "把已经确认的上传服务架构决定整理成内部 design doc，写清运行流程和失败契约。",
+    "should_trigger": true
+  },
+  {
+    "query": "重写这份 ADR，让结论先行，并把范围、回滚和验证补齐。",
+    "should_trigger": true
+  },
+  {
+    "query": "只审 API design 文档里的字段冲突、隐藏决定和错误码不一致。",
+    "should_trigger": true
+  },
+  {
+    "query": "我们已锁定事件模型，请写 schema design，保留精确字段和类型。",
+    "should_trigger": true
+  },
+  {
+    "query": "把模块边界的技术提案整理成可评审文档，未确认项都标 Proposal。",
+    "should_trigger": true
+  },
+  {
+    "query": "写一份内部 decision record，记录已经拍板的缓存策略和非目标。",
+    "should_trigger": true
+  },
+  {
+    "query": "整理服务降级设计；断路器已确认，重试次数仍标为 Open question。",
+    "should_trigger": true
+  },
+  {
+    "query": "检查这份架构说明中流程图、API 和正文是否互相矛盾，不要改代码。",
+    "should_trigger": true
+  },
+  {
+    "query": "把已经确认的迁移方案写成短设计文档，说明回滚和可观察结果。",
+    "should_trigger": true
+  },
+  {
+    "query": "压缩这份内部 technical design，但保留决定、所有权和失败分支。",
+    "should_trigger": true
+  },
+  {
+    "query": "Kafka 还是 SQS？先比较后替我拍板，不要写文档。",
+    "should_trigger": false
+  },
+  {
+    "query": "docs/specs/cache.md 已定稿，按文件和测试拆 implementation plan。",
+    "should_trigger": false
+  },
+  {
+    "query": "列出支付架构可能的方案，先把选项空间撑开。",
+    "should_trigger": false
+  },
+  {
+    "query": "按现成计划实现 src/api/session.ts 并跑测试。",
+    "should_trigger": false
+  },
+  { "query": "写一篇面向新人的 OAuth 教程。", "should_trigger": false },
+  { "query": "优化首页营销文案，提高注册转化率。", "should_trigger": false },
+  {
+    "query": "review 当前 Git diff，修完再 re-review 到 clean。",
+    "should_trigger": false
+  },
+  { "query": "把 README 里的拼写错误修掉。", "should_trigger": false },
+  { "query": "排查 CI 偶发超时的根因。", "should_trigger": false },
+  {
+    "query": "给已经确定的 schema 生成 TypeScript 类型文件，只要代码。",
+    "should_trigger": false
+  }
+]

@@ -3,7 +3,7 @@ name: review-prompt-composer
 description: "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops."
 metadata:
   author: adonis
-  version: "2.1.0"
+  version: "2.1.1"
 ---
 
 # Review Prompt Composer
@@ -105,7 +105,7 @@ git rev-parse HEAD
 git status --short
 ```
 
-仓库、HEAD 或状态清单不一致时，停止并报告提示词已失效。即使三者相同，也只有 `scope_digest` 重算匹配才证明生成时范围内容未漂移；仍须读取当前完整 diff / untracked 内容并逐项核对。
+仓库或 HEAD 不一致时，停止并报告提示词已失效。完整 `git status` 只是上下文，不是独立 freshness 门禁：若变化只发生在提示词明确排除的路径，且 writer 的 `--verify-prompt` 对所选 canonical scope 返回 `status: fresh`，提示词仍可继续。若状态变化改变了 scope membership、影响 in-scope 内容，或 verifier 返回非 fresh，则停止。无论状态路径是否相同，仍须读取当前完整 in-scope diff / untracked 内容并逐项核对；`scope_digest` 才是所选范围内容的新鲜度权威。
 
 ## 待验证目标
 

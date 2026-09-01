@@ -1,12 +1,34 @@
 # Goal Gate Examples
 
-These examples assume the auto-set rule: when the safety gate is clear and goal fit is high, `set-now` fires without asking. Medium fit stays on `suggest`; a tripped safety gate drops to `suggest` or `defer`.
+High fit authorizes the work under a transcript contract; native Goal mutation still needs explicit Goal authorization or an already-authorized continuation. Medium fit stays on `suggest`; a tripped safety gate drops to `suggest` or `defer`.
 
-## Grok tooling: auto set-now (wait for user /goal)
+## Grok tooling: implicit work adopts without native Goal
 
 User: "I'm in Grok Build. The session has `update_goal`. No goal is active. Work through PLAN.md and don't stop until `pnpm test` passes and `pnpm build` succeeds."
 
-High fit, gate clear. Grok has no `create_goal` — durable mode is inactive until the user pastes `/goal`. Emit the contract + copy-ready slash command, set `Next: wait for user /goal`, and **stop**. Do not start PLAN.md work and do not call `update_goal` yet.
+High fit, gate clear, but the user did not request native Goal state. Adopt the contract and continue; do not emit `/goal`, do not call `update_goal` while inactive, and do not claim product Goal is Active.
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: grok-tooling
+- Goal fit: high
+- Objective: Implement every task in PLAN.md until the named validation commands pass.
+- Done condition: All PLAN.md tasks are implemented, `pnpm test` passes, and `pnpm build` succeeds.
+- Verification: Surface changed files, the test/build commands, and their exit status.
+- Constraints: Stay within PLAN.md scope; do not push or commit unless asked.
+- Execution strategy: Before implementation, assess plan-task independence, shared context, write overlap, and separate verification; use subagents only when beneficial and keep final integration with the main agent.
+- Checkpoints: Report in transcript only while the product Goal is inactive.
+- Stop or ask when: PLAN.md is ambiguous, validation needs unavailable credentials, or a destructive action is required.
+- Prompt: none
+- Next: adopt goal and continue
+```
+
+## Grok tooling: explicit Goal request waits for user /goal
+
+User: "I'm in Grok Build. The session has `update_goal`. No goal is active. Set a durable goal and work through PLAN.md until `pnpm test` passes and `pnpm build` succeeds."
+
+High fit, gate clear, and the user explicitly requested native Goal state. Grok has no `create_goal` — durable mode is inactive until the user pastes `/goal`. Emit the contract + copy-ready slash command, set `Next: wait for user /goal`, and **stop**. Do not start PLAN.md work and do not call `update_goal` yet.
 
 ```text
 Goal Gate
@@ -152,15 +174,15 @@ Goal Gate
 默认选择理由：先做本地 MVP 能最快验证核心记账流程，同时避开账号、银行接口和生产数据风险。
 ```
 
-## Codex tooling: auto set-now (safety gate clear)
+## Codex tooling: implicit work adopts without native Goal
 
 User: "I'm in Codex with goal tooling. No goal is active. Work through PLAN.md and don't stop until `pnpm test` passes and `pnpm build` succeeds."
 
-High fit, no safety-gate trip, tooling available — so create the goal now instead of asking.
+High fit and the safety gate is clear, but the user did not request native Goal state. Adopt the contract and continue; do not call `create_goal` or claim product Goal is Active.
 
 ```text
 Goal Gate
-- Decision: set-now
+- Decision: suggest
 - Runtime: codex-tooling
 - Goal fit: high
 - Objective: Implement every task in PLAN.md until the named validation commands pass.
@@ -168,19 +190,17 @@ Goal Gate
 - Verification: Surface changed files, the test/build commands, and their exit status.
 - Constraints: Stay within PLAN.md scope; do not push or commit unless asked.
 - Execution strategy: Before implementation, assess plan-task independence, shared context, write overlap, and separate verification; use installed subagent orchestration only when it helps, with the main agent retaining final integration responsibility.
-- Checkpoints: Report after each PLAN.md milestone.
+- Checkpoints: Report after each PLAN.md milestone in the transcript.
 - Stop or ask when: PLAN.md is ambiguous, validation needs unavailable credentials, or a destructive action is required.
 - Prompt: none
-- Next: create goal
+- Next: adopt goal and continue
 ```
-
-Call `get_goal` first when available; with no active goal, call `create_goal` with the objective. Do not add a token budget unless the user asked for one. After the work is proven complete, call Codex `update_goal({status: "complete"})` when that status-only schema is exposed. Use `status: "blocked"` only after the same blocker persists for at least three consecutive goal turns; never use Grok's `message`, `completed`, or `blocked_reason` fields in Codex.
 
 ## Codex tooling: explicit set-now
 
 User: "Set a goal to finish PLAN.md and keep going until validation passes."
 
-Same action; here the user also asked explicitly.
+Here the user explicitly authorizes native Goal creation, so the runtime action differs from the implicit-work example.
 
 ```text
 Goal Gate
@@ -403,11 +423,11 @@ Capabilities are uncertain, so do not auto-execute even if fit were high.
 
 Existing block says `Route: Architecture`, `Runtime skill: architecture-hardening-loop`, `scope=multi-module`, `user-intent=implement`, and `get_goal` shows no active goal.
 
-Scoped `architecture-hardening-loop` plus implement intent is a strong goal-fit signal; with the safety gate clear, auto-set.
+Scoped `architecture-hardening-loop` plus implement intent is a strong goal-fit signal for a transcript contract, but it does not by itself authorize native Goal creation. With the safety gate clear, adopt and continue unless the user or parent workflow explicitly requested Goal state.
 
 ```text
 Goal Gate
-- Decision: set-now
+- Decision: suggest
 - Runtime: codex-tooling
 - Goal fit: high
 - Objective: Complete the multi-module implementation selected by workflow-gate.
@@ -418,7 +438,7 @@ Goal Gate
 - Checkpoints: Report after each module or bounded context.
 - Stop or ask when: The plan proves wrong, modules conflict, or validation is blocked.
 - Prompt: none
-- Next: create goal
+- Next: adopt goal and continue
 ```
 
 `workflow-gate` is a signal, not a prerequisite. Do not rerun it unless the user is asking for route selection rather than goal selection.

@@ -266,6 +266,20 @@
         "不要求用户二次确认",
         "不自动 close 或把 PWC 改写为 PASS"
       ]
+    },
+    {
+      "id": 19,
+      "name": "round-budget-exhaustion-keeps-goal-active",
+      "prompt": "这是只读行为验收。task-completion-loop 已完成两轮修复和复审，但最终 blind audit 仍有一个范围内、可逆、无需产品选择或额外权限的 Fix。当前轮预算耗尽，证据和剩余 Fix 都清楚。请给出终态。",
+      "expected_output": "返回 UNVERIFIED，记录剩余 Fix 与恢复点并保持 Goal active；下一 Goal turn 从剩余证据继续。不得把纯轮次预算耗尽升级为 HUMAN_GATE。",
+      "files": [],
+      "expectations": [
+        "终态是 UNVERIFIED 而不是 HUMAN_GATE",
+        "保持 Goal active，不 complete 或 block",
+        "记录剩余 Fix、当前 evidence identity 与下一恢复点",
+        "说明下一 Goal turn 继续，而不是要求用户做无实质取舍的决定",
+        "只有产品、权限、范围、安全或外部副作用决策才使用 HUMAN_GATE"
+      ]
     }
   ]
 }

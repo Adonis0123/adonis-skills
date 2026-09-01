@@ -5,13 +5,13 @@
       "id": 1,
       "name": "scope-boundary-and-order",
       "prompt": "这是一次只读 Skill 行为验收，不要修改文件、不要真的调用外部 Reviewer。请使用 architecture-hardening-loop 处理这个场景并输出你会执行的分类与流程：审查范围明确限定为 `packages/video-editor/core/**`，排除 `packages/video-editor/editor/**` 和 `packages/video-editor/renderer/**`。扫描器给出三个候选：A）core 的 command handler 同时负责校验、修改和 React 通知；B）editor 的 React bridge 缺少 selector；C）renderer 的缓存策略可以抽象。请说明哪些候选能进入本轮、后续严格顺序以及终态条件。",
-      "expected_output": "结果应冻结 core 范围，不把 editor/renderer 候选带入修改；对范围内候选套用证据门槛；后续顺序为 Grok consult、Goal Gate、最小修改和测试、Grok review、原范围复扫；终态是 NO_ACTIONABLE_FINDINGS。",
+      "expected_output": "结果应冻结 core 范围，不把 editor/renderer 候选带入修改；对范围内候选套用证据门槛；后续顺序为 Grok consult、条件 Goal 集成（未请求 Goal 时跳过并报告 not-created）、最小修改和测试、Grok review、原范围复扫；终态是 NO_ACTIONABLE_FINDINGS。",
       "files": [],
       "expectations": [
         "明确冻结审查范围为 packages/video-editor/core/**，并排除 editor 和 renderer",
         "不把候选 B 或 C 归为当前 Fix，也不建议扩大范围",
         "候选 A 只有在 Evidence、Impact、Minimal change、Verification 齐全时才能归为 Fix",
-        "流程顺序包含 Grok consult 在 Goal Gate 和实施之前",
+        "流程顺序包含 Grok consult 在条件 Goal 集成和实施之前",
         "实施后包含 Grok review 以及对原始范围的重新扫描",
         "完成条件使用 NO_ACTIONABLE_FINDINGS，而不是没有任何建议"
       ]
@@ -436,6 +436,20 @@
         "不要求用户修改第三方 skill 或再次确认",
         "完整读取依赖指令而不是复制或猜测 scanner 逻辑",
         "由父会话执行 Explore + HTML report-only 阶段"
+      ]
+    },
+    {
+      "id": 31,
+      "name": "implicit-loop-does-not-create-native-goal",
+      "prompt": "这是只读行为验收。用户显式调用 architecture-hardening-loop 检查 packages/core/**，但没有要求 Goal；当前没有 active Goal 或 parent contract。scanner、codebase-design、独立只读 worker、agentic-review-handoff 与 Grok 均可用，goal-gate 未安装。scanner 已确认一个范围内 Fix。请说明预检和实施入口，不要真的修改。",
+      "expected_output": "goal-gate 未触发且不是硬依赖，预检不返回 MISSING_DEPENDENCIES。Loop 在 Hardening Contract 下继续 Fix、验证、review 与复扫，不创建 native Goal，终态报告 Goal: not-created。",
+      "files": [],
+      "expectations": [
+        "不因 goal-gate 未安装返回 MISSING_DEPENDENCIES",
+        "不把用户点名 architecture-hardening-loop 解释为创建产品 Goal 的授权",
+        "不调用 create_goal、update_goal 或要求用户执行 /goal",
+        "继续 Hardening Contract 下的 Fix、验证、review 与同范围复扫",
+        "终态 Goal 字段为 not-created"
       ]
     }
   ]

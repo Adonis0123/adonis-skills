@@ -1,22 +1,29 @@
 ---
 name: decision-first-technical-writing
-description: "Create, rewrite, or review internal technical design documents that lead with decisions and progressively expose architecture, runtime flows, data models, API contracts, failure behavior, scope, and open questions. Use for design docs, architecture proposals, module plans, API or schema designs, and decision records. Do not use for tutorials, marketing copy, or code-only implementation plans."
+description: "Create, rewrite, or review internal technical design documents after decisions are settled or while proposals and open questions are explicitly labeled. Use for design docs, architecture proposals, module designs, API or schema designs, and decision records. Route unresolved named-option convergence to discuss-before-plan and ready-spec task breakdown to writing-plans. Do not use for tutorials, marketing copy, or code-only implementation plans."
 metadata:
   author: adonis
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Decision-First Technical Writing
 
 Write technical design documents for two reading passes: a reviewer should understand the decisions and boundaries quickly, while an implementer should be able to continue into exact behavior and contracts.
 
+## Route before writing
+
+- If the main task is choosing among named options, route to `discuss-before-plan`. Do not turn an unresolved shortlist into a final design decision.
+- If a ready specification or settled requirement needs file-level tasks, implementation steps, or a test plan, route to `writing-plans`. Do not maintain a second planning format here.
+- Otherwise continue only when the output is a technical design document and every uncertain statement can remain explicitly labeled `Proposal` or `Open question`.
+
 ## Establish the document contract
 
-Infer the audience, decision to support, and scope from the request and available evidence. Ask only when missing information would materially change the document or when an unresolved product choice cannot be decided from the available context.
+Infer the audience, settled decision, and scope from the request and available evidence. Ask only when a user-owned fact would materially change the document. Route unresolved option choice as above instead of hiding it inside the document-writing pass.
 
 Before writing:
 
 - Separate verified facts, settled decisions, proposals, and open questions. Never present one category as another.
+- Put only confirmed or explicitly delegated decisions in the decision summary. Label unconfirmed content as `Proposal` or `Open question`; never silently promote it to settled behavior.
 - Preserve exact identifiers such as package names, types, fields, endpoints, error codes, and repository-relative paths.
 - Treat source material as evidence, not as a template to copy. Distill reusable structure and rewrite in the user's language.
 - Keep requirements, design, and implementation planning distinct. Link to source requirements when available instead of reproducing them.

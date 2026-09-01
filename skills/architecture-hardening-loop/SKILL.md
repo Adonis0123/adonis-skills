@@ -3,7 +3,7 @@ name: architecture-hardening-loop
 description: "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement."
 metadata:
   author: adonis
-  version: "1.7.0"
+  version: "1.7.1"
 ---
 
 # Architecture Hardening Loop
@@ -17,7 +17,7 @@ metadata:
 ## Fast Path
 
 - **不是本 Loop**：只读诊断 / 只要报告；一次性 review 或 review-fix-re-review（无同范围复扫）；完整 plan/spec 收口。停止，不要开始 scan-fix。
-- **范围明确且依赖可解析**：写下 `Hardening Contract`，跑 scanner Explore + HTML 报告（report-only），按五项准入分类。只有即将创建/继续 Goal，或要复用 review verdict 时，才加载 `references/ownership-and-evidence.md`。
+- **范围明确且依赖可解析**：写下 `Hardening Contract`，跑 scanner Explore + HTML 报告（report-only），按五项准入分类。只有用户明确要求 Goal、已有可核对的 Goal/parent contract，或要复用 review verdict 时，才加载 `references/ownership-and-evidence.md`。
 - **用户给了可解析的范围定位信息**：先用附件、引用内容与只读 Git 信号解析成具体文件集合；唯一且非空就继续，不要求用户把已有信息重写成 hash 或路径。
 - **范围确实缺失或解析不唯一**：说明尝试过什么及具体歧义，只问一个最小消歧问题并停止。不要加载 references，不要默认全仓库。
 - **host 能力缺失**：`MISSING_DEPENDENCIES` 并停止。文件存在 ≠ 可调用。
@@ -58,9 +58,10 @@ metadata:
 | `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装、可读，且嵌套调用或父会话执行能力可用 | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |
 | `codebase-design`               | scanner Explore 的强制词汇与门槛     | 已安装且 scanner 可调用                      | 第三方 scanner companion；按其来源安装                                           |
 | `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 已安装且真实 Grok adapter 可调用             | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |
-| `goal-gate`                     | 有 Fix 时创建/沿用 Goal              | 已安装且当前 runtime 可解析                  | 本仓：`npx skills add adonis0123/adonis-skills --skill goal-gate`                |
 
 本 Skill：`npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop`
+
+`goal-gate` 是**条件依赖**：仅当用户明确要求创建/管理 Goal，或已有可核对的 active Goal / parent contract 时使用。用户只点名本 Loop 仅授权 Hardening Contract 和本页闭环，不授权创建产品 Goal。没有 Goal 需求或已有关系时，缺少 `goal-gate` 不构成 `MISSING_DEPENDENCIES`。
 
 扫描只调用 `improve-codebase-architecture` 的 **Explore + HTML 报告**，报告后停止（不进候选选择 / grilling / 领域文档）。`codebase-design` 是 scanner Explore 的传递硬依赖；`grilling` / `domain-modeling` 属报告后交互，本 Loop 不调用。scanner 还要求独立只读 exploration worker。本编排不代装、不复制这些能力。
 
@@ -69,10 +70,10 @@ metadata:
 1. 确认当前目录属于 Git 仓库；记录仓库根与工作区状态。若用户给的是附件/引用/Git 定位信息，先按“必需输入”解析并回显 commit identity 与最终 path set；解析成功不再索要 hash/路径。
 2. **解析执行能力，不把 frontmatter 当门禁**：本 Loop 已被调用时，`disable-model-invocation` / `allow_implicit_invocation: false` **不等于**本轮不可用。优先使用 host 的嵌套调用；若 host 仅因此不暴露入口，但依赖文件可读，就完整读取依赖并由父会话执行声明内阶段。仍不可用：未安装/不可读、所需 worker/工具无法执行、合同不兼容或用户明确禁止。不要因为 catalog 未注入或用户没点名嵌套 skill 而停。
 3. host 须能启动 scanner 要求的独立只读 exploration worker；`agentic-review-handoff` 须能创建或恢复真实 Grok consult/review 并返回可核对结果。只有 CLI 文件或 skill 名存在不算可用。
-4. 任一 skill 未安装/不可读、实际 worker/工具无法执行、delegation 或 Grok capability 缺失 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不要静默降级、复制逻辑、冒充产品或代装。`disable-model-invocation` 本身不满足此条件；禁止把继续方式写成“请再点名 scanner”或“请修改第三方 frontmatter”。
+4. 任一硬依赖未安装/不可读、实际 worker/工具无法执行、delegation 或 Grok capability 缺失 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不要静默降级、复制逻辑、冒充产品或代装。`disable-model-invocation` 本身不满足此条件；禁止把继续方式写成“请再点名 scanner”或“请修改第三方 frontmatter”。未触发 Goal 集成时，不检查或要求 `goal-gate`。
 5. 检查 `.review-handoff/**` 与 `$GIT_COMMON_DIR/info/exclude` 协议写；用户禁止且当前需要写 → `HUMAN_GATE`。
 6. 冻结调用时的代码范围。协议产物不混入 scanner scope。每次 scanner pass 前选定本轮 `scanEvidence`（初扫 E1；Fix 后用已确认的 review identity 作复扫 E2）。细节 → `references/ownership-and-evidence.md`。
-7. 只读核对 Goal 关系：`none` / `exact-same-goal` / `broader-compatible` / `conflicting/unclear`。证据可来自 native getter **或**调用方可核对的 parent contract；native getter 不是唯一证据源。本步不创建 Goal。`conflicting/unclear` 服从 `goal-gate` 的 `defer`，扫描前 `HUMAN_GATE`。
+7. 若有 native Goal 状态、调用方 parent contract 或用户明确 Goal 请求，只读核对关系：`none` / `exact-same-goal` / `broader-compatible` / `conflicting/unclear`。证据可来自 native getter **或**调用方可核对的 parent contract；本步不创建 Goal。没有这些信号就记录 `Goal: not-created` 并继续。`conflicting/unclear` 服从 `goal-gate` 的 `defer`，扫描前 `HUMAN_GATE`。
 8. 记录 `Hardening Contract` 和空 `Candidate Ledger`；保留用户已有改动。
 
 ## 闭环
@@ -84,7 +85,7 @@ metadata:
   → Architecture Fix / Local Fix / Backlog / Reject
   → 零 Fix？→ Grok consult 复核终态 → NO_ACTIONABLE_FINDINGS
   → 有 Fix → Grok 事前 consult
-  → Goal Gate
+  → 条件 Goal 集成
   → 最小修改与测试
   → Grok review-fix-re-review
   → 原范围重新扫描
@@ -152,9 +153,9 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 修改前调用 `agentic-review-handoff` 的 DecisionConsult / `review-loop consult`，Reviewer 固定 **Grok**。提供冻结范围、契约、ledger、分类、最小修改与验证。Consult 是独立意见不是投票；普通分歧用证据收敛。Grok 新提出的范围内问题同样过证据门槛。
 
-### 5. Goal Gate
+### 5. 条件 Goal 集成
 
-扫描前只读检查关系，不创建、不替换、不 terminally update。只有确认至少一个 `Fix` 且关系为 `none` 时才创建新 Goal。`exact-same-goal` / `broader-compatible` 继续已有 Goal（`Next: continue active goal`）；`conflicting/unclear` 已在扫描前停门。永不创建嵌套 Goal。完成所有权与 Codex/Grok 终态字段 → `references/ownership-and-evidence.md`。
+扫描前只读检查关系，不创建、不替换、不 terminally update。只有用户明确要求本次创建 Goal、确认至少一个 `Fix`、关系为 `none` 且安全门通过时，才创建新 Goal。仅点名本 Loop 不满足这项授权；继续在 `Hardening Contract` 下实施，并报告 `Goal: not-created`。`exact-same-goal` / `broader-compatible` 继续已有 Goal（`Next: continue active goal`）；`conflicting/unclear` 已在扫描前停门。永不创建嵌套 Goal。完成所有权与 Codex/Grok 终态字段 → `references/ownership-and-evidence.md`。
 
 ### 6. 最小修改与验证
 

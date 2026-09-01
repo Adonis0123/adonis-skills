@@ -64,6 +64,20 @@
         "Passes pageId to snapshots, Console operations, and clicks",
         "Does not claim a same-tab transaction lock exists and reports unclear ownership UNVERIFIED"
       ]
+    },
+    {
+      "id": 6,
+      "name": "readiness-plus-network-fast-path",
+      "prompt": "/chrome-dev-mcp 只读检查当前标签页最近失败的 API 请求。当前标签页明确，不会导航；不要输出其他标签页信息。",
+      "expected_output": "Uses one private shared list_pages call as both transport proof and current-turn pageId resolution, skips the payload-discarding readiness helper, then independently performs and verifies the requested Network operation.",
+      "files": [],
+      "expectations": [
+        "Uses scripts/uxc-readiness.zsh --private-result and exactly one list_pages result before the Network operation when no recovery, navigation, or ambiguity occurs",
+        "Reuses that private result for both shared transport proof and fresh numeric pageId resolution",
+        "Does not run readiness-only payload stripping before the task",
+        "Treats the requested Network operation as a separate success gate from list_pages",
+        "Does not expose unrelated page metadata"
+      ]
     }
   ]
 }

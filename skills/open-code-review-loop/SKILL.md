@@ -1,9 +1,9 @@
 ---
 name: open-code-review-loop
-description: "Run a bounded OCR-delegation review-fix-re-review loop. Use when the user wants ocr delegate file selection and rules (including open-code-review-delegate phrasing) with codex, claude-code, grok-build, or cursor-cli, iterating until validated NO_FINDINGS. Explicit invocation starts immediately with no-prompt product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, observed reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
+description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request starts with safe product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
-  version: "1.6.0"
+  version: "1.7.0"
 ---
 
 # Open Code Review Loop
@@ -32,10 +32,14 @@ Do these in order. Later references stay closed until a step needs them.
 
 ## Trigger and exclusions
 
-Use this Skill for an OCR-delegation loop (`ocr delegate` / open-code-review)
-on a Git workspace with a supported reviewer (`codex`, `claude-code`,
-`grok-build`, `cursor-cli`) and a fixer until validated `NO_FINDINGS`. Skip
-one-shot review, non-Git files, commit/push/deploy, and destructive work.
+Use this Skill only for an OCR-delegation loop (`ocr delegate` /
+open-code-review) on a Git workspace with a supported reviewer (`codex`,
+`claude-code`, `grok-build`, `cursor-cli`) when the request includes both
+fixing verified findings and independent re-review until validated
+`NO_FINDINGS` or `CLEAN`. Merely asking for one `ocr delegate` /
+`open-code-review-delegate` pass is insufficient; route that request to
+`open-code-review-delegate`. Skip other one-shot or read-only review,
+non-Git files, commit/push/deploy, and destructive work.
 
 > **Wrong skill.** Packet protocol, `.review-handoff`, `review-loop run`, or
 > a Grok consult → `agentic-review-handoff`. Redirect; do not start
@@ -62,7 +66,8 @@ Resolve before the first model call:
   10 minutes per Reviewer/Fixer call
 - Background: user requirement or none; pass through preview/rule/prompt
 
-Explicit skill invocation authorizes the reversible local workspace loop. Do
+Once the user has requested the full fix-and-re-review loop, explicit skill
+invocation authorizes the reversible local workspace loop. Do
 not ask whether to start, reconfirm OCR scope, choose a product, or accept
 supplemental Markdown review. One named product without roles → that product is
 Reviewer, current host is Fixer. No named product → use the current visible

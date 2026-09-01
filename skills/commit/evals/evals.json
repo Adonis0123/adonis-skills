@@ -52,6 +52,19 @@
         "Does not modify .gitignore for the unrelated cache directory.",
         "Produces a commit message from the requested source change."
       ]
+    },
+    {
+      "id": 5,
+      "eval_name": "explicit-unstaged-scope-does-not-commit-existing-index",
+      "prompt": "Use the commit skill to commit only unstaged src/b.ts. The index already contains an unrelated staged docs/a.md change. Do not push. Explain the next action without changing Git state.",
+      "expected_output": "Stops before staging or committing because the explicit authorized scope differs from the existing index; preserves both groups and asks the user to choose or split the index.",
+      "files": [],
+      "expectations": [
+        "Does not commit the existing staged docs/a.md change",
+        "Does not stage src/b.ts while the unrelated index remains",
+        "Does not silently unstage docs/a.md",
+        "Reports the scope mismatch and asks the user to choose or split the index"
+      ]
     }
   ]
 }

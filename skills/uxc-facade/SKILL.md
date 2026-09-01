@@ -1,16 +1,16 @@
 ---
 name: uxc-facade
-description: "Use this skill whenever the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing the native host or service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp."
+description: "This skill should be used when the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp."
 metadata:
   author: adonis
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # UXC Facade
 
 Use UXC as a protocol adapter and stable JSON CLI facade. Do not turn it into a second service runtime.
 
-The native host stays authoritative for registration and the service-specific skill stays authoritative for endpoint identity, safety, and final acceptance. UXC success is transport proof, not native-host acceptance.
+The service-specific skill stays authoritative for endpoint identity, safety, execution routing, and final acceptance. Native registration may remain authoritative for services that require host-native tools, or become an explicit compatibility path when a measured shared facade is the service-specific default. UXC success is transport proof, not task acceptance.
 
 ## Entry behavior
 
@@ -38,7 +38,7 @@ Skip the facade when:
 
 | Layer                  | Owns                                                                             | Must not claim                                     |
 | ---------------------- | -------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Native host or client  | Registration, permissions, lifecycle, native tool exposure                       | Service identity unless it validates it            |
+| Native host or client  | Registration, permissions, lifecycle, optional native tool exposure              | Service identity unless it validates it            |
 | Service-specific skill | Endpoint identity, auth boundary, recovery policy, safe output, final acceptance | Generic UXC installation for every service         |
 | UXC facade             | Protocol discovery, stable link, JSON envelope, optional daemon reuse            | Correct service instance or native-host acceptance |
 
@@ -51,7 +51,7 @@ Authentication stays with the native client, credential provider, or service-spe
 1. Name the native authority and the service-specific owner.
 2. Name the UXC binary owner, which is the sole installer and updater, and its install root.
 3. Select the least-privilege read operation and allowed output for readiness.
-4. Record the native acceptance action separately from UXC readiness.
+4. Record task acceptance separately from UXC readiness, and record native acceptance only when the service contract retains it.
 
 ### Make execution deterministic
 
@@ -82,12 +82,12 @@ Use daemon-backed exclusivity only when the endpoint owns shared mutable state, 
 1. Prove UXC discovery for the intended operation.
 2. Prove one sanitized transport call through the fixed link.
 3. If reuse matters, prove the second call reused the intended daemon session.
-4. Run the native host's real tool call or service-specific acceptance separately.
+4. Run the service-specific real operation separately; run native-host acceptance only when that compatibility path is in scope.
 
 Return bounded status fields only. Discard URLs, titles, body content, credentials, cookies, tokens, and raw tool payloads unless the user explicitly requested safe data from them.
 
 ## Report the result
 
-Use four statuses: `FACADE_READY`, `TRANSPORT_READY`, `SESSION_REUSED`, and `NATIVE_ACCEPTANCE`. Mark any unproved layer `UNVERIFIED` and name one next action. Never collapse them into one generic success claim.
+Use four statuses: `FACADE_READY`, `TRANSPORT_READY`, `SESSION_REUSED`, and `TASK_ACCEPTANCE`. Add `NATIVE_COMPAT` only when the service retains that path. Mark any required but unproved layer `UNVERIFIED` and name one next action. Never collapse them into one generic success claim.
 
 Read [references/facade-contract.md](references/facade-contract.md) for the reusable template, command skeleton, and update checklist. Use the [official UXC repository](https://github.com/holon-run/uxc) as the source of truth for current commands and supported protocols.

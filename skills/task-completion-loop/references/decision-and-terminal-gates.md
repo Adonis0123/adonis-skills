@@ -77,4 +77,4 @@ The host independently classifies each finding:
 
 Severity alone does not decide the class. A real P3 may be a `Fix`; an unsupported P1 may be `Reject`.
 
-A `Fix` keeps the Goal active and expires old gates: add the nearest regression, implement the minimum repair, rerun verification, direct review, same-scope architecture hardening, and a new blind audit on the new evidence. One such cycle is one round; after two rounds, remaining in-scope Fixes return `HUMAN_GATE`.
+A `Fix` keeps the Goal active and expires old gates: add the nearest regression, implement the minimum repair, rerun verification, direct review, same-scope architecture hardening, and a new blind audit on the new evidence. One such cycle is one round. After two rounds, remaining in-scope Fixes return `UNVERIFIED`, keep the Goal active, and resume from the remaining evidence on the next Goal turn. Use `HUMAN_GATE` only for a real product, permission, range, safety, or external-side-effect decision that the agent cannot resolve from evidence.

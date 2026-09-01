@@ -78,5 +78,9 @@
   {
     "query": "写一个 Node CLI，把 YAML 文件里的 todo 标记为完成，不提供网页、不常驻、不绑定 HTTP 端口。",
     "should_trigger": false
+  },
+  {
+    "query": "给 https://intranet.example.com 做一个双击打开的 macOS .app，只包装远程 URL，不要 localhost、listener 或 LaunchAgent。",
+    "should_trigger": false
   }
 ]

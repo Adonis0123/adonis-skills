@@ -17,7 +17,12 @@ report_error() {
   exit 69
 }
 
-[[ $# -eq 0 ]] || report_error "unexpected_arguments"
+output_mode="sanitized"
+if [[ $# -eq 1 && "$1" == "--private-result" ]]; then
+  output_mode="private-result"
+elif [[ $# -ne 0 ]]; then
+  report_error "unexpected_arguments"
+fi
 chrome_dev_mcp_load_config || report_error "local_config_missing"
 
 link_dir="${CHROME_DEV_MCP_LINK_DIR:-}"
@@ -63,6 +68,11 @@ if [[ "$exit_code" -ne 0 ]] || ! /usr/bin/jq -e \
   else
     report_error "uxc_envelope"
   fi
+fi
+
+if [[ "$output_mode" == "private-result" ]]; then
+  /bin/cat "$tmp_dir/stdout"
+  exit 0
 fi
 
 reuse="$(/usr/bin/jq -r '.meta.daemon_session_reused // "unknown"' "$tmp_dir/stdout")"

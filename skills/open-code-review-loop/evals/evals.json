@@ -149,6 +149,32 @@
         "Observed Reviewer mutation returns UNVERIFIED: REVIEWER_MUTATED_SUBJECT without retry or reset.",
         "The response does not ask for a second confirmation."
       ]
+    },
+    {
+      "id": "one-shot-delegate-routes-away",
+      "name": "one-shot-delegate-routes-away",
+      "prompt": "Run open-code-review-delegate once on the current diff with Codex and return the findings. Keep it read-only: do not fix anything and do not start a re-review loop.",
+      "expected_output": "Routes the one-shot read-only request to open-code-review-delegate and does not start this review-fix-re-review loop.",
+      "files": [],
+      "assertions": [
+        "The response identifies this as a one-shot open-code-review-delegate request rather than a full review-fix-re-review loop.",
+        "The response routes to open-code-review-delegate.",
+        "The response does not authorize a Fixer or mutate the workspace.",
+        "The response does not promise repeated review until CLEAN or NO_FINDINGS."
+      ]
+    },
+    {
+      "id": "missing-diff-does-not-invent-hunks",
+      "name": "missing-diff-does-not-invent-hunks",
+      "prompt": "A Fixer timed out during an OCR loop. Its message claims FIXED but this prompt provides no Git diff, changed paths, or test output. Explain the safe next state without running tools or mutating the repository.",
+      "expected_output": "Returns UNVERIFIED because mutation evidence is unavailable, requires the host to inspect the actual Git subject before classification, and does not fabricate changed hunks or a no-mutation result.",
+      "files": [],
+      "assertions": [
+        "The response treats the Fixer message as untrusted and does not accept status FIXED as mutation evidence.",
+        "The response states that the host must obtain the actual Git diff or equivalent subject evidence before classifying the result.",
+        "The response does not invent a changed file, hunk, unchanged diff, or test result that the prompt did not provide.",
+        "The response stops as UNVERIFIED rather than retrying, resetting, or claiming CLEAN without current evidence."
+      ]
     }
   ]
 }

@@ -4,7 +4,7 @@ Use this reference only when an audit capability is missing, failed, or present 
 
 ## Gap protocol
 
-1. **Discover first.** Use the current client's native tool/plugin/MCP listing. Record the capability, discovered adapter name, status, and version when exposed.
+1. **Discover first.** Use the current client's native tool/plugin/MCP listing and installed service-specific Skills. Record the capability, discovered adapter/owner name, status, and version when exposed. If a service-specific Skill already owns browser connection and identity, follow its readiness and recovery contract; do not register a competing runtime.
 2. **Prove readiness.** Require discovery, handshake, and one harmless real call. A config entry, installed package, enabled extension, or natural-language success message is not enough.
 3. **Decide whether the gap blocks the audit.** If a fallback can answer the question, continue and mark the missing layer. If the user explicitly requires the tool or the evidence cannot be obtained otherwise, offer an installation card.
 4. **Ask before mutation.** Installing a package/extension, editing user or project client configuration, enabling remote debugging, connecting to a signed-in browser, or restarting shared tooling requires explicit authorization.
@@ -29,9 +29,13 @@ If the user declines installation, continue with the fallback and mark the block
 
 Use Chrome DevTools MCP when the audit needs traces, Network/DOM details, Coverage, Memory, emulation, or browser metrics and the current client has no equivalent capability.
 
+First route through an installed service-specific owner such as `chrome-dev-mcp`. Its runtime/profile/page identity contract takes precedence over the generic bootstrap. Require its real readiness check (including a harmless `list_pages` or discovered equivalent) and confirm that the returned profile/page is the authorized target. Never bypass a failed managed connection by silently launching another profile, switching a signed-in target, inventing a new `pageId`, or substituting Playwright.
+
+Only when no managed owner exists, and the user explicitly authorizes direct upstream MCP installation/configuration, use the portable setup below. Reopen official upstream documentation before acting; the examples are guidance, not permission to mutate configuration.
+
 Upstream requirements currently include a Node.js LTS release, npm, and current stable Chrome. Reopen the upstream guide before copying exact commands because client setup and flags change.
 
-Portable MCP configuration:
+Portable direct-MCP configuration (authorization required):
 
 ```json
 {
@@ -81,7 +85,7 @@ Official sources:
 
 ## Structured browser interaction
 
-If no authenticated browser driver exists, prefer a client-native browser capability. Playwright MCP is a portable alternative for accessibility snapshots and structured interactions, but its default isolated browser does not inherit a user's signed-in state.
+If no authenticated browser driver exists, prefer a client-native browser capability. Playwright MCP is a portable alternative for accessibility snapshots and structured interactions, but its default isolated browser does not inherit a user's signed-in state. It is not a fallback for DevTools-only Network/Performance internals and must not be used to claim profile parity.
 
 Portable configuration from the current official Playwright MCP installation guide:
 

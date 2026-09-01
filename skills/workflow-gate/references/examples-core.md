@@ -14,7 +14,7 @@ Workflow Gate
 - Execution path: direct local work
 - Thesis: n/a
 - Goal: Report the line count of apps/web/src/App.tsx.
-- Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=implement
+- Signals: scope=single-file; risk=low; destructive=no; decisions=resolved; user-intent=lookup
 - Assumptions: none
 - Next: Count the file's lines with the local runtime's native command and return the number.
 ```
@@ -70,9 +70,9 @@ Workflow Gate
 - Next: Load discuss-before-plan; surface provider tradeoffs and tier shape for a one-pass decision.
 ```
 
-## Plan — RFC-driven feature
+## Plan — RFC-driven task breakdown
 
-User: "Per RFC-024, wire Google OAuth into apps/web — 5-8 files."
+User: "Per RFC-024, give me a task breakdown for wiring Google OAuth into apps/web — expect 5-8 files."
 
 ```
 Workflow Gate
@@ -81,9 +81,9 @@ Workflow Gate
 - Fallback alias: none
 - Execution path: n/a
 - Thesis: n/a
-- Goal: Wire Google OAuth into apps/web per RFC-024.
+- Goal: Break the RFC-024 Google OAuth work into implementation tasks.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=resolved; user-intent=plan
-- Assumptions: RFC-024 is authoritative and current.
+- Assumptions: RFC-024 is authoritative and current; the immediate request is planning, not implementation.
 - Next: Load writing-plans; produce a 5-8 task breakdown grounded in the RFC.
 ```
 

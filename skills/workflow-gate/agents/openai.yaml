@@ -1,4 +1,4 @@
 interface:
   display_name: "Workflow Gate"
   short_description: "Route tasks before heavier workflow skills"
-  default_prompt: "Use $workflow-gate to choose the smallest safe workflow for this request. Preserve destructive and creative gates, accept explicit architecture scope or uniquely resolvable user-supplied attachment/Git selectors, resolve those selectors before asking the user to repeat hashes or paths, and fail closed when a required runtime is not callable."
+  default_prompt: "Use $workflow-gate to choose the smallest safe workflow. Diagnose symptoms before solution decisions, treat first-principles as a method unless scope is widening, route explicit Goal management to goal-gate, and fail closed only when the selected runtime truly cannot be executed."

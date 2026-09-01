@@ -15,7 +15,7 @@ Fallback-only. Do not load this file for Architecture / Review-Handoff / Challen
 
 - _Challenge → Direct/Light:_ the request is not creative HARD-GATE work, or the prompt/spec already fixes the relevant design and behavior. _Why:_ re-challenging wastes their signal only after the design decision has been paid.
 - _Discuss → Light:_ one reasonable implementation; user supplied exact behavior. _Why:_ alignment is implicit.
-- _Plan → Light:_ one or two files, obvious task list. _Why:_ not a plan, just overhead.
+- _Plan → Light:_ the immediate request is direct implementation, regardless of file count. _Why:_ scope changes risk and verification depth, not user intent; a user-facing plan would be overhead.
 - _Architecture + unresolved scope → Architecture + `Runtime skill: none`:_ first try user-supplied attachment/reference/Git locators plus one cheap repo signal; only then ask one minimal scope question and do not load a scanner. _Why:_ scanners without a frozen file set become whole-repo thrash, while making users repeat already-resolvable scope wastes a full round trip.
 - _Architecture → Light/Discuss:_ the ask is really a bug symptom or product decision rather than structure work. _Why:_ bugs belong to systematic-debugging; named-option decisions belong to Discuss.
 - _architecture-hardening-loop → improve-codebase-architecture:_ user asked only for diagnosis/report. _Why:_ harden loops mutate code; diagnose must not silently upgrade.
@@ -30,6 +30,6 @@ Re-run the cheat card and precedence rules when the active Route's preconditions
 - A new blocking bug appears (Plan → Light + `systematic-debugging` until it closes).
 - User adds "don't ask" / "discuss first".
 - Architecture diagnose finishes and the user then explicitly asks to harden/implement in the same frozen scope → re-gate to Architecture + `architecture-hardening-loop`.
-- Challenge `agent-strawman` is confirmed by the user → load grilling / grill-with-docs (do not re-emit a different Route unless signals changed).
+- Challenge `agent-strawman` is confirmed by the user, or explicitly delegated as a reversible product direction → load grilling / grill-with-docs (do not re-emit a different Route unless signals changed).
 
-Re-gating costs ~30 sec; riding a stale Route costs hours.
+Re-gate only when a listed precondition changes; do not re-run it as routine ceremony.

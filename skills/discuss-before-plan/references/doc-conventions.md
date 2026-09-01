@@ -1,6 +1,6 @@
 # Documentation Persistence Adapter
 
-This file defines how the discuss-before-plan skill persists Spec/Decision Records and Implementation Plans to disk. It is a **persistence adapter** — not the core domain. The core domain is the decision-gating workflow in SKILL.md.
+This file defines how the discuss-before-plan skill persists Spec/Decision Records to disk. It is a **persistence adapter** — not the core domain. The core domain is the decision-gating workflow in SKILL.md; implementation plans belong to `writing-plans`.
 
 ## Documentation Profile Resolver
 
@@ -11,7 +11,7 @@ Before writing any document, resolve which profile to use. Check in this order �
 2. Same-directory examples      → 2-3 existing files in the target directory
 3. Existing docs conventions    → docs/specs/, docs/plans/, docs/decisions/, docs/adr/
 4. docs/superpowers/ fallback   → only if this directory already exists AND matches repo style
-5. Generic defaults             → docs/specs/ + docs/plans/ (see below)
+5. Generic default              → docs/specs/ (see below)
 ```
 
 Once resolved, record the profile as a **Docs Style Snapshot** before writing.
@@ -49,16 +49,15 @@ To populate the snapshot, read these sources (stop early if rules are unambiguou
 
 When no project convention is detected:
 
-| Artifact | Directory | Filename | Purpose |
-|----------|-----------|----------|---------|
+| Artifact             | Directory     | Filename                     | Purpose                                                      |
+| -------------------- | ------------- | ---------------------------- | ------------------------------------------------------------ |
 | Spec/Decision Record | `docs/specs/` | `YYYY-MM-DD-topic-design.md` | Background, goals, non-goals, decisions, architecture, risks |
-| Focused Decision | `docs/specs/` | `YYYY-MM-DD-topic.md` | Smaller-scope technical decision |
-| Implementation Plan | `docs/plans/` | `YYYY-MM-DD-topic.md` | Task-by-task plan referencing corresponding spec |
+| Focused Decision     | `docs/specs/` | `YYYY-MM-DD-topic.md`        | Smaller-scope technical decision                             |
 
 Naming rules:
+
 - `YYYY-MM-DD`: current local date
 - `topic`: lowercase hyphen-case, matches feature name
-- Spec and plan share the same topic for cross-reference
 - Architecture/data-flow/interface-level designs use `-design.md` suffix
 - If a file on the same topic already exists, read and update it — don't create parallel truths
 
@@ -82,49 +81,15 @@ doc_type: spec
 
 ## Decisions
 
-| # | Decision | Choice | Rationale |
-|---|----------|--------|-----------|
+| #   | Decision | Choice | Rationale |
+| --- | -------- | ------ | --------- |
 
 ## Architecture / Data Flow
 
 ## Risks & Mitigations
 
 | Risk | Mitigation |
-|------|-----------|
+| ---- | ---------- |
 
 ## Open Items
 ```
-
-## Implementation Plan Template
-
-```md
-# [Feature] Implementation Plan
-
-**Spec**: [link to corresponding spec/decision document]
-**Goal**: [one-line goal]
-
-## File Structure
-
-- New: ...
-- Modified: ...
-
-## Conventions
-
-[Commit, test, typecheck constraints for this task]
-
-## Tasks
-
-### Task 1: [Title]
-
-**Files**: [affected files]
-
-- [ ] Step 1
-- [ ] Step 2
-
-**Verification**: [how to verify]
-```
-
-Plan constraints:
-- Never introduce new design choices in task steps
-- Line numbers are snapshot values; note "re-locate if drifted" when fragile
-- Never use `git add -A`; commit steps list exact files

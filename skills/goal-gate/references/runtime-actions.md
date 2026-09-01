@@ -8,7 +8,9 @@ Load this file only when the compact runtime row in `SKILL.md` is not enough to 
 
 Grok has no `create_goal` / `get_goal`. Only the user-run slash `/goal <objective>` can make the session Active; `update_goal` fails until then.
 
-On `set-now`:
+If the user or system did not explicitly request native Goal state, use `Decision: suggest`, `Next: adopt goal and continue`: start the authorized work under the transcript contract, emit no `/goal`, never call `update_goal`, and do not claim product Goal state is Active.
+
+On explicitly authorized native `set-now`:
 
 1. Emit the Goal Gate block **and** the full copy-ready `/goal <objective>` **before** any multi-step implementation.
 2. Set `Next: wait for user /goal`. **Stop.** Do not start the implementation plan, do not call `update_goal` (`message`, `completed`, or `blocked_reason`), and do not claim durable goal mode is on.
@@ -16,7 +18,7 @@ On `set-now`:
 4. After the user pastes `/goal …`, says the goal is active, or `/goal status` shows Active — then work the contract and report with `update_goal` (`message` at checkpoints; `completed: true` only when verification proves the done condition; `blocked_reason` only when genuinely stuck).
 5. Soft-adopt exception: if the user explicitly declines durable mode ("just do the work, no `/goal`", "soft only", "不要原生 goal"), set `Next: adopt goal and continue`, work without waiting, and still **never** call `update_goal` until Active.
 
-Why Grok waits: Codex `create_goal` can activate from the agent. Grok cannot. Pretending `set-now` already activated Grok goal mode produces `Goal is not Active` failures and confuses `/goal-gate` with `/goal`. Stopping once for a paste is cheaper than a false durable session.
+Why an explicitly requested Grok Goal waits: Codex `create_goal` can activate from the agent. Grok cannot. Pretending `set-now` already activated Grok goal mode produces `Goal is not Active` failures and confuses `/goal-gate` with `/goal`.
 
 On Grok when `Next: wait for user /goal`, put the copy-ready `/goal` first in the user-visible reply (right under the block), then stop. Do not bury it after implementation notes or a completion summary.
 
@@ -50,7 +52,7 @@ Prompt craft:
 
 ## Codex tooling
 
-If `Decision: set-now`, call `get_goal` first when available. If no goal is active, call `create_goal` with the `Objective` (`Next: create goal`); do not set a token budget unless the user asked for one.
+Call `get_goal` first when Goal state is relevant. If no goal is active, call `create_goal` only when the user or system explicitly requested native Goal creation (`Decision: set-now`, `Next: create goal`); do not set a token budget unless the user asked for one. Without explicit Goal authorization, use `Decision: suggest`, `Next: adopt goal and continue`, start the authorized task, and do not call `create_goal` or claim product Goal state is Active.
 
 If the active Goal is the exact objective, or demonstrably contains the requested checkpoint in its frozen scope and Done condition, set `Next: continue active goal` and keep working without calling `create_goal` or a terminal `update_goal`. A contained checkpoint never owns parent completion. Work until the Goal owner's full done condition is proven; then call Codex `update_goal({status: "complete"})` when that tool/schema is exposed (`Next: report via update_goal`). Mark `blocked` only after the same blocking condition has persisted for at least three consecutive goal turns and no meaningful progress is possible; ordinary questions, incomplete work, or low remaining budget are not blockers.
 

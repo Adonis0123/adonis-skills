@@ -54,6 +54,8 @@ After the user authorizes local installation:
 
 The first readiness call may create a daemon session and can spend up to 45 seconds attaching to a busy existing Chrome. The immediate second call should report `DAEMON_SESSION_REUSED=YES`. The helper discards the `list_pages` payload and prints only bounded status fields.
 
+Those two calls are installation acceptance, not the readiness-plus-task fast path. When an invocation already includes a page task, run `scripts/uxc-readiness.zsh --private-result` once instead. It applies the same owned binary/link and managed-`PATH` gates while retaining the one current-turn JSON result privately for target resolution.
+
 Use a finite idle TTL so an unused MCP child is reaped. Treat the configured daemon-exclusive key as an ownership boundary, not session identity; UXC's lifecycle contract defines stdio identity from endpoint, auth fingerprint, injected environment fingerprint, and runtime family.
 
 Never log raw linked-command output for readiness `list_pages`. `STATUS=READY` proves shared transport and correct-browser attachment; verify each requested DevTools operation separately. Native-host acceptance is optional compatibility evidence, not the default success condition.
@@ -65,4 +67,4 @@ chrome-dev-mcp-cli <operation> -h
 chrome-dev-mcp-cli take_snapshot pageId=<fresh-numeric-page-id> filePath=<os-temp-path>
 ```
 
-Obtain the numeric page ID from a fresh `list_pages` result. Never copy a page ID from an earlier turn.
+Obtain the numeric page ID from the eligible current-turn private result, or refresh `list_pages` after recovery, navigation, or target ambiguity. Never copy a page ID from an earlier turn.

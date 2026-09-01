@@ -7,7 +7,7 @@ Use this reference when designing or reviewing a UXC-backed wrapper skill. Fill 
 ```text
 UXC Facade Contract
 - Owner skill:
-- Native authority:
+- Native authority or compatibility path:
 - Protocol and host:
 - Readiness operation:
 - Allowed readiness output:
@@ -20,10 +20,11 @@ UXC Facade Contract
 - Shared mutable state:
 - Exclusivity key, if needed:
 - Idle TTL, if needed:
-- Native acceptance action:
+- Task acceptance action:
+- Native compatibility acceptance, if retained:
 ```
 
-If the contract cannot identify a safe readiness operation or the native acceptance action, the facade is not ready to automate.
+If the contract cannot identify a safe readiness operation or the task acceptance action, the facade is not ready to automate.
 
 ## Discovery and link skeleton
 
@@ -50,8 +51,9 @@ Use `--schema-url`, credential providers, or injected environment only when the 
 | -------------------------------- | ----------------------------------- | ------------------------ |
 | UXC discovery                    | Schema or tool visibility           | Successful execution     |
 | Linked readiness call            | Adapter transport and JSON envelope | Correct service instance |
-| Daemon metadata across two calls | Intended session reuse              | Native host discovery    |
-| Native real tool call            | Host-level acceptance               | Every other host         |
+| Daemon metadata across two calls | Intended session reuse              | Task acceptance          |
+| Service-specific real operation  | Task-level acceptance               | Native compatibility     |
+| Native real tool call, if kept   | Host compatibility                  | Shared-path acceptance   |
 
 Store only bounded booleans, reason codes, counts, and versions. A readiness check should parse the UXC envelope, decide success, discard the payload, and print the minimum status needed for diagnosis.
 
@@ -77,7 +79,7 @@ The service-specific skill always owns its link and readiness helpers. It also o
 1. Verify the release in the official UXC repository.
 2. Confirm the binary owner and install root, then update its version pin and published digests or package lock.
 3. Recreate the managed link only if its contract changed.
-4. Run discovery, sanitized readiness twice, reuse proof if applicable, and native acceptance.
+4. Run discovery, sanitized readiness twice, reuse proof if applicable, and task acceptance. Run native compatibility only when retained by the service contract.
 5. Record unsupported platforms or skipped hosts as `UNVERIFIED`.
 
 Do not use an unpinned moving tag in unattended automation. Do not infer daemon reuse from a faster second call. Do not expose raw readiness data merely to prove the adapter works.

@@ -66,6 +66,20 @@
         "On an explicit mismatch, clears and replaces only the active host surface's OAuth grant",
         "Stops for credentials, passkeys, Touch ID, 2FA, CAPTCHA, or an ambiguous account chooser"
       ]
+    },
+    {
+      "id": 6,
+      "name": "current-account-read-fast-path",
+      "prompt": "/figma-mcp 用当前账号只读读取这个 Figma 文件里的指定节点，只在 Codex 当前 host 执行；不要切账号，不要写入，也不要做多 host 验收。",
+      "expected_output": "Loads the official operation skill and lets the first requested harmless read prove server, tool, and auth readiness without a separate whoami; if authentication recovery becomes necessary, runs whoami after recovery before retrying the read.",
+      "files": [],
+      "expectations": [
+        "Does not add a separate whoami before the current-account single-host read-only task",
+        "Loads the official Figma operation skill required by the requested read",
+        "Uses the first requested official read as tool and authentication proof",
+        "Keeps readiness-only, named-account, switch, recovery, write, and multi-host paths on whoami",
+        "Does not expose account identity or unrelated file data"
+      ]
     }
   ]
 }

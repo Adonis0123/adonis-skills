@@ -87,6 +87,20 @@
         "Black-box writer verification detects same-path restaging as scope_digest_mismatch",
         "Stops and reports a stale prompt when same-path content changed"
       ]
+    },
+    {
+      "id": 8,
+      "name": "excluded-status-change-does-not-stale-staged-scope",
+      "prompt": "旧 prompt 的 canonical scope 是 staged-only。生成后新增了一个明确排除的 untracked notes.tmp，HEAD 和 staged diff 都没变；writer --verify-prompt 返回 status: fresh。reviewer 现在准备审核。",
+      "expected_output": "继续 staged-only 审核；完整 status 变化只作上下文，因为新增文件明确排除且 canonical scope digest 仍 fresh。仍读取当前完整 staged diff，不把 excluded untracked 文件纳入审核。",
+      "files": [],
+      "expectations": [
+        "Does not mark the prompt stale solely because excluded untracked status changed",
+        "Treats writer --verify-prompt and the canonical in-scope digest as freshness authority",
+        "Keeps notes.tmp excluded from staged-only review",
+        "Still reads and reconciles the current full staged diff",
+        "Stops if a later change alters scope membership or in-scope content"
+      ]
     }
   ]
 }

@@ -1,0 +1,76 @@
+[
+  {
+    "query": "用 Codex 做独立 Reviewer，修复当前 diff 的问题，再反复 review 到 validated clean。",
+    "should_trigger": true
+  },
+  {
+    "query": "运行 open-code-review-loop：OCR 选文件，当前 host 修复，直到 NO_FINDINGS。",
+    "should_trigger": true
+  },
+  {
+    "query": "让 Claude Code review workspace changes，修完每个确认问题后重新审到 clean。",
+    "should_trigger": true
+  },
+  {
+    "query": "用 cursor-cli 读审，Codex 修复，再用新证据复核，最多三轮。",
+    "should_trigger": true
+  },
+  {
+    "query": "对当前 Git 工作区做 ocr delegate，fix verified findings and re-review until clean。",
+    "should_trigger": true
+  },
+  {
+    "query": "不要 commit；请把 OCR 发现的问题修掉，并让独立 Reviewer 复审到零 findings。",
+    "should_trigger": true
+  },
+  {
+    "query": "同一个 Claude Code 分成只读 Reviewer 和 Fixer 会话，循环到 validated NO_FINDINGS。",
+    "should_trigger": true
+  },
+  {
+    "query": "Grok Build 当 Fixer，Codex 当 Reviewer，处理当前改动并反复检查到 clean。",
+    "should_trigger": true
+  },
+  {
+    "query": "$open-code-review-loop current workspace，安全默认值，修复并复核直到通过。",
+    "should_trigger": true
+  },
+  {
+    "query": "OCR preview 后逐项修复可验证 finding，每次重建证据再 review，直到 clean。",
+    "should_trigger": true
+  },
+  {
+    "query": "只跑一次 open-code-review-delegate，用 Codex 返回 findings，不要修。",
+    "should_trigger": false
+  },
+  {
+    "query": "对当前 diff 做一次只读 code review，列问题就结束。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 review findings 写进 .review-handoff，交给 Grok consult。",
+    "should_trigger": false
+  },
+  {
+    "query": "扫描 packages/core 的架构，修复后 rescan 到没有架构问题。",
+    "should_trigger": false
+  },
+  {
+    "query": "修复这个已知 failing test，不需要独立 review。",
+    "should_trigger": false
+  },
+  {
+    "query": "审查 commit abc123，只报告风险，不修改历史目标。",
+    "should_trigger": false
+  },
+  {
+    "query": "生成当前分支的 commit message 并 push。",
+    "should_trigger": false
+  },
+  { "query": "给这份非 Git 文档做文字校对。", "should_trigger": false },
+  { "query": "排查生产 API 500 的根因并给诊断。", "should_trigger": false },
+  {
+    "query": "用 ocr delegate 选择文件和规则，输出一次 reviewer 结果，不要进入 fixer。",
+    "should_trigger": false
+  }
+]
