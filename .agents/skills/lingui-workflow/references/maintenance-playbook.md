@@ -1,33 +1,21 @@
 # Lingui Skill Maintenance Playbook
 
-本手册记录可复用的维护剧本，目标是下次遇到同类任务时可直接照抄执行。
+本手册仅用于维护本仓库保留的 Lingui 工作流文档。初始化模板已经退役，不再新建、迁移或同步对应模板。
 
 ## 适用范围
 
-1. 新建 `skills/*` 下的 Lingui 相关公共 skill。
-2. 在 `lingui-next-init` 与 `lingui-workflow` 之间迁移文档职责。
-3. 更新命令语义文档并保持索引与校验通过。
+1. 根据既有项目的实际脚本更新命令语义文档。
+2. 同步工作流入口与相关参考，并保持索引与校验通过。
 
 ## 标准剧本
 
-### 1) 新建 skill（Creation Mode）
+### 1) 先核对实际项目
 
-```bash
-pnpm skills:init <skill-slug> --path skills --resources references
-```
+只读取本次问题对应的脚本与配置，记录适用版本或脚本约定。通用说明与历史模板示例分开；不把个别项目的命令名、目录和 manifest 机制当成 Lingui 的标准接口。
 
-注意：
+### 2) 更新工作流文档
 
-1. `skills:init` 会自动创建 `agents/openai.yaml`。
-2. 若该文件不在本次范围，需在 finalize 前删除。
-
-### 2) 迁移文档（先迁移再删除）
-
-固定顺序：
-
-1. 先在目标 skill 新增或更新完整文档。
-2. 再在来源 skill 删除重复内容/文件。
-3. 最后补交叉链接，确保入口不丢失。
+同步入口、命令参考与受影响的场景说明；保留适用范围和副作用边界，不恢复已退役初始化 skill 的路由。
 
 ### 3) Finalize 固定流水线
 
@@ -54,10 +42,10 @@ git status --short
 2. 确认关键文件存在性与内容：
 
 ```bash
-find skills/<skill-slug> -maxdepth 3 -type f | sort
+rg --files skills/<skill-slug>
 ```
 
-3. 若发现半迁移状态（目标已写，来源未删），按“先补齐目标，再清来源”收敛。
+3. 若发现文档更新不完整，补齐入口与参考的一致性；不要借机删除其他内容。
 
 ### 场景 B：`quick-validate` 失败
 
@@ -89,14 +77,14 @@ rg -n "\"slug\": \"<skill-slug>\"" apps/web/src/generated/skills-index-lite.json
 
 ## 命令语义漂移同步规则
 
-当以下文件有语义变化时：
+仅当既有目标项目仍采用以下历史路径和实现，且本次已核实语义变化时更新说明；实际项目脚本优先：
 
 1. `apps/web/scripts/i18n/index.ts`（含 `cleanOrphanedCatalogs` 文件级清理逻辑（`.po/.mjs`）、`I18N_DRY_RUN` 试运行开关，以及非 dry-run 清理后触发 `manifestI18n()` 的一致性保护）
 2. `apps/web/scripts/i18n/cli.ts`
 3. `apps/web/scripts/i18n/manifest.ts`（含 `resolveSourceLocale` 回退链、ownership 判据、多后缀匹配规则与 manifest 统计逻辑）
 4. `packages/i18n/src/lingui-config.ts`
 
-必须同步：
+同步文档，不同步已退役的初始化模板：
 
 1. `skills/lingui-workflow/references/i18n-commands.md`
 2. `skills/lingui-workflow/references/workflow-daily.md`（若流程变化）

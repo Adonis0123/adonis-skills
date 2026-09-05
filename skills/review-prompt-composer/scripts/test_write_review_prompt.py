@@ -170,6 +170,26 @@ class ReviewPromptWriterTest(unittest.TestCase):
         self.assertEqual((expires_at - created_at).total_seconds(), 24 * 60 * 60)
         self.assertNotIn(".review-handoff", self.git("status", "--short").stdout)
 
+    def test_all_uncommitted_detects_index_drift_with_unchanged_worktree(self) -> None:
+        tracked = self.repo / "tracked.txt"
+        tracked.write_text("staged version one\n", encoding="utf-8")
+        self.git("add", "tracked.txt")
+        tracked.write_text("working version\n", encoding="utf-8")
+        body_file = self.root / "body.md"
+        body_file.write_text(REVIEW_BODY, encoding="utf-8")
+        created = self.run_writer("all-uncommitted", body_file)
+        self.assertEqual(created.returncode, 0, created.stderr)
+        prompt_path = Path(json.loads(created.stdout)["prompt_path"])
+        self.assertEqual(self.run_verify(prompt_path).returncode, 0)
+
+        tracked.write_text("staged version two\n", encoding="utf-8")
+        self.git("add", "tracked.txt")
+        tracked.write_text("working version\n", encoding="utf-8")
+
+        stale = self.run_verify(prompt_path)
+        self.assertNotEqual(stale.returncode, 0)
+        self.assertEqual(json.loads(stale.stdout)["reason"], "scope_digest_mismatch")
+
     def test_staged_same_path_content_drift_fails_digest_verification(self) -> None:
         (self.repo / "tracked.txt").write_text("staged version one\n", encoding="utf-8")
         self.git("add", "tracked.txt")

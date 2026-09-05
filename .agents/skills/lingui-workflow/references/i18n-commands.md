@@ -1,51 +1,53 @@
 # Lingui i18n 命令说明（中文速查）
 
-本文档解释 `web/package.json` 中的 `i18n:*` 命令含义、输入输出、副作用，以及日常该怎么执行。
+本文档保留已退役的 `lingui-next-init` 历史模板的 `i18n:*` 命令说明，用于维护仍采用这些脚本的既有项目，不提供初始化入口。先核对目标项目实际 `package.json` 和入口；不同版本与自定义项目可能不同，实际脚本优先，不能把这些命令当成所有 Lingui 项目的标准接口。
 
 ## 先看这个
 
 1. 日常新增/修改文案（推荐）：
-`pnpm --filter @your/web run i18n:extract`
-`pnpm --filter @your/web run i18n:translate`
-`pnpm --filter @your/web run i18n:compile`
+   `pnpm --filter @your/web run i18n:extract`
+   `pnpm --filter @your/web run i18n:translate`
+   `pnpm --filter @your/web run i18n:compile`
 
-2. 首次初始化（快速跑通）：
-`pnpm --filter @your/web run i18n:bootstrap`
+2. 既有项目一次性补齐产物（仅当该脚本存在时）：
+   `pnpm --filter @your/web run i18n:bootstrap`
 
 3. 只重建 manifest：
-`pnpm --filter @your/web run i18n:manifest`
+   `pnpm --filter @your/web run i18n:manifest`
 
 4. 一条命令串联（高级用法）：
-`pnpm --filter @your/web run i18n -- --compile`
+   `pnpm --filter @your/web run i18n -- --compile`
 
-注意：`i18n` 默认不会 compile；只有传 `--compile` 才会执行 compile。
+注意：`i18n` 默认不会 compile；只有传 `--compile` 才会执行 compile。`i18n:compile` 已包含 manifest，不再单独重复执行它。只读缺失检查使用 `i18n:check`；组合 `i18n -- --strict` 会先 extract，可能改写 catalog。
 
 ## 参数组合速查
 
 1. 标准串联并产出编译结果：
-`pnpm --filter @your/web run i18n -- --compile`
+   `pnpm --filter @your/web run i18n -- --compile`
 
 2. 仅提取并编译（跳过 translate 统计）：
-`pnpm --filter @your/web run i18n -- --no-translate --compile`
+   `pnpm --filter @your/web run i18n -- --no-translate --compile`
 
 3. 翻译缺失项回填 source 文案：
-`pnpm --filter @your/web run i18n:translate -- --fill-source`
+   `pnpm --filter @your/web run i18n:translate -- --fill-source`
 
 4. 严格翻译检查（发现缺失即失败）：
-`pnpm --filter @your/web run i18n -- --strict`
+   `pnpm --filter @your/web run i18n -- --strict`
 
-## 8 个命令的真实语义（基于当前脚本实现）
+## 8 个历史模板命令的语义（须与项目实现核对）
 
-| 命令 | 实际执行 | 主要输入 | 主要输出 | 副作用 | 典型场景 |
-| --- | --- | --- | --- | --- | --- |
-| `i18n:extract` | `lingui extract-experimental` + `cleanOrphanedCatalogs()` | 源码中的 `<Trans>` / `t` 文案 | `src/locales/**/*.po` 更新（必要时刷新 `src/i18n/catalog-manifest.ts`） | 会改写 `po` 文件；自动删除不拥有自身消息的 entry 文件（`.po/.mjs`）并清理空目录（`I18N_DRY_RUN=1` 时仅打印待删除文件/目录）；非 dry-run 且发生清理时自动重建 manifest | 文案新增或改动后第一步 |
-| `i18n:translate` | 统计目标语言缺失；`--fill-source` 时回填 `msgstr`；`--strict` 时缺失即报错 | `src/locales/**/*.po` | 控制台缺失统计 | `--fill-source` 会写回目标语言 `po` | 翻译前检查缺失项；占位回填 |
-| `i18n:check` | `translate.ts --strict`；调用 `translateI18n({ strict: true })`，缺失 `msgstr` 时抛出 Error 并非零退出 | `src/locales/**/*.po` | 控制台缺失统计；缺失时非零退出 | 只读，不修改文件 | CI 管线中的翻译完整性门禁 |
-| `i18n:compile` | `lingui compile` 后自动执行 `i18n:manifest` | `src/locales/**/*.po` | `src/locales/**/*.mjs` + `src/i18n/catalog-manifest.ts` | 会生成/覆盖编译产物与 manifest | 翻译完成后用于运行与构建 |
-| `i18n:manifest` | 仅运行 `scripts/i18n/manifest.ts` | 已存在的 `src/locales/**/*.mjs` | `src/i18n/catalog-manifest.ts` | 会覆盖 manifest 文件 | 只想重建 loader 映射时 |
-| `i18n:sync` | 当前仅调用 extract | 源码文案 | `src/locales/**/*.po` 更新 | 行为等价 `i18n:extract` | 兼容入口（不是全流程同步） |
-| `i18n:bootstrap` | `extract + compile(+manifest)` | 源码文案 + `po` | `po/mjs/manifest` 全链路更新 | 会执行多步写入 | 初始化或一次性补齐产物 |
-| `i18n` | 组合入口：默认 `extract + translate`；可加 `--compile`、`--fill-source`、`--no-translate`、`--strict` | 源码文案 + `po` | 默认输出统计；可选生成 `mjs/manifest`；`--strict` 时可非零退出 | 取决于参数 | 本地串联流程，减少多条命令 |
+| 命令             | 实际执行                                                                                               | 主要输入                        | 主要输出                                                                | 副作用                                                                                                                                                                | 典型场景                   |
+| ---------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `i18n:extract`   | `lingui extract-experimental` + `cleanOrphanedCatalogs()`                                              | 源码中的 `<Trans>` / `t` 文案   | `src/locales/**/*.po` 更新（必要时刷新 `src/i18n/catalog-manifest.ts`） | 会改写 `po` 文件；自动删除不拥有自身消息的 entry 文件（`.po/.mjs`）并清理空目录（`I18N_DRY_RUN=1` 时仅打印待删除文件/目录）；非 dry-run 且发生清理时自动重建 manifest | 文案新增或改动后第一步     |
+| `i18n:translate` | 统计目标语言缺失；`--fill-source` 时回填 `msgstr`；`--strict` 时缺失即报错                             | `src/locales/**/*.po`           | 控制台缺失统计                                                          | `--fill-source` 会写回目标语言 `po`                                                                                                                                   | 翻译前检查缺失项；占位回填 |
+| `i18n:check`     | `translate.ts --strict`；调用 `translateI18n({ strict: true })`，缺失 `msgstr` 时抛出 Error 并非零退出 | `src/locales/**/*.po`           | 控制台缺失统计；缺失时非零退出                                          | 只读，不修改文件                                                                                                                                                      | CI 管线中的翻译完整性门禁  |
+| `i18n:compile`   | `lingui compile` 后自动执行 `i18n:manifest`                                                            | `src/locales/**/*.po`           | `src/locales/**/*.mjs` + `src/i18n/catalog-manifest.ts`                 | 会生成/覆盖编译产物与 manifest                                                                                                                                        | 翻译完成后用于运行与构建   |
+| `i18n:manifest`  | 仅运行 `scripts/i18n/manifest.ts`                                                                      | 已存在的 `src/locales/**/*.mjs` | `src/i18n/catalog-manifest.ts`                                          | 会覆盖 manifest 文件                                                                                                                                                  | 只想重建 loader 映射时     |
+| `i18n:sync`      | 当前仅调用 extract                                                                                     | 源码文案                        | `src/locales/**/*.po` 更新                                              | 行为等价 `i18n:extract`                                                                                                                                               | 兼容入口（不是全流程同步） |
+| `i18n:bootstrap` | `extract + compile(+manifest)`                                                                         | 源码文案 + `po`                 | `po/mjs/manifest` 全链路更新                                            | 会执行多步写入                                                                                                                                                        | 既有项目一次性补齐产物     |
+| `i18n`           | 组合入口：默认 `extract + translate`；可加 `--compile`、`--fill-source`、`--no-translate`、`--strict`  | 源码文案 + `po`                 | 默认输出统计；可选生成 `mjs/manifest`；`--strict` 时可非零退出          | 取决于参数                                                                                                                                                            | 本地串联流程，减少多条命令 |
+
+`I18N_DRY_RUN=1` 只阻止清理阶段删除文件；extract 命令仍会运行并可能改写 `.po`。它不是整个命令链的只读模式。
 
 ## `.gitignore` 建议（编译产物）
 
@@ -59,32 +61,35 @@ web/locale/**/*.mjs
 ```
 
 说明：
+
 1. 常用目录是 `web/src/locales/**`，`web/locale/**` 作为兼容路径一并忽略。
 2. 这些规则只忽略编译产物，不影响 `po` 源文件提交。
 
 ## 常见误用与纠正
 
 1. 误用：以为 `i18n` 默认会 compile。  
-纠正：默认不会，需显式加 `--compile`。
+   纠正：默认不会，需显式加 `--compile`。
 
 2. 误用：把 `i18n:sync` 当成“全量同步”。  
-纠正：当前实现只做 extract。
+   纠正：当前实现只做 extract。
 
 3. 误用：只跑 `i18n:manifest` 就想得到最新翻译。  
-纠正：manifest 依赖已编译的 `.mjs`；先 compile 再谈 manifest。
+   纠正：manifest 依赖已编译的 `.mjs`；先 compile 再谈 manifest。
 
 4. 误用：只在 layout 初始化 locale，page 和共享服务端组件不处理。  
-纠正：App Router / RSC 下应确保服务端 layout + page 都完成 locale 初始化（如 `initPageLingui(params)`）；共享服务端组件优先 `useLingui`/`Trans`。
+   纠正：App Router / RSC 下应确保服务端 layout + page 都完成 locale 初始化（如 `initPageLingui(params)`）；共享服务端组件优先 `useLingui`/`Trans`。
 
 ## 变更后校验清单（命令语义有改动时）
 
-当 `apps/web/scripts/i18n/index.ts`、`cli.ts`、`manifest.ts`、`packages/i18n/src/lingui-config.ts` 任一语义变化后，至少执行：
+仅当目标项目仍采用下列历史实现时，按本次改动选择对应检查；路径和行为以目标项目为准，不要求同步已退役模板：
 
 1. 文档同步：
+
 - 更新本文件命令矩阵与参数组合。
 - 如流程变化，更新 `references/workflow-daily.md`。
 
 2. 运行校验：
+
 ```bash
 pnpm --filter @your/web run i18n:extract
 pnpm --filter @your/web run i18n -- --strict
@@ -93,6 +98,7 @@ pnpm --filter @your/web run typecheck
 ```
 
 3. 结果核对：
+
 - `src/i18n/catalog-manifest.ts` 有预期 entry。
 - `src/locales/**/*.mjs` 与 `po` 输入一致更新。
 - `lingui-config.ts` 中 entries 使用精确两层 glob 自动发现（`src/components/*.tsx` + `src/components/layout/*.tsx`），在覆盖的两个层级内新增可翻译组件无需手动添加路径。
@@ -100,7 +106,7 @@ pnpm --filter @your/web run typecheck
 - manifest 生成阶段自动跳过不拥有自身消息的 entry（空 catalog 及纯包装组件），无需手动维护排除列表。跳过判据：entry 的 `.po` 中无任何 `#:` 源引用指向 entry 自身源文件（支持后缀：`.ts/.tsx/.js/.jsx/.mts/.cts/.mjs/.cjs/.md/.mdx`）。
 - `extractI18n()` 在 `lingui extract-experimental` 之后自动调用 `cleanOrphanedCatalogs(sourceLocale)`；默认删除空 catalog 和纯包装组件 entry 的 `.po/.mjs` 文件并清理空目录。设置 `I18N_DRY_RUN=1` 时只打印待删除文件与空目录用于安全检查；非 dry-run 且发生清理时自动调用 `manifestI18n()`，避免 manifest 仍引用已删除 `.mjs`。
 
-## 对应实现位置（便于核对）
+## 历史实现位置示例（实际项目路径优先）
 
 1. 组合逻辑：`web/scripts/i18n/index.ts`
 2. 组合入口参数：`web/scripts/i18n/cli.ts`

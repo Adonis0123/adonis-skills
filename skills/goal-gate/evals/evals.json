@@ -71,13 +71,13 @@
       "id": 4,
       "name": "medium-fit-suggest",
       "prompt": "I'm in Codex with goal tooling. Could you tidy up the logging in our worker service — make the levels consistent and add a bit more context to the noisy ones? Not urgent, whenever.",
-      "expected_output": "This is a medium-fit cleanup: useful, but the end state is fuzzy and easily done in a turn or two. Auto-set should NOT fire at medium fit. Decision is suggest (offer the contract and ask for a nod), not set-now.",
+      "expected_output": "This is medium/low fit: suggest a concise contract or skip Goal. Do not create native Goal state, and continue the authorized cleanup without making Goal confirmation a prerequisite.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block",
         "Decision is suggest (NOT set-now) — medium fit does not auto-set",
         "Goal fit is medium (or low), not high",
-        "Does not auto-create a goal: Next is 'ask approval' / 'provide prompt', not 'create goal'"
+        "Does not create native Goal state; continues authorized cleanup without waiting for a Goal approval round"
       ]
     },
     {
@@ -461,6 +461,31 @@
         "Does not add an executable /goal prefix",
         "Preserves [chatId] as documented Cursor CLI resume syntax rather than an unresolved placeholder",
         "Does not invent goal-management APIs or claim product Goal activation"
+      ]
+    },
+    {
+      "id": 30,
+      "name": "authorized-isolated-auth-fixture",
+      "prompt": "在 Codex 调用 goal-gate。已经批准仅在临时 fixture 实现 auth parser 的边界测试，禁止改生产代码、凭据和权限；测试文件与 pnpm test 已明确。设 Goal 并跑到这些本地测试通过。",
+      "expected_output": "Use the verified Codex Goal tools for the explicit request, preserve the local-only boundary, and continue without treating the word auth as an unapproved production rewrite.",
+      "files": [],
+      "expectations": [
+        "Checks existing Goal before creating one",
+        "Does not re-ask authorization solely because the isolated fixture concerns auth",
+        "Keeps all production code, credentials and permission changes outside scope",
+        "Creates no token budget and claims completion only after actual tests"
+      ]
+    },
+    {
+      "id": 31,
+      "name": "medium-fit-work-continues",
+      "prompt": "Codex 的 goal-gate 帮我看下这个是否需要 Goal：顺手统一一个 worker 文件的日志级别并补上下文，按现有约定改就行。",
+      "expected_output": "Medium/low fit avoids native Goal creation but does not block the authorized small edit.",
+      "files": [],
+      "expectations": [
+        "Does not create native Goal merely for cleanup",
+        "Continues authorized small work without waiting for Goal approval",
+        "Does not inflate scope or invent a budget"
       ]
     }
   ]

@@ -37,7 +37,7 @@ git status --short --branch
 - 如果已经有 staged changes，且用户没有点名不同范围，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。
 - 如果已经有 staged changes，但用户明确授权的是另一组 unstaged/untracked 路径，立即停止并报告范围错位。不要提交已有 staged 内容，不要 stage 新范围，也不要替用户 unstage；请用户先选择或拆分 index。
 - 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。
-- 如果没有 staged changes，且存在多个 unstaged/untracked 文件，只有在用户明确说“全部提交”或明确点名文件时才 stage 对应路径。否则停止并列出最小的 `git add -- <path>` 建议，让用户选择提交范围。
+- 如果没有 staged changes，且存在多个 unstaged/untracked 文件，用户点名的范围或本会话刚完成、目的单一且能从差异核对的变更集都可作为提交范围。先逐项检查，再只 stage 对应路径；不需要用户再说“全部提交”。若混有无法归属的既有修改，先排除；范围仍不唯一时才询问，不凭文件相邻或同目录推断同属本任务。
 - 如果既没有 staged changes，也没有 unstaged/untracked changes，告诉用户当前没有可提交内容。
 
 自动 stage 前必须遵守这些边界：
@@ -138,7 +138,7 @@ git log -1 --oneline
 ## 注意事项
 
 - 不要提交包含敏感信息的文件（.env、credentials 等）；缺 ignore 规则时先补 `.gitignore`
-- 提交前确保代码通过 lint 和类型检查
+- 提交前完成仓库要求和改动相关的验证。纯文档通常检查格式、链接或生成索引；只有代码或配置影响需要时才加 lint、类型检查和测试。可复用本会话针对同一内容已通过的结果；内容改变或仓库要求重跑时重新执行，不跳过 hooks。
 - 一次提交只做一件事，保持提交的原子性
 - 提交信息要准确反映变更内容，关注"为什么"而非"做了什么"
 

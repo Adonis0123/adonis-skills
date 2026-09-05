@@ -8,6 +8,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+import re
 from typing import Any, Dict, List, Optional
 
 
@@ -134,13 +135,41 @@ def _render_report_markdown(
     return "\n".join(lines) + "\n"
 
 
+def _split_next_week_plan(content: str) -> tuple[str, str]:
+    parts = re.split(r"(?m)^下周计划[ \t]*$", content, maxsplit=1)
+    return parts[0], parts[1] if len(parts) == 2 else ""
+
+
+def _merge_next_week_plans(existing: str, new: str) -> str:
+    def parse_plan(content: str) -> dict[str, list[ReportEntry]]:
+        # A bare dash is the documented empty plan, not a project heading.
+        content = "\n".join(line for line in content.splitlines() if line.strip() != "-")
+        return _parse_report_markdown(content)[1]
+
+    sections = _merge_sections(parse_plan(existing), parse_plan(new))
+    lines = ["下周计划"]
+    for project, entries in sections.items():
+        lines.append(project)
+        if not entries:
+            lines.append("-")
+        for entry in entries:
+            lines.append(f"  - {entry.summary}")
+            lines.extend(f"    - {detail}" for detail in entry.details)
+    return "\n".join(lines) + "\n"
+
+
 def merge_report_content(existing: str, new: str) -> str:
-    existing_preamble, existing_sections = _parse_report_markdown(existing)
-    new_preamble, new_sections = _parse_report_markdown(new)
+    existing_body, existing_plan = _split_next_week_plan(existing)
+    new_body, new_plan = _split_next_week_plan(new)
+    existing_preamble, existing_sections = _parse_report_markdown(existing_body)
+    new_preamble, new_sections = _parse_report_markdown(new_body)
 
     preamble = existing_preamble or new_preamble
     merged_sections = _merge_sections(existing_sections, new_sections)
-    return _render_report_markdown(preamble, merged_sections)
+    content = _render_report_markdown(preamble, merged_sections)
+    if existing_plan or new_plan:
+        content += "\n" + _merge_next_week_plans(existing_plan, new_plan)
+    return content
 
 
 def get_storage_dir(base_dir: Optional[Path] = None) -> Path:

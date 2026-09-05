@@ -39,15 +39,15 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-30T03:51:50.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "branch-creator",
     "name": "branch-creator",
-    "description": "Create safe Git feature or hotfix branches with concise names. Use this whenever the user asks to create a branch, start work on a new feature or fix, wants a `feat/...` or `hotfix/...` branch name, asks for a short branch slug from a task description, or wants help before beginning local Git work. Default to recommending the branch name and command first, then create only after user confirmation. Do not push, commit, rebase, or create PRs.",
+    "description": "Create safe Git feature or hotfix branches with concise names. Use when the user asks to create a local branch or suggest a branch name. A name-only request stays read-only; an explicit creation request authorizes creation after local checks. Ordinary feature work alone does not request a branch. Do not push, commit, rebase, or create PRs.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.1"
+      "version": "1.1.2"
     },
     "files": {
       "hasReferences": false,
@@ -68,7 +68,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-26T09:46:55.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -86,10 +86,10 @@
   {
     "slug": "code-plugin-architecture",
     "name": "code-plugin-architecture",
-    "description": "Use when the user's pain is \"adding/removing one more X means editing N files\" and X is a recurring variant kind: popup, banner, modal, ad slot, payment method, AI model/tool, form field type, connector, sub-site, command, menu item, agent, extension point, or data source. Use when they want to design, refactor, review, name, or explain a pluggable mechanism using registry, interface/trait contract, runtime core, and convention folders; mention pluginize, pluggable, plugin architecture, extension point, registry pattern, or extensibility. Use when explaining the first-principles rationale, DDD/SOLID/OCP mapping, or industry analogies behind that structure. Use for cross-stack mapping to VSCode contributes, Webpack/Vite plugins, Rust/Tauri connectors, Python entry_points, or cargo features. Skip one variant's internals/styles/hooks/copy/bugs, and skip register/registry meaning DI container, user signup, or package registry.",
+    "description": "Design, review, refactor, or explain recurring extension mechanisms when adding or removing one variant requires scattered coordinated edits. Use for plugin architecture, registries, extension points, and cross-stack contract/host mappings. Assess whether a typed map, existing framework mechanism, or lifecycle-owning core is justified. Skip one plugin's internal styling or bugs, user signup, DI containers, and package registries.",
     "metadata": {
       "author": "adonis",
-      "version": "0.2.0"
+      "version": "0.4.0"
     },
     "files": {
       "hasReferences": true,
@@ -108,7 +108,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-26T08:46:46.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "commit-push",
@@ -121,7 +121,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-25T05:50:27.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "decision-first-technical-writing",
@@ -135,7 +135,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-22T01:35:13.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "discuss-before-plan",
@@ -143,27 +143,13 @@
     "description": "Resolve a bounded design choice before planning. Use when the user presents named alternatives, a proposal with an implicit status-quo alternative, or delegates a decision and asks to compare, recommend, or decide. Do not use for open-ended option generation, a fully specified implementation, or a ready spec that only needs task planning.",
     "metadata": {
       "author": "adonis",
-      "version": "2.5.0"
+      "version": "2.5.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-24T01:40:24.000Z"
-  },
-  {
-    "slug": "enforce-lf",
-    "name": "enforce-lf",
-    "description": "Enforce consistent LF line endings across platforms with a four-layer guard: .gitattributes, .editorconfig, Prettier endOfLine, and lint-staged pre-commit formatting. Targets pnpm + Prettier + simple-git-hooks projects.",
-    "metadata": {
-      "author": "adonis",
-      "version": "1.0.0"
-    },
-    "files": {
-      "hasReferences": false,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-03-10T06:47:07.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "figma-mcp",
@@ -177,21 +163,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-15T07:26:15.000Z"
-  },
-  {
-    "slug": "global-modal-scaffold",
-    "name": "global-modal-scaffold",
-    "description": "This skill should be used when the user asks to \"create a global modal\", \"add a new modal extension\", \"scaffold a modal plugin\", \"add a global dialog\", \"create a modal with callbacks\", \"set up a global modal system\", or mentions the global-modals extension system.",
-    "metadata": {
-      "author": "adonis",
-      "version": "0.1.0"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "goal-gate",
@@ -199,33 +171,19 @@
     "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.1"
+      "version": "2.0.2"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-24T01:36:27.000Z"
-  },
-  {
-    "slug": "lingui-next-init",
-    "name": "lingui-next-init",
-    "description": "Scaffold Lingui i18n for Next.js App Router projects with deterministic scripts and templates. Use when you need to initialize or standardize multilingual setup in a single project or monorepo.",
-    "metadata": {
-      "author": "adonis"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false,
-      "hasScripts": true
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "lingui-workflow",
     "name": "lingui-workflow",
-    "description": "Guide daily Lingui command workflow for Next.js and React projects. Use when teams need clear extract/translate/compile/manifest routines, troubleshooting steps, and command semantics for i18n catalogs.",
+    "description": "Choose and troubleshoot extract, translation-check, compile, and catalog-manifest commands in an existing Lingui project. Use for daily catalog maintenance and command semantics, not initial setup, plain text translation, or choosing an i18n library.",
     "metadata": {
       "author": "adonis"
     },
@@ -247,7 +205,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-08T13:07:09.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "open-code-review-loop",
@@ -262,7 +220,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-30T03:51:50.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "review-prompt-composer",
@@ -277,21 +235,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-08T13:02:41.000Z"
-  },
-  {
-    "slug": "tailwindcss-next-init",
-    "name": "tailwindcss-next-init",
-    "description": "Initialize Tailwind CSS v4 and Iconify for Next.js App Router projects with script-driven templates. Use when you need a fast setup or migration with consistent style-entry conventions.",
-    "metadata": {
-      "author": "adonis"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false,
-      "hasScripts": true
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "task-completion-loop",
@@ -305,7 +249,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-30T03:51:50.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "uxc-facade",
@@ -319,7 +263,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-10T09:42:36.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "web-performance-audit",
@@ -327,14 +271,14 @@
     "description": "Run a read-only, evidence-led runtime performance audit of a real web application, especially authenticated editors, dashboards, media tools, long-lived SPAs, and pages with many tabs or states. Use when the user asks to profile slowness, inspect every tab, use Chrome DevTools or Chrome Recorder, run React Scan, compare normal and throttled interactions, find memory or rendering risks, or produce a performance report and recommendations without changing code. Discover available browser capabilities, guide the user through official installation when an important capability is missing, route to validated fallbacks, isolate measurement pollution, and distinguish measured facts from screen observations, hypotheses, and unverified paths. Do not use for a Lighthouse-only SEO/accessibility audit, tool installation with no audit goal, or when the user already wants a specific optimization implemented.",
     "metadata": {
       "author": "Adonis",
-      "version": "1.2.1"
+      "version": "1.2.2"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-30T15:29:30.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   },
   {
     "slug": "weekly-report",
@@ -342,11 +286,12 @@
     "description": "Generate structured weekly reports from Git commit history across one or multiple repositories. Use when you need concise, project-grouped progress summaries for status reporting.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "files": {
       "hasReferences": true,
-      "hasSrc": true
+      "hasSrc": true,
+      "hasScripts": true
     },
     "updatedAt": "2026-03-02T07:25:38.000Z",
     "allowedTools": ["Read", "Write", "Bash(git:*)", "Bash(python:*)"]
@@ -363,21 +308,6 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-26T08:46:46.000Z"
-  },
-  {
-    "slug": "zustand-store-scaffold",
-    "name": "zustand-store-scaffold",
-    "description": "Scaffold class-based Zustand stores with flattenActions: web (component-level store + Context + Provider) and core (slice-based store with immer). Class-based actions provide Go-to-Definition DX, #private field encapsulation, and prototype-safe slice composition.",
-    "metadata": {
-      "author": "adonis",
-      "version": "1.0.0"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false,
-      "hasScripts": true
-    },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z"
   }
 ]

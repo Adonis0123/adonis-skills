@@ -5,49 +5,31 @@
       "id": 1,
       "eval_name": "refactor-scattered-modals-to-plugin-system",
       "prompt": "我们项目里现在有 5 个推广弹窗（NPS 调研、限时折扣、新人引导、签到提醒、邀请奖励），每个弹窗的关闭逻辑、显示条件、缓存策略都散在调用方组件里。每次产品要加一个新弹窗，我就要改 4-5 个文件，新人接手第一周一定踩坑。栈是 Next.js Pages Router + React 18 + Zustand + TypeScript。能不能帮我设计一套插件化机制，让以后加新弹窗 = 新建一个目录 + 注册表加一行？给我可以直接拿去用的目录结构 + 核心代码骨架。",
-      "expected_output": "应该给出一套清晰的 5 层结构（Identity / Contract / Registry / Runtime Core / Convention Folder），具体目录树，核心 store + factory 代码骨架，以及一个最小可用的示例插件。还应该提到延迟加载（dynamic）、占位符引导、命名推导表，最后给一个'加新弹窗的 N 步'清单。",
+      "expected_output": "针对重复的关闭、显示条件和缓存协调给出设计与可用骨架，保留 key 和明确生命周期边界。目录、Core 与引导按实际复杂度选择；延迟加载须说明等待、失败和真实分包验证，不默认关闭 SSR。",
       "assertions": [
         {
-          "id": "mentions-five-pieces",
-          "text": "Output mentions the five-piece structure: Identity, Contract, Registry, Runtime Core (or Core Factory), and Convention Folder.",
-          "check_method": "grep_all",
-          "patterns": ["Identity", "Contract|契约", "Registry|注册表", "Core|内核|Factory", "Convention|约定"]
+          "id": "centralizes-repeated-knowledge",
+          "text": "Identifies the duplicated policy/lifecycle knowledge and proposes an ownership boundary that stops callers repeating it.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "provides-directory-tree",
-          "text": "Output contains at least one ASCII directory tree (with `├──` or similar) showing the proposed folder structure.",
-          "check_method": "grep_any",
-          "patterns": ["├──", "└──", "│   "]
+          "id": "preserves-lifecycle-contract",
+          "text": "Makes state ownership, initialization/update and cleanup behavior reviewable; plugin-specific conditions do not become key branches in shared Core.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "mentions-lazy-loading",
-          "text": "Output explicitly discusses lazy loading using dynamic() / lazy / dynamics.ts pattern.",
-          "check_method": "grep_any",
-          "patterns": ["dynamic\\(", "lazy\\(", "dynamics\\.ts", "延迟加载|懒加载"]
+          "id": "loading-tradeoff-is-conditional",
+          "text": "Treats lazy loading as a measured choice and preserves SSR/loading/error behavior instead of requiring every component to be lazy.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "mentions-placeholder-comment",
-          "text": "Output mentions placeholder comments using the unified `// [Domain-Action]:(slot)` format (e.g. // [Popup-Config]:(add)) to guide future plugin additions. Output should NOT use the old [X-Placeholder] format.",
-          "check_method": "grep_any",
-          "patterns": ["占位符|placeholder", "\\[[A-Za-z]+-[A-Za-z]+\\]:\\("]
-        },
-        {
-          "id": "mentions-naming-table",
-          "text": "Output includes a naming derivation table (key → ComponentName → dataName → hookName) so adding a plugin becomes mechanical.",
-          "check_method": "grep_any",
-          "patterns": ["命名推导|naming derivation|naming table", "camelCase.*PascalCase|PascalCase.*camelCase", "snake_case"]
-        },
-        {
-          "id": "core-has-no-business-key-check",
-          "text": "Core code shown should NOT contain hardcoded plugin key checks like `if (key === 'xxx')`.",
-          "check_method": "grep_none",
-          "patterns": ["if\\s*\\(\\s*key\\s*===\\s*['\"]nps", "if\\s*\\(\\s*key\\s*===\\s*['\"]invite", "if\\s*\\(\\s*key\\s*===\\s*['\"]flash"]
-        },
-        {
-          "id": "provides-step-by-step",
-          "text": "Output provides a numbered or bulleted 'add new plugin in N steps' onboarding guide.",
-          "check_method": "grep_any",
-          "patterns": ["加新.*步|加一个.*步|N 步|添加.*步骤", "Step 1.*Step 2", "1\\..*2\\..*3\\."]
+          "id": "design-does-not-claim-delivery",
+          "text": "Provides the requested design/code skeleton without claiming that unexecuted runtime or browser checks passed.",
+          "check_method": "human_review",
+          "patterns": []
         }
       ],
       "files": []
@@ -56,43 +38,31 @@
       "id": 2,
       "eval_name": "review-fake-pluginization",
       "prompt": "团队里有同学说他做了个'插件化'的工具扩展系统，但我看了下感觉哪里怪怪的，每次加新工具还是要改 5、6 个地方。下面是核心代码，帮我看看这是不是真正的插件化，有没有反模式，要怎么改？\n\n```ts\n// extensions/index.ts\nimport { MotionExt } from './motion'\nimport { RelightExt } from './relight'\nimport { ShotsExt } from './shots'\n\nexport const extensions = {\n  motion: { component: MotionExt, priority: 1 },\n  relight: { component: RelightExt },\n  shots: { component: ShotsExt, priority: 3, customLayout: true },\n}\n\nexport function shouldShowExtension(key: string, user: User) {\n  if (key === 'motion') {\n    if (user.plan === 'free' && user.creditsLeft < 10) return false\n    return true\n  }\n  if (key === 'shots') {\n    const motionState = useStore((s) => s.motionOpen)\n    return !motionState && user.plan !== 'free'\n  }\n  return true\n}\n\nexport function getExtensionByKey(key: string) {\n  const ext = extensions[key]\n  if (key === 'shots' && ext.customLayout) {\n    return { ...ext, layout: SpecialShotsLayout }\n  }\n  return ext\n}\n```",
-      "expected_output": "应该识别出至少 5 种反模式：(1) Core 里有具体 key 的 if-else 业务逻辑（#7）；(2) 一个插件反向依赖另一个插件的 store（#4）；(3) 字段不同质——只有 shots 有 customLayout（#1）；(4) 没有 dynamic 延迟加载（#5）；(5) `customLayout: true` 这种 boolean 标记需要中心 if 解释（#1 变体）。还应该提出修法：把展示判断挪到单插件的 init、把 layout 升为 Contract 字段、加 dynamic 包装。",
+      "expected_output": "核实中心 key 业务判断、shots 依赖 motion 状态与 customLayout 解释的位置；给最小改法。不能只因 optional 字段、静态 import 或缺占位符就判严重错误；只读评审不落地七份实现。",
       "assertions": [
         {
-          "id": "identifies-not-real-pluginization",
-          "text": "Output explicitly concludes this is NOT real pluginization (or is fake/伪插件化).",
-          "check_method": "grep_any",
-          "patterns": ["伪插件化|不是真.*插件化|not real plugin|fake plugin|not truly plugin", "OCP|open.*closed"]
+          "id": "identifies-business-dispatch",
+          "text": "Explains which key branches repeat variant knowledge and where the corresponding decision should live.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "identifies-core-key-check",
-          "text": "Output identifies the if (key === 'motion') / if (key === 'shots') anti-pattern (business in Core, anti-pattern #7).",
-          "check_method": "grep_any",
-          "patterns": ["业务.*漏到.*[Cc]ore|key.*===.*['\"]|god function|all.*visibility.*one place|集中.*可见性|集中.*business"]
+          "id": "identifies-cross-variant-ownership",
+          "text": "Explains the dependency on motionOpen and assigns cross-variant product ordering to an explicit owner.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "identifies-cross-plugin-coupling",
-          "text": "Output identifies that shots reads motion's store (anti-pattern #4 — cross-plugin reverse dependency).",
-          "check_method": "grep_any",
-          "patterns": ["反向依赖|cross-plugin|耦合|shots.*motion|motionOpen|motion.*state"]
+          "id": "avoids-shape-only-findings",
+          "text": "Does not label optional fields, static imports or absent placeholders as proven bugs without checking their contract or actual cost.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "identifies-heterogeneous-fields",
-          "text": "Output identifies that fields are heterogeneous (some have priority, only shots has customLayout — anti-pattern #1).",
-          "check_method": "grep_any",
-          "patterns": ["不同质|heterogeneous|customLayout.*only|field.*inconsistent|priority.*缺|字段.*差异|结构.*不一致"]
-        },
-        {
-          "id": "identifies-no-lazy-loading",
-          "text": "Output identifies the missing dynamic / lazy loading (anti-pattern #5).",
-          "check_method": "grep_any",
-          "patterns": ["dynamic\\(\\)|lazy loading|延迟加载|懒加载|没有.*dynamic|缺.*lazy"]
-        },
-        {
-          "id": "proposes-refactor",
-          "text": "Output proposes concrete refactor steps (not just diagnosis): move visibility to init.ts, promote customLayout to Contract, add dynamic wrapper.",
-          "check_method": "grep_all",
-          "patterns": ["init", "Contract|契约|interface", "dynamic|lazy"]
+          "id": "review-stays-read-only",
+          "text": "Reports review findings and minimal recommendations without executing refactors or generating a mandatory framework.",
+          "check_method": "human_review",
+          "patterns": []
         }
       ],
       "files": []
@@ -101,47 +71,35 @@
       "id": 3,
       "eval_name": "cross-stack-rust-tauri",
       "prompt": "我之前在 React 项目里用过你说的那套'五件套'插件化模式（Identity / Contract / Registry / Runtime Core / Convention Folder），现在公司接了个 Rust + Tauri v2 的桌面应用，UI 是 React 但很多扩展点在 Rust 后端——比如用户可以装第三方的'数据源 connector'（每个 connector 是一个 Rust crate，可能是 sqlite、postgres、csv、s3 等等）。能不能告诉我这套模式怎么映射到 Rust + Tauri 上？尤其是 Identity 和 Registry 这两层怎么落地最自然。",
-      "expected_output": "应该明确给出 Rust/Tauri 上的映射：Identity 用 crate name 或 const string（不是 trait——trait 是 Contract）；Registry 三种形态可选（编译期静态、inventory/linkme 分散、运行时 libloading）并说明各自取舍；Contract 用 trait；Runtime Core 用 host crate 持有 Box<dyn Trait>；Convention Folder 是 workspace member crate；Lazy loading 用 cargo features。还应该提到 Tauri 自带 Plugin 系统的关系：业务扩展应整体包成一个 Tauri Plugin，而不是每个 connector 独立 Tauri Plugin。",
+      "expected_output": "区分 stable key 与 trait、静态组合与用户发布后安装。Cargo features 是条件编译，不是运行时 lazy loading。第三方安装需要单独定义稳定 ABI/协议、权限和隔离；不能假装静态 crate 注册已实现它。Tauri 包装粒度按实际发布/权限边界选择。",
       "assertions": [
         {
-          "id": "separates-identity-from-contract",
-          "text": "Output distinguishes Identity (crate name / const string) from Contract (trait) — does NOT conflate trait with Identity.",
-          "check_method": "grep_all",
-          "patterns": ["trait.*Contract|trait.*契约|trait.*接口|Contract.*trait|Identity.*crate|crate name.*Identity|const.*PLUGIN_KEY|name.*identifier"]
+          "id": "identity-not-trait",
+          "text": "Separates identity from the trait or function contract.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "discusses-multiple-registry-forms",
-          "text": "Output discusses at least 2 forms of Registry: static (workspace builder), inventory/linkme distributed registration, or libloading dynamic.",
-          "check_method": "grep_any",
-          "patterns": ["inventory|linkme", "libloading|dlopen|dynamic.*load", "Builder.*plugin|register_all", "workspace.*member|静态注册|编译期"]
+          "id": "compile-not-runtime-load",
+          "text": "Distinguishes Cargo conditional compilation, dynamic dispatch and runtime loading.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "mentions-cargo-features-as-lazy",
-          "text": "Output mentions cargo features as the equivalent of lazy loading (compile-time feature gates).",
-          "check_method": "grep_any",
-          "patterns": ["cargo.*features|cfg\\(feature", "feature flag.*compile|编译期.*feature|features.*等价"]
+          "id": "preserves-install-requirement",
+          "text": "Does not silently replace user-installed third-party connectors with an in-workspace static-only design; states what static composition cannot deliver.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "discusses-tauri-plugin-relationship",
-          "text": "Output discusses how to relate this to Tauri's built-in Plugin system — recommend wrapping the entire connector mechanism as one Tauri Plugin, not one Tauri Plugin per connector.",
-          "check_method": "grep_any",
-          "patterns": ["Tauri.*[Pp]lugin.*关系|tauri::Builder|包成.*Tauri.*[Pp]lugin|wrap.*single.*Tauri.*plugin|不要每个.*Tauri.*[Pp]lugin"]
+          "id": "stable-boundary-for-dynamic-code",
+          "text": "If native dynamic loading is proposed, addresses Rust ABI compatibility and actual isolation/permission design.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "uses-five-piece-vocab",
-          "text": "Output uses the five-piece vocabulary (Identity, Contract, Registry, Runtime Core, Convention Folder).",
-          "check_method": "grep_all",
-          "patterns": ["Identity", "Contract|契约", "Registry|注册表", "Core|内核", "Convention|约定"]
-        },
-        {
-          "id": "recommends-compile-time-as-safer-default",
-          "text": "Output explicitly recommends compile-time / static registration (form A) as the safer default starting point for in-workspace plugins.",
-          "check_method": "grep_any",
-          "patterns": ["推荐.*编译期|recommend.*compile-time", "形态 A.*起步|从.*形态 A|start with.*form A", "默认.*静态注册|静态注册.*默认", "compile-time.*safer|compile-time.*default"]
-        },
-        {
-          "id": "abi-risk-flagged-when-discussing-dynamic-loading",
-          "text": "Conditional check (requires semantic review): IF the output discusses runtime dynamic loading (libloading / dlopen / dylib / .so loading), it MUST flag Rust ABI instability or recommend C ABI / abi_stable wrapping. If the output does NOT discuss dynamic loading at all, this assertion is vacuously satisfied. Grader: read the section on dynamic loading (if any) and verify ABI risk is called out.",
+          "id": "tauri-wrapper-is-conditional",
+          "text": "Does not mandate one Tauri plugin for the entire connector system without evidence about its release, permission and lifecycle boundaries.",
           "check_method": "human_review",
           "patterns": []
         }
@@ -152,37 +110,139 @@
       "id": 4,
       "eval_name": "first-principles-ddd-solid-rationale",
       "prompt": "我想把团队里那套到处 switch case 的工具系统改成插件化，但大家觉得这是我个人偏好。你能不能从第一性原理解释：为什么 Identity / Contract / Registry / Runtime Core / Convention Folder 这五件套不是拍脑袋，而是把'加一个新变种'从改 N 处降到只改一个自治单元 + 注册表一行的必要条件？顺便把它和 DDD、SOLID、OCP 的关系讲清楚，但不要把概念硬画等号。",
-      "expected_output": "应该先把根问题定义为 Shotgun Surgery / 一个逻辑变化散落多处，再把目标表述为 O(N) 扩展成本降到 O(1)。然后逐条推导五件套：Contract 让核心按稳定形状消费变种；Identity 让命名可机械推导；Registry 收敛'有哪些'；Runtime Core 对具体变种零知识；Convention Folder 让单变种自治。DDD 映射要谨慎：Contract 可以充当 Published Language，adapter 可类比 ACL，单 plugin 不默认等于 Bounded Context，Core 能力只有在标准化暴露时才类比 OHS。SOLID 关系应点出 OCP 是主轴、DIP 是依赖方向、SRP/ISP 分别解释自治目录和窄契约。",
+      "expected_output": "直接纠正“五个独立部件是必要条件”的前提，用静态函数表等反例说明职责可以合并。把有限编辑触点与算法复杂度分开；说明 OCP/DIP 等在真实边界上的作用，DDD 不硬等同。仅解释，不生成实现。",
       "assertions": [
         {
-          "id": "starts-from-shotgun-surgery-and-o1-goal",
-          "text": "Output frames the root problem as Shotgun Surgery / scattered edits and the goal as reducing add-one-variant cost from O(N) to O(1).",
-          "check_method": "grep_all",
-          "patterns": ["Shotgun Surgery|霰弹式修改|散.*改|多个文件", "O\\(N\\)", "O\\(1\\)"]
+          "id": "challenges-false-necessity",
+          "text": "Rejects the universal necessity claim and gives a concrete structure that supports local extension without all five independent parts.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "derives-five-pieces-as-necessary",
-          "text": "Output derives all five pieces as necessary conditions, not just lists them.",
-          "check_method": "grep_all",
-          "patterns": ["必要条件|推导|绕不开|否则", "Identity", "Contract|契约", "Registry|注册表", "Runtime Core|Core|内核", "Convention Folder|约定式目录|自治目录"]
+          "id": "defines-cost-not-big-o-proof",
+          "text": "Distinguishes edit-site locality from constant total development/testing/runtime cost.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "maps-ddd-carefully-without-equating",
-          "text": "Output maps DDD concepts carefully and avoids saying plugin equals bounded context by default.",
-          "check_method": "grep_all",
-          "patterns": ["Published Language|发布语言", "Anti-Corruption Layer|ACL|防腐", "Bounded Context|边界上下文", "不.*等于|不是.*等号|类比|可充当"]
+          "id": "bounded-ddd-solid-mapping",
+          "text": "Explains relevant SOLID/DDD relationships without equating every plugin with a bounded context or every interface with Published Language.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "mentions-solid-axis",
-          "text": "Output explains the SOLID relationship, including OCP and DIP.",
-          "check_method": "grep_all",
-          "patterns": ["OCP|Open.*Closed|开闭", "DIP|Dependency Inversion|依赖倒置", "SRP|Single Responsibility|单一职责", "ISP|Interface Segregation|接口隔离"]
+          "id": "explanation-only",
+          "text": "Answers the conceptual request without creating a mandatory Core, README, sample plugin or test workspace.",
+          "check_method": "human_review",
+          "patterns": []
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 5,
+      "eval_name": "explain-static-table-without-scaffolding",
+      "prompt": "只解释，不要改仓库或生成文件。这个 CLI 里有 const formatters = { upper: s => s.toUpperCase(), lower: s => s.toLowerCase() }，唯一调用点按已校验的 key 查表执行。没有订阅、网络、缓存或 UI；以后加 formatter 只加一项。它算什么结构，还欠一个 Core factory、单项目录和调试探针吗？",
+      "expected_output": "解释 typed/function registry 已能承载当前变化，不制造缺失的生命周期或凑五层。只输出解释。",
+      "assertions": [
+        {
+          "id": "no-artifact-expansion",
+          "text": "Produces only the requested explanation, with no repository writes or mandatory artifact generation.",
+          "check_method": "human_review",
+          "patterns": []
         },
         {
-          "id": "does-not-overclaim-ddd",
-          "text": "Output should not claim that every plugin is a Bounded Context or that Contract is literally DDD Published Language.",
-          "check_method": "grep_none",
-          "patterns": ["每个.*plugin.*Bounded Context", "插件.*就是.*边界上下文", "Contract.*就是.*Published Language", "契约.*就是.*发布语言"]
+          "id": "no-fake-missing-layers",
+          "text": "Recognizes the table can be sufficient and does not prescribe Core/store/lazy/probes for the given synchronous case.",
+          "check_method": "human_review",
+          "patterns": []
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 6,
+      "eval_name": "static-dispatch-preserves-input-boundary",
+      "prompt": "请给一个最小补丁建议，不落盘。当前两个 CLI consumer 各有同样的 switch：upper 返回 value.toUpperCase()，lower 返回 value.toLowerCase()；其他 key 抛 Error(\"UNKNOWN_FORMATTER\")。key 来自 JSON 输入，运行时就是 string。想合并重复 dispatch，以后新增 trim 只加一处定义。全部同步、无状态，无 UI。保留已有错误文本，别改变命令签名。",
+      "expected_output": "类型明确的共享函数表和一次运行时 key 校验，保留 UNKNOWN_FORMATTER；不引入全套框架或靠类型断言冒充校验。",
+      "assertions": [
+        {
+          "id": "shared-small-dispatch",
+          "text": "Uses a small shared dispatch boundary so new variants do not require edits to both consumers.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "runtime-key-validation",
+          "text": "Validates the runtime string including unknown keys, rather than using only a TypeScript assertion.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "preserves-error-and-scope",
+          "text": "Preserves UNKNOWN_FORMATTER and command signatures, gives a patch suggestion only, and does not add stateful machinery.",
+          "check_method": "human_review",
+          "patterns": []
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "eval_name": "stateful-account-switch-and-dispose",
+      "prompt": "只读 review 这个插件运行时。start(user) 会 store.subscribe(() => refresh(user))，但不保存 unsubscribe；refresh(user) 发请求后直接把返回结果写进全局 result；切换账号会再 start(newUser)；dispose 仅设 opened=false。复现：A 的慢请求在切换 B 后返回，页面显示 A 的结果；来回切号三次，每次刷新会打三遍请求。请找根因，给最小修法与验收，不要另造插件框架。",
+      "expected_output": "识别旧 owner 的迟到结果和未清理订阅，修正取消/序号或 owner guard 与 unsubscribe，验证切号和 dispose/remount，保持已有框架。",
+      "assertions": [
+        {
+          "id": "stale-owner-result",
+          "text": "Explains why account A can overwrite B and proposes cancellation plus a stale-result guard or equivalent owner/generation check.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "cleans-subscription-lifecycle",
+          "text": "Explains duplicate subscriptions and defines cleanup on update/dispose and safe remount.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "meaningful-runtime-validation",
+          "text": "Proposes observable delayed-result and subscriber-count checks instead of only build/typecheck or static grep.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "no-unneeded-framework",
+          "text": "Keeps recommendations in the existing runtime rather than adding a registry/bus/provider to solve the local lifecycle bug.",
+          "check_method": "human_review",
+          "patterns": []
+        }
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "eval_name": "existing-host-and-optional-fields-review",
+      "prompt": "只评审结构是否需要整改，不写代码。宿主已经用框架 manifest 自动发现 12 个 command，每项有必填 run 和可选 icon，缺 icon 有默认值。所有命令无状态，执行失败由已有错误处理器显示，新增一项只建一个定义文件。团队想再加中央 registry、Core factory、全部 lazy 和 window.__COMMAND_STORE__，理由是“五件套不能少”。是否值得？",
+      "expected_output": "依据已有机制、默认值和成本保留现状，不把 optional 差异当错误，不另建 host，不加不需要的 lazy/store/global probe。",
+      "assertions": [
+        {
+          "id": "reuses-existing-host",
+          "text": "Recognizes the existing manifest and error handling satisfy the required structure and rejects duplicate discovery/core layers without new evidence.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "optional-field-is-valid",
+          "text": "Accepts the icon field as a valid optional contract with a default.",
+          "check_method": "human_review",
+          "patterns": []
+        },
+        {
+          "id": "does-not-introduce-global-state",
+          "text": "Does not require lazy boundaries or a global writable store for the stateless commands.",
+          "check_method": "human_review",
+          "patterns": []
         }
       ],
       "files": []

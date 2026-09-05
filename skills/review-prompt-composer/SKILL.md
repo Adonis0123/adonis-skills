@@ -41,14 +41,14 @@ This skill requires the receiver to read the same repository and working tree. I
 
 Use read-only evidence:
 
-| Scope             | Commands                                                                                                           |
-| ----------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `all-uncommitted` | `git diff HEAD --stat`, `git diff HEAD --name-status`, `git diff HEAD`, `git ls-files --others --exclude-standard` |
-| `staged-only`     | `git diff --cached --stat`, `git diff --cached --name-status`, `git diff --cached`                                 |
-| `unstaged-only`   | `git diff --stat`, `git diff --name-status`, `git diff`                                                            |
-| `untracked-only`  | `git ls-files --others --exclude-standard`, then read each in-scope file                                           |
-| branch range      | `git log --oneline "$base".."$head"`, `git diff --find-renames "$base"..."$head" --stat`, full diff                |
-| commits           | `git show --find-renames --stat "$sha"` and full show for every resolved SHA                                       |
+| Scope             | Commands                                                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `all-uncommitted` | `git diff --cached --stat`, `git diff --cached`, `git diff --stat`, `git diff`, `git ls-files --others --exclude-standard` |
+| `staged-only`     | `git diff --cached --stat`, `git diff --cached --name-status`, `git diff --cached`                                         |
+| `unstaged-only`   | `git diff --stat`, `git diff --name-status`, `git diff`                                                                    |
+| `untracked-only`  | `git ls-files --others --exclude-standard`, then read each in-scope file                                                   |
+| branch range      | `git log --oneline "$base".."$head"`, `git diff --find-renames "$base"..."$head" --stat`, full diff                        |
+| commits           | `git show --find-renames --stat "$sha"` and full show for every resolved SHA                                               |
 
 If the selected scope is empty, stop without writing a prompt. Build an evidence-backed inventory with repository-relative paths, Git status, and concrete changes. Include rename, delete, binary, mode, and public-contract changes; do not invent intent.
 

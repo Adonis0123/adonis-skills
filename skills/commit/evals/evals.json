@@ -11,7 +11,7 @@
         "Did not stage or commit .env contents",
         "Staged and committed intentional non-secret changes (source and/or README)",
         "Added or updated .gitignore so .env is ignored when it was untracked noise",
-        "report.md (or final message) explicitly tells the user what was ignored and why \u2014 not silent",
+        "report.md (or final message) explicitly tells the user what was ignored and why — not silent",
         "Did not use bare git add . or git add -A"
       ]
     },
@@ -65,6 +65,31 @@
         "Does not silently unstage docs/a.md",
         "Reports the scope mismatch and asks the user to choose or split the index"
       ]
+    },
+    {
+      "id": 6,
+      "name": "same-turn-related-files",
+      "prompt": "本轮只改了 parser 和它的测试，现已验证通过，没有其他改动，也没有暂存文件。commit 这次修复。",
+      "expected_output": "Inspect the two related diffs, stage only the established current-task scope and commit without asking the user to repeat filenames or say all.",
+      "expectations": [
+        "Uses the verified same-turn change set as scope",
+        "Does not request redundant scope confirmation",
+        "Checks for unrelated staged/dirty content and secrets",
+        "Preserves required repository checks and hooks"
+      ],
+      "files": []
+    },
+    {
+      "id": 7,
+      "name": "documentation-only-verification",
+      "prompt": "只提交本轮 README 两种语言的措辞修正。仓库只要求文档格式检查，已通过；没有运行时代码变更。",
+      "expected_output": "Reuse the matching successful documentation check and respect hooks; do not require unrelated typecheck/build.",
+      "expectations": [
+        "Keeps exact documentation scope",
+        "Does not add unrelated runtime checks merely due to the commit skill",
+        "Does not bypass repository hooks"
+      ],
+      "files": []
     }
   ]
 }

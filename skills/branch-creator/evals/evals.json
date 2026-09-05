@@ -1,0 +1,41 @@
+{
+  "skill_name": "branch-creator",
+  "evals": [
+    {
+      "id": 0,
+      "name": "explicit-create-preserves-dirty-work",
+      "prompt": "帮我从当前分支创建 feat/login-redirect。当前未提交文件是本次工作，需要一起带过去。",
+      "expected_output": "Inspect and create the exact branch in this turn, retaining working files and index state.",
+      "files": [],
+      "expectations": [
+        "Creates the exact named branch without redundant confirmation",
+        "Preserves preexisting dirty content and staged state",
+        "Does not commit, push, fetch or open a pull request"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "name-only-read-only",
+      "prompt": "登录跳转修复，给我一个短分支名和命令，先别创建。",
+      "expected_output": "Suggest a readable branch name and command; leave checkout unchanged.",
+      "files": [],
+      "expectations": [
+        "Does not switch or create any branch",
+        "Does not commit, push or query remotes",
+        "Proposes a short name based on the supplied task"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "requested-base-is-preserved",
+      "prompt": "从本地 release 分支创建 feat/login-redirect，工作区干净，不联网。",
+      "expected_output": "Resolve the local requested base and create there, not at the current branch HEAD.",
+      "files": [],
+      "expectations": [
+        "New branch starts at the requested local release ref",
+        "Does not fetch or silently substitute current HEAD",
+        "Reports the actual creation result"
+      ]
+    }
+  ]
+}

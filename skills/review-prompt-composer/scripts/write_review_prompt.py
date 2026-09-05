@@ -159,15 +159,27 @@ def compute_scope_evidence(
     untracked = b""
 
     if scope == "all-uncommitted":
-        diff = run_git(
+        staged = run_git(
             repo,
             "diff",
+            "--cached",
             "--binary",
             "--no-ext-diff",
             "--no-textconv",
             head,
             "--",
         )
+        unstaged = run_git(
+            repo,
+            "diff",
+            "--binary",
+            "--no-ext-diff",
+            "--no-textconv",
+            "--",
+        )
+        # HEAD-to-worktree alone hides index changes that the worktree cancels.
+        # Reviewers inspect both surfaces, so bind the prompt to each separately.
+        diff = frame_bytes("staged", staged) + frame_bytes("unstaged", unstaged)
         untracked = untracked_payload(repo)
     elif scope == "staged-only":
         diff = run_git(

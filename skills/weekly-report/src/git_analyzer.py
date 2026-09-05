@@ -5,10 +5,13 @@
 
 import re
 import subprocess
-from datetime import date, timedelta
+from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
+# Match the calendar used by date_utils, independently of the shell timezone.
+REPORT_TIMEZONE = timezone(timedelta(hours=8))
 
 # 琐碎提交的关键词
 TRIVIAL_PATTERNS = [
@@ -111,19 +114,25 @@ def get_commits(
     Returns:
         提交记录列表
     """
-    # git log 的 --until=YYYY-MM-DD 会被解析为当天 00:00:00，
-    # 可能导致“结束日当天”的提交被排除；这里将截止时间调整到下一天 00:00。
-    end_date_exclusive = end_date + timedelta(days=1)
+    if start_date > end_date:
+        raise ValueError("Report start date must not be after end date")
+
+    # Git's date-only arguments inherit a time of day. Explicit offsets also
+    # keep reports stable when the host shell uses a different timezone.
+    start = datetime.combine(start_date, time.min, REPORT_TIMEZONE)
+    end = datetime.combine(end_date, time(23, 59, 59), REPORT_TIMEZONE)
 
     # 构建 git log 命令
     cmd = [
         "git",
         "log",
         "--all",
-        f"--since={start_date.isoformat()}",
-        f"--until={end_date_exclusive.isoformat()}",
-        "--pretty=format:%H|%s|%an|%ad",
-        "--date=short",
+        "--extended-regexp",
+        f"--since={start.isoformat()}",
+        f"--until={end.isoformat()}",
+        "--no-show-signature",
+        "-z",
+        "--format=%H%x00%s%x00%an%x00%cI",
     ]
 
     if author:
@@ -137,30 +146,36 @@ def get_commits(
             text=True,
         )
 
-        if result.returncode != 0 or not result.stdout.strip():
-            return []
+    except OSError as exc:
+        raise RuntimeError("Unable to run Git history query") from exc
 
-        commits = []
-        for line in result.stdout.strip().split("\n"):
-            if not line:
-                continue
-
-            parts = line.split("|")
-            if len(parts) >= 4:
-                parsed = parse_commit_message(parts[1])
-                commits.append({
-                    "hash": parts[0],
-                    "message": parts[1],
-                    "author": parts[2],
-                    "date": parts[3],
-                    "type": parsed["type"],
-                    "is_trivial": parsed["is_trivial"],
-                    "project": get_repo_name(repo_path),
-                })
-
-        return commits
-    except Exception:
+    if result.returncode != 0:
+        raise RuntimeError(f"Git history query failed (exit {result.returncode})")
+    if not result.stdout:
         return []
+
+    # NUL cannot occur in commit headers; pipes and other punctuation can.
+    parts = result.stdout.removesuffix("\0").split("\0")
+    if len(parts) % 4:
+        raise RuntimeError("Git history returned an incomplete record")
+
+    commits = []
+    for offset in range(0, len(parts), 4):
+        commit_hash, message, author_name, committed_at = parts[offset:offset + 4]
+        parsed = parse_commit_message(message)
+        # --since/--until select committer time, so report the same time basis.
+        report_date = datetime.fromisoformat(committed_at).astimezone(REPORT_TIMEZONE).date()
+        commits.append({
+            "hash": commit_hash,
+            "message": message,
+            "author": author_name,
+            "date": report_date.isoformat(),
+            "type": parsed["type"],
+            "is_trivial": parsed["is_trivial"],
+            "project": get_repo_name(repo_path),
+        })
+
+    return commits
 
 
 def group_commits_by_project(
@@ -202,15 +217,16 @@ def parse_commit_message(message: str) -> Dict[str, Any]:
     }
 
     # 检查是否为琐碎提交
-    message_lower = message.lower().strip()
+    normalized = re.sub(r"^[^\w]+", "", message.strip())
+    message_lower = normalized.lower()
     for pattern in TRIVIAL_PATTERNS:
         if re.match(pattern, message_lower, re.IGNORECASE):
             result["is_trivial"] = True
             break
 
     # 解析常规提交格式: type(scope): description
-    conventional_pattern = r"^(\w+)(?:\(([^)]+)\))?\s*:\s*(.+)$"
-    match = re.match(conventional_pattern, message)
+    conventional_pattern = r"^(\w+)(?:\(([^)]+)\))?!?\s*:\s*(.+)$"
+    match = re.match(conventional_pattern, normalized)
 
     if match:
         result["type"] = match.group(1).lower()
@@ -222,17 +238,26 @@ def parse_commit_message(message: str) -> Dict[str, Any]:
     return result
 
 
+def get_repo_root(path: Path) -> Optional[Path]:
+    """Resolve a worktree or its subdirectory to the worktree root."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            cwd=path,
+            capture_output=True,
+            text=True,
+        )
+    except OSError:
+        return None
+    root_path = result.stdout.removesuffix("\n")
+    if result.returncode != 0 or not root_path:
+        return None
+    return Path(root_path).resolve()
+
+
 def is_git_repo(path: Path) -> bool:
-    """检查路径是否为 Git 仓库
-
-    Args:
-        path: 路径
-
-    Returns:
-        是否为 Git 仓库
-    """
-    git_dir = path / ".git"
-    return git_dir.exists() and git_dir.is_dir()
+    """Check whether a directory is inside an accessible Git worktree."""
+    return get_repo_root(path) is not None
 
 
 def get_repo_name(repo_path: Path) -> str:
@@ -264,10 +289,11 @@ def scan_repos(
         if isinstance(path, str):
             path = Path(path)
 
-        if is_git_repo(path):
+        root = get_repo_root(path)
+        if root is not None and not any(repo["path"] == root for repo in repos):
             repos.append({
-                "path": path,
-                "name": get_repo_name(path),
+                "path": root,
+                "name": get_repo_name(root),
             })
 
     return repos
@@ -317,13 +343,24 @@ def get_all_commits_from_repos(
         按仓库分组的提交记录
     """
     commits_by_repo: Dict[str, List[Dict[str, Any]]] = {}
+    seen_repos: Dict[str, Path] = {}
 
     for path in repo_paths:
         if isinstance(path, str):
             path = Path(path)
 
-        if not is_git_repo(path):
-            continue
+        root = get_repo_root(path)
+        if root is None:
+            raise RuntimeError("A requested report directory is not an accessible Git worktree")
+
+        path = root
+        repo_name = get_repo_name(path)
+        resolved = path.resolve()
+        if repo_name in seen_repos:
+            if seen_repos[repo_name] == resolved:
+                continue
+            raise ValueError("Report repositories have duplicate names; use distinct directory names or query separately")
+        seen_repos[repo_name] = resolved
 
         # 如果没有指定作者，自动获取
         current_author = author
@@ -332,8 +369,9 @@ def get_all_commits_from_repos(
                 user_name=get_git_user(path),
                 user_email=get_git_user_email(path),
             )
+        if not current_author or not current_author.strip():
+            raise RuntimeError("Report author is unknown; provide an author name or email before collecting commits")
 
-        repo_name = get_repo_name(path)
         commits = get_commits(path, start_date, end_date, current_author)
 
         if commits:

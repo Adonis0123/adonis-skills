@@ -14,7 +14,7 @@
 
 ## 当前状态
 
-- 公开技能：`commit`、`staged-review-validator`、`tailwindcss-next-init`、`weekly-report`
+- 公开技能：`commit`、`staged-review-validator`、`chrome-dev-mcp`、`weekly-report`
 - 展示站点：`apps/web`（Next.js 16）
 - 技能目录：`skills/*`
 - 技能索引生成：`scripts/generate-skills-index.mjs`
@@ -29,7 +29,7 @@
 ├── skills/
 │   ├── commit/
 │   ├── staged-review-validator/
-│   ├── tailwindcss-next-init/
+│   ├── chrome-dev-mcp/
 │   └── weekly-report/
 ├── scripts/
 │   ├── generate-skills-index.mjs
@@ -56,7 +56,6 @@ pnpm dev
 
 ```bash
 npx skills add adonis0123/adonis-skills --skill weekly-report
-npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp
 npx skills add adonis0123/adonis-skills --skill uxc-facade
 ```

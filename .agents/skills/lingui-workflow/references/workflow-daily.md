@@ -1,6 +1,6 @@
 # Lingui 日常工作流与发布前检查
 
-本文件面向已完成 Lingui 接入的项目，聚焦日常命令执行顺序与故障排查，不讨论初始化脚手架。
+本文件使用已退役的 `lingui-next-init` 历史模板命令举例，只服务既有项目维护。先核对目标项目已有脚本，只读取与当前场景有关的部分；实际命令优先，不调用初始化 skill 或同步其模板。
 
 ## 场景一：新增或修改源码文案
 
@@ -13,6 +13,7 @@ pnpm --filter @your/web run i18n:compile
 ```
 
 目标：
+
 1. `extract` 把最新文案落到 `po`。
 2. `translate` 明确缺失项。
 3. `compile` 生成 `mjs` 并刷新 manifest。
@@ -27,6 +28,7 @@ pnpm --filter @your/web run i18n:compile
 ```
 
 说明：
+
 1. 不强制再跑 extract，但如果怀疑词条漂移可补跑 extract。
 2. `compile` 是把翻译变成运行时可加载产物的关键步骤。
 
@@ -37,7 +39,7 @@ pnpm --filter @your/web run i18n:compile
 pnpm --filter @your/web run typecheck
 ```
 
-如果构建脚本已内置 compile gate（例如 build 前先跑 `i18n:compile`），可减少漏步骤风险。
+如果本次构建已包含 compile，就复用该结果，不在同内容上先重复编译。采用此历史脚本实现的 compile 已包含 manifest；以实际入口为准。
 
 ## 场景四：快速占位回填
 
@@ -46,7 +48,7 @@ pnpm --filter @your/web run i18n:translate -- --fill-source
 pnpm --filter @your/web run i18n:compile
 ```
 
-用途：短期内先让非 source 语言有文案可显示，再安排人工翻译替换。
+仅在用户明确接受源语言占位时使用；回填不是实际翻译完成。
 
 ## 场景五：出现 locale 未激活运行时错误
 
@@ -68,6 +70,7 @@ pnpm --filter @your/web run i18n:check
 ```
 
 说明：
+
 1. `i18n:check` 等价于 `i18n:translate -- --strict`，发现任何目标语言 `msgstr` 为空即非零退出。
 2. 适用于 CI 管线或发布前门禁，确保所有文案均已翻译。
 3. 只读操作，不会修改任何 `po` 文件。
@@ -80,7 +83,9 @@ pnpm --filter @your/web run i18n:check
 pnpm --filter @your/web run i18n:compile
 ```
 
-## 失败排查顺序（固定）
+## 按失败阶段选择检查
+
+从实际失败阶段开始，必要时向前核查输入，不要求每次跑完整链路。
 
 1. `extract` 是否成功产出/更新对应 `po`。
 2. `po` 中目标语言 `msgstr` 是否为空。

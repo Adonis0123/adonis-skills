@@ -14,7 +14,7 @@ Goals:
 
 ## Current Status
 
-- Public skills: `commit`, `staged-review-validator`, `tailwindcss-next-init`, `weekly-report`
+- Public skills: `commit`, `staged-review-validator`, `chrome-dev-mcp`, `weekly-report`
 - Web site: `apps/web` (Next.js 16)
 - Skills directory: `skills/*`
 - Skills index generation: `scripts/generate-skills-index.mjs`
@@ -29,7 +29,7 @@ Goals:
 ├── skills/
 │   ├── commit/
 │   ├── staged-review-validator/
-│   ├── tailwindcss-next-init/
+│   ├── chrome-dev-mcp/
 │   └── weekly-report/
 ├── scripts/
 │   ├── generate-skills-index.mjs
@@ -56,7 +56,6 @@ Default repository identifier: `adonis0123/adonis-skills`
 
 ```bash
 npx skills add adonis0123/adonis-skills --skill weekly-report
-npx skills add adonis0123/adonis-skills --skill tailwindcss-next-init
 npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp
 npx skills add adonis0123/adonis-skills --skill uxc-facade
 ```

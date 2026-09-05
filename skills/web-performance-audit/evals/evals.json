@@ -82,6 +82,19 @@
         "连接失败时把相关指标标为 UNVERIFIED，并遵循 managed skill 的恢复合同",
         "输出不重启共享浏览器、不切 profile、不发明 pageId"
       ]
+    },
+    {
+      "id": 7,
+      "name": "single-button-keeps-scope",
+      "prompt": "只看当前页面 Generate 按钮点下后为什么要等两秒，别扫整个编辑器，也别改代码。浏览器已能连接。",
+      "expected_output": "Measure the named interaction and reachable loading/result states first, with a clean repeated baseline. Expand only if evidence needs it; no unrelated tab inventory.",
+      "expectations": [
+        "Keeps initial coverage to Generate and its reachable states",
+        "Does not require a whole-editor tab or router inventory",
+        "Retains clean baseline, repeated measurements and state restoration",
+        "Does not claim INP or a verified cause from an unmeasured observation"
+      ],
+      "files": []
     }
   ]
 }

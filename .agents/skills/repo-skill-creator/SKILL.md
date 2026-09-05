@@ -32,7 +32,7 @@ pnpm skills:finalize -- skills/<skill-name>
 
 ## Mode B: Finalize Existing Skill by Path
 
-When the user pastes a path under `skills/*`, run:
+For the selected finalize-path action, run from the current repository root. Relative and absolute targets must resolve to a direct child of this repository's `skills/` directory:
 
 ```bash
 pnpm skills:finalize -- <skill-path>
@@ -42,7 +42,8 @@ Examples:
 
 ```bash
 pnpm skills:finalize -- skills/code-inspector-init
-pnpm skills:finalize -- /Users/adonis/coding/adonis-skills2/skills/code-inspector-init/
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+pnpm skills:finalize -- "$REPO_ROOT/skills/code-inspector-init"
 ```
 
 Finalize pipeline is fixed and must run in order:

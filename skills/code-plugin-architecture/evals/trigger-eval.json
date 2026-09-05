@@ -86,5 +86,17 @@
   {
     "query": "我们准备做一轮 DDD 建模，核心问题是订单、发票、退款这几个聚合根怎么划边界，不涉及持续新增同类插件或 registry。能帮我做领域建模吗？",
     "should_trigger": false
+  },
+  {
+    "query": "只解释这个 formatter 函数表是不是需要扩成插件框架：新增只加一项，没有状态或异步。",
+    "should_trigger": true
+  },
+  {
+    "query": "只改 upper formatter 的大小写转换 bug，别评审 registry 结构。",
+    "should_trigger": false
+  },
+  {
+    "query": "已有 manifest 自动发现命令，还要再加一个 registry 和 Core factory 吗？请评审扩展机制，不写代码。",
+    "should_trigger": true
   }
 ]

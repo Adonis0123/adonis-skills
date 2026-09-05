@@ -6,7 +6,7 @@
 import re
 from typing import Any, Dict, List, Optional
 
-from src.git_analyzer import group_commits_by_project
+from src.git_analyzer import group_commits_by_project, parse_commit_message
 
 
 def generate_report(
@@ -145,7 +145,7 @@ def extract_keywords(message: str) -> List[str]:
         关键词列表
     """
     # 去除前缀
-    cleaned = re.sub(r"^(\w+)(\([^)]+\))?\s*:\s*", "", message)
+    cleaned = clean_commit_message(message)
 
     # 提取中文词语和英文单词
     chinese_words = re.findall(r"[\u4e00-\u9fff]+", cleaned)
@@ -162,7 +162,7 @@ def extract_keywords(message: str) -> List[str]:
 
 def clean_commit_message(message: str) -> str:
     """清理提交信息为可读描述（去除 conventional 前缀）"""
-    return re.sub(r"^(\w+)(\([^)]+\))?\s*:\s*", "", message).strip()
+    return parse_commit_message(message)["description"].strip()
 
 
 def format_project_section(
@@ -207,12 +207,12 @@ def format_other_section(supplements: List[str]) -> str:
     return "\n".join(lines)
 
 
-def summarize_commit(message: str, max_length: int = 20) -> str:
+def summarize_commit(message: str, max_length: Optional[int] = None) -> str:
     """生成提交摘要
 
     Args:
         message: 提交信息
-        max_length: 最大长度
+        max_length: 显式指定时才截断；默认保留完整语义供后续总结
 
     Returns:
         摘要文本
@@ -220,7 +220,7 @@ def summarize_commit(message: str, max_length: int = 20) -> str:
     cleaned = clean_commit_message(message)
 
     # 截断过长的文本
-    if len(cleaned) > max_length:
+    if max_length is not None and len(cleaned) > max_length:
         cleaned = cleaned[:max_length - 3] + "..."
 
     return cleaned.strip()

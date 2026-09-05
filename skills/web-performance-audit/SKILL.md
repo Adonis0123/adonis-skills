@@ -3,7 +3,7 @@ name: web-performance-audit
 description: Run a read-only, evidence-led runtime performance audit of a real web application, especially authenticated editors, dashboards, media tools, long-lived SPAs, and pages with many tabs or states. Use when the user asks to profile slowness, inspect every tab, use Chrome DevTools or Chrome Recorder, run React Scan, compare normal and throttled interactions, find memory or rendering risks, or produce a performance report and recommendations without changing code. Discover available browser capabilities, guide the user through official installation when an important capability is missing, route to validated fallbacks, isolate measurement pollution, and distinguish measured facts from screen observations, hypotheses, and unverified paths. Do not use for a Lighthouse-only SEO/accessibility audit, tool installation with no audit goal, or when the user already wants a specific optimization implemented.
 metadata:
   author: Adonis
-  version: "1.2.1"
+  version: "1.2.2"
 ---
 
 # Web Performance Audit
@@ -32,6 +32,7 @@ Write a compact contract before driving the page:
 Runtime target: <exact URL verified in the browser; do not persist secrets>
 Report target: <identity-safe HTTP(S) URL without userinfo, query, fragment, or private identity>
 User journey: <what feels slow or what must be exhaustively covered>
+Coverage: <named interaction and reachable states | explicitly requested full surface>
 Initial state: <tab, selection, playback, scroll, viewport>
 Build: <development | production | unknown>
 Write boundary: read-only; list any safe reversible exceptions
@@ -69,9 +70,11 @@ No single tool is mandatory. Missing Chrome DevTools MCP degrades trace depth; i
 - If the page is a development build, keep development and production conclusions separate.
 - Repeat important measurements at least three times when the tool allows it; report the range or median, not a convenient single run.
 
-### 2. Enumerate the full interaction surface
+### 2. Enumerate the requested interaction surface
 
-Build a coverage fingerprint before measuring: exact target, exact surface ids/labels in source order, expected count, and required state ids for each surface. Never replace user-provided names with examples or merely preserve the count. Then reconcile three sources: rendered visual inspection, the accessibility/DOM tree, and a focused navigation manifest/router/source inventory when source access exists. This catches overflow menus, permission-gated, lazy, and feature-flagged surfaces. If the sources disagree, add the missing surface/state as `blocked` or `skipped`; do not silently call the list complete. Include:
+For a named slow interaction, inventory only its controls, reachable states and dependencies supported by the baseline. Do not enumerate unrelated tabs or load a whole navigation manifest before measuring it. Expand coverage only when evidence links another surface to the symptom; explain that dependency and preserve explicit exclusions.
+
+For an explicitly exhaustive audit (all tabs, all panels, or the full application), build a full coverage fingerprint: exact target, exact surface ids/labels in source order, expected count, and required state ids for each surface. Never replace user-provided names with examples or merely preserve the count. Then reconcile three sources: rendered visual inspection, the accessibility/DOM tree, and a focused navigation manifest/router/source inventory when source access exists. This catches overflow menus, permission-gated, lazy, and feature-flagged surfaces. If the sources disagree, add the missing surface/state as `blocked` or `skipped`; do not silently call the list complete. Include:
 
 - primary tabs and rails;
 - nested tabs, modes, filters, menus, dialogs, and collapsed panels;
@@ -84,7 +87,7 @@ Do not equate a screenshot with coverage. Mark every surface `covered`, `partial
 
 ### 3. Run a bounded measurement matrix
 
-Read `{{skill_path}}/references/measurement-playbook.md`, then select the smallest matrix that can falsify the current hypotheses. A complex editor usually needs:
+Read `{{skill_path}}/references/measurement-playbook.md`, then select the smallest matrix that can falsify the current hypotheses. Choose only axes relevant to the requested journey and current hypothesis; the table is a menu, not an obligation to run every row. An exhaustive complex-editor audit usually considers:
 
 | Axis            | Minimum comparison                                                 |
 | --------------- | ------------------------------------------------------------------ |

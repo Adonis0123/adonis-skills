@@ -3,7 +3,7 @@ name: goal-gate
 description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
 metadata:
   author: adonis
-  version: "2.0.1"
+  version: "2.0.2"
 ---
 
 # Goal Gate
@@ -49,7 +49,7 @@ For vague but low-risk work, prefer a goal with safe defaults over a clarificati
 
 Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.
 
-- Destructive, irreversible, billing, auth, production-data, or schema-breaking work.
+- Destructive, irreversible, billing, auth, production-data, or schema-breaking action whose concrete scope is not yet authorized. Check the action and existing approval, not domain keywords alone: read-only diagnosis and explicitly authorized isolated local tests can proceed. Prior approval applies only to its stated paths, environment and effects; a new production target, security change or expanded effect needs its own gate.
 - A goal is already active **and** the new objective conflicts with it, or the user has not chosen how to handle it. Never replace or mutate that goal silently; ask whether to continue, complete, block, pause, clear, or replace it, and emit `Decision: defer`. Same-Goal management includes both an exact objective match and a contained checkpoint when the active Goal's objective, frozen scope, and Done condition explicitly include that checkpoint and the user already authorized the parent pipeline. Verify this relationship from evidence; compatible containment never permits scope expansion or narrowing the parent's Done condition.
 - The objective still needs a design or scoping decision that `grilling` (Route: Challenge) or `discuss-before-plan` should resolve.
 - Verification cannot run, so completion could never be proven from evidence.
@@ -66,7 +66,7 @@ When work is authorized but native Goal state is not, adopt the checkable contra
 
 ## Auto-Set
 
-When the safety gate is clear and goal fit is `high`, start the authorized work under a transcript contract. This does not by itself authorize native Goal state. Hold auto-adoption for `medium` fit: the medium boundary is fuzzy enough that a quick nod is worth more than the saved round-trip. `low` fit is `none`.
+When the safety gate is clear and goal fit is `high`, start the authorized work under a transcript contract. This does not by itself authorize native Goal state. For `medium` fit, suggest the contract without creating native Goal state; continue already authorized task work while the user considers it. Goal fit is not a second permission gate for the underlying work. `low` fit is `none`.
 
 Native `set-now` requires explicit Goal authorization or an already-authorized exact-same / compatible-contained continuation. A high-fit task without that authorization uses `suggest` plus `adopt goal and continue` on a native-capable runtime; transcript-only runtimes may use `set-now` because no product state is mutated. Both start the task without claiming a native Goal became Active. A contained checkpoint reports progress but leaves completion to the parent Goal owner. Same-goal complete/block uses `Next: report via update_goal` only after its terminal preconditions are proven. If an active goal conflicts with a new objective or the desired action is unclear, emit `Decision: defer` and ask; never call either runtime's completion action or tell the user to clear a goal merely to make replacement convenient.
 
@@ -75,7 +75,7 @@ Native `set-now` requires explicit Goal authorization or an already-authorized e
 | High fit, native-capable runtime, no explicit Goal action                                | `suggest`            | `adopt goal and continue`; no native Goal mutation        |
 | High fit, transcript-only runtime, no explicit Goal action                               | `set-now`            | `adopt goal and continue`; no product Goal claim          |
 | Explicit Goal action, high fit, safety clear                                             | `set-now`            | Runtime action below                                      |
-| Medium fit, safety clear                                                                 | `suggest`            | `provide prompt` or `ask approval`                        |
+| Medium fit, safety clear                                                                 | `suggest`            | `provide prompt`; continue authorized task work           |
 | Safety tripped (auth, destructive, production-data, irreversible, billing, unverifiable) | `suggest` or `defer` | `ask approval` (or `route elsewhere`); do not auto-create |
 | Conflicting or unchosen active goal                                                      | `defer`              | Ask continue / complete / block / pause / clear / replace |
 | Exact-same or compatible-contained continuation                                          | `set-now`            | `continue active goal`                                    |

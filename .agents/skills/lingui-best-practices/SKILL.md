@@ -1,15 +1,19 @@
 ---
 name: lingui-best-practices
-description: Implement internationalization with Lingui in React and JavaScript applications. Use when adding i18n, translating UI, working with Trans/useLingui/Plural, extracting messages, compiling catalogs, or when the user mentions Lingui, internationalization, i18n, translations, locales, message extraction, ICU MessageFormat, or working with .po files.
+description: Implement or review Lingui message macros, catalog configuration, locale loading, and React or JavaScript integration. Use for Lingui-specific code and runtime issues, not plain text translation or another i18n library. For command-only catalog maintenance, use the project workflow.
 ---
 
 # Lingui Best Practices
 
 Lingui is a powerful internationalization (i18n) framework for JavaScript. This skill covers best practices for implementing i18n in React and vanilla JavaScript applications.
 
+## Scope Before Setup
+
+Reuse the project's existing Lingui version, framework, catalog layout, and initialization. A message edit does not require reinstalling packages or rebuilding the provider. Inspect the relevant imports and lockfile before applying version-sensitive examples; read only the reference needed for the current problem. The provider example below is a client-side starting point, not a replacement for an established RSC setup.
+
 ## Quick Start Workflow
 
-The standard Lingui workflow consists of these steps:
+For a new integration, the main pieces are below. For an existing integration, work only on the pieces affected by the request:
 
 1. Wrap your app in `I18nProvider`
 2. Mark messages for translation using macros (`Trans`, `t`, etc.)
@@ -47,11 +51,7 @@ i18n.load("en", messages);
 i18n.activate("en");
 
 function App() {
-  return (
-    <I18nProvider i18n={i18n}>
-      {/* Your app */}
-    </I18nProvider>
-  );
+  return <I18nProvider i18n={i18n}>{/* Your app */}</I18nProvider>;
 }
 ```
 
@@ -146,7 +146,7 @@ const STATUSES = {
 
 function StatusList() {
   const { _ } = useLingui();
-  
+
   return Object.entries(STATUSES).map(([key, message]) => (
     <div key={key}>{_(message)}</div>
   ));
@@ -162,11 +162,11 @@ Use the `Plural` macro for quantity-dependent messages:
 ```jsx
 import { Plural } from "@lingui/react/macro";
 
-<Plural 
+<Plural
   value={messageCount}
   one="You have # message"
   other="You have # messages"
-/>
+/>;
 ```
 
 The `#` placeholder is replaced with the actual value.
@@ -176,12 +176,7 @@ The `#` placeholder is replaced with the actual value.
 Use `_N` syntax for exact number matches (takes precedence over plural forms):
 
 ```jsx
-<Plural
-  value={count}
-  _0="No messages"
-  one="One message"
-  other="# messages"
-/>
+<Plural value={count} _0="No messages" one="One message" other="# messages" />
 ```
 
 ### With Variables and Components
@@ -210,12 +205,8 @@ import { useLingui } from "@lingui/react/macro";
 function MyComponent() {
   const { i18n } = useLingui();
   const lastLogin = new Date();
-  
-  return (
-    <Trans>
-      Last login: {i18n.date(lastLogin)}
-    </Trans>
-  );
+
+  return <Trans>Last login: {i18n.date(lastLogin)}</Trans>;
 }
 ```
 
@@ -292,12 +283,12 @@ Avoid complex expressions in messages - they'll be replaced with placeholders:
 
 ```jsx
 // ❌ Bad - loses context
-<Trans>Hello {user.name.toUpperCase()}</Trans>
+<Trans>Hello {user.name.toUpperCase()}</Trans>;
 // Extracted as: "Hello {0}"
 
 // ✅ Good - clear variable name
 const userName = user.name.toUpperCase();
-<Trans>Hello {userName}</Trans>
+<Trans>Hello {userName}</Trans>;
 // Extracted as: "Hello {userName}"
 ```
 
@@ -307,11 +298,13 @@ Choose the right tool:
 
 ```jsx
 // ✅ For JSX content
-<h1><Trans>Welcome</Trans></h1>
+<h1>
+  <Trans>Welcome</Trans>
+</h1>;
 
 // ✅ For string values
 const { t } = useLingui();
-<img alt={t`Profile picture`} />
+<img alt={t`Profile picture`} />;
 ```
 
 ### Don't Use Macros at Module Level
@@ -340,9 +333,7 @@ npm install --save-dev eslint-plugin-lingui
 // eslint.config.js
 import pluginLingui from "eslint-plugin-lingui";
 
-export default [
-  pluginLingui.configs["flat/recommended"],
-];
+export default [pluginLingui.configs["flat/recommended"]];
 ```
 
 ## Common Patterns
@@ -371,12 +362,12 @@ function loadCatalog(locale) {
 
 function App() {
   useEffect(() => {
-    loadCatalog("en").then(catalog => {
+    loadCatalog("en").then((catalog) => {
       i18n.load("en", catalog.messages);
       i18n.activate("en");
     });
   }, []);
-  
+
   return <I18nProvider i18n={i18n}>{/* ... */}</I18nProvider>;
 }
 ```
@@ -394,10 +385,10 @@ const welcomeMessage = msg`Welcome!`;
 
 function MyComponent() {
   const { t } = useLingui(); // Macro version - reference changes with locale
-  
+
   // ✅ Safe - t reference updates with locale
   const message = useMemo(() => t(welcomeMessage), [t]);
-  
+
   return <div>{message}</div>;
 }
 ```

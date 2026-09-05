@@ -243,7 +243,7 @@
     "slug": "branch-creator",
     "sections": [
       {
-        "raw": "Create a local Git branch with a short, readable name:\n\n- `feat/<slug>` for normal feature work\n- `hotfix/<slug>` for urgent fixes or production-impacting repairs\n\nThree qualities define a good run, in this order:\n\n1. **Accurate** — the prefix matches urgency, and the slug names the thing with words the team already uses.\n2. **Fast** — the whole flow takes at most two shell commands and a handful of output lines.\n3. **Short** — the slug is 1–3 words, ideally 2; short names get typed by hand, tab-completed, and scanned in PR lists, so every extra word costs more than it informs.\n\nBranch creation changes the local checkout, so the default workflow is propose first, create after confirmation.",
+        "raw": "Create a local Git branch with a short, readable name:\n\n- `feat/<slug>` for normal feature work\n- `hotfix/<slug>` for urgent fixes or production-impacting repairs\n\nThree qualities define a good run, in this order:\n\n1. **Accurate** — the prefix matches urgency, and the slug names the thing with words the team already uses.\n2. **Fast** — the common case uses two shell calls and a handful of output lines.\n3. **Short** — the slug is 1–3 words, ideally 2; short names get typed by hand, tab-completed, and scanned in PR lists, so every extra word costs more than it informs.\n\nClassify intent first: suggest a name when asked for naming; create when the user asks to create a branch. Reuse authorization already given in the conversation. Ask only when the starting point, ownership of existing changes, or requested action remains unclear after local inspection.",
         "heading": "Branch Creator",
         "level": 1
       },
@@ -253,33 +253,33 @@
         "level": 2
       },
       {
-        "raw": "Pick one prefix:\n\n- Use `feat/` for new features, non-urgent product changes, refactors tied to a feature, UI improvements, and planned work.\n- Use `hotfix/` for urgent fixes, production breakages, release-blocking fixes, payment/auth/data-loss fixes, or when the user explicitly says hotfix.\n\nIf both are plausible, recommend one and ask for confirmation. Do not silently use `hotfix/` just because the task is a bug; reserve it for urgency or release pressure.",
+        "raw": "Pick one prefix:\n\n- Use `feat/` for new features, non-urgent product changes, refactors tied to a feature, UI improvements, and planned work.\n- Use `hotfix/` for urgent fixes, production breakages, release-blocking fixes, payment/auth/data-loss fixes, or when the user explicitly says hotfix.\n\nIf urgency is unspecified, use `feat/` and state that assumption. Reserve `hotfix/` for urgency or release pressure. Preserve an explicitly requested prefix.",
         "heading": "Prefix",
         "level": 3
       },
       {
-        "raw": "Generate the part after the slash from the user's task:\n\n- Use lowercase English words joined by hyphens.\n- **1–3 words, prefer 2. Aim for a slug under 16 characters; treat 20 as the ceiling.** If the task does not fit in 3 words, pick the first concrete slice or ask one scope question.\n- **Reuse vocabulary the project already has.** If the request or surrounding context mentions an existing script, command, module, or team term (`track:gen`, `paid-success`, `pricing-table`), derive the slug from it (`track-gen`) instead of re-describing the task in fresh English (`tracker-code-generation`). The team greps, tab-completes, and recognizes branches by the words they already use, so a shorter borrowed name is also the more accurate one. Do not go searching the repo for vocabulary — only reuse terms already visible in the request or conversation.\n- Drop filler words that carry no meaning in context: `add`, `update`, `fix`, `new`, `page`, `feature`, `code`, `logic`, `issue`, `support`.\n- Avoid issue numbers unless the user provided one and clearly wants it included.\n\nTightening examples — the \"loose\" names are what to avoid:\n\n| Task | Loose (too long) | Tight |\n| --- | --- | --- |\n| 改埋点代码的生成方式（项目里有 `track:gen`） | `feat/tracker-code-generation` | `feat/track-gen` |\n| 登录后跳转修复 | `feat/fix-login-redirect-issue` | `feat/login-redirect` |\n| 线上支付确认弹窗崩溃 | `hotfix/payment-confirmation-modal-crash` | `hotfix/pay-confirm` |\n| pricing 页面多币种支持 | `feat/pricing-multi-currency-support` | `feat/pricing-currency` |\n\nSafe character set: letters `a-z`, numbers `0-9`, hyphen `-`, one slash between prefix and slug. Avoid spaces, uppercase, underscores, dots, quotes, emoji, shell metacharacters, consecutive slashes, and Git-reserved sequences such as `..` or `@{`.",
+        "raw": "Preserve an exact user-provided branch name if Git accepts it; the naming preferences below apply only when generating a name. Generate the part after the slash from the user's task:\n\n- Use lowercase English words joined by hyphens.\n- **1–3 words, prefer 2. Aim for a slug under 16 characters; treat 20 as the ceiling.** If the task does not fit in 3 words, pick the first concrete slice or ask one scope question.\n- **Reuse vocabulary the project already has.** If the request or surrounding context mentions an existing script, command, module, or team term (`track:gen`, `paid-success`, `pricing-table`), derive the slug from it (`track-gen`) instead of re-describing the task in fresh English (`tracker-code-generation`). The team greps, tab-completes, and recognizes branches by the words they already use, so a shorter borrowed name is also the more accurate one. Do not go searching the repo for vocabulary — only reuse terms already visible in the request or conversation.\n- Drop filler words that carry no meaning in context: `add`, `update`, `fix`, `new`, `page`, `feature`, `code`, `logic`, `issue`, `support`.\n- Avoid issue numbers unless the user provided one and clearly wants it included.\n\nTightening examples — the \"loose\" names are what to avoid:\n\n| Task                                         | Loose (too long)                          | Tight                   |\n| -------------------------------------------- | ----------------------------------------- | ----------------------- |\n| 改埋点代码的生成方式（项目里有 `track:gen`） | `feat/tracker-code-generation`            | `feat/track-gen`        |\n| 登录后跳转修复                               | `feat/fix-login-redirect-issue`           | `feat/login-redirect`   |\n| 线上支付确认弹窗崩溃                         | `hotfix/payment-confirmation-modal-crash` | `hotfix/pay-confirm`    |\n| pricing 页面多币种支持                       | `feat/pricing-multi-currency-support`     | `feat/pricing-currency` |\n\nFor generated names, use this safe character set: letters `a-z`, numbers `0-9`, hyphen `-`, one slash between prefix and slug. Avoid spaces, uppercase, underscores, dots, quotes, emoji, shell metacharacters, consecutive slashes, and Git-reserved sequences such as `..` or `@{`.",
         "heading": "Slug",
         "level": 3
       },
       {
-        "raw": "Speed matters here: every extra shell command is a round trip the user waits through, and `git ls-remote` is a *network* round trip that can take seconds. The whole flow needs at most two commands — one to inspect, one to create.",
+        "raw": "Speed matters here: every extra shell command is a round trip the user waits through, and `git ls-remote` is a _network_ round trip that can take seconds. The common case needs one inspection call and one creation call. Additional checks are justified for an explicit base ref, an interrupted Git operation, or an ambiguous checkout; the call count is a fast path, not a safety limit.",
         "heading": "Workflow",
         "level": 2
       },
       {
-        "raw": "```bash\ngit status --short --branch\n```\n\nThis single call tells you everything you need: it errors if the directory is not a Git repository (stop and tell the user), the `## ...` line shows the current branch, and any remaining lines show uncommitted changes. Do not also run `git rev-parse`, `git branch --show-current`, `git show-ref`, or any remote query during the proposal step.\n\nA dirty working tree is not a blocker — `git switch -c` carries the changes onto the new branch. Mention it in one clause and continue.",
+        "raw": "```bash\ngit status --short --branch\n```\n\nFor the common case, this tells you the needed checkout state: it errors if the directory is not a Git repository (stop and tell the user), the `## ...` line shows the current branch, and any remaining lines show uncommitted changes. Do not also run `git rev-parse`, `git branch --show-current`, `git show-ref`, or any remote query during the proposal step.\n\nA dirty working tree is not a blocker when branching from the current HEAD: `git switch -c` carries the changes onto the new branch. Mention it in one clause and continue. If the user names another base, resolve it locally first; do not substitute HEAD, discard changes, or fetch silently. Stop for conflicts or an in-progress merge/rebase. Ask for a starting branch when HEAD is detached and the intended base is unclear.",
         "heading": "1. Inspect (one command)",
         "level": 3
       },
       {
-        "raw": "Reply in the user's language, in exactly this shape:\n\n```text\n推荐分支：feat/track-gen\n命令：git switch -c feat/track-gen\n原因：<one sentence covering both prefix and slug choice>\n（当前 master，工作区干净）确认后我创建。\n```\n\nThe final line compresses the repository state into one parenthetical. Do not output a checklist that reports each individual check on its own line (格式 / 本地同名 / 远端同名 / …) — that is slower to produce and slower to read, and the checks happen at creation time anyway.\n\nIf the user's intent is too vague to name well, ask one concise question instead of proposing. Good branch names depend on small scope.",
-        "heading": "2. Propose (four lines, then stop)",
+        "raw": "For a name or command suggestion, reply briefly in the user's language, for example:\n\n```text\n推荐分支：feat/track-gen\n命令：git switch -c feat/track-gen\n原因：<one sentence covering both prefix and slug choice>\n（当前 main，工作区干净）\n```\n\nThe final line compresses the repository state into one parenthetical. Do not output a checklist that reports each individual check on its own line (格式 / 本地同名 / 远端同名 / …) — that is slower to produce and slower to read, and the checks happen at creation time anyway.\n\nIf the user's intent is too vague to name well, ask one concise question instead of proposing. Good branch names depend on small scope.",
+        "heading": "2. Name-only request: propose and stop",
         "level": 3
       },
       {
-        "raw": "If the original request already pre-authorizes creation (\"直接创建\", \"create it now\", \"不用确认\"), propose and create in the same turn — still show the name and command, just don't wait.\n\nIf the user confirms a branch you already proposed in the previous turn, use that exact branch name unless the user asks to change it. Do not regenerate the slug.\n\n```bash\ngit check-ref-format --branch <branch-name> && git switch -c <branch-name>\n```\n\nNo pre-checks needed beyond this chain: `git switch -c` itself fails cleanly if the branch already exists — handle that by offering `git switch <branch-name>` instead. If `git check-ref-format` fails, do not try shell escaping or quoting tricks; generate a simpler safe name and confirm it. Skip the remote-collision check by default: it costs a network round trip, and a collision surfaces harmlessly at push time anyway. Run `git ls-remote --heads origin <branch-name>` only if the user explicitly asks about the remote.\n\nNever push, commit, rebase, merge, delete branches, or create a PR/MR as part of this skill.",
-        "heading": "3. Create (one command, after confirmation)",
+        "raw": "An explicit request such as \"帮我创建一个分支做登录跳转\" or \"create a branch for pricing\" is sufficient authorization; it does not need \"直接\" or a second confirmation. State the chosen name, then create from the verified starting point. A request only to suggest a name does not authorize checkout changes.\n\nIf the user confirms a branch you already proposed in the previous turn, use that exact branch name unless the user asks to change it. Do not regenerate the slug.\n\n```bash\ngit check-ref-format --branch <branch-name> && git switch -c <branch-name>\n```\n\nFor creation from the verified current HEAD, no duplicate collision pre-check is needed: `git switch -c` itself fails cleanly if the branch already exists — handle that by offering `git switch <branch-name>` instead. If `git check-ref-format` rejects an exact user-provided name, report that result and ask for a replacement; do not silently rename it. For a generated name, simplify and retry validation once. Pass names as quoted arguments or an argument array, never as interpolated shell code. Skip the remote-collision check by default: it costs a network round trip, and a collision surfaces harmlessly at push time anyway. Run `git ls-remote --heads origin <branch-name>` only if the user explicitly asks about the remote.\n\nNever push, commit, rebase, merge, delete branches, or create a PR/MR as part of this skill.",
+        "heading": "3. Creation request: create in the same turn",
         "level": 3
       },
       {
@@ -288,7 +288,7 @@
         "level": 3
       },
       {
-        "raw": "A good result is boring, fast, and short:\n\n- At most two shell commands total, and no network calls.\n- Slug is 1–3 words (prefer 2), under 20 characters, reusing project vocabulary when it exists.\n- The prefix communicates urgency correctly.\n- The proposal is 4 lines; the post-creation report is 1–2 lines.\n- The checkout never changes before the user has seen the name and command.",
+        "raw": "A good result is boring, fast, and short:\n\n- The common case uses two shell calls and no network calls; conditional checks protect an explicit base or unusual Git state.\n- Generated slugs are 1–3 words (prefer 2), under 20 characters, reusing visible project vocabulary; exact user names are preserved.\n- The prefix communicates urgency correctly.\n- Naming suggestions and creation reports are short and reflect the action actually requested.\n- Name-only requests leave the checkout unchanged; explicit creation requests finish without a redundant confirmation.",
         "heading": "Quality Bar",
         "level": 2
       }
@@ -398,168 +398,38 @@
     "slug": "code-plugin-architecture",
     "sections": [
       {
-        "raw": "把\"会持续新增的一类东西\"改造成插件化结构的**方法论 skill**。\n\n不是脚手架，不绑定具体框架/语言。React / Vue / Rust / Python / CLI / VSCode extension / Webpack plugin / 后台菜单都适用——所有这些**本质上都是这套模式的实例**。",
+        "raw": "让新增或移除一种变体所需的知识集中在清晰边界内。目标是减少真实的修改传播和回归，结构按问题选择。",
         "heading": "Code Plugin Architecture",
         "level": 1
       },
       {
-        "raw": "工程里反复出现的同一类痛点：\n\n| 症状 | 真正问题 |\n|---|---|\n| \"每次加一个新弹窗都要改 5 个文件\" | 缺中央注册表 + 占位符引导 |\n| \"加新工具有半天要踩坑找改哪儿\" | 没有约定式目录 |\n| \"几个相似模块各自 if-else 判断 type\" | 缺核心 factory，business 写在调用方 |\n| \"首屏变慢，因为所有模态框都被打包进来\" | 缺延迟加载层（仅 frontend / runtime loading 场景） |\n| \"新人改 A 弹窗结果 B 弹窗坏了\" | 单插件没有自治目录 |\n| \"命名一会儿 camelCase 一会儿 snake_case，dataName 还不一样\" | 没有从 key 推导其他命名 |\n| \"下线一个旧支付方式要改 8 处\" | 注册表与实现耦合 |\n\n如果用户描述命中其中任何一条，**这就是要这个 skill 介入的时刻**。",
-        "heading": "这个 skill 解决什么",
+        "raw": "| 当前请求                 | 本轮产出与边界                                                         |\n| ------------------------ | ---------------------------------------------------------------------- |\n| 解释 / 命名 / 第一性原理 | 解释当前机制、取舍和反例；不创建实现、README 或评审工程                |\n| 只读评审                 | 读取约定范围，报告当前伤害、证据和最小建议；不为验收删除插件或创建分支 |\n| 设计                     | 给所需契约、落点、行为和验证方案；示例是建议，不声称已实现             |\n| 实现 / 重构              | 检查工作树后修改授权范围，保留既有行为与标识，运行对应验证             |\n\n解释、评审、设计不因加载本 skill 自动变成实现。已有授权继续有效；新增范围、外部动作、破坏性迁移仍需对应授权。用户只问一个变体的内部问题时，处理那个问题，不扩成机制改造。\n\n默认只读本文件。仅当当前任务需要时加载对应引用，不用为一个简单问题读完案例库：\n\n- 需要论证必要性、OCP / DIP / DDD 类比 → [references/first-principles.md](references/first-principles.md)。\n- 需要检查具体反模式 → [references/anti-patterns.md](references/anti-patterns.md)。\n- 有真实生命周期、订阅、缓存、异步加载或多账号状态 → [references/stateful-runtime.md](references/stateful-runtime.md)。\n- 跨团队发布、第三方插件或版本兼容 → [references/governance.md](references/governance.md)。\n- 要迁移到 Rust / Tauri / Python 或框架插件 API → [references/cross-stack.md](references/cross-stack.md)。\n- 需要多站点、弹窗或工具目录的参考形状 → [references/case-studies.md](references/case-studies.md) 的相关案例；示意代码不是当前仓库证据。",
+        "heading": "先确定用户要什么",
         "level": 2
       },
       {
-        "raw": "- 只有 1～2 个变种，且**未来确定不会再加**的功能：直接 if-else 比插件化便宜。\n- 变种之间根本不共享行为（接口/输出/生命周期都不同）：强行套同一抽象会出现\"5 个可选属性 4 个用不上\"。\n- 用户已经在用成熟的、强约定的框架插件机制（Next.js pages、VSCode extension manifest、Tauri plugin）——直接顺着用，不要发明第二套。\n- 用户问的是**单个具体插件的内部实现**（\"这个 modal 的样式怎么改\"），而不是\"插件机制本身的设计\"。",
-        "heading": "何时不要用",
+        "raw": "先沿最近一次新增或移除变体的路径，读现有 key、消费方、配置和测试。区分“同一事实必须同步改多处”与“实现、测试、文案各有合法职责”。文件数量、变体数量或出现 switch 本身都不是重构证据。\n\n检查能推翻方案的最便宜证据：真实变体是否共享输入、输出、生命周期；重复的是知识还是外观；现有框架是否已经提供所需扩展点。能从代码查到的事实先查。普通可逆工程默认值自行选择，只有影响产品偏好、难回退取舍、授权或用户独有事实的问题才询问。\n\n| 当前复杂度                               | 合理起点                                                              |\n| ---------------------------------------- | --------------------------------------------------------------------- |\n| 少量稳定分支，变化不传播                 | 保留函数或 switch；不因未知的未来需求建插件系统                       |\n| 同步静态条目，共享简单输入/输出          | 类型明确的映射或函数表；无需 store、Provider、factory、缓存或异步边界 |\n| 多变体确实共享订阅、调度、资源或状态转换 | 提取拥有这些生命周期的 Core，变体提供窄契约；按需分目录               |\n| 框架已有注册和生命周期机制               | 使用现有机制，只补业务所需的契约；不再复制一套 host                   |\n| 第三方独立安装或动态发现                 | 先确认安装模型、兼容性与权限边界；静态注册无法自动满足这一要求        |\n\n收益不成立时给出“保留现状”及证据。用户要求证明某种结构必然正确时，先检查前提，不制造证明。",
+        "heading": "从变化出发选择结构",
         "level": 2
       },
       {
-        "raw": "任何插件化系统的最小骨架是这五层。**只要少一层，扩展性就会在 3 个月内塌掉**。\n\n> 注：第一版方法论曾把它叫\"四件套\"（把 Contract 隐藏在 Registry 类型里）。实践证明把 Contract 显式拎出来更稳——绝大多数事故都来自 Contract 不清晰。",
-        "heading": "核心结构 — 五件套",
+        "raw": "Identity、Contract、Registry、Runtime Core、Convention Folder 是分析职责的词汇，不要求五个文件、五个模块或每次齐备。简单类型映射可以同时表达前三项；没有生命周期就无需独立 Core。目录负责组织实现，不决定架构是否成立。\n\n1. **Identity**：沿用最权威的稳定 key 和兼容语义。外部供应商 ID、埋点名、已发布路由不应为了命名整齐被重命名；本地目录可保留显式映射。外部字符串先校验，再查注册表。\n2. **Contract**：写清输入、输出、失败、生命周期和能力。Identity 只标识条目，不能替代行为契约。共享字段确实适用于全部变体才必填；可选字段有明确默认值；互斥能力用可辨识联合或不同契约，不为“结构同质”堆可选字段。\n3. **Registry**：给“有哪些条目”一个可追溯的组合入口。显式表、框架 manifest 或由模块贡献并汇总的表均可；单一事实来源不等于只许一个物理文件。保留重复 key、未知 key 和缺失能力的既有处理。\n4. **Runtime Core**：只抽出真实共享的调度与生命周期，依赖 Contract，不硬编码具体插件的业务条件。单插件条件归变体，跨插件产品顺序归编排层。没有共享状态时，普通调用函数就够。\n5. **Convention Folder**：当单变体有多份相关资源时聚拢；简单条目留在一个文件也成立。依赖方向应让移除一个变体不破坏无关变体；不为消除所有直接 import 而引入总线。\n\n最小静态例子只表达共同函数签名和可追溯的名单：\n\n```ts\ntype Formatter = (value: string) => string;\n\nconst formatters = {\n  upper: (value: string) => value.toUpperCase(),\n  lower: (value: string) => value.toLowerCase(),\n} satisfies Record<string, Formatter>;\n\ntype FormatterKey = keyof typeof formatters;\n\nfunction format(key: FormatterKey, value: string): string {\n  return formatters[key](value);\n}\n```\n\n示例假定 key 已由类型内调用方提供。若 key 来自 URL、网络或用户输入，必须在边界校验并保留原有未知值错误；TypeScript 类型不能验证运行时输入。",
+        "heading": "五个概念，按需落地",
         "level": 2
       },
       {
-        "raw": "每个插件必须有一个**唯一、稳定、来自最权威层**的 key。\n\n```\n站点：    hostKey: 'site-a.example.com'  ← 来自 SiteKey 枚举（顶层）\n工具：    appKey: 'Motion'    ← 来自后端 Labels schema（最权威）\n弹窗：    configKey: 'npsSurveyModal' ← camelCase 自定义\n模型：    modelId: 'gpt-4o'   ← 来自供应商 ID\n```\n\n**原则**：\n- 主键由**最权威的层**定义（后端 schema、外部供应商 ID、顶层枚举），**不要在调用侧重新发明**。\n- 主键派生其他所有命名：组件名、文件夹名、埋点名、route 段、CSS 变量。把推导关系列成一张表，加新插件就照表填。\n\n错误示范：弹窗的 `configKey = \"promoModal\"`，组件名 `<PromoModalV2>`，埋点名 `promo_pop`，文件夹 `PromoPopup/`——四个名字互相猜不出，半年后没人敢删。",
-        "heading": "1. Identity（主键）",
-        "level": 3
-      },
-      {
-        "raw": "明确**每个插件必须提供什么、可以提供什么**的契约 — 通常是一个 interface / trait / TypedDict / Protocol。\n\n```ts\n// 必填字段（结构同质）\ninterface PluginContract {\n  key: PluginKey\n  component: ComponentRef\n  // ...\n\n  // 可选行为钩子\n  shouldShow?: (ctx: Ctx) => boolean\n  onMount?: (ctx: Ctx) => Cleanup\n}\n```\n\n**原则**：\n- Contract 是 **Core ↔ Plugin 之间的唯一通讯协议**。Core 通过 Contract 看插件，插件通过 Contract 看 Core 暴露的能力。\n- 必填字段尽量少，可选字段表达变种差异。但要给\"宽核心，窄实现\"留余地——core 容忍各种可选，单插件只填用到的。\n- 一旦 Contract 上字段变了，所有插件要同步——所以**Contract 改动是高代价的**，加新字段优先用可选。\n- **Identity 是字段，不是 Contract 本身**。这是常见误解——很多人把\"插件的 key 类型\"当作 Contract，但 Contract 实际是\"key + 行为\"。",
-        "heading": "2. Contract（契约）",
-        "level": 3
-      },
-      {
-        "raw": "一处显式的\"我这里有哪些插件\"清单。\n\n```ts\n// ✅ 注册表只引用，不实现\nimport { DynamicNpsSurveyModal } from './popups/dynamic'\n\nexport const popupsConfig = {\n  npsSurveyModal: initialPopupConfig({\n    priority: 504,\n    component: DynamicNpsSurveyModal,\n    cache: { type: 'interval', timeout: 1, upperLimit: 2 },\n    dataWidgetName: 'nps_survey_popup',\n  }),\n  // [Popup-Config]:(add)   ← 占位符\n}\n```\n\n**原则**：\n- **只引用，不实现**。注册表里不能出现任何插件的业务逻辑——一旦出现，下次加插件就要改注册表里的判断分支。\n- **结构同质**。每条记录的字段集合完全一致（用 `pluginConfig({...})` 工厂统一兜底默认值）。\n- **位置稳定**。所有同类插件的注册表只此一份，别因为\"分组\"拆成多个——分组的代价是丢失全局视野。",
-        "heading": "3. Registry（中央注册表）",
-        "level": 3
-      },
-      {
-        "raw": "通用、无业务的内核，**对具体插件保持完全无知**。Runtime Core 负责\"机制\"，不负责\"内容\"。\n\n```ts\nexport function createPluginCoreFactory<\n  T extends PluginRegistry,\n  S extends Record<string, any>,\n>(initialState, options) {\n  return (...a) => {\n    // 通用状态机\n    return {\n      init: (options) => { /* cache decision */ },\n      closeAndTerminate: () => { /* ... */ },\n      openForce: () => { /* ... */ },\n      // ...\n    }\n  }\n}\n```\n\n**原则**：\n- 内核通过**泛型** `<T extends Registry>` 接收注册表形状，自己不 import 任何具体插件。\n- 内核负责**横切同质的关注点**：状态机、缓存策略、生命周期、横切的埋点（\"插件被打开时统一埋一次曝光\"）、统一持久化。\n- 业务相关的事（\"这个弹窗要不要弹\"、\"用户登录后才显示\"）**不能写在内核里**——那是单插件 `init.ts` 的事。\n- 不要在内核里设 \"if (key === 'X') ...\" 的特殊分支——这是注册表机制失败的明确信号。\n\n> **关于 Provider Orchestration**：在 React/Vue/前端场景里，\"何时选择 openKey\"、\"渲染哪个插件\"这种**编排决策**通常落在 Provider/Orchestrator 层（订阅 Core store，按 Contract 字段做决策），不在 Core 里。Core 是状态机和切面 SDK，Orchestrator 是策略实现。两者都属于\"业务零知识\"，但职责不同。把它当 Core 的子层即可，不必单列。",
-        "heading": "4. Runtime Core（运行时内核）",
-        "level": 3
-      },
-      {
-        "raw": "单个插件自治在一个目录内，所有相关物聚拢。\n\n```\npopups/[Name]/\n├── index.tsx         ← UI（默认 export 一个组件）\n├── init.ts           ← 何时打开（条件 / AB / 登录态）+ 该插件特有的副作用\n└── constants.ts      ← 这个插件专属的常量、文案\n```\n\n**原则**：\n- 删除这个插件 = `rm -rf` 这个目录 + 注册表删一行。**没有跨目录的反向引用**。\n- 单插件内可以**完整理解**而不需要跳出去看核心机制。\n- 文件分工固定（一两种模式即可），让阅读者闭着眼也知道找什么去哪个文件。\n- 目录名 = 主键派生的 PascalCase。",
-        "heading": "5. Convention Folder（约定式目录）",
-        "level": 3
-      },
-      {
-        "raw": "开篇那张痛点表，业界有个正式名字叫 **Shotgun Surgery**（霰弹式修改）——\"一个逻辑改动要散着改很多处\"，根因是\"同一个职责（管理这一类东西）被切散到了多个文件\"。插件化要解决的就是它。\n\n从第一性原理看，目标只有一句话：**把\"加一个新变种\"的成本从 O(N)（改 N 处）降到 O(1)（新建一个自治单元 + 注册表加一行）**。一旦把目标定死成 O(1)，五件套就不是谁拍脑袋的设计，而是逻辑上**绕不开的必要条件**——少任何一件，成本就回不到 O(1)：\n\n| 要达成 | 否则会怎样 | 推出的件 | 业界可类比 |\n|---|---|---|---|\n| 所有变种共享稳定\"形状\" | 核心要为每种特判 | **Contract** | 可充当 Core↔Plugin 边界的 *Published Language*（DDD） |\n| 有唯一权威\"身份\" | 命名漂移、无法机器推导 | **Identity** | 插件的 name/id |\n| 有且仅有一处\"名单\" | \"有哪些\"这一知识被切散 | **Registry** | Fowler *Plugin*：\"在配置期而非编译期把实现接上\"；Microkernel 的中心清单 |\n| 核心对具体变种零知识 | 核心随变种增长而改 | **Runtime Core** | *OCP*：对扩展开放、对修改封闭（用抽象/多态替代 switch） |\n| 单变种自治、无外部反向引用 | 删一个要满地找 | **Convention Folder** | 高内聚 + 单一变更点 |\n\n> 这就是\"高内聚低耦合\"在这里的精确落点：**高内聚** = Convention Folder（一个变种的东西聚一处）+ Registry（一类东西的名单聚一处）；**低耦合** = Contract 是唯一通道，依赖方向单向 `Plugin → Contract ← Core`（谁都不依赖对方实现，即 DIP）。\n>\n> 注意类比是\"可类比\"，不是等号——例如 Microkernel 的 registry 含动态发现/协议协商/版本治理，本方法论的 Registry 通常只是\"中心元数据清单\"那一层。完整推导、DDD 全映射与出处见 [references/first-principles.md](references/first-principles.md)。",
-        "heading": "第一性原理：五件套不是发明，是必要推论",
+        "raw": "- **延迟加载**：仅在加载成本和实际渲染路径支持收益时采用。它会引入等待、失败和首次使用延迟；保留 SSR、首屏与错误行为，不默认 `ssr: false`。用真实网络/产物证据确认收益，不凭 dynamic import 字样宣称成功。\n- **命名与引导**：存在反复找落点的成本时，给一个添加条目的例子、简短命名映射或仓内已有生成器。占位符、README、脚手架不是插件化的必要条件。\n- **调试能力**：优先复用已有日志、DevTools 或测试接口。只有实际诊断需要才增加开发环境探针；不默认暴露全局 store、用户数据或清缓存写入口。\n- **有状态的机制**：登录/权限变化必须重算相关意图；订阅、定时器、资源和异步结果必须有明确 owner 与清理；缓存按实际用户/租户边界隔离。静态机制不需要添加这些状态。具体边界见 stateful runtime 引用。",
+        "heading": "条件式工程细节",
         "level": 2
       },
       {
-        "raw": "五件套不是只能用一次。当**单个 plugin 内部**也长出\"会持续新增的变种\"时，就在它内部**再套一层五件套**——一级注册表挂这个 plugin，它内部有自己的二级 Identity / Contract / Registry。这能避免把 N 个内部变种全炸成一级 key（否则一级编排的优先级/调度会爆炸）。\n\n关键洞察：**Contract 不规定\"插件必须是一个组件\"**。同一个 Contract 下，变种可以是不同\"种类\"的东西——有的渲染 UI，有的只执行一个副作用。用一个可辨识联合表达就够了：\n\n```ts\ntype VariantStrategy =\n  | { mode: 'view';   render: ComponentRef }      // 渲染型：交给渲染层\n  | { mode: 'effect'; perform: (deps) => void }   // 副作用型：直接执行一个动作\n```\n\n编排层按 `mode` 分流，渲染层只认 `view`、副作用层只认 `effect`，核心依旧零业务。这其实是 **Strategy 模式与插件化的结合**，也天然对应 DDD 的\"领域 / 应用 / UI\"分层（详见 [references/first-principles.md](references/first-principles.md)）。",
-        "heading": "递归组合：插件化是分形的",
+        "raw": "1. 冻结本轮范围，说明要减少哪条修改传播以及保留哪些行为；不把纯命名整齐或新框架当目标。\n2. 做一个最小、可回退的变体迁移，沿用既有 key、路由、持久化数据和错误契约；确认消费方不再重复同一判断后再移除旧路径。\n3. 运行与变化对应的验证：静态表检查合法/未知 key 与已有输出；有状态的机制检查更新、卸载、重复挂载、失败和跨账号隔离；公共 UI 行为还需真实浏览器/渲染信号。\n\n用隔离 fixture 或只读依赖图验证新增/移除条目的传播，不在用户工作区为了“验收”真的删插件。只有用户要求实现且改动有回归风险时补必要行为测试；解释和只读评审不生成测试工程。\n\n检索只能定位候选：字段不同、存在 switch、静态 import 或缺占位符都不能单独判失败。构建/typecheck 不能替代运行时清理、UI 加载或账号切换验收。未跑的必需验证写 `UNVERIFIED`。",
+        "heading": "实现与验证",
         "level": 2
       },
       {
-        "raw": "五件套之外，还有八个让系统真的\"用起来顺\"的要点。前七条是\"结构舒适度\"，第八条是\"运行时正确性\"。",
-        "heading": "八条设计要点",
-        "level": 2
-      },
-      {
-        "raw": "```\nconfig.ts  ← 静态（priority、cache 策略、埋点名、默认 disabled）\ninit.ts    ← 动态（订阅 store、判断登录态、调用 AB 实验、调 init({open: true/false}))\n```\n\n**同一属性只在一处写**。比如 cache 策略一律放 `config.ts`，`init.ts` 不重复传——否则双写就是双倍 bug。\n\n⚠️ **历史债的迁移建议**：真实项目里这条很容易腐烂——比如某个 banner 的 `init.ts` 同时在 `config.ts` 和 `init.ts` 写 `cache: { type: 'count', count: 2 }`，原因往往是早期没有 config 层、后来加上时没回收旧 init 里的 cache。这类双写应该作为技术债清理，而不是当作\"规范\"复制粘贴。",
-        "heading": "a. 配置 / 行为分离",
-        "level": 3
-      },
-      {
-        "raw": "每个插件实现都用 `dynamic()` / `lazy()` / 框架的延迟加载机制包一层。\n\n```ts\n// dynamics.ts — 集中维护所有动态 import\nexport const DynamicNpsSurveyModal = dynamic(\n  () => import('./NpsSurveyModal'),\n  { ssr: false },\n)\n```\n\n注册表只引用 `Dynamic*` 名字。**0 个用户用的插件不该进 bundle**。\n\n**适用范围限定**：这条对前端 / 用户面应用（首屏 bundle 重要）成立；后端内部插件、CLI 工具、内部 admin 工具可以省。Rust 编译型项目用 cargo `features` 是等价手段。",
-        "heading": "b. 延迟加载默认开（仅对应用场景）",
-        "level": 3
-      },
-      {
-        "raw": "在中央注册表里留注释占位符，引导下一个加插件的人在哪一行操作：\n\n```ts\nconst config = {\n  [SiteKey.SiteA]: siteAConfig,\n  [SiteKey.SiteB]: siteBConfig,\n  // [SiteKey-Site]:(config)   ← 占位符\n}\n```\n\n让\"加新插件\"成为**机械动作**而非脑力税。也是后续做 codegen / 模板插入的锚点。",
-        "heading": "c. 占位符引导",
-        "level": 3
-      },
-      {
-        "raw": "每个插件主键能机械推导出所有其他命名。列成表写在 README 里：\n\n| 占位符 | 规则 | 例子 |\n|---|---|---|\n| `__KEY__` | camelCase | `npsSurveyModal` |\n| `__COMPONENT__` | PascalCase | `NpsSurveyModal` |\n| `__DIR__` | = `__COMPONENT__` | `NpsSurveyModal` |\n| `__HOOK__` | `use__COMPONENT__Init` | `useNpsSurveyModalInit` |\n| `__DATA_NAME__` | snake_case | `nps_survey_modal` |\n| `__DYNAMIC__` | `Dynamic__COMPONENT__` | `DynamicNpsSurveyModal` |\n\n无歧义、可机器化。这一张表是 skill 落地阶段最值钱的产出。",
-        "heading": "d. 命名推导表",
-        "level": 3
-      },
-      {
-        "raw": "| 副作用类型 | 归属 |\n|---|---|\n| **横切同质副作用**（每个插件都做同样的事） | Runtime Core 一处 subscribe |\n| **插件特有副作用**（只这一个插件需要） | 该插件的 `init.ts` 或 render adapter |\n| **跨插件编排副作用**（\"A 打开后强制开 B\"） | Provider/Orchestrator 层 |\n\n```ts\n// ✅ 横切：所有 plugin 都要的曝光埋点 → core\nstore.subscribe(\n  (state) => state.openKey,\n  (openKey) => openKey && tracker?.trackEvent({...}),\n)\n\n// ✅ 特有：NPS 弹窗专属的\"提交后 closeAndTerminate\" → init.ts\n// ✅ 编排：用户登录后强制打开 onboardingExperiment → Provider\n```\n\n错误：把所有插件可能的副作用都塞进 core，导致 core 出现 `if (key === 'X')` 分支。",
-        "heading": "e. 副作用边界明确",
-        "level": 3
-      },
-      {
-        "raw": "实际工程里\"插件\"往往不只一种（弹窗、横幅、抽屉、Banner、Toast……）。把它们建在**同一个 core factory** 上，每种变种用自己的 store + Provider 注入：\n\n```\nPluginProvider/\n├── _factory/core.ts      ← 共享内核（缓存策略、生命周期、横切埋点）\n├── popups/               ← 变种 A：弹窗\n│   ├── store.ts          ← createPopupsStore (cachePrefix='popups')\n│   └── Provider/         ← 弹窗 Orchestrator（按 priority 选 openKey）\n└── banners/              ← 变种 B：横幅\n    ├── store.ts          ← createBannersStore (cachePrefix='banners')\n    └── Provider/         ← 横幅 Orchestrator（按 priority 选 openKey + renderHeight）\n```\n\n复用所有共性，分隔状态隔离。变种之间的差异（横幅有 renderHeight、弹窗没有）通过 slice 扩展实现。",
-        "heading": "f. 一份 Core，多个变种",
-        "level": 3
-      },
-      {
-        "raw": "开发环境把 store 挂到 `window`（或等价的运行时全局）：\n\n```ts\nif (!IS_PROD) {\n  (window as any).__POPUPS_STORE__ = store\n  (window as any).clearPluginCache_popups = () => clearCacheWithPrefix('popups')\n}\n```\n\n加新插件后第一次没显示——直接打开 DevTools 看 store 状态、清缓存就能定位。**省下\"为啥不显示\"的 30 分钟来回猜**。",
-        "heading": "g. 全局调试探针",
-        "level": 3
-      },
-      {
-        "raw": "这条是\"声明式注册\"在真实运行时会撞上的两个坑，框架无关。\n\n**① 重算逃生阀**。注册通常做成幂等的（同一个 key 注册第二次就短路，避免重复初始化）。但当一个插件的\"要不要显示 / 要不要启用\"**取决于会变化的运行时上下文**（登录态、权限、AB 实验分组、远程开关），幂等就会把后续更新吃掉——上下文从\"未登录\"变成\"已登录\"，插件状态却停在第一次注册的结果。\n\n```ts\nregister({ key, enabled: deriveEnabled(ctx), force: true })\n//                                            ^ 绕过幂等短路，按新 ctx 重算\n```\n\n判断边界：注册入口要不要 `force`，取决于\"注册意图是否会随上下文失效\"。纯静态插件不需要；意图依赖外部可变状态的，必须留这个逃生阀，否则会出\"切换账号后弹窗永不出现\"这类静默 bug。\n\n**② 状态维度隔离**。Core 持有的横切状态（缓存、关闭计数、已读标记、冷却时间）如果要按**维度**隔离（按用户 / 租户 / 环境），用\"主键 + 维度后缀\"组合出存储键，而不是为每个维度新造一个主键：\n\n```ts\nstorageKey = `${prefix}_${pluginKey}_${dimensionSuffix}`  // 如 ..._${userId}\n```\n\n否则 A 用户的\"已关闭一次\"会串到同设备的 B 用户身上。维度后缀让同一个插件主键在多用户/多环境下天然隔离，且不污染主键命名体系。",
-        "heading": "h. 运行时重算 + 状态维度隔离",
-        "level": 3
-      },
-      {
-        "raw": "接到\"把这块改成插件化\"或\"我要建一套 X 的插件机制\"任务时，按这个顺序做。",
-        "heading": "落地流程（最小步骤）",
-        "level": 2
-      },
-      {
-        "raw": "回答三个问题：\n1. **谁来命名？** 后端 schema、供应商 ID、还是自定义？尽量挂最权威的那层。\n2. **类型是什么？** 字符串字面量联合、enum、还是来自外部包的类型？\n3. **新增 key 时改哪里？** 这条路径将出现在所有插件作者的工作流里，要短。",
-        "heading": "Step 1: 找 Identity",
-        "level": 3
-      },
-      {
-        "raw": "写出每条插件**必须**有什么、**可以**有什么：\n\n```ts\ninterface PluginContract {\n  // 必填（结构同质）\n  priority: number\n  component: React.ComponentType<any>\n  dataWidgetName: string\n\n  // 可选（变种特有）\n  cache?: PluginCache\n  disabled?: boolean\n  closeIconClassName?: string  // 只横幅用\n}\n```\n\n写一个 `initialPluginConfig(data) { return { open: false, ...data } }` 兜底默认值。",
-        "heading": "Step 2: 设计 Plugin Contract",
-        "level": 3
-      },
-      {
-        "raw": "零业务、纯泛型。核心动作至少：\n- 注册（init）\n- 触发（open / close / openForce）\n- 销毁（terminate）\n- 状态查询\n- 横切同质的副作用切面（同质埋点、cache、持久化）\n\n**绝对不允许**出现具体插件的 key 字符串。\n\n如果需要\"按 Contract 字段做策略决策\"（例如 priority 排序选 openKey），把决策放到 **Provider/Orchestrator** 层，而不是 Core 状态机里——Orchestrator 也是业务零知识，但它消费 Core 暴露的 store。",
-        "heading": "Step 3: 写 Runtime Core",
-        "level": 3
-      },
-      {
-        "raw": "一份注册表。注册表里只有引用、配置、占位符，**没有 if-else**。",
-        "heading": "Step 4: 建中央 Registry",
-        "level": 3
-      },
-      {
-        "raw": "照 Convention Folder 模板写一个最小可用插件。这是后面所有插件的\"复制粘贴模板\"。",
-        "heading": "Step 5: 写第一个插件示例",
-        "level": 3
-      },
-      {
-        "raw": "在 README 或注释里：\n- 占位符注释行\n- 命名推导表\n- 5 分钟 onboarding 文档（\"加一个新 X 的 5 个步骤\"）",
-        "heading": "Step 6: 加占位符引导和命名表",
-        "level": 3
-      },
-      {
-        "raw": "按下面的\"评审清单\"对照过一遍。每一条都能回答\"是\"才算落地完成。挂上全局调试探针。",
-        "heading": "Step 7: 写自检清单 + 调试探针",
-        "level": 3
-      },
-      {
-        "raw": "把已有的\"散装 if-else\"迁移到插件化结构，跟从零搭建是两件事。**强行一刀切迁移 = 大批量回归**。推荐绞杀者模式：\n\n1. **保留旧实现，建立新机制**。先在新位置建好 Contract / Registry / Core 三层，**不动旧代码**。\n2. **建 adapter**。让 Registry 既能接旧的\"裸组件\"，也能接新的\"完整 plugin contract\"。adapter 把旧的塞成 contract 的形状（cache 类型先用 `{type: 'default'}` 占位、埋点名沿用旧值）。\n3. **新增插件全走新路**。从这一刻起，**新弹窗 / 新工具只允许走新机制**——给团队设硬边界。\n4. **逐个迁移老插件**。每次只迁一个，PR 必须包含：(a) 迁移前后的展示行为对比截图/视频、(b) 缓存兼容验证（旧用户已存的 localStorage key 仍有效）、(c) 埋点 dataName 对应表。\n5. **设旧 key 兼容期**。如果新机制变了命名规则，旧的 `localStorage` key / 埋点 name 要兼容一段时间——给 Core 加 `legacyKey?: string` 字段做映射，迁移期过后回收。\n6. **删旧机制**。所有旧插件迁完 + 兼容期过 → 删旧机制 + 占位符代码 + 旧文档。\n\n**反模式**：一个大 PR 把所有旧弹窗一次性重写——审 review 几乎不可能、回归看不全、出 bug 时无法二分。",
-        "heading": "从存量代码迁移到插件化",
-        "level": 2
-      },
-      {
-        "raw": "落地一个插件化结构 / 评审现有插件化结构时，逐条对照。每条都标了 **Check method**——优先用机器化方法验证，能 grep 就别人眼瞅。\n\n| # | 评审项 | Check method |\n|---|---|---|\n| 1 | 加新插件 = 新建一个目录 + 注册表加一行 | 在 onboarding 文档里走一遍\"加一个 X\"的步骤，数改了几个文件 |\n| 2 | 删插件 = `rm -rf` 目录 + 注册表删一行 | 选一个最简单的插件，真的删一次（branch 上），看构建 + typecheck 报错处 |\n| 3 | 单插件目录内可以完整理解 | human review：随机抽一个插件目录，让没看过的人 10 分钟内说出它做啥 |\n| 4 | Core factory 不知道任何具体插件 | `grep -RE \"['\\\"](pluginKeyA|pluginKeyB)['\\\"]\" core/` 应为空（用真实插件 key 替换；分隔用裸 `|`，标准 ERE，不要转义） |\n| 5 | 同一属性只在一处定义（cache 不要 config + init 双写） | `grep \"cache:\" plugins/*/init.ts` 应为空 |\n| 6 | Bundle 真的按需加载 | DevTools Network panel / bundle analyzer 看每个插件是否独立 chunk（非 frontend 场景跳过） |\n| 7 | 命名遵循推导表 | 写一个脚本：从 key 推导出所有命名，对照实际文件名/常量名/埋点名 |\n| 8 | 占位符注释存在 | `grep -RE \"\\[[A-Za-z]+-[A-Za-z]+\\]:\\(\" registry.ts` 应有命中（约定格式：`// [Domain-Action]:(slot)`） |\n| 9 | 横切副作用在 Core subscribe 一处 | `grep \"subscribe\\|emit\\|trackEvent\" plugins/` ≈ 0；core/ 集中 |\n| 10 | 开发环境有调试探针 | DevTools console：`__YOUR_REGISTRY_STORE__` 应可访问；清缓存命令应存在 |\n| 11 | 没有 `if (key === 'X')` 这种特例 | `grep -RE \"key\\s*===\\s*['\\\"]\" core/ orchestrator/` 应为空 |\n\n**关于占位符的格式约定**：本 skill 全程统一用 `// [Domain-Action]:(slot)` 形式，例如：\n- `// [Popup-Config]:(add)` — 在 Popups 注册表里加新 popup config 的位置\n- `// [SiteKey-Site]:(config)` — 在站群中央注册表里加新 hostKey config 的位置\n- `// [Plugin-Placeholder]:(register)` — Rust 例子里 vec! 注册插件的位置\n\n`grep` 时用同一种 regex 即可命中所有。**不要混用 `[X-Placeholder]` 和 `[X]:(Y)` 两种格式**——选一种全项目沿用，否则 grep 总会漏。\n\n**Check method 的轻重**：\n- `grep` 类规则可以放进 lint / CI（一旦回归立即拦住）。\n- `typecheck` 类规则可以用 `satisfies Record<Identity, Contract>` 强约束。\n- `human review` 类规则只能进 PR template。\n- `Network panel` 类规则进 release 前 checklist。\n\n每条都通才算\"真的插件化\"。任意一条不通——**先回答\"为什么这条不适用于本场景\"，能解释清楚再放过**。",
-        "heading": "评审清单（add / review 通用）",
-        "level": 2
-      },
-      {
-        "raw": "按需读取：\n\n- [references/first-principles.md](references/first-principles.md) — 第一性原理完整推导（O(N)→O(1) 为什么逼出五件套）、DDD 全映射、业界出处（Microkernel / Fowler Plugin / OCP / Shotgun Surgery）与 SOLID 关系，**用于说服他人\"这套不是编的\"或对齐团队架构词汇**。\n- [references/case-studies.md](references/case-studies.md) — 4 个真实案例的对照表（多站点站群、推广横幅、推广弹窗、工具扩展 apps），每个案例都给出\"五件套\"映射，**用于实际操作前对齐**。\n- [references/anti-patterns.md](references/anti-patterns.md) — 八种最常见的\"伪插件化\"反模式（按严重程度分层：Must-fix / Smell / Context-dependent），**用于代码评审和 PR review 时挑出问题**。\n- [references/cross-stack.md](references/cross-stack.md) — 这套模式在 Webpack / VSCode / Express / Tailwind / Rust trait / Python entry_points 上的同构映射，**用于跨语言/跨框架 onboarding 时建立类比**。",
-        "heading": "案例研究与跨技术栈应用",
-        "level": 2
-      },
-      {
-        "raw": "当用户说\"帮我把这块改成插件化\"但没说细节，主动问：\n\n1. **这一类东西未来还会加吗？预计多久加一个？** 不会加 → 不该用。\n2. **主键从哪来？** 后端 / 供应商 / 自定义。回答不上来 → 先讨论主键，不要急着写代码。\n3. **变种之间共享哪些行为？哪些不一样？** 共享的进 Core，不一样的进单插件。这是抽象边界。\n4. **现在的痛点是\"加慢\"、\"删难\"还是\"互相影响\"？** 三种痛点对应不同重点（占位符 / 反向引用 / 自治目录）。\n5. **有没有现成的框架插件机制可以顺？** 有就别造轮子。\n6. **存量 vs 增量？** 已有插件多少个？新机制能容忍同时存在两套吗？（决定是否走绞杀者迁移）\n\n不要在没回答这六个问题之前开始写 Core——很可能写出来用户用不上。",
-        "heading": "用户给的需求不够明确时",
-        "level": 2
-      },
-      {
-        "raw": "执行这个 skill 时，**至少**产出：\n\n1. 一份 Plugin Contract 类型定义（TypeScript / Rust trait / Python TypedDict 等，按项目栈）。\n2. 一份中央 Registry 文件（含占位符注释）。\n3. 一份 Runtime Core（泛型，零业务）。\n4. 一个完整的示例插件（按 Convention Folder 模板）。\n5. 一份 README（含命名推导表、\"加新插件 5 步\"、调试探针使用说明）。\n6. 评审清单的**逐条勾选回应**（不能直接 copy 清单——要针对当前项目情况说\"为什么这条满足/不满足\"，给出 Check method 的实际结果）。\n7. 如果是存量代码改造，**附迁移路径**：adapter 设计、旧 key 兼容方案、PR 拆分计划。",
-        "heading": "输出要求",
+        "raw": "只交付用户要求的模式：解释给结论与必要例子；评审给证据、影响与最小修法；设计给适用边界、契约与验证；实现给修改和实际结果。迁移路径、目录树、README、调试探针仅在当前改造确实需要时提供，不固定凑齐产物。",
+        "heading": "交付",
         "level": 2
       }
     ]
@@ -583,7 +453,7 @@
         "level": 2
       },
       {
-        "raw": "执行：\n\n```bash\ngit status --short --branch\n```\n\n以下规则只用于 **execute-commit**。先判断这次提交的来源：\n\n- 如果已经有 staged changes，且用户没有点名不同范围，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。\n- 如果已经有 staged changes，但用户明确授权的是另一组 unstaged/untracked 路径，立即停止并报告范围错位。不要提交已有 staged 内容，不要 stage 新范围，也不要替用户 unstage；请用户先选择或拆分 index。\n- 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。\n- 如果没有 staged changes，且存在多个 unstaged/untracked 文件，只有在用户明确说“全部提交”或明确点名文件时才 stage 对应路径。否则停止并列出最小的 `git add -- <path>` 建议，让用户选择提交范围。\n- 如果既没有 staged changes，也没有 unstaged/untracked changes，告诉用户当前没有可提交内容。\n\n自动 stage 前必须遵守这些边界：\n\n- 使用 `git add -- <path>` 或多个明确路径；不要用裸 `git add .`、`git add -A`，除非用户明确要求提交全部变更。\n- 对单个 unstaged 文件，先用 `git diff -- <path>` 或必要的文件读取确认变更意图。对 untracked 文件，先确认文件名和内容类型合理。\n- 如果文件名或 diff 暗示 `.env`、credential、token、cookie、private key、secret、证书、账号私密数据等敏感信息，停止并请用户确认，不要自动 stage 或提交。\n- 如果变更看起来包含多个无关目的，停止并询问是否拆分提交。\n- **Ignore vs Commit 门禁**（对每个候选路径，尤其 `??` untracked）：该忽略的先写进 `.gitignore` 再跳过 stage；该提交的才 `git add -- <path>`。细则见 `references/ignore-vs-commit.md`。\n- **忽略必须说明**：凡跳过 stage、写入/修改 `.gitignore`、或因 ignore 规则未纳入本次提交的路径，不得静默处理。须在当轮明确告诉用户：路径/pattern、原因、做了什么（未 stage / 已改 `.gitignore` 等）。多条可按原因分组列表；无忽略则不必多写。",
+        "raw": "执行：\n\n```bash\ngit status --short --branch\n```\n\n以下规则只用于 **execute-commit**。先判断这次提交的来源：\n\n- 如果已经有 staged changes，且用户没有点名不同范围，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。\n- 如果已经有 staged changes，但用户明确授权的是另一组 unstaged/untracked 路径，立即停止并报告范围错位。不要提交已有 staged 内容，不要 stage 新范围，也不要替用户 unstage；请用户先选择或拆分 index。\n- 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。\n- 如果没有 staged changes，且存在多个 unstaged/untracked 文件，用户点名的范围或本会话刚完成、目的单一且能从差异核对的变更集都可作为提交范围。先逐项检查，再只 stage 对应路径；不需要用户再说“全部提交”。若混有无法归属的既有修改，先排除；范围仍不唯一时才询问，不凭文件相邻或同目录推断同属本任务。\n- 如果既没有 staged changes，也没有 unstaged/untracked changes，告诉用户当前没有可提交内容。\n\n自动 stage 前必须遵守这些边界：\n\n- 使用 `git add -- <path>` 或多个明确路径；不要用裸 `git add .`、`git add -A`，除非用户明确要求提交全部变更。\n- 对单个 unstaged 文件，先用 `git diff -- <path>` 或必要的文件读取确认变更意图。对 untracked 文件，先确认文件名和内容类型合理。\n- 如果文件名或 diff 暗示 `.env`、credential、token、cookie、private key、secret、证书、账号私密数据等敏感信息，停止并请用户确认，不要自动 stage 或提交。\n- 如果变更看起来包含多个无关目的，停止并询问是否拆分提交。\n- **Ignore vs Commit 门禁**（对每个候选路径，尤其 `??` untracked）：该忽略的先写进 `.gitignore` 再跳过 stage；该提交的才 `git add -- <path>`。细则见 `references/ignore-vs-commit.md`。\n- **忽略必须说明**：凡跳过 stage、写入/修改 `.gitignore`、或因 ignore 规则未纳入本次提交的路径，不得静默处理。须在当轮明确告诉用户：路径/pattern、原因、做了什么（未 stage / 已改 `.gitignore` 等）。多条可按原因分组列表；无忽略则不必多写。",
         "heading": "1. 检查 Git 状态和提交范围",
         "level": 3
       },
@@ -618,7 +488,7 @@
         "level": 3
       },
       {
-        "raw": "- 不要提交包含敏感信息的文件（.env、credentials 等）；缺 ignore 规则时先补 `.gitignore`\n- 提交前确保代码通过 lint 和类型检查\n- 一次提交只做一件事，保持提交的原子性\n- 提交信息要准确反映变更内容，关注\"为什么\"而非\"做了什么\"",
+        "raw": "- 不要提交包含敏感信息的文件（.env、credentials 等）；缺 ignore 规则时先补 `.gitignore`\n- 提交前完成仓库要求和改动相关的验证。纯文档通常检查格式、链接或生成索引；只有代码或配置影响需要时才加 lint、类型检查和测试。可复用本会话针对同一内容已通过的结果；内容改变或仓库要求重跑时重新执行，不跳过 hooks。\n- 一次提交只做一件事，保持提交的原子性\n- 提交信息要准确反映变更内容，关注\"为什么\"而非\"做了什么\"",
         "heading": "注意事项",
         "level": 2
       },
@@ -733,17 +603,17 @@
         "level": 1
       },
       {
-        "raw": "First match wins:\n\n1. **Safety hold** — this turn would execute a sensitive or hard-to-reverse action, directly authorize its execution, or make an external commitment. Ask the single blocking authorization question or defer. Do not mark the action `agent-committed`. A design-only comparison of future destructive options is not a hold: converge without executing, and record the required implementation re-gate in the Summary.\n2. **Skip** — the interface and behavior are already specified, or this is typo / formatting / mechanical execution with no remaining choice. Do the work; do not manufacture a Decision Summary.\n3. **Redirect widening** — the user wants to expand the option space, generate alternatives, or has no shortlist / thesis. Point to Challenge (`grilling`) and stop. “First principles” alone is an analysis method, not proof that widening is needed.\n4. **Already locked** — skip Deliberation. If the user wants to pressure-test the locked thesis, hand off to `grilling`. For a requested Spec/ADR, use [references/doc-conventions.md](references/doc-conventions.md). For an implementation plan, hand off to `writing-plans`; do not maintain a second planning contract here.\n5. **Decide now** — the choice is bounded and the user says “you decide”, “don't ask”, or equivalent. Use the fast path below.\n6. **Deliberate** — the user wants to participate in the bounded choice. Choose light or standard mode below.\n\nA proposal may have an implicit alternative: “replace polling with WebSocket” means “replace it or keep the current mechanism”. Treating that pair as bounded convergence is not widening. Do not invent a third provider or architecture merely to appear thorough.",
+        "raw": "First match wins:\n\n1. **Safety hold** — this turn would execute a sensitive or hard-to-reverse action, directly authorize its execution, or make an external commitment. Ask the single blocking authorization question or defer. Do not mark the action `agent-committed`. A design-only comparison of future destructive options is not a hold: converge without executing, and record the required implementation re-gate in the Summary.\n2. **Skip** — the interface and behavior are already specified, or this is typo / formatting / mechanical execution with no remaining choice. Do the work; do not manufacture a Decision Summary.\n3. **Redirect widening** — the user wants to expand the option space, generate alternatives, or has no shortlist / thesis. Point to Challenge (`grilling`) and stop. “First principles” alone is an analysis method, not proof that widening is needed.\n4. **Already locked** — skip Deliberation. If the user wants to pressure-test the locked thesis, hand off to `grilling`. For a requested Spec/ADR, use [references/doc-conventions.md](references/doc-conventions.md). For an implementation plan, hand off to `writing-plans`; do not maintain a second planning contract here.\n5. **Decide now** — the choice is bounded and the user delegates it, or it is a reversible implementation detail inside already authorized work with no product preference. Use the fast path below. An explicit request to confirm a choice keeps it user-owned.\n6. **Deliberate** — the user wants to participate in the bounded choice. Choose light or standard mode below.\n\nA proposal may have an implicit alternative: “replace polling with WebSocket” means “replace it or keep the current mechanism”. Treating that pair as bounded convergence is not widening. Do not invent a third provider or architecture merely to appear thorough.",
         "heading": "Route First",
         "level": 2
       },
       {
-        "raw": "Gather the cheapest code, configuration, doc, or history evidence that could overturn the recommendation, then stop searching. Do not ask the user for facts you can inspect. If facts remain unavailable, state the decision-relevant assumptions instead of adding a confirmation round.\n\nIn one turn:\n\n1. Pick one option and give the decisive reason plus the rejected alternative.\n2. Emit a Decision Summary with `commitment: agent-committed`.\n3. Skip the persist question and second confirmation. Default to chat-only.\n4. If the user also requested a plan, hand the locked Summary to `writing-plans` without a persistence or confirmation round. Otherwise stop after the decision.\n\nWrite a file only when the user requested one or repository rules require it.",
+        "raw": "Gather the cheapest code, configuration, doc, or history evidence that could overturn the recommendation, then stop searching. Do not ask the user for facts you can inspect. If facts remain unavailable, state the decision-relevant assumptions instead of adding a confirmation round.\n\nIn one turn:\n\n1. Pick one option and give the decisive reason plus the rejected alternative.\n2. Emit a Decision Summary with `commitment: agent-committed`.\n3. Skip the persist question and second confirmation. Default to chat-only.\n4. If the user also requested a plan, hand the locked Summary to `writing-plans` without a persistence or confirmation round. If implementation was already requested, continue it after locking the choice; otherwise stop after the decision.\n\nWrite a file only when the user requested one or repository rules require it.",
         "heading": "Decide-now Fast Path",
         "level": 2
       },
       {
-        "raw": "Use **light mode** for one local decision with two alternatives (including proposal vs status quo), small impact, and no architecture-level consequence. Recommend one option, explain the rejected alternative, then ask one confirmation question. Aim to finish in 1–2 rounds.\n\nUse **standard mode** for multiple dependent decisions, three or more credible alternatives, cross-module/public-interface impact, or architecture-level consequence. Ask the current independent frontier together, capped at three questions per round; defer questions that depend on answers in the same round.",
+        "raw": "Use **light mode** for one local decision with two alternatives (including proposal vs status quo), small impact, and no architecture-level consequence. Recommend one option and explain the rejected alternative. Ask one confirmation question only for a user-owned choice; lock an ordinary agent-owned default with its evidence and continue the authorized work. Aim to finish in 1–2 rounds.\n\nUse **standard mode** for multiple dependent decisions, three or more credible alternatives, cross-module/public-interface impact, or architecture-level consequence. Ask the current independent frontier together, capped at three questions per round; defer questions that depend on answers in the same round.",
         "heading": "Deliberation",
         "level": 2
       },
@@ -753,12 +623,12 @@
         "level": 3
       },
       {
-        "raw": "Lead with judgment:\n\n1. recommendation and decisive evidence;\n2. strongest rejected alternative and its tradeoff;\n3. impact on complexity, modules, tests, and rollback;\n4. what is explicitly not needed now;\n5. one confirmation question.\n\nIf an option has a fatal failure mode, say so instead of preserving artificial neutrality.",
+        "raw": "Lead with judgment:\n\n1. recommendation and decisive evidence;\n2. strongest rejected alternative and its tradeoff;\n3. impact on complexity, modules, tests, and rollback;\n4. what is explicitly not needed now;\n5. one confirmation question only if a user-owned decision remains.\n\nIf an option has a fatal failure mode, say so instead of preserving artificial neutrality.",
         "heading": "2. Compare one decision",
         "level": 3
       },
       {
-        "raw": "When no blocking item remains, emit the first formal artifact:\n\n```text\nDecision Summary\ncommitment: user-confirmed | agent-committed\n```\n\n| Decision   | Choice   | Decisive reason | Rejected alternative |\n| ---------- | -------- | --------------- | -------------------- |\n| [question] | [choice] | [reason]        | [alternative]        |\n\nAlso record **Non-goals** and any **Open items**. A row belongs in the table only when the user confirmed it or explicitly delegated the choice. Do not hide an open item in a confirmed row.\n\nFor user-confirmed deliberation, walk the Summary once. For Decide-now, emit it and continue without re-asking.",
+        "raw": "When no blocking item remains, emit the first formal artifact:\n\n```text\nDecision Summary\ncommitment: user-confirmed | agent-committed\n```\n\n| Decision   | Choice   | Decisive reason | Rejected alternative |\n| ---------- | -------- | --------------- | -------------------- |\n| [question] | [choice] | [reason]        | [alternative]        |\n\nAlso record **Non-goals** and any **Open items**. A row belongs in the table when the user confirmed or delegated it, or when it is an evidence-backed reversible implementation default within authorized work. Label the latter `agent-committed`; never use that label to settle a product preference or grant action authorization. Do not hide an open item in a confirmed row.\n\nFor user-confirmed deliberation, walk the Summary once. For Decide-now or an agent-owned implementation default, emit it and continue the requested work without re-asking.",
         "heading": "3. Lock the choice",
         "level": 3
       },
@@ -773,68 +643,8 @@
         "level": 2
       },
       {
-        "raw": "Stop immediately when one of these is true:\n\n- the route is Skip, Redirect widening, or Safety hold;\n- one blocking question is waiting on the user;\n- the user requested only a decision and the Summary is complete;\n- the requested planning handoff is complete and introduces no new decision.\n\nDo not add another confirmation, persistence prompt, phase recap, or option after the applicable stop condition.",
+        "raw": "Stop immediately when one of these is true:\n\n- the route is Redirect widening or Safety hold (Skip exits this skill and continues the specified work);\n- one blocking question is waiting on the user;\n- the user requested only a decision and the Summary is complete;\n- the requested planning handoff is complete and introduces no new decision.\n\nDo not add another confirmation, persistence prompt, phase recap, or option after the applicable stop condition.",
         "heading": "Stop Conditions",
-        "level": 2
-      }
-    ]
-  },
-  {
-    "slug": "enforce-lf",
-    "sections": [
-      {
-        "raw": "在 pnpm + Prettier + simple-git-hooks 项目中一键部署四层跨平台 LF 行尾守卫，确保 Windows/macOS/Linux 协作时行尾始终为 LF。",
-        "heading": "Enforce LF Line Endings",
-        "level": 1
-      },
-      {
-        "raw": "| 层级 | 文件 | 作用 | 触发时机 |\n|------|------|------|----------|\n| 1 | `.gitattributes` | Git 层：checkout/commit 时强制 LF | `git checkout` / `git add` |\n| 2 | `.editorconfig` | 编辑器层：新建/保存文件时使用 LF | 文件编辑 |\n| 3 | `.prettierrc.json` | 格式化层：`prettier --write` 时转换为 LF | 手动或自动格式化 |\n| 4 | `package.json` (lint-staged + simple-git-hooks) | 提交层：pre-commit 钩子自动格式化 | `git commit` |",
-        "heading": "四层守卫概览",
-        "level": 2
-      },
-      {
-        "raw": "- 使用 **pnpm** 作为包管理器的项目\n- 已有或即将使用 **Prettier** 的项目\n- 已有或即将使用 **simple-git-hooks** 的项目\n- 支持 monorepo（Turborepo / pnpm workspaces）和单体项目",
-        "heading": "适用范围",
-        "level": 2
-      },
-      {
-        "raw": "在项目根目录确认以下条件：\n\n- 存在 `package.json`\n- 使用 pnpm（存在 `pnpm-lock.yaml` 或 `pnpm-workspace.yaml`）\n- 如果条件不满足，告知用户此 skill 的适用范围，询问是否继续",
-        "heading": "1. 前置检查",
-        "level": 3
-      },
-      {
-        "raw": "从现有代码推断以下变量，用于配置模板：\n\n- **indent_size**: 检查现有 `.editorconfig`、`.prettierrc.json` 或 `package.json` 中的 `tabWidth`，默认 `2`\n- **lint-staged glob**: 扫描项目中的文件类型，构建 glob 模式，默认 `*.{ts,tsx,js,mjs,jsx,json,css,md}`\n- **现有 pre-commit 命令**: 读取 `package.json` 中 `simple-git-hooks.pre-commit`，用于后续合并",
-        "heading": "2. 自动检测项目参数",
-        "level": 3
-      },
-      {
-        "raw": "#### 层 1：`.gitattributes`\n\n**目标内容**（追加到文件顶部）：\n\n```",
-        "heading": "3. 配置四层守卫",
-        "level": 3
-      },
-      {
-        "raw": "* text=auto eol=lf\n```\n\n**合并策略**：\n- 读取现有 `.gitattributes`（如果存在）\n- 检查是否已包含 `* text=auto eol=lf`，已有则跳过\n- 没有则在文件顶部追加上述两行 + 空行分隔\n\n#### 层 2：`.editorconfig`\n\n**目标内容**：\n\n```ini\nroot = true\n\n[*]\nend_of_line = lf\ninsert_final_newline = true\ncharset = utf-8\nindent_style = space\nindent_size = {indent_size}\ntrim_trailing_whitespace = true\n```\n\n**合并策略**：\n- 如果不存在 `.editorconfig`，直接创建\n- 如果已存在，读取内容：\n  - 确保 `[*]` section 包含 `end_of_line = lf`\n  - 保留已有的其他设置（`indent_size`、`indent_style` 等）\n  - 仅补充缺失的字段，不覆盖已有值\n\n#### 层 3：`.prettierrc.json`\n\n**目标内容**（合并到现有配置）：\n\n```json\n{\n  \"endOfLine\": \"lf\"\n}\n```\n\n**合并策略**：\n- 读取项目根目录 `.prettierrc.json`（如果存在），合并 `\"endOfLine\": \"lf\"`，保留其他字段\n- 如果不存在，创建仅含 `endOfLine` 的配置文件\n- **monorepo 子目录**：检查 `apps/*/` 和 `packages/*/` 下是否有独立的 `.prettierrc.json`，同样合并 `endOfLine`\n- 如果项目使用 `.prettierrc`（YAML 格式）或 `prettier.config.js` 等其他格式，告知用户手动添加 `endOfLine: \"lf\"` 配置\n\n#### 层 4：`package.json`（lint-staged + simple-git-hooks）\n\n**目标配置**（合并到根 `package.json`）：\n\n```json\n{\n  \"devDependencies\": {\n    \"lint-staged\": \"^16.3.2\",\n    \"prettier\": \"^3.8.1\",\n    \"simple-git-hooks\": \"^2.13.1\"\n  },\n  \"simple-git-hooks\": {\n    \"pre-commit\": \"pnpm lint-staged && {existing_pre_commit_commands}\"\n  },\n  \"lint-staged\": {\n    \"{lint_staged_glob}\": \"prettier --write --end-of-line lf\"\n  }\n}\n```\n\n**合并策略**：\n- **devDependencies**: 仅添加缺失的依赖，不覆盖已有版本\n- **simple-git-hooks.pre-commit**:\n  - 如果已有 pre-commit 命令，将 `pnpm lint-staged` 追加到前面（用 `&&` 连接）\n  - 如果已包含 `lint-staged`，不重复添加\n  - 如果不存在 `simple-git-hooks` 字段，创建完整配置\n- **lint-staged**:\n  - 如果已存在 lint-staged 配置，合并 prettier 规则\n  - 如果已有 prettier 规则，确保包含 `--end-of-line lf` 参数\n- **限制**：此 skill 仅处理 `package.json` 内的 lint-staged 配置，不处理独立的 `.lintstagedrc` 文件。如果检测到独立配置文件，告知用户手动迁移",
-        "heading": "Force LF line endings for all text files",
-        "level": 1
-      },
-      {
-        "raw": "```bash\npnpm install\npnpm exec simple-git-hooks\n```\n\n`pnpm install` 会自动安装新增的 devDependencies。`simple-git-hooks` 命令将 `package.json` 中的 hook 配置写入 `.git/hooks/`。",
-        "heading": "4. 安装依赖并激活 hooks",
-        "level": 3
-      },
-      {
-        "raw": "逐项检查以下内容并向用户报告结果：\n\n1. `.gitattributes` 包含 `* text=auto eol=lf`\n2. `.editorconfig` 的 `[*]` section 包含 `end_of_line = lf`\n3. `.prettierrc.json` 包含 `\"endOfLine\": \"lf\"`\n4. `package.json` 中 `lint-staged` 配置的 prettier 命令包含 `--end-of-line lf`\n5. `package.json` 中 `simple-git-hooks.pre-commit` 包含 `lint-staged`\n6. `.git/hooks/pre-commit` 文件存在且可执行\n\n可选的端到端测试：\n\n```bash",
-        "heading": "5. 验证清单",
-        "level": 3
-      },
-      {
-        "raw": "echo \"test\" > /tmp/lf-test.txt && git add /tmp/lf-test.txt 2>/dev/null\ngit commit --allow-empty -m \"test: verify pre-commit hook\"\n```",
-        "heading": "创建一个测试文件，验证 pre-commit hook 能正常触发",
-        "level": 1
-      },
-      {
-        "raw": "- 首次配置后，建议运行 `prettier --write --end-of-line lf .` 对全仓库做一次格式化，统一存量文件\n- 如果项目已有 Husky 而非 simple-git-hooks，此 skill 不适用，需手动适配\n- 对于二进制文件（图片、字体等），`.gitattributes` 的 `text=auto` 会自动识别并跳过",
-        "heading": "注意事项",
         "level": 2
       }
     ]
@@ -910,66 +720,6 @@
     ]
   },
   {
-    "slug": "global-modal-scaffold",
-    "sections": [
-      {
-        "raw": "插件化全局弹窗系统：基于 Zustand 状态管理 + 扩展注册表 + 懒加载 + 完整类型安全。",
-        "heading": "Global Modal Scaffold",
-        "level": 1
-      },
-      {
-        "raw": "该系统将全局弹窗抽象为**扩展（Extension）**，每个扩展包含：\n- **key** — 唯一标识符（字符串字面量，自动推导为联合类型）\n- **modal** — 懒加载的弹窗组件\n- **useMountCallbacks?** — 可选的挂载回调（用于全局事件桥接）\n\n核心能力：\n- Zustand store slice 管理 `openedGlobalModals` 数组，支持多弹窗并发\n- `useGlobalModalState<T>(key)` 泛型 hook 提供 `{ open, data, openModal, closeModal }`\n- `onOpen(isFirstOpen)` / `onClose()` 生命周期回调\n- `ExtensionKey` 从扩展数组自动推导，新增扩展时类型自动更新\n- BaseModal 接口与 UI 库解耦，可适配任意组件库",
-        "heading": "概述",
-        "level": 2
-      },
-      {
-        "raw": "当项目中尚无全局弹窗系统时使用。读取 `templates/infrastructure/` 下所有 `.tpl` 模板，根据项目技术栈适配后生成基础设施文件。\n\n**步骤：**\n\n1. **询问用户技术栈** — UI 库（Ant Design / Material UI / Headless UI / shadcn 等）、状态管理（Zustand / Redux / Context）、懒加载方式（next/dynamic / React.lazy）、函数记忆化（ahooks useMemoizedFn / useCallback）\n2. **确定目标目录** — 建议 `src/pages/_blocks/global-modals/` 或用户指定路径\n3. **生成基础设施文件**：\n   - 从 `store-slice.ts.tpl` 生成 store slice（需集成到用户的全局 store）\n   - 从 `store-hooks.ts.tpl` 生成通用 hooks\n   - 从 `helpers.ts.tpl` 生成 `defineGlobalModalExtension` + 类型\n   - 从 `orchestrator.tsx.tpl` 生成 GlobalModals 编排器\n   - 从 `base-modal.tsx.tpl` 生成 BaseModal 组件（适配用户选择的 UI 库）\n4. **创建 extensions 注册表** — 空的 `extensions` 数组 + `ExtensionKey` 类型导出\n5. **在布局组件中挂载** — 指导用户将 `<GlobalModals />` 放置在全局 Layout 底部\n\n**生成的目录结构：**\n```\nglobal-modals/\n├── _components/\n│   ├── GlobalBaseModal/index.tsx    # BaseModal 组件\n│   └── GlobalModals/index.tsx       # 编排器\n└── _extensions/\n    ├── _helpers/index.ts            # defineGlobalModalExtension + types\n    └── index.ts                     # extensions 数组 + ExtensionKey\n```",
-        "heading": "流程一：初始化基础设施（首次搭建）",
-        "level": 3
-      },
-      {
-        "raw": "当项目已有全局弹窗基础设施，需要新增一个弹窗时使用。\n\n**步骤：**\n\n1. **确认扩展模式** — 询问用户需要 basic / enriched / with-callbacks\n2. **获取弹窗名称** — 如 `confirm-delete`，自动派生 `ConfirmDelete`（PascalCase）和 `confirmDelete`（camelCase）\n3. **创建扩展目录** — `_extensions/{{KEBAB_NAME}}/`\n4. **从对应模式模板生成文件** — 替换所有占位符\n5. **注册扩展** — 在 `_extensions/index.ts` 的 extensions 数组中导入并添加新扩展\n6. **实现具体 UI** — 在 modal-component 中填充业务 UI",
-        "heading": "流程二：新增弹窗扩展（已有基础设施）",
-        "level": 3
-      },
-      {
-        "raw": "| 模式 | 适用场景 | 文件数 | 特有能力 |\n|------|---------|--------|---------|\n| **basic** | 简单展示弹窗（确认框、信息展示） | 3 | 无 |\n| **enriched** | 需要 onOpen/onClose 副作用（analytics、URL 重写） | 3 | openModal 包装注入生命周期 |\n| **with-callbacks** | 需要从非 React 代码触发弹窗（tRPC 错误拦截等） | 4 | useMountCallbacks + 全局事件桥 |",
-        "heading": "三种扩展模式",
-        "level": 2
-      },
-      {
-        "raw": "所有 `.tpl` 模板使用以下占位符，生成时按规则替换：\n\n| 占位符 | 规则 | 示例（输入 `confirm-delete`） |\n|--------|------|------|\n| `{{PASCAL_NAME}}` | PascalCase | `ConfirmDelete` |\n| `{{KEBAB_NAME}}` | kebab-case | `confirm-delete` |\n| `{{CAMEL_NAME}}` | camelCase | `confirmDelete` |\n\n基础设施模板额外占位符：\n\n| 占位符 | 说明 |\n|--------|------|\n| `{{STORE_TYPE}}` | 全局 store 类型名（如 `GlobalStore`） |\n| `{{EXTENSION_KEY_TYPE}}` | ExtensionKey 类型的导入路径 |\n| `{{EXTENSIONS_IMPORT_PATH}}` | extensions 数组的导入路径 |\n| `{{BASE_MODAL_IMPORT}}` | BaseModal 组件的导入路径 |\n| `{{MODAL_STATE_HOOK_IMPORT}}` | useGlobalModalState 的导入路径 |",
-        "heading": "模板占位符说明",
-        "level": 2
-      },
-      {
-        "raw": "- **扩展目录**: `kebab-case`（如 `confirm-delete/`）\n- **extension 变量**: `camelCase` + `GlobalModalExtension` 后缀（如 `confirmDeleteGlobalModalExtension`）\n- **hook 函数**: `use` + `PascalCase` + `GlobalModalState`（如 `useConfirmDeleteGlobalModalState`）\n- **Modal 组件**: `PascalCase` + `Modal`（如 `ConfirmDeleteModal`）\n- **key 字符串**: `kebab-case`（如 `'confirm-delete'`）",
-        "heading": "命名约定",
-        "level": 2
-      },
-      {
-        "raw": "1. **懒加载** — 所有 modal 组件必须使用 dynamic import 包装，避免主包体积膨胀\n2. **GlobalModalCoreData** — 所有弹窗数据接口都应继承 `GlobalModalCoreData`（包含 `onClose`、`onOpen` 回调）\n3. **destroyOnClose** — BaseModal 建议默认开启销毁模式，确保每次打开时状态干净\n4. **isFirstOpen** — `onOpen(isFirstOpen)` 区分首次打开和重复打开，用于控制只触发一次的副作用（如 analytics）\n5. **useMountCallbacks 无条件调用** — 编排器中必须无条件遍历所有扩展调用 `useMountCallbacks`，确保 React Hooks 调用顺序稳定\n6. **稳定函数引用** — enriched 模式的 hook 包装应使用 `useMemoizedFn`（ahooks）或 `useCallback` 确保引用地址稳定",
-        "heading": "关键设计约定",
-        "level": 2
-      },
-      {
-        "raw": "本 skill 设计为 UI 库无关、状态管理方案无关。BaseModal 模板仅定义接口，需适配到用户实际使用的组件库。详见 `references/portability.md`。",
-        "heading": "适配说明",
-        "level": 2
-      },
-      {
-        "raw": "```\ntemplates/\n├── infrastructure/          # 基础设施模板（流程一使用）\n│   ├── store-slice.ts.tpl\n│   ├── store-hooks.ts.tpl\n│   ├── orchestrator.tsx.tpl\n│   ├── base-modal.tsx.tpl\n│   └── helpers.ts.tpl\n└── extensions/              # 扩展模板（流程二使用）\n    ├── basic/\n    │   ├── extension.ts.tpl\n    │   ├── hooks.ts.tpl\n    │   └── modal-component.tsx.tpl\n    ├── enriched/\n    │   ├── extension.ts.tpl\n    │   ├── hooks.ts.tpl\n    │   └── modal-component.tsx.tpl\n    └── with-callbacks/\n        ├── extension.tsx.tpl\n        ├── hooks.ts.tpl\n        ├── callbacks.ts.tpl\n        └── modal-component.tsx.tpl\n```",
-        "heading": "模板文件位置",
-        "level": 2
-      },
-      {
-        "raw": "- `references/architecture.md` — 深度架构解析（store 设计、编排器原理、类型系统、生命周期）\n- `references/portability.md` — 不同技术栈适配指南（UI 库、状态管理、框架、代码风格）",
-        "heading": "参考文档",
-        "level": 2
-      }
-    ]
-  },
-  {
     "slug": "goal-gate",
     "sections": [
       {
@@ -993,7 +743,7 @@
         "level": 2
       },
       {
-        "raw": "Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.\n\n- Destructive, irreversible, billing, auth, production-data, or schema-breaking work.\n- A goal is already active **and** the new objective conflicts with it, or the user has not chosen how to handle it. Never replace or mutate that goal silently; ask whether to continue, complete, block, pause, clear, or replace it, and emit `Decision: defer`. Same-Goal management includes both an exact objective match and a contained checkpoint when the active Goal's objective, frozen scope, and Done condition explicitly include that checkpoint and the user already authorized the parent pipeline. Verify this relationship from evidence; compatible containment never permits scope expansion or narrowing the parent's Done condition.\n- The objective still needs a design or scoping decision that `grilling` (Route: Challenge) or `discuss-before-plan` should resolve.\n- Verification cannot run, so completion could never be proven from evidence.\n\nThe gate exists because an auto-started goal hands the agent a long leash. That leash is only safe when the end state is reversible-or-approved, unambiguous, and checkable. When in doubt, fall back to `suggest` — the cost of asking once is small next to a goal that runs off in the wrong direction.\n\nHigh-risk work can still receive a goal draft, but the draft must be discovery-first or approval-first. Do not present a production write, destructive migration, auth rewrite, billing change, or regulated-domain decision as an immediately executable action.",
+        "raw": "Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.\n\n- Destructive, irreversible, billing, auth, production-data, or schema-breaking action whose concrete scope is not yet authorized. Check the action and existing approval, not domain keywords alone: read-only diagnosis and explicitly authorized isolated local tests can proceed. Prior approval applies only to its stated paths, environment and effects; a new production target, security change or expanded effect needs its own gate.\n- A goal is already active **and** the new objective conflicts with it, or the user has not chosen how to handle it. Never replace or mutate that goal silently; ask whether to continue, complete, block, pause, clear, or replace it, and emit `Decision: defer`. Same-Goal management includes both an exact objective match and a contained checkpoint when the active Goal's objective, frozen scope, and Done condition explicitly include that checkpoint and the user already authorized the parent pipeline. Verify this relationship from evidence; compatible containment never permits scope expansion or narrowing the parent's Done condition.\n- The objective still needs a design or scoping decision that `grilling` (Route: Challenge) or `discuss-before-plan` should resolve.\n- Verification cannot run, so completion could never be proven from evidence.\n\nThe gate exists because an auto-started goal hands the agent a long leash. That leash is only safe when the end state is reversible-or-approved, unambiguous, and checkable. When in doubt, fall back to `suggest` — the cost of asking once is small next to a goal that runs off in the wrong direction.\n\nHigh-risk work can still receive a goal draft, but the draft must be discovery-first or approval-first. Do not present a production write, destructive migration, auth rewrite, billing change, or regulated-domain decision as an immediately executable action.",
         "heading": "Safety Gate",
         "level": 2
       },
@@ -1003,12 +753,12 @@
         "level": 2
       },
       {
-        "raw": "When the safety gate is clear and goal fit is `high`, start the authorized work under a transcript contract. This does not by itself authorize native Goal state. Hold auto-adoption for `medium` fit: the medium boundary is fuzzy enough that a quick nod is worth more than the saved round-trip. `low` fit is `none`.\n\nNative `set-now` requires explicit Goal authorization or an already-authorized exact-same / compatible-contained continuation. A high-fit task without that authorization uses `suggest` plus `adopt goal and continue` on a native-capable runtime; transcript-only runtimes may use `set-now` because no product state is mutated. Both start the task without claiming a native Goal became Active. A contained checkpoint reports progress but leaves completion to the parent Goal owner. Same-goal complete/block uses `Next: report via update_goal` only after its terminal preconditions are proven. If an active goal conflicts with a new objective or the desired action is unclear, emit `Decision: defer` and ask; never call either runtime's completion action or tell the user to clear a goal merely to make replacement convenient.\n\n| Situation                                                                                | Decision             | Next                                                      |\n| ---------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------- |\n| High fit, native-capable runtime, no explicit Goal action                                | `suggest`            | `adopt goal and continue`; no native Goal mutation        |\n| High fit, transcript-only runtime, no explicit Goal action                               | `set-now`            | `adopt goal and continue`; no product Goal claim          |\n| Explicit Goal action, high fit, safety clear                                             | `set-now`            | Runtime action below                                      |\n| Medium fit, safety clear                                                                 | `suggest`            | `provide prompt` or `ask approval`                        |\n| Safety tripped (auth, destructive, production-data, irreversible, billing, unverifiable) | `suggest` or `defer` | `ask approval` (or `route elsewhere`); do not auto-create |\n| Conflicting or unchosen active goal                                                      | `defer`              | Ask continue / complete / block / pause / clear / replace |\n| Exact-same or compatible-contained continuation                                          | `set-now`            | `continue active goal`                                    |\n| Same-goal proven complete or 3-turn persistent block                                     | `set-now`            | `report via update_goal`                                  |\n| User asked only for text to copy or review                                               | `suggest`            | `provide prompt`                                          |\n| Low fit (typo, one-shot, no durable end state)                                           | `none`               | `continue without goal`; Prompt `none`                    |\n| User is asking which workflow/route to use                                               | `defer`              | `route elsewhere`                                         |\n| Unresolved `Route: Challenge`                                                            | `defer` (fit `low`)  | Finish the thesis/spec first                              |\n| Diagnose-only `Route: Architecture` without a goal request                               | `none` (fit `low`)   | Preserve stop-after-report                                |\n| Runtime `unknown`                                                                        | do not auto-execute  | `ask approval`                                            |",
+        "raw": "When the safety gate is clear and goal fit is `high`, start the authorized work under a transcript contract. This does not by itself authorize native Goal state. For `medium` fit, suggest the contract without creating native Goal state; continue already authorized task work while the user considers it. Goal fit is not a second permission gate for the underlying work. `low` fit is `none`.\n\nNative `set-now` requires explicit Goal authorization or an already-authorized exact-same / compatible-contained continuation. A high-fit task without that authorization uses `suggest` plus `adopt goal and continue` on a native-capable runtime; transcript-only runtimes may use `set-now` because no product state is mutated. Both start the task without claiming a native Goal became Active. A contained checkpoint reports progress but leaves completion to the parent Goal owner. Same-goal complete/block uses `Next: report via update_goal` only after its terminal preconditions are proven. If an active goal conflicts with a new objective or the desired action is unclear, emit `Decision: defer` and ask; never call either runtime's completion action or tell the user to clear a goal merely to make replacement convenient.\n\n| Situation                                                                                | Decision             | Next                                                      |\n| ---------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------- |\n| High fit, native-capable runtime, no explicit Goal action                                | `suggest`            | `adopt goal and continue`; no native Goal mutation        |\n| High fit, transcript-only runtime, no explicit Goal action                               | `set-now`            | `adopt goal and continue`; no product Goal claim          |\n| Explicit Goal action, high fit, safety clear                                             | `set-now`            | Runtime action below                                      |\n| Medium fit, safety clear                                                                 | `suggest`            | `provide prompt`; continue authorized task work           |\n| Safety tripped (auth, destructive, production-data, irreversible, billing, unverifiable) | `suggest` or `defer` | `ask approval` (or `route elsewhere`); do not auto-create |\n| Conflicting or unchosen active goal                                                      | `defer`              | Ask continue / complete / block / pause / clear / replace |\n| Exact-same or compatible-contained continuation                                          | `set-now`            | `continue active goal`                                    |\n| Same-goal proven complete or 3-turn persistent block                                     | `set-now`            | `report via update_goal`                                  |\n| User asked only for text to copy or review                                               | `suggest`            | `provide prompt`                                          |\n| Low fit (typo, one-shot, no durable end state)                                           | `none`               | `continue without goal`; Prompt `none`                    |\n| User is asking which workflow/route to use                                               | `defer`              | `route elsewhere`                                         |\n| Unresolved `Route: Challenge`                                                            | `defer` (fit `low`)  | Finish the thesis/spec first                              |\n| Diagnose-only `Route: Architecture` without a goal request                               | `none` (fit `low`)   | Preserve stop-after-report                                |\n| Runtime `unknown`                                                                        | do not auto-execute  | `ask approval`                                            |",
         "heading": "Auto-Set",
         "level": 2
       },
       {
-        "raw": "| Runtime                                      | Next                                                                  | Do now                                                                                                                                                                                                                                                                                                                                       |\n| -------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| `cursor-cli`                                 | `adopt goal and continue`; same-chat resume → `continue adopted goal` | No `/goal`. No `get_goal` / `create_goal` / `update_goal`. Work in this chat; report evidence in the transcript. Resume commands restore chat context only (see Runtime Detection). Prompt-only → `suggest` / `provide prompt` with a plain prompt. Ask/Plan are read-only — surface the mode constraint instead of claiming writes started. |\n| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                                 | Emit the block and a full copy-ready `/goal` first, then **stop**. No implementation. No `update_goal`. `/goal-gate` ≠ `/goal`. Without explicit Goal authorization → `suggest` / `adopt goal and continue`, still no `update_goal` until Active.                                                                                             |\n| `grok-tooling` (Active, same/contained)      | `continue active goal`                                                | Work the contract. Checkpoint with Grok `message`. Do not emit a second `/goal`. Do not invent `create_goal` / `get_goal`. `completed: true` only after the full parent Done condition is proven.                                                                                                                                            |\n| `grok-tooling` (Active, Done proven)         | `report via update_goal`                                              | Grok `completed: true` plus a concise evidence `message`. Never Codex `status`.                                                                                                                                                                                                                                                              |\n| `grok-slash`                                 | usually `provide prompt`                                              | Copy-ready `/goal`. Soft-adopt only if the user also authorized execution without durable mode.                                                                                                                                                                                                                                              |\n| `codex-tooling` (no active, explicit Goal)   | `create goal`                                                         | `get_goal` then `create_goal` with the `Objective`. No token budget unless the user asked. Without explicit Goal authorization → `suggest` / `adopt goal and continue`; do not call `create_goal`.                                                                                                                                              |\n| `codex-tooling` (same/contained, not done)   | `continue active goal`                                                | Keep working. No `create_goal`, no replacement, no terminal `update_goal`. A contained checkpoint cannot complete the parent.                                                                                                                                                                                                                |\n| `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                              | Codex `status: \"complete\"` after evidence, or `status: \"blocked\"` only after the same blocker persists ≥3 consecutive goal turns. Never Grok `message` / `completed` / `blocked_reason`.                                                                                                                                                     |\n| `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                             | Self-adopt and keep working. Still emit `/goal` for reuse. Claude: surface verification in the transcript — the evaluator does not independently read files or run commands.                                                                                                                                                                 |\n| `unknown`                                    | `ask approval`                                                        | Portable contract only.                                                                                                                                                                                                                                                                                                                      |\n\nWhy an explicitly requested Grok Goal waits: Codex `create_goal` can activate from the agent; Grok cannot. A false Active session is what produces `Goal is not Active` failures.",
+        "raw": "| Runtime                                      | Next                                                                  | Do now                                                                                                                                                                                                                                                                                                                                       |\n| -------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |\n| `cursor-cli`                                 | `adopt goal and continue`; same-chat resume → `continue adopted goal` | No `/goal`. No `get_goal` / `create_goal` / `update_goal`. Work in this chat; report evidence in the transcript. Resume commands restore chat context only (see Runtime Detection). Prompt-only → `suggest` / `provide prompt` with a plain prompt. Ask/Plan are read-only — surface the mode constraint instead of claiming writes started. |\n| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                                 | Emit the block and a full copy-ready `/goal` first, then **stop**. No implementation. No `update_goal`. `/goal-gate` ≠ `/goal`. Without explicit Goal authorization → `suggest` / `adopt goal and continue`, still no `update_goal` until Active.                                                                                            |\n| `grok-tooling` (Active, same/contained)      | `continue active goal`                                                | Work the contract. Checkpoint with Grok `message`. Do not emit a second `/goal`. Do not invent `create_goal` / `get_goal`. `completed: true` only after the full parent Done condition is proven.                                                                                                                                            |\n| `grok-tooling` (Active, Done proven)         | `report via update_goal`                                              | Grok `completed: true` plus a concise evidence `message`. Never Codex `status`.                                                                                                                                                                                                                                                              |\n| `grok-slash`                                 | usually `provide prompt`                                              | Copy-ready `/goal`. Soft-adopt only if the user also authorized execution without durable mode.                                                                                                                                                                                                                                              |\n| `codex-tooling` (no active, explicit Goal)   | `create goal`                                                         | `get_goal` then `create_goal` with the `Objective`. No token budget unless the user asked. Without explicit Goal authorization → `suggest` / `adopt goal and continue`; do not call `create_goal`.                                                                                                                                           |\n| `codex-tooling` (same/contained, not done)   | `continue active goal`                                                | Keep working. No `create_goal`, no replacement, no terminal `update_goal`. A contained checkpoint cannot complete the parent.                                                                                                                                                                                                                |\n| `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                              | Codex `status: \"complete\"` after evidence, or `status: \"blocked\"` only after the same blocker persists ≥3 consecutive goal turns. Never Grok `message` / `completed` / `blocked_reason`.                                                                                                                                                     |\n| `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                             | Self-adopt and keep working. Still emit `/goal` for reuse. Claude: surface verification in the transcript — the evaluator does not independently read files or run commands.                                                                                                                                                                 |\n| `unknown`                                    | `ask approval`                                                        | Portable contract only.                                                                                                                                                                                                                                                                                                                      |\n\nWhy an explicitly requested Grok Goal waits: Codex `create_goal` can activate from the agent; Grok cannot. A false Active session is what produces `Goal is not Active` failures.",
         "heading": "Runtime action on `set-now`",
         "level": 3
       },
@@ -1035,101 +785,36 @@
     ]
   },
   {
-    "slug": "lingui-next-init",
-    "sections": [
-      {
-        "raw": "Initialize Lingui i18n in a Next.js App Router codebase using deterministic templates and a single scaffold script.",
-        "heading": "Lingui Next Init",
-        "level": 1
-      },
-      {
-        "raw": "Run the scaffold script with an absolute project path:\n\nSet `SKILL_ROOT` to your actual skill install location first:\n- Repository development: `.agents/skills/lingui-next-init`\n- Installed runtime location: `.claude/skills/lingui-next-init`\n\n```bash\npython3 \"${SKILL_ROOT}/scripts/scaffold_lingui_next.py\" \\\n  --project-root /abs/path/to/project \\\n  --mode app-only \\\n  --locales en,zh \\\n  --default-locale en \\\n  --source-locale en \\\n  --package-manager pnpm\n```\n\nDry-run first:\n\n```bash\npython3 \"${SKILL_ROOT}/scripts/scaffold_lingui_next.py\" \\\n  --project-root /abs/path/to/project \\\n  --mode shared-auto \\\n  --locales en,zh \\\n  --default-locale en \\\n  --source-locale en \\\n  --package-manager pnpm \\\n  --dry-run\n```\n\n`--package-manager` is restricted to: `pnpm`, `npm`, `yarn`, `bun`.\n\nOptional server-layout composition:\n\n```bash\npython3 \"${SKILL_ROOT}/scripts/scaffold_lingui_next.py\" \\\n  --project-root /abs/path/to/project \\\n  --mode app-only \\\n  --locales en,zh \\\n  --default-locale en \\\n  --source-locale en \\\n  --package-manager pnpm \\\n  --with-server-layouts \\\n  --server-layouts-package @adonis-kit/react-layouts \\\n  --server-layouts-version latest \\\n  --dry-run\n```\n\nWhen `--with-server-layouts` is enabled:\n- Render optional templates: `web/src/i18n/layout-factory.tsx` and `web/src/app/[lang]/(home)/layout.tsx`.\n- Merge `--server-layouts-package` and `--server-layouts-version` into `web/package.json` `dependencies` when missing.\n- Preserve the default `web/src/app/[lang]/layout.tsx` `initLingui` flow.\n- Keep server initialization explicit: call `initPageLingui(params)` in server layouts and server pages before using Lingui `t`/metadata.",
-        "heading": "Quick Start",
-        "level": 2
-      },
-      {
-        "raw": "Choose one mode:\n\n1. `app-only`\nCreate only app-side files under `web/**`. Never create `packages/i18n`.\n\n2. `shared-auto`\nDetect workspace and existing `packages/i18n`:\n- Workspace + missing `packages/i18n`: create shared package templates.\n- Existing `packages/i18n`: skip creating package files.\n- No workspace and no package: fallback to app-only behavior.\n\n3. `shared-force`\nAlways render shared package templates under `packages/i18n`.",
-        "heading": "Mode Decision",
-        "level": 2
-      },
-      {
-        "raw": "The script renders templates from:\n\n1. `assets/templates/app-router/web/**.tpl`\n2. `assets/templates/app-router/packages/i18n/**.tpl` (mode-dependent)\n3. `assets/templates/app-router/web/src/i18n/layout-factory.tsx.tpl` and `assets/templates/app-router/web/src/app/[lang]/(home)/layout.tsx.tpl` (only when `--with-server-layouts` is enabled)\n4. `assets/templates/pages-router/_reserved.tpl` (reserved for future extension, not scaffolded)\n\n`web/package.scripts.json.tpl` is merged into `web/package.json` incrementally:\n- Add missing `scripts`\n- Add missing `dependencies`\n- Add missing `devDependencies`\n- If `--with-server-layouts` is enabled, add missing `dependencies.<server-layouts-package>` with `<server-layouts-version>`\n- Never overwrite existing keys\n\nProject-root `.gitignore` is merged incrementally:\n- Add missing compiled-catalog ignore patterns:\n  - `web/src/locales/**/*.js`\n  - `web/src/locales/**/*.mjs`\n  - `web/locale/**/*.js`\n  - `web/locale/**/*.mjs`\n- Never remove existing rules",
-        "heading": "Generated Scope",
-        "level": 2
-      },
-      {
-        "raw": "After scaffolding a target project:\n\nFirst, merge the generated SWC snippet into your Next config:\n- Merge `web/next.swc-snippet.ts` into `web/next.config.ts`.\n- Ensure `experimental.swcPlugins` contains `[\"@lingui/swc-plugin\", {}]`.\n- Without this step, Lingui extraction/compile behavior may not match expectations.\n\n```bash\npnpm --filter @your/web run i18n:extract\npnpm --filter @your/web run i18n:compile\npnpm --filter @your/web run i18n:manifest\npnpm --filter @your/web run typecheck\n```\n\nUse `--fill-source` when placeholder translation is acceptable:\n\n```bash\npnpm --filter @your/web run i18n:translate -- --fill-source\n```\n\nDaily command execution and troubleshooting are maintained in `lingui-workflow`.\nUse `skills/lingui-workflow` for the day-to-day extract/translate/compile workflow.",
-        "heading": "Validation Workflow",
-        "level": 2
-      },
-      {
-        "raw": "Use this checklist to avoid common maintenance mistakes when updating Lingui skills:\n\n1. Handoff timing:\nAfter scaffold/setup is done, hand over immediately to `skills/lingui-workflow` for day-to-day command guidance.\n\n2. Documentation migration order:\nMigrate content to the target new doc first, then delete old duplicate docs, and run finalize pipeline last.\n\n3. `skills:init` side effect:\n`pnpm skills:init` creates `agents/openai.yaml` automatically.\nIf this file is not needed for the new public skill, remove it before finalize.\n\n4. Large workspace safety:\nRun `git status` before `skills:finalize` so `AD`/`MM` states are understood and not misinterpreted as current-task failures.",
-        "heading": "Experience Notes",
-        "level": 2
-      },
-      {
-        "raw": "1. Manifest empty:\nConfirm `web/src/locales/**` contains compiled `.mjs` files, then rerun `i18n:manifest`.\n\n2. Locale route mismatch:\nVerify `web/src/proxy.ts` default-locale rewrite and non-default prefix redirect logic.\n\n3. No translated text at runtime:\nCheck `web/src/i18n/catalog-manifest.ts` and `web/src/i18n/appRouterI18n.ts` loader paths.\n\n4. Error: `Attempted to call a translation function without setting a locale`:\nConfirm `web/src/i18n/initLingui.ts` activates locale before `setI18n`.\nThen ensure both server `layout.tsx` and server `page.tsx` call `initPageLingui(params)` (or equivalent) before `t`/metadata usage.\nPrefer `useLingui`/`Trans` in shared server components.\n\n5. `shared-auto` with existing `packages/i18n`:\n`shared-auto` will reuse the existing shared package and skip rendering `packages/i18n/**` templates.\nEnsure your package exports `<i18n-package-name>/next-config` and `<i18n-package-name>/lingui-config`.\nIf not, use `--mode shared-force` to scaffold shared templates or switch to `--mode app-only`.\n\n6. `withServerLayouts` setup issues:\nConfirm `--with-server-layouts` is enabled and your package exports `<server-layouts-package>/server`.\nIf you use a custom package, pass `--server-layouts-package` explicitly.",
-        "heading": "Troubleshooting",
-        "level": 2
-      },
-      {
-        "raw": "Read these files only when needed:\n\n1. `references/workflow-app-router.md`\n2. `references/official-notes.md`\n3. `references/pages-router-roadmap.md`\n4. Daily workflow skill: `skills/lingui-workflow`",
-        "heading": "References",
-        "level": 2
-      }
-    ]
-  },
-  {
     "slug": "lingui-workflow",
     "sections": [
       {
-        "raw": "当此 skill 被激活时，**先输出以下命令速查表**，再回应用户问题：\n\n```\n| 命令              | 作用摘要                                       | 可用参数                                          |\n| ----------------- | ---------------------------------------------- | ------------------------------------------------- |\n| i18n:extract      | 提取源码文案到 po                              | —                                                 |\n| i18n:translate    | 统计缺失翻译                                   | --fill-source, --strict                           |\n| i18n:check        | 严格翻译检查，缺失即报错退出                   | —                                                 |\n| i18n:compile      | 编译 po → mjs，自动执行 i18n:manifest          | —                                                 |\n| i18n:manifest     | 基于已有 mjs 生成 catalog-manifest.ts           | —                                                 |\n| i18n:sync         | 当前仅等价 i18n:extract                        | —                                                 |\n| i18n:bootstrap    | 一次执行 extract + compile(+manifest)           | —                                                 |\n| i18n              | 组合入口；默认 extract + translate              | --compile, --fill-source, --no-translate, --strict |\n```",
-        "heading": "Agent Behavior",
+        "raw": "处理已经接入 Lingui 的项目。先回答当前问题或执行已授权的步骤；只有用户要完整速查时才输出命令表。",
+        "heading": "Lingui Workflow",
+        "level": 1
+      },
+      {
+        "raw": "- 复用本轮已确认的项目、包管理器和脚本信息。缺少时先读目标包的 `package.json` 与 Lingui 配置，再按问题查看对应入口；不预先读取所有脚本。\n- `i18n:*` 是项目自定义名称，不是 Lingui 标准接口。下文示例来自已退役的 `lingui-next-init` 历史模板，仅用于维护既有项目；所有项目以实际脚本为准。不要因缺少 `scripts/i18n`、manifest 或 Next.js SWC 配置就判定普通 React/Lingui 接入不完整。\n- `@your/web` 是占位符，先替换成已核实的包名；非 workspace 项目在目标包目录运行相应脚本。沿用已有包管理器。\n- 首次接入不属于本 skill 范围，优先复用用户已选定的项目模板；不要调用已退役的初始化 skill。单纯问命令含义不运行写入命令。",
+        "heading": "Resolve the Project Contract",
         "level": 2
       },
       {
-        "raw": "这个 skill 面向“已经完成 Lingui 接入后的日常使用”，帮助你稳定执行 i18n 命令链路并快速排障。  \n如果你需要的是“初始化/脚手架接入”，请使用 `lingui-next-init`，不要混用职责。",
-        "heading": "Overview",
+        "raw": "- **源码文案改变**：extract → 检查缺失翻译 → 完成翻译后 compile。\n- **仅修改已有翻译**：检查目标 catalog → compile；没有词条漂移证据就不重复 extract。\n- **只检查缺失翻译**：已存在的只读严格检查命令，例如 `i18n:check`；不附加 extract、占位回填或 compile。\n- **只重建 manifest**：确认编译产物已经存在且新鲜，再运行 `i18n:manifest`。\n- **编译或构建**：先确认 `i18n:compile` / build 是否已包含 manifest 或 compile，避免重复执行。\n\n采用该历史脚本约定的既有项目，新增源码文案的示例：\n\n```bash\npnpm --filter @your/web run i18n:extract\npnpm --filter @your/web run i18n:translate\npnpm --filter @your/web run i18n:compile\n```\n\n`i18n:translate` 默认统计缺失，并不调用翻译服务。只有明确接受源文案占位时才用 `--fill-source`，不能把占位回填报告为完成翻译。",
+        "heading": "Choose the Shortest Relevant Flow",
         "level": 2
       },
       {
-        "raw": "Before using this skill, confirm your project already has Lingui runtime setup:\n\n1. `scripts/i18n/*` exists (at least `index.ts`, `cli.ts`, `manifest.ts`).\n2. Next.js SWC plugin contains `[\"@lingui/swc-plugin\", {}]`.\n3. `src/locales/**` catalogs and `src/i18n/catalog-manifest.ts` flow are already wired.",
-        "heading": "Prerequisites",
+        "raw": "需要参数或输入/输出细节时读 [references/i18n-commands.md](references/i18n-commands.md)。需要场景例子时读 [references/workflow-daily.md](references/workflow-daily.md)。不要为一个命令问题同时加载全部参考。\n\n仅对经核对仍采用以下历史脚本约定的项目：\n\n- `i18n` 默认 extract + translate，显式 `--compile` 才编译；`i18n:sync` 仅 extract。\n- `i18n:compile` 包含 manifest；`i18n:manifest` 不生成编译 catalog。\n- `i18n:check` 是只读严格检查。组合入口的 `--strict` 仍会先 extract，不能作为只读检查的替代。\n- extract 会改写 catalog，并可能清理不再归属的 entry。`I18N_DRY_RUN=1` 只预览清理阶段，**不阻止 extract 写入**；需要只读探测时选只读命令或可丢弃副本。\n- CLI 失败与“没有缺失翻译”不同。保留实际退出状态；旧脚手架缺少新命令时说明版本差异，不假装执行成功。",
+        "heading": "Command Semantics and Side Effects",
         "level": 2
       },
       {
-        "raw": "推荐最短日常流程（新增/修改文案）：\n\n```bash\npnpm --filter @your/web run i18n:extract\npnpm --filter @your/web run i18n:translate\npnpm --filter @your/web run i18n:compile\n```\n\n高频补充命令：\n- 首次初始化：`pnpm --filter @your/web run i18n:bootstrap`\n- 仅重建 manifest：`pnpm --filter @your/web run i18n:manifest`\n- 一条命令串联：`pnpm --filter @your/web run i18n -- --compile`\n- CI / 发布前翻译检查：`pnpm --filter @your/web run i18n:check`",
-        "heading": "Quick Start",
+        "raw": "从失败阶段开始，不固定重跑整个流程：\n\n1. 文案未提取：检查对应源码、catalog include/entry 和 extract 结果。\n2. 翻译未显示：核对目标 `po`、编译产物与实际 locale loader；有 manifest 的项目再检查它。\n3. `Attempted to call a translation function without setting a locale`：先查 locale 初始化与调用顺序，不先修改翻译内容。\n4. Next.js App Router / RSC：确认使用翻译的 server layout/page 在调用前完成 locale 初始化；共享服务端组件按已有版本和 `useLingui`/`Trans` 约定取上下文。此项不适用于普通 React 客户端项目。\n\n运行命令只能证明对应步骤。涉及页面显示时，还需在目标 locale 的真实页面核对文案；没运行就标记 `UNVERIFIED`。",
+        "heading": "Diagnose from the Observed Failure",
         "level": 2
       },
       {
-        "raw": "| 命令 | 作用摘要 | 可用参数 |\n| --- | --- | --- |\n| `i18n:extract` | 提取源码文案到 `po` | — |\n| `i18n:translate` | 统计缺失翻译 | `--fill-source`, `--strict` |\n| `i18n:check` | 严格翻译检查，缺失即报错退出 | — |\n| `i18n:compile` | 编译 `po` 到 `mjs`，并自动执行 `i18n:manifest` | — |\n| `i18n:manifest` | 基于现有 `mjs` 生成 `catalog-manifest.ts` | — |\n| `i18n:sync` | 当前仅等价 `i18n:extract` | — |\n| `i18n:bootstrap` | 一次执行 `extract + compile(+manifest)` | — |\n| `i18n` | 组合入口；默认 `extract + translate`，加 `--compile` 才会编译 | `--compile`, `--fill-source`, `--no-translate`, `--strict` |\n\n详细输入/输出/副作用请看 `references/i18n-commands.md`。",
-        "heading": "Command Matrix",
-        "level": 2
-      },
-      {
-        "raw": "When command semantics change, docs must be updated in the same change set.\n\nTrigger files:\n1. `apps/web/scripts/i18n/index.ts`\n2. `apps/web/scripts/i18n/manifest.ts`\n3. `apps/web/scripts/i18n/cli.ts`\n4. `packages/i18n/src/lingui-config.ts`\n\nRequired doc sync:\n1. `references/i18n-commands.md`\n2. `references/workflow-daily.md` (if execution sequence changed)\n3. `references/maintenance-playbook.md` (if maintenance workflow changed)",
-        "heading": "Doc Drift Guard",
-        "level": 2
-      },
-      {
-        "raw": "1. `i18n` 默认会 compile。  \n实际：默认不会，必须显式传 `--compile`。\n\n2. `i18n:sync` 是全量同步命令。  \n实际：当前实现仅执行 extract。\n\n3. `i18n:manifest` 可替代 `i18n:compile`。  \n实际：manifest 依赖已有 `.mjs`，不会自行生成编译产物。\n\n4. 只在 `[lang]/layout.tsx` 做初始化就够了。  \n实际：在 Next App Router / RSC 下，服务端 `page.tsx` 也应在使用 `t` 或生成 metadata 前初始化 locale。",
-        "heading": "Common Misconceptions",
-        "level": 2
-      },
-      {
-        "raw": "遇到以下错误时按顺序检查：\n\n`Lingui: Attempted to call a translation function without setting a locale`\n\n1. `initLingui(locale)` 是否执行了 `i18n.activate(locale)`。\n2. 服务端 `layout.tsx` 与服务端 `page.tsx` 是否都调用了 `initPageLingui(params)`（或等价逻辑）。\n3. 共享服务端组件中的非 JSX 字符串是否优先使用 `useLingui`/`Trans`，避免依赖全局 `@lingui/core/macro` `t` 的初始化时序。\n4. `i18n:compile` 后的 manifest 是否包含对应 entry + locale loader。",
-        "heading": "Runtime Locale Error Checklist",
-        "level": 2
-      },
-      {
-        "raw": "1. 新增/修改文案后，已执行 `extract -> translate -> compile`。\n2. `translate` 输出缺失项为预期状态（已补翻或接受占位）。\n3. 构建前确认已执行 compile（或 `build` 脚本含 compile gate）。\n4. `.gitignore` 已忽略编译产物 `web/src/locales/**/*.js|*.mjs`（及兼容路径）。",
-        "heading": "Daily Checklist",
-        "level": 2
-      },
-      {
-        "raw": "1. `references/i18n-commands.md`\n2. `references/workflow-daily.md`\n3. `references/maintenance-playbook.md`\n4. Runtime implementation check: `apps/web/scripts/i18n/index.ts`\n5. Runtime implementation check: `apps/web/scripts/i18n/manifest.ts`",
-        "heading": "References",
+        "raw": "仅在修改本仓库 Lingui 工作流文档时读取 [references/maintenance-playbook.md](references/maintenance-playbook.md)。已有项目的命令语义变化经核实后，同步此入口与命令参考；不再维护或同步已退役的初始化模板，也不把仓库维护流程加入下游项目的日常翻译任务。",
+        "heading": "Maintaining These Skills",
         "level": 2
       }
     ]
@@ -1298,7 +983,7 @@
         "level": 3
       },
       {
-        "raw": "Use read-only evidence:\n\n| Scope             | Commands                                                                                                           |\n| ----------------- | ------------------------------------------------------------------------------------------------------------------ |\n| `all-uncommitted` | `git diff HEAD --stat`, `git diff HEAD --name-status`, `git diff HEAD`, `git ls-files --others --exclude-standard` |\n| `staged-only`     | `git diff --cached --stat`, `git diff --cached --name-status`, `git diff --cached`                                 |\n| `unstaged-only`   | `git diff --stat`, `git diff --name-status`, `git diff`                                                            |\n| `untracked-only`  | `git ls-files --others --exclude-standard`, then read each in-scope file                                           |\n| branch range      | `git log --oneline \"$base\"..\"$head\"`, `git diff --find-renames \"$base\"...\"$head\" --stat`, full diff                |\n| commits           | `git show --find-renames --stat \"$sha\"` and full show for every resolved SHA                                       |\n\nIf the selected scope is empty, stop without writing a prompt. Build an evidence-backed inventory with repository-relative paths, Git status, and concrete changes. Include rename, delete, binary, mode, and public-contract changes; do not invent intent.",
+        "raw": "Use read-only evidence:\n\n| Scope             | Commands                                                                                                                   |\n| ----------------- | -------------------------------------------------------------------------------------------------------------------------- |\n| `all-uncommitted` | `git diff --cached --stat`, `git diff --cached`, `git diff --stat`, `git diff`, `git ls-files --others --exclude-standard` |\n| `staged-only`     | `git diff --cached --stat`, `git diff --cached --name-status`, `git diff --cached`                                         |\n| `unstaged-only`   | `git diff --stat`, `git diff --name-status`, `git diff`                                                                    |\n| `untracked-only`  | `git ls-files --others --exclude-standard`, then read each in-scope file                                                   |\n| branch range      | `git log --oneline \"$base\"..\"$head\"`, `git diff --find-renames \"$base\"...\"$head\" --stat`, full diff                        |\n| commits           | `git show --find-renames --stat \"$sha\"` and full show for every resolved SHA                                               |\n\nIf the selected scope is empty, stop without writing a prompt. Build an evidence-backed inventory with repository-relative paths, Git status, and concrete changes. Include rename, delete, binary, mode, and public-contract changes; do not invent intent.",
         "heading": "2. Collect scope evidence",
         "level": 3
       },
@@ -1360,36 +1045,6 @@
       {
         "raw": "- Write only the prompt artifact and the repository-local exclude entry needed to hide `.review-handoff/`.\n- Never modify reviewed source, tests, configs, index, HEAD, tracked ignore files, or repository configuration.\n- Never run checks, commit, stage, unstage, stash, push, or send the prompt.\n- Never overwrite an active or archived prompt; create a collision suffix.\n- Never delete expired or malformed prompts automatically.\n- Never assume a prompt summary proves a reviewer finding.\n- Never treat matching HEAD and status paths as content freshness. Require `--verify-prompt` to return `fresh`, then reconcile the current full scope diff with the inventory.",
         "heading": "Guardrails",
-        "level": 2
-      }
-    ]
-  },
-  {
-    "slug": "tailwindcss-next-init",
-    "sections": [
-      {
-        "raw": "用本 skill 为目标仓库生成 Tailwind v4 初始化骨架，并给出可复制的依赖安装命令、布局导入检查结果、`@source` 与 `@reference` 使用建议。\n优先运行脚本完成标准化输出，避免手工遗漏。",
-        "heading": "概览",
-        "level": 2
-      },
-      {
-        "raw": "1. 识别目标项目结构。\n- 检查 `<project-root>/package.json` 是否存在。\n- 检查 `src/app/layout.tsx` 或 `app/layout.tsx` 是否存在。\n- 检查 `src/styles/` 与 `styles/` 目录状态。\n\n2. 先做 dry-run 预览。\n- 运行：\n```bash\npython3 scripts/init_tailwind_v4.py --project-root /abs/path/to/project --dry-run\n```\n- 先确认将创建/覆盖的文件，再决定是否执行真实写入。\n\n3. 执行初始化写入。\n- 默认最小模板：\n```bash\npython3 scripts/init_tailwind_v4.py --project-root /abs/path/to/project\n```\n- 贴近本仓库模板：\n```bash\npython3 scripts/init_tailwind_v4.py --project-root /abs/path/to/project --preset project-like\n```\n- 已有文件需覆盖时显式加 `--force`。\n\n4. 处理依赖安装。\n- 按脚本输出的包管理器命令安装依赖（脚本只生成命令，不直接执行安装）。\n- 默认图标策略是 `--icons all`，安装 `lucide/mdi/tabler` 三套图标集。\n\n5. 检查导入与扫描边界。\n- 若脚本提示缺少全局样式导入，在目标 `layout.tsx` 增加：\n```ts\nimport \"@/styles/globals.css\";\nimport \"@/styles/custom.css\";\n```\n- 若类名来自 `node_modules` 或扫描盲区，按提示在 `tailwind-core.css` 增加 `@source`。\n\n6. 进行项目验证。\n- 至少执行一次构建链路检查（如 `pnpm typecheck`、`pnpm dev`）。\n- 确认页面样式生效、Iconify 图标类可渲染。",
-        "heading": "标准流程",
-        "level": 2
-      },
-      {
-        "raw": "`scripts/init_tailwind_v4.py` 支持以下参数：\n- `--project-root <path>`：目标项目根目录（必填）\n- `--preset minimal|project-like`：模板风格，默认 `minimal`\n- `--icons all|lucide|none`：图标策略，默认 `all`\n- `--package-manager auto|pnpm|npm|yarn|bun`：包管理器，默认 `auto`\n- `--dry-run`：仅预览，不写文件\n- `--force`：覆盖已存在文件",
-        "heading": "脚本参数契约",
-        "level": 2
-      },
-      {
-        "raw": "- `references/repo-tailwind-audit.md`\n  - 记录当前仓库 Tailwind 链路与历史演进，供“项目同款”策略参考。\n- `references/tailwind-v4-best-practices.md`\n  - 记录 Tailwind v4 / Next.js / Iconify 的最佳实践与官方链接。\n- `assets/templates/minimal/*`\n  - 通用最小模板，适合跨项目快速落地。模板源文件使用 `.tpl` 后缀。\n- `assets/templates/project-like/*`\n  - 贴近本仓库风格，包含 safe-area、reduced-motion、theme token bridge。模板源文件使用 `.tpl` 后缀。\n  - `project-like` 模板中的 `@layer ... antd ...` 为仓库同款特化项；非 Ant Design 项目可按需移除该 layer。\n\n模板后缀约定：\n- 模板源：`*.tpl`\n- 目标产物：`src/styles/*.css` 或 `styles/*.css`（脚本自动判定）\n- `init_tailwind_v4.py` 严格读取 `.tpl`，不会回退读取 `.css` 模板。",
-        "heading": "资源说明",
-        "level": 2
-      },
-      {
-        "raw": "执行本 skill 时，始终输出：\n1. 目标项目识别结果（layout、styles、package manager）\n2. 将写入/已写入文件列表\n3. 依赖安装命令（按所选包管理器）\n4. `@source` 与 `@reference` 的建议片段\n5. 验证清单（至少 3 条可执行检查项）",
-        "heading": "输出约束",
         "level": 2
       }
     ]
@@ -1528,7 +1183,7 @@
         "level": 2
       },
       {
-        "raw": "Write a compact contract before driving the page:\n\n```text\nRuntime target: <exact URL verified in the browser; do not persist secrets>\nReport target: <identity-safe HTTP(S) URL without userinfo, query, fragment, or private identity>\nUser journey: <what feels slow or what must be exhaustively covered>\nInitial state: <tab, selection, playback, scroll, viewport>\nBuild: <development | production | unknown>\nWrite boundary: read-only; list any safe reversible exceptions\nSuccess: evidence-backed findings + recommendations + covered/skipped matrix + restored state\n```\n\nAlso record the data boundary before attaching browser tooling: whether access is authorized, whether the page is trusted, whether sensitive data is visible, whether the browser profile is shared or isolated, the target class, the risk decision (`proceed` or `blocked`), and whether CrUX URL lookup, usage statistics, and network-header redaction are enabled, disabled, unavailable, or unknown. Chrome DevTools MCP can expose everything visible to its browser client; do not attach it to a sensitive signed-in profile merely because that profile is convenient. A blocked risk decision produces only blocked/skipped coverage—no product finding.\n\nIf the user supplied a large or representative dataset, preserve it. If a dangerous action is necessary to reach a state, stop and ask before the action, not before harmless inspection.",
+        "raw": "Write a compact contract before driving the page:\n\n```text\nRuntime target: <exact URL verified in the browser; do not persist secrets>\nReport target: <identity-safe HTTP(S) URL without userinfo, query, fragment, or private identity>\nUser journey: <what feels slow or what must be exhaustively covered>\nCoverage: <named interaction and reachable states | explicitly requested full surface>\nInitial state: <tab, selection, playback, scroll, viewport>\nBuild: <development | production | unknown>\nWrite boundary: read-only; list any safe reversible exceptions\nSuccess: evidence-backed findings + recommendations + covered/skipped matrix + restored state\n```\n\nAlso record the data boundary before attaching browser tooling: whether access is authorized, whether the page is trusted, whether sensitive data is visible, whether the browser profile is shared or isolated, the target class, the risk decision (`proceed` or `blocked`), and whether CrUX URL lookup, usage statistics, and network-header redaction are enabled, disabled, unavailable, or unknown. Chrome DevTools MCP can expose everything visible to its browser client; do not attach it to a sensitive signed-in profile merely because that profile is convenient. A blocked risk decision produces only blocked/skipped coverage—no product finding.\n\nIf the user supplied a large or representative dataset, preserve it. If a dangerous action is necessary to reach a state, stop and ask before the action, not before harmless inspection.",
         "heading": "Start with an audit contract",
         "level": 2
       },
@@ -1543,12 +1198,12 @@
         "level": 3
       },
       {
-        "raw": "Build a coverage fingerprint before measuring: exact target, exact surface ids/labels in source order, expected count, and required state ids for each surface. Never replace user-provided names with examples or merely preserve the count. Then reconcile three sources: rendered visual inspection, the accessibility/DOM tree, and a focused navigation manifest/router/source inventory when source access exists. This catches overflow menus, permission-gated, lazy, and feature-flagged surfaces. If the sources disagree, add the missing surface/state as `blocked` or `skipped`; do not silently call the list complete. Include:\n\n- primary tabs and rails;\n- nested tabs, modes, filters, menus, dialogs, and collapsed panels;\n- cold first-open and warm return;\n- idle and active playback/animation;\n- scroll, resize, drag, input, save/export previews, and other safe core journeys;\n- loading, empty, error, long-list, and large-media states that are reachable without mutation.\n\nDo not equate a screenshot with coverage. Mark every surface `covered`, `partial`, `blocked`, or `skipped`, with the reason.",
-        "heading": "2. Enumerate the full interaction surface",
+        "raw": "For a named slow interaction, inventory only its controls, reachable states and dependencies supported by the baseline. Do not enumerate unrelated tabs or load a whole navigation manifest before measuring it. Expand coverage only when evidence links another surface to the symptom; explain that dependency and preserve explicit exclusions.\n\nFor an explicitly exhaustive audit (all tabs, all panels, or the full application), build a full coverage fingerprint: exact target, exact surface ids/labels in source order, expected count, and required state ids for each surface. Never replace user-provided names with examples or merely preserve the count. Then reconcile three sources: rendered visual inspection, the accessibility/DOM tree, and a focused navigation manifest/router/source inventory when source access exists. This catches overflow menus, permission-gated, lazy, and feature-flagged surfaces. If the sources disagree, add the missing surface/state as `blocked` or `skipped`; do not silently call the list complete. Include:\n\n- primary tabs and rails;\n- nested tabs, modes, filters, menus, dialogs, and collapsed panels;\n- cold first-open and warm return;\n- idle and active playback/animation;\n- scroll, resize, drag, input, save/export previews, and other safe core journeys;\n- loading, empty, error, long-list, and large-media states that are reachable without mutation.\n\nDo not equate a screenshot with coverage. Mark every surface `covered`, `partial`, `blocked`, or `skipped`, with the reason.",
+        "heading": "2. Enumerate the requested interaction surface",
         "level": 3
       },
       {
-        "raw": "Read `{{skill_path}}/references/measurement-playbook.md`, then select the smallest matrix that can falsify the current hypotheses. A complex editor usually needs:\n\n| Axis            | Minimum comparison                                                 |\n| --------------- | ------------------------------------------------------------------ |\n| Lifecycle       | cold first-open vs warm return                                     |\n| Activity        | idle/paused vs playback/animation active                           |\n| Device          | normal CPU vs one throttled run such as 4× CPU slowdown            |\n| Scale           | current representative dataset; larger scale only if available     |\n| Repetition      | single interaction vs 10 representative cycles plus recovery wait  |\n| Instrumentation | clean baseline vs Recorder/React Scan run                          |\n| Build           | development vs production-equivalent when production claims matter |\n\nUse negative controls: pause the media, close the panel, disable optional instrumentation, or wait for recovery. A negative result is valuable and belongs in the report.",
+        "raw": "Read `{{skill_path}}/references/measurement-playbook.md`, then select the smallest matrix that can falsify the current hypotheses. Choose only axes relevant to the requested journey and current hypothesis; the table is a menu, not an obligation to run every row. An exhaustive complex-editor audit usually considers:\n\n| Axis            | Minimum comparison                                                 |\n| --------------- | ------------------------------------------------------------------ |\n| Lifecycle       | cold first-open vs warm return                                     |\n| Activity        | idle/paused vs playback/animation active                           |\n| Device          | normal CPU vs one throttled run such as 4× CPU slowdown            |\n| Scale           | current representative dataset; larger scale only if available     |\n| Repetition      | single interaction vs 10 representative cycles plus recovery wait  |\n| Instrumentation | clean baseline vs Recorder/React Scan run                          |\n| Build           | development vs production-equivalent when production claims matter |\n\nUse negative controls: pause the media, close the panel, disable optional instrumentation, or wait for recovery. A negative result is valuable and belongs in the report.",
         "heading": "3. Run a bounded measurement matrix",
         "level": 3
       },
@@ -1716,6 +1371,11 @@
         "level": 1
       },
       {
+        "raw": "先复用用户本轮或已有配置中明确给出的日期、仓库、作者、保存位置和格式。已给定的值不再逐项确认；只在缺失且无法从当前仓库/配置可靠得出时询问。未指定日期时采用本周一至今天，报告中写明具体范围。日期统一使用 UTC+08:00，与日期工具一致；用户指定其他时区时先按该时区明确边界，不套用默认命令。\n\n只读取所选仓库与日期范围。默认仅生成本地草稿；已有报告先读取并合并，保留手工补充和下周计划。提交、推送或对外发送仍须对应授权。",
+        "heading": "快速路径",
+        "level": 2
+      },
+      {
         "raw": "- 自动读取 Git 提交记录\n- 支持多仓库汇总\n- 自动识别当前用户 (`git config user.name`)\n- 按项目分组，生成结构化周报\n- 过滤琐碎提交（typo、merge、format 等）\n- 支持添加补充说明\n- 周报统一存储在 `~/.weekly-reports/` 目录",
         "heading": "功能特性",
         "level": 2
@@ -1726,18 +1386,18 @@
         "level": 3
       },
       {
-        "raw": "1. **选择时间范围**\n   - 本周 (显示具体日期，如 2026-01-06 ~ 2026-01-12)\n   - 上周 (显示具体日期，如 2025-12-30 ~ 2026-01-05)\n   - 前半年 (显示具体日期，如 2025-07-13 ~ 2026-01-13)\n   - 自定义周报（输入周一日期）\n   - 自定义时间段（输入起始日期，截止到今天）\n\n   **重要**：选择时必须显示具体的日期范围，让用户确认是否正确\n\n2. **选择仓库**（如已配置多仓库）\n   - 显示已配置的仓库列表\n   - 可多选要包含的仓库\n   - 可添加当前目录为新仓库\n\n3. **添加补充内容**（可选）\n   - 输入额外的工作内容\n   - 如：参与会议、技术分享等\n\n4. **生成周报**\n   - 读取选定仓库的 Git 提交（必须覆盖所有分支/远端跟踪分支，避免漏提交）\n   - 按项目分组\n   - 过滤琐碎提交\n   - 生成 Markdown 格式周报\n   - 在周报正文末尾自动追加\"下周计划\"模板（详见输出格式）\n   - 周报保存到 `~/.weekly-reports/{year}/week-{week}.md`\n   - 时间段报告保存到 `~/.weekly-reports/periods/{start_date}_to_{end_date}.md`",
+        "raw": "1. **选择时间范围**\n   - 本周 (显示具体日期，如 2026-01-06 ~ 2026-01-12)\n   - 上周 (显示具体日期，如 2025-12-30 ~ 2026-01-05)\n   - 前半年 (显示具体日期，如 2025-07-13 ~ 2026-01-13)\n   - 自定义周报（输入周一日期）\n   - 自定义时间段（输入起始日期，截止到今天）\n\n   显示实际采用的日期范围。用户已指定“本周”“上周”或具体日期时直接换算并继续，不重复询问。\n\n2. **选择仓库**（如已配置多仓库）\n   - 用户未指定仓库且当前仓库不足以确定范围时，再显示已配置的仓库列表\n   - 可多选要包含的仓库\n   - 可添加当前目录为新仓库\n\n3. **添加补充内容**（可选）\n   - 使用用户已给出的额外工作内容；没有补充也可直接生成，不等待填写\n   - 如：参与会议、技术分享等\n\n4. **生成周报**\n   - 读取选定仓库的 Git 提交（必须覆盖所有分支/远端跟踪分支，避免漏提交）\n   - 按项目分组\n   - 过滤琐碎提交\n   - 生成 Markdown 格式周报\n   - 在周报正文末尾自动追加\"下周计划\"模板（详见输出格式）\n   - 周报保存到 `~/.weekly-reports/{year}/week-{week}.md`\n   - 时间段报告保存到 `~/.weekly-reports/periods/{start_date}_to_{end_date}.md`",
         "heading": "执行流程",
         "level": 3
       },
       {
-        "raw": "为避免“只读取当前分支而漏掉其它分支（例如 `credits-lite*`）”的问题，读取提交时必须使用 `--all`（覆盖本地分支 + 远端跟踪分支），并确保截止时间包含结束日当天：\n\n```bash",
+        "raw": "优先调用本技能的 `src/git_analyzer.py`，其 `get_all_commits_from_repos` 接收仓库列表、开始日期、结束日期和可选作者正则。它覆盖本地及远端跟踪分支，支持 Git worktree，按 UTC+08:00 的提交时间选取整日并返回结构化记录。`author=None` 会按每个仓库的 Git name/email 自动匹配；身份缺失或仓库同名时必须报告，不能默默读取全员或覆盖某个仓库的结果。\n\n手动读取时遵守相同合同：\n\n```bash",
         "heading": "Git 提交读取（重要）",
         "level": 2
       },
       {
-        "raw": "AUTHOR_PATTERN=\"(your-name|your@email.com)\"  # 或仅用你的 name/email\ngit log --all \\\n  --author=\"$AUTHOR_PATTERN\" \\\n  --since=\"$START_DATE 00:00:00\" \\\n  --until=\"$END_DATE 23:59:59\" \\\n  --pretty=format:\"%H|%s|%an|%ad\" \\\n  --date=short\n```\n\n如果 `git branch -a` 看不到目标远端分支（说明本地没有对应的远端跟踪引用），需要先 `git fetch --all --prune`（在用户同意且网络可用时执行），否则无法读取到“本地不存在的分支”的提交。",
-        "heading": "- --author 建议用 name + email 联合匹配，避免不同身份写法漏掉本人提交",
+        "raw": "AUTHOR_PATTERN=\"(your-name|your@email.com)\"  # 或仅用你的 name/email\ngit log --all \\\n  --extended-regexp \\\n  --author=\"$AUTHOR_PATTERN\" \\\n  --since=\"${START_DATE}T00:00:00+08:00\" \\\n  --until=\"${END_DATE}T23:59:59+08:00\" \\\n  --no-show-signature -z \\\n  --format='%H%x00%s%x00%an%x00%cI'\n```\n\n如果 `git branch -a` 看不到目标远端分支（说明本地没有对应的远端跟踪引用），需要先 `git fetch --all --prune`（在用户同意且网络可用时执行），否则无法读取到“本地不存在的分支”的提交。\n\nGit 命令失败、仓库不可访问或作者未知属于 `UNVERIFIED`，不等于“本周没有提交”。只有成功查询且结果确实为空才能报告无记录。提交记录证明代码变更，不自动证明已上线、已验收或产生业务收益；这些状态只写用户提供或本轮核实的证据。",
+        "heading": "- NUL 分隔固定四字段，不能按 | 拆分含管道符的提交标题",
         "level": 1
       },
       {
@@ -1751,7 +1411,7 @@
         "level": 3
       },
       {
-        "raw": "项目名称\n  - 主要工作点（10字以内）\n    - 补充说明（可选）\n  - 另一个工作点\n\n其他\n  - 不属于特定项目的工作内容\n\n下周计划\n项目名称\n-\n```",
+        "raw": "项目名称\n\n- 主要工作点（一个具体结果，保留关键术语）\n  - 补充说明（可选）\n- 另一个工作点\n\n其他\n\n- 不属于特定项目的工作内容\n\n下周计划\n项目名称\n\n-\n```",
         "heading": "周报 (2026-01-06 ~ 2026-01-12)",
         "level": 1
       },
@@ -1761,7 +1421,7 @@
         "level": 3
       },
       {
-        "raw": "项目名称\n  - 主要工作点（10字以内）\n    - 补充说明（可选）\n  - 另一个工作点\n\n其他\n  - 不属于特定项目的工作内容\n```",
+        "raw": "项目名称\n\n- 主要工作点（一个具体结果，保留关键术语）\n  - 补充说明（可选）\n- 另一个工作点\n\n其他\n\n- 不属于特定项目的工作内容\n```",
         "heading": "工作总结 (2025-07-13 ~ 2026-01-13)",
         "level": 1
       },
@@ -1776,7 +1436,7 @@
         "level": 3
       },
       {
-        "raw": "project-frontend\n  - 构建工具升级改造\n  - 核心功能开发流程跟进\n    - 方案合理性优化\n  - 脚本国际化优化\n\nproject-backend\n  - 自定义类型化消息渲染\n  - 断线重连流程梳理\n\n其他\n  - 新版国际化方案讨论\n\n下周计划\nproject-frontend\n-\nproject-backend\n-\n```",
+        "raw": "project-frontend\n\n- 构建工具升级改造\n- 核心功能开发流程跟进\n  - 方案合理性优化\n- 脚本国际化优化\n\nproject-backend\n\n- 自定义类型化消息渲染\n- 断线重连流程梳理\n\n其他\n\n- 新版国际化方案讨论\n\n下周计划\nproject-frontend\n\n- project-backend\n-\n```",
         "heading": "周报 (2026-01-06 ~ 2026-01-12)",
         "level": 1
       },
@@ -1786,12 +1446,12 @@
         "level": 2
       },
       {
-        "raw": "- **事实导向**：只总结实际完成的工作\n- **简洁精炼**：主要工作点控制在 10 字以内\n- **重点突出**：过滤琐碎修改\n- **按项目分组**：相同项目的工作归类\n- **层级清晰**：用缩进表示从属关系",
+        "raw": "- **事实导向**：只总结实际完成的工作\n- **简洁精炼**：每点表达一个具体结果，不为凑字数截断术语或删掉关键行为\n- **重点突出**：过滤琐碎修改\n- **按项目分组**：相同项目的工作归类\n- **层级清晰**：用缩进表示从属关系",
         "heading": "必须遵守",
         "level": 3
       },
       {
-        "raw": "以下提交不会单独列出：\n- 纯格式化/代码风格调整\n- 简单的 typo 修复\n- 依赖版本小幅更新\n- Merge 提交\n- 重复性的相似提交\n\n详细格式规范见 [周报格式规范](references/WEEKLY_REPORT_FORMAT.md)",
+        "raw": "以下提交不会单独列出：\n\n- 纯格式化/代码风格调整\n- 简单的 typo 修复\n- 依赖版本小幅更新\n- Merge 提交\n- 重复性的相似提交\n\n详细格式规范见 [周报格式规范](references/WEEKLY_REPORT_FORMAT.md)\n\n修改提取或保存逻辑后运行：\n\n```bash\npython3 <skill-dir>/scripts/test_git_analyzer.py\n```",
         "heading": "过滤规则",
         "level": 3
       }
@@ -1858,71 +1518,6 @@
       {
         "raw": "- Pick the smallest Route that protects correctness; the gate is advisory and never expands authority.\n- Create no persistent artifact from this skill alone. The selected workflow owns subsequent work.\n- Never load `brainstorming`.\n\nWorked output blocks live in two Slow-path files: `references/examples-core.md` has one example per Route; `references/examples-edge.md` covers tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory signals, and \"don't ask me\". Open either only when a worked output is genuinely needed — never after a cheat-card or numbered-rule match.",
         "heading": "Guardrails",
-        "level": 2
-      }
-    ]
-  },
-  {
-    "slug": "zustand-store-scaffold",
-    "sections": [
-      {
-        "raw": "Generate type-safe class-based Zustand stores with `flattenActions` for prototype-safe slice composition.",
-        "heading": "Zustand Store Scaffold",
-        "level": 1
-      },
-      {
-        "raw": "```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern web \\\n  --name ToolList \\\n  --path web/src/pages/_components/ToolList/store\n```\n\nGenerates:\n- `types.ts` — `StoreSetter<T>` type definition\n- `utils/flattenActions.ts` — Prototype-safe action flattener\n- `index.ts` — Class-based store with `ActionImpl` + `flattenActions`\n- `context.ts` — React Context and typed `useContext` hook\n- `provider.tsx` — Memo-wrapped Provider component",
-        "heading": "Web Pattern (Component-level Store)",
-        "level": 3
-      },
-      {
-        "raw": "**Single Slice:**\n\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name CoreAgent \\\n  --path packages/ag-ui-view/src/core/helpers/isomorphic/store\n```\n\n**Multiple Slices (Interactive):**\n\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store",
-        "heading": "Core Pattern (Slice-based Store)",
-        "level": 3
-      },
-      {
-        "raw": "```\n\n**Multiple Slices (Direct):**\n\n```bash\npython3 ~/.claude/skills/zustand-store-scaffold/scripts/scaffold_zustand_store.py \\\n  --pattern core \\\n  --name AppStore \\\n  --path src/store \\\n  --slices auth,user,ui\n```\n\nGenerates:\n- `types.ts` — `StoreSetter<T>` type definition\n- `utils/flattenActions.ts` — Prototype-safe action flattener\n- `index.ts` — Store factory with `flattenActions` slice composition\n- `slices/[name].ts` — Class-based slice with `ActionImpl` + `#private` fields",
-        "heading": "Example input: auth,user,ui",
-        "level": 1
-      },
-      {
-        "raw": "| Option | Required | Description | Example |\n|--------|----------|-------------|---------|\n| `--pattern` | Yes | Store pattern (`web` or `core`) | `--pattern web` |\n| `--name` | Yes | Store name in PascalCase | `--name ToolList` |\n| `--path` | Yes | Target directory path | `--path src/store` |\n| `--slices` | No | Comma-separated slice names (core only) | `--slices auth,user,ui` |\n| `--force` | No | Overwrite existing files | `--force` |\n\n**Note:** For `core` pattern without `--slices`, the script interactively asks for slice names. Shared files (`types.ts`, `utils/flattenActions.ts`) are skipped if they already exist (unless `--force`).",
-        "heading": "Options",
-        "level": 2
-      },
-      {
-        "raw": "| Pattern | Use When | Location Pattern | Slices |\n|---------|----------|------------------|--------|\n| **web** | Component-level state with Provider | `web/src/pages/_components/**/store` | N/A |\n| **core** | Isomorphic/shared state with slices | `packages/**/store` | Single or multiple |",
-        "heading": "Choose the Right Pattern",
-        "level": 2
-      },
-      {
-        "raw": "Use multiple slices to organize complex state by feature domains:\n\n| Scenario | Recommended Slices |\n|----------|-------------------|\n| Authentication app | `auth, user, session` |\n| E-commerce store | `cart, products, user, ui` |\n| Dashboard | `data, filters, ui, settings` |\n| Chat application | `messages, contacts, ui, notifications` |",
-        "heading": "When to Use Multiple Slices (Core Pattern)",
-        "level": 3
-      },
-      {
-        "raw": "| File | Purpose |\n|------|---------|\n| `types.ts` | `StoreSetter<T>` — type-safe overloaded setter matching Zustand internals |\n| `utils/flattenActions.ts` | `flattenActions<T>` — walks prototype chain, binds methods, merges class instances |\n| `index.ts` | Store factory combining initial state + `flattenActions` composition |\n| `slices/*.ts` (core) | `*ActionImpl` class with `#set`/`#get`, exported via `create*Slice` |\n| `context.ts` (web) | React Context + typed selector hook |\n| `provider.tsx` (web) | Memo-wrapped Provider with ref-stable store creation |",
-        "heading": "Generated Files",
-        "level": 2
-      },
-      {
-        "raw": "1. **Define state** in `*SliceState` interface (core) or `*StoreState` interface (web):\n   ```ts\n   export interface CoreSliceState {\n     agents: Agent[]\n     selectedId: string | null\n   }\n   ```\n\n2. **Add action methods** as arrow functions in `*ActionImpl` class:\n   ```ts\n   export class CoreActionImpl {\n     readonly #set: StoreSetter<CoreSlice>\n     readonly #get: () => CoreSlice\n     // ...constructor\n\n     selectAgent = (id: string): void => {\n       this.#set({ selectedId: id })\n     }\n\n     getSelectedAgent = (): Agent | undefined => {\n       const { agents, selectedId } = this.#get()\n       return agents.find((a) => a.id === selectedId)\n     }\n   }\n   ```\n\n3. **Set initial state** in the store factory or config:\n   ```ts\n   const store = createCoreAgentStore({\n     initialState: { agents: [], selectedId: null }\n   })\n   ```",
-        "heading": "Post-Generation Steps",
-        "level": 2
-      },
-      {
-        "raw": "```tsx\nimport Provider from './store/provider'\nimport { useToolListContext } from './store/context'\n\nfunction ToolListPage() {\n  return (\n    <Provider>\n      <ToolListContent />\n    </Provider>\n  )\n}\n\nfunction ToolListContent() {\n  const toolList = useToolListContext((s) => s.toolList)\n  const setToolList = useToolListContext((s) => s.setToolList)\n  // Go to Definition on setToolList → lands directly on ActionImpl method\n}\n```",
-        "heading": "Web Store Usage",
-        "level": 3
-      },
-      {
-        "raw": "```ts\nimport { createCoreAgentStore } from './store'\n\nconst store = createCoreAgentStore({\n  initialState: { agents: [], selectedId: null }\n})\n\n// Vanilla JS\nconst state = store.getState()\nstate.selectAgent('agent-1')\n\n// React (with useStore)\nimport { useStore } from 'zustand'\n\nfunction AgentList() {\n  const agents = useStore(store, (s) => s.agents)\n  const selectAgent = useStore(store, (s) => s.selectAgent)\n}\n```",
-        "heading": "Core Store Usage",
-        "level": 3
-      },
-      {
-        "raw": "- See `references/class-based-pattern.md` for detailed pattern documentation\n- See `references/store-patterns.md` for complete code examples\n- Reference PR: [lobehub#12081](https://github.com/lobehub/lobehub/pull/12081)",
-        "heading": "References",
         "level": 2
       }
     ]
