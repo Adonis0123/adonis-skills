@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
 metadata:
   author: adonis
-  version: "3.7.0"
+  version: "3.7.1"
 ---
 
 # Agentic Review Handoff
@@ -25,7 +25,7 @@ Route first, then load only that route's references:
 
 ## Auto loop (`review-loop run`) — preferred
 
-Explicit invocation starts immediately. Human intervenes only at: **initiate**, **terminal report**, or a real exception (DELIVERY_UNKNOWN / hash mismatch / budget / deadlock / scope or external-action decision). Reviewer selection and ordinary findings are not confirmation gates.
+Explicit invocation starts immediately. Human intervenes only at: **initiate**, **terminal report**, or an unresolved exception (ambiguous delivery / hash mismatch / budget / deadlock / scope or external-action decision). Reviewer selection, ordinary findings, and safely recoverable local startup faults are not confirmation gates.
 
 ```bash
 RL="<skill-dir>/scripts/review-loop.mjs"
@@ -76,6 +76,16 @@ alive, do not kill it, retry it, or start a second Reviewer because stdout is
 silent. Trust the adapter's progress line and deadline; use STOP only when the
 user intentionally cancels. A real timeout remains `DELIVERY_UNKNOWN` with no
 automatic retry, because delivery state is ambiguous.
+
+**Recover local startup faults without redundant approval.** `DELIVERY_UNKNOWN`
+is a conservative adapter result, not proof that human intervention is needed.
+The visible Fixer first diagnoses whether submission occurred. When local evidence
+proves failure before submission, automatically make the smallest reversible
+repair within existing authorization and retry once with the same Reviewer,
+scope, and read-only controls. For example, a verified dangling Docker socket
+symlink that blocks sandbox initialization may be temporarily moved and restored;
+never disable the sandbox to bypass it. Read `references/environment-recovery.md`
+only on such failures. Ambiguous delivery still forbids automatic resubmission.
 
 Contract details: `references/auto-loop-contract.md`.
 

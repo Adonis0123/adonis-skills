@@ -18,7 +18,7 @@
     "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git.",
     "metadata": {
       "author": "adonis",
-      "version": "3.7.0"
+      "version": "3.7.1"
     },
     "files": {
       "hasReferences": true,
@@ -53,7 +53,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-06-11T08:18:21.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "chrome-dev-mcp",
@@ -95,7 +95,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-05-29T05:45:36.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "commit",
@@ -108,7 +108,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "commit-push",
@@ -149,7 +149,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "figma-mcp",
@@ -178,7 +178,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "lingui-workflow",
@@ -191,7 +191,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-26T08:46:46.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "local-web-surface",
@@ -235,7 +235,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "task-completion-loop",
@@ -278,7 +278,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "weekly-report",
@@ -293,7 +293,7 @@
       "hasSrc": true,
       "hasScripts": true
     },
-    "updatedAt": "2026-03-02T07:25:38.000Z",
+    "updatedAt": "2026-09-05T08:38:42.000Z",
     "allowedTools": ["Read", "Write", "Bash(git:*)", "Bash(python:*)"]
   },
   {
