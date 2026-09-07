@@ -1,6 +1,6 @@
 ---
 name: commit-push
-description: Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits; excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.
+description: Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits to non-CNB remotes; cnb.cool remotes and CNB MR delivery go to coco-commit-push-mr. Excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.
 metadata:
   author: adonis
 ---

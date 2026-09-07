@@ -78,5 +78,13 @@
   {
     "query": "帮我写 Selenium WebDriver 初始化代码，不连接当前浏览器。",
     "should_trigger": false
+  },
+  {
+    "query": "我改完了首页的弹窗样式，帮我打开 localhost:3000 截图验收一下。",
+    "should_trigger": false
+  },
+  {
+    "query": "Figma 稿已经对过了，现在需要产品页面的运行时截图当验收证据。",
+    "should_trigger": false
   }
 ]
