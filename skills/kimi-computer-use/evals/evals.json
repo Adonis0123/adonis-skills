@@ -1,0 +1,17 @@
+{
+  "skill_name": "kimi-computer-use",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "Case 1: Update Kimi CU skill in adonis-skills for six AI hosts; installed files are readable but sessions untested. Case 2: Add Kimi CU to WorkBuddy preserving other servers and current model; a later version returns 11 tools. Provide offline execution approach and evidence boundaries.",
+      "expected_output": "A scoped source/distribution plan and host verification plan preserving configuration and evidence limits.",
+      "files": [],
+      "expectations": [
+        "Maintain repository source and distinguish distribution from session loading.",
+        "Preserve other WorkBuddy servers and the configured model.",
+        "Do not reject a later version only because it exposes 11 tools.",
+        "Do not claim real host completion from this offline evaluation."
+      ]
+    }
+  ]
+}

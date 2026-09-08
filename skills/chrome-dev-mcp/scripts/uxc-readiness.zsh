@@ -75,7 +75,7 @@ if [[ "$output_mode" == "private-result" ]]; then
   exit 0
 fi
 
-reuse="$(/usr/bin/jq -r '.meta.daemon_session_reused // "unknown"' "$tmp_dir/stdout")"
+reuse="$(/usr/bin/jq -r 'if (.meta.daemon_session_reused | type) == "boolean" then .meta.daemon_session_reused else "unknown" end' "$tmp_dir/stdout")"
 case "$reuse" in
   true) reuse_label="YES" ;;
   false) reuse_label="NO" ;;

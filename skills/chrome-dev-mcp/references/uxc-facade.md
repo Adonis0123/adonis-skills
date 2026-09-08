@@ -46,6 +46,8 @@ Keep this installer with the Chrome skill; future UXC-backed skills should apply
 
 ## Install, link, and validate
 
+When upgrading the Chrome runtime, retain a recoverable pinned installation, inspect changed flags and filesystem defaults, and refresh only this endpoint's schema cache. Recreate the corresponding MCP child so the new version is actually loaded; report any interrupted in-flight calls. Keep Chrome itself running. Verify the fresh schema, two consecutive readiness calls, concurrent calls from different working directories, and an explicit-page operation on a disposable test page. Do not infer a speed improvement from a package version alone.
+
 After the user authorizes local installation:
 
 1. Run `scripts/install-uxc.zsh`.
@@ -56,7 +58,7 @@ The first readiness call may create a daemon session and can spend up to 45 seco
 
 Those two calls are installation acceptance, not the readiness-plus-task fast path. When an invocation already includes a page task, run `scripts/uxc-readiness.zsh --private-result` once instead. It applies the same owned binary/link and managed-`PATH` gates while retaining the one current-turn JSON result privately for target resolution.
 
-Use a finite idle TTL so an unused MCP child is reaped. Treat the configured daemon-exclusive key as an ownership boundary, not session identity; UXC's lifecycle contract defines stdio identity from endpoint, auth fingerprint, injected environment fingerprint, and runtime family.
+Use a finite idle TTL so an unused MCP child is reaped. Treat the configured daemon-exclusive key as an ownership boundary, not session identity. In pinned UXC 0.17.0, stdio identity includes endpoint, auth fingerprint, injected environment fingerprint, and working directory. Keep the fixed directory in the managed launcher, not only in readiness, so calls from different projects reuse the same child. The setup helper migrates only the exact legacy generated link and saves a recovery copy; it does not restart the daemon or browser.
 
 Never log raw linked-command output for readiness `list_pages`. `STATUS=READY` proves shared transport and correct-browser attachment; verify each requested DevTools operation separately. Native-host acceptance is optional compatibility evidence, not the default success condition.
 

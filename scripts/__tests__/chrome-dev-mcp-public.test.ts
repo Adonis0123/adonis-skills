@@ -74,10 +74,12 @@ async function runScript(options: {
   args?: string[];
   env?: NodeJS.ProcessEnv;
   script: string;
+  cwd?: string;
 }): Promise<{ code: number | null; stderr: string; stdout: string }> {
   return await new Promise((resolve, reject) => {
     const child = spawn(options.script, options.args ?? [], {
       env: { ...process.env, ...options.env },
+      cwd: options.cwd,
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -193,7 +195,7 @@ test("Chrome private-result readiness keeps one managed result despite poisoned 
     await writeFile(wrapperPath, "#!/bin/zsh\nexit 0\n", "utf8");
     await chmod(wrapperPath, 0o755);
 
-    const ownedContent = `#!/bin/zsh\nif [[ "\${1:-}" == "--version" ]]; then\n  print -- "uxc 0.17.0"\n  exit 0\nfi\nprint -- call >> '${ownedMarker}'\nprint -r -- '{"ok":true,"protocol":"mcp","operation":"list_pages","meta":{"daemon_session_reused":true},"result":{"pageId":17}}'\n`;
+    const ownedContent = `#!/bin/zsh\nif [[ "\${1:-}" == "--version" ]]; then\n  print -- "uxc 0.17.0"\n  exit 0\nfi\n[[ "$PWD" == '${canonicalSkillDir}' ]] || exit 71\nprint -- call >> '${ownedMarker}'\nprint -r -- '{"ok":true,"protocol":"mcp","operation":"list_pages","meta":{"daemon_session_reused":false},"result":{"pageId":17}}'\n`;
     const ownedSha256 = createHash("sha256").update(ownedContent).digest("hex");
     await writeOwnedUxc(linkDir, ownedContent);
 
@@ -237,6 +239,21 @@ test("Chrome private-result readiness keeps one managed result despite poisoned 
       "utf8",
     );
 
+    await writeFile(path.join(fixtureSkillDir, "SKILL.md"), "fixture");
+    const legacyLink = await readFile(linkPath, "utf8");
+    const migration = await runScript({
+      script: path.join(fixtureScriptsDir, "setup-uxc-link.zsh"),
+      env: { CHROME_DEV_MCP_CONFIG_FILE: configPath },
+    });
+    assert.equal(migration.code, 0, migration.stderr);
+    const backups = (await readdir(linkDir)).filter((name) =>
+      name.startsWith(".chrome-dev-mcp-legacy."),
+    );
+    assert.equal(backups.length, 1);
+    assert.equal(
+      await readFile(path.join(linkDir, backups[0]), "utf8"),
+      legacyLink,
+    );
     const result = await runScript({
       script: path.join(fixtureScriptsDir, "uxc-readiness.zsh"),
       args: ["--private-result"],
@@ -250,6 +267,37 @@ test("Chrome private-result readiness keeps one managed result despite poisoned 
     assert.equal(JSON.parse(result.stdout).result.pageId, 17);
     assert.equal((await readFile(ownedMarker, "utf8")).trim(), "call");
     await assert.rejects(() => readFile(foreignMarker), { code: "ENOENT" });
+    // Existing owned links must migrate before direct calls from arbitrary projects.
+    await writeFile(path.join(fixtureSkillDir, "SKILL.md"), "fixture");
+    const setup = await runScript({
+      script: path.join(fixtureScriptsDir, "setup-uxc-link.zsh"),
+      env: { CHROME_DEV_MCP_CONFIG_FILE: configPath },
+    });
+    assert.equal(setup.code, 0, setup.stderr);
+    const calls = await Promise.all(
+      [fixtureDir, foreignDir].map((cwd) =>
+        runScript({
+          script: linkPath,
+          cwd,
+          env: { PATH: `${foreignDir}:/usr/bin:/bin` },
+        }),
+      ),
+    );
+    for (const call of calls) assert.equal(call.code, 0, call.stderr);
+    await assert.rejects(() => readFile(foreignMarker), { code: "ENOENT" });
+    const stableLink = await readFile(linkPath, "utf8");
+    const repeat = await runScript({
+      script: path.join(fixtureScriptsDir, "setup-uxc-link.zsh"),
+      env: { CHROME_DEV_MCP_CONFIG_FILE: configPath },
+    });
+    assert.equal(repeat.code, 0, repeat.stderr);
+    assert.equal(await readFile(linkPath, "utf8"), stableLink);
+    const readiness = await runScript({
+      script: path.join(fixtureScriptsDir, "uxc-readiness.zsh"),
+      env: { CHROME_DEV_MCP_CONFIG_FILE: configPath },
+    });
+    assert.equal(readiness.code, 0, readiness.stderr);
+    assert.match(readiness.stdout, /^DAEMON_SESSION_REUSED=NO$/m);
   } finally {
     await rm(fixtureDir, { recursive: true, force: true });
   }

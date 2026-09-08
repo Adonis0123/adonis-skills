@@ -3,7 +3,7 @@ name: chrome-dev-mcp
 description: "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task."
 metadata:
   author: adonis
-  version: "1.2.1"
+  version: "1.3.2"
 ---
 
 # Chrome Dev MCP
@@ -11,6 +11,8 @@ metadata:
 Use the managed `chrome-dev-mcp-cli` facade for browser-internal evidence. It reuses one identity-checked MCP child instead of starting one child per agent session. Keep host-native registration only as an explicit compatibility and rollback path.
 
 Require the locally configured safe wrapper, launcher, and pinned UXC 0.17.0 facade. Never silently fall back to a host-native server because doing so recreates the per-session runtime fan-out this skill is designed to avoid.
+
+For runtime or skill upgrades, follow [references/maintenance.md](references/maintenance.md): check versions, preserve rollback, stage, activate, verify real operations and process reuse, then synchronize hosts. Ordinary page tasks do not load this maintenance workflow.
 
 ## Keep the user contract simple
 
@@ -90,7 +92,13 @@ Reuse `scripts/install-uxc.zsh` for the pinned UXC binary and its owner manifest
 
 ## Handle concurrency
 
-The wrapper enables `--experimentalPageIdRouting`. Pass a fresh `pageId` to every page-scoped read or write so one agent cannot change another agent's selected-page context. Different page IDs route safely, but the runtime serializes individual tool calls and does not guarantee parallel execution. No cross-agent transaction lock exists for multi-step writes to one tab; report that case `UNVERIFIED` and stop when ownership is unclear. Use separate isolated browsers for truly parallel writes that cannot share a tab safely.
+Use the installed `chrome-dev-mcp-cli` for every call. Its managed launcher fixes the working directory before UXC computes session identity and invokes the owned binary by absolute path. UXC 0.17.0 includes the caller's working directory in stdio identity; calling `uxc <wrapper>` directly from project directories creates competing sessions for the same exclusive key. The exclusive key is a browser ownership guard, not a task lock: do not remove it, invent per-agent keys for the same browser, kill another session, or loop until it releases. Repair a known legacy launcher with `scripts/setup-uxc-link.zsh`; it preserves the exact old owned link and refuses foreign contracts.
+
+Real system-pointer input has one shared cursor and foreground window across the desktop. Serialize drag, keyboard, focus, and screen-recording sequences that depend on them, even across different tabs. For parallel browser work, prefer explicit `pageId` DevTools operations on separate pages. A required real-pointer test must reserve exclusive desktop use for its duration; a transport fix cannot make simultaneous pointer control independent.
+
+With Chrome DevTools MCP 1.9.0, use `--pageIdRouting` (enabled by default); older wrappers may name the experimental flag. Verify the live schema still requires `pageId` after upgrading. Pass a fresh `pageId` to every page-scoped read or write so one agent cannot change another agent's selected-page context. Different page IDs route safely, but the runtime serializes individual tool calls and does not guarantee parallel execution. No cross-agent transaction lock exists for multi-step writes to one tab; report that case `UNVERIFIED` and stop when ownership is unclear. Use separate isolated browsers for truly parallel writes that cannot share a tab safely.
+
+For a purely read-only `evaluate_script`, use `waitForStableDom=false` when the live schema supports it; DOM mutations still need stability and post-action verification. Keep output bounded to the requested evidence.
 
 Shared UXC does not negotiate workspace roots. Write screenshots, snapshots, traces, or heap data only to an OS temporary path first, return the path and a bounded summary, then move the artifact only after its contents and destination are validated. Never add `--allow-unrestricted-paths`. If the host must render native content blocks, use explicit native compatibility mode.
 
@@ -102,3 +110,5 @@ For multi-host validation, report each host independently:
 | ---- | --------------- | ---------------- | ----------------- | ------------- | ------ |
 
 Use `VERIFIED` only after the real shared tool call. Report native compatibility separately and leave it `NOT_USED` on the healthy default path. Otherwise report `UNVERIFIED` or the explicit external blocker.
+
+For multi-session installation or performance acceptance, also verify process count before and after concurrent calls: one shared MCP child with the same PID, not one child per host. Check OS parent processes as well as UXC sessions, because eager native children are invisible to UXC. Read [references/host-verification.md](references/host-verification.md) for residual-process handling.

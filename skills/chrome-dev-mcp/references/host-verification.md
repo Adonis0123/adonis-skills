@@ -17,6 +17,10 @@ hermes mcp list                      # expect disabled
 
 Then run `scripts/uxc-readiness.zsh` twice. Require `SHARED_TRANSPORT=OK` and require the second call to report `DAEMON_SESSION_REUSED=YES`. Discovery never proves that the shared child attached to the intended Chrome; sanitized readiness does.
 
+For fan-out checks, compare the OS process tree with `uxc daemon sessions`. Count actual Chrome DevTools MCP server processes separately from npm launchers, watchdogs, Chrome renderers and Chrome Helper processes. Run concurrent read-only calls from different project directories and verify the same single shared child remains afterward; `daemon_session_reused=true` alone does not rule out other native children.
+
+If duplicate native children remain, trace each parent to its host and check current user/project/plugin registration. Removing a registration does not stop an already-open session. Within an authorized cleanup, terminate only positively identified legacy MCP processes after confirming they are not the shared child; preserve browser windows and unrelated sessions. Never use a broad name-based kill or a background reaper. Recheck for respawn and fix the owning registration if it returns. Do not promise a permanent global process cap: a separate native registration can still start its own server outside this facade.
+
 ## Run optional runtime-lab checks
 
 When `CHROME_DEV_MCP_LAB_DIR` names a trusted checkout, run from that directory:

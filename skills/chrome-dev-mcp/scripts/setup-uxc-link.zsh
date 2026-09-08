@@ -32,6 +32,8 @@ link_exists="NO"
 if [[ -e "$link_path" || -L "$link_path" ]]; then
   chrome_dev_mcp_uxc_link_contract_matches \
     "$link_path" "$wrapper" "$exclusive_key" "$skill_dir" || \
+    chrome_dev_mcp_uxc_link_contract_matches \
+      "$link_path" "$wrapper" "$exclusive_key" "$skill_dir" legacy || \
     fail_closed "link_contract_mismatch"
   link_exists="YES"
 fi
@@ -41,7 +43,7 @@ uxc_bin="$link_dir/uxc"
 chrome_dev_mcp_verify_owned_uxc "$uxc_bin" || fail_closed "foreign_uxc"
 [[ "$("$uxc_bin" --version 2>/dev/null || true)" == "uxc $UXC_VERSION" ]] || fail_closed "version_mismatch"
 
-if [[ "$link_exists" == "YES" ]]; then
+if [[ "$link_exists" == "YES" ]] && chrome_dev_mcp_uxc_link_contract_matches "$link_path" "$wrapper" "$exclusive_key" "$skill_dir"; then
   print -- "CHROME_DEV_MCP_UXC_LINK=READY"
   print -- "UXC_VERSION=$UXC_VERSION"
   print -- "LINK_PATH=$link_path"
@@ -49,22 +51,23 @@ if [[ "$link_exists" == "YES" ]]; then
   exit 0
 fi
 
-tmp_dir="$(mktemp -d)"
+# Stage on the destination filesystem, then replace only the exact owned contract.
+tmp_dir="$(mktemp -d "$link_dir/.chrome-dev-mcp-link.XXXXXX")"
 cleanup() {
   /bin/rm -rf -- "$tmp_dir"
 }
 trap cleanup EXIT INT TERM
-
-if ! "$uxc_bin" \
-  --daemon-exclusive "$exclusive_key" \
-  --daemon-idle-ttl 900 \
-  link chrome-dev-mcp-cli "$wrapper" \
-  --dir "$link_dir" \
-  --skill chrome-dev-mcp \
-  --skill-path "$skill_dir" \
-  >"$tmp_dir/stdout" 2>"$tmp_dir/stderr"; then
-  fail_closed "uxc_link_failed"
+chrome_dev_mcp_render_uxc_link "$wrapper" "$exclusive_key" "$skill_dir" "$link_dir" > "$tmp_dir/link"
+/bin/chmod 755 "$tmp_dir/link"
+if [[ "$link_exists" == YES ]]; then
+  chrome_dev_mcp_uxc_link_contract_matches "$link_path" "$wrapper" "$exclusive_key" "$skill_dir" legacy || fail_closed "link_changed"
+  /bin/cp -p "$link_path" "$tmp_dir/previous"
+  backup_path="$(mktemp "$link_dir/.chrome-dev-mcp-legacy.XXXXXX")"
+  /bin/cp -p "$tmp_dir/previous" "$backup_path"
+else
+  [[ ! -e "$link_path" && ! -L "$link_path" ]] || fail_closed "link_changed"
 fi
+/bin/mv "$tmp_dir/link" "$link_path"
 
 chrome_dev_mcp_uxc_link_contract_matches \
   "$link_path" "$wrapper" "$exclusive_key" "$skill_dir" || \

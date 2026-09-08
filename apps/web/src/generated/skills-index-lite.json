@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-08-30T03:51:50.000Z"
+    "updatedAt": "2026-09-05T09:11:55.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -58,17 +58,17 @@
   {
     "slug": "chrome-dev-mcp",
     "name": "chrome-dev-mcp",
-    "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required.",
+    "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.0"
+      "version": "1.3.2"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-07T02:50:36.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -113,7 +113,7 @@
   {
     "slug": "commit-push",
     "name": "commit-push",
-    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits; excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
+    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits to non-CNB remotes; cnb.cool remotes and CNB MR delivery go to coco-commit-push-mr. Excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
     "metadata": {
       "author": "adonis"
     },
@@ -121,7 +121,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-07T02:50:36.000Z"
   },
   {
     "slug": "decision-first-technical-writing",
@@ -179,6 +179,19 @@
       "hasScripts": true
     },
     "updatedAt": "2026-09-05T08:38:42.000Z"
+  },
+  {
+    "slug": "kimi-computer-use",
+    "name": "kimi-computer-use",
+    "description": "This skill should be used when the user asks to install, configure, upgrade, repair, or diagnose Kimi Computer Use (kimi-cu), especially for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes MCP clients.",
+    "metadata": {
+      "author": "adonis",
+      "version": "0.2.1"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   },
   {
     "slug": "lingui-workflow",
