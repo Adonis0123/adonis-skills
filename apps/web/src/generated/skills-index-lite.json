@@ -10,7 +10,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-08-26T08:46:46.000Z"
+    "updatedAt": "2026-09-14T13:25:30.000Z"
   },
   {
     "slug": "agentic-review-handoff",
@@ -81,7 +81,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-03-09T16:14:12.000Z"
+    "updatedAt": "2026-09-14T13:25:30.000Z"
   },
   {
     "slug": "code-plugin-architecture",
@@ -95,7 +95,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-14T13:25:32.000Z"
   },
   {
     "slug": "commit",
@@ -135,7 +135,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T13:25:28.000Z"
   },
   {
     "slug": "figma-mcp",
@@ -164,7 +164,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-14T11:34:41.000Z"
+    "updatedAt": "2026-09-14T13:25:28.000Z"
   },
   {
     "slug": "kimi-computer-use",
@@ -235,7 +235,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-14T13:25:32.000Z"
   },
   {
     "slug": "task-completion-loop",
@@ -293,7 +293,7 @@
       "hasSrc": true,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z",
+    "updatedAt": "2026-09-14T13:25:32.000Z",
     "allowedTools": ["Read", "Write", "Bash(git:*)", "Bash(python:*)"]
   },
   {
@@ -308,6 +308,6 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T13:25:28.000Z"
   }
 ]
