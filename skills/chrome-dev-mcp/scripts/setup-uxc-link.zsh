@@ -15,6 +15,12 @@ fail_closed() {
   exit 69
 }
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  print -- "usage: zsh setup-uxc-link.zsh"
+  print -- "  creates or repairs the owned chrome-dev-mcp-cli link; fails closed on a foreign link or binary"
+  exit 0
+fi
+
 [[ $# -eq 0 ]] || fail_closed "unexpected_arguments"
 chrome_dev_mcp_load_config || fail_closed "local_config_missing"
 

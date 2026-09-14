@@ -3,7 +3,7 @@ name: figma-mcp
 description: "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, or Cursor. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts."
 metadata:
   author: adonis
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # Figma MCP
@@ -12,7 +12,7 @@ Use the official remote Figma MCP server through each supported host's native re
 
 ## Keep the user contract simple
 
-Let the user remember only `/figma-mcp`. Handle host discovery, OAuth state, account identity, and readiness internally. With no additional task, accept the host's currently authenticated Figma account and return only `FIGMA_MCP_READY` after a real `whoami` tool call. For a current-account, single-host, read-only file or node task, skip a separate identity probe and let the first requested official read prove that its tool and OAuth grant work. When the user names an account, require a private match before readiness. On failure, report one failing layer and one required action.
+Let the user remember only `/figma-mcp`. Handle host discovery, OAuth state, account identity, and readiness internally. With no additional task, accept the host's currently authenticated Figma account and return only `FIGMA_MCP_READY` after a real `whoami` tool call. For a current-account, single-host, read-only task, the first requested official read is the proof (path 2 below). When the user names an account, require a private match before readiness. On failure, report one failing layer and one required action.
 
 Use `/figma-mcp` in Claude Code and Cursor, and `$figma-mcp` in Codex.
 
@@ -21,13 +21,14 @@ Use `/figma-mcp` in Claude Code and Cursor, and `$figma-mcp` in Codex.
 Classify an explicit invocation by its payload before calling a tool.
 
 1. For readiness-only, a named account, an account switch, recovery, a write, or multi-host acceptance, call the host-registered Figma MCP `whoami` once. Inspect the result privately and require a private match when the user named an account.
-2. For a single-host read-only file or node task where the user accepts the current account, first load the official operation skill, then execute the first requested harmless read. Its success proves server discovery, tool availability, and authentication for that task; do not add a separate `whoami` call.
-3. On readiness-only success, return `FIGMA_MCP_READY`. On task success, continue the requested work without emitting identity details.
-4. If the required tool is absent, diagnose native host discovery before changing authentication.
-5. If the server requires authentication, use the host's native login command or plugin UI. Let the user complete passwords, passkeys, Touch ID, 2FA, CAPTCHA, or any other credential challenge.
-6. After successful authentication or recovery, retry `whoami` exactly once. If the original request was the read-only fast path, retry its requested read only after that post-recovery identity and authentication proof succeeds.
+2. For a single-host read-only file or node task where the user accepts the current account, load the operation skill the read requires (see the prerequisite table below), then execute the first requested harmless read. Its success proves server discovery, tool availability, and authentication for that task; do not add a separate `whoami` call. When the goal is only to confirm file access, probe with `get_metadata` on the `fileKey`: it needs no prerequisite skill and returns the page list. Reserve `get_design_context` for implementation work.
+3. If the task needs a file but no Figma URL or `fileKey` was supplied, or the first read returns forbidden or not-found, stop. A Figma-originated forbidden or not-found error already proves tool discovery and authentication, so add at most one `whoami` and only when no read reached Figma. Report `FILE_ACCESS: UNVERIFIED`, name the one missing item (URL, share permission, or plan feature), and do not probe other files. Identity readiness never proves a file workflow.
+4. On readiness-only success, return `FIGMA_MCP_READY`. On task success, continue the requested work without emitting identity details.
+5. If the required tool is absent, diagnose native host discovery before changing authentication.
+6. If the server requires authentication, use the host's native login command or plugin UI. Let the user complete passwords, passkeys, Touch ID, 2FA, CAPTCHA, or any other credential challenge.
+7. After successful authentication or recovery, retry `whoami` exactly once on identity-sensitive paths (readiness-only, named account, switch, write, multi-host). For the unnamed-account read-only fast path, retry the requested read directly; its success is the post-recovery proof.
 
-Use `VERIFIED` only after the proof required for that path completes. Server configuration, an OAuth browser page, a successful callback, and tool discovery are separate evidence layers.
+Report success only after the proof required for that path completes. Server configuration, an OAuth browser page, a successful callback, and tool discovery are separate evidence layers.
 
 ## Preserve the remote invariant
 
@@ -49,7 +50,7 @@ Only clients listed in Figma's MCP Catalog may connect. Treat Grok, Hermes, Work
 
 Share only the skill and official server registration. Never store a default Figma account, email, account alias, token, cookie, browser profile, or OAuth callback in the skill, MCP configuration, environment variables, or repository files.
 
-- With no account named, keep the existing OAuth grant. Use `whoami` when identity is part of the proof path; do not inspect identity for the current-account single-host read-only fast path.
+- With no account named, keep the existing OAuth grant and inspect identity only on paths that use `whoami`.
 - With an account named, compare privately and switch only when the current host is a mismatch.
 - Switching accounts must preserve the existing server identifier, endpoint, scope, and unrelated MCP entries.
 - App plugins and CLI registrations may have separate OAuth lifecycles even on the same machine. Switch and verify only the surface the user is actually using.
@@ -61,10 +62,19 @@ Account switching changes authentication state, not MCP configuration. Do not ad
 Use this skill for:
 
 - Official Figma MCP installation, OAuth, connection recovery, and multi-host acceptance.
-- Readiness and private account-identity checks with `whoami`, plus current-account single-host read-only fast-path proof through the requested official read.
+- Readiness and private account-identity checks with `whoami`, or the read-only fast path proof.
 - Diagnosing the difference between server discovery, tool discovery, authentication, and a real tool call.
 
-For Figma design reads and writes, load the official task skill that owns the operation before calling its tool. In particular, load `figma-use` before every `use_figma` call and honor any stricter prerequisite named by a Figma tool. Test write workflows in a duplicate or disposable file, never an important working file.
+For Figma design reads and writes, load the official task skill that owns the operation before calling its tool, and honor any stricter prerequisite named by the tool description. Test write workflows in a duplicate or disposable file, never an important working file.
+
+| Tool                                                  | Prerequisite                                                                                                              |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `get_design_context`                                  | Load `figma-design-to-code` first (`/figma-design-to-code`, or `skill://figma/figma-design-to-code/SKILL.md`)             |
+| `use_figma`                                           | Load `figma-use` first (`/figma-use`, or `skill://figma/figma-use/SKILL.md`)                                              |
+| `create_new_file`, `generate_diagram`, shader/plugin  | `whoami` for `planKey`; pass it only as a tool parameter, never in visible text; ask which plan to use when several exist |
+| `get_metadata`, `get_screenshot`, `get_variable_defs` | None; `get_metadata` without a `node-id` lists the file's pages                                                           |
+
+URL parsing: `figma.com/design/:fileKey/:name?node-id=1-2` gives `fileKey` and nodeId `1:2`; `/design/:fileKey/branch/:branchKey/...` uses `branchKey` as the file key; `/make/:key` uses nodeId `0:1` and only `get_design_context`; `/board/` is FigJam and uses `get_figjam`.
 
 Do not use Figma MCP for ordinary web browsing, desktop navigation, generic screenshots, or non-Figma files.
 
@@ -74,7 +84,7 @@ Read [references/authentication.md](references/authentication.md) when login is 
 
 Prefer the host's native OAuth command or plugin UI. Computer Use may assist only with already-visible, non-secret UI after the user explicitly authorizes the target account. It must stop for credential entry, passkeys, Touch ID, 2FA, CAPTCHA, consent ambiguity, or an account not clearly matching the requested identity.
 
-Never print `whoami` payloads in readiness reports. Reduce identity checks to `CURRENT`, `MATCH`, `MISMATCH`, or `UNVERIFIED`.
+Never print `whoami` payloads in readiness reports. Reduce identity checks to `CURRENT`, `MATCH`, `MISMATCH`, or `UNVERIFIED`. A `planKey` may travel as a tool parameter when a write tool requires it; it never appears in user-visible text.
 
 ## Recover by failed layer
 
@@ -84,7 +94,7 @@ Read [references/host-verification.md](references/host-verification.md). Merge t
 
 ### Authentication required
 
-Run only that host's native login flow, then retry `whoami` once. If recovery interrupted a current-account read-only task, retry its requested read after `whoami` succeeds. A login in one host does not prove another host is authenticated.
+Run only that host's native login flow, then retry `whoami` once on identity-sensitive paths. If recovery interrupted an unnamed-account read-only task, retry the requested read directly. A login in one host does not prove another host is authenticated.
 
 ### Switch account or recover from a mismatch
 

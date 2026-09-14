@@ -86,5 +86,9 @@
   {
     "query": "Figma 稿已经对过了，现在需要产品页面的运行时截图当验收证据。",
     "should_trigger": false
+  },
+  {
+    "query": "我已经在 ego-browser 里开着这个页面了，帮我看看点按钮时 Console 有没有报错、那个请求返回什么，不用换浏览器。",
+    "should_trigger": false
   }
 ]

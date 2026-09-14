@@ -60,12 +60,12 @@ Resolve only the installed `cursor-agent` or `cursor-cli` executable. Do not ass
 
 ## Run the real acceptance
 
-This section is for readiness-only, recovery, and multi-host acceptance, so identity is part of the proof. Do not add it before a current-account, single-host, read-only file or node task; that path uses the first requested official read as `REQUESTED_READ`, as defined by the main skill.
+This section is for readiness-only, recovery, and multi-host acceptance, so identity is part of the proof. The main skill's read-only fast path does not use it.
 
 When no account was named, use one fresh read-only session per host with this prompt:
 
 ```text
-只读验收：必须真实调用 Figma MCP 的 whoami 一次；接受当前已认证帐号，不要访问任何 Figma 文件，不要输出姓名、邮箱、plan、ID 或其他身份详情。工具成功完成只回答 FIGMA_MCP_OK；工具未暴露、需要登录或调用失败只回答 FIGMA_MCP_FAIL。
+只读验收：必须真实调用 Figma MCP 的 whoami 一次；接受当前已认证帐号，不要访问任何 Figma 文件，不要输出姓名、邮箱、plan、ID 或其他身份详情。工具成功完成只回答 FIGMA_MCP_READY；工具未暴露、需要登录或调用失败只回答 FIGMA_MCP_FAIL。
 ```
 
 When the user named an account, add the target only to the ephemeral prompt and require the model to compare privately. Never persist the target in MCP configuration or skill files.

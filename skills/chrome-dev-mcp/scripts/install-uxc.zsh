@@ -13,6 +13,12 @@ fail_closed() {
   exit 69
 }
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  print -- "usage: zsh install-uxc.zsh [--manifest]"
+  print -- "  installs the pinned owned UXC binary and its manifest; --manifest prints the pins without downloading"
+  exit 0
+fi
+
 if [[ "${1:-}" == "--manifest" ]]; then
   [[ $# -eq 1 ]] || fail_closed "unexpected_arguments"
   print -- "UXC_VERSION=$UXC_VERSION"

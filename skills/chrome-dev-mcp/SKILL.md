@@ -1,9 +1,9 @@
 ---
 name: chrome-dev-mcp
-description: "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task."
+description: "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task."
 metadata:
   author: adonis
-  version: "1.3.2"
+  version: "1.4.0"
 ---
 
 # Chrome Dev MCP
@@ -22,9 +22,11 @@ Let the user remember only `/chrome-dev-mcp`. Handle connection checks, recovery
 
 Treat `/chrome-dev-mcp` without a task as a readiness-only action. Treat the same invocation with a page task as readiness-plus-task.
 
-1. For readiness-only, run `scripts/uxc-readiness.zsh` from this skill. It performs a real shared `list_pages` call, discards the page payload, and returns only `CHROME_DEV_MCP_READY` on success.
-2. For readiness-plus-task, run `scripts/uxc-readiness.zsh --private-result`. This strict mode validates the configured binary/link ownership contract, prepends the managed binary directory ahead of inherited `PATH`, calls shared `list_pages` exactly once, and returns its JSON only to the agent. Keep the result private and reuse that same current-turn result as both transport proof and fresh numeric `pageId` resolution. Do not run the payload-discarding mode first or call the linked CLI directly.
-3. If either path reports a connection or wrapper failure, run `scripts/ensure-connection.zsh --recover`, then retry exactly once with the same path: `scripts/uxc-readiness.zsh` for readiness-only, or `scripts/uxc-readiness.zsh --private-result` for readiness-plus-task. The latter post-recovery JSON is the fresh result for the task.
+Invoke every helper with `zsh` (for example `zsh scripts/uxc-readiness.zsh`). Under `bash`, `set -u` and `${0:A:h}` abort with `A: unbound variable`.
+
+1. For readiness-only, run `zsh scripts/uxc-readiness.zsh` from this skill. It performs a real shared `list_pages` call, discards the page payload, and returns only `CHROME_DEV_MCP_READY` on success.
+2. For readiness-plus-task, run `zsh scripts/uxc-readiness.zsh --private-result`. This strict mode validates the configured binary/link ownership contract, prepends the managed binary directory ahead of inherited `PATH`, calls shared `list_pages` exactly once, and returns its JSON only to the agent. Keep the result private and reuse that same current-turn result as both transport proof and fresh numeric `pageId` resolution. Do not run the payload-discarding mode first or call the linked CLI directly.
+3. If either path reports a connection or wrapper failure, run `zsh scripts/ensure-connection.zsh --recover`, then retry exactly once with the same path: `zsh scripts/uxc-readiness.zsh` for readiness-only, or `zsh scripts/uxc-readiness.zsh --private-result` for readiness-plus-task. The latter post-recovery JSON is the fresh result for the task.
 4. If the CLI, shell, or required response type is unavailable, report `NATIVE_COMPAT_REQUIRED`; do not start a native server automatically.
 5. Use host-native `chrome-devtools` only when the user explicitly requests `native` compatibility or approves it after that blocker. Mark that mode because it adds one runtime per host session.
 6. A successful `list_pages` proves readiness, not the requested page operation. Claim the task `VERIFIED` only after its Console, Network, snapshot, interaction, or other requested command independently completes.
@@ -57,7 +59,7 @@ Use this skill for:
 - Chrome DevTools MCP/CDP connectivity and correct-profile diagnosis.
 - Multi-host discovery and real-tool-call acceptance.
 
-Use the host's native Chrome/browser capability for ordinary navigation and form filling. Use native Computer Use for browser chrome, macOS windows, and cross-app work. Do not substitute Playwright, Computer Use, raw CDP, or another browser layer for missing DevTools evidence when the requested evidence is browser-internal.
+Ordinary navigation, form filling, and page acceptance follow the caller's browser routing (for example ego-browser, or the host's native browser when no browser is specified); this skill only supplies browser-internal evidence. An existing ego-browser page keeps its own Console, exception, request, and basic metric diagnosis; switch here for Lighthouse, a full performance trace, heap analysis, or a user-specified Chrome tab. Use native Computer Use for browser chrome, macOS windows, and cross-app work. Do not substitute Playwright, Computer Use, raw CDP, or another browser layer for missing DevTools evidence when the requested evidence is browser-internal.
 
 ## Start with runtime proof
 
@@ -70,15 +72,31 @@ Use the host's native Chrome/browser capability for ordinary navigation and form
 
 Do not echo unrelated page data. A successful handshake is not proof of attachment; a completed `list_pages` call is the minimum runtime proof.
 
+## Keep a time budget
+
+Readiness already bounds its single `list_pages` call at 45 seconds. Budget the rest so a diagnosis ends with a report instead of a timeout:
+
+- Allow one recovery attempt and one retry per invocation. Do not loop on a busy Chrome or an exclusive-key conflict.
+- Pass `--timeout-ms 15000` as a global flag before the operation name (`chrome-dev-mcp-cli --timeout-ms 15000 <operation> ...`); after the operation it is rejected as an unknown argument. Skip it when the operation states its own duration (a Performance trace, Lighthouse, or `new_page timeout=`).
+- Keep a routine diagnosis within roughly 90 seconds of tool time. When the budget is spent or a call fails, report the evidence already collected and mark the missing part `UNVERIFIED` instead of retrying.
+
+## Collect Network evidence
+
+1. `chrome-dev-mcp-cli list_network_requests pageId=<id> pageSize=20`; add `'resourceTypes:=["fetch","xhr"]'` (JSON argument syntax) when the task is about API calls. Pick the `reqid` of the failing request.
+2. `chrome-dev-mcp-cli get_network_request pageId=<id> reqid=<reqid>` returns status, headers, and the body inline. Use `responseFilePath=` only for a large body, and only inside a configured workspace root: the runtime rejects other paths, including OS temporary directories. Read only the fields the task needs.
+3. A missing or empty body does not mean the request failed or returned nothing: Chrome may not retain the body of a failed, redirected, or streamed response. Report the status code and headers you have, state that the body was unavailable, and never replay a request with side effects to obtain it.
+
+Confirm parameter names with `chrome-dev-mcp-cli <operation> -h`; the installed runtime's schema wins over this text.
+
 ## Recover by failed layer
 
 ### Shared CLI absent
 
-Run `scripts/setup-uxc-link.zsh` only after confirming the pinned owned UXC binary is installed. Fail closed on a foreign link or binary. Do not substitute `npx`, `@latest`, or auto-connect.
+Run `zsh scripts/setup-uxc-link.zsh` only after confirming the pinned owned UXC binary is installed. Fail closed on a foreign link or binary. Do not substitute `npx`, `@latest`, or auto-connect.
 
 ### Startup or tool call failed
 
-Run `scripts/ensure-connection.zsh --recover` from this skill, then retry the path-specific shared `list_pages` proof once. Use `scripts/uxc-readiness.zsh` for readiness-only and `scripts/uxc-readiness.zsh --private-result` for readiness-plus-task; retain the recovered private result for fresh `pageId` resolution. The helper reads the one-time local configuration produced by `scripts/configure-local.zsh`; it does not depend on shell aliases or login-shell startup.
+Run `zsh scripts/ensure-connection.zsh --recover` from this skill, then retry the path-specific shared `list_pages` proof once. Use `zsh scripts/uxc-readiness.zsh` for readiness-only and `zsh scripts/uxc-readiness.zsh --private-result` for readiness-plus-task; retain the recovered private result for fresh `pageId` resolution. The helper reads the one-time local configuration produced by `scripts/configure-local.zsh`; it does not depend on shell aliases or login-shell startup.
 
 If identity validation reports the wrong browser or profile, fail closed. Read [references/profile-identity.md](references/profile-identity.md). Never close or restart an existing browser without explicit authorization.
 
@@ -92,15 +110,11 @@ Reuse `scripts/install-uxc.zsh` for the pinned UXC binary and its owner manifest
 
 ## Handle concurrency
 
-Use the installed `chrome-dev-mcp-cli` for every call. Its managed launcher fixes the working directory before UXC computes session identity and invokes the owned binary by absolute path. UXC 0.17.0 includes the caller's working directory in stdio identity; calling `uxc <wrapper>` directly from project directories creates competing sessions for the same exclusive key. The exclusive key is a browser ownership guard, not a task lock: do not remove it, invent per-agent keys for the same browser, kill another session, or loop until it releases. Repair a known legacy launcher with `scripts/setup-uxc-link.zsh`; it preserves the exact old owned link and refuses foreign contracts.
+Use the installed `chrome-dev-mcp-cli` for every call. Its managed launcher fixes the working directory and invokes the owned binary by absolute path, so calls from different projects reuse one daemon session instead of competing for the same exclusive key. That key is a browser ownership guard, not a task lock: do not remove it, invent per-agent keys for the same browser, kill another session, or loop until it releases.
 
-Real system-pointer input has one shared cursor and foreground window across the desktop. Serialize drag, keyboard, focus, and screen-recording sequences that depend on them, even across different tabs. For parallel browser work, prefer explicit `pageId` DevTools operations on separate pages. A required real-pointer test must reserve exclusive desktop use for its duration; a transport fix cannot make simultaneous pointer control independent.
+Pass a fresh `pageId` to every page-scoped read or write so one agent cannot change another agent's selected page. The runtime serializes tool calls and has no cross-agent transaction lock for multi-step writes to one tab; report that case `UNVERIFIED` and stop when ownership is unclear. Real pointer input has one shared cursor and foreground window, so serialize drag, keyboard, focus, and screen-recording sequences across the desktop.
 
-With Chrome DevTools MCP 1.9.0, use `--pageIdRouting` (enabled by default); older wrappers may name the experimental flag. Verify the live schema still requires `pageId` after upgrading. Pass a fresh `pageId` to every page-scoped read or write so one agent cannot change another agent's selected-page context. Different page IDs route safely, but the runtime serializes individual tool calls and does not guarantee parallel execution. No cross-agent transaction lock exists for multi-step writes to one tab; report that case `UNVERIFIED` and stop when ownership is unclear. Use separate isolated browsers for truly parallel writes that cannot share a tab safely.
-
-For a purely read-only `evaluate_script`, use `waitForStableDom=false` when the live schema supports it; DOM mutations still need stability and post-action verification. Keep output bounded to the requested evidence.
-
-Shared UXC does not negotiate workspace roots. Write screenshots, snapshots, traces, or heap data only to an OS temporary path first, return the path and a bounded summary, then move the artifact only after its contents and destination are validated. Never add `--allow-unrestricted-paths`. If the host must render native content blocks, use explicit native compatibility mode.
+Write screenshots, snapshots, traces, or heap data only to an OS temporary path first and return the path with a bounded summary. Never add `--allow-unrestricted-paths`. Flag details, `waitForStableDom`, legacy launcher repair, and isolated-browser parallelism → [references/uxc-facade.md](references/uxc-facade.md).
 
 ## Report acceptance
 

@@ -78,5 +78,13 @@
   {
     "query": "profile 一下 editor playback 为什么掉帧，先给 flamegraph 和根因，不要改模块边界或进入 scan-fix loop。",
     "should_trigger": false
+  },
+  {
+    "query": "用 architecture-hardening-loop 看最近 3 个 commit 触及的文件，加上我还没提交的改动，直接修到没有可修项；不用再问我 hash。",
+    "should_trigger": true
+  },
+  {
+    "query": "attach 里这两个提交（标题我截图了）做一轮架构加固：只修有当前伤害的，Grok 复审后同范围复扫。",
+    "should_trigger": true
   }
 ]

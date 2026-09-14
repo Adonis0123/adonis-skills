@@ -5,6 +5,12 @@ set -euo pipefail
 script_dir="${0:A:h}"
 source "$script_dir/lib/load-config.zsh"
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  print -- "usage: zsh ensure-connection.zsh [--check|--recover]"
+  print -- "  --check: identity check only; --recover (default): launch the configured isolated profile when the endpoint is absent"
+  exit 0
+fi
+
 mode="${1:---recover}"
 check_reason="CHECK_FAILED"
 

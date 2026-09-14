@@ -24,7 +24,7 @@
         "Uses the host-native OAuth command or plugin UI",
         "Stops for passwords, passkeys, Touch ID, 2FA, CAPTCHA, or account ambiguity",
         "Does not copy OAuth tokens, cookies, or credential caches between hosts",
-        "Requires whoami after authentication before VERIFIED"
+        "Requires whoami after authentication before reporting success"
       ]
     },
     {
@@ -71,14 +71,56 @@
       "id": 6,
       "name": "current-account-read-fast-path",
       "prompt": "/figma-mcp 用当前账号只读读取这个 Figma 文件里的指定节点，只在 Codex 当前 host 执行；不要切账号，不要写入，也不要做多 host 验收。",
-      "expected_output": "Loads the official operation skill and lets the first requested harmless read prove server, tool, and auth readiness without a separate whoami; if authentication recovery becomes necessary, runs whoami after recovery before retrying the read.",
+      "expected_output": "Loads the official operation skill and lets the first requested harmless read prove server, tool, and auth readiness without a separate whoami; if authentication recovery becomes necessary on this unnamed-account path, retries the requested read directly after login instead of adding whoami.",
       "files": [],
       "expectations": [
         "Does not add a separate whoami before the current-account single-host read-only task",
         "Loads the official Figma operation skill required by the requested read",
         "Uses the first requested official read as tool and authentication proof",
-        "Keeps readiness-only, named-account, switch, recovery, write, and multi-host paths on whoami",
-        "Does not expose account identity or unrelated file data"
+        "Retries the requested read directly after any login recovery instead of adding whoami on this unnamed-account path",
+        "Does not expose account identity or unrelated file data",
+        "Keeps readiness-only, named-account, switch, write, and multi-host paths on whoami"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "unsupported-client-fails-closed",
+      "prompt": "在 Grok Build 里把官方 Figma MCP 配起来并做一次 whoami 验收，账号用当前登录的就行。",
+      "expected_output": "Checks Figma's MCP Catalog, reports that Grok is not a listed client, refuses to work around it with a proxy or borrowed client identity, and names the supported hosts instead of attempting registration.",
+      "files": [],
+      "expectations": [
+        "Identifies Grok as unlisted in Figma's MCP Catalog and does not register the server there",
+        "Does not propose a proxy, shared wrapper, or borrowed client identity",
+        "Names Codex, Claude Code, or Cursor as supported alternatives",
+        "Does not print any account identity"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "file-access-forbidden-fast-fail",
+      "prompt": "/figma-mcp 读一下这个文件的页面列表：https://www.figma.com/design/AbCdEfGhIjKlMnOpQrStUv/Checkout （当前账号，只在 Claude Code）。",
+      "expected_output": "Parses the fileKey from the URL, probes with get_metadata without a separate whoami, and when the read returns forbidden or not-found stops without further probing: the Figma-originated error already proves tool and auth, so whoami is skipped (at most one is allowed if no read reached Figma). Reports FILE_ACCESS: UNVERIFIED with the single missing item (share permission).",
+      "files": [],
+      "expectations": [
+        "Extracts the fileKey from the URL and uses get_metadata as the first read",
+        "Does not call whoami before the first read on the current-account single-host path",
+        "On forbidden or not-found, stops with zero or at most one whoami call and no further reads",
+        "Reports FILE_ACCESS: UNVERIFIED and names one missing item such as share permission",
+        "Does not probe other files or fall back to other read tools"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "code-to-design-requires-plan-key-privately",
+      "prompt": "用 Figma MCP 在我的 team 下新建一个 design 文件，然后把这个 React 登录页画进去；连接和登录都已经好了。",
+      "expected_output": "Calls whoami to obtain the planKey, passes it to create_new_file without echoing plan names or IDs, asks which plan when several exist, loads figma-use before use_figma, and works in the new file rather than an existing important file.",
+      "files": [],
+      "expectations": [
+        "Calls whoami to obtain the planKey before create_new_file",
+        "Passes planKey only as a tool parameter and does not print plan names or IDs",
+        "Asks the user which plan to use when whoami returns more than one",
+        "Loads figma-use before the first use_figma call",
+        "Writes into the newly created file, not an existing working file"
       ]
     }
   ]

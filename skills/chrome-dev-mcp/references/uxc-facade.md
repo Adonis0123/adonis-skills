@@ -24,10 +24,7 @@ UXC also publishes a generic `chrome-devtools-mcp-skill` that favors package `@l
 Keep this skill shared-first and fail-closed:
 
 - disable eager native MCP registration host by host only after shared acceptance; preserve a documented rollback;
-- link UXC only to the same safe wrapper;
-- never use `@latest`, auto-connect, alternate endpoint discovery, or isolated fallback inside this facade;
-- require explicit `pageId` routing for every page-scoped operation;
-- never fall back to native MCP automatically;
+- link UXC only to the same safe wrapper; the main skill already forbids `@latest`, auto-connect, and automatic native fallback;
 - treat sanitized readiness as shared transport evidence and the requested CLI operation as task acceptance.
 
 ## Reusable provenance
@@ -52,13 +49,22 @@ After the user authorizes local installation:
 
 1. Run `scripts/install-uxc.zsh`.
 2. Run `scripts/setup-uxc-link.zsh`.
-3. Run `scripts/uxc-readiness.zsh` twice from the installed skill.
+3. Run `zsh scripts/uxc-readiness.zsh` twice from the installed skill.
 
 The first readiness call may create a daemon session and can spend up to 45 seconds attaching to a busy existing Chrome. The immediate second call should report `DAEMON_SESSION_REUSED=YES`. The helper discards the `list_pages` payload and prints only bounded status fields.
 
-Those two calls are installation acceptance, not the readiness-plus-task fast path. When an invocation already includes a page task, run `scripts/uxc-readiness.zsh --private-result` once instead. It applies the same owned binary/link and managed-`PATH` gates while retaining the one current-turn JSON result privately for target resolution.
+Those two calls are installation acceptance, not the readiness-plus-task fast path. When an invocation already includes a page task, run `zsh scripts/uxc-readiness.zsh --private-result` once instead. It applies the same owned binary/link and managed-`PATH` gates while retaining the one current-turn JSON result privately for target resolution.
 
-Use a finite idle TTL so an unused MCP child is reaped. Treat the configured daemon-exclusive key as an ownership boundary, not session identity. In pinned UXC 0.17.0, stdio identity includes endpoint, auth fingerprint, injected environment fingerprint, and working directory. Keep the fixed directory in the managed launcher, not only in readiness, so calls from different projects reuse the same child. The setup helper migrates only the exact legacy generated link and saves a recovery copy; it does not restart the daemon or browser.
+Use a finite idle TTL so an unused MCP child is reaped. Treat the configured daemon-exclusive key as an ownership boundary, not session identity. Keep the fixed working directory in the managed launcher, not only in readiness, so UXC computes one stable session identity and calls from different projects reuse the same child (observed with the pinned 0.17.0; recheck after any UXC upgrade). The setup helper migrates only the exact legacy generated link and saves a recovery copy; it does not restart the daemon or browser.
+
+## Concurrency details
+
+- Chrome DevTools MCP 1.9.0 enables `--pageIdRouting` by default; older wrappers name the experimental flag. After an upgrade, confirm the live schema still requires `pageId` for page-scoped operations.
+- Different page IDs route safely, but tool calls are serialized; do not expect parallel execution. Use separate isolated browsers for parallel writes that cannot share a tab.
+- For a purely read-only `evaluate_script`, use `waitForStableDom=false` when the live schema supports it; DOM mutations still need stability and post-action verification.
+- A real-pointer test must reserve exclusive desktop use for its duration; a transport fix cannot make simultaneous pointer control independent.
+- Repair a known legacy launcher with `zsh scripts/setup-uxc-link.zsh`; it preserves the exact old owned link and refuses foreign contracts.
+- Shared UXC does not negotiate workspace roots; move an artifact out of the OS temporary path only after its contents and destination are validated. If the host must render native content blocks, use explicit native compatibility mode.
 
 Never log raw linked-command output for readiness `list_pages`. `STATUS=READY` proves shared transport and correct-browser attachment; verify each requested DevTools operation separately. Native-host acceptance is optional compatibility evidence, not the default success condition.
 

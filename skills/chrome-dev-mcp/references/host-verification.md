@@ -15,7 +15,7 @@ grok mcp list                        # expect disabled
 hermes mcp list                      # expect disabled
 ```
 
-Then run `scripts/uxc-readiness.zsh` twice. Require `SHARED_TRANSPORT=OK` and require the second call to report `DAEMON_SESSION_REUSED=YES`. Discovery never proves that the shared child attached to the intended Chrome; sanitized readiness does.
+Then run `zsh scripts/uxc-readiness.zsh` twice. Require `SHARED_TRANSPORT=OK` and require the second call to report `DAEMON_SESSION_REUSED=YES`. Discovery never proves that the shared child attached to the intended Chrome; sanitized readiness does.
 
 For fan-out checks, compare the OS process tree with `uxc daemon sessions`. Count actual Chrome DevTools MCP server processes separately from npm launchers, watchdogs, Chrome renderers and Chrome Helper processes. Run concurrent read-only calls from different project directories and verify the same single shared child remains afterward; `daemon_session_reused=true` alone does not rule out other native children.
 

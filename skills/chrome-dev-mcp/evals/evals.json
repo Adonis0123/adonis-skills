@@ -78,6 +78,21 @@
         "Treats the requested Network operation as a separate success gate from list_pages",
         "Does not expose unrelated page metadata"
       ]
+    },
+    {
+      "id": 7,
+      "name": "network-body-unavailable-reports-status",
+      "prompt": "/chrome-dev-mcp 当前标签页点“提交”后接口报 503，请拿到这个请求的状态码、响应头和响应正文。标签页明确，不要导航到别处；如果 90 秒内拿不全就直接给结论。",
+      "expected_output": "Uses one private list_pages result for pageId, lists network requests filtered to the failing call, fetches it with get_network_request (inline body; responseFilePath only inside a configured workspace root), and when the body is unavailable reports the 503 status and headers with the body marked UNVERIFIED instead of retrying or replaying the request; stays inside the time budget.",
+      "files": [],
+      "expectations": [
+        "Resolves pageId from one current-turn private list_pages result",
+        "Calls list_network_requests with the fresh pageId before get_network_request",
+        "Reads the body inline or via responseFilePath inside a configured workspace root, never an arbitrary temp path",
+        "Treats an unavailable body as missing evidence, not as request failure or an empty body",
+        "Does not replay the submit request or loop on retries to obtain the body",
+        "Delivers status code and headers with UNVERIFIED for the missing body within the time budget"
+      ]
     }
   ]
 }

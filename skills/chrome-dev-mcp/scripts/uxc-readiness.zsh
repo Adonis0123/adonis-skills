@@ -17,6 +17,12 @@ report_error() {
   exit 69
 }
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  print -- "usage: zsh uxc-readiness.zsh [--private-result]"
+  print -- "  default: shared list_pages proof, prints sanitized STATUS fields; --private-result: prints the JSON envelope for pageId resolution"
+  exit 0
+fi
+
 output_mode="sanitized"
 if [[ $# -eq 1 && "$1" == "--private-result" ]]; then
   output_mode="private-result"

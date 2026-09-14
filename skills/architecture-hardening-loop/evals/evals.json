@@ -451,6 +451,20 @@
         "继续 Hardening Contract 下的 Fix、验证、review 与同范围复扫",
         "终态 Goal 字段为 not-created"
       ]
+    },
+    {
+      "id": 32,
+      "name": "duplicate-only-rescan-reuses-review-verdict",
+      "prompt": "这是只读行为验收，不要修改文件、调用 Reviewer 或 Goal。范围 packages/core/**。首轮有一个 Architecture Fix：事前 Grok consult 已看过完整 ledger（含两个 Backlog、一个 Reject），Fix 实施后 Grok review PASS 并返回 E2。复扫按 fingerprint 对账后没有新候选，也没有满足 Reconsider when 的项。请给出是否还需要再调用一次 Grok 终态 consult、stop reason 是什么，以及若这是首轮零 Fix 时答案有何不同。",
+      "expected_output": "复扫轮次 ledger 无新 fingerprint、且全部 disposition 已在事前 consult 与 review verdict 中由 Grok 看过时，复用该 review verdict 作终态复核，不再单独 consult；仍必须重算 evidence 与 E2 一致后才进入 NO_ACTIONABLE_FINDINGS，stop reason 为 duplicate-only。首轮零 Fix 没有任何 Grok 已看过的 verdict，必须做终态 consult，stop reason 为 zero-fix-first-pass。",
+      "files": [],
+      "expectations": [
+        "复扫零 Fix 且无新 fingerprint 时不再单独调用 Grok 终态 consult",
+        "说明复用的是本轮事前 consult 与 review PASS verdict",
+        "仍要求重算 evidence 与 E2 一致后才 NO_ACTIONABLE_FINDINGS",
+        "stop reason 报告为 duplicate-only",
+        "首轮零 Fix 仍必须做终态 consult 且 stop reason 为 zero-fix-first-pass"
+      ]
     }
   ]
 }
