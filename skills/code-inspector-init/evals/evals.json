@@ -1,0 +1,39 @@
+{
+  "skill_name": "code-inspector-init",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "这个 Vite 项目已经装了 code-inspector-plugin，dev 在运行，CODE_INSPECTOR=true。配置是 hotKeys: [\"altKey\", \"shiftKey\"]、hideConsole: true。Alt+Shift 能出现遮罩并跳 IDE，但单按 Alt 没反应。先帮我查原因，不要改文件。",
+      "expected_output": "识别配置要求 Alt+Shift，解释单 Alt 不触发；保持文件、依赖与配置不变，不把已观察的跳转成功说成本次实测。",
+      "files": [],
+      "assertions": [
+        "识别实际配置与单按 Alt 的差异。",
+        "没有安装依赖、修改配置或要求无关的升级。",
+        "区分用户提供的观察与本次运行证据。"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "这个 Vite 项目已经装了 code-inspector-plugin。当前 hotKeys 是 [\"altKey\", \"shiftKey\"]，needEnvInspector: true、hideConsole: true，.env.local 已启用。Alt+Shift 能跳 IDE。请直接改为单按 Alt，保留其他配置，并验证；这是本地开发配置改动。",
+      "expected_output": "检查现有文件后只修改 hotKeys；不重复征求实施许可、不重装依赖、不替换配置；如无浏览器/IDE 能力，完成配置改动并准确报告交互验证尚未完成。",
+      "files": [],
+      "assertions": [
+        "实际执行已授权的 hotKeys 修改，而非仅提供方案。",
+        "保留 needEnvInspector、hideConsole 和其他已有配置。",
+        "没有重装插件或无依据升级依赖。",
+        "仅在实际观察后声称遮罩和 IDE 跳转通过；缺少该能力时标明 UNVERIFIED。"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "我们在评估 code-inspector-plugin 的快捷键设置。只解释一下已有 hotKeys: [\"altKey\", \"shiftKey\"] 与 [\"altKey\"] 的区别，给最小配置例子即可，不要接入项目或运行命令。",
+      "expected_output": "直接解释组合键与单键区别，提供局部 hotKeys 示例；不扫描项目、安装、修改文件或把解释扩成完整接入与回滚流程。",
+      "files": [],
+      "assertions": [
+        "准确解释两种快捷键组合。",
+        "只给与问题相关的配置示例。",
+        "不执行命令或修改文件。"
+      ]
+    }
+  ]
+}

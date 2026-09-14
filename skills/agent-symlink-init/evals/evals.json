@@ -21,6 +21,19 @@
         "Inspects semantics instead of classifying by flag name alone.",
         "Limits removals to the verified legacy sync implementation."
       ]
+    },
+    {
+      "id": 3,
+      "name": "gitfile-project-root",
+      "prompt": "Only initialize .claude/skills -> .agents/skills in this Python Git repository. It has a .git file pointing to a separate Git directory, no package.json, and git rev-parse --show-toplevel resolves to the requested root. Preserve CLAUDE.md and do not create AGENTS.md.",
+      "expected_output": "Recognizes the valid Git root and creates only the requested relative symlink; verifies its resolved target without requiring a .git directory or package.json.",
+      "files": [],
+      "expectations": [
+        "Accepts the Git root reported by Git despite .git being a file",
+        "Creates .claude/skills pointing to the existing .agents/skills directory",
+        "Does not create AGENTS.md or change CLAUDE.md",
+        "Does not commit, push, or modify external Git metadata"
+      ]
     }
   ]
 }

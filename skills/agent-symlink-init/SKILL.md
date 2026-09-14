@@ -19,7 +19,9 @@ Set up or migrate a repository to the symlink-based agent-skill layout.
 
 ## Detect Before Editing
 
-Work only from the repository root. Require either `.git/` or `package.json`.
+Confirm the requested repository or project root before editing. For a Git repository, use `git rev-parse --show-toplevel` and work from that root within the authorized scope. Do not require `.git` to be a directory: worktrees and separate Git directories use a `.git` file. A `package.json` alone does not prove a Git root.
+
+For a non-Git project, use the root explicitly identified by the user; if it is unclear, ask for the target directory. Perform only the requested filesystem setup and report that Git tracking checks are unavailable.
 
 Inspect these paths first:
 
