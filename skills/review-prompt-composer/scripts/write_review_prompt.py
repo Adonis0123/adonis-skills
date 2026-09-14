@@ -127,7 +127,12 @@ def untracked_payload(repo: Path) -> bytes:
                 content = path.read_bytes()
                 kind = b"file"
             else:
-                continue
+                safe_path = json.dumps(os.fsdecode(raw_path), ensure_ascii=True)
+                raise WriterError(
+                    f"Unsupported untracked path for scope digest: {safe_path}. "
+                    "Use a separate explicit review scope for a nested repository; "
+                    "directories and other unsupported entry types are not traversed.",
+                )
         except OSError as exc:
             raise WriterError(
                 f"Unable to read untracked path for scope digest: {os.fsdecode(raw_path)}",

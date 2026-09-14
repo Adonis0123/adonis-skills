@@ -62,6 +62,12 @@
       "sourceType": "local",
       "computedHash": "2fd6e63ac0ac119ef010ab7f0f9c9ae5c8254002915070fb4cbb257272f759d1"
     },
+    "uxc-facade": {
+      "source": "adonis0123/adonis-skills",
+      "sourceType": "github",
+      "skillPath": "skills/uxc-facade/SKILL.md",
+      "computedHash": "a455f4d467f005aa3493627acbbffbab3663e03c7151ba0944d190263757c57d"
+    },
     "weekly-report": {
       "source": "adonis0123/skills",
       "sourceType": "local",

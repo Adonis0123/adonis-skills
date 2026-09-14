@@ -83,12 +83,14 @@ def build_author_pattern(
     user_name: Optional[str],
     user_email: Optional[str],
 ) -> Optional[str]:
-    """构建 git log --author 的匹配模式（name/email 任一匹配即视为本人）"""
+    """构建自动身份匹配：完整 name/email 任一匹配即视为本人。"""
+    # Match Git author-field boundaries, not substrings in another name/email.
+    # Explicit caller-provided author regexes bypass this automatic builder.
     parts: List[str] = []
     if user_name and user_name.strip():
-        parts.append(_escape_git_author_pattern(user_name.strip()))
+        parts.append("^" + _escape_git_author_pattern(user_name.strip()) + " <")
     if user_email and user_email.strip():
-        parts.append(_escape_git_author_pattern(user_email.strip()))
+        parts.append("<" + _escape_git_author_pattern(user_email.strip()) + ">")
 
     if not parts:
         return None
@@ -109,7 +111,7 @@ def get_commits(
         repo_path: 仓库路径
         start_date: 开始日期
         end_date: 结束日期
-        author: 作者名（可选）
+        author: Git 扩展正则（可选，None 不筛选作者）
 
     Returns:
         提交记录列表
@@ -122,13 +124,15 @@ def get_commits(
     start = datetime.combine(start_date, time.min, REPORT_TIMEZONE)
     end = datetime.combine(end_date, time(23, 59, 59), REPORT_TIMEZONE)
 
-    # 构建 git log 命令
+    # Traverse all reachable commits before filtering: committer clocks can go
+    # backwards, and --since would prune an in-range ancestor behind an old tip.
+    # Full traversal can cost more on large histories; completeness comes first.
     cmd = [
         "git",
         "log",
         "--all",
         "--extended-regexp",
-        f"--since={start.isoformat()}",
+        f"--since-as-filter={start.isoformat()}",
         f"--until={end.isoformat()}",
         "--no-show-signature",
         "-z",
@@ -163,7 +167,7 @@ def get_commits(
     for offset in range(0, len(parts), 4):
         commit_hash, message, author_name, committed_at = parts[offset:offset + 4]
         parsed = parse_commit_message(message)
-        # --since/--until select committer time, so report the same time basis.
+        # Date filters select committer time, so report the same time basis.
         report_date = datetime.fromisoformat(committed_at).astimezone(REPORT_TIMEZONE).date()
         commits.append({
             "hash": commit_hash,
@@ -337,7 +341,7 @@ def get_all_commits_from_repos(
         repo_paths: 仓库路径列表
         start_date: 开始日期
         end_date: 结束日期
-        author: 作者名（可选，None 表示自动获取）
+        author: Git 扩展正则（可选，None 按完整 name/email 自动匹配）
 
     Returns:
         按仓库分组的提交记录

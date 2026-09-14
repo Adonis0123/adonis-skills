@@ -4,7 +4,7 @@ description: Generate structured weekly reports from Git commit history across o
 allowed-tools: Read, Write, Bash(git:*), Bash(python:*)
 metadata:
   author: adonis
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # 周报生成技能
@@ -68,22 +68,24 @@ metadata:
 
 ## Git 提交读取（重要）
 
-优先调用本技能的 `src/git_analyzer.py`，其 `get_all_commits_from_repos` 接收仓库列表、开始日期、结束日期和可选作者正则。它覆盖本地及远端跟踪分支，支持 Git worktree，按 UTC+08:00 的提交时间选取整日并返回结构化记录。`author=None` 会按每个仓库的 Git name/email 自动匹配；身份缺失或仓库同名时必须报告，不能默默读取全员或覆盖某个仓库的结果。
+优先调用本技能的 `src/git_analyzer.py`，其 `get_all_commits_from_repos` 接收仓库列表、开始日期、结束日期和可选作者正则。它覆盖本地及远端跟踪分支，支持 Git worktree，按 UTC+08:00 的提交时间选取整日并返回结构化记录。`author=None` 会按每个仓库的完整 Git name/email 任一匹配；显式传入的 `author` 保持自定义扩展正则语义。身份缺失或仓库同名时必须报告，不能默默读取全员或覆盖某个仓库的结果。
 
 手动读取时遵守相同合同：
+
+日期筛选使用 `--since-as-filter`，完整遍历可达提交后按时间过滤，避免提交时间倒序时漏掉范围内工作。大型历史可能更慢；这是完整性修复，不是加速。
 
 ```bash
 # 关键点：
 # - 用 --all 覆盖所有本地 refs（包含 remotes/origin/*）
 # - 指定首末日时刻与时区，避免继承当前时刻或混入下一天
-# - 作者联合正则需要 --extended-regexp；真实 name/email 先转义
+# - 作者联合正则需要 --extended-regexp；真实 name/email 先转义并限定字段边界
 # - NUL 分隔固定四字段，不能按 | 拆分含管道符的提交标题
 
-AUTHOR_PATTERN="(your-name|your@email.com)"  # 或仅用你的 name/email
+AUTHOR_PATTERN='(^your-name <|<your@email\.com>)'  # 完整 name 或 email 任一匹配
 git log --all \
   --extended-regexp \
   --author="$AUTHOR_PATTERN" \
-  --since="${START_DATE}T00:00:00+08:00" \
+  --since-as-filter="${START_DATE}T00:00:00+08:00" \
   --until="${END_DATE}T23:59:59+08:00" \
   --no-show-signature -z \
   --format='%H%x00%s%x00%an%x00%cI'

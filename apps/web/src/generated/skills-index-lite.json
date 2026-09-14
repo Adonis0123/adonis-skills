@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-05T09:11:55.000Z"
+    "updatedAt": "2026-09-14T11:34:41.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -33,13 +33,13 @@
     "description": "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement.",
     "metadata": {
       "author": "adonis",
-      "version": "1.7.1"
+      "version": "1.8.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T13:17:42.000Z"
   },
   {
     "slug": "branch-creator",
@@ -58,17 +58,17 @@
   {
     "slug": "chrome-dev-mcp",
     "name": "chrome-dev-mcp",
-    "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task.",
+    "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task.",
     "metadata": {
       "author": "adonis",
-      "version": "1.3.2"
+      "version": "1.4.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-07T02:50:36.000Z"
+    "updatedAt": "2026-09-14T13:17:42.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -89,7 +89,7 @@
     "description": "Design, review, refactor, or explain recurring extension mechanisms when adding or removing one variant requires scattered coordinated edits. Use for plugin architecture, registries, extension points, and cross-stack contract/host mappings. Assess whether a typed map, existing framework mechanism, or lifecycle-owning core is justified. Skip one plugin's internal styling or bugs, user signup, DI containers, and package registries.",
     "metadata": {
       "author": "adonis",
-      "version": "0.4.0"
+      "version": "0.4.1"
     },
     "files": {
       "hasReferences": true,
@@ -126,30 +126,16 @@
   {
     "slug": "decision-first-technical-writing",
     "name": "decision-first-technical-writing",
-    "description": "Create, rewrite, or review internal technical design documents after decisions are settled or while proposals and open questions are explicitly labeled. Use for design docs, architecture proposals, module designs, API or schema designs, and decision records. Route unresolved named-option convergence to discuss-before-plan and ready-spec task breakdown to writing-plans. Do not use for tutorials, marketing copy, or code-only implementation plans.",
+    "description": "Create, rewrite, or review internal technical design documents after decisions are settled or while proposals and open questions are explicitly labeled. Use for design docs, architecture proposals, module designs, API or schema designs, and decision records. Route unresolved named-option convergence to grilling (workflow-gate Challenge in convergence mode) and ready-spec task breakdown to writing-plans. Do not use for tutorials, marketing copy, or code-only implementation plans.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.1.1"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
     "updatedAt": "2026-09-01T01:25:43.000Z"
-  },
-  {
-    "slug": "discuss-before-plan",
-    "name": "discuss-before-plan",
-    "description": "Resolve a bounded design choice before planning. Use when the user presents named alternatives, a proposal with an implicit status-quo alternative, or delegates a decision and asks to compare, recommend, or decide. Do not use for open-ended option generation, a fully specified implementation, or a ready spec that only needs task planning.",
-    "metadata": {
-      "author": "adonis",
-      "version": "2.5.1"
-    },
-    "files": {
-      "hasReferences": true,
-      "hasSrc": false
-    },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
   },
   {
     "slug": "figma-mcp",
@@ -157,13 +143,13 @@
     "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, or Cursor. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.0"
+      "version": "1.3.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T13:17:42.000Z"
   },
   {
     "slug": "goal-gate",
@@ -171,27 +157,28 @@
     "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.2"
+      "version": "2.0.3"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-14T11:34:41.000Z"
   },
   {
     "slug": "kimi-computer-use",
     "name": "kimi-computer-use",
-    "description": "This skill should be used when the user asks to install, configure, upgrade, repair, or diagnose Kimi Computer Use (kimi-cu), especially for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes MCP clients.",
+    "description": "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes, or fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'. Not for general desktop automation once kimi-cu already works, and not a replacement for a host's native Computer Use.",
     "metadata": {
       "author": "adonis",
-      "version": "0.2.1"
+      "version": "0.3.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-09-14T12:28:53.000Z"
   },
   {
     "slug": "lingui-workflow",
@@ -233,7 +220,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T11:34:41.000Z"
   },
   {
     "slug": "review-prompt-composer",
@@ -241,7 +228,7 @@
     "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops.",
     "metadata": {
       "author": "adonis",
-      "version": "2.1.1"
+      "version": "2.1.2"
     },
     "files": {
       "hasReferences": false,
@@ -256,13 +243,13 @@
     "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.6.1"
+      "version": "1.7.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T12:28:53.000Z"
   },
   {
     "slug": "uxc-facade",
@@ -270,13 +257,13 @@
     "description": "This skill should be used when the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.2.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-14T12:28:53.000Z"
   },
   {
     "slug": "web-performance-audit",
@@ -291,7 +278,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-14T11:34:41.000Z"
   },
   {
     "slug": "weekly-report",
@@ -299,7 +286,7 @@
     "description": "Generate structured weekly reports from Git commit history across one or multiple repositories. Use when you need concise, project-grouped progress summaries for status reporting.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.1.1"
     },
     "files": {
       "hasReferences": true,
@@ -315,7 +302,7 @@
     "description": "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, explicit Goal management, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and full-completion pipelines. Skip trivial one-line work and clearly matching safe named-skill requests. Treat first-principles analysis as a method, not a Challenge trigger unless the user is widening the option space.",
     "metadata": {
       "author": "adonis",
-      "version": "3.5.0"
+      "version": "3.6.0"
     },
     "files": {
       "hasReferences": true,

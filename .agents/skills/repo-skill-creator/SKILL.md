@@ -15,6 +15,8 @@ Create and maintain repository skills with intent-specific workflows. Validation
 4. Run auto-discover finalize-and-stage only when the user explicitly asks to prepare newly added skills for commit or to stage them.
 5. A bare invocation with no path or action defaults to validation. If exactly one new `skills/<slug>/SKILL.md` is discoverable, report it as the likely finalize target, but do not stage or create anything implicitly.
 
+For normal create or finalize, first read the repository instructions, command definitions, and required arguments. When these establish the applicable entry point and no failure has occurred, use that entry point without routinely pre-reading the initializer, finalizer, validator, indexer, or YAML generator implementation. Read the relevant implementation on demand for an actual failure, command ambiguity, an output that conflicts with the documented contract, or maintenance of that tooling. This does not restrict necessary source or safety checks, target ownership checks, or verification of the real finalize pipeline and generated outputs.
+
 ## Mode A: Create New Skill
 
 Primary command (recommended):

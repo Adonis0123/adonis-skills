@@ -227,6 +227,59 @@ class ReviewPromptWriterTest(unittest.TestCase):
         self.assertEqual(stale.returncode, 2, stale.stderr)
         self.assertEqual(json.loads(stale.stdout)["reason"], "scope_digest_mismatch")
 
+    def create_untracked_nested_repo(self) -> Path:
+        nested = self.repo / "vendor-copy"
+        nested.mkdir()
+        subprocess.run(
+            ["git", "init", "-b", "main", str(nested)],
+            check=True, capture_output=True, text=True,
+        )
+        module = nested / "module.py"
+        module.write_text("value = 1\n", encoding="utf-8")
+        return module
+
+    def test_nested_untracked_repo_cannot_be_silently_omitted_at_creation(self) -> None:
+        self.create_untracked_nested_repo()
+        body_file = self.root / "body.md"
+        body_file.write_text(REVIEW_BODY, encoding="utf-8")
+        for scope in ("untracked-only", "all-uncommitted"):
+            with self.subTest(scope=scope):
+                result = self.run_writer(scope, body_file)
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("Unsupported untracked path", result.stderr)
+                self.assertIn("vendor-copy/", result.stderr)
+                self.assertIn("separate explicit review scope", result.stderr)
+        self.assertFalse(list((self.repo / ".review-handoff/prompts/active").rglob("*.md")))
+
+    def test_verifier_rejects_legacy_digest_that_omits_nested_repo(self) -> None:
+        # The old writer omitted nested directories entirely. Creating before
+        # the directory exists yields the same canonical bytes as that legacy
+        # prompt, without embedding a second copy of the writer algorithm.
+        artifacts = [WRITER_MODULE.create_review_prompt(self.repo, scope, REVIEW_BODY)
+                     for scope in ("untracked-only", "all-uncommitted")]
+        module = self.create_untracked_nested_repo()
+        module.write_text("value = 999\n", encoding="utf-8")
+        for artifact in artifacts:
+            with self.subTest(scope=artifact.scope):
+                result = self.run_verify(artifact.prompt_path)
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("Unsupported untracked path", result.stderr)
+                self.assertNotIn('"status": "fresh"', result.stdout)
+
+    def test_staged_scope_excludes_nested_untracked_repo(self) -> None:
+        self.dirty_tracked_file()
+        self.git("add", "tracked.txt")
+        module = self.create_untracked_nested_repo()
+        body_file = self.root / "body.md"
+        body_file.write_text(REVIEW_BODY, encoding="utf-8")
+        result = self.run_writer("staged-only", body_file)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        prompt = Path(json.loads(result.stdout)["prompt_path"])
+        module.write_text("value = 999\n", encoding="utf-8")
+        verified = self.run_verify(prompt)
+        self.assertEqual(verified.returncode, 0, verified.stderr)
+        self.assertEqual(json.loads(verified.stdout)["status"], "fresh")
+
     def test_ref_range_requires_and_persists_resolved_refs(self) -> None:
         (self.repo / "tracked.txt").write_text("second commit\n", encoding="utf-8")
         self.git("add", "tracked.txt")

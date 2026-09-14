@@ -3,7 +3,7 @@ name: review-prompt-composer
 description: "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops."
 metadata:
   author: adonis
-  version: "2.1.1"
+  version: "2.1.2"
 ---
 
 # Review Prompt Composer
@@ -50,6 +50,8 @@ Use read-only evidence:
 | branch range      | `git log --oneline "$base".."$head"`, `git diff --find-renames "$base"..."$head" --stat`, full diff                        |
 | commits           | `git show --find-renames --stat "$sha"` and full show for every resolved SHA                                               |
 
+Untracked nested Git repositories and other non-file, non-symlink entries are unsupported: the writer and freshness check stop with a relative-path error. Define a separate explicit review scope for a nested repository; do not silently omit it or recursively read its contents. This does not affect scopes such as `staged-only` that exclude untracked entries.
+
 If the selected scope is empty, stop without writing a prompt. Build an evidence-backed inventory with repository-relative paths, Git status, and concrete changes. Include rename, delete, binary, mode, and public-contract changes; do not invent intent.
 
 ### 3. Gate sensitive prompt content
@@ -65,13 +67,15 @@ Shared-worktree access does not weaken this gate.
 
 ### 4. Define falsifiable objectives and checks
 
-Write the central claim as a target the reviewer must try to disprove. Label user-supplied intent as `用户声明的待验证目标`. If diff evidence conflicts with the claim, report the conflict before composing the prompt.
+Write the central claim as a target the reviewer must try to disprove. Label only user-supplied intent as `用户声明的待验证目标`; do not add inferred guarantees to that claim. Put additional evidence-based hypotheses and safety checks under review focus, clearly as reviewer checks. If diff evidence conflicts with the claim, report the conflict before composing the prompt.
 
 Read applicable `AGENTS.md`, repository docs, package scripts, and CI configuration to find exact test, lint, typecheck, or build commands. Record commands and observable expected results; do not run them or claim they pass. Omit the checks section when reliable commands cannot be established, and state why.
 
 ### 5. Compose the prompt body
 
 Create this body with actual evidence. Include `{{REVIEW_PROMPT_ID}}`, `{{SCOPE_DIGEST}}`, and `{{VERIFY_COMMAND}}` exactly once each; the writer replaces them atomically.
+
+Summarize changes in prose with repository-relative paths; do not paste source code or diff blocks into the prompt. The reviewer must read the current working tree through the scope checks above. Keep every user-included path in scope throughout the prompt. Discuss change-grouping concerns separately; do not ask the reviewer to exclude or reclassify explicitly included files as out of scope.
 
 ````markdown
 # 审核任务：<repository and change summary>
@@ -120,14 +124,6 @@ git status --short
 - <counterexample and regression focus>
 - <boundary, security, compatibility, or public-contract risks>
 
-## 检查命令
-
-```bash
-<exact repository-defined commands>
-```
-
-预期：<observable result; never claim it already passed>。
-
 ## 输出要求
 
 审核结果第一行必须原样返回：
@@ -140,7 +136,19 @@ Review-Prompt-ID: `{{REVIEW_PROMPT_ID}}`
 4. 列出每条检查命令的实际结果；未运行时说明原因。
 ````
 
-Remove the checks section when it is unsupported. Do not leave any other placeholder in the final body.
+Only when step 4 establishes reliable repository commands, insert this section before output requirements:
+
+````markdown
+## 检查命令
+
+```bash
+<exact repository-defined commands>
+```
+
+预期：<observable result; never claim it already passed>。
+````
+
+Otherwise omit the checks heading entirely and state the reason under review focus. Do not leave any other placeholder in the final body.
 
 ### 6. Persist through the writer
 

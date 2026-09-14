@@ -4,7 +4,7 @@ description: >-
   Design, review, refactor, or explain recurring extension mechanisms when adding or removing one variant requires scattered coordinated edits. Use for plugin architecture, registries, extension points, and cross-stack contract/host mappings. Assess whether a typed map, existing framework mechanism, or lifecycle-owning core is justified. Skip one plugin's internal styling or bugs, user signup, DI containers, and package registries.
 metadata:
   author: adonis
-  version: "0.4.0"
+  version: "0.4.1"
 ---
 
 # Code Plugin Architecture

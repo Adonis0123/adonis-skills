@@ -67,6 +67,38 @@ class GitAnalyzerTests(unittest.TestCase):
         pattern = git_analyzer.build_author_pattern("Report (UI)+", "report+ui@example.invalid")
         self.assertEqual(len(self.read(pattern)), 1)
 
+    def test_auto_author_excludes_name_and_email_substrings(self):
+        for name, email, message in [
+            ("Report Author", "old@example.invalid", "own name"),
+            ("New Alias", "report@example.invalid", "own email"),
+            ("Report Author Bot", "bot@example.invalid", "bot name suffix"),
+            ("Other Report Author", "other@example.invalid", "name prefix"),
+            ("Other Person", "report@example.invalid.test", "email suffix"),
+            ("Another Person", "other-report@example.invalid", "email prefix"),
+        ]:
+            self.commit(message, GIT_AUTHOR_NAME=name, GIT_AUTHOR_EMAIL=email)
+        commits = git_analyzer.get_all_commits_from_repos(
+            [self.repo], date(2026, 8, 31), date(2026, 9, 6)
+        )["repo"]
+        self.assertEqual({c["message"] for c in commits}, {"own name", "own email"})
+
+    def test_auto_author_special_characters_do_not_broaden_identity(self):
+        self.commit("exact", GIT_AUTHOR_NAME="Report (UI)+", GIT_AUTHOR_EMAIL="old@example.invalid")
+        self.commit("alias", GIT_AUTHOR_NAME="Alias", GIT_AUTHOR_EMAIL="report+ui@example.invalid")
+        self.commit("bot", GIT_AUTHOR_NAME="Report (UI)+ Bot", GIT_AUTHOR_EMAIL="bot@example.invalid")
+        self.commit("long email", GIT_AUTHOR_NAME="Other", GIT_AUTHOR_EMAIL="report+ui@example.invalid.test")
+        pattern = git_analyzer.build_author_pattern("Report (UI)+", "report+ui@example.invalid")
+        self.assertEqual({c["message"] for c in self.read(pattern)}, {"exact", "alias"})
+
+    def test_explicit_author_regex_retains_broad_matching(self):
+        self.commit("person", GIT_AUTHOR_NAME="Report Author", GIT_AUTHOR_EMAIL="one@example.invalid")
+        self.commit("bot", GIT_AUTHOR_NAME="Report Author Bot", GIT_AUTHOR_EMAIL="two@example.invalid")
+        self.commit("other", GIT_AUTHOR_NAME="Other", GIT_AUTHOR_EMAIL="three@example.invalid")
+        commits = git_analyzer.get_all_commits_from_repos(
+            [self.repo], date(2026, 8, 31), date(2026, 9, 6), "^Report Author( Bot)? <"
+        )["repo"]
+        self.assertEqual({c["message"] for c in commits}, {"person", "bot"})
+
     def test_date_range_covers_whole_days_in_report_timezone(self):
         for label, stamp in [
             ("before", "2026-08-30T23:59:59+08:00"),
@@ -78,6 +110,12 @@ class GitAnalyzerTests(unittest.TestCase):
         commits = self.read()
         self.assertEqual({c["message"] for c in commits}, {"start", "end"})
         self.assertEqual({c["date"] for c in commits}, {"2026-08-31", "2026-09-06"})
+
+    def test_old_tip_does_not_hide_in_range_ancestor(self):
+        self.commit("feat: in-range work", "2026-09-02T12:00:00+08:00")
+        self.commit("chore: older committer clock", "2026-08-20T12:00:00+08:00")
+        commits = self.read()
+        self.assertEqual([c["message"] for c in commits], ["feat: in-range work"])
 
     def test_pipe_in_subject_does_not_shift_fields(self):
         self.commit("fix: local | remote")

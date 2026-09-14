@@ -101,6 +101,34 @@
         "Still reads and reconciles the current full staged diff",
         "Stops if a later change alters scope membership or in-scope content"
       ]
+    },
+    {
+      "id": 9,
+      "name": "no-check-commands-and-user-intent-attribution",
+      "prompt": "请为同一工作树的审核者生成全部未提交改动的 review prompt。用户声明的目标是 session TTL 调为 900 秒、按钮文案改为 Export，其余行为无意改变；notes.txt 虽写着 unrelated，也明确纳入范围。仓库没有可靠的测试、lint 或构建命令。",
+      "expected_output": "真实 writer 生成 all-uncommitted prompt，保留 staged、unstaged 和 untracked 清单。没有检查命令章节，在审核重点说明缺少可靠命令。用户声明只包含原始意图；notes.txt 的安全性、类型及是否应提交属于审核检查，不扩充为用户保证。实际全文回读、freshness 验证和临时文件清理仍须完成。",
+      "files": [],
+      "expectations": [
+        "Omits the check-command heading when no reliable repository command exists and explains why under review focus",
+        "Does not attribute inferred notes safety, configuration, or behavior guarantees to the user",
+        "Includes all staged, unstaged tracked, and untracked changes, including notes.txt",
+        "Uses the real writer, reads the complete artifact, verifies freshness, and removes the temporary body",
+        "Preserves privacy, read-only source boundaries, scope digest, 24-hour expiration, and Review-Prompt-ID"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "supported-check-without-code-copy-or-scope-reclassification",
+      "prompt": "为同一工作树的审核者生成全部未提交改动的 review prompt。会话 TTL 改为 900 秒、按钮文案改为 Export。新增 Makefile 定义 make check，对这两份 Python 源文件仅做语法解析，预期打印 syntax: ok 并退出 0。Makefile 与写着 unrelated 的 notes.txt 均明确纳入范围。生成提示词，不执行检查或审核。",
+      "expected_output": "用相对路径和文字概述改动，不复制源码或 diff。列出 make check 及预期，说明未执行。全文保留所有明确纳入的文件；提交分组意见与审核范围分开。真实 writer、完整产物回读、freshness 验证和临时文件清理完成。",
+      "files": [],
+      "expectations": [
+        "Summarizes reviewed changes without pasted source code or diff blocks; required command blocks remain permitted",
+        "Keeps every explicitly included path in scope throughout the artifact; grouping concerns never reclassify it as out of scope",
+        "Includes the repository-defined check and observable expected outcome without executing it or claiming success",
+        "Preserves the staged, unstaged tracked, and untracked inventory and user-supplied intent",
+        "Uses the real writer, complete readback, freshness verification, and temporary body cleanup; source and Git semantics remain unchanged"
+      ]
     }
   ]
 }

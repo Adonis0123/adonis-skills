@@ -30,6 +30,31 @@
         "Stages only discovered skill directories and changed generated index files.",
         "Uses skills-index-lite.json and skills-detail-index.json, not the removed skills-index.json."
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "In the provided isolated repository, create skills/csv-expense-totals with author Platform #1. Implement a Python standard-library CSV helper that groups by currency and sums amounts with Decimal, including 0.1 plus 0.2. Reject missing columns, blank, invalid and non-finite amounts without partial stdout or echoing private input values. Add meaningful tests and a usable example, then run the actual finalize pipeline and read back the generated skill, helper, usage and both indexes. Leave everything unstaged and preserve unrelated inputs.",
+      "expected_output": "Creates a usable skill, preserves the quoted author, passes behavior tests and the complete finalize pipeline, and verifies actual indexed output.",
+      "files": [],
+      "expectations": [
+        "Executes real initialization, implementation tests and quick-validate, validate and index in order.",
+        "Passes the same independent precision, grouping, missing-column and invalid-amount cases as the baseline, including invalid data after a valid row with no partial output.",
+        "Preserves unrelated skill and tool inputs and verifies author metadata and both actual index schemas.",
+        "Uses implementation reads when needed rather than assuming every normal creation needs every tool implementation.",
+        "Compare native elapsed time and terminal usage under the same model and configuration; fewer source characters alone are not an efficiency result."
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "In the provided isolated repository, finalize the existing skills/csv-expense-totals. Do not edit any existing skill or tool, stage files, install dependencies or change permissions. Use the real repository pipeline and report its actual outcome; diagnose a failure from the available evidence without repairing unrelated content.",
+      "expected_output": "With a valid target and an invalid unrelated existing skill in the fixture, target quick-validation succeeds, repository validation fails, and index generation does not run. The report names the real validation problem without unauthorized repair.",
+      "files": [],
+      "expectations": [
+        "Runs the actual target finalize command once and preserves its nonzero validation outcome.",
+        "Reads relevant source or metadata when the failure needs diagnosis; the normal-path loading rule must not prevent that investigation.",
+        "Does not run index generation after failed repository validation, modify unrelated skills, stage files or claim success.",
+        "All skill and tool inputs remain unchanged; only authorized report and task-local validation cache outputs may change."
+      ]
     }
   ]
 }
