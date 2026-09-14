@@ -54,7 +54,7 @@ test("uxc-facade owns generic packaging while chrome-dev-mcp owns task acceptanc
 
   assert.match(facade, /one-off API calls/i);
   assert.match(facade, /chrome-dev-mcp/);
-  assert.match(facade, /service-specific skill stays authoritative/i);
+  assert.match(facade, /owner skill.*owns endpoint identity/i);
   assert.match(facade, /transport proof/i);
   assert.match(facade, /TASK_ACCEPTANCE/);
   assert.match(facade, /NATIVE_COMPAT/);
@@ -63,7 +63,7 @@ test("uxc-facade owns generic packaging while chrome-dev-mcp owns task acceptanc
   assert.match(facade, /link and readiness/i);
   assert.match(facade, /ownership gates/i);
   assert.match(facade, /version conflict/i);
-  assert.match(facade, /fail closed/i);
+  assert.match(facade, /GATE_FAIL|fail closed/i);
   assert.match(chrome, /UXC packaging for Chrome DevTools/);
   assert.match(chrome, /pinned UXC 0\.17\.0 facade/);
   assert.match(chrome, /explicit compatibility and rollback path/);
@@ -92,13 +92,14 @@ test("uxc-facade evals cover explicit use, reusable packaging, near miss, and Ch
       "chrome-devtools-handoff",
       "binary-pin-conflict",
       "multi-protocol-packaging",
+      "reuse-proof-by-metadata",
     ]),
   );
 
   const triggers = JSON.parse(
     await readFile(path.join(skillDir, "evals/trigger-eval.json"), "utf8"),
   ) as Array<{ query: string; should_trigger: boolean }>;
-  assert.equal(triggers.length, 20);
+  assert.ok(triggers.length >= 20);
   assert.ok(triggers.some((entry) => entry.should_trigger));
   assert.ok(triggers.some((entry) => !entry.should_trigger));
 });

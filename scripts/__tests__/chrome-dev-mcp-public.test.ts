@@ -148,7 +148,7 @@ test("chrome readiness-plus-task reuses one private page discovery result", asyn
   assert.match(skill, /no recovery, navigation, or target ambiguity/);
   assert.match(
     skill,
-    /retry exactly once with the same path: `scripts\/uxc-readiness\.zsh` for readiness-only, or `scripts\/uxc-readiness\.zsh --private-result`/,
+    /retry exactly once with the same path: `(?:zsh )?scripts\/uxc-readiness\.zsh` for readiness-only, or `(?:zsh )?scripts\/uxc-readiness\.zsh --private-result`/,
   );
   assert.match(
     uxcFacade,
@@ -344,10 +344,7 @@ test("figma read-only fast path preserves identity gates and resolves Cursor CLI
       ?.split("## Run the real acceptance")[0] ?? "";
   assert.match(cursorSection, /```zsh/);
   assert.doesNotMatch(cursorSection, /```bash/);
-  assert.match(
-    hostVerification,
-    /Do not add it before a current-account, single-host, read-only file or node task/,
-  );
+  assert.match(hostVerification, /read-only fast path does not use it/);
   assert.doesNotMatch(hostVerification, /^agent mcp /m);
 
   const fastPathEval = evals.evals.find((entry) => entry.id === 6);
