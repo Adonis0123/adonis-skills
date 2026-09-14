@@ -1,0 +1,2 @@
+# Generated build inputs are written by scripts/generate-skills-index.mjs; formatting them by hand or in lint-staged creates churn.
+apps/web/src/generated/

@@ -294,7 +294,12 @@
       "hasScripts": true
     },
     "updatedAt": "2026-09-14T13:25:32.000Z",
-    "allowedTools": ["Read", "Write", "Bash(git:*)", "Bash(python:*)"]
+    "allowedTools": [
+      "Read",
+      "Write",
+      "Bash(git:*)",
+      "Bash(python:*)"
+    ]
   },
   {
     "slug": "workflow-gate",
