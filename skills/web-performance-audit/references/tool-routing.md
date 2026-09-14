@@ -4,7 +4,7 @@ Use this reference to choose capabilities, not brands. Tool names change across 
 
 ## Capability preflight
 
-Record every layer as `available`, `unavailable`, `failed`, or `polluting` before relying on it:
+Record every layer as `available`, `unavailable`, `failed`, `polluting`, or `untested`. Use `untested` for a layer not checked in this audit; it is not evidence that the capability is absent. Only an `available` layer with the required proof can support machine-measured findings:
 
 | Need                    | Capability proof                                                                  | Appropriate evidence                              |
 | ----------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------- |

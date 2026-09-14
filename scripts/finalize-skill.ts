@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { stat } from "node:fs/promises";
+import { realpath, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -143,7 +143,10 @@ function resolveFinalizeTarget(
   };
 }
 
-async function ensureValidSkillDirectory(absoluteSkillDir: string) {
+async function ensureValidSkillDirectory(
+  repoRoot: string,
+  absoluteSkillDir: string,
+) {
   const skillDirStat = await stat(absoluteSkillDir).catch(() => null);
   if (!skillDirStat?.isDirectory()) {
     throw new Error(`Skill directory not found: ${absoluteSkillDir}`);
@@ -153,6 +156,35 @@ async function ensureValidSkillDirectory(absoluteSkillDir: string) {
   const skillMdStat = await stat(skillMdPath).catch(() => null);
   if (!skillMdStat?.isFile()) {
     throw new Error(`SKILL.md not found: ${skillMdPath}`);
+  }
+
+  // The index publishes real skill directories, not links to another source.
+  const canonicalRepoRoot = await realpath(repoRoot);
+  const canonicalSkillDir = await realpath(absoluteSkillDir);
+  const expectedSkillDir = path.join(
+    canonicalRepoRoot,
+    "skills",
+    path.basename(absoluteSkillDir),
+  );
+  if (canonicalSkillDir !== expectedSkillDir) {
+    throw new Error(
+      "Finalize requires a repository-owned skill directory; linked skill directories are not published",
+    );
+  }
+
+  const canonicalSkillFile = await realpath(skillMdPath);
+  const relativeSkillFile = path.relative(
+    canonicalSkillDir,
+    canonicalSkillFile,
+  );
+  if (
+    relativeSkillFile === ".." ||
+    relativeSkillFile.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeSkillFile)
+  ) {
+    throw new Error(
+      "SKILL.md must resolve within its own repository skill directory",
+    );
   }
 }
 
@@ -209,7 +241,7 @@ async function main() {
   const repoRoot = path.resolve(__dirname, "..");
 
   const target = resolveFinalizeTarget(repoRoot, cliOptions.skillPath);
-  await ensureValidSkillDirectory(target.absoluteSkillDir);
+  await ensureValidSkillDirectory(repoRoot, target.absoluteSkillDir);
 
   console.log(
     `[skills:finalize] Finalizing ${target.relativeSkillPath} (${target.skillSlug})`,

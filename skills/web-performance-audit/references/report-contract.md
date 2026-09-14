@@ -16,6 +16,8 @@ Do not upgrade a label because source code looks suspicious. Runtime evidence an
 
 The ledger validator also checks coherence: every requested surface label and required state needs an exact coverage row; an `available` tool needs discovery, handshake, and harmless-call proof; machine evidence must name an available tool; `VERIFIED` must be a measured result or a code-backed source fact; and high-priority findings need direct user-impact evidence.
 
+Use `untested` when a capability was not checked or exercised in this audit. It does not mean the capability is unavailable, and it cannot support machine-measured findings. Reserve `unavailable` for an established availability limitation and state its scope in the caveat. Newly initialized ledgers start with `untested`; complete the capability checks before changing that status to `available`.
+
 ## Finding contract
 
 Every actionable finding contains:

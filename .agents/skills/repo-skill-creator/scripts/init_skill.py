@@ -19,6 +19,8 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 from generate_openai_yaml import write_openai_yaml
 
 MAX_SKILL_NAME_LENGTH = 64
@@ -290,7 +292,14 @@ def init_skill(skill_name, path, resources, include_examples, interface_override
 
     # Create SKILL.md from template
     skill_title = title_case_skill_name(skill_name)
-    skill_content = SKILL_TEMPLATE.format(skill_name=skill_name, skill_title=skill_title, author=author)
+    # Quote with YAML's own escapes and keep the embedded scalar on one line.
+    skill_content = SKILL_TEMPLATE.format(
+        skill_name=skill_name,
+        skill_title=skill_title,
+        author=yaml.safe_dump(
+            author, default_style='"', allow_unicode=True, width=float("inf")
+        ).strip(),
+    )
 
     skill_md_path = skill_dir / "SKILL.md"
     try:

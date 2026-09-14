@@ -68,10 +68,30 @@ OWNERSHIP_WORDS = [
 
 
 def marker_content(text: str, patterns: list[str]) -> str | None:
-    for pattern in patterns:
-        match = re.search(rf"^{pattern}\s*(.+)$", text, re.IGNORECASE | re.MULTILINE)
+    """Read a labeled block without borrowing the next field's content."""
+    field_patterns = [
+        pattern
+        for name, group in REQUIRED_GROUPS
+        if name != "command"
+        for pattern in group
+    ]
+    header = re.compile(rf"^[ \t]*(?:{'|'.join(patterns)})[ \t]*(.*)$", re.IGNORECASE)
+    boundary = re.compile(
+        rf"^[ \t]*(?:{'|'.join(field_patterns)}|/goal(?:[ \t]|$))",
+        re.IGNORECASE,
+    )
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        match = header.match(line)
         if match:
-            return match.group(1).strip()
+            content = [match.group(1)]
+            for continuation in lines[index + 1:]:
+                if boundary.match(continuation):
+                    break
+                # Markdown fences wrap content; they are not field values.
+                if not re.match(r"^[ \t]*(?:```|~~~)", continuation):
+                    content.append(continuation)
+            return "\n".join(content).strip()
     return None
 
 
@@ -81,9 +101,18 @@ def lint_text(text: str, label: str) -> list[str]:
     if re.search(r"^\s*/目标\b", text, re.MULTILINE):
         errors.append(f"{label}: use /goal, not /目标")
 
+    goal_match = re.search(r"^[ \t]*/goal(?:[ \t]+(.*)|[ \t]*$)", text, re.MULTILINE)
+    if goal_match is None:
+        errors.append(f"{label}: missing command")
+
     for name, patterns in REQUIRED_GROUPS:
-        if not any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns):
+        if name == "command":
+            continue
+        content = marker_content(text, patterns)
+        if content is None:
             errors.append(f"{label}: missing {name}")
+        elif not content:
+            errors.append(f"{label}: empty {name}")
 
     for pattern in PLACEHOLDERS:
         if re.search(pattern, text, re.IGNORECASE):
@@ -119,8 +148,7 @@ def lint_text(text: str, label: str) -> list[str]:
         if not keeps_main_accountable:
             errors.append(f"{label}: execution strategy should keep the main agent accountable")
 
-    goal_line = next((line.strip() for line in text.splitlines() if line.strip().startswith("/goal")), "")
-    if goal_line and len(goal_line.removeprefix("/goal").strip()) < 20:
+    if goal_match is not None and len((goal_match.group(1) or "").strip()) < 20:
         errors.append(f"{label}: /goal outcome is too short")
 
     return errors

@@ -101,11 +101,12 @@ function help() {
 
 async function main() {
   const argv = process.argv.slice(2);
+  // Help is global: handle it before parsing/dispatch can write or spawn.
   if (
     argv.length === 0 ||
     argv[0] === "help" ||
-    argv[0] === "--help" ||
-    argv[0] === "-h"
+    argv.includes("--help") ||
+    argv.includes("-h")
   ) {
     print(help());
     return;

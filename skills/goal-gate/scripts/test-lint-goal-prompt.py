@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import tempfile
@@ -118,6 +119,40 @@ CASES = [
         "stderr_contains": "verification should name concrete evidence",
     },
 ]
+
+
+# Required field bodies must be real content, including multi-line copy-ready
+# blocks. A following label cannot supply the previous field's value.
+FIELD_LABELS = [
+    ("verification", "Verification", "验证"),
+    ("constraints", "Constraints", "约束"),
+    ("boundaries", "Boundaries", "边界"),
+    ("execution strategy", "Execution strategy", "执行编排"),
+    ("iteration policy", "Iteration policy", "迭代策略"),
+    ("stop when", "Stop when", "完成条件"),
+    ("pause if", "Pause if", "暂停条件"),
+]
+for field, english, chinese in FIELD_LABELS:
+    for language, prompt, label in [("en", VALID_GOAL_EN, english), ("zh", VALID_GOAL, chinese)]:
+        CASES.append({
+            "name": f"reject-empty-{language}-{field.replace(' ', '-')}",
+            "text": re.sub(rf"(?m)^{re.escape(label)}[:：].*$", label + ":  ", prompt),
+            "returncode": 1,
+            "stderr_contains": f"empty {field}",
+        })
+
+for name, text, code, diagnostic in [
+    ("valid-multiline-blocks", re.sub(r"(?m)^([^/\n]+[:：]) +", r"\1\n  ", VALID_GOAL_EN), 0, ""),
+    ("valid-indented-fenced-block", "```text\n" + "\n".join("  " + line for line in VALID_GOAL.splitlines()) + "\n```\n", 0, ""),
+    ("valid-multiline-chinese", re.sub(r"(?m)^([^/\n]+[:：])", r"\1\n  ", VALID_GOAL), 0, ""),
+    ("valid-verification-code-block", VALID_GOAL_EN.replace("Verification: run pnpm test and pnpm build, surface exit codes, changed files, and screenshots if UI changed.", "Verification:\n```sh\npnpm test\npnpm build\n```"), 0, ""),
+    ("reject-fence-only-pause", re.sub(r"(?m)^Pause if:.*$", "Pause if:\n```", VALID_GOAL_EN), 1, "empty pause if"),
+    ("reject-doc-url-command", VALID_GOAL_EN.replace("/goal", "https://docs.example.test/goal", 1), 1, "missing command"),
+    ("reject-prose-command", VALID_GOAL_EN.replace("/goal", "The command is /goal", 1), 1, "missing command"),
+    ("reject-longer-command-token", VALID_GOAL_EN.replace("/goal", "/goalkeeper", 1), 1, "missing command"),
+    ("reject-inline-label-only", VALID_GOAL_EN.replace("Constraints:", "Background mentions Constraints:", 1), 1, "missing constraints"),
+]:
+    CASES.append({"name": name, "text": text, "returncode": code, "stderr_contains": diagnostic})
 
 
 def run_case(tmp_dir: Path, case: dict[str, object]) -> list[str]:

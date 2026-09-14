@@ -25,7 +25,7 @@ CONFIDENCE = {
     "MEASUREMENT_POLLUTION",
 }
 BUILD_MODES = {"development", "production", "production-equivalent", "unknown"}
-TOOL_STATUSES = {"available", "unavailable", "failed", "polluting"}
+TOOL_STATUSES = {"available", "unavailable", "failed", "polluting", "untested"}
 COVERAGE_STATUSES = {"covered", "partial", "blocked", "skipped"}
 CAUSAL_STATUSES = {"measured", "correlated", "source_fact", "source_hypothesis", "unverified"}
 EVIDENCE_SOURCES = {
@@ -97,7 +97,7 @@ def template(title: str, target_url: str) -> dict[str, Any]:
                 {
                     "name": "TODO: browser capability",
                     "version": "TODO: client, server, or browser version",
-                    "status": "unavailable",
+                    "status": "untested",
                     "role": "TODO: evidence role",
                     "caveat": "TODO: discovery result or pollution risk",
                     "proof": {

@@ -491,6 +491,32 @@ class ValidateRoundTest(unittest.TestCase):
         self.assertFalse(result["valid"])
         self.assertIn("duplicate finding id: OCR-001", result["errors"])
 
+    def test_cli_reports_non_string_finding_paths_without_crashing(self) -> None:
+        for invalid_path in ([], {}, ["src/example.ts"], {"path": "src/example.ts"}):
+            with self.subTest(path=invalid_path), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                review = finding_review()
+                review["findings"][0]["path"] = invalid_path
+                bundle_path = root / "bundle.json"
+                review_path = root / "review.json"
+                output_path = root / "validation.json"
+                bundle_path.write_text(json.dumps(bundle()), encoding="utf-8")
+                review_path.write_text(json.dumps(review), encoding="utf-8")
+                result = subprocess.run(
+                    [sys.executable, str(MODULE_PATH), "--bundle", str(bundle_path),
+                     "--review", str(review_path), "--output", str(output_path)],
+                    capture_output=True, text=True, check=False,
+                )
+                self.assertEqual(result.returncode, 2, result.stderr)
+                report = json.loads(output_path.read_text(encoding="utf-8"))
+                self.assertEqual(json.loads(result.stdout), report)
+                self.assertFalse(report["valid"])
+                self.assertFalse(report["clean"])
+                self.assertIn(
+                    "findings[0].path must be a non-empty string", report["errors"]
+                )
+                self.assertNotIn("Traceback", result.stderr)
+
     def test_rejects_duplicate_identity_with_omitted_file(self) -> None:
         current_bundle = bundle()
         current_bundle["reviewable_files"].append(

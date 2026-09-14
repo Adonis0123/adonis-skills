@@ -158,6 +158,29 @@ def valid_ledger() -> dict:
 
 
 class AuditLedgerTest(unittest.TestCase):
+    def test_unchecked_capability_is_not_reported_unavailable(self) -> None:
+        data = audit_ledger.template("Example", "https://example.test")
+        tool = data["audit"]["tools"][0]
+        self.assertEqual(tool["status"], "untested")
+        self.assertTrue(all(not step["performed"] for step in tool["proof"].values()))
+
+    def test_untested_capability_can_be_disclosed_without_supporting_findings(self) -> None:
+        data = valid_ledger()
+        tool = copy.deepcopy(data["audit"]["tools"][0])
+        tool.update(name="CPU throttling", status="untested", caveat="Not exercised in this audit")
+        for step in tool["proof"].values():
+            step.update(performed=False, evidence="Not exercised in this audit")
+        data["audit"]["tools"].append(tool)
+        self.assertEqual(audit_ledger.validate(data), [])
+        row = next(line for line in audit_ledger.render(data).splitlines() if line.startswith("| CPU throttling |"))
+        self.assertEqual(row.split("|")[3].strip(), "untested")
+
+    def test_untested_capability_cannot_support_machine_evidence(self) -> None:
+        data = valid_ledger()
+        data["audit"]["tools"][0]["status"] = "untested"
+        errors = audit_ledger.validate(data)
+        self.assertTrue(any("must name an available capability" in error for error in errors))
+
     def test_template_requires_completion(self) -> None:
         errors = audit_ledger.validate(
             audit_ledger.template("Example", "https://app.example.test/editor/project")

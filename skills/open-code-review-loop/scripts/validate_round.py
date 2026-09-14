@@ -250,7 +250,8 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
             if finding_id in finding_ids:
                 errors.append(f"duplicate finding id: {finding_id}")
             finding_ids.add(finding_id)
-        if finding.get("path") not in expected_paths:
+        finding_path = finding.get("path")
+        if isinstance(finding_path, str) and finding_path not in expected_paths:
             errors.append(f"findings[{index}].path is outside the selected review set")
         category = finding.get("category")
         if not isinstance(category, str) or category not in CATEGORIES:
