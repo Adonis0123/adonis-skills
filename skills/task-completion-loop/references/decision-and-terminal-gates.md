@@ -1,9 +1,32 @@
 # Decision and Terminal Gates
 
-Read this reference only when either condition is true:
+Read this reference only when one condition is true:
 
+- Preflight cannot classify a dependency as available from SKILL.md's one-line rule.
 - Phase 1 finds an unresolved `HUMAN_DECISION` or the user explicitly requests `grill-with-docs`.
+- Phase 2 finds an existing Goal or a caller parent contract.
 - Phase 4 is about to start, resume, or interpret a non-happy-path dependency result.
+
+## Preflight policy
+
+Invocation policy follows `architecture-hardening-loop` § 硬依赖与 runtime 能力:
+
+- Naming this Loop authorizes every always-required hard dependency (including `architecture-hardening-loop` and its declared scanner) to be invoked nested for its declared purpose. Do not ask the user to name each nested skill.
+- `disable-model-invocation` / `allow_implicit_invocation: false` only forbids isolated automatic triggering. If the host exposes no entry point for that reason but the dependency files are readable, continue on the parent-session execution path of the dependent Loop; do not report it missing.
+- Still missing for this round: not installed or unreadable, incompatible contract, or the actual worker/tool cannot execute.
+- The conditional dependency `grill-with-docs` must be explicitly requested by the user or proven necessary by preflight, and the host must be able to load it (its default frontmatter is `disable-model-invocation: true`, so readability, not the flag, decides).
+- Resolve everything before discussion; do not discover a missing dependency after implementation.
+
+## Goal ownership
+
+| Goal relationship     | Behavior                                                                                             | Completion owner                     |
+| --------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `none`                | Create this Loop's Goal after the safety gate clears                                                 | `created-by-loop`                    |
+| `exact-same-goal`     | `Decision: set-now`, `Next: continue active goal`; do not ask again, create, or replace              | this Skill                           |
+| `broader-compatible`  | The parent objective, scope, and Done condition explicitly contain this Loop checkpoint; continue it | parent orchestrator; checkpoint only |
+| `conflicting/unclear` | `Decision: defer`; return `HUMAN_GATE`                                                               | none                                 |
+
+Evidence for the relationship may come from a native getter, product state, or a caller-supplied checkable parent contract. Only `created-by-loop` / `exact-same-goal` are completed by this Skill; `broader-compatible` always reports `Goal: active-checkpoint` and leaves completion to the parent owner.
 
 ## Human decision convergence
 

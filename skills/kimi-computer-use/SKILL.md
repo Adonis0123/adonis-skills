@@ -1,16 +1,14 @@
 ---
 name: kimi-computer-use
-description: This skill should be used when the user asks to install, configure, upgrade, repair, or diagnose Kimi Computer Use (kimi-cu), especially for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes MCP clients.
+description: "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes, or fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'. Not for general desktop automation once kimi-cu already works, and not a replacement for a host's native Computer Use."
 metadata:
   author: adonis
-  version: "0.2.1"
+  version: "0.3.0"
 ---
 
 # Kimi Computer Use
 
-Use Kimi Computer Use as one local MCP service shared by multiple agent hosts. Keep the executable MCP registration in each host's native config; keep shared operating guidance in this skill.
-
-Maintain this skill in the `adonis-skills` repository at `skills/kimi-computer-use/`. Treat installed copies as distribution targets: update the repository source, then synchronize the intended hosts through their configured skill installation mechanism. A readable file or symlink proves availability, not that an existing session loaded it. Verify discovery separately from MCP registration and runtime calls.
+Kimi Computer Use (MCP server name `kimi-cu`) is one local macOS MCP service shared by several agent hosts. Keep the executable registration in each host's native config; keep the shared operating rules in this skill. Below, `kimi-cu` names the server and "Cursor CLI" means the `cursor-agent` executable.
 
 ## Safety boundary
 
@@ -21,55 +19,46 @@ Maintain this skill in the `adonis-skills` repository at `skills/kimi-computer-u
 
 ## Verify the installation
 
-1. Verify the signed app exists:
+Run the routine check first; add the signature checks only after an install or upgrade:
 
-   ```bash
-   test -x /Applications/KimiCU.app/Contents/MacOS/kimi-cu
-   codesign --verify --deep --strict /Applications/KimiCU.app
-   spctl --assess --type execute -vv /Applications/KimiCU.app
-   defaults read /Applications/KimiCU.app/Contents/Info CFBundleShortVersionString
-   ```
+```bash
+# routine check
+/Applications/KimiCU.app/Contents/MacOS/kimi-cu service-status
+/Applications/KimiCU.app/Contents/MacOS/kimi-cu xpc-ping
+defaults read /Applications/KimiCU.app/Contents/Info CFBundleShortVersionString
 
-2. Check the background service and permissions:
+# install/upgrade-time only
+codesign --verify --deep --strict /Applications/KimiCU.app
+spctl --assess --type execute -vv /Applications/KimiCU.app
+```
 
-   ```bash
-   /Applications/KimiCU.app/Contents/MacOS/kimi-cu service-status
-   /Applications/KimiCU.app/Contents/MacOS/kimi-cu xpc-ping
-   ```
+Treat `xpc-ping` as the permission source of truth: it prints `accessibility=` and `screenRecording=` from the service itself. Do not infer Accessibility or Screen Recording permission from a host's generic doctor command.
 
-3. Treat `xpc-ping` as the permission source of truth. Do not infer Accessibility or Screen Recording permission from a generic CLI doctor command.
+`kimi-cu` has no help command. Unknown subcommands print `unknown command`, unknown flags are ignored, and `kimi-cu upgrade` executes immediately, so never probe subcommands with `--help`.
 
-4. If installation is missing, use the official Kimi Code plugin flow: update Kimi Code, open `Plugins`, choose `official`, and install `Kimi Computer Use`. Do not install an unverified binary from a reposted script.
+If the app is missing, use the official Kimi Code plugin flow: update Kimi Code, open `Plugins`, choose `official`, and install `Kimi Computer Use`. Do not install a binary from a reposted script; it bypasses the signature the checks above rely on.
 
 ## Register MCP clients
 
-Use the exact executable and arguments below:
+Every host uses the same stdio command:
 
 ```text
 /Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user
 ```
 
-Apply host-native registration from [references/host-configs.md](references/host-configs.md). Do not replace all host configs with one symlinked file: their schemas and lifecycle commands differ.
-
-Cursor CLI reads its native user or workspace MCP configuration. Merge the `kimi-cu` entry into the existing JSON instead of replacing the file, then use Cursor's own `mcp list` and `mcp list-tools` commands before attempting a model smoke test.
-
-Registration does not make Kimi CU the default for every host:
-
-- Codex desktop and cross-app work prefer Codex native Computer Use; use Kimi CU only as fallback or when the user explicitly requests it.
-- WorkBuddy ordinary browser, desktop, and cross-app work prefer WorkBuddy native capabilities; use Kimi CU only when native Computer Use is unavailable or insufficient.
-- Browser internals such as DOM, Console, Network, and Performance belong to Chrome DevTools MCP, not Kimi CU.
+Per-host config paths, registration commands, status commands, and the read-only model smoke live in [references/host-configs.md](references/host-configs.md); open only the section for the requested host. Merge the `kimi-cu` entry into the host's existing config and do not point several hosts at one symlinked file: their schemas and reload lifecycles differ.
 
 ## Operate through MCP
 
 1. When the target app is already named, call `get_app_state` directly; call `list_apps` only when the process identity is unknown.
-2. Call `get_app_state` with `mode: "ax"` for text and accessibility-first inspection; use the visual mode only when layout or pixels are necessary.
-3. Use the smallest action that can achieve the requested result.
+2. Call `get_app_state` with `mode: "ax"` for text and accessibility-first inspection; use `image` or `full` only when layout or pixels matter.
+3. Use the smallest action that achieves the requested result.
 4. Call `get_app_state` again after every mutation and verify the observable result.
-5. Report `UNVERIFIED` when a host discovers the MCP server but its selected model does not emit a real tool call.
+5. Report `UNVERIFIED` when a host discovers the server but its selected model never emits a real tool call.
 
-### get_app_state contract (hard)
+### get_app_state arguments
 
-Hermes tool name: `mcp__kimi_cu__get_app_state`.
+Wrong values here produce `no target app` or `mode must be full, image, or ax`. Both look like permission failures but are argument errors.
 
 | Field  | Required                                                  | Wrong                                                    |
 | ------ | --------------------------------------------------------- | -------------------------------------------------------- |
@@ -77,38 +66,38 @@ Hermes tool name: `mcp__kimi_cu__get_app_state`.
 | `pid`  | integer from `list_apps`                                  | omit both `app` and `pid`                                |
 | `mode` | only `full` / `image` / `ax`                              | `som` / `vision` (those are Hermes `computer_use`)       |
 
-Smoke:
+Read-only smoke for every host: `list_apps`, then `get_app_state` with `app=com.apple.finder` and `mode=ax`.
 
-1. `list_apps`
-2. `get_app_state` with `app=com.apple.finder` and `mode=ax` (or a known pid)
+Compare a host's discovered tool set with the live schema instead of a fixed count; a different count after an upgrade is not by itself a failure.
 
-If three consecutive tool calls fail, Hermes may temporarily mark the MCP server unreachable and refuse retries for about one minute. That is client circuit-breaking after bad args, not proof that Kimi CU permissions are down. Wait for the cooldown and retry with valid args; re-check with `hermes mcp test kimi-cu` if needed.
+Do not mass-kill `kimi-cu` processes: one `kimi-cu service` helper runs at PPID 1 and each host owns its own `kimi-cu mcp` children, so a sweep breaks other hosts' sessions. Reconnect the affected host instead.
 
-Do not mass-kill `kimi-cu` processes. Many belong to other hosts (Codex/ChatGPT app-server, Grok). Keep the PPID 1 `kimi-cu service` helper and Hermes `mcp_stdio_watchdog` chain.
+### Choose when to use Kimi CU
 
-The verified 0.5.10 baseline exposes `list_apps`, `get_app_state`, `click`, `type_text`, `press_key`, `scroll`, `set_value`, `perform_secondary_action`, `select_text`, and `drag`. Read the live tool schema after future upgrades rather than treating this count as a permanent compatibility limit.
+Registration does not make `kimi-cu` the default:
+
+- Codex desktop and cross-app work prefer Codex native Computer Use; use `kimi-cu` only as fallback or on explicit request.
+- WorkBuddy browser, desktop, and cross-app work prefer WorkBuddy native capabilities; use `kimi-cu` only when native Computer Use is unavailable or insufficient.
+- Browser internals such as DOM, Console, Network, and Performance belong to Chrome DevTools MCP, not `kimi-cu`.
 
 ## Diagnose failures
 
-Work from the service outward:
+Fast path: if the error text is `no target app` or `mode must be full, image, or ax`, fix the tool arguments per the table above and stop. The service is fine; skip the checks below.
+
+Otherwise work from the service outward:
 
 1. Re-run `service-status` and `xpc-ping`.
-2. Run the host's native MCP status/test command.
-3. Confirm the host reports the installed version's tool set, including the two read-only smoke tools.
-4. Run a read-only smoke test: `list_apps`, then `get_app_state` for a harmless app.
+2. Run the host's native MCP status or test command from the host reference.
+3. Confirm the host discovers the installed tool set, including `list_apps` and `get_app_state`.
+4. Run the read-only smoke.
 5. Separate three states in the report:
    - server connected;
    - tools discovered;
    - model actually emitted and completed a tool call.
-6. If the error is `no target app` or `mode must be full, image, or ax`, fix the tool arguments first — do not restart the OS service.
-7. If Hermes reports `MCP server 'kimi-cu' is unreachable after 3 consecutive failures`, treat it as a temporary client fuse after bad calls; wait/retry with valid args rather than reinstalling the app.
+6. If Hermes reports `MCP server 'kimi-cu' is unreachable after 3 consecutive failures`, it is a client fuse tripped by bad calls, not a permission outage. Wait for the cooldown, retry with valid arguments, and re-check with `hermes mcp test kimi-cu`.
 
-For Cursor CLI, `mcp list` proves server readiness and `mcp list-tools kimi-cu` proves tool discovery. Neither proves that the selected model emitted a tool call; run the read-only CLI smoke from the host reference and inspect the completed call before reporting end-to-end success. If `cursor-cli` is a shell alias, validate it in a fresh login shell or invoke the underlying Cursor Agent executable directly.
-
-If the first two pass but the third fails, test one other officially supported host model before declaring a model-adapter incompatibility. Do not rewrite a working MCP config to compensate for model output that merely prints tool-call markup as text.
-
-WorkBuddy may expose MCP tools through deferred dispatch. In that case, allow `ToolSearch` and `DeferExecuteTool` narrowly for the session; do not switch the whole session to bypass-permissions mode. See the verified smoke command in the host reference.
+If states one and two pass but three fails, test one other officially supported host model before declaring a model-adapter incompatibility. Do not rewrite a working MCP config to compensate for a model that prints tool-call markup as text.
 
 ## Upgrade
 
-Follow [references/maintenance.md](references/maintenance.md) for the official unattended upgrade, signature and permission checks, fresh-session version proof, affected-host reconnection and source distribution. Existing sessions may report `Transport closed`; reconnect rather than mass-killing processes. Keep installed version, standalone server success and per-host model acceptance as separate evidence.
+Check and upgrade in place with `/Applications/KimiCU.app/Contents/MacOS/kimi-cu upgrade </dev/null`; it prints installed versus latest, and EOF keeps an unattended prompt from hanging. For signature and permission rechecks, fresh-session version proof, host reconnection, and source distribution, follow [references/maintenance.md](references/maintenance.md). Existing sessions may report `Transport closed` after an upgrade; reconnect them. Keep installed version, standalone server success, and per-host model acceptance as separate evidence.

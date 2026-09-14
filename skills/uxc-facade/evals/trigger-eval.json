@@ -28,7 +28,7 @@
     "should_trigger": true
   },
   {
-    "query": "迁移已有 MCP config 到 UXC 前先做 dry-run，并保留原生兼容路径。",
+    "query": "把已有 MCP config 导入 UXC 后做成固定 uxc link，先 dry-run，并保留原生兼容路径。",
     "should_trigger": true
   },
   {
@@ -49,6 +49,14 @@
   },
   {
     "query": "普通 curl 调一下本地 REST endpoint，返回 status code。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 uxc 调一次 GraphQL 查询并带上 bearer token，看看返回什么。",
+    "should_trigger": false
+  },
+  {
+    "query": "给这个 OpenAPI spec 写一个 TypeScript client。",
     "should_trigger": false
   },
   {

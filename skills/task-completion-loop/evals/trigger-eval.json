@@ -68,7 +68,7 @@
     "should_trigger": false
   },
   {
-    "query": "删掉生产数据库旧账本表并直接切换写流量；scope 和回滚还没批准，但请自动做完。",
+    "query": "对 docs/plans/persistence.md 的改动跑 review-fix-re-review 到 PASS，再做同范围 architecture rescan；不需要 Goal、三方收敛或最终盲审。",
     "should_trigger": false
   },
   {

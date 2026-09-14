@@ -29,7 +29,7 @@
         "明确 AI 三方一致不能替代支付 owner 的产品或数据决策",
         "识别生产数据真相源、账本表和回滚为 HUMAN_DECISION",
         "调用条件式 grill-with-docs 而不是把它当作每次必跑",
-        "一次只提出一个带推荐答案的问题",
+        "按 grilling 的 frontier round 提问，每个问题带推荐答案",
         "结果包含 HUMAN_GATE",
         "用户确认 shared understanding 前不创建 Goal或修改源码",
         "不启动 review、architecture hardening、部署、commit 或 push"
@@ -279,6 +279,50 @@
         "记录剩余 Fix、当前 evidence identity 与下一恢复点",
         "说明下一 Goal turn 继续，而不是要求用户做无实质取舍的决定",
         "只有产品、权限、范围、安全或外部副作用决策才使用 HUMAN_GATE"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "phase1-claude-timeout-returns-unverified-not-missing",
+      "prompt": "这是只读行为验收，不要真的启动外部会话。用户明确要求完整 task-completion-loop；预检通过，Grok 与 Claude 会话都能创建。Phase 1 A 并行发起后，Grok 在 163 秒返回立场并有可恢复句柄；Claude 的 review-loop consult 在 20 分钟 deadline 到期仍无输出，进程已退出，本地证据无法证明请求是否已提交。请给出本轮终态与下一步。",
+      "expected_output": "Claude 超时属于 DELIVERY_UNKNOWN 而不是能力缺失。不重试（无法证明未提交）、不用宿主或通用 subagent 代写 Claude 立场、不进入 B。返回 Result: UNVERIFIED，保留 Grok 句柄与立场，下一轮从 Claude 一方继续。",
+      "files": [],
+      "expectations": [
+        "结果包含 Result: UNVERIFIED",
+        "不返回 MISSING_DEPENDENCIES，因为会话创建能力已被 Grok 往返证明",
+        "不返回 HUMAN_GATE，因为没有用户决策",
+        "识别 DELIVERY_UNKNOWN 且因无法证明未提交而不自动重试",
+        "保留 Grok session 句柄与已得立场",
+        "不用宿主、通用 subagent 或伪造会话代替 Claude 立场",
+        "不进入交叉质疑 B、Goal Gate 或源码修改"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "goal-gate-suggest-adopt-continues-with-not-created",
+      "prompt": "这是只读行为验收，不要调用 Goal 工具。用户明确要求完整 task-completion-loop；预检与三方收敛已通过，没有 HUMAN_DECISION。宿主是 Codex tooling，没有 active Goal；goal-gate 返回 Decision: suggest、Next: adopt goal and continue，未调用 create_goal。请说明 Phase 2 之后如何继续以及完成报告中的 Goal 字段。",
+      "expected_output": "suggest + adopt goal and continue 不是用户决策门。按 transcript contract 继续实现全部 PENDING 与三道门禁；不调用 create_goal，不声称 native Goal 已 Active；完成报告写 Goal: not-created，Result 按证据给出。",
+      "files": [],
+      "expectations": [
+        "识别 Decision: suggest 与 Next: adopt goal and continue",
+        "不返回 HUMAN_GATE",
+        "继续 Phase 3 实现与 Phase 4 三道门禁",
+        "不调用 create_goal 或 update_goal，也不声称 Goal 已 Active",
+        "完成报告包含 Goal: not-created"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "ambiguous-scope-asks-one-question-then-stops",
+      "prompt": "这是只读行为验收，不要修改文件或启动外部会话。用户说“把 persistence 的 plan 做完，走完整 task-completion-loop”。仓库里有 docs/plans/persistence-v1.md 与 docs/plans/persistence-v2.md，两份都未完成且范围不同；代码中没有能唯一区分二者的信号。请给出此时行为。",
+      "expected_output": "范围不能安全确定：只问一个范围问题（选 v1 还是 v2），不默认全仓库，不合并两份 plan，不开始预检会话探测、三方讨论、Goal 或源码修改，然后停止。",
+      "files": [],
+      "expectations": [
+        "识别两份 plan 造成范围歧义",
+        "只提出一个范围问题",
+        "不默认全仓库，也不合并两份 plan",
+        "提问后停止，不启动 Grok/Claude 会话、Goal 或源码修改",
+        "不返回 MISSING_DEPENDENCIES 或 UNVERIFIED"
       ]
     }
   ]

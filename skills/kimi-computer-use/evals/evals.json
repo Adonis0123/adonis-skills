@@ -2,15 +2,61 @@
   "skill_name": "kimi-computer-use",
   "evals": [
     {
-      "id": 0,
-      "prompt": "Case 1: Update Kimi CU skill in adonis-skills for six AI hosts; installed files are readable but sessions untested. Case 2: Add Kimi CU to WorkBuddy preserving other servers and current model; a later version returns 11 tools. Provide offline execution approach and evidence boundaries.",
-      "expected_output": "A scoped source/distribution plan and host verification plan preserving configuration and evidence limits.",
+      "id": 1,
+      "name": "install-verify-routine-check",
+      "prompt": "Check whether Kimi Computer Use is installed and healthy on this Mac. I only want to know if the service is running and whether Accessibility and Screen Recording are granted; nothing else has changed since yesterday.",
+      "expected_output": "Runs service-status, xpc-ping, and the bundle version read as the routine check, reads permissions only from the xpc-ping output, skips codesign/spctl because no install or upgrade happened, and never probes kimi-cu with --help or runs upgrade.",
       "files": [],
       "expectations": [
-        "Maintain repository source and distinguish distribution from session loading.",
-        "Preserve other WorkBuddy servers and the configured model.",
-        "Do not reject a later version only because it exposes 11 tools.",
-        "Do not claim real host completion from this offline evaluation."
+        "Runs `kimi-cu service-status` and `kimi-cu xpc-ping` using the full /Applications/KimiCU.app path",
+        "Reports Accessibility and Screen Recording from the xpc-ping `permissionStatus` line, not from a host doctor command",
+        "Does not run codesign or spctl for a routine check, or explains they are install/upgrade-time checks",
+        "Does not run `kimi-cu upgrade` or append `--help` to any kimi-cu subcommand",
+        "If the app is missing, points to the official Kimi Code plugin flow rather than a reposted binary"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "register-cursor-cli-merge-and-prove",
+      "prompt": "Add kimi-cu to my Cursor CLI. ~/.cursor/mcp.json already has a Figma server in it that must keep working. Tell me how you will prove it actually works end to end.",
+      "expected_output": "Merges a kimi-cu entry with command /Applications/KimiCU.app/Contents/MacOS/kimi-cu and args [mcp, -s, user] into the existing mcpServers object of the user-level file, then proves connection with `cursor-agent mcp list`, discovery with `cursor-agent mcp list-tools kimi-cu`, and model/runtime with the read-only list_apps + get_app_state(com.apple.finder, ax) smoke, reporting the three layers separately.",
+      "files": [],
+      "expectations": [
+        "Uses the exact command `/Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user` and the server name `kimi-cu`",
+        "Merges into the existing `mcpServers` object and preserves the Figma entry; does not overwrite the file or symlink another host's config",
+        "Uses `cursor-agent` (not `cursor-cli`) for `mcp list`, `mcp list-tools kimi-cu`, and the smoke run",
+        "Separates connection, tool discovery, and completed model tool call as three distinct evidence layers",
+        "Marks the model layer `UNVERIFIED` if the model only prints or describes a tool call",
+        "Opens only the Cursor CLI section of references/host-configs.md, not other host sections or maintenance.md"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "diagnose-no-target-app-fast-path",
+      "prompt": "kimi-cu 报 `no target app`。我在 Hermes 里调 get_app_state 传的是 app=\"Google Chrome\"，连着失败三次之后 Hermes 又说 MCP server 'kimi-cu' is unreachable after 3 consecutive failures。是不是权限掉了？要不要重启服务或者重装？",
+      "expected_output": "Identifies both messages as argument errors and a client fuse, not a permission or service failure: `app` must be the bundle id `com.google.Chrome` (or a pid from list_apps) and `mode` must be full/image/ax. Advises waiting for the Hermes cooldown, retrying with valid arguments, optionally `hermes mcp test kimi-cu`, and explicitly declines to restart the service, reinstall, or kill kimi-cu processes.",
+      "files": [],
+      "expectations": [
+        "Takes the Diagnose fast path: fixes arguments first and does not run service-status/xpc-ping/reinstall as the primary remedy",
+        "States that `app` requires a bundle id such as `com.google.Chrome`, not the display name `Google Chrome`",
+        "Explains the Hermes `unreachable after 3 consecutive failures` message as a temporary client fuse caused by bad calls",
+        "Does not restart the OS service, reinstall the app, or mass-kill kimi-cu processes",
+        "Uses the Hermes tool name form `mcp__kimi_cu__get_app_state` or refers to the Hermes section of host-configs.md if host-specific detail is needed"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "upgrade-and-distribute-evidence-boundaries",
+      "prompt": "Case 1: Upgrade Kimi Computer Use and then update the kimi-computer-use skill in adonis-skills for six AI hosts; installed skill files are readable but sessions are untested. Case 2: After the upgrade a host reports 11 tools instead of 10 and an old Codex session says Transport closed. Provide the execution approach and evidence boundaries.",
+      "expected_output": "Uses `kimi-cu upgrade </dev/null` from references/maintenance.md, rechecks version/signature/xpc-ping, proves the new version in a fresh MCP session, treats Transport closed as a reconnect for that host only, accepts 11 tools as a schema change to read rather than a failure, distinguishes repository source from installed distribution from session loading, and marks untested host/model layers UNVERIFIED.",
+      "files": [],
+      "expectations": [
+        "Runs the official upgrade command with `</dev/null` and does not treat EOF as user consent for login or permission prompts",
+        "Rechecks bundle version, signature, and xpc-ping after upgrade instead of assuming success",
+        "Treats `Transport closed` as a reason to reconnect the affected host; does not mass-kill kimi-cu processes or rewrite working registrations",
+        "Does not reject the new version only because it exposes 11 tools; reads the live tool schema instead",
+        "Distinguishes repository source, installed distribution copies, and whether an existing session loaded the new skill",
+        "Does not claim real per-host model acceptance from this offline evaluation; marks it UNVERIFIED"
       ]
     }
   ]

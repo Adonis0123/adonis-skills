@@ -67,10 +67,11 @@
       "id": 6,
       "name": "binary-pin-conflict",
       "prompt": "两个业务 skill 都想安装 UXC：一个 pin 0.17，另一个需要不同版本，而且它们现在会写同一个 uxc 路径。请按通用方法决定怎么包装；不要为了复用而新建共享 installer。",
-      "expected_output": "Names the binary owner and install root, uses service-private roots or one explicit shared owner, fails closed on a foreign or mismatched binary, and keeps executable scripts in each owning skill.",
+      "expected_output": "Explains that a private install root isolates only the binary while the daemon, schema cache, and credentials under $HOME/.uxc are shared per user, so it names one binary owner and one pinned UXC version per user, requires uxc daemon status version_mismatch=false, fails closed on a foreign or mismatched binary, and keeps executable scripts in each owner skill.",
       "files": [],
       "expectations": [
         "Does not allow two owner skills to overwrite one shared binary",
+        "States that two UXC versions on one user share one daemon and resolves to one pinned version with a named binary owner",
         "Fails closed on a foreign owner, digest mismatch, or version conflict",
         "Does not create a shared installer or shared runtime script dependency"
       ]
@@ -85,6 +86,18 @@
         "Uses the same facade method without pretending the protocols are identical",
         "Keeps authentication and acceptance service-specific",
         "Does not introduce a shared service runtime"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "reuse-proof-by-metadata",
+      "prompt": "我们的 uxc link 第二次 readiness 调用明显变快了，可以把 SESSION_REUSED 标成已证明吗？",
+      "expected_output": "Keeps SESSION_REUSED as UNVERIFIED and names the metadata proof: run the readiness call twice, then check uxc daemon sessions for one reuse-eligible stdio session and uxc daemon status for an increased mcp_reuse_hits with unchanged mcp_stdio_sessions.",
+      "files": [],
+      "expectations": [
+        "Rejects timing as reuse evidence",
+        "Names uxc daemon sessions and mcp_reuse_hits as the proof",
+        "Keeps SESSION_REUSED UNVERIFIED until that metadata is checked and names the next action"
       ]
     }
   ]

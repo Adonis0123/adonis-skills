@@ -8,7 +8,7 @@ All hosts use the same stdio command:
 
 ## Cursor CLI
 
-Cursor Agent reads MCP servers from the workspace `.cursor/mcp.json` or the user-level `$HOME/.cursor/mcp.json`. Merge the following server into the existing `mcpServers` object; do not replace other entries:
+Cursor CLI (`cursor-agent`) reads MCP servers from the user-level `$HOME/.cursor/mcp.json` or a workspace `.cursor/mcp.json`. Prefer the user-level file unless the user names a workspace. Merge the following server into the existing `mcpServers` object; do not replace other entries:
 
 ```json
 {
@@ -21,23 +21,21 @@ Cursor Agent reads MCP servers from the workspace `.cursor/mcp.json` or the user
 }
 ```
 
-The commands below use `cursor-cli` as the Cursor Agent command. When it is a shell alias, run them in a fresh login shell or replace `cursor-cli` with the underlying executable:
-
 ```bash
-cursor-cli mcp list
-cursor-cli mcp list-tools kimi-cu
+cursor-agent mcp list
+cursor-agent mcp list-tools kimi-cu
 ```
 
-Expect `kimi-cu: ready` and the installed version's tool set (10 tools in the verified 0.5.10 baseline). If the server is configured but disabled or awaiting approval, approve only this server within existing authorization, then repeat the checks:
+Expect `kimi-cu: ready` and the installed version's tool set, including `list_apps` and `get_app_state`. If the server is configured but disabled or awaiting approval, approve only this server within existing authorization, then repeat the checks:
 
 ```bash
-cursor-cli mcp enable kimi-cu
+cursor-agent mcp enable kimi-cu
 ```
 
 Finish with a model-level, read-only smoke test. The response must confirm that it completed both tool calls without reproducing window contents or other private screen data:
 
 ```bash
-cursor-cli --print --mode ask \
+cursor-agent --print --mode ask \
   'Use only kimi-cu. Call list_apps, then call get_app_state with app=com.apple.finder and mode=ax. Do not modify the UI. Report only whether both tool calls completed and the target bundle id; do not repeat window contents.'
 ```
 
@@ -51,8 +49,6 @@ grok mcp doctor kimi-cu
 ```
 
 ## Codex
-
-Register Kimi CU as fallback. Codex native Computer Use remains the first choice for desktop and cross-app work.
 
 ```bash
 codex mcp add kimi-cu -- /Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user
@@ -77,9 +73,9 @@ hermes mcp test kimi-cu
 
 Review tool approval choices when prompted; grant only the tools needed for the authorized task. Do not automatically approve tools added by a later version or enable global `--yolo` mode.
 
-## WorkBuddy desktop
+Hermes exposes the server's tools as `mcp__kimi_cu__<tool>`, for example `mcp__kimi_cu__get_app_state`. Its own `computer_use` tool accepts `som` / `vision` modes; `kimi-cu` does not.
 
-Register Kimi CU as fallback. WorkBuddy native Browser / Computer Use remains the first choice for ordinary page and desktop interaction; use Chrome DevTools MCP for browser-internal diagnostics.
+## WorkBuddy desktop
 
 Merge this entry into `$HOME/.workbuddy/mcp.json`, preserving other servers:
 
@@ -106,12 +102,11 @@ WORKBUDDY_CLI=/Applications/WorkBuddy.app/Contents/Resources/app.asar.unpacked/c
   --mcp-config "$HOME/.workbuddy/mcp.json" \
   --permission-mode default \
   --settings '{"permissions":{"allow":["ToolSearch","DeferExecuteTool","mcp__kimi-cu__list_apps","mcp__kimi-cu__get_app_state"]}}' \
-  'Use kimi-cu to list apps, then read Calculator with get_app_state(mode=ax). Do not modify the UI.'
+  'Use only kimi-cu. Call list_apps, then call get_app_state with app=com.apple.finder and mode=ax. Do not modify the UI. Report only whether both tool calls completed.'
 ```
+
+WorkBuddy may expose MCP tools through deferred dispatch; the `ToolSearch` and `DeferExecuteTool` allowances above cover that narrowly. Do not switch the whole session to bypass-permissions mode.
 
 Use the host's configured model. If it prints tool markup, cannot discover deferred tools, or hangs, separate that observation from server health; do not assume an adapter defect without a second supported-model check. A model switch is a diagnostic option, not a permanent configuration change.
 
-Official WorkBuddy references:
-
-- <https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/MCP-Guide>
-- <https://www.workbuddy.ai/docs/cli/release-notes/v2.48.0>
+Official WorkBuddy reference: <https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/MCP-Guide>

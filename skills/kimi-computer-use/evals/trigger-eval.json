@@ -1,0 +1,54 @@
+[
+  {
+    "query": "帮我把 kimi-cu 加到 Claude Code 的 MCP 里，别动我已有的其他 server。",
+    "should_trigger": true
+  },
+  {
+    "query": "Is Kimi Computer Use installed on this Mac? Check that the service is running and the permissions are granted.",
+    "should_trigger": true
+  },
+  {
+    "query": "kimi-cu 报 no target app，我传的是 app=\"Google Chrome\"，是权限掉了吗？",
+    "should_trigger": true
+  },
+  {
+    "query": "Cursor CLI 里 mcp list 显示 kimi-cu ready，但模型只打印了工具调用的文本没有真的调用，怎么排查？",
+    "should_trigger": true
+  },
+  {
+    "query": "Upgrade Kimi Computer Use to the latest version and make sure Codex and Grok reconnect afterwards.",
+    "should_trigger": true
+  },
+  {
+    "query": "Hermes 说 MCP server 'kimi-cu' is unreachable after 3 consecutive failures，需要重装 KimiCU.app 吗？",
+    "should_trigger": true
+  },
+  {
+    "query": "get_app_state returned `mode must be full, image, or ax` from kimi-cu in WorkBuddy. What did I do wrong?",
+    "should_trigger": true
+  },
+  {
+    "query": "Use Codex native computer use to open Finder and drag the report into the Shared folder.",
+    "should_trigger": false
+  },
+  {
+    "query": "用 Chrome DevTools MCP 看一下这个页面的 DOM 和 Network 请求，找出为什么图片没加载。",
+    "should_trigger": false
+  },
+  {
+    "query": "kimi-cu is already working. Please click the Save button in Preview and then close the window.",
+    "should_trigger": false
+  },
+  {
+    "query": "Add the GitHub MCP server to my Cursor mcp.json with my token from the environment.",
+    "should_trigger": false
+  },
+  {
+    "query": "Write an AppleScript that resizes all Finder windows to 1200x800.",
+    "should_trigger": false
+  },
+  {
+    "query": "How do I grant Screen Recording permission to OBS on macOS Sequoia?",
+    "should_trigger": false
+  }
+]

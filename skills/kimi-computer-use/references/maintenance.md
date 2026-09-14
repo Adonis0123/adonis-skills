@@ -18,7 +18,7 @@ Use this runbook when upgrading Kimi Computer Use. Maintain the skill in `adonis
 ## Prove the new session
 
 1. Open a fresh MCP session with the registered command. Compare the `initialize` server version with the installed bundle version. Discover the live tool schema, then complete `list_apps` and `get_app_state(app=com.apple.finder, mode=ax)`.
-2. Treat `Transport closed` on an old connection after upgrade as a reason to reconnect the affected host. Do not mass-kill other hosts' processes, rewrite working registrations or bypass permissions.
+2. Treat `Transport closed` on an old connection after upgrade as a reason to reconnect the affected host, not to rewrite working registrations or bypass permissions.
 3. A standalone stdio check proves that server session only. For each host in the requested acceptance scope, distinguish skill discovery, MCP connection, tool discovery, completed model tool calls and old-session recovery. Use [host-configs.md](host-configs.md) only for the relevant host. Mark untested layers `UNVERIFIED`.
 4. Preserve each host's preferred native Computer Use and model. Explicitly requested Kimi smoke tests can use Kimi; they do not make it the global default. Real pointer/keyboard actions across AI hosts still share one desktop and must be serialized.
 
