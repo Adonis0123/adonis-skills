@@ -80,7 +80,7 @@
     "should_trigger": false
   },
   {
-    "query": "这个 UI 重设计应该走 Challenge、Discuss 还是 Plan？只帮我选 workflow。",
+    "query": "这个 UI 重设计应该走 Challenge 还是 Plan？只帮我选 workflow。",
     "should_trigger": false
   },
   {

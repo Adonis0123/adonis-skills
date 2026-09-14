@@ -36,7 +36,7 @@
     "should_trigger": true
   },
   {
-    "query": "这个行为改动会影响三个消费者，选 Challenge、Discuss 还是 Light？",
+    "query": "这个行为改动会影响三个消费者，选 Challenge 还是 Light？",
     "should_trigger": true
   },
   {

@@ -3,7 +3,7 @@ name: goal-gate
 description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
 metadata:
   author: adonis
-  version: "2.0.2"
+  version: "2.0.3"
 ---
 
 # Goal Gate
@@ -41,7 +41,7 @@ Never borrow one runtime's fields for another. If the user explicitly requests b
 
 Prefer a goal when all are true: the task is larger than one normal turn; it has one durable end state; completion can be verified from evidence the agent can surface in the transcript; the agent can make useful progress without frequent human steering; stop or ask conditions can be stated before work starts.
 
-Avoid a goal for single-step lookups, typo fixes, small edits, or commit-message work; open-ended exploration with no measurable stopping condition; product or architecture choices that still need `grilling` (Route: Challenge) or `discuss-before-plan`; destructive, irreversible, billing, auth, production-data, or schema-breaking work before explicit human approval; a loose backlog of unrelated tasks.
+Avoid a goal for single-step lookups, typo fixes, small edits, or commit-message work; open-ended exploration with no measurable stopping condition; product or architecture choices that still need `grilling` (Route: Challenge, widening or named-option convergence); destructive, irreversible, billing, auth, production-data, or schema-breaking work before explicit human approval; a loose backlog of unrelated tasks.
 
 For vague but low-risk work, prefer a goal with safe defaults over a clarification loop. Ask only when the answer materially changes cost, risk, ownership, product direction, or write boundaries.
 
@@ -51,7 +51,7 @@ Before any automatic action, check for conditions that must keep a human in the 
 
 - Destructive, irreversible, billing, auth, production-data, or schema-breaking action whose concrete scope is not yet authorized. Check the action and existing approval, not domain keywords alone: read-only diagnosis and explicitly authorized isolated local tests can proceed. Prior approval applies only to its stated paths, environment and effects; a new production target, security change or expanded effect needs its own gate.
 - A goal is already active **and** the new objective conflicts with it, or the user has not chosen how to handle it. Never replace or mutate that goal silently; ask whether to continue, complete, block, pause, clear, or replace it, and emit `Decision: defer`. Same-Goal management includes both an exact objective match and a contained checkpoint when the active Goal's objective, frozen scope, and Done condition explicitly include that checkpoint and the user already authorized the parent pipeline. Verify this relationship from evidence; compatible containment never permits scope expansion or narrowing the parent's Done condition.
-- The objective still needs a design or scoping decision that `grilling` (Route: Challenge) or `discuss-before-plan` should resolve.
+- The objective still needs a design or scoping decision that `grilling` (Route: Challenge, widening or named-option convergence) should resolve.
 - Verification cannot run, so completion could never be proven from evidence.
 
 The gate exists because an auto-started goal hands the agent a long leash. That leash is only safe when the end state is reversible-or-approved, unambiguous, and checkable. When in doubt, fall back to `suggest` — the cost of asking once is small next to a goal that runs off in the wrong direction.

@@ -3,7 +3,7 @@ name: workflow-gate
 description: "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, explicit Goal management, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and full-completion pipelines. Skip trivial one-line work and clearly matching safe named-skill requests. Treat first-principles analysis as a method, not a Challenge trigger unless the user is widening the option space."
 metadata:
   author: adonis
-  version: "3.5.0"
+  version: "3.6.0"
 ---
 
 # Workflow Gate
@@ -42,23 +42,22 @@ After Rules #1 and #2 clear, skip the block only when the answer fits in one lin
 
 ## Cheat card — scan first, exit early
 
-| Route              | Trigger keyword                                                                                                                       | Default Runtime skill                                                                                       | Default Execution path |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------- |
-| **Direct**         | read-only lookup, no write                                                                                                            | `none`                                                                                                      | `direct local work`    |
-| **Light**          | small write / debug / docs / ship-check                                                                                               | `none` _(or `systematic-debugging` / `test-driven-development` via the rules below)_                        | `direct local work`    |
-| **Challenge**      | creative work — full trigger list in Rule #2; also explicit option-space widening or thesis stress. Requires a thesis before grilling | `grilling` _(or `grill-with-docs` when the same request explicitly requires ADR/glossary persistence)_      | `n/a`                  |
-| **Discuss**        | "Stripe vs X / decide before plan" — named options, bottleneck is converging                                                          | `discuss-before-plan`                                                                                       | `n/a`                  |
-| **Plan**           | user asks for task breakdown from a ready RFC/spec or otherwise resolved requirements                                                 | `writing-plans`                                                                                             | `n/a`                  |
-| **Architecture**   | existing-code structure pain; diagnose vs bounded harden loop                                                                         | `improve-codebase-architecture` _(diagnose)_ or `architecture-hardening-loop` _(scoped + implement intent)_ | `n/a`                  |
-| **Review-Handoff** | "fresh eyes / fix-then-re-review"                                                                                                     | `agentic-review-handoff`                                                                                    | `n/a`                  |
+| Route              | Trigger keyword                                                                                                                                                                                 | Default Runtime skill                                                                                       | Default Execution path |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- | ---------------------- |
+| **Direct**         | read-only lookup, no write                                                                                                                                                                      | `none`                                                                                                      | `direct local work`    |
+| **Light**          | small write / debug / docs / ship-check                                                                                                                                                         | `none` _(or `systematic-debugging` / `test-driven-development` via the rules below)_                        | `direct local work`    |
+| **Challenge**      | creative work — full trigger list in Rule #2; also explicit option-space widening, thesis stress, or converging among named options (pick one, do not widen). Requires a thesis before grilling | `grilling` _(or `grill-with-docs` when the same request explicitly requires ADR/glossary persistence)_      | `n/a`                  |
+| **Plan**           | user asks for task breakdown from a ready RFC/spec or otherwise resolved requirements                                                                                                           | `writing-plans`                                                                                             | `n/a`                  |
+| **Architecture**   | existing-code structure pain; diagnose vs bounded harden loop                                                                                                                                   | `improve-codebase-architecture` _(diagnose)_ or `architecture-hardening-loop` _(scoped + implement intent)_ | `n/a`                  |
+| **Review-Handoff** | "fresh eyes / fix-then-re-review"                                                                                                                                                               | `agentic-review-handoff`                                                                                    | `n/a`                  |
 
-One row fits → emit the block. Multiple fire → use precedence below. These rows already decide ordinary Architecture, Review-Handoff, Challenge, and Discuss prompts; do not open a reference for them.
+One row fits → emit the block. Multiple fire → use precedence below. These rows already decide ordinary Architecture, Review-Handoff, and Challenge prompts; do not open a reference for them.
 
 ## Precedence rules — earlier overrides later
 
-1. **`destructive=yes`** — **reversibility test for this turn's authorized action**: if work in the current turn can perform or directly alter an irreversible mutation, set `destructive=yes` and route to minimum **Discuss**. Covers the literal list (drop table, force push, delete prod data, schema break, public API removal) AND irreversible mutations not in the keyword list (billing mutation, external API call, broadcast send, migration that drops state). A purely non-executing design request about a future destructive surface is `destructive=no; risk=high`; route it normally and require a Rule #1 re-gate before implementation. Flag the reversibility cost in `Assumptions`. `destructive=yes` overrides every rule below, including a user-named skill and Fast-skip.
+1. **`destructive=yes`** — **reversibility test for this turn's authorized action**: if work in the current turn can perform or directly alter an irreversible mutation, set `destructive=yes` and enter an **authorization hold**: keep the smallest fitting Route, emit `Runtime skill: none` + `Execution path: n/a`, and make `Next` the single blocking authorization question (environment, evidence of disuse or backup, safer alternative). Load no runtime and start no work until the user authorizes. Covers the literal list (drop table, force push, delete prod data, schema break, public API removal) AND irreversible mutations not in the keyword list (billing mutation, external API call, broadcast send, migration that drops state). A purely non-executing design request about a future destructive surface is `destructive=no; risk=high`; route it normally and require a Rule #1 re-gate before implementation. Flag the reversibility cost in `Assumptions`. `destructive=yes` overrides every rule below, including a user-named skill and Fast-skip.
 2. **Creative-work HARD-GATE** — new feature / screen / component, UI replication / 复刻, redesign, composed UI, or intentional behavior change.
-   - Classify the user's **immediate job**, not the eventual feature. If the current request is to converge among already named options, continue to Rule #8 and route **Discuss**; feature context alone does not turn option selection into Challenge.
+   - Classify the user's **immediate job**, not the eventual feature. If the current request is to converge among already named options, continue to Rule #8 (Challenge in convergence mode); feature context alone does not reopen the what/why space.
    - No explicit design doc / spec reference and behavior/design still has unresolved what/why choices → **Challenge** immediately. Do not continue to Rule #3 and do not produce a discovery-first Plan.
    - Set `Thesis:`:
      - `user-provided` when the user already stated a concrete thesis / preferred approach;
@@ -69,11 +68,13 @@ One row fits → emit the block. Multiple fire → use precedence below. These r
    - Spec/design references that skip Challenge: `docs/superpowers/specs/*-design.md`, `docs/ideas/*.md`, `docs/rfcs/*.md`, `docs/forms/*-spec.md`, `designs/**/*.md`, or an explicit spec/design name or path. Note the reference in `Assumptions`.
    - After a spec/design reference, route by requested next action: **Plan** for task breakdown, or **Light** for direct implementation. Use `test-driven-development` when the implementation changes behavior with regression risk; broad scope may use an internal ledger without stopping for a user-facing plan.
 3. **User named a downstream skill** (and Rules #1 / #2 didn't fire) → respect it when its trigger covers the whole request. On a clear mismatch, choose the smallest correct Route and record the named skill in `Assumptions`; do not add a confirmation round for an obvious low-risk mismatch. Naming an Architecture scanner does not bypass Rule #9's scope gate, but a user-supplied locator that the cheap resolution rule maps uniquely to files satisfies that gate. Only unresolved scope keeps `Runtime skill: none`. Legacy name `brainstorming` maps to Challenge per the deprecated-alias rule above — do not load that skill.
-4. **Bug / failing test / build / CI failure / unexpected behavior / perf symptom** → **Light** + `Runtime skill: systematic-debugging` + `Execution path: systematic-debugging`, including payments/auth/production-data surfaces. Diagnosis comes before solution choice. For payments, auth, production-data, and other high-risk surfaces, keep reproduction and evidence gathering read-only until the root cause is established; re-gate before any destructive, external, production-data, auth, billing, or otherwise hard-to-reverse mutation. For ordinary surfaces, preserve an explicit read-only request. Upgrade to Discuss only after evidence reveals a genuine unresolved product/safety decision.
+4. **Bug / failing test / build / CI failure / unexpected behavior / perf symptom** → **Light** + `Runtime skill: systematic-debugging` + `Execution path: systematic-debugging`, including payments/auth/production-data surfaces. Diagnosis comes before solution choice. For payments, auth, production-data, and other high-risk surfaces, keep reproduction and evidence gathering read-only until the root cause is established; re-gate before any destructive, external, production-data, auth, billing, or otherwise hard-to-reverse mutation. For ordinary surfaces, preserve an explicit read-only request. Upgrade to Challenge (convergence) or an authorization hold only after evidence reveals a genuine unresolved product/safety decision.
 5. **"Done? / ready to commit / ship this"** → **Light** + `Runtime skill: none` + `Fallback alias: none` + `Execution path: direct local work`. Run the relevant full verification command in the current turn, read its output and exit status, and cite that evidence before any completion claim. If the user explicitly asks for persona fan-out / security + test + review coverage, flag the unsupported fan-out in `Assumptions` and perform the available checks directly.
 6. **Cross-agent / fix-then-re-review** → **Review-Handoff**. Mutually exclusive with #2/#4/#5/#7/#8/#10/#11 — replaces any of them. Rule #1 (destructive) still overrides per the tiebreaker.
 7. **Option-space widening / thesis stress** (no shortlist, or the user explicitly asks to generate alternatives) → **Challenge** (same Thesis rules as Rule #2). The phrase "first principles" alone does not fire this rule; it may describe how to analyze an already bounded choice.
-8. **Decisions unresolved with named options** (provider / architecture choice / data model / API — bottleneck is converging) → **Discuss**.
+8. **Decisions unresolved with named options** (provider / architecture choice / data model / API — bottleneck is converging) → **Challenge in convergence mode**, `user-intent=decide`. Converge; never add options. `Thesis: user-provided` when the user already prefers one option, otherwise `agent-strawman` = the option you recommend plus its decisive reason.
+   - User wants to participate ("先拍板 / 捋一遍 / decide with me") → `Runtime skill: grilling`; grilling pressure-tests the recommended option against the named alternatives only.
+   - User delegates the bounded choice ("替我决定 / you decide / don't widen") → `Runtime skill: none`, `Execution path: n/a`; decide in this turn: compare on the user's criteria, pick one, state the decisive reason and the rejected alternative, record the delegation in `Assumptions`. No interview, no third option. Delegation never authorizes a destructive, production, auth, billing, or external-message action (Rule #1 still applies).
 9. **Architecture on existing code** — structure pain, deepening, module boundaries, "scan then harden", architecture cleanup in an explicit path/module/file set or a user-supplied locator that resolves uniquely to files.
    - Scope is explicit or uniquely resolved **and** the user asked only to diagnose / report / explore → **Architecture** + `improve-codebase-architecture` (stop after report; do not enter fix loop).
    - Scope is explicit or uniquely resolved **and** the user asked to implement / harden / scan-fix-review until clean → **Architecture** + `architecture-hardening-loop`.
@@ -92,8 +93,8 @@ Light's default Execution path is `direct local work`. Upgrade the Execution pat
 
 ### Tiebreakers
 
-- A future destructive surface in a design-only turn is `destructive=no; risk=high`. Named alternatives whose bottleneck is convergence follow Rule #8 → **Discuss**; unresolved what/why design or deliberate widening follows **Challenge**. Re-gate Rule #1 before implementation. If this turn can perform the irreversible action, Rule #1 → **Discuss**.
-- **Challenge** widens or stress-tests a thesis; **Discuss** converges among named options.
+- A future destructive surface in a design-only turn is `destructive=no; risk=high`. Named alternatives whose bottleneck is convergence follow Rule #8 → **Challenge** (convergence); unresolved what/why design or deliberate widening → **Challenge** (widening). Re-gate Rule #1 before implementation. If this turn can perform the irreversible action, Rule #1 → authorization hold.
+- **Challenge** covers both widening / thesis stress (`user-intent=ideate`) and converging among named options (`user-intent=decide`); `Thesis` and `user-intent` record which mode.
 - A named skill never bypasses Rules #1 or #2. Record the mismatch in `Assumptions`.
 - A bug beats ship and Architecture; fix-then-re-review of a diff beats Architecture. Re-gate after the winning job closes.
 
@@ -111,7 +112,7 @@ Light's default Execution path is `direct local work`. Upgrade the Execution pat
 
 ```text
 Workflow Gate
-- Route: <Direct | Light | Challenge | Discuss | Plan | Architecture | Review-Handoff>
+- Route: <Direct | Light | Challenge | Plan | Architecture | Review-Handoff>
 - Runtime skill: <none | bare-slug>
 - Fallback alias: <none | superpowers:test-driven-development>
 - Execution path: <direct local work | systematic-debugging | test-driven-development | n/a>
@@ -124,12 +125,12 @@ Workflow Gate
 
 Emit all nine fields in the shown order. `Thesis` is `n/a` outside Challenge; never omit it. `Runtime skill` is one bare slug or `none`; plugin names belong only in `Fallback alias`. `Execution path` is the implementation pattern and stays `n/a` before code work. `risk` measures blast radius; `destructive` measures reversibility.
 
-**Runtime preflight.** Before loading the selected runtime, verify name resolution and invocation eligibility. `disable-model-invocation: true` or `allow_implicit_invocation: false` blocks an implicit handoff unless the user explicitly named the dependency and the host permits it. A required Challenge, Discuss, Plan, Architecture, Review-Handoff, or full-completion runtime fails closed; optional Light tooling may re-gate to direct work only when semantics stay intact.
+**Runtime preflight.** Before loading the selected runtime, verify name resolution and invocation eligibility. `disable-model-invocation: true` or `allow_implicit_invocation: false` blocks an implicit handoff unless the user explicitly named the dependency and the host permits it. A required Challenge, Plan, Architecture, Review-Handoff, or full-completion runtime fails closed; optional Light tooling may re-gate to direct work only when semantics stay intact.
 
 ```text
 Workflow Gate Failure
 - Result: MISSING_DEPENDENCIES
-- Intended route: <Challenge | Discuss | Plan | Architecture | Review-Handoff | task-completion-loop handoff>
+- Intended route: <Challenge | Plan | Architecture | Review-Handoff | task-completion-loop handoff>
 - Missing: <bare slug + resolution or invocation-policy reason>
 - Work started: no
 - Next: <install/enable explicitly, or choose a different user-authorized workflow>

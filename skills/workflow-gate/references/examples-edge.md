@@ -36,7 +36,7 @@ Workflow Gate
 - Next: Run the full relevant verification suite and read fresh output and exit status before any ship claim.
 ```
 
-Ship checks use `direct local work` because verification is enforced by the global evidence rule rather than a separate runtime skill. Challenge / Discuss / Architecture / Review-Handoff still use `n/a` because their runtime skill is the workflow.
+Ship checks use `direct local work` because verification is enforced by the global evidence rule rather than a separate runtime skill. Challenge / Architecture / Review-Handoff still use `n/a` because their runtime skill is the workflow.
 
 ## Light + test-driven-development — referenced spec, direct few-file behavior change
 
@@ -57,21 +57,21 @@ Workflow Gate
 - Next: Load test-driven-development; write valid and invalid input coverage before implementing the validation.
 ```
 
-## Discuss — destructive op disguised as Direct
+## Authorization hold — destructive op disguised as Direct
 
 User: "Just drop the `users` table, it's unused."
 
 ```
 Workflow Gate
-- Route: Discuss
-- Runtime skill: discuss-before-plan
+- Route: Light
+- Runtime skill: none
 - Fallback alias: none
 - Execution path: n/a
 - Thesis: n/a
 - Goal: Decide whether and how to drop the `users` table safely.
 - Signals: scope=multi-module; risk=high; destructive=yes; decisions=unresolved; user-intent=ship
 - Assumptions: "Unused" is the user's unverified claim; no backup/migration plan stated.
-- Next: Load discuss-before-plan; ask once for env + disuse evidence + safe-deprecation alternative before any DROP.
+- Next: Authorization hold — ask once for env + disuse evidence + safe-deprecation alternative; no DROP and no runtime until authorized.
 ```
 
 ## High-risk bug still starts with diagnosis
@@ -99,15 +99,15 @@ You are implementing the OAuth integration plan (RFC-024) when you notice it cal
 
 ```
 Workflow Gate (re-gate)
-- Route: Discuss
-- Runtime skill: discuss-before-plan
+- Route: Plan
+- Runtime skill: none
 - Fallback alias: none
 - Execution path: n/a
 - Thesis: n/a
 - Goal: Decide the safe path for the oauth_states drop introduced inside the OAuth plan.
 - Signals: scope=multi-module; risk=high; destructive=yes; decisions=unresolved; user-intent=plan
 - Assumptions: Other RFC-024 tasks remain on the original Plan route; only the destructive task is being re-gated.
-- Next: Load discuss-before-plan; confirm migration vs deprecation strategy, then resume the remaining plan tasks through the normal implementation workflow.
+- Next: Authorization hold — ask once whether to migrate or deprecate before dropping; resume the remaining plan tasks only after the answer.
 ```
 
 ## Rule #3 mismatch — user named a skill that doesn't fit
@@ -184,24 +184,24 @@ Workflow Gate
 - Next: Draft the strawman thesis; confirm it unless the user explicitly delegated the reversible direction; then load grilling before any writing-plans handoff.
 ```
 
-## Challenge vs Discuss — named options converge to Discuss
+## Challenge convergence — named options converge without widening
 
 User: "计费要上：Stripe 和 Lemon Squeezy 两个选项都列出来了，定价档也有草案；直接出方案前先把该选哪个拍板。"
 
 ```
 Workflow Gate
-- Route: Discuss
-- Runtime skill: discuss-before-plan
+- Route: Challenge
+- Runtime skill: grilling
 - Fallback alias: none
 - Execution path: n/a
-- Thesis: n/a
+- Thesis: agent-strawman
 - Goal: Converge billing provider and pricing-tier decisions before planning.
 - Signals: scope=multi-module; risk=high; destructive=no; decisions=unresolved; user-intent=decide
-- Assumptions: Options are already named — bottleneck is converging, not widening.
-- Next: Load discuss-before-plan.
+- Assumptions: Options are already named — converge, do not widen.
+- Next: Strawman — recommend one provider with the decisive reason; confirm or revise; then load grilling against the named alternative only.
 ```
 
-## Challenge vs Discuss — still widening stays Challenge
+## Challenge widening — no shortlist yet
 
 User: "计费还没短名单：有哪些计费提供商/模式值得考虑？先从第一性原理把空间撑开，别急着拍板。"
 
@@ -214,7 +214,7 @@ Workflow Gate
 - Thesis: agent-strawman
 - Goal: Widen the billing-provider and pricing-model space before shortlisting.
 - Signals: scope=multi-module; risk=high; destructive=no; decisions=unresolved; user-intent=ideate
-- Assumptions: No named shortlist yet — Challenge (widening), not Discuss.
+- Assumptions: No named shortlist yet — Challenge in widening mode (ideate), not convergence.
 - Next: Draft a short strawman framing of candidate dimensions; confirm; then load grilling.
 ```
 

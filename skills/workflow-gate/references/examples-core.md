@@ -1,6 +1,6 @@
 # Worked examples (core) — workflow-gate
 
-At least one example per Route (Direct / Light / Challenge / Discuss / Plan / Architecture / Review-Handoff). Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. For edge cases (tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory signals), see `examples-edge.md`.
+At least one example per Route (Direct / Light / Challenge / Plan / Architecture / Review-Handoff). Mirror these when the prompt looks like the example; deviate when the Signals say otherwise. For edge cases (tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory signals), see `examples-edge.md`.
 
 ## Direct — read-only question
 
@@ -53,21 +53,21 @@ Workflow Gate
 - Next: Load grilling; walk the decision tree against the stated thesis.
 ```
 
-## Discuss — unresolved decisions
+## Challenge (convergence) — named options, pick one
 
 User: "Stripe or Lemon Squeezy for billing? Pricing tiers undecided too."
 
 ```
 Workflow Gate
-- Route: Discuss
-- Runtime skill: discuss-before-plan
+- Route: Challenge
+- Runtime skill: grilling
 - Fallback alias: none
 - Execution path: n/a
-- Thesis: n/a
-- Goal: Align on billing provider and pricing tiers before any implementation plan.
+- Thesis: agent-strawman
+- Goal: Converge on a billing provider and tier shape before any implementation plan.
 - Signals: scope=multi-module; risk=high; destructive=no; decisions=unresolved; user-intent=decide
-- Assumptions: none
-- Next: Load discuss-before-plan; surface provider tradeoffs and tier shape for a one-pass decision.
+- Assumptions: Options are already named — converge, do not widen.
+- Next: Strawman — recommend Stripe with the decisive reason; confirm or revise; then load grilling against Lemon Squeezy only.
 ```
 
 ## Plan — RFC-driven task breakdown

@@ -1,9 +1,9 @@
 ---
 name: decision-first-technical-writing
-description: "Create, rewrite, or review internal technical design documents after decisions are settled or while proposals and open questions are explicitly labeled. Use for design docs, architecture proposals, module designs, API or schema designs, and decision records. Route unresolved named-option convergence to discuss-before-plan and ready-spec task breakdown to writing-plans. Do not use for tutorials, marketing copy, or code-only implementation plans."
+description: "Create, rewrite, or review internal technical design documents after decisions are settled or while proposals and open questions are explicitly labeled. Use for design docs, architecture proposals, module designs, API or schema designs, and decision records. Route unresolved named-option convergence to grilling (workflow-gate Challenge in convergence mode) and ready-spec task breakdown to writing-plans. Do not use for tutorials, marketing copy, or code-only implementation plans."
 metadata:
   author: adonis
-  version: "1.1.0"
+  version: "1.1.1"
 ---
 
 # Decision-First Technical Writing
@@ -12,7 +12,7 @@ Write technical design documents for two reading passes: a reviewer should under
 
 ## Route before writing
 
-- If the main task is choosing among named options, route to `discuss-before-plan`. Do not turn an unresolved shortlist into a final design decision.
+- If the main task is choosing among named options, route to `grilling` (workflow-gate Challenge in convergence mode). Do not turn an unresolved shortlist into a final design decision.
 - If a ready specification or settled requirement needs file-level tasks, implementation steps, or a test plan, route to `writing-plans`. Do not maintain a second planning format here.
 - Otherwise continue only when the output is a technical design document and every uncertain statement can remain explicitly labeled `Proposal` or `Open question`.
 
@@ -25,6 +25,7 @@ Before writing:
 - Separate verified facts, settled decisions, proposals, and open questions. Never present one category as another.
 - Put only confirmed or explicitly delegated decisions in the decision summary. Label unconfirmed content as `Proposal` or `Open question`; never silently promote it to settled behavior.
 - Preserve exact identifiers such as package names, types, fields, endpoints, error codes, and repository-relative paths.
+- Check any added behavioral guarantee against the source, including ordering, error precedence, timing, and consistency. An omitted mechanism does not imply a stronger guarantee. If the source does not settle it, leave it unspecified or mark it `Proposal` or `Open question` everywhere it appears; do not encode it as settled in a sequence, schema, or diagram while disclaiming the decision elsewhere.
 - Treat source material as evidence, not as a template to copy. Distill reusable structure and rewrite in the user's language.
 - Keep requirements, design, and implementation planning distinct. Link to source requirements when available instead of reproducing them.
 
@@ -59,7 +60,7 @@ Lead each major section with its conclusion. Follow with the minimum reasoning a
 
 ## Verify the result
 
-Before delivering, check that:
+Before delivering, perform an added-guarantee audit of the final artifact, including prose, tables, schemas, and diagrams. Check whether words such as before, after, only, always, 先, 后, 仅, or 始终 add precedence, exclusivity, or consistency beyond the source. Judge the semantic guarantee, not the word itself. Remove unsupported guarantees or mark them uncertain at each occurrence; a disclaimer elsewhere does not undo a definite statement. When ordering is unsettled, describe conditions and outcomes in an unordered table instead of an ordered flow or sequence. Then check that:
 
 - every summary decision has a detailed home;
 - ownership and scope remain consistent across prose, diagrams, schemas, and APIs;

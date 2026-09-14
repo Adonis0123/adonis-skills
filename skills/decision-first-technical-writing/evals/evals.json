@@ -17,11 +17,11 @@
       "id": 2,
       "name": "named-options-route-to-discussion",
       "prompt": "请写架构文档，先帮我在 Kafka 和 SQS 之间选一个，选完就把它写成最终方案。",
-      "expected_output": "Routes the unresolved named-option choice to discuss-before-plan and does not write either option as a finalized design decision yet.",
+      "expected_output": "Routes the unresolved named-option choice to grilling (Challenge convergence) and does not write either option as a finalized design decision yet.",
       "files": [],
       "expectations": [
         "Identifies Kafka versus SQS as unresolved named-option convergence",
-        "Routes the choice to discuss-before-plan",
+        "Routes the choice to grilling (Challenge convergence)",
         "Does not present a preferred option as a confirmed decision before convergence"
       ]
     },

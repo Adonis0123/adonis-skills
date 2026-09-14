@@ -2,7 +2,7 @@
 
 > Internal classifier reference, not part of the output contract. The output remains the same 9 fields (including `Thesis`). The phase mapping and ecosystem notes below help you decide the Route — they don't surface in the emitted block except via Route / Runtime skill / Thesis.
 
-Three workflow ecosystems show up in the runtime: `mattpocock` (grilling / architecture scan skills), `obra/superpowers` (debug / TDD / writing-plans), and `adonis-skills` (this repo: `discuss-before-plan`, `agentic-review-handoff`, `architecture-hardening-loop`, `task-completion-loop`, `goal-gate`). `addyosmani/agent-skills` remains a phase reference only.
+Three workflow ecosystems show up in the runtime: `mattpocock` (grilling / architecture scan skills), `obra/superpowers` (debug / TDD / writing-plans), and `adonis-skills` (this repo: `agentic-review-handoff`, `architecture-hardening-loop`, `task-completion-loop`, `goal-gate`). `addyosmani/agent-skills` remains a phase reference only.
 
 ## Ecosystem boundaries
 
@@ -19,11 +19,11 @@ A request to **replicate an existing UI**, **add a new screen**, **compose a pag
 
 Exception: when the user references an existing design doc or spec by path, the design gate has already been paid. Route by the immediate request: **Plan** only for task breakdown, or **Light** for direct implementation regardless of scope. Add TDD when behavior has regression risk, and record the spec path in `Assumptions`.
 
-### discuss-before-plan — the decision gate, not a Challenge substitute
+### Named-option convergence — Challenge in convergence mode
 
-Activates when **named options exist and the bottleneck is picking one**: Stripe vs Lemon Squeezy, monolith vs microservices, sync vs async. It surfaces tradeoffs and locks decisions in a Decision Summary. Persistence is optional and requested only when the user, repository rules, or cross-session handoff needs it.
+When **named options exist and the bottleneck is picking one** (Stripe vs Lemon Squeezy, monolith vs microservices, sync vs async), stay on Challenge with `user-intent=decide`. Recommend one option as the thesis (`agent-strawman`, or `user-provided` when the user already prefers one) and pressure-test it against the named alternatives only; never widen. If the user delegates the bounded choice, decide in the same turn with `Runtime skill: none`: decisive reason plus rejected alternative, delegation recorded in `Assumptions`. A chat Decision Summary locks the choice; write a file only when the user or repository rules ask.
 
-It does not replace Challenge. Challenge pressure-tests a thesis / opens a still-wide space; `discuss-before-plan` closes among named options. Tiebreaker: Challenge when widening or thesis-stressing; Discuss when narrowing.
+The retired `discuss-before-plan` skill used to own this job. Its safety semantics now live in Rule #1: a turn that can execute an irreversible action becomes an authorization hold (`Runtime skill: none`, one blocking authorization question, no work started), and a design-only comparison of future destructive options is `destructive=no; risk=high` with a mandatory Rule #1 re-gate before implementation.
 
 ### Architecture — diagnose vs harden
 
@@ -54,7 +54,7 @@ Tag the prompt's phase before committing to a Route. The Phase column is never p
 | ------------------------------------------------- | --------------- | ------------------------------------------------- | ----------------------------------------- |
 | Read-only lookup                                  | `lookup`        | Direct                                            | `none`                                    |
 | Ideation / thesis stress / creative without spec  | `define-design` | Challenge                                         | `grilling` or `grill-with-docs`           |
-| Named options, pick one                           | `decide`        | Discuss                                           | `discuss-before-plan`                     |
+| Named options, pick one                           | `decide`        | Challenge (convergence)                           | `grilling`, or `none` when delegated      |
 | Spec or RFC exists, break into tasks              | `plan`          | Plan                                              | `writing-plans`                           |
 | Broad or multi-context task breakdown             | `build-plan`    | Plan                                              | `writing-plans`                           |
 | Existing-code structure diagnose                  | `arch-diagnose` | Architecture                                      | `improve-codebase-architecture`           |
@@ -74,5 +74,5 @@ If the phase maps to a Route the gate supports, emit it. If it maps to a phase t
 - `Runtime skill` is single bare token; `Fallback alias` is the only place plugin-namespaced strings appear.
 - Never emit or load `brainstorming`.
 - Rule #1 (destructive) overrides everything else.
-- Challenge-vs-Discuss: widening / thesis stress → Challenge; named-options converging → Discuss.
+- Widening / thesis stress and named-option convergence are both Challenge; `user-intent` (ideate vs decide) and `Thesis` record the mode.
 - Architecture harden requires explicit path **and** implement intent.

@@ -39,6 +39,7 @@ __pycache__/
 .agents/skills/branch-creator/
 .agents/skills/code-plugin-architecture/
 .agents/skills/commit-push/
+.agents/skills/decision-first-technical-writing/
 .agents/skills/discuss-before-plan/
 .agents/skills/enforce-lf/
 .agents/skills/global-modal-scaffold/

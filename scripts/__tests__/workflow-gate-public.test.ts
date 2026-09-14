@@ -136,23 +136,3 @@ test("workflow-gate trigger evals cover routing intent and direct downstream byp
     ),
   );
 });
-
-test("discuss-before-plan converges design-only destructive choices with a later safety gate", async () => {
-  const discussDir = path.join(repoRoot, "skills/discuss-before-plan");
-  const skill = await readFile(path.join(discussDir, "SKILL.md"), "utf8");
-  const evals = JSON.parse(
-    await readFile(path.join(discussDir, "evals/evals.json"), "utf8"),
-  ) as { evals: Array<{ name: string }> };
-
-  assert.match(
-    skill,
-    /design-only comparison of future destructive options is not a hold/i,
-  );
-  assert.match(skill, /requires a fresh safety gate/i);
-  assert.ok(
-    evals.evals.some(
-      (entry) =>
-        entry.name === "design-only-destructive-choice-converges-with-regate",
-    ),
-  );
-});
