@@ -1,0 +1,50 @@
+[
+  {
+    "query": "/ardot-mcp",
+    "should_trigger": true
+  },
+  {
+    "query": "用 UXC 把 Ardot MCP 包成固定 ardot-mcp-cli，并做脱敏 readiness。",
+    "should_trigger": true
+  },
+  {
+    "query": "帮我完成 Ardot 的 UXC OAuth，credential 用 ardot-mcp。",
+    "should_trigger": true
+  },
+  {
+    "query": "ardot-mcp-cli 打不开，检查 owned binary 和 link contract。",
+    "should_trigger": true
+  },
+  {
+    "query": "通过共享 CLI facade 打开 ardot.tencent.com 的设计文件并验收。",
+    "should_trigger": true
+  },
+  {
+    "query": "Grok 原生 ardot-remote 当兼容路径，默认还是走 UXC link。",
+    "should_trigger": true
+  },
+  {
+    "query": "search_style_guide 作为 Ardot facade 的 sanitized readiness 可以吗？",
+    "should_trigger": true
+  },
+  {
+    "query": "pin UXC 0.22.0 给 ardot-mcp，并校验 Linux/macOS digest。",
+    "should_trigger": true
+  },
+  {
+    "query": "直接用当前会话的 ardot-remote 工具看一下这个文件，不用 UXC。",
+    "should_trigger": false
+  },
+  {
+    "query": "用 uxc-facade 设计一个通用 OpenAPI facade，跟 Ardot 无关。",
+    "should_trigger": false
+  },
+  {
+    "query": "Chrome DevTools MCP 的 list_pages readiness 挂了。",
+    "should_trigger": false
+  },
+  {
+    "query": "把 Figma 设计转成 React 组件。",
+    "should_trigger": false
+  }
+]

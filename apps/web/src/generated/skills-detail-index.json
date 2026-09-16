@@ -240,6 +240,46 @@
     ]
   },
   {
+    "slug": "ardot-mcp",
+    "sections": [
+      {
+        "raw": "Use the managed `ardot-mcp-cli` facade for Ardot design-file work from a deterministic JSON CLI. This skill owns the Ardot endpoint, OAuth credential/binding, sanitized readiness, and task acceptance. Keep host-native Ardot MCP (for example Grok `ardot-remote`) as an explicit compatibility path, not the default shared CLI path.\n\nThis skill is the **binary owner** for pinned UXC `0.22.0`. The UXC daemon under `$HOME/.uxc` is shared per user; do not let another skill silently install a different UXC version on the same machine. Use `uxc-facade` for the generic packaging method.",
+        "heading": "Ardot MCP",
+        "level": 1
+      },
+      {
+        "raw": "Let the user remember `/ardot-mcp`. Handle install, OAuth handoff, link repair, and readiness internally. With no additional task, return only `ARDOT_MCP_READY` after sanitized readiness. On failure, report one failing layer and one required action.",
+        "heading": "Keep the user contract simple",
+        "level": 2
+      },
+      {
+        "raw": "Treat `/ardot-mcp` without a task as readiness-only. Treat the same invocation with a design task as readiness-plus-task.\n\nInvoke every helper with `zsh` (for example `zsh scripts/uxc-readiness.zsh`). Under `bash`, `set -u` and `${0:A:h}` abort with `A: unbound variable`.\n\n1. For readiness-only, run `zsh scripts/uxc-readiness.zsh` from this skill. It calls shared `search_style_guide`, discards catalog candidates, and prints only bounded status fields.\n2. For readiness-plus-task, run `zsh scripts/uxc-readiness.zsh --private-result` once, keep the JSON private, and reuse that current-turn proof before design operations.\n3. If readiness reports missing OAuth or auth failure, run the OAuth handoff in [references/oauth-and-binding.md](references/oauth-and-binding.md), then retry readiness once.\n4. If the managed CLI is absent, install and link only through this skill's scripts. Do not fall back to an unowned `uxc` on `PATH`.\n5. Use host-native Ardot MCP only when the user explicitly requests `native` compatibility or approves it after a blocker. Mark that mode `NATIVE_COMPAT`.\n6. Claim a design task `VERIFIED` only after the requested Ardot operation completes. Readiness alone is transport proof.",
+        "heading": "Execute the slash entry",
+        "level": 2
+      },
+      {
+        "raw": "```text\nmanaged ardot-mcp-cli\n  -> pinned owned UXC 0.22.0\n  -> UXC OAuth credential + binding for ardot.tencent.com/mcp\n  -> Ardot MCP HTTP endpoint\n```\n\nFixed values:\n\n| Item | Value |\n| ---- | ----- |\n| Endpoint | `https://ardot.tencent.com/mcp` |\n| Link name | `ardot-mcp-cli` |\n| Credential / binding id | `ardot-mcp` |\n| Default scope | `mcp:use` |\n| Default install/link dir | `${XDG_DATA_HOME:-$HOME/.local/share}/ardot-mcp` |\n| Binary owner | `ardot-mcp` |\n\nHTTP MCP has no expensive stdio child, so this skill does **not** set `--daemon-exclusive`. Session reuse metadata may still appear; do not invent exclusivity keys.",
+        "heading": "Preserve the runtime invariant",
+        "level": 2
+      },
+      {
+        "raw": "Run only after the user authorizes local install and OAuth:\n\n1. `zsh scripts/install-uxc.zsh`\n2. `zsh scripts/setup-uxc-link.zsh`\n3. OAuth start/complete from [references/oauth-and-binding.md](references/oauth-and-binding.md)\n4. `zsh scripts/uxc-readiness.zsh` twice for install acceptance\n\n`zsh scripts/install-uxc.zsh --manifest` prints pins without downloading.",
+        "heading": "Setup sequence",
+        "level": 2
+      },
+      {
+        "raw": "Use this skill for:\n\n- Installing or repairing the Ardot UXC facade and OAuth binding.\n- Shared CLI discovery and sanitized readiness across agents.\n- Design tasks that should go through `ardot-mcp-cli` instead of ad-hoc native tools.\n\nFor one-off inspection already connected in the current host's native Ardot MCP, stay on the native tools unless the user asked for the shared CLI facade.\n\nTypical task operations after readiness:\n\n```bash\nardot-mcp-cli -h\nardot-mcp-cli open_design fileUrl='https://ardot.tencent.com/file/<id>'\nardot-mcp-cli fetch_editor_state fileUrl='https://ardot.tencent.com/file/<id>' includeSchema=false includeGeneralEditInstructions=false\nardot-mcp-cli batch_read fileUrl='https://ardot.tencent.com/file/<id>'\n```\n\nConfirm parameter names with `ardot-mcp-cli <operation> -h`. Never print OAuth tokens, raw readiness catalogs, or unrelated design payloads unless the user asked for that data.",
+        "heading": "Route by task semantics",
+        "level": 2
+      },
+      {
+        "raw": "| Status | Proven by |\n| ------ | --------- |\n| `FACADE_READY` | Owned binary + link contract gates passed |\n| `TRANSPORT_READY` | Sanitized `search_style_guide` through `ardot-mcp-cli` |\n| `TASK_ACCEPTANCE` | Requested Ardot operation completed |\n| `NATIVE_COMPAT` | Host-native Ardot MCP call, only when retained |\n\nMark unproved layers `UNVERIFIED` and name one next action. Read [references/uxc-facade.md](references/uxc-facade.md) for ownership, pins, and evidence boundaries.",
+        "heading": "Report acceptance",
+        "level": 2
+      }
+    ]
+  },
+  {
     "slug": "branch-creator",
     "sections": [
       {

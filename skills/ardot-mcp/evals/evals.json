@@ -1,0 +1,65 @@
+{
+  "skill_name": "ardot-mcp",
+  "evals": [
+    {
+      "id": 1,
+      "name": "readiness-only-entry",
+      "prompt": "/ardot-mcp",
+      "expected_output": "Runs sanitized UXC readiness through the owned ardot-mcp facade and returns ARDOT_MCP_READY without mutating designs or printing OAuth tokens.",
+      "files": [],
+      "expectations": [
+        "Treats bare /ardot-mcp as readiness-only",
+        "Uses zsh scripts/uxc-readiness.zsh rather than an unowned PATH uxc",
+        "Does not claim task acceptance from readiness alone"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "oauth-handoff",
+      "prompt": "Ardot 的 UXC facade 报 oauth_required。请按 ardot-mcp skill 完成 OAuth 并重新 readiness。",
+      "expected_output": "Uses oauth-start/oauth-complete helpers, sets the ardot-mcp binding, retries sanitized readiness once, and never pastes tokens into chat.",
+      "files": [],
+      "expectations": [
+        "Follows the skill OAuth handoff instead of inventing curl token hacks",
+        "Keeps native Grok OAuth separate from UXC credentials",
+        "Retries readiness after binding is ready"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "design-task-acceptance",
+      "prompt": "用 ardot-mcp-cli 打开 https://ardot.tencent.com/file/726157280612685 并总结页面顶层 Frame。",
+      "expected_output": "Proves readiness or reuses private-result, then runs open_design/fetch_editor_state or batch_read through ardot-mcp-cli and reports task acceptance separately from transport.",
+      "files": [],
+      "expectations": [
+        "Uses the managed CLI path by default",
+        "Separates TRANSPORT_READY from TASK_ACCEPTANCE",
+        "Avoids dumping unrelated design payloads"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "native-compat-opt-in",
+      "prompt": "当前 Grok 已经连了 ardot-remote，不要装 UXC，直接用原生 MCP 看一下文件。",
+      "expected_output": "Respects the explicit native compatibility request, does not install or overwrite the UXC binary/link, and marks NATIVE_COMPAT when using host tools.",
+      "files": [],
+      "expectations": [
+        "Does not force UXC install when native is requested",
+        "Marks native compatibility explicitly",
+        "Does not claim the shared facade is ready without running it"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "binary-owner-conflict",
+      "prompt": "chrome-dev-mcp 想装 UXC 0.17，ardot-mcp 想装 0.22，能不能各装一份？",
+      "expected_output": "Explains the shared $HOME/.uxc daemon boundary, keeps ardot-mcp as the named binary owner for its pin, and refuses silent dual-version installs on one user.",
+      "files": [],
+      "expectations": [
+        "Names the shared daemon boundary",
+        "Does not allow two owners to overwrite one shared daemon version silently",
+        "Points to uxc-facade for the generic ownership method"
+      ]
+    }
+  ]
+}

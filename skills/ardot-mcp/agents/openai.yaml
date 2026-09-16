@@ -1,0 +1,3 @@
+interface:
+  display_name: "Ardot MCP"
+  short_description: "UXC facade for Ardot MCP HTTP with OAuth"

@@ -42,6 +42,20 @@
     "updatedAt": "2026-09-14T13:17:42.000Z"
   },
   {
+    "slug": "ardot-mcp",
+    "name": "ardot-mcp",
+    "description": "This skill should be used when the user invokes /ardot-mcp or asks to package Ardot MCP through UXC, set up ardot-mcp-cli, complete Ardot OAuth for UXC, run sanitized Ardot readiness, open or inspect Ardot design files via a fixed CLI facade, or keep Grok/Claude native Ardot MCP as a compatibility path. Own Ardot endpoint identity, OAuth boundary, safe output, and task acceptance. Use uxc-facade for the generic packaging method. Do not use for one-off Ardot calls already solved by the native host MCP tools.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    }
+  },
+  {
     "slug": "branch-creator",
     "name": "branch-creator",
     "description": "Create safe Git feature or hotfix branches with concise names. Use when the user asks to create a local branch or suggest a branch name. A name-only request stays read-only; an explicit creation request authorizes creation after local checks. Ordinary feature work alone does not request a branch. Do not push, commit, rebase, or create PRs.",
