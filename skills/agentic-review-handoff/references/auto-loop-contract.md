@@ -155,7 +155,7 @@ Opt-in review-only terminal path when lifecycle is `awaiting_user_decision` afte
 - The adapter owns the only automatic invocation deadline. STOP remains the
   explicit user cancellation path.
 - Non-zero / empty / timeout / STOP → conservative `DELIVERY_UNKNOWN`; the adapter does not retry these failures automatically. The visible Fixer diagnoses local startup faults before escalating to the user; this status alone is not a confirmation gate.
-- Proven failure before submission permits one Fixer-driven retry after a minimal reversible environment repair under existing authorization. See `environment-recovery.md`. The adapter does not itself repair the environment or guarantee non-delivery.
+- Proven failure before submission permits one Fixer-driven retry after an invocation-local correction under existing authorization. Socket operations, shared-service repair, and account configuration changes are outside this skill. See `environment-recovery.md`. The adapter does not repair the environment or guarantee non-delivery.
 - Real timeout, empty output without pre-submission proof, and ambiguous connection failure remain non-retryable automatically. STOP is cancellation, not a repair trigger.
 - Resume degrades to newSession only for: missing session id, T0 resume unsupported, CLI "session not found".
 - Gray-zone connection failures do **not** degrade (would double-review).

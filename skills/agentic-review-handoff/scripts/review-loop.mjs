@@ -94,7 +94,8 @@ function help() {
       rounds: 3,
       reviewerTimeout: "20 minutes (REVIEW_LOOP_TIMEOUT_MS override)",
       reviewerProgress: "every 30 seconds while the process is alive",
-      sandbox: "hardcoded in adapters; cannot be disabled via CLI",
+      sandbox:
+        "product-specific read-only controls fixed in adapters (Grok uses a tool allowlist)",
     },
   };
 }
@@ -162,7 +163,7 @@ async function main() {
           args.sandbox === "off"
         ) {
           throw new Error(
-            "sandbox flags are hardcoded in adapters and cannot be disabled",
+            "read-only controls are hardcoded in adapters and cannot be disabled",
           );
         }
         if (args.intake !== undefined && typeof args.intake !== "boolean") {

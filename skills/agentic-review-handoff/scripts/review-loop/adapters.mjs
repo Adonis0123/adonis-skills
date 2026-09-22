@@ -2,7 +2,7 @@
  * Product adapters for headless read-only reviewer invocation.
  *
  * Hard rules (T0/T1):
- * - Sandbox / allowed-tool flags are hardcoded here; callers cannot disable them.
+ * - Read-only sandbox / tool controls are hardcoded here; callers cannot disable them.
  * - Subprocesses always start with cwd = repoRoot.
  * - Non-zero / empty / timeout → DELIVERY_UNKNOWN (no retry).
  * - Resume degrades to newSession only on the mechanical whitelist (a/b/c).
@@ -241,7 +241,7 @@ function defaultBin(product) {
 }
 
 /**
- * Build argv for a product. Sandbox flags are hardcoded (never caller-controlled).
+ * Build argv for a product. Read-only controls are hardcoded (never caller-controlled).
  * @param {{ product: Product, mode: 'new'|'resume', prompt: string, sessionId: string|null, outFile?: string }} args
  */
 export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
@@ -266,7 +266,7 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
   }
 
   if (product === "grok") {
-    // grok [-r id] -p "<prompt>" --output-format json --sandbox read-only --permission-mode dontAsk
+    // Grok uses a read-only tool allowlist; no forced OS sandbox profile.
     const argv = [];
     if (mode === "resume") {
       if (!sessionId) throw new Error("grok resume requires sessionId");
@@ -277,8 +277,12 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
       prompt,
       "--output-format",
       "json",
-      "--sandbox",
-      "read-only",
+      "--tools",
+      "read_file,grep,list_dir",
+      "--disallowed-tools",
+      "search_tool,use_tool",
+      "--deny",
+      "MCPTool",
       "--permission-mode",
       "dontAsk",
       "--no-subagents",
@@ -620,7 +624,7 @@ function persistSession(storePath, payload) {
   fs.writeFileSync(storePath, `${JSON.stringify(payload, null, 2)}\n`, "utf8");
 }
 
-/** Test helper: assert sandbox flags always present in argv. */
+/** Test helper: assert product-specific read-only controls in argv. */
 export function assertSandboxHardcoded(product, argv) {
   if (product === "codex") {
     const i = argv.indexOf("-s");
@@ -633,10 +637,11 @@ export function assertSandboxHardcoded(product, argv) {
     }
   } else if (product === "grok") {
     if (
-      !argv.includes("--sandbox") ||
-      argv[argv.indexOf("--sandbox") + 1] !== "read-only"
+      argv[argv.indexOf("--tools") + 1] !== "read_file,grep,list_dir" ||
+      argv[argv.indexOf("--deny") + 1] !== "MCPTool" ||
+      argv[argv.indexOf("--disallowed-tools") + 1] !== "search_tool,use_tool"
     ) {
-      throw new Error("grok sandbox flag missing");
+      throw new Error("grok read-only tool controls missing");
     }
     const permission = argv.indexOf("--permission-mode");
     if (permission === -1 || argv[permission + 1] !== "dontAsk") {

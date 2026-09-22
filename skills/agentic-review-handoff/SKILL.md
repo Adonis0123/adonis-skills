@@ -3,18 +3,19 @@ name: agentic-review-handoff
 description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
 metadata:
   author: adonis
-  version: "3.7.1"
+  version: "3.8.0"
 ---
 
 # Agentic Review Handoff
 
-Persistent packet protocol for review→fix→re-review. **Preferred path (v2): auto loop** — one visible Fixer session drives everything; the Reviewer is invoked headless and read-only; the loop stops only at start, terminal report, or exception.
+Use direct Grok CLI calls for ordinary Grok consultation and one-shot review. Use the persistent packet/auto-loop protocol when explicitly requested or when continuing an existing packet.
 
 ## Fast Path
 
 Route first, then load only that route's references:
 
 - **Wrong job** — stop; do not start a substitute loop. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.
+- **Ordinary Grok consult / one-shot review** (including a named `grok00x` account) → Direct Grok below. Explicit CLI commands (including `review-loop consult`), auto-loop, packet, and continuation requests take precedence. Do not start a protocol loop merely because Grok is involved.
 - **Same-session implementer closure** → `review-loop run`; the verified implementer context permits the default `# Review Handoff` origin.
 - **Explicit auto loop / review-fix-re-review without verified implementer context** → `review-loop run --intake`; the script starts truthfully from `# Review Intake` while retaining the auto lifecycle.
 - **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.
@@ -23,7 +24,45 @@ Route first, then load only that route's references:
 - **Maintainer-only protocol / state-machine / persistence or integrity-claim change** → `references/protocol-evolution-gate.md`. Ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`).
 - **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`
 
-## Auto loop (`review-loop run`) — preferred
+## Direct Grok — ordinary consult / one-shot review
+
+Use the user's existing `grok` or named `grok00x` command. Keep account selection
+in that launcher; do not recreate account configuration, copy credentials, or
+cycle through accounts. `grok00x` is a naming pattern, not a literal command.
+Discover the actual command in the user's shell. If it is a shell function, invoke
+it in that shell (for example `zsh -ic`), passing the prompt file as an argument;
+never interpolate prompt text into shell code.
+
+Keep the launcher's existing sandbox configuration; do not force an OS profile or
+turn an explicitly configured sandbox off. The tool allowlist permits file reads
+and search; remove the deferred MCP bridge tools as well as denying MCP calls. This is tool-level restriction, not OS isolation.
+
+From the subject repository, prepare one prompt file containing the question or
+review scope, relevant diff/context, and required output. Request evidence-backed
+findings with file locations and severity; for consultation request reasons and
+risks. Instruct Grok to read only and return its answer without implementing.
+
+```bash
+grok --prompt-file "$PROMPT_FILE" --output-format json \
+  --tools read_file,grep,list_dir --disallowed-tools search_tool,use_tool --deny MCPTool --permission-mode dontAsk \
+  --no-subagents --disable-web-search
+# For an existing account function, pass its discovered name and prompt path:
+# GROK_COMMAND is the selected command name, not a command string with arguments.
+zsh -ic '"$1" --prompt-file "$2" --output-format json --tools read_file,grep,list_dir --disallowed-tools search_tool,use_tool --deny MCPTool --permission-mode dontAsk --no-subagents --disable-web-search' _ "$GROK_COMMAND" "$PROMPT_FILE"
+```
+
+Prefer an existing executable launcher when available. A defining shell may emit
+startup text; distinguish that from the CLI result instead of assuming its entire
+stdout is one JSON object. Do not rewrite the user's shell startup to silence it.
+
+Use the selected command consistently, including `-r <session-id>` for follow-up.
+The visible agent verifies findings and makes authorized fixes. Do not create a
+packet, ledger, or extra orchestration script for this route. Record the selected
+command and returned session ID when available; direct sessions are not listed by
+`review-loop sessions`. Do not claim frozen-evidence or automatic-loop guarantees.
+On failure follow the short startup-failure rule below; do not repair Docker.
+
+## Auto loop (`review-loop run`) — explicit automation
 
 Explicit invocation starts immediately. Human intervenes only at: **initiate**, **terminal report**, or an unresolved exception (ambiguous delivery / hash mismatch / budget / deadlock / scope or external-action decision). Reviewer selection, ordinary findings, and safely recoverable local startup faults are not confirmation gates.
 
@@ -66,7 +105,7 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 | Timeout  | 20 minutes per Reviewer invocation; advanced override: `REVIEW_LOOP_TIMEOUT_MS`                            |
 | Progress | Immediate liveness line, then every 30 seconds while the Reviewer process is alive                         |
 | STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                            |
-| Sandbox  | Best available read-only controls are fixed in adapters; no permission prompt is shown                     |
+| Sandbox  | Codex OS sandbox; Grok read-only tool allowlist + MCP deny; Claude tool restrictions; no permission prompt |
 
 Default `completion=pass` treats `PASS_WITH_CONCERNS` as more work: the visible Fixer repairs each actionable in-scope concern, appends Fix Completion, and re-reviews within budget. It never asks the user whether to continue. Only explicit `--completion=review` parks concerns in `awaiting_user_decision`; this is the opt-in escape hatch for review-only judgment, not the loop default.
 
@@ -77,15 +116,13 @@ silent. Trust the adapter's progress line and deadline; use STOP only when the
 user intentionally cancels. A real timeout remains `DELIVERY_UNKNOWN` with no
 automatic retry, because delivery state is ambiguous.
 
-**Recover local startup faults without redundant approval.** `DELIVERY_UNKNOWN`
-is a conservative adapter result, not proof that human intervention is needed.
-The visible Fixer first diagnoses whether submission occurred. When local evidence
-proves failure before submission, automatically make the smallest reversible
-repair within existing authorization and retry once with the same Reviewer,
-scope, and read-only controls. For example, a verified dangling Docker socket
-symlink that blocks sandbox initialization may be temporarily moved and restored;
-never disable the sandbox to bypass it. Read `references/environment-recovery.md`
-only on such failures. Ambiguous delivery still forbids automatic resubmission.
+**Keep startup failures local.** Report the concrete failure once; do not turn a
+review into Docker/service repair. Never move or delete sockets, start shared
+services, or alter account configuration as part of this skill. A failed optional
+consult does not block independent work; mark that peer's opinion unavailable.
+A required review remains blocked, not passed. Do not silently switch accounts or
+reviewers. For ambiguous delivery or timeout, inspect the existing session rather
+than resubmitting. See `references/environment-recovery.md` only if needed.
 
 Contract details: `references/auto-loop-contract.md`.
 

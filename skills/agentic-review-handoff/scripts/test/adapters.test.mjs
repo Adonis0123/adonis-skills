@@ -74,13 +74,20 @@ describe("buildArgv sandbox hardcoding", () => {
     assert.deepEqual(argv.slice(0, 2), ["-a", "never"]);
   });
 
-  it("grok always includes --sandbox read-only", () => {
+  it("grok restricts tools without forcing an OS sandbox", () => {
     const argv = buildArgv({
       product: "grok",
       mode: "new",
       prompt: "hi",
       sessionId: null,
     });
+    assert.equal(argv.includes("--sandbox"), false);
+    assert.equal(argv[argv.indexOf("--tools") + 1], "read_file,grep,list_dir");
+    assert.equal(argv[argv.indexOf("--deny") + 1], "MCPTool");
+    assert.equal(
+      argv[argv.indexOf("--disallowed-tools") + 1],
+      "search_tool,use_tool",
+    );
     assertSandboxHardcoded("grok", argv);
     assert.ok(argv.includes("--permission-mode"));
     assert.equal(argv[argv.indexOf("--permission-mode") + 1], "dontAsk");
