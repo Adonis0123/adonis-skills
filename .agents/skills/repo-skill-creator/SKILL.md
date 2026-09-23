@@ -1,6 +1,9 @@
 ---
 name: repo-skill-creator
 description: Create and maintain repository skills for adonis-skills. Use when users ask to scaffold a new skill under skills/, generate agents/openai.yaml, run skill validation, refresh web index data, or standardize the skill authoring workflow.
+metadata:
+  internal: true
+  source: scripts adapted from https://github.com/openai/skills (Apache-2.0, see scripts/LICENSE.txt)
 ---
 
 # Repo Skill Creator

@@ -133,7 +133,7 @@ Legacy mismatch: user says "use brainstorming for this typo" → same Light rout
 
 ## Challenge — replicate an existing UI (Creative-work HARD-GATE positive)
 
-User: "结合 `$REPO_ROOT/web/src/pages/pollo.ai/p/[slug]` 的数据契约，把 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页按 Pollo 风格 1:1 复刻一下，适合走哪个流程？"
+User: "结合 `$REPO_ROOT/web/src/pages/acme.com/p/[slug]` 的数据契约，把 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页按 Acme 风格 1:1 复刻一下，适合走哪个流程？"
 
 Even though the data contract exists and the visual target is concrete, this is creative UI work. Rule #2 fires: Challenge, not Plan. No thesis yet → agent-strawman + confirm before grilling.
 
@@ -144,7 +144,7 @@ Workflow Gate
 - Fallback alias: none
 - Execution path: n/a
 - Thesis: agent-strawman
-- Goal: Design how to map the YouMind prompt-detail information architecture into a Pollo-styled detail page before writing code.
+- Goal: Design how to map the YouMind prompt-detail information architecture into a Acme-styled detail page before writing code.
 - Signals: scope=few-files; risk=medium; destructive=no; decisions=unresolved; user-intent=ideate
 - Assumptions: Data contract exists, but the UI composition is creative work — Rule #2 requires Challenge before Plan. No design doc referenced.
 - Next: Draft a short strawman thesis (layout / hierarchy / CTA / empty-state); wait for user confirmation; only then load grilling.

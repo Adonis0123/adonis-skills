@@ -1,0 +1,63 @@
+# Generic gitleaks config for public repos.
+# Default gitleaks rules + a few rules that catch machine-local details.
+# Keep this file generic: no personal names, ids or company words here.
+title = "public-repo privacy scan"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "home-path"
+description = "Absolute macOS home path (use ~ or $HOME instead)"
+regex = '''/Users/[A-Za-z0-9._-]+'''
+keywords = ["/users/"]
+  [[rules.allowlists]]
+  regexes = ['''/Users/(?:you|me|user|username|name|<[^>]*>|\$USER|\{[^}]*\})\b''']
+  # Repo-specific: placeholder home path used as a test fixture.
+  [[rules.allowlists]]
+  condition = "AND"
+  paths = ['''(?:^|/)skills/(?:chrome-dev-mcp/scripts/test|agentic-review-handoff/evals)/''']
+  regexes = ['''/Users/example\b''']
+
+[[rules]]
+id = "claude-private-dir"
+description = "Reference to a private ~/.claude directory"
+regex = '''~/\.claude-[0-9]+|~/\.claude/(?:docs|scripts|memory|todos|history)\b|-Users-[A-Za-z0-9]'''
+keywords = [".claude", "-Users-"]
+
+[[rules]]
+id = "local-hostname"
+description = "mDNS/Bonjour hostname (*.local)"
+regex = '''(?i)\b[a-z0-9][a-z0-9-]*\.local\b'''
+keywords = [".local"]
+  [[rules.allowlists]]
+  regexTarget = "line"
+  regexes = ['''(?i)\.local[.\-/_]''', '''(?i)\b(?:settings|env|config)\.local\b''']
+
+[[rules]]
+id = "loopback-port"
+description = "Machine-specific loopback port"
+regex = '''\b127\.0\.0\.1:[0-9]{2,5}\b'''
+keywords = ["127.0.0.1:"]
+  [[rules.allowlists]]
+  regexes = ['''127\.0\.0\.1:(?:80|443|3000|5173|8000|8080|8888|9222)\b''']
+  # Repo-specific: documented OAuth callback port of ardot-mcp.
+  [[rules.allowlists]]
+  condition = "AND"
+  paths = ['''(?:^|/)skills/ardot-mcp/''']
+  regexes = ['''127\.0\.0\.1:8788\b''']
+  # Repo-specific: example loopback daemon port in local-web-surface evals.
+  [[rules.allowlists]]
+  condition = "AND"
+  paths = ['''(?:^|/)skills/local-web-surface/evals/''']
+  regexes = ['''127\.0\.0\.1:17333\b''']
+
+[[rules]]
+id = "feishu-open-id"
+description = "Real Feishu/Lark open id, chat id or app id"
+regex = '''\b(?:ou|oc|cli)_[0-9a-f]{8,}\b'''
+keywords = ["ou_", "oc_", "cli_"]
+
+[allowlist]
+description = "Paths that never contain real data"
+paths = ['''(?:^|/)\.gitleaks\.toml$''', '''(?:^|/)\.privacy-allow$''']

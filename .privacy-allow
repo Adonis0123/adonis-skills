@@ -1,0 +1,4 @@
+# Repo convention: public author handle in SKILL.md frontmatter.
+/SKILL\.md:\s*author: adonis$
+# Portability guard test that lists forbidden private markers on purpose.
+^skills/web-performance-audit/scripts/test_public_portability\.py:\s*"private project marker"

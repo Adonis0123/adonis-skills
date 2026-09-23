@@ -83,7 +83,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-14T13:17:42.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -123,7 +123,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z"
   },
   {
     "slug": "commit-push",
@@ -153,6 +153,31 @@
     "updatedAt": "2026-09-14T13:25:28.000Z"
   },
   {
+    "slug": "desktop-agent-activity",
+    "name": "desktop-agent-activity",
+    "description": "Use when 查 Orca/Claude Code 是否还在干活. Process+files first.",
+    "metadata": {
+      "author": "Adonis0123"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
+  },
+  {
+    "slug": "dev-environment-roi-audit",
+    "name": "dev-environment-roi-audit",
+    "description": "Audit a local coding-agent environment with real logs and controlled ablations, then make evidence-backed keep, narrow, on-demand, or remove decisions for MCP servers, skills, instruction files, plugins, commands, hooks, and memory. Use whenever the user asks to audit or slim a Claude, Codex, Grok, Cursor, or similar development setup; find unused tools; quantify context or startup tax; or clean agent configuration by ROI. Enforces discovered paths, per-file JSONL schema probes, OUT_DIR-only artifacts, secret-safe output, and item-by-item approval before mutations.",
+    "metadata": {
+      "author": "Adonis0123"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    }
+  },
+  {
     "slug": "figma-mcp",
     "name": "figma-mcp",
     "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts.",
@@ -164,7 +189,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:17:42.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z"
   },
   {
     "slug": "goal-gate",
@@ -179,7 +204,19 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-14T13:25:28.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z"
+  },
+  {
+    "slug": "installed-app-feature-inventory",
+    "name": "installed-app-feature-inventory",
+    "description": "Use when listing a Mac app's real features from the install.",
+    "metadata": {
+      "author": "Adonis0123"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    }
   },
   {
     "slug": "kimi-computer-use",
@@ -278,7 +315,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T12:28:53.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z"
   },
   {
     "slug": "web-performance-audit",

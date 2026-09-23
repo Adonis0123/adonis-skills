@@ -36,7 +36,7 @@ Attachments, quoted selections, Git refs/ranges, exact commit subjects, relative
 
 ## Fast skip
 
-After Rules #1 and #2 clear, skip the block only when the answer fits in one line **and** the request is a single-line read-only lookup, a formatting-only edit, or an exact safe named-skill match. A named skill matches only when its scope covers the whole request; `coco-commit` fits reviewed staged work, not "fix this bug and commit". If safety or fit is not clear in five seconds, emit the block. For a mismatch, emit the correct Route and record the named skill in `Assumptions`.
+After Rules #1 and #2 clear, skip the block only when the answer fits in one line **and** the request is a single-line read-only lookup, a formatting-only edit, or an exact safe named-skill match. A named skill matches only when its scope covers the whole request; `commit` fits reviewed staged work, not "fix this bug and commit". If safety or fit is not clear in five seconds, emit the block. For a mismatch, emit the correct Route and record the named skill in `Assumptions`.
 
 **Deprecated input alias:** if the user says `Brainstorm` / `brainstorming`, treat that as a request for **Challenge** (not as a Runtime skill to load). Record the alias in `Assumptions`. Never load `brainstorming` — it is not part of this gate's runtime.
 

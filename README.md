@@ -2,44 +2,147 @@ English | [中文](./README.zh-CN.md)
 
 # adonis-skills
 
-`adonis-skills` is an agent-oriented skills repository built with a `pnpm + Turborepo + Next.js 16` monorepo architecture.
+Agent-agnostic skills for coding agents: review loops, workflow gates, MCP setup, Git delivery, and local environment audits. Install them into Claude Code, Codex, Cursor, Hermes, or any agent that reads `SKILL.md`.
 
-Goals:
+**Live site**: <https://adonis-skills.vercel.app/>
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./docs/assets/overview-dark.svg">
+  <img alt="Self-authored skills live in a private source, pass an allowlist export and privacy scan, land in adonis-skills as skills/&lt;name&gt;/SKILL.md, then install into Claude Code, npx skills hosts, and Hermes." src="./docs/assets/overview-light.svg">
+</picture>
+
+## Quick Start
+
+| Host                                                                                    | Install                                                                                                           |
+| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Codex, Cursor, and other agents ([`skills` CLI](https://github.com/vercel-labs/skills)) | `npx skills add adonis0123/adonis-skills --skill <name>` (add `-g` for a global install, `--list` to list skills) |
+| Claude Code                                                                             | `/plugin marketplace add Adonis0123/adonis-skills` then `/plugin install adonis-skills@adonis-skills`             |
+| Hermes Agent                                                                            | `hermes skills tap add adonis0123/adonis-skills`                                                                  |
+
+Examples:
+
+```bash
+npx skills add adonis0123/adonis-skills --skill workflow-gate
+npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp -g
+npx skills add adonis0123/adonis-skills --list
+```
+
+## Skills
+
+| Skill                                                                           | What it is for                                                                                                                         |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| **Review and completion loops**                                                 |                                                                                                                                        |
+| [`agentic-review-handoff`](./skills/agentic-review-handoff)                     | Validate pasted review findings, run a same-session review-fix-re-review loop with a headless reviewer, or resume review-loop packets. |
+| [`open-code-review-loop`](./skills/open-code-review-loop)                       | Bounded open-code-review delegation loop until current evidence shows no findings.                                                     |
+| [`review-prompt-composer`](./skills/review-prompt-composer)                     | Compose one copy-ready prompt for another agent to review changes in the same working tree.                                            |
+| [`architecture-hardening-loop`](./skills/architecture-hardening-loop)           | Scan, triage, fix, review, and rescan a code scope until no evidence-backed architecture fix remains.                                  |
+| [`task-completion-loop`](./skills/task-completion-loop)                         | Finish a named plan or bounded coding task through ledger, Goal, proof, review, and final audit.                                       |
+| **Workflow routing**                                                            |                                                                                                                                        |
+| [`workflow-gate`](./skills/workflow-gate)                                       | Pick the right workflow or skill when route choice matters.                                                                            |
+| [`goal-gate`](./skills/goal-gate)                                               | Decide whether a task needs a durable, verifiable Goal contract, then draft, start, or close it.                                       |
+| **Git delivery**                                                                |                                                                                                                                        |
+| [`commit`](./skills/commit)                                                     | Emoji Conventional Commit messages, or focused local commits.                                                                          |
+| [`commit-push`](./skills/commit-push)                                           | Commit and push one inspected change set with verified remote delivery.                                                                |
+| [`branch-creator`](./skills/branch-creator)                                     | Create safe feature or hotfix branches with concise names.                                                                             |
+| **MCP and tool setup**                                                          |                                                                                                                                        |
+| [`chrome-dev-mcp`](./skills/chrome-dev-mcp)                                     | Set up, recover, and prove a Chrome DevTools MCP connection across agent hosts.                                                        |
+| [`figma-mcp`](./skills/figma-mcp)                                               | Install, authenticate, and verify the official Figma MCP server per host.                                                              |
+| [`kimi-computer-use`](./skills/kimi-computer-use)                               | Install, register, or diagnose the Kimi Computer Use MCP.                                                                              |
+| [`ardot-mcp`](./skills/ardot-mcp)                                               | Package Ardot MCP through UXC and complete its OAuth setup.                                                                            |
+| [`uxc-facade`](./skills/uxc-facade)                                             | Package MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interfaces as a stable UXC CLI facade.                                                |
+| **Web and frontend**                                                            |                                                                                                                                        |
+| [`web-performance-audit`](./skills/web-performance-audit)                       | Read-only, evidence-led runtime performance audit of a real web app.                                                                   |
+| [`local-web-surface`](./skills/local-web-surface)                               | Build a persistent macOS local web surface on a stable `*.localhost` URL.                                                              |
+| [`code-inspector-init`](./skills/code-inspector-init)                           | Set up click-to-source IDE navigation with code-inspector-plugin.                                                                      |
+| [`lingui-workflow`](./skills/lingui-workflow)                                   | Day-to-day Lingui extract, check, compile, and catalog commands.                                                                       |
+| **Repository setup and writing**                                                |                                                                                                                                        |
+| [`agent-symlink-init`](./skills/agent-symlink-init)                             | Link `.claude/skills` to `.agents/skills` and `AGENTS.md` to `CLAUDE.md`.                                                              |
+| [`code-plugin-architecture`](./skills/code-plugin-architecture)                 | Design or review plugin registries and extension points.                                                                               |
+| [`decision-first-technical-writing`](./skills/decision-first-technical-writing) | Write or review technical design docs that lead with decisions.                                                                        |
+| [`weekly-report`](./skills/weekly-report)                                       | Weekly reports from Git history across one or more repositories.                                                                       |
+| **Local environment**                                                           |                                                                                                                                        |
+| [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | Audit MCP servers, skills, and instruction files with real logs; keep, narrow, or remove by ROI.                                       |
+| [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | Tell whether a desktop-hosted coding agent is working, idle, or stopped, from process and file evidence.                               |
+| [`installed-app-feature-inventory`](./skills/installed-app-feature-inventory)   | List what an installed macOS app can really do, from its bundle on disk.                                                               |
+
+## Recommended Third-Party Skills
+
+These skills are maintained elsewhere and are not copied into this repository. Install them from their own repositories.
+
+| Repository (license)                                                                   | Skill                           | What it is for                                                       | Install                                                                     |
+| -------------------------------------------------------------------------------------- | ------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| [larksuite/cli](https://github.com/larksuite/cli) (MIT)                                | `lark-im`                       | Send and search Feishu/Lark messages and chats.                      | `npx skills add larksuite/cli --skill lark-im`                              |
+|                                                                                        | `lark-doc`                      | Read, create, and edit Feishu/Lark docs.                             | `npx skills add larksuite/cli --skill lark-doc`                             |
+|                                                                                        | `lark-shared`                   | Shared auth and conventions for the other `lark-*` skills.           | `npx skills add larksuite/cli --skill lark-shared`                          |
+|                                                                                        | `lark-base`                     | Work with Feishu/Lark Base tables and records.                       | `npx skills add larksuite/cli --skill lark-base`                            |
+|                                                                                        | `lark-contact`                  | Resolve people by name, email, or open_id.                           | `npx skills add larksuite/cli --skill lark-contact`                         |
+|                                                                                        | `lark-wiki`                     | Browse and manage Feishu/Lark wiki spaces.                           | `npx skills add larksuite/cli --skill lark-wiki`                            |
+| [mattpocock/skills](https://github.com/mattpocock/skills) (MIT)                        | `grilling`                      | Stress-test a plan by being questioned hard.                         | `npx skills add mattpocock/skills --skill grilling`                         |
+|                                                                                        | `domain-modeling`               | Sharpen domain terms, `CONTEXT.md`, and ADRs.                        | `npx skills add mattpocock/skills --skill domain-modeling`                  |
+|                                                                                        | `codebase-design`               | Shared vocabulary for designing deep modules.                        | `npx skills add mattpocock/skills --skill codebase-design`                  |
+|                                                                                        | `improve-codebase-architecture` | Find module-deepening opportunities and report them.                 | `npx skills add mattpocock/skills --skill improve-codebase-architecture`    |
+| [obra/superpowers](https://github.com/obra/superpowers) (MIT)                          | `systematic-debugging`          | Root-cause bugs before proposing fixes.                              | `npx skills add obra/superpowers --skill systematic-debugging`              |
+|                                                                                        | `test-driven-development`       | Red-green-refactor discipline for features and fixes.                | `npx skills add obra/superpowers --skill test-driven-development`           |
+|                                                                                        | `writing-plans`                 | Turn a spec into a step-by-step implementation plan.                 | `npx skills add obra/superpowers --skill writing-plans`                     |
+| [MrGeDiao/shuorenhua](https://github.com/MrGeDiao/shuorenhua) (MIT)                    | `shuorenhua`                    | Edit Chinese or English prose to remove AI-sounding phrasing.        | `npx skills add MrGeDiao/shuorenhua --skill shuorenhua`                     |
+| [citrolabs/ego-lite](https://github.com/citrolabs/ego-lite) (MIT)                      | `ego-browser`                   | Drive a logged-in browser for agent tasks and QA.                    | `npx skills add citrolabs/ego-lite --skill ego-browser`                     |
+| [vercel-labs/skills](https://github.com/vercel-labs/skills) (MIT)                      | `find-skills`                   | Discover and install skills from the open ecosystem.                 | `npx skills add vercel-labs/skills --skill find-skills`                     |
+| [anthropics/skills](https://github.com/anthropics/skills) (Apache-2.0, per skill)      | `skill-creator`                 | Create, test, and improve skills.                                    | `npx skills add anthropics/skills --skill skill-creator`                    |
+| [alibaba/open-code-review](https://github.com/alibaba/open-code-review) (Apache-2.0)   | `open-code-review-delegate`     | Let the host agent run the review while OCR selects files and rules. | `npx skills add alibaba/open-code-review --skill open-code-review-delegate` |
+| [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) (Apache-2.0) | `agent-browser`                 | Browser automation CLI for agents.                                   | `npx skills add vercel-labs/agent-browser --skill agent-browser`            |
+
+## How It Works
+
+```mermaid
+flowchart LR
+  src["Private source<br/>(single copy of each skill)"] --> exp["Allowlist export<br/>+ privacy scan"]
+  exp -->|"one fresh commit"| repo["adonis-skills<br/>skills/&lt;name&gt;/SKILL.md"]
+  repo --> ci["CI: skills:validate,<br/>skills:index, gitleaks"]
+  repo --> cc["Claude Code<br/>plugin marketplace"]
+  repo --> npx["npx skills<br/>Codex, Cursor, others"]
+  repo --> hm["Hermes<br/>skills tap"]
+  repo --> web["Web catalog<br/>adonis-skills.vercel.app"]
+```
+
+- Some skills (`dev-environment-roi-audit`, `desktop-agent-activity`, `installed-app-feature-inventory`) are exported from a private source. Machine- or company-specific details stay in `references/local-*.md` files that are never exported.
+- Third-party skills are only linked, never vendored.
+- Every skill is a directory `skills/<name>/` with a `SKILL.md` whose frontmatter `name` equals the directory name.
+
+## For AI Agents
+
+- Read [`AGENTS.md`](./AGENTS.md) for repository rules, commands, and skill authoring conventions.
+- [`llms.txt`](./llms.txt) gives a short map of this repository.
+- Install one skill: `npx skills add adonis0123/adonis-skills --skill <name>`; list them with `--list`.
+
+## Related
+
+- [Adonis0123/hermes-kit](https://github.com/Adonis0123/hermes-kit): Hermes plugins and Hermes-only skills.
+
+## Develop This Repository
+
+This repository is a `pnpm + Turborepo + Next.js 16` monorepo. Goals:
 
 - Make skills directly installable via `npx skills add`
 - Provide a web UI that presents skill metadata and install commands
 - Keep room for future evolution (more skills, optional npm publishing)
 
-**Live site**: <https://adonis-skills.vercel.app/>
-
-## Current Status
-
-- Public skills: `commit`, `staged-review-validator`, `chrome-dev-mcp`, `weekly-report`
-- Web site: `apps/web` (Next.js 16)
-- Skills directory: `skills/*`
-- Skills index generation: `scripts/generate-skills-index.mjs`
-- Skills structure validation: `scripts/validate-skills.mjs`
-
-## Repository Structure
+Layout:
 
 ```txt
 .
-├── apps/
-│   └── web/
-├── skills/
-│   ├── commit/
-│   ├── staged-review-validator/
-│   ├── chrome-dev-mcp/
-│   └── weekly-report/
+├── .claude-plugin/marketplace.json   # Claude Code marketplace manifest
+├── apps/web/                          # Next.js 16 web catalog
+├── skills/<name>/SKILL.md             # public skills (indexed by the web app)
+├── .agents/skills/                    # internal tooling skills (not indexed)
 ├── scripts/
-│   ├── generate-skills-index.mjs
-│   └── validate-skills.mjs
+│   ├── generate-skills-index.mjs      # skills index generation
+│   └── validate-skills.mjs            # skills structure validation
 ├── turbo.json
 ├── pnpm-workspace.yaml
-└── .github/workflows/ci.yml
+└── .github/workflows/                 # ci.yml, privacy-scan.yml
 ```
 
-## Quick Start
+Local development:
 
 ```bash
 pnpm install
@@ -50,22 +153,12 @@ pnpm dev
 
 Open `http://localhost:3000` in your browser.
 
-## Install Skills
-
-Default repository identifier: `adonis0123/adonis-skills`
-
-```bash
-npx skills add adonis0123/adonis-skills --skill weekly-report
-npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp
-npx skills add adonis0123/adonis-skills --skill uxc-facade
-```
-
 If the repository owner changes:
 
 1. Set `NEXT_PUBLIC_SKILLS_REPO=<new-owner>/adonis-skills` (for example in `.env.local`)
 2. Restart `pnpm dev` (or redeploy) to apply the new value
 
-## Command Cheatsheet (What Each Command Does)
+### Command Cheatsheet (What Each Command Does)
 
 The table below explains each script in `package.json`.
 
@@ -92,7 +185,7 @@ Notes:
 - Most common flow for new skills: `skills:new` -> `skills:validate` -> `skills:index`
 - Most common manual flow: `skills:init` (or copy manually) -> `skills:finalize -- <skill-path>`
 
-## New Skill Standard Flow (SOP)
+### New Skill Standard Flow (SOP)
 
 Prepare-and-stage mode (use only when you already added/copied a skill under `skills/*` and want those new files staged):
 
@@ -139,13 +232,13 @@ Finalize only (no re-initialization needed):
 pnpm skills:finalize -- skills/code-inspector-init
 
 # Absolute path (trailing / is handled automatically)
-pnpm skills:finalize -- /Users/adonis/coding/adonis-skills2/skills/code-inspector-init/
+pnpm skills:finalize -- "$REPO_ROOT/skills/code-inspector-init/"
 
 # Preview commands only; do not execute
 pnpm skills:finalize -- --dry-run skills/code-inspector-init
 ```
 
-## Local Interactive Install and Testing
+### Local Interactive Install and Testing
 
 This repository supports installing skills from `skills/` into `.agents/skills`. `.claude/skills` should be a symlink to `.agents/skills` for local Claude/Codex runtime testing.
 
@@ -181,7 +274,7 @@ Notes:
 - Install command uses `npx skills add ./skills -a codex ...` under the hood, target directory is `.agents/skills`
 - `skills:test:local` runs the same install flow with `--sync-llm`, which verifies or creates `.claude/skills -> ../.agents/skills`
 
-## CI
+### CI
 
 GitHub Actions runs:
 
@@ -218,7 +311,9 @@ Troubleshooting rule:
 
 Failures block merge to keep the main branch deployable.
 
-## Vercel Deployment (Automatic)
+A separate `privacy-scan` workflow runs gitleaks with [`.gitleaks.toml`](./.gitleaks.toml) (default secret rules plus generic local-path, hostname, and loopback-port rules) on every push and pull request.
+
+### Vercel Deployment (Automatic)
 
 Recommended Vercel settings for this repository:
 
@@ -228,6 +323,10 @@ Recommended Vercel settings for this repository:
 
 After main branch updates, Vercel deploys automatically. If a bad release appears, revert to the previous green commit on GitHub.
 
-## Future Plan
+### Future Plan
 
 V1 supports GitHub installation flow only. Later we can add npm publishing (including GitHub Action release and rollback strategy).
+
+## License
+
+[MIT](./LICENSE). Third-party skills listed above keep their own licenses.

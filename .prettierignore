@@ -1,2 +1,7 @@
 # Generated build inputs are written by scripts/generate-skills-index.mjs; formatting them by hand or in lint-staged creates churn.
 apps/web/src/generated/
+# Exported from a private source by an allowlist export (see .export-manifest.json); formatting them here would drift from the source.
+skills/desktop-agent-activity/
+skills/installed-app-feature-inventory/
+skills/dev-environment-roi-audit/
+.export-manifest.json

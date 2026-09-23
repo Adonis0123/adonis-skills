@@ -1,0 +1,78 @@
+{
+  "generated_by": "private export script (edit the private source, not these files)",
+  "target": "adonis-skills",
+  "repo": "Adonis0123/adonis-skills",
+  "sources": [
+    {
+      "source": "Adonis0123/agents@06ddca399871f1160b3b6ca66830a19fc2fd4627",
+      "dirty": true
+    },
+    {
+      "source": "Adonis0123/hermes@224aa695bf6a72edf76f7b3ec32264533daade7f",
+      "dirty": true
+    }
+  ],
+  "managed": [
+    "skills/desktop-agent-activity",
+    "skills/dev-environment-roi-audit",
+    "skills/installed-app-feature-inventory"
+  ],
+  "files": [
+    {
+      "path": "skills/desktop-agent-activity/SKILL.md",
+      "sha256": "0aa5f725609683e70f89e45c8a69b325d064400548fbe45d2d9375d9541ec60f"
+    },
+    {
+      "path": "skills/desktop-agent-activity/references/display-asleep-lock-tui.md",
+      "sha256": "21cd901efc272297fccbe52188dd10681a58d0d50b084574d9a5de4b938e5f84"
+    },
+    {
+      "path": "skills/desktop-agent-activity/references/orca-claude-liveness.md",
+      "sha256": "a6535feb07bfe51958adbffdcaa938bbbd6afad187adf7ebc0900d9fd14214a9"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/SKILL.md",
+      "sha256": "1d1147c45f4dfdb4ee70415766c9cc0e18b7d50e417a74adda1459fb8bfadd4a"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/evals/evals.json",
+      "sha256": "a46e52f0d6da5c46d228510e6fe768f5aa46fd41d4a1bf6b7ede9d7712a951a2"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/evals/fixtures/schema-a.jsonl",
+      "sha256": "bc1f3e72b9b29dc9d8b0327c7a2065e7eb3a9fbcb5531060e7c6d1798289232b"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/evals/fixtures/schema-b.jsonl",
+      "sha256": "f58f838644ce11390f18164f6485338a94122fcdb57ea42c24b3f892c6be68dc"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/references/artifact-contract.md",
+      "sha256": "018358b9ac20d05ac44fcafc81e6df3f75110b521122cd946c136f5603aeddce"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/references/metrics-and-decisions.md",
+      "sha256": "7a9ffbedfbe1ffa026e37071c311a9d3704e1651ce1869d859e488adf752b82b"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/scripts/finalize_audit.py",
+      "sha256": "0e5a3515a2451d2763f4182b90496e47ef136b4857310cc2dfb463ece9762354"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/scripts/init_audit.py",
+      "sha256": "83f3ffc171a44345530b633f5c2b5f7fd603dd838442df89e89f343d46dcbc8f"
+    },
+    {
+      "path": "skills/dev-environment-roi-audit/scripts/probe_jsonl_schema.py",
+      "sha256": "818f05ca1d88fb4b41f8709878c7d831d9f59dd91c8e91142d0eee44d03ff6f9"
+    },
+    {
+      "path": "skills/installed-app-feature-inventory/SKILL.md",
+      "sha256": "9de19bb33cc3ee2c4fb342ddca135f03a9ee0f04a9dd67d1b732b800e44dc1d8"
+    },
+    {
+      "path": "skills/installed-app-feature-inventory/references/jianying-pro-macos.md",
+      "sha256": "cb4a4cddec4ba810321ce8e7d4581408dd4ecbd311049bb773fa1244483e6958"
+    }
+  ]
+}

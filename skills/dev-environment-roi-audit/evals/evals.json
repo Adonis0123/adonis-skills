@@ -1,0 +1,23 @@
+{
+  "skill_name": "dev-environment-roi-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "审核我这台 Mac 上 Claude、Codex 和 Grok 的 MCP、skills、hooks 和指令文件。只用近 90 天真实日志，先只读，所有产物放到我指定的 OUT_DIR，每一步先说要得到什么数字。",
+      "expected_output": "Establishes an absolute OUT_DIR and window, discovers paths, probes each JSONL schema before parsing, keeps measurement read-only, and produces the numbered artifact contract without generic advice.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "我有多个 ~/.claude/projects 残留和两个账号 wrapper。帮我算每个 MCP 的调用、错误率、工具使用率、常驻 token 和 ROI；日志 schema 可能不一样，别按旧格式猜。",
+      "expected_output": "Lists discovered roots by mtime, probes every JSONL first line, records schema deviations, resolves wrappers safely, and calculates M1-M4 with measured or explicitly estimated resident cost.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "审计结束后帮我逐个清理零调用组件，还要找 OUT_DIR 里特别大的测试副本。配置可能有 Authorization，不能泄露；每个删除都等我确认。",
+      "expected_output": "Never prints credential values, uses minimal credential-free recovery fragments, presents one numeric decision at a time, validates exact deletion targets, prefers Trash, preserves reports, and finalizes with a secret scan and manifest.",
+      "files": []
+    }
+  ]
+}

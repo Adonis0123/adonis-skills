@@ -1,0 +1,18 @@
+{
+  "name": "adonis-skills",
+  "owner": {
+    "name": "Adonis0123"
+  },
+  "metadata": {
+    "description": "Agent-agnostic skills by Adonis0123, installable as one Claude Code plugin."
+  },
+  "plugins": [
+    {
+      "name": "adonis-skills",
+      "source": "./",
+      "description": "Agent-agnostic skills by Adonis0123: review loops, workflow gates, MCP setup, commit and delivery helpers.",
+      "skills": ["./skills/"],
+      "strict": false
+    }
+  ]
+}

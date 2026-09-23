@@ -1,0 +1,2 @@
+{"event":"tool_call","payload":{},"timestamp":"2026-08-11T00:00:00Z"}
+{"event":"tool_result","payload":{"ok":true},"timestamp":"2026-08-11T00:00:01Z"}

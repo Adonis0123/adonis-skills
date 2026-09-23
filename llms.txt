@@ -1,0 +1,18 @@
+# adonis-skills
+
+> Agent-agnostic skills for coding agents (review loops, workflow gates, MCP setup, Git delivery, local environment audits). Each skill is `skills/<name>/SKILL.md`. Install with `npx skills add adonis0123/adonis-skills --skill <name>`, as a Claude Code plugin (`/plugin marketplace add Adonis0123/adonis-skills`), or as a Hermes tap (`hermes skills tap add adonis0123/adonis-skills`).
+
+## Docs
+
+- [README](https://github.com/Adonis0123/adonis-skills/blob/main/README.md): install per host, skill list, recommended third-party skills
+- [AGENTS.md](https://github.com/Adonis0123/adonis-skills/blob/main/AGENTS.md): repository rules, commands, skill authoring conventions
+- [Web catalog](https://adonis-skills.vercel.app/): skill metadata and install commands
+
+## Skills
+
+- [skills/](https://github.com/Adonis0123/adonis-skills/tree/main/skills): one directory per public skill; frontmatter `name` equals the directory name
+- [Claude Code marketplace manifest](https://github.com/Adonis0123/adonis-skills/blob/main/.claude-plugin/marketplace.json)
+
+## Related
+
+- [Adonis0123/hermes-kit](https://github.com/Adonis0123/hermes-kit): Hermes plugins and Hermes-only skills

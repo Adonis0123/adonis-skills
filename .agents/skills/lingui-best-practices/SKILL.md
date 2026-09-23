@@ -1,6 +1,10 @@
 ---
 name: lingui-best-practices
 description: Implement or review Lingui message macros, catalog configuration, locale loading, and React or JavaScript integration. Use for Lingui-specific code and runtime issues, not plain text translation or another i18n library. For command-only catalog maintenance, use the project workflow.
+license: Complete terms in LICENSE.txt
+metadata:
+  internal: true
+  source: https://github.com/lingui/skills
 ---
 
 # Lingui Best Practices

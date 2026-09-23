@@ -21,7 +21,7 @@
   },
   {
     "id": "pos-sessions-resume",
-    "query": "上次 auto loop 用的 headless codex reviewer 会话在 Desktop 列表里找不到了。给我 codex/grok/claude 恢复对话的命令，或者直接 list review-loop sessions。仓库根是 /Users/adonis/coding/adonis-skills。",
+    "query": "上次 auto loop 用的 headless codex reviewer 会话在 Desktop 列表里找不到了。给我 codex/grok/claude 恢复对话的命令，或者直接 list review-loop sessions。仓库根是 /Users/example/coding/adonis-skills。",
     "should_trigger": true
   },
   {

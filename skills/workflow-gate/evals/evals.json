@@ -137,7 +137,7 @@
     {
       "id": 11,
       "name": "creative-work-replicate-ui-challenge",
-      "prompt": "我们的 pollo.ai 详情页 (web/src/pages/pollo.ai/p/[slug]) 已经有数据契约和 loader 了。现在想结合数据，按 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页的风格 1:1 复刻一版详情页 UI，适合走哪个流程？",
+      "prompt": "我们的 acme.com 详情页 (web/src/pages/acme.com/p/[slug]) 已经有数据契约和 loader 了。现在想结合数据，按 https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 这页的风格 1:1 复刻一版详情页 UI，适合走哪个流程？",
       "expected_route": "Challenge",
       "expectations": [
         "Route is exactly 'Challenge'",
@@ -221,7 +221,7 @@
     {
       "id": 17,
       "name": "workflow-question-ui-replication-challenge",
-      "prompt": "https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 $REPO_ROOT/web/src/pages/pollo.ai/p/[slug] Workflow Gate 现在要结合详情页的数据，然后按照 pollo 的风格1:1复刻一下，适合走哪个流程",
+      "prompt": "https://youmind.com/zh-CN/video-prompts/japanese-classroom-romance-1402 $REPO_ROOT/web/src/pages/acme.com/p/[slug] Workflow Gate 现在要结合详情页的数据，然后按照 Acme 的风格1:1复刻一下，适合走哪个流程",
       "expected_route": "Challenge",
       "expectations": [
         "Route is exactly 'Challenge'",
@@ -265,7 +265,7 @@
     {
       "id": 20,
       "name": "skip-path-user-named-safe-skill",
-      "prompt": "Use /coco-commit to commit my staged changes — I already reviewed the diff.",
+      "prompt": "Use /commit to commit my staged changes — I already reviewed the diff.",
       "expected_route": "skip-or-Light",
       "expectations": [
         "Either the gate skips (user named a downstream skill that is cheaply safe and non-destructive) OR emits a Light block respecting the named skill with Thesis 'n/a'",

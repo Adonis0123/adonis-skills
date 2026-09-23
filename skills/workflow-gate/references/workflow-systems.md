@@ -28,7 +28,7 @@ The retired `discuss-before-plan` skill used to own this job. Its safety semanti
 ### Architecture — diagnose vs harden
 
 - `improve-codebase-architecture` (mattpocock): explore + HTML candidate report; stop after report when the user only wants diagnosis.
-- `architecture-hardening-loop` (adonis): bounded scan → evidence triage → fix → Grok review → rescan. Requires an explicit user path/module **and** implement/harden intent.
+- `architecture-hardening-loop` (Adonis0123): bounded scan → evidence triage → fix → Grok review → rescan. Requires an explicit user path/module **and** implement/harden intent.
 
 Do not vendor mattpocock logic into this gate; only route to installed bare slugs.
 

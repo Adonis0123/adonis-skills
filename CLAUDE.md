@@ -14,7 +14,16 @@
 
 - `skills/<slug>/` contains public skills indexed by the web app; `.agents/skills/` contains internal tooling and is not published.
 - `.claude/skills` is a symlink to `.agents/skills` for local runtime testing.
-- `apps/web/src/generated/skills-index.json` is generated and is a web build input. After changing public skills, run `pnpm skills:validate` and `pnpm skills:index`; never edit the index manually.
+- `skills/desktop-agent-activity`, `skills/installed-app-feature-inventory`, and `skills/dev-environment-roi-audit` are exported from a private source (listed in `.export-manifest.json`). Treat them as generated: edit the private source, not these copies; the next export overwrites local edits.
+- `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json` are generated web build inputs. After changing public skills, run `pnpm skills:validate` and `pnpm skills:index`; never edit the index manually.
+
+## Install Targets
+
+| Host                                    | Command                                                                                                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex, Cursor, other `skills` CLI hosts | `npx skills add adonis0123/adonis-skills --skill <name>` (`-g` global, `--list` to list)                                                             |
+| Claude Code                             | `/plugin marketplace add Adonis0123/adonis-skills`, then `/plugin install adonis-skills@adonis-skills` (manifest: `.claude-plugin/marketplace.json`) |
+| Hermes Agent                            | `hermes skills tap add adonis0123/adonis-skills`                                                                                                     |
 
 ## Commands
 
