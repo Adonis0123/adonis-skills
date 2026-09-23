@@ -11,11 +11,14 @@ Use the `uxc-facade` skill for the generic decision and packaging contract. This
 UXC is an adapter, not a browser or CDP implementation. In this skill it replaces eager per-host registration as the default execution path while preserving native registration only for explicit compatibility and rollback.
 
 ```text
-linked CLI
-  -> pinned UXC daemon
-  -> configured safe MCP wrapper
-  -> identity-checked Chrome
+managed chrome-dev-mcp-cli
+  -> pinned UXC daemon and one reusable stdio session
+  -> user-configured safe wrapper
+  -> identity-checked loopback Chrome
+  -> pinned chrome-devtools-mcp runtime
 ```
+
+The safe wrapper validates its configured endpoint, WebSocket address, browser process, and intended profile before exposing the MCP runtime, and launches only the configured isolated profile when the endpoint is absent. Treat skill discovery, shared transport discovery, server handshake, tool discovery, endpoint identity, and a real tool call as separate layers; host-native MCP discovery is a compatibility-only layer.
 
 ## Why this skill keeps a separate contract
 
@@ -45,6 +48,10 @@ Keep this installer with the Chrome skill; future UXC-backed skills should apply
 
 When upgrading the Chrome runtime, retain a recoverable pinned installation, inspect changed flags and filesystem defaults, and refresh only this endpoint's schema cache. Recreate the corresponding MCP child so the new version is actually loaded; report any interrupted in-flight calls. Keep Chrome itself running. Verify the fresh schema, two consecutive readiness calls, concurrent calls from different working directories, and an explicit-page operation on a disposable test page. Do not infer a speed improvement from a package version alone.
 
+`scripts/install-uxc.zsh` owns the pinned binary and its manifest; `scripts/setup-uxc-link.zsh` owns the Chrome link; `scripts/uxc-readiness.zsh` owns both the payload-stripping readiness and the private-result task path. Never execute an unowned `uxc`, accept a PATH fallback, or overwrite a managed link whose exact contract differs.
+
+When `chrome-dev-mcp-cli` is missing, run `zsh scripts/setup-uxc-link.zsh` only after confirming the pinned owned UXC binary is installed. It fails closed on a foreign link or binary.
+
 After the user authorizes local installation:
 
 1. Run `scripts/install-uxc.zsh`.
@@ -61,10 +68,8 @@ Use a finite idle TTL so an unused MCP child is reaped. Treat the configured dae
 
 - Chrome DevTools MCP 1.9.0 enables `--pageIdRouting` by default; older wrappers name the experimental flag. After an upgrade, confirm the live schema still requires `pageId` for page-scoped operations.
 - Different page IDs route safely, but tool calls are serialized; do not expect parallel execution. Use separate isolated browsers for parallel writes that cannot share a tab.
-- For a purely read-only `evaluate_script`, use `waitForStableDom=false` when the live schema supports it; DOM mutations still need stability and post-action verification.
-- A real-pointer test must reserve exclusive desktop use for its duration; a transport fix cannot make simultaneous pointer control independent.
 - Repair a known legacy launcher with `zsh scripts/setup-uxc-link.zsh`; it preserves the exact old owned link and refuses foreign contracts.
-- Shared UXC does not negotiate workspace roots; move an artifact out of the OS temporary path only after its contents and destination are validated. If the host must render native content blocks, use explicit native compatibility mode.
+- The runtime's only file root is the MCP child's `os.tmpdir()` (on macOS `getconf DARWIN_USER_TEMP_DIR`), because UXC does not negotiate MCP workspace roots. If the host must render native content blocks, use explicit native compatibility mode.
 
 Never log raw linked-command output for readiness `list_pages`. `STATUS=READY` proves shared transport and correct-browser attachment; verify each requested DevTools operation separately. Native-host acceptance is optional compatibility evidence, not the default success condition.
 
@@ -72,7 +77,7 @@ Discover exact parameters before calling a page-scoped operation:
 
 ```bash
 chrome-dev-mcp-cli <operation> -h
-chrome-dev-mcp-cli take_snapshot pageId=<fresh-numeric-page-id> filePath=<os-temp-path>
+chrome-dev-mcp-cli take_snapshot pageId=<fresh-numeric-page-id> filePath="$(getconf DARWIN_USER_TEMP_DIR)snapshot.txt"
 ```
 
 Obtain the numeric page ID from the eligible current-turn private result, or refresh `list_pages` after recovery, navigation, or target ambiguity. Never copy a page ID from an earlier turn.

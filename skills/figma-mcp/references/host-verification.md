@@ -2,7 +2,7 @@
 
 Read this reference only for installation, authentication recovery, host discovery, or multi-host acceptance. The supported endpoint is `https://mcp.figma.com/mcp`.
 
-Before running commands, confirm the host remains listed in Figma's current MCP Catalog. These examples cover Codex, Claude Code, and Cursor. Do not adapt them to an unlisted client.
+Before running commands, confirm the host remains listed in Figma's current MCP Catalog (<https://www.figma.com/mcp-catalog/>). These examples cover Codex, Claude Code, Cursor, and Grok Build. Do not adapt them to an unlisted client.
 
 The registration is account-neutral. Keep the exact server identifier and endpoint when the user changes accounts; only the current host surface's OAuth grant changes. Do not create per-account MCP entries.
 
@@ -58,6 +58,17 @@ fi
 
 Resolve only the installed `cursor-agent` or `cursor-cli` executable. Do not assume a bare `agent` alias exists merely because help text uses that name. Use the resolved command without changing its MCP configuration schema. Merge the official URL into the existing user or workspace configuration; never replace other servers.
 
+## Grok Build
+
+Grok is listed in the catalog. Prefer Figma's official plugin repository, which Grok marks as `xAI Official`:
+
+```bash
+grok plugin list
+grok plugin install https://github.com/figma/mcp-server-guide.git   # only when `grok plugin list` shows no figma plugin
+```
+
+The plugin registers the official endpoint with OAuth enabled and ships the operation skills (`figma-design-to-code`, `figma-use`, and others). Grok exposes the tools as `Figma__<tool>` through `use_tool`. Grok has no `mcp login` subcommand; let the Grok session's own OAuth prompt drive login, and use `grok mcp doctor` for connectivity diagnosis. Do not add a second manual `grok mcp add` entry when the plugin is installed.
+
 ## Run the real acceptance
 
 This section is for readiness-only, recovery, and multi-host acceptance, so identity is part of the proof. The main skill's read-only fast path does not use it.
@@ -82,8 +93,18 @@ For the Account result, use `CURRENT` when no target was named and the real call
 
 An OAuth callback, `Connected` status, or tool list is not a substitute for the real call. Report provider, plan, quota, and model-adapter failures separately from registration failures.
 
+## Report acceptance
+
+Report each host independently:
+
+| Host | Server discovered | Tools discovered | Proof call | Account | Result |
+| ---- | ----------------- | ---------------- | ---------- | ------- | ------ |
+
+Use `WHOAMI` in the Proof call column for every host. Use `CURRENT` only when that proof completed without a named target, and `MATCH` only after privately matching an explicit target. Otherwise report `MISMATCH`, `UNVERIFIED`, or the exact external blocker.
+
 ## Official references
 
 - <https://developers.figma.com/docs/figma-mcp-server/>
 - <https://developers.figma.com/docs/figma-mcp-server/remote-server-installation/>
 - <https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/>
+- <https://www.figma.com/mcp-catalog/>

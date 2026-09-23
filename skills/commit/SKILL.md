@@ -5,88 +5,71 @@ metadata:
   author: adonis
 ---
 
-# Commit Message Generator
+# Commit
 
-根据明确的 Git 提交范围自动生成符合 Conventional Commits 规范的提交信息，并自动添加对应的 emoji 前缀。
+这个 skill 的产出是一次范围正确的本地提交（或一条只读生成的消息）。三件事决定成败：选对变更集、消息符合 emoji + Conventional Commits、报告与 Git 实际结果一致。不 push。
 
-## 使用场景
+## 1. 先分流模式
 
-- 用户执行 `/commit` 命令，希望生成或执行一次聚焦的本地提交
-- 用户请求生成提交信息
-- 用户需要帮助编写符合规范的 commit message
+- **message-only**：用户只要生成、推荐或改写 commit message。只读 `git status`、`git diff --cached`、`git diff` 和必要文件；不 `git add`、不 `git commit`、不改 `.gitignore` 或其他工作树/index。默认分析 staged changes；用户点名另一组 unstaged/untracked 变更时只分析该范围，并说明 staged 内容被排除。范围不唯一时只说明需要选哪组。
+- **execute-commit**：用户明确要求提交。才进入下面的 stage、Ignore vs Commit 和 commit 流程。
 
-## 先分流模式
+## 2. 确定提交范围（execute-commit）
 
-开始时先区分两种模式，避免“只写消息”意外修改 Git 状态：
-
-- **message-only**：用户只要求生成、推荐或改写 commit message。只读 `git status`、`git diff --cached`、`git diff` 和必要文件；禁止 `git add`、`git commit`、修改 `.gitignore` 或其他工作树/index 写入。用户未点名其他范围时优先分析 staged changes；若用户明确点名另一组 unstaged/untracked 变更，只分析该范围并说明现有 staged 内容被排除。范围仍不唯一时，只说明需要选择哪组变更。
-- **execute-commit**：用户明确要求执行本地提交。才进入下面的 stage、Ignore vs Commit 和 commit 流程。
-
-## 工作流程
-
-### 1. 检查 Git 状态和提交范围
-
-执行：
+第一次探测合并成一次调用：
 
 ```bash
-git status --short --branch
+git status --short --branch && git diff --cached --stat
 ```
 
-以下规则只用于 **execute-commit**。先判断这次提交的来源：
+按顺序判断：
 
-- 如果已经有 staged changes，且用户没有点名不同范围，只分析和提交 staged changes。不要把 unstaged changes 自动加入提交；最终报告里提醒仍有未提交文件即可。
-- 如果已经有 staged changes，但用户明确授权的是另一组 unstaged/untracked 路径，立即停止并报告范围错位。不要提交已有 staged 内容，不要 stage 新范围，也不要替用户 unstage；请用户先选择或拆分 index。
-- 如果没有 staged changes，但只有一个明确的 unstaged 或 untracked 文件，且路径/内容没有明显敏感信息风险，先检查该文件变更，再自动执行 `git add -- <path>`，然后继续生成提交信息和提交。
-- 如果没有 staged changes，且存在多个 unstaged/untracked 文件，用户点名的范围或本会话刚完成、目的单一且能从差异核对的变更集都可作为提交范围。先逐项检查，再只 stage 对应路径；不需要用户再说“全部提交”。若混有无法归属的既有修改，先排除；范围仍不唯一时才询问，不凭文件相邻或同目录推断同属本任务。
-- 如果既没有 staged changes，也没有 unstaged/untracked changes，告诉用户当前没有可提交内容。
+| 状态                                        | 做法                                                                                                                                                                               |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 有 staged，用户没点名别的范围               | 只提交 staged。unstaged 不自动加入，报告里提醒仍未提交的文件。                                                                                                                     |
+| 有 staged，但用户授权的是另一组路径         | 停下报告范围错位。不提交已有 staged，不 stage 新范围，不替用户 unstage；请用户选择或拆分 index。                                                                                   |
+| 无 staged，只有一个 unstaged/untracked 文件 | 看该文件 diff 或内容，无敏感风险就 `git add -- <path>` 后继续，不要求用户再跑一次。                                                                                                |
+| 无 staged，多个文件                         | 用户点名的范围，或本会话刚完成、目的单一且能从 diff 核对的变更集，就是提交范围，不需要用户再说“全部提交”。无法归属的既有修改先排除；范围仍不唯一才询问，不凭同目录推断同属本任务。 |
+| 什么都没有                                  | 告诉用户没有可提交内容。                                                                                                                                                           |
 
-自动 stage 前必须遵守这些边界：
+用户要求拆成多个提交时，每个提交各自用明确路径 stage，逐个完成下面的流程。
 
-- 使用 `git add -- <path>` 或多个明确路径；不要用裸 `git add .`、`git add -A`，除非用户明确要求提交全部变更。
-- 对单个 unstaged 文件，先用 `git diff -- <path>` 或必要的文件读取确认变更意图。对 untracked 文件，先确认文件名和内容类型合理。
-- 如果文件名或 diff 暗示 `.env`、credential、token、cookie、private key、secret、证书、账号私密数据等敏感信息，停止并请用户确认，不要自动 stage 或提交。
-- 如果变更看起来包含多个无关目的，停止并询问是否拆分提交。
-- **Ignore vs Commit 门禁**（对每个候选路径，尤其 `??` untracked）：该忽略的先写进 `.gitignore` 再跳过 stage；该提交的才 `git add -- <path>`。细则见 `references/ignore-vs-commit.md`。
-- **忽略必须说明**：凡跳过 stage、写入/修改 `.gitignore`、或因 ignore 规则未纳入本次提交的路径，不得静默处理。须在当轮明确告诉用户：路径/pattern、原因、做了什么（未 stage / 已改 `.gitignore` 等）。多条可按原因分组列表；无忽略则不必多写。
+### stage 边界
 
-### 2. 分析代码变更
+- 只用 `git add -- <path...>`。把 `git status` 的全部条目批量喂给 `git add`（如 `--pathspec-from-file`）等同 `git add -A`，同样跳过了逐项分类；除非用户明确要求提交全部变更，否则不用。
+- 路径名或 diff 像 `.env`、credential、token、cookie、private key、secret、证书或私密数据时，停下请用户确认。
+- 变更混有多个无关目的时，停下询问是否拆分。
+- **Ignore vs Commit**：候选里有 `??` untracked、依赖/构建/缓存/OS 噪音或疑似密钥时，先读 `references/ignore-vs-commit.md` 再分类；该忽略的补 `.gitignore` 且不 stage，已跟踪的密钥停下上报。候选全是已跟踪的源码/文档改动时不用读它。
+- 忽略不能静默：凡跳过 stage、改了 `.gitignore`、或因 ignore 规则没纳入的路径，当轮告诉用户路径/pattern、原因、做了什么。
 
-执行 `git diff --cached --stat` 和 `git diff --cached` 获取已确定提交范围的差异，分析变更内容：
+## 3. 写提交信息
 
-- 识别变更的文件类型和位置
-- 理解变更的目的（新功能、修复、重构等）
-- 确定影响范围（scope）
+用 `git diff --cached` 看已确定范围的内容，再写消息：
 
-### 3. 生成提交信息
+1. 用户给了消息就原样使用。
+2. 仓库有自己的提交约定（`commitlint` 配置、`CONTRIBUTING`、`AGENTS.md`/`CLAUDE.md` 中的规定）时服从仓库。
+3. 否则用 `emoji type(scope): subject`。emoji 只能取下表对应项，并由你写进消息；不要依赖 hook 自动补 emoji，没有这类 hook 的仓库会留下格式不一的历史。
 
-根据分析结果生成符合规范的提交信息。
+| type     | emoji | 用于                       |
+| -------- | ----- | -------------------------- |
+| feat     | ✨    | 新功能                     |
+| fix      | 🐛    | Bug 修复                   |
+| docs     | 📝    | 仅文档                     |
+| style    | 🎨    | 不改语义的格式调整         |
+| refactor | ♻️    | 非新功能、非修复的代码调整 |
+| perf     | ⚡️    | 性能                       |
+| test     | ✅    | 测试                       |
+| build    | 🏗️    | 构建系统或依赖             |
+| ci       | 👷    | CI 配置和脚本              |
+| chore    | 🔧    | 其他杂项（配置、同步等）   |
 
-**消息格式：**
+- header ≤ 250 字符；scope 可选，取模块、功能或目录名；subject 用祈使句、首字母小写、不加句号。
+- body 可选，写“为什么”，每行 ≤ 300 字符。例：`🐛 fix(payment): handle zero-amount refunds`。
 
-```
-type(scope): subject
-```
+## 4. 提交与核对
 
-**允许的类型和对应 emoji：**
-
-| 类型     | Emoji | 说明     | 示例                                  |
-| -------- | ----- | -------- | ------------------------------------- |
-| feat     | ✨    | 新功能   | `✨ feat: add user authentication`    |
-| fix      | 🐛    | Bug 修复 | `🐛 fix: resolve login timeout`       |
-| docs     | 📝    | 文档变更 | `📝 docs: update API documentation`   |
-| style    | 🎨    | 代码风格 | `🎨 style: format code with prettier` |
-| refactor | ♻️    | 代码重构 | `♻️ refactor: extract common utils`   |
-| perf     | ⚡️    | 性能优化 | `⚡️ perf: optimize database queries`  |
-| test     | ✅    | 测试相关 | `✅ test: add unit tests for auth`    |
-| build    | 🏗️    | 构建系统 | `🏗️ build: update webpack config`     |
-| ci       | 👷    | CI 配置  | `👷 ci: add GitHub Actions workflow`  |
-| chore    | 🔧    | 其他变更 | `🔧 chore: update dependencies`       |
-
-### 4. 执行提交
-
-如果用户只要求“生成 commit message”，应已在 message-only 分支完成；只输出候选消息，不执行任何 Git 或文件写入。
-
-如果用户要求执行提交，使用 HEREDOC 格式执行 git commit：
+- 提交前完成仓库要求的、与改动相关的验证。纯文档通常只查格式、链接或生成索引；代码或配置有影响时才加 lint、类型检查和测试。本会话对同一内容已通过的结果可以复用；内容变了或仓库要求重跑就重跑。
+- 用 HEREDOC 提交，保留 hooks：
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -95,57 +78,16 @@ EOF
 )"
 ```
 
-提交后执行：
+- 不用 `--no-verify` 或 `HUSKY=0`，除非用户明确要求。
+- hook 失败时提交没有生成：修根因，重新 stage，再建一个新提交（不是 `--amend`）；没成功就不报告成功。
+- 修复边界：修复是机械的才直接做——hook 输出已写明改法，或是格式化/lint autofix，且改动不改变代码行为和文字含义（如删一个 hook 点名的标记）。直接修了也要在报告里写明改了哪一行、为什么。修复需要判断（改逻辑、改文案、删用户的实质内容、动提交范围外的文件）时，先报告 hook 输出和拟定改法，等用户确认；这时提交仍未生成，照实说。
+- hook 可能改写文件（如 lint-staged 格式化）。如果改写了已提交路径，重跑受影响的聚焦验证。
+- 提交后一次核对，报告以这次输出为准（hook 可能改写了 subject）：
 
 ```bash
-git status --short --branch
-git log -1 --oneline
+git status --short --branch && git log -1 --format='%h %s'
 ```
 
-向用户报告提交 hash、提交信息、已执行的检查、仍然未提交的文件，以及本次 **Ignore vs Commit** 处理过的路径（忽略了什么、为何忽略、是否改了 `.gitignore`）。
+## 5. 报告
 
-## 提交信息编写规则
-
-### Header 规则
-
-- 格式：`emoji type(scope): subject`
-- Header 最大长度：250 字符
-- type 必须是允许的类型之一
-- scope 可选，表示影响范围
-- subject 使用祈使句，首字母小写，不加句号
-
-### 类型选择指南
-
-- **feat**: 添加新功能或新特性
-- **fix**: 修复 bug 或问题
-- **docs**: 仅文档变更（README、注释等）
-- **style**: 不影响代码含义的变更（格式化、空格等）
-- **refactor**: 既不是新功能也不是修复的代码变更
-- **perf**: 提升性能的代码变更
-- **test**: 添加或修改测试
-- **build**: 影响构建系统或外部依赖的变更
-- **ci**: CI 配置文件和脚本的变更
-- **chore**: 其他不修改 src 或 test 文件的变更
-
-### Scope 建议
-
-根据项目结构选择合适的 scope：
-
-- 按模块：`auth`、`api`、`ui`、`db`
-- 按功能：`login`、`payment`、`search`
-- 按目录：`components`、`hooks`、`utils`
-
-## 注意事项
-
-- 不要提交包含敏感信息的文件（.env、credentials 等）；缺 ignore 规则时先补 `.gitignore`
-- 提交前完成仓库要求和改动相关的验证。纯文档通常检查格式、链接或生成索引；只有代码或配置影响需要时才加 lint、类型检查和测试。可复用本会话针对同一内容已通过的结果；内容改变或仓库要求重跑时重新执行，不跳过 hooks。
-- 一次提交只做一件事，保持提交的原子性
-- 提交信息要准确反映变更内容，关注"为什么"而非"做了什么"
-
-## 参考资源
-
-详细的提交规范和项目配置，参考：
-
-- **`references/ignore-vs-commit.md`** - 忽略 vs 提交门禁（`.gitignore` 与 stage 决策）
-- **`references/commit-convention.md`** - 完整的提交规范文档
-- **`references/commit-examples.md`** - 提交信息示例
+给出：提交 hash 和实际 subject、跑过的检查、仍未提交的文件，以及本次 Ignore vs Commit 处理过的路径（忽略了什么、为什么、是否改了 `.gitignore`）。

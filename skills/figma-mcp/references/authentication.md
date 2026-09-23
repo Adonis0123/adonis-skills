@@ -34,12 +34,13 @@ Changing accounts must never require a second Figma server entry. Preserve the c
 
 Use the installed host's native capability:
 
-| Host surface | Scoped account-switch route                                                                       |
-| ------------ | ------------------------------------------------------------------------------------------------- |
-| Codex CLI    | `codex mcp logout figma`, then `codex mcp login figma`                                            |
-| Codex app    | Figma plugin Disconnect/Connect UI                                                                |
-| Claude Code  | `claude mcp logout <exact-figma-identifier>`, then `claude mcp login <exact-figma-identifier>`    |
-| Cursor       | Figma MCP/plugin Disconnect/Connect UI; use a CLI logout only if the installed CLI advertises one |
+| Host surface | Scoped account-switch route                                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex CLI    | `codex mcp logout figma`, then `codex mcp login figma`                                                                                  |
+| Codex app    | Figma plugin Disconnect/Connect UI                                                                                                      |
+| Claude Code  | `claude mcp logout <exact-figma-identifier>`, then `claude mcp login <exact-figma-identifier>`                                          |
+| Cursor       | Figma MCP/plugin Disconnect/Connect UI; use a CLI logout only if the installed CLI advertises one                                       |
+| Grok Build   | The session's native Figma OAuth prompt; Grok has no `mcp logout`, so report `UNVERIFIED` rather than deleting credential files by hand |
 
 App plugins and CLIs can keep separate grants. Do not assume switching one surface switches another.
 

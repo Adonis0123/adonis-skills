@@ -24,7 +24,7 @@
       "id": 1,
       "name": "autoset-claude-slash-adopt",
       "prompt": "I'm in Claude Code. Implement everything in docs/PLAN.md and keep going on your own until `pnpm test` passes and the app builds. I'm stepping away for a bit — don't wait on me, just finish it and show me the evidence when it's done.",
-      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: claude-code-slash. Because Claude Code has no goal API, the agent adopts the goal contract itself (Next: adopt goal and continue) AND emits a runnable /goal prompt for reuse. Done condition is pnpm test passing + app building, with a reminder to surface verification evidence and assess whether bounded independent plan tasks benefit from subagents while the main agent retains aggregate responsibility.",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: claude-code-slash. Because Claude Code has no goal API, the agent adopts the goal contract itself (Next: adopt goal and continue) and, because the user did not ask for a reusable prompt, sets Prompt: none instead of duplicating the contract as a /goal. Done condition is pnpm test passing + app building, with a reminder to surface verification evidence and assess whether bounded independent plan tasks benefit from subagents while the main agent retains aggregate responsibility.",
       "files": [],
       "expectations": [
         "Emits a structured Goal Gate block",
@@ -32,7 +32,7 @@
         "Runtime is claude-code-slash",
         "Goal fit is high",
         "Next is 'adopt goal and continue' (the agent self-adopts the contract rather than only handing back a prompt)",
-        "Still provides a runnable /goal prompt (Prompt field is a /goal command, not 'none')",
+        "Does not duplicate the contract as a reusable /goal prompt the user did not ask for (Prompt is none), and starts implementation in the same reply",
         "Done condition references pnpm test passing and/or the app building",
         "Prompt/contract instructs the agent to surface verification evidence in the conversation/transcript",
         "Prompt/contract includes an execution strategy that assesses subagent usefulness rather than delegating solely because the task is large",
@@ -486,6 +486,55 @@
         "Does not create native Goal merely for cleanup",
         "Continues authorized small work without waiting for Goal approval",
         "Does not inflate scope or invent a budget"
+      ]
+    },
+    {
+      "id": 32,
+      "name": "claude-contract-adds-no-unrequested-commit",
+      "source": "real Claude Code session (contract Done added '两批各成一个 commit'; user later: '没有叫你提交吧')",
+      "prompt": "/goal-gate 开始去做吧，docs/plan.md 里的两批（批一 web、批二 packages）一起做完，然后最后我再给他们看吧",
+      "expected_output": "claude-code-slash set-now adopt-and-continue contract whose Done condition is about implementation and verification only; no commit/push/MR in Done, Checkpoints, or Next; changes stay in the working tree.",
+      "files": [],
+      "setup": "Create a git repo in the outputs dir with docs/plan.md listing 批一 (web/src/a.ts change + test) and 批二 (packages/core/b.ts change + test), and a package.json whose test script is `node --test`.",
+      "expectations": [
+        "Emits a Goal Gate block with Decision: set-now, Runtime: claude-code-slash, Next: adopt goal and continue",
+        "Done condition, Checkpoints, and Next contain no commit, push, MR, or deploy step",
+        "Constraints or Done state that changes stay in the working tree / are not committed",
+        "Verification names the test command(s) whose output will be surfaced",
+        "Starts implementation in the same reply instead of asking for approval",
+        "No git commit is created during the run (git log unchanged)"
+      ]
+    },
+    {
+      "id": 33,
+      "name": "claude-source-anchored-done-and-honest-close",
+      "source": "real Claude Code session (contract silently kept 'v14.5 画布空白不清选中' against TAPD, closed with 'Everything is done'; user: '你没自己真实验证过'); also another real session ('之前被我划在范围外')",
+      "prompt": "/goal-gate 按 docs/spec.md 的验收 1–4 做完，做完要自己验收 /chrome-dev-mcp。注意 spec 里第 3 条和旧版 v1 的行为冲突，以 spec 为准。",
+      "expected_output": "Contract anchors Objective/Done on spec 验收 1–4, verification includes a real browser check of each item, any excluded/reinterpreted item is surfaced for confirmation, and the final report maps each Done item to evidence or UNVERIFIED instead of blanket 'done'.",
+      "files": [],
+      "setup": "Create docs/spec.md with four numbered acceptance items for a tiny static page (index.html + app.js), where item 3 explicitly overrides a note 'v1: clicking blank area keeps selection'. Chrome DevTools MCP may be unavailable in the eval sandbox.",
+      "expectations": [
+        "Objective or Done condition references docs/spec.md 验收 1–4 (not a paraphrase that drops items)",
+        "Verification includes a per-item real browser interaction check via chrome-dev-mcp in addition to any unit tests",
+        "Does not keep the old v1 behaviour for item 3 as a constraint; if any item is excluded or reinterpreted, it is named for user confirmation",
+        "Final report maps each of the 4 items to surfaced evidence or marks it UNVERIFIED with a reason",
+        "Does not claim everything is done while any item lacks browser evidence (e.g. when the browser tool is unavailable)"
+      ]
+    },
+    {
+      "id": 34,
+      "name": "regression-codex-explicit-goal-gate-creates-goal",
+      "source": "real Codex session 2026-08-25 (worked: '$goal-gate 确认，可以开始做了' -> get_goal, create_goal, TDD, update_goal complete)",
+      "prompt": "I'm in Codex with get_goal / create_goal / update_goal available and no active goal. The design is agreed: add remapAssetIds() to packages/protocol with structured failures and tests. $goal-gate 确认，可以开始做了。Don't commit.",
+      "expected_output": "codex-tooling set-now create goal: get_goal then create_goal (no token budget), then works; completes with update_goal status complete only after surfaced test/typecheck evidence.",
+      "files": [],
+      "setup": "none (goal tools are simulated; the grader checks the described/emitted calls and block)",
+      "expectations": [
+        "Runtime is codex-tooling and Decision is set-now with Next: create goal",
+        "Calls or states get_goal before create_goal, and sets no token budget",
+        "Does not use Grok fields (message / completed / blocked_reason)",
+        "Constraints preserve no-commit",
+        "Uses update_goal status complete only after test evidence is surfaced; otherwise leaves the goal active"
       ]
     }
   ]

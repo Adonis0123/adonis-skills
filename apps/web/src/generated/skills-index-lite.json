@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-22T03:33:11.000Z"
+    "updatedAt": "2026-09-22T03:34:03.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -76,7 +76,7 @@
     "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.0"
+      "version": "1.5.0"
     },
     "files": {
       "hasReferences": true,
@@ -155,10 +155,10 @@
   {
     "slug": "figma-mcp",
     "name": "figma-mcp",
-    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, or Cursor. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts.",
+    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts.",
     "metadata": {
       "author": "adonis",
-      "version": "1.3.0"
+      "version": "1.4.0"
     },
     "files": {
       "hasReferences": true,
@@ -172,7 +172,7 @@
     "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
     "metadata": {
       "author": "adonis",
-      "version": "2.0.3"
+      "version": "2.1.0"
     },
     "files": {
       "hasReferences": true,
@@ -272,7 +272,7 @@
     "description": "This skill should be used when the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.0"
+      "version": "1.3.0"
     },
     "files": {
       "hasReferences": true,

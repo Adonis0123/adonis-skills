@@ -54,3 +54,14 @@ Report provider or quota failures separately from shared transport failures. Tes
 ## Use explicit native compatibility only as rollback
 
 Treat `NATIVE_COMPAT_REQUIRED` as a blocker, not permission to change configuration. After user approval, restore or enable only the named host's saved `chrome-devtools` entry, use a fresh compatibility session for its real tool call, then return that host to disabled or absent. Do not rewrite unrelated MCP entries, do not use a moving `@latest` registration, and do not assume an already-open session hot-loads the restored tool.
+
+## Report multi-host acceptance
+
+Report each host independently:
+
+| Host | Skill discovery | Shared transport | Real `list_pages` | Native compat | Result |
+| ---- | --------------- | ---------------- | ----------------- | ------------- | ------ |
+
+Use `VERIFIED` only after the real shared tool call. Leave native compatibility `NOT_USED` on the healthy default path; otherwise report `UNVERIFIED` or the explicit external blocker.
+
+For multi-session installation or performance acceptance, verify process count before and after concurrent calls: one shared MCP child with the same PID, not one child per host. Check OS parent processes as well as UXC sessions, because eager native children are invisible to UXC.

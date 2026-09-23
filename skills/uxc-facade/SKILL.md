@@ -3,7 +3,7 @@ name: uxc-facade
 description: "This skill should be used when the user invokes /uxc-facade or asks to package, harden, or reuse an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC interface through UXC; create or maintain a stable uxc link; reuse a daemon-backed stdio child; pin UXC for automation; or design a deterministic JSON CLI facade for another skill. Apply the facade contract without replacing service-specific identity checks. Do not use for ordinary one-off API calls, and hand Chrome DevTools-specific work to chrome-dev-mcp."
 metadata:
   author: adonis
-  version: "1.2.0"
+  version: "1.3.0"
 ---
 
 # UXC Facade
@@ -38,6 +38,7 @@ UXC Facade Contract
 - Shared mutable state:
 - Exclusivity key, if needed:
 - Idle TTL, if needed:
+- Writable file root, if the server validates paths:
 - Task acceptance action:
 - Native compatibility acceptance, if retained:
 ```
@@ -116,43 +117,20 @@ For an existing MCP configuration, preview the import before changing state with
 
 ### Pass both ownership gates
 
-Run this check before install, link, or readiness so implementers cannot mistake an incomplete contract for permission to overwrite state. Keep the facade `UNVERIFIED` until both gates identify the existing target as owned and compatible. Adapt the link-content checks if the installed `uxc link` writes a different shortcut format.
+Before install, link, or readiness, prove two gates so an incomplete contract is never mistaken for permission to overwrite state. Keep the facade `UNVERIFIED` until both pass.
 
-```zsh
-#!/usr/bin/env zsh
-# Fill from the contract. Prints GATE=PASS, LINK=ABSENT, or GATE_FAIL=<reason>.
-set -u
-UXC_ROOT="<install-root>"        # binary owner's install root
-UXC_PIN="<X.Y.Z>"                # pinned version without the leading v
-UXC_DIGEST="<sha256-of-binary>"  # from the binary owner's manifest
-BINARY_OWNER="<binary-owner-skill>"
-OWNER_FILE="$UXC_ROOT/uxc.$BINARY_OWNER.manifest"  # or the owner's OWNER file; must contain OWNER=<binary-owner-skill>
-LINK_NAME="<link-name>"
-LINK_HOST="<host-or-stdio-command>"
-fail() { print -r -- "GATE_FAIL=$1"; exit 1; }
+- **Binary gate**: the pinned binary exists, is not a symlink, has an owner file naming the binary owner, matches the recorded digest, and reports the pinned version. Check the digest before executing it, so an unknown file never runs.
+- **Link gate**: the link is absent, or it is a UXC shortcut whose owner skill and host target match the contract exactly.
 
-# Binary gate: symlink, foreign or unknown owner, digest mismatch, version conflict
-bin="$UXC_ROOT/uxc"
-[[ -e "$bin" ]] || fail BINARY_MISSING
-[[ -L "$bin" ]] && fail BINARY_SYMLINK
-[[ -f "$OWNER_FILE" ]] || fail BINARY_NO_OWNER
-grep -qx "OWNER=$BINARY_OWNER" "$OWNER_FILE" || fail BINARY_FOREIGN_OWNER
-[[ "$(shasum -a 256 "$bin" | cut -d' ' -f1)" == "$UXC_DIGEST" ]] || fail BINARY_DIGEST
-[[ "$("$bin" --version)" == "uxc $UXC_PIN" ]] || fail BINARY_VERSION
-
-# Link gate: non-UXC command, foreign link owner, owner/host target mismatch
-link_path="$(command -v "$LINK_NAME" 2>/dev/null)" || { print -r -- "LINK=ABSENT"; exit 0; }
-[[ -L "$link_path" ]] && fail LINK_SYMLINK
-grep -q "uxc" "$link_path" || fail LINK_NOT_UXC
-grep -qF -- "$LINK_HOST" "$link_path" || fail LINK_HOST_MISMATCH
-print -r -- "GATE=PASS"
-```
-
-Check the digest before executing the binary so an unknown file is never run to learn its version. Leave an exact existing link untouched, and keep the native registration unchanged unless the user explicitly asks to migrate it.
+Use the fill-in script in [references/ownership-gates.md](references/ownership-gates.md). Leave an exact existing link untouched, and keep the native registration unchanged unless the user explicitly asks to migrate it.
 
 ### Reuse only measured state
 
 Use `--daemon-exclusive` only when the endpoint owns shared mutable state, such as one stdio child. Give idle sessions a finite TTL unless retention is explicitly required and verified.
+
+The daemon is one per user and serves every facade on the machine. Never run `uxc daemon stop` or `restart`, or kill its children, to recover one facade: that cuts off every other consumer mid-call. Only the binary owner restarts it, during an authorized version update.
+
+UXC does not negotiate MCP `roots`. A server that validates file paths against roots falls back to its own default (for example, only the child's temporary directory), so record that writable root in the contract instead of letting callers guess paths.
 
 Prove reuse with metadata, never with timing, because a faster second call can come from caching or a warm host:
 
@@ -167,7 +145,7 @@ uxc daemon status                       # expect mcp_reuse_hits increased and mc
 ### Verify in layers
 
 1. Prove UXC discovery for the intended operation and pass both ownership gates.
-2. Prove one sanitized transport call through the fixed link.
+2. Prove one sanitized transport call through the fixed link. For MCP, `"ok": true` only means UXC delivered the call; the tool's own failure arrives as `data.isError: true` inside a successful envelope. Readiness and task checks must require both.
 3. If reuse matters, prove the second call reused the intended daemon session.
 4. Run the owner skill's real operation separately; run native-host acceptance only when that compatibility path is in scope.
 
@@ -175,13 +153,13 @@ Return bounded status fields only. Discard URLs, titles, body content, credentia
 
 ## Report the result
 
-| Status            | Proven by                                                                   |
-| ----------------- | --------------------------------------------------------------------------- |
-| `FACADE_READY`    | Discovery succeeded and both ownership gates passed                         |
-| `TRANSPORT_READY` | One sanitized call through the fixed link and `version_mismatch=false`      |
-| `SESSION_REUSED`  | Second call plus `uxc daemon sessions` and `mcp_reuse_hits` metadata        |
-| `TASK_ACCEPTANCE` | The owner skill's real operation completed                                  |
-| `NATIVE_COMPAT`   | Native-host real call, reported only when the owner skill retains that path |
+| Status            | Proven by                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------ |
+| `FACADE_READY`    | Discovery succeeded and both ownership gates passed                                        |
+| `TRANSPORT_READY` | One sanitized call through the fixed link, no `data.isError`, and `version_mismatch=false` |
+| `SESSION_REUSED`  | Second call plus `uxc daemon sessions` and `mcp_reuse_hits` metadata                       |
+| `TASK_ACCEPTANCE` | The owner skill's real operation completed                                                 |
+| `NATIVE_COMPAT`   | Native-host real call, reported only when the owner skill retains that path                |
 
 Mark any required but unproved layer `UNVERIFIED` and name one next action. Never collapse them into one generic success claim. Consumer skills may rename these statuses to their own vocabulary but must keep the layers separate.
 

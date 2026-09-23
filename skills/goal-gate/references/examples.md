@@ -270,7 +270,7 @@ Ask whether to continue, complete, block, clear, or replace the active goal befo
 
 User: "I'm in Claude Code. Implement docs/PLAN.md and keep going until `pnpm test` passes and the app builds. I'm stepping away — finish it and show me the evidence."
 
-High fit, gate clear, but Claude Code has no goal API. So adopt the contract and keep working, and also hand back a `/goal` prompt for reuse.
+High fit, gate clear, but Claude Code has no goal API. So adopt the contract and keep working. The user did not ask for a reusable prompt, so `Prompt: none`; the block is the contract.
 
 ```text
 Goal Gate
@@ -279,12 +279,12 @@ Goal Gate
 - Goal fit: high
 - Objective: Implement docs/PLAN.md.
 - Done condition: All acceptance criteria hold, the app builds, and `pnpm test` passes.
-- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
+- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots of each UI acceptance item if UI changed.
 - Constraints: Follow the plan; do not broaden scope; do not push.
 - Execution strategy: Assess plan-task independence before implementation; use subagents only for bounded independently verifiable tasks, and keep review, conflict resolution, and final integration verification with the main agent.
 - Checkpoints: Report after each acceptance-criteria group.
 - Stop or ask when: The plan conflicts with code reality, a destructive operation is needed, or verification cannot run.
-- Prompt: /goal Implement docs/PLAN.md without stopping until every acceptance criterion is satisfied, the app builds, and `pnpm test` passes. Execution strategy: Before implementation, assess dependencies, shared context, write overlap, and independent verification to decide whether subagents help; keep final integration responsibility with the main agent and fall back to one agent when needed. After each checkpoint, report what changed, what evidence was produced, and what remains. Stop and ask if the plan conflicts with the code, verification is blocked, or a destructive action would be required.
+- Prompt: none
 - Next: adopt goal and continue
 ```
 
@@ -355,7 +355,7 @@ Goal Gate
 - Goal fit: high
 - Objective: Implement docs/design.md.
 - Done condition: All acceptance criteria hold, the app builds, and the specified tests pass.
-- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots if UI changed.
+- Verification: Surface acceptance-criteria mapping, test/build commands, exit codes, and screenshots of each UI acceptance item if UI changed.
 - Constraints: Follow the design doc; do not broaden scope; do not push.
 - Execution strategy: Assess whether the plan contains bounded independently verifiable tasks; delegate only when useful and keep the main agent responsible for synthesis and final verification.
 - Checkpoints: Report after each acceptance-criteria group.

@@ -62,13 +62,13 @@ Use only the advertised Codex schema: `status: "complete"` after evidence proves
 
 ## Codex slash `/goal`
 
-There is no create-goal API to call, so adopt the goal contract yourself — keep working toward the done condition, reporting at the checkpoints, until it is met or a stop-or-ask condition fires (`Next: adopt goal and continue`). Still emit the `/goal` prompt so the user can re-run it as a durable goal in a fresh session.
+There is no create-goal API to call, so adopt the goal contract yourself — keep working toward the done condition, reporting at the checkpoints, until it is met or a stop-or-ask condition fires (`Next: adopt goal and continue`). Emit a reusable `/goal` prompt only when the user asks for one or wants to hand the work to a fresh session; otherwise `Prompt: none`, because the block already is the contract.
 
 Include the same durable contract and validation loop. If goals may be disabled, tell the user to enable goals before running the prompt.
 
 ## Claude Code slash `/goal`
 
-Same adopt-and-emit pattern as Codex slash: `Next: adopt goal and continue`, plus a reusable `/goal` prompt.
+Same adopt pattern as Codex slash: `Next: adopt goal and continue`; add a reusable `/goal` prompt only on request or for a fresh-session handoff.
 
 Ensure the verification evidence will appear in the conversation, because the evaluator judges from surfaced transcript evidence rather than independently reading files or running commands.
 

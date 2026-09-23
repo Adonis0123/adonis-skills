@@ -78,5 +78,9 @@
   {
     "query": "导出当前 Figma frame 为 PNG，连接状态已经验证过。",
     "should_trigger": false
+  },
+  {
+    "query": "Grok Build 里的 Figma MCP 工具不见了，帮我检查官方 Figma 插件和登录状态。",
+    "should_trigger": true
   }
 ]

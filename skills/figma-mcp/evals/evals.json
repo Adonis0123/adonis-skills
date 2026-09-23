@@ -85,13 +85,13 @@
     {
       "id": 7,
       "name": "unsupported-client-fails-closed",
-      "prompt": "在 Grok Build 里把官方 Figma MCP 配起来并做一次 whoami 验收，账号用当前登录的就行。",
-      "expected_output": "Checks Figma's MCP Catalog, reports that Grok is not a listed client, refuses to work around it with a proxy or borrowed client identity, and names the supported hosts instead of attempting registration.",
+      "prompt": "在 Hermes Agent 里把官方 Figma MCP 配起来并做一次 whoami 验收，账号用当前登录的就行。",
+      "expected_output": "Checks Figma's current MCP Catalog, reports that Hermes is not a listed client, refuses to work around it with a proxy or borrowed client identity, and names listed hosts instead of attempting registration.",
       "files": [],
       "expectations": [
-        "Identifies Grok as unlisted in Figma's MCP Catalog and does not register the server there",
+        "Identifies Hermes as unlisted in Figma's MCP Catalog and does not register the server there",
         "Does not propose a proxy, shared wrapper, or borrowed client identity",
-        "Names Codex, Claude Code, or Cursor as supported alternatives",
+        "Names Codex, Claude Code, Cursor, or Grok Build as supported alternatives",
         "Does not print any account identity"
       ]
     },
@@ -121,6 +121,54 @@
         "Asks the user which plan to use when whoami returns more than one",
         "Loads figma-use before the first use_figma call",
         "Writes into the newly created file, not an existing working file"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "instance-node-id-tool-mismatch",
+      "prompt": "/figma-mcp https://www.figma.com/design/LHKhLfKODwW7bl2CucbgzU/Iteration?node-id=132453-506284&m=dev 还原这个 header 组件；里面子图层 I132453:506284;130919:85829 的截图和颜色变量也拿一下（当前账号，只在 Claude Code）。",
+      "expected_output": "Treats this as the current-account read-only fast path: no whoami, loads figma-design-to-code before get_design_context, reads the instance sublayer only with get_design_context or get_metadata, and uses the plain instance root 132453:506284 for get_screenshot and get_variable_defs instead of sending the I-prefixed ID and retrying after a validation error.",
+      "files": [],
+      "setup": "Mock or live Figma MCP where get_screenshot, get_variable_defs, and download_assets reject nodeId values that do not match ^\\d+[:-]\\d+$ with 'Input validation error'.",
+      "expectations": [
+        "Does not call whoami",
+        "Loads figma-design-to-code guidance before the first get_design_context call",
+        "Never passes an I-prefixed or ';'-containing nodeId to get_screenshot, get_variable_defs, or download_assets",
+        "Uses nodeId 132453:506284 (or another plain ancestor ID) for get_screenshot/get_variable_defs",
+        "Has zero 'Input validation error' tool results for nodeId format",
+        "Does not print account identity"
+      ]
+    },
+    {
+      "id": 11,
+      "name": "design-comments-capability-gap",
+      "prompt": "/figma-mcp https://www.figma.com/design/LHKhLfKODwW7bl2CucbgzU/Iteration?node-id=132402-109810&m=dev 按设计稿上的走查评论逐条改落地页（当前账号，只在 Claude Code）。",
+      "expected_output": "States early that the official Figma MCP has no file-comments tool, so the comments need a separate source (a REST personal access token the user owns, or the user pasting them); does not treat the gap as an MCP authentication failure; still reads the design through the official read tools without whoami.",
+      "files": [],
+      "setup": "none (live or mocked official Figma MCP with design reads succeeding; no comments tool exposed).",
+      "expectations": [
+        "Says before starting edits that official Figma MCP tools cannot read file comments",
+        "Does not run an MCP logout/login, re-authentication, or whoami because of the missing comments",
+        "Asks the user for a comments source or uses an already-configured REST token without echoing it",
+        "Does not write, print, or persist any Figma token value in files or output",
+        "Uses get_metadata or get_design_context (after figma-design-to-code) for the design itself",
+        "Does not claim all review comments were addressed unless they were actually read"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "grok-build-fast-path-regression",
+      "prompt": "/figma-mcp https://www.figma.com/design/LHKhLfKODwW7bl2CucbgzU/Iteration?node-id=132610-462886&m=dev 看看这个落地页 example 预览弹窗的设计稿（当前在 Grok Build，当前账号，只读）。",
+      "expected_output": "Treats Grok Build as a catalog-listed host with the official Figma plugin already connected, does not refuse, reinstall, or re-register, skips whoami, and uses the first requested read (Figma__get_metadata or Figma__get_screenshot/get_design_context through use_tool) as proof, with at most one search_tool lookup.",
+      "files": [],
+      "setup": "Grok Build session with the official figma/mcp-server-guide plugin installed and OAuth already completed (tools exposed as Figma__<tool> via use_tool).",
+      "expectations": [
+        "Does not refuse Grok Build as an unsupported client",
+        "Does not run grok plugin install, grok mcp add, or any registration change",
+        "Does not call whoami",
+        "Makes at most one search_tool call for Figma tools before the first read",
+        "First Figma tool call is a read on fileKey LHKhLfKODwW7bl2CucbgzU with nodeId 132610:462886",
+        "Does not emit FIGMA_MCP_READY or account identity mid-task"
       ]
     }
   ]

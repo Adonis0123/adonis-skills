@@ -8,6 +8,7 @@ source "$script_dir/lib/load-config.zsh"
 source "$script_dir/lib/uxc-release.zsh"
 source "$script_dir/lib/uxc-owned-binary.zsh"
 source "$script_dir/lib/uxc-link-contract.zsh"
+source "$script_dir/lib/readiness-envelope.zsh"
 
 report_error() {
   print -- "STATUS=ERROR"
@@ -59,22 +60,8 @@ exit_code=0
 PATH="$link_dir:${PATH:-/usr/bin:/bin}" "$link_path" --timeout-ms 45000 list_pages \
   >"$tmp_dir/stdout" 2>"$tmp_dir/stderr" || exit_code=$?
 
-if ! /usr/bin/jq -e . "$tmp_dir/stdout" >/dev/null 2>&1; then
-  report_error "parse_error"
-fi
-
-if [[ "$exit_code" -ne 0 ]] || ! /usr/bin/jq -e \
-  '.ok == true and .protocol == "mcp" and .operation == "list_pages"' \
-  "$tmp_dir/stdout" >/dev/null 2>&1; then
-  combined="$(<"$tmp_dir/stdout")$(<"$tmp_dir/stderr")"
-  if [[ "$combined" == *"chrome-devtools-mcp-safe"* ]]; then
-    report_error "wrapper_fail_closed"
-  elif [[ "$combined" == *"timed out"* || "$combined" == *"timeout"* ]]; then
-    report_error "timeout"
-  else
-    report_error "uxc_envelope"
-  fi
-fi
+result_class="$(chrome_dev_mcp_classify_readiness "$tmp_dir/stdout" "$tmp_dir/stderr" "$exit_code")"
+[[ "$result_class" == "OK" ]] || report_error "$result_class"
 
 if [[ "$output_mode" == "private-result" ]]; then
   /bin/cat "$tmp_dir/stdout"

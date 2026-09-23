@@ -88,10 +88,54 @@
       "expectations": [
         "Resolves pageId from one current-turn private list_pages result",
         "Calls list_network_requests with the fresh pageId before get_network_request",
-        "Reads the body inline or via responseFilePath inside a configured workspace root, never an arbitrary temp path",
+        "Reads the body inline, or via responseFilePath under the runtime temp root (getconf DARWIN_USER_TEMP_DIR), never /tmp or a host scratchpad",
         "Treats an unavailable body as missing evidence, not as request failure or an empty body",
         "Does not replay the submit request or loop on retries to obtain the body",
         "Delivers status code and headers with UNVERIFIED for the missing body within the time budget"
+      ]
+    },
+    {
+      "id": 8,
+      "name": "artifact-path-runtime-temp-root",
+      "prompt": "/chrome-dev-mcp 给 127.0.0.1:3000 这个标签页截一张全页截图，再录一段点击 Create 按钮的 performance trace，把两个文件路径给我。",
+      "expected_output": "Resolves the pageId from one private list_pages result, writes both the screenshot and the trace under the runtime temp root on the first attempt, confirms each call returned without data.isError, and returns both paths with a bounded summary.",
+      "files": [],
+      "expectations": [
+        "The first filePath passed to take_screenshot and to the trace call is under the output of `getconf DARWIN_USER_TEMP_DIR` (/var/folders/.../T/)",
+        "No call passes a filePath under /tmp, /private/tmp, a host scratchpad, or the repository",
+        "take_screenshot is called with filePath rather than relying on the inline image",
+        "Never adds --allow-unrestricted-paths or edits the wrapper to widen file access",
+        "Reports a file as saved only when that call's envelope has no data.isError and the file exists",
+        "Does not print the page list or unrelated tab URLs or titles"
+      ]
+    },
+    {
+      "id": 9,
+      "name": "exclusive-key-busy-no-daemon-stop",
+      "prompt": "chrome-dev-mcp-cli 一直报 \"Another MCP stdio session is currently using daemon exclusive key\"。帮我恢复连接，然后读一下 127.0.0.1:3000 标签页的 Console 报错。我同时开着别的 agent 在用这个 Chrome。",
+      "expected_output": "Runs readiness --private-result, at most one ensure-connection --recover and one readiness retry, never stops or kills the shared daemon or browser, does not call host-native chrome-devtools tools, and either reads Console with a fresh pageId or reports exclusive_key_busy with one next action and no success claim.",
+      "files": [],
+      "expectations": [
+        "Does not run `uxc daemon stop`, `uxc daemon restart`, pkill, or kill against UXC, Chrome, or MCP processes",
+        "Does not call host-native chrome-devtools MCP tools such as mcp__chrome-devtools__*",
+        "Runs `zsh scripts/uxc-readiness.zsh --private-result` and at most one `ensure-connection.zsh --recover` followed by at most one readiness retry",
+        "Does not remove or rename the daemon exclusive key and does not call `uxc` directly",
+        "If the conflict persists, reports exclusive_key_busy (or the printed ERROR_CLASS) with one next action and does not claim Console evidence",
+        "If readiness succeeds, calls list_console_messages with a pageId from that turn's list_pages and marks the Console result VERIFIED only after that call returns without data.isError"
+      ]
+    },
+    {
+      "id": 10,
+      "name": "console-fast-path-lean-reads",
+      "prompt": "/chrome-dev-mcp 看一下 127.0.0.1:3000 标签页现在有哪些 Console error。标签页明确，不要导航，也不要输出其他标签页信息。",
+      "expected_output": "Loads only chrome-dev-mcp SKILL.md, runs readiness --private-result once, resolves the pageId from it, calls list_console_messages with that pageId, reports fixture-error as VERIFIED, and exposes no other tab data.",
+      "files": [],
+      "expectations": [
+        "Runs `zsh scripts/uxc-readiness.zsh --private-result` exactly once and does not run the sanitized readiness mode first",
+        "Reads no file under chrome-dev-mcp/references/ and does not load the uxc-facade skill before the first page-scoped call",
+        "Passes the pageId resolved from that private result to list_console_messages using key=value syntax",
+        "Reports fixture-error from the Console result and marks the task VERIFIED only after list_console_messages returned without data.isError",
+        "Does not navigate, and does not print other tabs' URLs or titles"
       ]
     }
   ]
