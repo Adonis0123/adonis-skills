@@ -643,7 +643,7 @@
         "level": 2
       },
       {
-        "raw": "- **Alive ≠ working.** MCP children spawn at session start and stay.\n- **`~/.claude/projects/**/*.jsonl` mtime can lag days** while the process is live. Never use stale jsonl as \"not working\".\n- **`orca-stats` unmatched `agent_start`** can be months-old ghosts. Prefer `last-status.json` + CPU + files.\n- **`last-status` `state=done` can lag** behind an already-resumed edit loop. Corroborate with file mtimes.\n- `terminal-history/` entries are **directories**, not files.\n- Iterating `Application Support/orca` can hit disappearing Electron cookies — skip `FileNotFoundError`, don't abort the check.",
+        "raw": "- **Alive ≠ working.** MCP children spawn at session start and stay.\n- **`~/.claude/projects/**/*.jsonl` mtime can lag days** while the process is live. Never use stale jsonl as \"not working\".\n- **`orca-stats` unmatched `agent_start`** can be months-old ghosts. Prefer `last-status.json` + CPU + files.\n- **`last-status` `state=done` can lag** behind an already-resumed edit loop. `state=working` can stick on the last tool. Corroborate with file mtimes. Parse pitfalls: `references/orca-claude-liveness.md`.\n- `terminal-history/` entries are **directories**, not files.\n- Iterating `Application Support/orca` can hit disappearing Electron cookies — skip `FileNotFoundError`, don't abort the check.",
         "heading": "Pitfalls",
         "level": 2
       },

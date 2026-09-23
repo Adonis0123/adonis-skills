@@ -28,11 +28,15 @@ Walk the target cwd excluding `node_modules`, `.next`, `.git`, `dist`, `.turbo`.
 
 | File | Use |
 |------|-----|
-| `agent-hooks/last-status.json` | Latest pane: `payload.state`, `payload.prompt`, `worktreeId` (`<uuid>::/abs/path`), `source` (`claude`/`grok`/`cursor`), `receivedAt` (ms) |
+| `agent-hooks/last-status.json` | `entries` is a **dict keyed by paneKey**, not a list. Each value is the pane object: `payload.state` / `payload.prompt` / `payload.toolName`, top-level `worktreeId` (`<uuid>::/abs/path`), `source` (`claude`/`grok`/`cursor`), `receivedAt` (ms), `providerSession.transcriptPath` |
 | `orca-stats.json` | `events[]` of `agent_start` / `agent_stop` with `meta.ptyId` and `durationMs` |
 | `terminal-history/` | Per-pane **directories** (not files), name encodes worktree + pane |
 
-`last-status.json` `state=done` can lag behind a resumed edit loop. Corroborate with file mtimes.
+`last-status.json` `state=done` can lag behind a resumed edit loop. Corroborate with file mtimes. `state=working` can also stick on the last tool while the turn is only thinking — require a fresh source mtime or a live non-sleep child before saying it is editing.
+
+With several Claude Code accounts (each with its own config dir), match a named account by `providerSession.transcriptPath` under that account's config dir, not by the process command line. The `claude` binary itself does not contain the account name. Local specifics: if `references/local-*.md` exists, read it for this machine's account → config-dir map.
+
+A long-lived `zsh -c` child that `until grep … tasks/*.output; do sleep` is a **finished background waiter**, not current work. Read the newest `tasks/*.output` and `scratchpad/` by mtime; an `exit` already in the file means that task ended. `caffeinate -i -t 300` still means a turn is in flight.
 
 Unmatched `agent_start` in `orca-stats.json` can be months-old ghosts. Prefer `last-status.json` + CPU + files.
 

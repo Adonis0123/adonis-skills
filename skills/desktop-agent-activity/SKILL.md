@@ -52,7 +52,7 @@ Visual capture is optional confirmation, not the primary evidence.
 - **Alive ≠ working.** MCP children spawn at session start and stay.
 - **`~/.claude/projects/**/*.jsonl` mtime can lag days** while the process is live. Never use stale jsonl as "not working".
 - **`orca-stats` unmatched `agent_start`** can be months-old ghosts. Prefer `last-status.json` + CPU + files.
-- **`last-status` `state=done` can lag** behind an already-resumed edit loop. Corroborate with file mtimes.
+- **`last-status` `state=done` can lag** behind an already-resumed edit loop. `state=working` can stick on the last tool. Corroborate with file mtimes. Parse pitfalls: `references/orca-claude-liveness.md`.
 - `terminal-history/` entries are **directories**, not files.
 - Iterating `Application Support/orca` can hit disappearing Electron cookies — skip `FileNotFoundError`, don't abort the check.
 

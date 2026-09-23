@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-22T03:34:03.000Z"
+    "updatedAt": "2026-09-23T09:55:31.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -162,7 +162,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-09-23T09:55:31.000Z"
   },
   {
     "slug": "dev-environment-roi-audit",
@@ -175,7 +176,8 @@
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
-    }
+    },
+    "updatedAt": "2026-09-23T09:55:31.000Z"
   },
   {
     "slug": "figma-mcp",
@@ -216,7 +218,8 @@
     "files": {
       "hasReferences": true,
       "hasSrc": false
-    }
+    },
+    "updatedAt": "2026-09-23T09:55:31.000Z"
   },
   {
     "slug": "kimi-computer-use",
@@ -365,6 +368,6 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:25:28.000Z"
+    "updatedAt": "2026-09-23T09:55:31.000Z"
   }
 ]

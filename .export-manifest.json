@@ -4,12 +4,12 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/agents@06ddca399871f1160b3b6ca66830a19fc2fd4627",
-      "dirty": true
+      "source": "Adonis0123/agents@15b7fb54202fb4ed92fbd4983cc14632ac93f1d2",
+      "dirty": false
     },
     {
-      "source": "Adonis0123/hermes@224aa695bf6a72edf76f7b3ec32264533daade7f",
-      "dirty": true
+      "source": "Adonis0123/hermes@68b6fc5279053e325bdb978f3cc569df411be4cf",
+      "dirty": false
     }
   ],
   "managed": [
@@ -20,7 +20,7 @@
   "files": [
     {
       "path": "skills/desktop-agent-activity/SKILL.md",
-      "sha256": "0aa5f725609683e70f89e45c8a69b325d064400548fbe45d2d9375d9541ec60f"
+      "sha256": "24fd68fc65c7a951499ca9fdb45f79e85e079040faacbcf67c99f08aa11595b5"
     },
     {
       "path": "skills/desktop-agent-activity/references/display-asleep-lock-tui.md",
@@ -28,7 +28,7 @@
     },
     {
       "path": "skills/desktop-agent-activity/references/orca-claude-liveness.md",
-      "sha256": "a6535feb07bfe51958adbffdcaa938bbbd6afad187adf7ebc0900d9fd14214a9"
+      "sha256": "c24d4d3eeb48d631bf8d63b6679d013e2d3a97c8061123ca3adac4ecdfa9f3fb"
     },
     {
       "path": "skills/dev-environment-roi-audit/SKILL.md",
