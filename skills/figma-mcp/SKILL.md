@@ -1,9 +1,9 @@
 ---
 name: figma-mcp
-description: "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts."
+description: "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts."
 metadata:
   author: adonis
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Figma MCP
@@ -33,7 +33,7 @@ On task success, continue the requested work; do not emit `FIGMA_MCP_READY` or i
 
 When a status line helps, report `Proof call: REQUESTED_READ` and `Account: NOT_READ`.
 
-The official MCP exposes no file-comments tool. When the task needs design review comments, say so at the start instead of treating it as an auth failure; the REST comments endpoint needs a separate personal access token that the user owns. Never echo or store such a token.
+The official MCP exposes no file-comments tool. When the task needs design review comments (read, filter resolved threads, or audit whether they were applied), say so at the start instead of treating it as an auth failure, then follow [references/rest-comments.md](references/rest-comments.md).
 
 ## Tool prerequisites
 
@@ -52,11 +52,11 @@ Do not use Figma MCP for ordinary web browsing, desktop navigation, generic scre
 
 ## Hosts and credentials
 
-Supported hosts must appear in Figma's current MCP Catalog (<https://www.figma.com/mcp-catalog/>). As of 2026-09 that includes Claude Code, Codex, Cursor, and Grok. Treat Hermes, WorkBuddy, and any other client missing from the catalog as unsupported: fail closed, name a supported host, and never work around the catalog with a proxy, shared wrapper, or borrowed client identity.
+Supported hosts must appear in Figma's current MCP Catalog (<https://www.figma.com/mcp-catalog/>). As of 2026-09 that includes Claude Code, Codex, Cursor, and Grok. Treat Hermes, WorkBuddy, pi, and any other client missing from the catalog as unsupported for the official MCP: fail closed on the MCP, name a supported host, and never work around the catalog with a proxy, shared wrapper, or borrowed client identity. Read-only design data on such a host can still come from the REST API under the user's own token; see REST fallback below.
 
 Keep one chain per host: native registration, the official endpoint, that host's OAuth grant, the current or explicitly requested account, then the path's proof call. OAuth credentials stay per host. Never copy tokens, credential caches, cookies, or browser profiles between hosts.
 
-Keep registration account-neutral. Never store a default account, email, alias, token, cookie, browser profile, or callback in the skill, MCP configuration, environment variables, or repository files. Switching accounts changes only the current host surface's OAuth grant; keep the server identifier, endpoint, scope, and unrelated MCP entries. App plugins and CLI registrations can hold separate grants, so switch and verify only the surface in use.
+Keep registration account-neutral. Never store a default account, email, alias, token, cookie, browser profile, or callback in the skill, MCP configuration, environment variables, or repository files. The one user-owned exception is the REST personal access token, which the user exports in their own environment; the agent never writes it anywhere. Switching accounts changes only the current host surface's OAuth grant; keep the server identifier, endpoint, scope, and unrelated MCP entries. App plugins and CLI registrations can hold separate grants, so switch and verify only the surface in use.
 
 Never print `whoami` payloads. Reduce identity to `CURRENT`, `MATCH`, `MISMATCH`, or `UNVERIFIED`.
 
@@ -68,3 +68,13 @@ Never print `whoami` payloads. Reduce identity to `CURRENT`, `MATCH`, `MISMATCH`
 - Tool call failed after authentication: separate provider, plan, rate-limit, client-compatibility, and file-permission failures from registration failures, and check Figma's official known issues.
 
 For multi-host acceptance, run the per-host prompt and report table in [references/host-verification.md](references/host-verification.md). Do not build that table for the single-host fast path.
+
+## REST fallback
+
+The public REST API with the user's personal access token can serve some reads the MCP cannot, but it returns less (node JSON and renders, no reference code or Code Connect), runs as whoever owns the token, and would mask MCP breakage. So it is a declared branch, not an automatic retry:
+
+- Use it for read-only data when the host is not in the catalog, or when the task needs comments.
+- Do not use it for a missing tool, missing registration, or expired OAuth (recover the MCP), for 403/404 or a named-account request (it cannot prove this account's access), or for any write.
+- Before the first call, state `Proof call: REST (not MCP)`, `Account: PAT owner`, and what the task loses. A REST success never yields `FIGMA_MCP_READY`.
+
+Read [references/rest-fallback.md](references/rest-fallback.md) for the full decision table, token setup, and `scripts/figma_rest.py` (`nodes`, `images`, `comments`), which keeps the token off the command line.

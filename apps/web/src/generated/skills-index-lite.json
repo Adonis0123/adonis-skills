@@ -163,7 +163,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T09:55:31.000Z"
+    "updatedAt": "2026-09-23T16:23:48.000Z"
   },
   {
     "slug": "dev-environment-roi-audit",
@@ -182,14 +182,15 @@
   {
     "slug": "figma-mcp",
     "name": "figma-mcp",
-    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Never copy OAuth tokens between hosts.",
+    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.0"
+      "version": "1.5.0"
     },
     "files": {
       "hasReferences": true,
-      "hasSrc": false
+      "hasSrc": false,
+      "hasScripts": true
     },
     "updatedAt": "2026-09-23T03:58:34.000Z"
   },
