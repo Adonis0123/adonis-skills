@@ -129,7 +129,7 @@
       "expected_output": "Treats explicit invocation as authorization to start the reversible workspace loop and selects a capability-safe Reviewer without an extra product or scope question. Still fail-closes on missing ocr and historical-target fixes.",
       "files": [],
       "assertions": [
-        "The response starts with the current visible host product as independent Reviewer and current host as Fixer without asking which products to use.",
+        "Because the user asked for defaults, the response picks an installed capability-safe product other than the current host as Reviewer without asking, records that choice, and keeps the current host as Fixer.",
         "The response treats explicit skill invocation as authorization for reversible local defaults, not as permission to skip fail-closed gates.",
         "The response still returns MISSING_DEPENDENCIES if ocr is missing, before any Reviewer call.",
         "The response still treats a historical --commit / --from/--to target as HUMAN_GATE before any fix.",

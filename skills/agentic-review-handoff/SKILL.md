@@ -46,9 +46,9 @@ risks. Instruct Grok to read only and return its answer without implementing.
 grok --prompt-file "$PROMPT_FILE" --output-format json \
   --tools read_file,grep,list_dir --disallowed-tools search_tool,use_tool --deny MCPTool --permission-mode dontAsk \
   --no-subagents --disable-web-search
-# For an existing account function, pass its discovered name and prompt path:
-# GROK_COMMAND is the selected command name, not a command string with arguments.
-zsh -ic '"$1" --prompt-file "$2" --output-format json --tools read_file,grep,list_dir --disallowed-tools search_tool,use_tool --deny MCPTool --permission-mode dontAsk --no-subagents --disable-web-search' _ "$GROK_COMMAND" "$PROMPT_FILE"
+# For an existing account function, pass its discovered name and prompt path as
+# environment values (GROK_COMMAND is a bare command name, not a command string):
+GROK_COMMAND="<discovered-name>" PROMPT_FILE="$PROMPT_FILE" zsh -ic '"$GROK_COMMAND" --prompt-file "$PROMPT_FILE" --output-format json --tools read_file,grep,list_dir --disallowed-tools search_tool,use_tool --deny MCPTool --permission-mode dontAsk --no-subagents --disable-web-search'
 ```
 
 Prefer an existing executable launcher when available. A defining shell may emit
@@ -64,48 +64,60 @@ On failure follow the short startup-failure rule below; do not repair Docker.
 
 ## Auto loop (`review-loop run`) — explicit automation
 
-Explicit invocation starts immediately. Human intervenes only at: **initiate**, **terminal report**, or an unresolved exception (ambiguous delivery / hash mismatch / budget / deadlock / scope or external-action decision). Reviewer selection, ordinary findings, and safely recoverable local startup faults are not confirmation gates.
+Explicit invocation starts immediately once the Reviewer is known. Human intervenes only at: **initiate** (including the one Reviewer question below), **terminal report**, or an unresolved exception (ambiguous delivery / hash mismatch / budget / deadlock / scope or external-action decision). Ordinary findings and safely recoverable local startup faults are not confirmation gates.
+
+### Reviewer selection (before the first `run`)
+
+A fresh `run` has no default Reviewer; omitting `--reviewer` fails with `REVIEWER_REQUIRED` before any external call. Resolve it in this order and never ask again for the same packet:
+
+1. The user named a product or account (`grok`, `grok002`, `codex003`, `cc002`, ...) → use it. An account name maps to its product (`grok00x`→grok, `codex00x`→codex, `cc00x`→claude) plus `--reviewer-command=<name>`.
+2. A parent workflow fixes the Reviewer (`architecture-hardening-loop` → Grok) → use it.
+3. `run --continue` → inherits the stored Reviewer and launcher; pass nothing.
+4. Otherwise ask once with the host question tool. Recommend an installed product other than the visible host (Claude host → Codex; Codex host → Grok; Grok host → Codex); the host's own product is allowed but not recommended.
+5. No question tool, or the user said not to ask at all → pick per step 4's recommendation and state the choice in the start line and the terminal report. "Don't ask mid-loop" (`中途不用问我`) covers rounds only; it does not skip this one start question.
+
+`--reviewer-command` takes a bare launcher name that starts with its product (`grok*`, `codex*`, `cc*`/`claude*`) and is a zsh/bash function defined in the rc file (`.zshrc` / `.bashrc`, not a profile file) or a PATH executable; aliases and fish functions do not resolve. The adapter runs it through an interactive shell and appends the product's read-only argv; a launcher from another family (`cc002` with `--reviewer=grok`) or with no product prefix is rejected because those flags would not restrict it. The launcher's own flags still apply, so it must not add permission-widening flags. Never copy credentials or rotate accounts. Consult uses the same rule with `--peer` / `--peer-command`.
 
 ```bash
 RL="<skill-dir>/scripts/review-loop.mjs"
 REPO="$(git rev-parse --show-toplevel)"
 
 # Start after this session implemented the change (default Review Handoff origin)
-node "$RL" run --repo "$REPO" [--reviewer=codex|grok|claude] [--base <sha>] [--rounds 3]
+node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--base <sha>] [--rounds 3]
 
 # Start an explicit auto loop without verified implementer context (Review Intake origin)
-node "$RL" run --intake --repo "$REPO" [--reviewer=codex|grok|claude] [--base <sha>] [--rounds 3]
+node "$RL" run --intake --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--base <sha>] [--rounds 3]
 
 # After BLOCKED or concerns_require_fix: Fixer edits code, records completion, then continues
 node "$RL" fix-completion --repo "$REPO" --packet "$PACKET" --body-file /tmp/fix.md
 node "$RL" run --continue --repo "$REPO" --packet "$PACKET"
 
 # Optional review-only mode: park PASS_WITH_CONCERNS for an explicit accept/continue decision
-node "$RL" run --repo "$REPO" --completion=review
+node "$RL" run --repo "$REPO" --reviewer=codex --completion=review
 node "$RL" close --repo "$REPO" --packet "$PACKET" --reason accept-concerns
 
 # Recompute current worktree identity before an outer workflow reuses a verdict
 node "$RL" evidence --repo "$REPO" --base "$BASE_SHA" [--paths=a,b]
 
 # Advisory decision consult (not part of Verdict machine)
-node "$RL" consult --repo "$REPO" --peer=codex --question-file /tmp/q.md
+node "$RL" consult --repo "$REPO" --peer=codex [--peer-command=codex002] --question-file /tmp/q.md
 
-# List recorded reviewer sessions + copy-ready resume commands
+# List recorded reviewer and consult sessions + copy-ready resume commands
 # (Codex Desktop's list hides codex_exec sessions — this is the way back in)
 node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
 ```
 
-| Concept  | Rule                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------- |
-| Fixer    | Visible session — sole worktree + packet writer                                                            |
-| Reviewer | Headless; omitted product defaults to Codex; adapters use read-only + `dontAsk` controls                   |
-| Origin   | First H1 only: default `Review Handoff`; explicit `--intake` uses `Review Intake`; later rounds inherit it |
-| Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked) |
-| Rounds   | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate)             |
-| Timeout  | 20 minutes per Reviewer invocation; advanced override: `REVIEW_LOOP_TIMEOUT_MS`                            |
-| Progress | Immediate liveness line, then every 30 seconds while the Reviewer process is alive                         |
-| STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                            |
-| Sandbox  | Codex OS sandbox; Grok read-only tool allowlist + MCP deny; Claude tool restrictions; no permission prompt |
+| Concept  | Rule                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------ |
+| Fixer    | Visible session — sole worktree + packet writer                                                              |
+| Reviewer | Headless; required on a fresh run (see Reviewer selection); optional account launcher; read-only + `dontAsk` |
+| Origin   | First H1 only: default `Review Handoff`; explicit `--intake` uses `Review Intake`; later rounds inherit it   |
+| Evidence | Per-round frozen diff under `.review-handoff/runtime/<packet>/evidence/round-N.diff` (tracked + untracked)   |
+| Rounds   | Default budget 3; early stop on PASS; budget exhaust → structured report (not a Protocol Gate)               |
+| Timeout  | 20 minutes per Reviewer invocation; advanced override: `REVIEW_LOOP_TIMEOUT_MS`                              |
+| Progress | Immediate liveness line, then every 30 seconds while the Reviewer process is alive                           |
+| STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                              |
+| Sandbox  | Codex OS sandbox; Grok read-only tool allowlist + MCP deny; Claude tool restrictions; no permission prompt   |
 
 Default `completion=pass` treats `PASS_WITH_CONCERNS` as more work: the visible Fixer repairs each actionable in-scope concern, appends Fix Completion, and re-reviews within budget. It never asks the user whether to continue. Only explicit `--completion=review` parks concerns in `awaiting_user_decision`; this is the opt-in escape hatch for review-only judgment, not the loop default.
 

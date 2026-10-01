@@ -192,7 +192,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-23T03:58:34.000Z"
+    "updatedAt": "2026-09-24T03:23:44.000Z"
   },
   {
     "slug": "goal-gate",
@@ -266,7 +266,7 @@
   {
     "slug": "open-code-review-loop",
     "name": "open-code-review-loop",
-    "description": "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request starts with safe product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds.",
+    "description": "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds.",
     "metadata": {
       "author": "adonis",
       "version": "1.7.0"

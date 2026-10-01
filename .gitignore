@@ -44,6 +44,7 @@ __pycache__/
 .agents/skills/enforce-lf/
 .agents/skills/global-modal-scaffold/
 .agents/skills/goal-gate/
+.agents/skills/open-code-review-loop/
 .agents/skills/review-prompt-composer/
 .agents/skills/task-completion-loop/
 .agents/skills/uxc-facade/

@@ -168,7 +168,7 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 ### 7. Grok 复审修改
 
-调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**：
+调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**（`--reviewer=grok`，不另问用户；用户点名 Grok 账号如 `grok002` 时加 `--reviewer-command=grok002`，consult 同理用 `--peer-command`）：
 
 | 结果                                                     | 动作                                                                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |

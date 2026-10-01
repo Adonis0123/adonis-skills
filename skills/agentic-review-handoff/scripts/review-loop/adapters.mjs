@@ -64,6 +64,7 @@ const IMMEDIATE_REJECT_MS = 5_000;
  *     pid: number|null,
  *   }) => void,
  *   bin?: string,
+ *   command?: string|null,
  *   env?: NodeJS.ProcessEnv,
  *   resumeSupported?: boolean,
  *   globalStopPath?: string,
@@ -85,6 +86,11 @@ export function createAdapter(product, opts) {
     throw new Error("progressIntervalMs must be a positive finite number");
   }
   const onProgress = opts.onProgress;
+  const command = opts.command ?? null;
+  if (command != null) {
+    assertLauncherName(command);
+    assertLauncherMatchesProduct(command, p);
+  }
   const bin = opts.bin ?? defaultBin(p);
   const resumeSupported = opts.resumeSupported !== false;
   const globalStopPath =
@@ -112,11 +118,13 @@ export function createAdapter(product, opts) {
         )
       : null);
 
-  /** @type {{ product: Product, sessionId: string|null }} */
+  /** @type {{ product: Product, sessionId: string|null, command: string|null }} */
   const stored = loadSessionRecord(sessionStorePath);
-  // A4: never resume a session id from a different product
+  // A4: never resume a session id from a different product or account launcher
   const sessionId =
-    stored.sessionId && stored.product && stored.product !== p
+    stored.sessionId &&
+    ((stored.product && stored.product !== p) ||
+      (stored.command ?? null) !== command)
       ? null
       : stored.sessionId;
   const state = {
@@ -139,6 +147,7 @@ export function createAdapter(product, opts) {
         sessionId: null,
         repoRoot: opts.repoRoot,
         bin,
+        command,
         env: opts.env,
         timeoutMs,
         progressIntervalMs,
@@ -150,6 +159,7 @@ export function createAdapter(product, opts) {
         state.sessionId = result.sessionId;
         persistSession(sessionStorePath, {
           product: state.product,
+          ...(command ? { command } : {}),
           sessionId: result.sessionId,
           updated: new Date().toISOString(),
         });
@@ -189,6 +199,7 @@ export function createAdapter(product, opts) {
         sessionId: sid,
         repoRoot: opts.repoRoot,
         bin,
+        command,
         env: opts.env,
         timeoutMs,
         progressIntervalMs,
@@ -223,6 +234,7 @@ export function createAdapter(product, opts) {
         state.sessionId = result.sessionId;
         persistSession(sessionStorePath, {
           product: state.product,
+          ...(command ? { command } : {}),
           sessionId: result.sessionId,
           updated: new Date().toISOString(),
         });
@@ -232,6 +244,63 @@ export function createAdapter(product, opts) {
       return result;
     },
   };
+}
+
+const LAUNCHER_NAME_RE = /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/;
+
+/**
+ * Account launchers (grok002, codex003, cc004, ...) are names the user's shell
+ * already defines. Accept a bare name only: it is passed as a positional
+ * argument, never interpolated into shell code.
+ * @param {string} name
+ */
+export function assertLauncherName(name) {
+  if (typeof name !== "string" || !LAUNCHER_NAME_RE.test(name)) {
+    throw new Error(
+      `reviewer command must be a bare launcher name such as grok002, got ${JSON.stringify(name)}`,
+    );
+  }
+}
+
+// Account families from the multi-account convention. A launcher must name its
+// product: an unrecognised name could be any CLI, and the read-only argv only
+// restricts the product it was built for.
+const LAUNCHER_FAMILIES = [
+  [/^grok/i, "grok"],
+  [/^codex/i, "codex"],
+  [/^(claude|cc(\d|[-_.]|$))/i, "claude"],
+];
+
+/**
+ * Read-only argv is built for the product, so a launcher from another family
+ * would receive flags that do not restrict it.
+ * @param {string} name
+ * @param {string} product
+ */
+export function assertLauncherMatchesProduct(name, product) {
+  const family = LAUNCHER_FAMILIES.find(([re]) => re.test(name))?.[1];
+  if (family !== product) {
+    throw new Error(
+      family
+        ? `launcher ${name} belongs to ${family}, not ${product}; read-only flags would not apply`
+        : `launcher ${name} must start with its product (grok*, codex*, cc*/claude*) so read-only flags match`,
+    );
+  }
+}
+
+/**
+ * Spawn target for one invocation. A launcher runs through an interactive
+ * shell so zsh functions (grok002() { ... }) resolve; the product argv still
+ * comes from buildArgv, so read-only controls are unchanged.
+ * @param {{ bin: string, command?: string|null, argv: string[], shell?: string }} cfg
+ * @returns {{ file: string, args: string[] }}
+ */
+export function resolveSpawn({ bin, command, argv, shell }) {
+  if (!command) return { file: bin, args: argv };
+  // "$0" "$@" is POSIX-family syntax; other login shells fall back to zsh.
+  const login = shell || process.env.SHELL || "";
+  const sh = /(^|\/)(zsh|bash)$/.test(login) ? login : "/bin/zsh";
+  return { file: sh, args: ["-ic", '"$0" "$@"', command, ...argv] };
 }
 
 function defaultBin(product) {
@@ -326,6 +395,7 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
  *   sessionId: string|null,
  *   repoRoot: string,
  *   bin: string,
+ *   command?: string|null,
  *   env?: NodeJS.ProcessEnv,
  *   timeoutMs: number,
  *   progressIntervalMs: number,
@@ -383,7 +453,13 @@ export function invokeProduct(cfg) {
     let stopped = false;
 
     // detached so we own a process group and can kill sleep grandchildren on timeout/STOP
-    const child = spawn(cfg.bin, argv, {
+    const target = resolveSpawn({
+      bin: cfg.bin,
+      command: cfg.command,
+      argv,
+      shell: cfg.env?.SHELL,
+    });
+    const child = spawn(target.file, target.args, {
       cwd: cfg.repoRoot,
       env: { ...process.env, ...(cfg.env ?? {}) },
       stdio: ["ignore", "pipe", "pipe"],
@@ -587,6 +663,25 @@ function tryParseJson(s) {
   } catch {
     /* fall through */
   }
+  // A launcher's interactive shell may print startup text first; the CLI's
+  // JSON is then the last line (or block) that starts with "{".
+  // Text may also follow it (a trailing echo or logout notice), so try every
+  // "{"-line start against every later "}"-line end, latest start first.
+  const lines = t.split("\n");
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    if (!lines[i].trimStart().startsWith("{")) continue;
+    for (let j = lines.length - 1; j >= i; j -= 1) {
+      if (!lines[j].trimEnd().endsWith("}")) continue;
+      try {
+        const parsed = JSON.parse(lines.slice(i, j + 1).join("\n"));
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          return parsed;
+        }
+      } catch {
+        /* keep scanning */
+      }
+    }
+  }
   const start = t.indexOf("{");
   const end = t.lastIndexOf("}");
   if (start >= 0 && end > start) {
@@ -605,16 +700,17 @@ function loadSessionId(storePath) {
 
 function loadSessionRecord(storePath) {
   if (!storePath || !fs.existsSync(storePath)) {
-    return { sessionId: null, product: null };
+    return { sessionId: null, product: null, command: null };
   }
   try {
     const data = JSON.parse(fs.readFileSync(storePath, "utf8"));
     return {
       sessionId: data.sessionId ?? data.session_id ?? null,
       product: data.product ?? null,
+      command: data.command ?? null,
     };
   } catch {
-    return { sessionId: null, product: null };
+    return { sessionId: null, product: null, command: null };
   }
 }
 

@@ -4,10 +4,13 @@
 import { afterEach, describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  resolveSpawn,
+  assertLauncherMatchesProduct,
   createAdapter,
   buildArgv,
   assertSandboxHardcoded,
@@ -606,4 +609,159 @@ exit 0`,
     assert.equal(r.text, "CLAUDE_OK");
     assert.equal(r.sessionId, "claude-sess-1");
   });
+});
+
+describe("account launcher", () => {
+  it("runs a launcher through an interactive POSIX shell without interpolating it", () => {
+    const argv = ["-p", "x; rm -rf /", "--tools", "read_file,grep,list_dir"];
+    assert.deepEqual(resolveSpawn({ bin: "grok", argv }), {
+      file: "grok",
+      args: argv,
+    });
+    assert.deepEqual(
+      resolveSpawn({
+        bin: "grok",
+        command: "grok002",
+        argv,
+        shell: "/bin/zsh",
+      }),
+      { file: "/bin/zsh", args: ["-ic", '"$0" "$@"', "grok002", ...argv] },
+    );
+    assert.equal(
+      resolveSpawn({
+        bin: "grok",
+        command: "grok002",
+        argv,
+        shell: "/usr/bin/fish",
+      }).file,
+      "/bin/zsh",
+    );
+  });
+
+  it("rejects launcher strings that are not bare names", () => {
+    for (const bad of ["grok002 --x", "a;b", "$(id)", "../grok", ""]) {
+      assert.throws(
+        () => createAdapter("grok", { repoRoot: tmpDir(), command: bad }),
+        /bare launcher name/,
+      );
+    }
+  });
+
+  it("never resumes a session recorded under a different launcher", async () => {
+    const repoRoot = makeRepo();
+    const store = path.join(
+      repoRoot,
+      ".review-handoff",
+      "runtime",
+      "pkt-1",
+      "reviewer-session.json",
+    );
+    fs.writeFileSync(
+      store,
+      JSON.stringify({
+        product: "grok",
+        command: "grok001",
+        sessionId: "s-other-account",
+      }),
+    );
+    const other = createAdapter("grok", {
+      repoRoot,
+      packetId: "pkt-1",
+      command: "grok002",
+    });
+    assert.equal(other.getSessionId(), null);
+    const same = createAdapter("grok", {
+      repoRoot,
+      packetId: "pkt-1",
+      command: "grok001",
+    });
+    assert.equal(same.getSessionId(), "s-other-account");
+    const plain = createAdapter("grok", { repoRoot, packetId: "pkt-1" });
+    assert.equal(plain.getSessionId(), null);
+  });
+});
+
+describe("launcher hardening", () => {
+  it("rejects a launcher from another account family; allows unknown names", () => {
+    assert.throws(
+      () => assertLauncherMatchesProduct("cc002", "grok"),
+      /belongs to claude/,
+    );
+    assert.throws(
+      () => assertLauncherMatchesProduct("grok002", "codex"),
+      /belongs to grok/,
+    );
+    assert.doesNotThrow(() =>
+      assertLauncherMatchesProduct("codex003", "codex"),
+    );
+    assert.doesNotThrow(() => assertLauncherMatchesProduct("cc002", "claude"));
+    assert.throws(
+      () => assertLauncherMatchesProduct("work", "claude"),
+      /must start with its product/,
+    );
+    assert.throws(
+      () => assertLauncherMatchesProduct("ccache-wrap", "claude"),
+      /must start with its product/,
+    );
+    assert.throws(
+      () => createAdapter("grok", { repoRoot: tmpDir(), command: "cc002" }),
+      /belongs to claude/,
+    );
+  });
+
+  it("parses the CLI JSON between interactive-shell startup and trailing noise", async () => {
+    const repoRoot = makeRepo();
+    const bin = writeFakeBin(
+      repoRoot,
+      "fake-grok-noisy",
+      `echo '{noise from .zshrc}'
+echo 'welcome'
+printf '%s\\n' '{"text":"GROK_OK","sessionId":"019f0000-0000-0000-0000-00000000g002"}'
+echo 'logout {bye}'
+exit 0`,
+    );
+    const adapter = createAdapter("grok", {
+      repoRoot,
+      packetId: "pkt-1",
+      bin,
+      timeoutMs: 5000,
+    });
+    const r = await adapter.newSession("prompt");
+    assert.equal(r.ok, true);
+    assert.equal(r.text, "GROK_OK");
+    assert.equal(r.sessionId, "019f0000-0000-0000-0000-00000000g002");
+  });
+
+  it(
+    "timeout kills a launcher function's grandchildren",
+    { skip: !fs.existsSync("/bin/zsh") && "needs /bin/zsh" },
+    async () => {
+      const zdot = tmpDir("adapter-zdot-");
+      const marker = `sleep ${40 + Math.floor(Math.random() * 50)}`;
+      fs.writeFileSync(
+        path.join(zdot, ".zshrc"),
+        `echo '{noise}'\ngrokfake() { ${marker}; }\n`,
+      );
+      const adapter = createAdapter("grok", {
+        repoRoot: makeRepo(),
+        command: "grokfake",
+        env: { ZDOTDIR: zdot, SHELL: "/bin/zsh" },
+        timeoutMs: 1500,
+        sessionStorePath: null,
+      });
+      const r = await adapter.newSession("prompt");
+      assert.equal(r.ok, false);
+      assert.equal(r.timedOut, true);
+      await new Promise((done) => setTimeout(done, 500));
+      let leftover = "";
+      try {
+        leftover = execFileSync("pgrep", ["-f", marker], {
+          encoding: "utf8",
+        }).trim();
+      } catch {
+        leftover = "";
+      }
+      assert.equal(leftover, "", "no launcher grandchild survives the timeout");
+    },
+  );
 });

@@ -19,7 +19,12 @@ import {
   lastPhysicalH1,
   listPhysicalH1s,
 } from "./repositories.mjs";
-import { createAdapter, DELIVERY_UNKNOWN } from "./adapters.mjs";
+import {
+  assertLauncherMatchesProduct,
+  assertLauncherName,
+  createAdapter,
+  DELIVERY_UNKNOWN,
+} from "./adapters.mjs";
 import {
   computeEvidenceIdentity,
   freezeRoundEvidence,
@@ -47,6 +52,9 @@ import {
 } from "./stage-writer.mjs";
 
 const DEFAULT_ROUNDS = 3;
+const REVIEWER_REQUIRED_MESSAGE =
+  "REVIEWER_REQUIRED: pass --reviewer=codex|grok|claude " +
+  "(ask the user once; recommend a product other than the current host)";
 
 function reviewedEvidenceIdentity({ baseSha, evidence, sourceRound }) {
   return {
@@ -115,7 +123,8 @@ Never place a literal pipe character in table cells. Use &#124; instead.`;
  * @param {object} opts
  * @param {string} [opts.repoRoot]
  * @param {string} [opts.cwd]
- * @param {string} [opts.reviewer]  codex|grok|claude; defaults to codex
+ * @param {string} [opts.reviewer]  codex|grok|claude; required unless continue inherits
+ * @param {string} [opts.reviewerCommand] account launcher name (e.g. grok002)
  * @param {string} [opts.base]
  * @param {number} [opts.rounds]
  * @param {'review'|'pass'} [opts.completion]
@@ -139,6 +148,31 @@ export async function cmdRun(opts) {
     throw new Error(
       "--intake cannot be combined with a caller-provided packet",
     );
+  }
+  // Validate selection before creating any packet: a fresh run has no default
+  // Reviewer, and a bad flag must not leave an orphan packet behind.
+  const requestedReviewer = opts.reviewer ?? opts.productReviewer ?? null;
+  if (!isContinue && !requestedReviewer) {
+    throw new Error(REVIEWER_REQUIRED_MESSAGE);
+  }
+  if (
+    requestedReviewer != null &&
+    !["codex", "grok", "claude"].includes(
+      String(requestedReviewer).toLowerCase(),
+    )
+  ) {
+    throw new Error(
+      `--reviewer must be codex|grok|claude, got ${requestedReviewer}`,
+    );
+  }
+  if (opts.reviewerCommand != null) {
+    assertLauncherName(opts.reviewerCommand);
+    if (requestedReviewer) {
+      assertLauncherMatchesProduct(
+        opts.reviewerCommand,
+        String(requestedReviewer).toLowerCase(),
+      );
+    }
   }
   ensureReviewHandoffLayout(repoRoot);
   const branch = resolveBranch(repoRoot);
@@ -192,16 +226,34 @@ export async function cmdRun(opts) {
     );
   }
 
-  // Reviewer: explicit flag wins; else continue inherits prior; else default codex.
-  // This is deterministic by design: never ask the user to select a Reviewer.
+  // Reviewer: explicit flag wins; else continue inherits prior. A fresh run has
+  // no silent default: the caller asks the user once (or picks a product other
+  // than the visible host) and passes it, so a Codex host never reviews itself
+  // by accident.
   const priorState = loadRunState(repoRoot, packetId) ?? {};
   let reviewer = opts.reviewer || opts.productReviewer || null;
-  if (!reviewer && isContinue && priorState.reviewer) {
-    reviewer = priorState.reviewer;
+  const inherited = !reviewer && isContinue && Boolean(priorState.reviewer);
+  if (inherited) reviewer = priorState.reviewer;
+  if (!reviewer) {
+    throw new Error(REVIEWER_REQUIRED_MESSAGE);
   }
-  reviewer = String(reviewer || "codex").toLowerCase();
+  reviewer = String(reviewer).toLowerCase();
   if (!["codex", "grok", "claude"].includes(reviewer)) {
     throw new Error(`--reviewer must be codex|grok|claude, got ${reviewer}`);
+  }
+  // Account launcher (e.g. grok002) stays bound to the product it was chosen for.
+  let reviewerCommand = opts.reviewerCommand ?? null;
+  if (
+    reviewerCommand == null &&
+    isContinue &&
+    priorState.reviewerCommand &&
+    priorState.reviewer === reviewer
+  ) {
+    reviewerCommand = priorState.reviewerCommand;
+  }
+  if (reviewerCommand != null) {
+    assertLauncherName(reviewerCommand);
+    assertLauncherMatchesProduct(reviewerCommand, reviewer);
   }
 
   // completion=pass means every actionable in-scope concern is fixed and
@@ -227,6 +279,7 @@ export async function cmdRun(opts) {
       packetPath,
       packetId,
       reviewer,
+      reviewerCommand,
       completion,
       roundsBudget,
       isContinue,
@@ -348,6 +401,7 @@ async function runBody(ctx) {
     packetPath: initialPacketPath,
     packetId,
     reviewer,
+    reviewerCommand,
     completion,
     roundsBudget,
     isContinue,
@@ -390,6 +444,7 @@ async function runBody(ctx) {
     ...state,
     baseSha,
     reviewer,
+    reviewerCommand,
     completion,
     packetHash: roundStartPacketHash,
     roundStartPacketHash,
@@ -559,6 +614,7 @@ async function runBody(ctx) {
   const adapter = (adapterFactory || createAdapter)(reviewer, {
     repoRoot,
     packetId,
+    command: reviewerCommand,
     ...(adapterOpts || {}),
   });
 

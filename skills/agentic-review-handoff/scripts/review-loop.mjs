@@ -40,6 +40,15 @@ function fail(err, code = 1) {
   process.exit(code);
 }
 
+function launcherArg(args, key) {
+  const value = args[key];
+  if (value === undefined) return undefined;
+  if (typeof value !== "string") {
+    throw new Error(`--${key} requires a launcher name such as grok002`);
+  }
+  return value;
+}
+
 function parseArgs(argv) {
   const args = { _: [] };
   for (let i = 0; i < argv.length; i += 1) {
@@ -73,12 +82,12 @@ function help() {
     skillScriptsDir: __dirname,
     mode: "auto-loop",
     usage: [
-      "review-loop run --repo=PATH [--reviewer=codex|grok|claude] [--completion=review|pass] [--until-pass] [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
-      "review-loop run --continue --repo=PATH [--packet=PATH] [--rounds=3|+N] [--paths=a,b]",
+      "review-loop run --repo=PATH --reviewer=codex|grok|claude [--reviewer-command=LAUNCHER] [--completion=review|pass] [--until-pass] [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
+      "review-loop run --continue --repo=PATH [--packet=PATH] [--reviewer=PRODUCT] [--reviewer-command=LAUNCHER] [--rounds=3|+N] [--paths=a,b]",
       "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
       "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
       "review-loop evidence --repo=PATH --base=SHA [--paths=a,b]",
-      "review-loop consult --repo=PATH --peer=codex|grok|claude --question-file=PATH",
+      "review-loop consult --repo=PATH --peer=codex|grok|claude [--peer-command=LAUNCHER] --question-file=PATH",
       "review-loop sessions --repo=PATH [--product=codex|grok|claude]",
     ],
     removed: [
@@ -88,7 +97,8 @@ function help() {
     defaults: {
       autoLoop:
         "single visible Fixer; headless read-only Reviewer; zero mid-loop human",
-      reviewer: "codex (explicit codex|grok|claude wins; never prompts)",
+      reviewer:
+        "none on a fresh run (REVIEWER_REQUIRED); --continue inherits the prior reviewer and launcher",
       completion:
         "pass (auto-fix PASS_WITH_CONCERNS without a second confirmation; use review to park concerns)",
       rounds: 3,
@@ -174,6 +184,7 @@ async function main() {
         result = await autoRun.cmdRun({
           ...base,
           reviewer: args.reviewer ?? args["product-reviewer"],
+          reviewerCommand: launcherArg(args, "reviewer-command"),
           base: args.base,
           // Pass raw string so --rounds +N stays additive (do not Number() early)
           rounds: args.rounds,
@@ -218,6 +229,7 @@ async function main() {
         result = await consult.cmdConsult({
           ...base,
           peer: args.peer ?? args.reviewer,
+          peerCommand: launcherArg(args, "peer-command"),
           questionFile: args["question-file"] ?? args.questionFile,
           question: args.question,
         });

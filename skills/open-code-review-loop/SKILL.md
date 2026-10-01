@@ -1,6 +1,6 @@
 ---
 name: open-code-review-loop
-description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request starts with safe product defaults and host mutation checks instead of redundant confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
+description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
   version: "1.7.0"
@@ -53,8 +53,9 @@ Resolve before the first model call:
 
 - Repository: current Git root; never infer a broader repo
 - Target: workspace changes; also OCR `--from/--to` and `--commit`
-- Reviewer: user-selected product, or the current visible host product when
-  none is named; always use a real independent read-only product session
+- Reviewer: user-selected product; when none is named, ask once and
+  recommend a product other than the visible host; always use a real
+  independent read-only product session
 - Fixer: current visible host. An external Fixer needs a user-authorized
   isolated checkout that becomes `$REPO` before round 1
 - Paths/excludes: OCR preview; preserve user exclusions every round.
@@ -68,10 +69,13 @@ Resolve before the first model call:
 
 Once the user has requested the full fix-and-re-review loop, explicit skill
 invocation authorizes the reversible local workspace loop. Do
-not ask whether to start, reconfirm OCR scope, choose a product, or accept
-supplemental Markdown review. One named product without roles → that product is
-Reviewer, current host is Fixer. No named product → use the current visible
-host product as Reviewer and Fixer in two independent sessions. If that
+not ask whether to start, reconfirm OCR scope, or accept supplemental Markdown
+review. One named product without roles → that product is Reviewer, current
+host is Fixer. No named product → ask once with the host question tool,
+recommending an installed capability-safe product other than the visible host
+(a model reviewing its own host's work is the weakest independence); the host
+product stays a valid answer in a separate session. Without a question tool, or
+when the user asked for defaults, pick that recommendation and record it. If an
 auto-selected Reviewer cannot satisfy the read-only adapter, try the next
 installed capability-safe product and record the fallback; never replace a
 product the user explicitly named. Missing `ocr`, historical-target fixes,

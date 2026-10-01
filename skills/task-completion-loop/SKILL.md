@@ -46,7 +46,7 @@ metadata:
 在讨论、Goal、源码修改前：
 
 1. 解析每个 skill 及其传递硬依赖（特别是 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter）。invocation policy 与父会话执行路径沿用 `architecture-hardening-loop`「硬依赖与 runtime 能力」的规则：用户点名本 Loop 即授权硬依赖按用途嵌套调用；文件可读即可由父会话执行；未安装/不可读、合同不兼容或 worker/工具无法执行才算缺失。细则见 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的 Preflight policy。
-2. 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer grok|claude --question-file <md>` 完成一次真实往返，并用 `review-loop sessions --repo <root> --product=grok|claude` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。Claude 还须能以 adapter 的只读控制启动。只有名字、catalog 条目或 CLI 文件存在不算可用。
+2. 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer grok|claude --question-file <md>` 完成一次真实往返（用户点名账号如 `grok002` / `cc002` 时加 `--peer-command=<名字>`，产品组合不变），并用 `review-loop sessions --repo <root> --product=grok|claude` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。Claude 还须能以 adapter 的只读控制启动。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
 
 缺少始终要求的能力，或缺少本轮实际需要的条件能力：

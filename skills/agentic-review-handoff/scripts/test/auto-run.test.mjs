@@ -372,29 +372,135 @@ describe("frozen evidence includes untracked", () => {
 });
 
 describe("auto-run happy paths", () => {
-  it("omitted reviewer starts with codex without asking the user", async () => {
+  it("fresh run without a reviewer fails closed before any Reviewer call", async () => {
     const dir = initTempRepo();
-    let selectedProduct = null;
-    const result = await cmdRun({
-      repoRoot: dir,
-      scopeSlug: "default-reviewer",
-      adapterFactory: (product) => {
-        selectedProduct = product;
-        return {
-          product,
-          getSessionId: () => null,
-          async newSession() {
-            return { ok: true, text: passText(), sessionId: "s" };
-          },
-          async resume() {
-            return { ok: true, text: passText(), sessionId: "s" };
-          },
-        };
-      },
-    });
+    let factoryCalls = 0;
+    await assert.rejects(
+      cmdRun({
+        repoRoot: dir,
+        scopeSlug: "no-reviewer",
+        adapterFactory: () => {
+          factoryCalls += 1;
+          throw new Error("adapter must not be created");
+        },
+      }),
+      /REVIEWER_REQUIRED/,
+    );
+    assert.equal(factoryCalls, 0);
+    const active = path.join(dir, ".review-handoff", "active");
+    const packets = fs.existsSync(active)
+      ? fs
+          .readdirSync(active, { recursive: true })
+          .filter((f) => String(f).endsWith(".md"))
+      : [];
+    assert.deepEqual(packets, [], "no packet left behind");
+  });
 
-    assert.equal(selectedProduct, "codex");
-    assert.equal(result.status, "archived");
+  it("rejects bad reviewer selection before creating any packet", async () => {
+    const dir = initTempRepo();
+    const cases = [
+      [
+        { reviewer: "grok", reviewerCommand: "grok002; rm -rf /" },
+        /bare launcher name/,
+      ],
+      [{ reviewer: "grok", reviewerCommand: "" }, /bare launcher name/],
+      [{ reviewer: "grok", reviewerCommand: "cc002" }, /belongs to claude/],
+      [{ reviewer: true }, /--reviewer must be/],
+    ];
+    for (const [selection, error] of cases) {
+      await assert.rejects(
+        cmdRun({
+          repoRoot: dir,
+          ...selection,
+          scopeSlug: "bad-selection",
+          adapterFactory: () => {
+            throw new Error("adapter must not be created");
+          },
+        }),
+        error,
+      );
+    }
+    const active = path.join(dir, ".review-handoff", "active");
+    const packets = fs.existsSync(active)
+      ? fs
+          .readdirSync(active, { recursive: true })
+          .filter((f) => String(f).endsWith(".md"))
+      : [];
+    assert.deepEqual(packets, [], "no packet left behind");
+  });
+
+  it("continue inherits reviewer + launcher; switching product drops the launcher", async () => {
+    const dir = initTempRepo();
+    fs.writeFileSync(path.join(dir, "c.ts"), "export const c = 1;\n");
+    /** @type {Array<{ product: string, command: string|null }>} */
+    const seen = [];
+    const factory = (product, cfg) => {
+      seen.push({ product, command: cfg.command ?? null });
+      // One adapter per cmdRun: odd creations are round 1 (BLOCKED), even are re-review.
+      const text =
+        seen.length % 2 === 1 ? blockedText("F1") : reReviewPass(["F1"]);
+      const reply = () => text;
+      return {
+        product,
+        getSessionId: () => "s",
+        async newSession() {
+          return { ok: true, text: reply(), sessionId: "s" };
+        },
+        async resume() {
+          return { ok: true, text: reply(), sessionId: "s" };
+        },
+      };
+    };
+    const fix = `# Fix Completion
+
+## Fix Conclusion
+- fixed
+
+## Original Findings Snapshot
+- F1 off-by-one
+
+## Finding Status
+- F1 fixed
+
+## Verification
+- unit test
+
+## Re-review Instructions
+- run --continue
+`;
+    // switchTo: undefined → inherit; "codex" → explicit product switch
+    for (const [slug, switchTo] of [
+      ["inherit", undefined],
+      ["switch", "codex"],
+    ]) {
+      const r1 = await cmdRun({
+        repoRoot: dir,
+        reviewer: "grok",
+        reviewerCommand: "grok002",
+        scopeSlug: `launcher-${slug}`,
+        adapterFactory: factory,
+      });
+      assert.equal(r1.status, "blocked", JSON.stringify(r1));
+      await cmdAppendFixCompletion({
+        repoRoot: dir,
+        packetPath: r1.packetPath,
+        body: fix,
+      });
+      const r2 = await cmdRun({
+        repoRoot: dir,
+        reviewer: switchTo,
+        continue: true,
+        packetPath: r1.packetPath,
+        adapterFactory: factory,
+      });
+      assert.equal(r2.status, "archived", JSON.stringify(r2));
+    }
+    assert.deepEqual(seen, [
+      { product: "grok", command: "grok002" },
+      { product: "grok", command: "grok002" },
+      { product: "grok", command: "grok002" },
+      { product: "codex", command: null },
+    ]);
   });
 
   it("1-round PASS archives packet", async () => {
@@ -597,6 +703,7 @@ PASS_WITH_CONCERNS
     ]);
     const r = await cmdRun({
       repoRoot: dir,
+      reviewer: "codex",
       scopeSlug: "concerns-until-pass",
       adapterFactory: factory,
     });

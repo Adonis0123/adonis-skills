@@ -195,7 +195,7 @@
       "id": 12,
       "name": "scenario-L-same-session-implementer-auto",
       "prompt": "你刚在当前会话实现并验证了 apps/api/cart-handler.ts。现在继续做 review-fix-re-review 到 PASS，中途不用问我。仓库 ${MOCK_REPO}。",
-      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走默认 review-loop run auto；允许创建 implementer Review Handoff，不添加 --intake。默认 completion=pass，Reviewer 未指定则自动选 Codex，PASS_WITH_CONCERNS 也自动修复续审，不询问用户。",
+      "expected_output": "当前会话有可验证 implementer context 且用户明确要求闭环，走默认 review-loop run auto；允许创建 implementer Review Handoff，不添加 --intake。默认 completion=pass。Reviewer 未指定时启动前用提问工具问一次，推荐与当前宿主不同的产品，之后不再问；PASS_WITH_CONCERNS 自动修复续审，不询问用户。",
       "files": []
     },
     {
@@ -209,7 +209,7 @@
       "id": 14,
       "name": "scenario-N-default-pwc-needs-no-confirmation",
       "prompt": "显式调用 agentic-review-handoff 跑当前 diff，没有指定 reviewer。首轮返回 PASS_WITH_CONCERNS，两个 concern 都在冻结范围内且可逆，预算还有两轮。不要真的运行 CLI，只说明默认状态机。${MOCK_REPO}。",
-      "expected_output": "默认自动选择 Codex 且 completion=pass。返回 concerns_require_fix/blocked 和 Fix Handoff，Fixer 修复、验证、写 Fix Completion 后 run --continue；不进入 awaiting_user_decision，不问用户是否继续，也不自动接受 concern。",
+      "expected_output": "启动前问一次 Reviewer（推荐非宿主产品；无提问工具时直接选非宿主并在报告里写明），completion=pass。返回 concerns_require_fix/blocked 和 Fix Handoff，Fixer 修复、验证、写 Fix Completion 后 run --continue；不进入 awaiting_user_decision，不问用户是否继续，也不自动接受 concern。",
       "files": []
     },
     {
@@ -259,6 +259,20 @@
       "name": "optional-grok-startup-failure",
       "prompt": "问 Grok 这个方案的利弊。调用返回 could not apply read-only sandbox profile: /var/run/docker.sock endpoint is a symlink。主任务还有独立的本地测试可做。",
       "expected_output": "普通咨询直调 Grok。失败后不修 Docker、不移动 socket、不改账号、不假报结论；记录 Grok 意见不可用，继续独立测试。",
+      "files": []
+    },
+    {
+      "id": 22,
+      "name": "reviewer-unspecified-asks-once",
+      "prompt": "我在 Codex 里刚改完 apps/api/cart-handler.ts，帮我跑 review-fix-re-review 到 PASS。仓库 ${MOCK_REPO}。没说用哪个 AI 审。",
+      "expected_output": "启动 run 前用提问工具问一次 Reviewer，推荐项不是 Codex（推荐 Grok 或 Claude）；不静默默认 Codex，不在轮次中再问；拿到答案后传 --reviewer。",
+      "files": []
+    },
+    {
+      "id": 23,
+      "name": "named-account-reviewer",
+      "prompt": "用 grok002 这个账号当 reviewer 跑自动 review-fix-re-review，当前会话刚实现了改动。仓库 ${MOCK_REPO}。",
+      "expected_output": "不再询问 Reviewer；调用 review-loop run --reviewer=grok --reviewer-command=grok002，不复制凭据、不轮换账号；--continue 继承同一 launcher，sessions 输出 grok002 -r <id>。",
       "files": []
     }
   ]

@@ -1,4 +1,4 @@
 interface:
   display_name: "Agentic Review Handoff"
   short_description: "Route Git reviews and run evidence-bound loops"
-  default_prompt: "Use $agentic-review-handoff to start the appropriate Git review path immediately; auto loops select a Reviewer without asking and fix in-scope concerns until PASS by default."
+  default_prompt: "Use $agentic-review-handoff to start the appropriate Git review path immediately; auto loops ask once for an unnamed Reviewer (recommending a product other than the host), then fix in-scope concerns until PASS without further confirmation."
