@@ -388,7 +388,7 @@
         "level": 2
       },
       {
-        "raw": "`CHROME_DEV_MCP_READY` and `list_pages` prove the connection only. Claim a task `VERIFIED` only after the requested snapshot, Console, Network, Performance, or interaction call itself returned without `data.isError`. Product-page acceptance stays with the calling task.\n\nInvoke as `/chrome-dev-mcp` in Claude Code and Grok, `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection.",
+        "raw": "`CHROME_DEV_MCP_READY` and `list_pages` prove the connection only. Claim a task `VERIFIED` only after the requested snapshot, Console, Network, Performance, or interaction call itself returned without `data.isError`. Product-page acceptance stays with the calling task.\n\nInvoke as `/chrome-dev-mcp` in Claude Code, Grok, and Cursor CLI (`cursor-agent`), `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection.",
         "heading": "Report honestly",
         "level": 2
       },

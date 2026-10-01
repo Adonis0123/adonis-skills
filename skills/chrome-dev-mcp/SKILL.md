@@ -1,9 +1,9 @@
 ---
 name: chrome-dev-mcp
-description: "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok/Grok002, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task."
+description: "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task."
 metadata:
   author: adonis
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Chrome Dev MCP
@@ -77,7 +77,7 @@ Calls are serialized by the runtime and no cross-agent lock exists for multi-ste
 
 `CHROME_DEV_MCP_READY` and `list_pages` prove the connection only. Claim a task `VERIFIED` only after the requested snapshot, Console, Network, Performance, or interaction call itself returned without `data.isError`. Product-page acceptance stays with the calling task.
 
-Invoke as `/chrome-dev-mcp` in Claude Code and Grok, `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection.
+Invoke as `/chrome-dev-mcp` in Claude Code, Grok, and Cursor CLI (`cursor-agent`), `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection.
 
 ## Read only when needed
 

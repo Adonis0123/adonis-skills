@@ -66,7 +66,7 @@ Use a finite idle TTL so an unused MCP child is reaped. Treat the configured dae
 
 ## Concurrency details
 
-- Chrome DevTools MCP 1.9.0 enables `--pageIdRouting` by default; older wrappers name the experimental flag. After an upgrade, confirm the live schema still requires `pageId` for page-scoped operations.
+- Chrome DevTools MCP 1.9.0+ (pinned 1.10.1) enables `--pageIdRouting` by default and restricts file writes to the OS temp directory unless `--workspace` is passed; older wrappers name the experimental flag. After an upgrade, confirm the live schema still requires `pageId` for page-scoped operations.
 - Different page IDs route safely, but tool calls are serialized; do not expect parallel execution. Use separate isolated browsers for parallel writes that cannot share a tab.
 - Repair a known legacy launcher with `zsh scripts/setup-uxc-link.zsh`; it preserves the exact old owned link and refuses foreign contracts.
 - The runtime's only file root is the MCP child's `os.tmpdir()` (on macOS `getconf DARWIN_USER_TEMP_DIR`), because UXC does not negotiate MCP workspace roots. If the host must render native content blocks, use explicit native compatibility mode.

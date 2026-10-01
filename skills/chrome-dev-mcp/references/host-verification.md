@@ -12,6 +12,7 @@ Examples for hosts that expose configuration inspection:
 claude mcp get chrome-devtools       # expect absent
 codex mcp list                       # expect disabled
 grok mcp list                        # expect disabled
+cursor-agent mcp list                # expect absent (Cursor CLI)
 hermes mcp list                      # expect disabled
 ```
 
@@ -35,7 +36,16 @@ Keep cold-start tests isolated. Never close an existing browser to simulate reco
 
 ## Run the real acceptance
 
-Use one fresh read-only session per host with this prompt:
+Run the bundled script from this skill's directory. It starts one fresh headless session per host in parallel and prints one `HOST=... RESULT=...` line each; page URLs are checked privately and never printed:
+
+```bash
+zsh scripts/host-acceptance.zsh                       # claude, codex, grok, cursor
+zsh scripts/host-acceptance.zsh --host codex --keep-raw
+```
+
+Each host may run only `zsh scripts/uxc-readiness.zsh` and `chrome-dev-mcp-cli`; no host gets an approve-everything flag. Claude Code and Grok get narrow `--allowedTools`/`--allow` rules, Codex keeps the `workspace-write` sandbox with network and `~/.uxc` added, and Cursor CLI uses the shell allow list in `~/.cursor/cli-config.json`. Pass `--bypass` only after the user explicitly approves approve-everything sessions; it uses `--permission-mode bypassPermissions` (Claude Code), `--dangerously-bypass-approvals-and-sandbox` (Codex), `--always-approve` (Grok) and `--force` (Cursor CLI), which removes the narrow rules above for that run. When the calling agent's own permission layer blocks launching other agent CLIs, ask the user to run the script (for example with `! zsh <skill-dir>/scripts/host-acceptance.zsh` in Claude Code) or to allow that exact command; do not retry through another host or wrapper.
+
+The script runs this prompt in every session:
 
 ```text
 只读验收：必须通过 chrome-dev-mcp skill 的共享 CLI 真实调用 list_pages 一次；不要导航、点击，也不要输出页面 URL、标题或正文。成功只回答 CHROME_DEV_MCP_READY，共享调用失败只回答 CHROME_DEV_MCP_FAIL。不要自动回退到 native MCP。
