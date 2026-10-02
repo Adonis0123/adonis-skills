@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-01T11:34:49.000Z"
+    "updatedAt": "2026-10-02T08:02:51.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -207,7 +207,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-23T03:58:34.000Z"
+    "updatedAt": "2026-10-02T02:09:20.000Z"
   },
   {
     "slug": "installed-app-feature-inventory",
@@ -305,7 +305,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-01T11:34:49.000Z"
+    "updatedAt": "2026-10-02T02:09:20.000Z"
   },
   {
     "slug": "uxc-facade",
@@ -369,6 +369,6 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T09:55:31.000Z"
+    "updatedAt": "2026-10-02T08:02:54.000Z"
   }
 ]

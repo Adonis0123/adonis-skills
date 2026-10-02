@@ -85,7 +85,7 @@ git push --dry-run
 git push --dry-run -u origin <branch>
 ```
 
-If the preflight fails, do not create the commit; report `UNVERIFIED: push preflight failed` with the relevant error. A successful dry-run proves only that the preflight passed. It never proves delivery.
+If the preflight is rejected only because the remote is ahead (non-fast-forward), the remote was reached: create the commit and let step 5 recover. If it fails for any other reason, do not create the commit; report `UNVERIFIED: push preflight failed` with the relevant error. A successful dry-run proves only that the preflight passed. It never proves delivery.
 
 ### 4. Commit
 
@@ -110,7 +110,7 @@ Keep the commit focused. If staged changes contain multiple unrelated concerns, 
 
 ### 5. Push
 
-After a successful commit, or when the branch already contains inspected expected commits to deliver, run the planned real push once. If it fails, do not retry automatically, duplicate the commit, rewrite history, or report delivery success. Report the exact failing command, the relevant error line, and the remaining ahead state, then suggest the smallest safe next step.
+After a successful commit, or when the branch already contains inspected expected commits to deliver, run the planned real push once. If it is rejected only because the remote is ahead (non-fast-forward) and the worktree is clean, run `git pull --rebase` once and retry the push once. On a rebase conflict, run `git rebase --abort` and stop. On any other failure or a dirty worktree, stop: do not retry, duplicate the commit, rewrite history further, or report delivery success. Report the exact failing command, the relevant error line, and the remaining ahead state, then suggest the smallest safe next step.
 
 Never force-push unless the user explicitly asked for force push and the repository state has been inspected immediately before doing so.
 
@@ -139,4 +139,4 @@ If the repo uses a generated index or validation workflow, mention the commands 
 
 ## Boundaries
 
-Do not create PRs/MRs, merge branches, rebase, tag, release, deploy, land changes, or handle QA gates as part of this skill. Those are separate delivery workflows.
+Do not create PRs/MRs, merge branches, rebase (beyond the single non-fast-forward recovery in step 5), tag, release, deploy, land changes, or handle QA gates as part of this skill. Those are separate delivery workflows.
