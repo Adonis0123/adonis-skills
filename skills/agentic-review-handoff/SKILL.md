@@ -22,7 +22,7 @@ Route first, then load only that route's references:
 - **Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake.
 - **Classic** (`intake` / `feedback_validation` / `manual_continuation`) → read `references/packet-anatomy.md` and `references/packet-addressing.md`. Add `references/source-prompt-addressing.md` only when source-prompt provenance exists, `references/review-contract.md` only for deep review, and `references/example-packet.md` only when diagnosing packet shape against a populated example.
 - **Maintainer-only protocol / state-machine / persistence or integrity-claim change** → `references/protocol-evolution-gate.md`. Ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`).
-- **legacy dual-window** (`open`/`bind`/… deleted T8): CLI migration error → use `run` / `fix-completion` / `close` / `consult`
+- **Removed dual-window commands** (`open` / `bind` / …): the CLI returns a migration error → use `run` / `fix-completion` / `close` / `consult`
 
 ## Direct Grok — ordinary consult / one-shot review
 
@@ -154,7 +154,7 @@ node --test skills/agentic-review-handoff/scripts/test/adapters.test.mjs \
 
 ## Read-only Boundary (Important)
 
-This skill historically said "review/re-review are read-only by default; do not edit files." That rule still holds for the **subject of review** (source / docs / product / tests / configs being reviewed) but is **explicitly overridden** for one path: writing to the packet artifact itself.
+Review and re-review never modify the **subject of review** (source / docs / product / tests / configs being reviewed). Writing the packet artifact itself is part of the protocol, not an edit to that subject:
 
 - **Read-only still means**: do not modify the code, docs, tests, or configs being reviewed; do not commit / push / rebase.
 - **Packet artifact writes are part of the protocol, not a violation**: creating, appending to, renaming, and `mv`-ing files under `$repo_root/.review-handoff/**` is exactly what makes the cross-agent loop work. Treat these writes the same way you treat printing findings to the terminal.
@@ -162,11 +162,11 @@ This skill historically said "review/re-review are read-only by default; do not 
 
 ## Three non-negotiable invariants
 
-These survive every path (auto loop and classic). Each line is an accident-backed rule:
+These survive every path (auto loop and classic):
 
 1. **Absolute paths under `$repo_root/.review-handoff/`** — never cwd-relative. Violation → monorepo subdirectories create a second inbox or miss the root packet.
 2. **Never fabricate `# Review Handoff` without implementer context** — reviewers use `# Review Intake` instead. Violation → evidence trust boundary breaks; re-reviewers cannot independently re-attest findings.
-3. **H1 body is append-only at EOF; frontmatter is rewritten atomically once per stage** — never mid-file insert or leave `last_anchor` / `lifecycle_state` stale. Violation → physical last H1 diverges from frontmatter (Incident A); packet is unusable.
+3. **H1 body is append-only at EOF; frontmatter is rewritten atomically once per stage** — never mid-file insert or leave `last_anchor` / `lifecycle_state` stale. Violation → physical last H1 diverges from frontmatter; packet is unusable.
 
 ## Classic compatibility path (prompt-protocol only)
 
