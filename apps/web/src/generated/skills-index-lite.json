@@ -25,7 +25,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-23T09:55:31.000Z"
+    "updatedAt": "2026-10-01T11:34:49.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -39,7 +39,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:17:42.000Z"
+    "updatedAt": "2026-10-01T11:34:49.000Z"
   },
   {
     "slug": "ardot-mcp",
@@ -83,7 +83,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-23T03:58:34.000Z"
+    "updatedAt": "2026-10-01T11:30:46.000Z"
   },
   {
     "slug": "code-inspector-init",
@@ -200,7 +200,7 @@
     "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
     "metadata": {
       "author": "adonis",
-      "version": "2.1.0"
+      "version": "2.2.0"
     },
     "files": {
       "hasReferences": true,
@@ -276,7 +276,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-14T11:34:41.000Z"
+    "updatedAt": "2026-10-01T11:34:49.000Z"
   },
   {
     "slug": "review-prompt-composer",
@@ -299,13 +299,13 @@
     "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.7.0"
+      "version": "1.8.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T12:28:53.000Z"
+    "updatedAt": "2026-10-01T11:34:49.000Z"
   },
   {
     "slug": "uxc-facade",

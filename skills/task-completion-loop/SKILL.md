@@ -3,7 +3,7 @@ name: task-completion-loop
 description: "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review."
 metadata:
   author: adonis
-  version: "1.7.0"
+  version: "1.8.0"
 ---
 
 # Task Completion Loop
@@ -177,6 +177,14 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 1. `agentic-review-handoff`：默认 `completion=pass`；只在最终 `PASS` / `NO_FINDINGS` 覆盖当前 evidence id 时继续。`BLOCKED`、`concerns_require_fix`、review-only 与异常路径见 reference。
 2. `architecture-hardening-loop`：同范围运行，只接受 `NO_ACTIONABLE_FINDINGS`；其 `HUMAN_GATE` / `MISSING_DEPENDENCIES` / `UNVERIFIED` 原样透传为本 Loop 的同名 Result。它修改文件会使旧 evidence id 失效；其内部 review 覆盖最终 evidence id 时可复用，不必重跑直接 review。Fix 与 ownership 路径见 reference。
 3. 全新 Claude 盲审：使用新的可验证只读会话审最终 evidence id。范围内 `Fix` 触发最小修复和全部下游门禁重跑；最多 2 轮。
+
+## 无人值守续跑
+
+仅用于无人值守 / 自主运行；有人在场回答的 human-in-the-loop 会话不套用。
+
+- 纯文本结束的回合是进度报告，不是完成证据。任务账本就是 checklist，每回合更新；回合结束时仍有 `PENDING` 且未写明 blocker，就继续，或由宿主 / 父会话发一条点名未完成项的短消息。同一任务自动续跑最多 2–3 次，之后停下交审（按下文预算规则返回 `UNVERIFIED`），让真正卡住的运行结束。
+- 本 Loop 启动的后台命令、subagent 或 Grok / Claude 会话仍在运行时，等它结束并取回输出，不把任务当作完成。
+- 不应出现的提前停止：(1) 长总结只宣布下一步、没有工具调用；(2) 提出“除非你另有安排，否则我继续”并等回复；(3) 列出待用户决策项，但按自己判断没有一项阻塞剩余工作；(4) 因回合太长或某个里程碑完成而停下汇报。状态说明与建议放在下一次工具调用的同一消息里。应当停止：没有用户就无法推进（`HUMAN_GATE`），或阻塞点是被刻意保护的对象。本节不替代高风险 / 破坏性动作的确认，也不扩大「入口与授权」。
 
 ## 终态与报告
 

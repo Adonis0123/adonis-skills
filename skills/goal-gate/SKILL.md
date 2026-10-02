@@ -3,7 +3,7 @@ name: goal-gate
 description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
 metadata:
   author: adonis
-  version: "2.1.0"
+  version: "2.2.0"
 ---
 
 # Goal Gate
@@ -143,6 +143,14 @@ For a Chinese-first copy-ready prompt, use as needed: `推荐执行版（中文�
 ## Closing an adopted contract
 
 The final report is where false completion happens. Map each Done item to the evidence you surfaced (command + result, screenshot or page state, Figma comparison), and mark anything not exercised on the acceptance path as `UNVERIFIED` with the reason. Say "done" only when every Done item has evidence; otherwise report what is proven, what is `UNVERIFIED`, and what remains. A native Goal is completed only through its runtime row after this mapping holds.
+
+### Unattended continuation
+
+Only for unattended or autonomous runs; leave it out of human-in-the-loop sessions, where someone is there to answer.
+
+- A text-only end of turn is a report, not proof the contract is done. Keep the Done items in a checklist the agent updates (to-do tool or file). If a turn ends with items open and no blocker stated, continue, or have the harness or parent send a short message naming the open items. Stop after two or three automatic continuations on the same task so a genuinely stuck run ends and can be reviewed.
+- If a background command or subagent the agent started is still running, wait for it and use its output instead of treating the contract as done.
+- Unwanted stops while owed work remains: (1) a long summary that announces the next step with no tool call; (2) an offer to carry on unless the user prefers otherwise; (3) a list of decisions for the user when none blocks the rest; (4) stopping to report because the turn was long or a milestone is done. Put status notes and recommendations in the same message as the next tool call. Wanted stops: nothing can move without the user, or the blocker is deliberately protected. This never overrides the Safety Gate or confirmation for risky or destructive actions.
 
 ## Workflow-Gate Relationship
 
