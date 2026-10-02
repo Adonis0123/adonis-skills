@@ -4,11 +4,11 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/agents@15b7fb54202fb4ed92fbd4983cc14632ac93f1d2",
+      "source": "Adonis0123/agents@12e88b5a1fca90f945303d21d49d6814c7765d2f",
       "dirty": false
     },
     {
-      "source": "Adonis0123/hermes@68b6fc5279053e325bdb978f3cc569df411be4cf",
+      "source": "Adonis0123/hermes@a03a2771245af9013a387d5e5f6c8f11e687b5d2",
       "dirty": false
     }
   ],
@@ -32,7 +32,7 @@
     },
     {
       "path": "skills/dev-environment-roi-audit/SKILL.md",
-      "sha256": "1d1147c45f4dfdb4ee70415766c9cc0e18b7d50e417a74adda1459fb8bfadd4a"
+      "sha256": "9f47f18a606bb7b37ee7eceed03128617a801e965cbb6f7aaa17633329e64924"
     },
     {
       "path": "skills/dev-environment-roi-audit/evals/evals.json",

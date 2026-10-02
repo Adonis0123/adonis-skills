@@ -14,7 +14,7 @@ Measure whether each coding-agent component saves more loop time than it taxes. 
 
 1. Ask for or agree on an absolute `OUT_DIR` and analysis window before collecting data. Default to 90 days; if less data exists, report the actual window and session count.
 2. Keep source and configuration read-only during measurement. Write only under `OUT_DIR`. Git write operations are outside this workflow.
-3. Before every command, tell the user what will run and which numbers it should produce. Afterward, show the relevant raw output before interpreting it.
+3. For each measurement step, state which numbers it should produce, and show the raw output a conclusion rests on before interpreting it.
 4. Attach at least one measured number to every conclusion. Put unsupported opinions under `UNVERIFIED`; never blend them into findings.
 5. Discover paths and wrappers from the machine. Do not assume home-directory layouts, project names, account aliases, or config inheritance.
 6. Require item-by-item approval before changing configuration, disabling components, moving files, or deleting anything. A completed audit is not blanket mutation authority.
