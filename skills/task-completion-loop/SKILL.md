@@ -116,6 +116,7 @@ Task Completion Result
 - A 的三方立场互不依赖：宿主写自己的立场时，并行发起 Grok 与 Claude。
 - B 的两次交叉质疑互不依赖，并行发起。B 至多两轮；第二轮后仍存分歧，属技术默认值由宿主依证据裁定，属用户决策转入 C。
 - 每次外部调用设 deadline（默认与 `agentic-review-handoff` 的 Reviewer timeout 一致，20 分钟；宿主可缩短并记录）。以后台进程 + 轮询方式发起，避免宿主前台工具超时截断真实会话。进程存活时不杀、不重发；超时按 `DELIVERY_UNKNOWN` 处理：仅当本地证据证明未提交才同参数重试一次，否则本阶段记 `UNVERIFIED`，保留句柄与已得立场，下一轮从缺失的一方继续。
+- 等后台外部调用结束：优先等发起时记下的 PID（如 `review-loop consult ... > out 2>&1 & echo $! > pid`，再 `while kill -0 "$(cat pid)" 2>/dev/null; do sleep 15; done`），或用宿主自带的后台任务完成通知。不用 `pgrep -f` / `ps | grep` 按等待命令自身也含的字符串轮询：它会匹配到等待脚本自己，循环永不结束；非用模式不可时写成 `[r]eview-loop` 这类方括号形式，让它匹配不到自身。
 - 快路径：账本无 `HUMAN_DECISION`、范围由 plan/代码唯一确定、A 三方在范围/归属/验证上无实质分歧时，B 只跑一轮，无新分歧即收敛。快路径不减少参与方，不省略 B。
 
 ### B. 交叉质疑
