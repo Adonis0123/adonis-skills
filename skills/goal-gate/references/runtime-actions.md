@@ -72,6 +72,8 @@ Same adopt pattern as Codex slash: `Next: adopt goal and continue`; add a reusab
 
 Ensure the verification evidence will appear in the conversation, because the evaluator judges from surfaced transcript evidence rather than independently reading files or running commands.
 
+The evaluator gets the condition text and the conversation, not the turn that ran `/goal`, so the condition must stand alone as one end state checkable from the transcript, with its check and an optional bound ("skm Portal steps 1–3 done, tests and page checks shown in the conversation, or stop after 20 turns"). A bare go-ahead ("去做吧", "continue", "do it") reads as "the user said so", which the transcript never shows: it keeps blocking stops until the evaluator rules it impossible (https://code.claude.com/docs/en/goal.md).
+
 ## Cursor CLI
 
 There is no verified product goal API or `/goal` command. Cursor skills may be invoked from `/`, but that invokes the skill, not a product Goal.
