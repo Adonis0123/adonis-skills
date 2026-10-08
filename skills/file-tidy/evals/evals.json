@@ -1,0 +1,58 @@
+{
+  "skill_name": "file-tidy",
+  "evals": [
+    {
+      "id": 0,
+      "name": "routine-tidy",
+      "prompt": "帮我把下载和桌面整理一下，按 ~/Files 那套规则来，截图收件箱也一起清掉。我已经同意直接执行，不用再问我。",
+      "expected_output": "Existing Root is used. Each item is filed by precedence: a key file into 99_sensitive, an invoice and a receipt screenshot (identified by viewing it) and an expense CSV (identified by reading it) into 30_finance, a health report into 10_personal. One of two byte-identical CSVs goes to the trash bundle. A verified Manifest is written and anything left behind is named in the report.",
+      "files": [
+        "fixture: Downloads with invoice, uninstalled-app dmg, duplicate expense CSVs, api-keys.txt, docx, mp4; Desktop with a receipt screenshot PNG and a health report; 00_inbox with a screen recording"
+      ],
+      "assertions": [
+        "Every item left in an Inbox or on the Desktop is named in the report",
+        "Receipt screenshot (readable image) is filed under 30_finance",
+        "Expense CSV (readable text) is filed under 30_finance",
+        "api-keys.txt is in Files/99_sensitive",
+        "Invoice is in Files/30_finance",
+        "Health report is in Files/10_personal",
+        "No file lost: every original file's content still exists in the sandbox (Trash included)",
+        "Duplicate CSV: one copy kept in Files, the other in Trash (not deleted)",
+        "A Manifest with all entries verified exists in Files/_system/manifests"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "first-setup",
+      "prompt": "我刚换了新 Mac，桌面和下载已经开始乱了。帮我建一套固定的文件分类，把现在的东西都归进去，以后截图也别再堆在桌面上。直接做，不用再找我确认。",
+      "expected_output": "Root ~/Files is created from the default config with numbered Categories, a config and README; all items are filed (passport scan into the Sensitive Zone); the screenshot-location change to the Capture Inbox is written down; a verified Manifest exists.",
+      "files": [
+        "fixture: no Root yet; Downloads with invoice, passport scan, installer, photo, pptx, srt; Desktop with a sprint-board screenshot PNG, rental contract, cat video"
+      ],
+      "assertions": [
+        "Root ~/Files created with >=5 numbered Categories",
+        "Downloads and Desktop are empty",
+        "passport-scan.jpg is in a sensitive Category",
+        "No file lost: every original file's content still exists in the sandbox (Trash included)",
+        "Screenshot location change to an inbox under Files is written down",
+        "A Manifest with all entries verified exists in Files/_system/manifests",
+        "Machine config recorded at Files/_system/config.json"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "undo-last-run",
+      "prompt": "上次整理把我下载文件夹里的东西搬走了，我现在找不到了。帮我把上次整理的全部恢复回原来的位置，直接弄就行。",
+      "expected_output": "The latest Manifest is rolled back with the script: all three files are back in Downloads, nothing is left in Files, and every Manifest entry carries restored_at.",
+      "files": [
+        "fixture: one previous run moved three Downloads files into Files and wrote a Manifest"
+      ],
+      "assertions": [
+        "All 3 files are back in Downloads",
+        "No copies remain inside Files",
+        "The Manifest records the restore (restored_at on every entry)",
+        "No file lost: every original file's content still exists in the sandbox (Trash included)"
+      ]
+    }
+  ]
+}

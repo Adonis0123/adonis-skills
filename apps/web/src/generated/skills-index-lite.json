@@ -177,7 +177,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-23T09:55:31.000Z"
+    "updatedAt": "2026-10-02T08:30:06.000Z"
   },
   {
     "slug": "figma-mcp",
@@ -195,6 +195,20 @@
     "updatedAt": "2026-09-24T03:23:44.000Z"
   },
   {
+    "slug": "file-tidy",
+    "name": "file-tidy",
+    "description": "Organize a person's own files into one numbered Root such as ~/Files on macOS, Linux or Windows: empty the Downloads and screenshot Inboxes, clear the desktop Workbench, file scattered personal, work, finance, media, installer and sensitive files into Categories, and point app save locations at the Inboxes so it stays tidy. Use whenever the user asks to tidy, sort, clean up or file their Desktop, Downloads, home folder or personal documents in any language, to set default download or screenshot folders, to set up the same filing scheme on a new computer, or to undo a previous tidy run. Every run writes a reviewed Plan, moves with content-hash verification, keeps a rollback Manifest and never deletes. Not for code repositories, cloud or Feishu documents, photo-library management, or disk-space analysis alone.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.1.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    }
+  },
+  {
     "slug": "goal-gate",
     "name": "goal-gate",
     "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
@@ -207,7 +221,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-02T02:09:20.000Z"
+    "updatedAt": "2026-10-07T11:51:42.000Z"
   },
   {
     "slug": "installed-app-feature-inventory",
@@ -305,7 +319,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-02T02:09:20.000Z"
+    "updatedAt": "2026-10-07T10:09:08.000Z"
   },
   {
     "slug": "uxc-facade",

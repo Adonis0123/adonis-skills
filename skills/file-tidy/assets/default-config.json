@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "root": "~/Files",
+  "categories": [
+    {
+      "id": "00_inbox",
+      "purpose": "Capture Inbox: screenshots and screen recordings land here; emptied on every tidy run.",
+      "children": []
+    },
+    {
+      "id": "10_personal",
+      "purpose": "Personal life records: health, family, events, household.",
+      "children": ["health", "family", "events", "household"]
+    },
+    {
+      "id": "20_work",
+      "purpose": "Employer and job material: company documents, processes, troubleshooting, meeting recordings, test results.",
+      "children": [
+        "company",
+        "process",
+        "troubleshooting",
+        "recordings",
+        "test-results"
+      ]
+    },
+    {
+      "id": "30_finance",
+      "purpose": "Anything about money: invoices, receipts, bills, reimbursements, ledgers.",
+      "children": [
+        "invoices/personal",
+        "invoices/company",
+        "bills",
+        "reimbursements",
+        "ledger"
+      ]
+    },
+    {
+      "id": "40_media",
+      "purpose": "Creative work and reusable assets: videos, images, subtitles, fonts.",
+      "children": ["videos", "images", "subtitles", "fonts"]
+    },
+    {
+      "id": "80_installers",
+      "purpose": "Installers and packages that are kept on purpose.",
+      "children": ["macos", "android", "windows"]
+    },
+    {
+      "id": "90_archive",
+      "purpose": "Material the owner explicitly retired but wants to keep, grouped by year of archiving.",
+      "children": []
+    },
+    {
+      "id": "99_sensitive",
+      "purpose": "Sensitive Zone: identity documents, passwords, tokens, keys, credentials.",
+      "children": ["identity", "credentials", "keys"]
+    }
+  ],
+  "precedence": [
+    "99_sensitive",
+    "30_finance",
+    "20_work",
+    "10_personal",
+    "40_media",
+    "80_installers",
+    "90_archive"
+  ],
+  "inboxes": {
+    "download": "~/Downloads",
+    "capture": "~/Files/00_inbox",
+    "workbench": "~/Desktop"
+  },
+  "outside_root": {
+    "notes": [],
+    "code": [],
+    "app_data": []
+  },
+  "app_settings": []
+}

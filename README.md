@@ -64,6 +64,7 @@ npx skills add adonis0123/adonis-skills --list
 | [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | Audit MCP servers, skills, and instruction files with real logs; keep, narrow, or remove by ROI.                                       |
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | Tell whether a desktop-hosted coding agent is working, idle, or stopped, from process and file evidence.                               |
 | [`installed-app-feature-inventory`](./skills/installed-app-feature-inventory)   | List what an installed macOS app can really do, from its bundle on disk.                                                               |
+| [`file-tidy`](./skills/file-tidy)                                               | Sort Desktop, Downloads and home files into one numbered `~/Files` Root with verified, reversible moves.                               |
 
 ## Recommended Third-Party Skills
 

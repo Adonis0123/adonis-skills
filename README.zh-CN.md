@@ -64,6 +64,7 @@ npx skills add adonis0123/adonis-skills --list
 | [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | 用真实日志审计 MCP server、技能和指令文件，按投入产出决定保留、收窄或移除。                            |
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | 根据进程和文件证据，判断桌面端 coding agent 是在干活、闲置还是已停。                                   |
 | [`installed-app-feature-inventory`](./skills/installed-app-feature-inventory)   | 从磁盘上的安装包列出一个 macOS 应用真正具备的功能。                                                    |
+| [`file-tidy`](./skills/file-tidy)                                               | 把桌面、下载和家目录的文件整理进带编号的 `~/Files`，移动可校验、可回滚。                               |
 
 ## 推荐的第三方技能
 
