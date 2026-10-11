@@ -4,3 +4,6 @@
 *.py linguist-detectable=false
 *.smhtml linguist-detectable=false
 *.tpl linguist-detectable=false
+
+# Windows PowerShell 5.1 scripts: store CRLF byte-for-byte (file-tidy tests assert it)
+*.ps1 -text
