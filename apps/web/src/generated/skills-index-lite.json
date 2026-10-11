@@ -197,16 +197,17 @@
   {
     "slug": "file-tidy",
     "name": "file-tidy",
-    "description": "Organize a person's own files into one numbered Root such as ~/Files on macOS, Linux or Windows: empty the Downloads and screenshot Inboxes, clear the desktop Workbench, file scattered personal, work, finance, media, installer and sensitive files into Categories, and point app save locations at the Inboxes so it stays tidy. Use whenever the user asks to tidy, sort, clean up or file their Desktop, Downloads, home folder or personal documents in any language, to set default download or screenshot folders, to set up the same filing scheme on a new computer, or to undo a previous tidy run. Every run writes a reviewed Plan, moves with content-hash verification, keeps a rollback Manifest and never deletes. Not for code repositories, cloud or Feishu documents, photo-library management, or disk-space analysis alone.",
+    "description": "Organize a person's own files on macOS, Linux or Windows into one numbered Root (default ~/Files): empty Downloads and screenshot Inboxes, clear the desktop, file personal, work, finance, media, installer and sensitive files into Categories, find duplicate files, and point app save locations at the Inboxes. Use when the user asks, in any language (e.g. 整理文件/桌面/下载、去重), to tidy, sort, dedupe or file their Desktop, Downloads, home folder, documents or data drives, set default download or screenshot folders, repeat the scheme on a new computer, or undo a previous tidy. Every run is planned, verified, reversible and never deletes. Not for code repositories, cloud documents, photo-library management or disk-space analysis alone.",
     "metadata": {
       "author": "adonis",
-      "version": "1.1.0"
+      "version": "1.3.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
-    }
+    },
+    "updatedAt": "2026-10-08T12:26:58.000Z"
   },
   {
     "slug": "goal-gate",
