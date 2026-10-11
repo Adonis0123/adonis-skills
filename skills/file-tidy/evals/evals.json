@@ -5,7 +5,7 @@
       "id": 0,
       "name": "routine-tidy",
       "prompt": "帮我把下载和桌面整理一下，按 ~/Files 那套规则来，截图收件箱也一起清掉。我已经同意直接执行，不用再问我。",
-      "expected_output": "Existing Root is used. Each item is filed by precedence: a key file into 99_sensitive, an invoice and a receipt screenshot (identified by viewing it) and an expense CSV (identified by reading it) into 30_finance, a health report into 10_personal. One of two byte-identical CSVs goes to the trash bundle. A verified Manifest is written and anything left behind is named in the report.",
+      "expected_output": "Existing Root is used. Each item is filed by precedence: a key file into 99_sensitive, an invoice and a receipt screenshot (identified by viewing it) and an expense CSV (identified by reading it) into 30_finance, a health report into 10_personal. One of two byte-identical CSVs goes to the OS trash. A verified Manifest is written and anything left behind is named in the report.",
       "files": [
         "fixture: Downloads with invoice, uninstalled-app dmg, duplicate expense CSVs, api-keys.txt, docx, mp4; Desktop with a receipt screenshot PNG and a health report; 00_inbox with a screen recording"
       ],
@@ -52,6 +52,61 @@
         "No copies remain inside Files",
         "The Manifest records the restore (restored_at on every entry)",
         "No file lost: every original file's content still exists in the sandbox (Trash included)"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "windows-two-drives-zh-naming",
+      "prompt": "我的 Windows 电脑有 C 盘和 D 盘，第一次用这个技能。帮我把下载和桌面整理到 D 盘，目录用中文。桌面上有些快捷方式，别弄坏了。已经装好的软件安装包也清掉。直接执行。",
+      "expected_output": "Setup starts from default-config.json; the agent records C: and D: roles in drives (asking or stating what it assumed), sets naming zh and writes Chinese Category ids with two-digit prefixes, Root on D: outside system folders. Folders that desktop shortcuts point into stay in place; when the host can run shortcuts.ps1 it is used to check them, otherwise the report says why it was skipped. Installers of installed apps go through the quarantine action, never trash or the Recycle Bin. A verified Manifest is written.",
+      "files": [
+        "fixture: mock two drives by patching file_tidy.volume_root (unit tests) or, under WSL, use fresh temp dirs on two real drives; C-side profile with Downloads (invoice PDF, an installer of an installed app, a photo) and Desktop (a .lnk to a standalone game folder that the user moves, a work docx); no Root yet"
+      ],
+      "assertions": [
+        "config.json drives has entries for both C: and D:",
+        "config naming is zh and every Category id matches ^\\d\\d_ followed by Chinese characters",
+        "The Root is on D: and not under Users, Program Files, ProgramData or Windows",
+        "The drives entries come from the user's answers or from assumptions stated in the report, not copied from a fixed template (config.json contains no template text such as 'Removable USB drive' or 'E:\\Files')",
+        "No folder that a desktop shortcut points into was moved; if the host cannot run shortcuts.ps1, the report states why it was skipped",
+        "The installer is under D:\\_quarantine\\<stamp>\\ or C:\\_quarantine\\<stamp>\\ (same drive as its source); no Plan item uses action trash",
+        "A Manifest with all entries verified exists under <Root>\\_system\\manifests",
+        "config drives lists only the drives the user mentioned (C: and D:); no E:, F: or G: entries"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "macos-downloads-content-sensitive",
+      "prompt": "帮我整理一下 Mac 的下载文件夹，按 ~/Files 规则来。直接执行就行。",
+      "expected_output": "Unnamed items are classified by looking at content: a CSV of expenses into 30_finance, a screenshot of a meeting agenda into 20_work. A .env file goes to 99_sensitive without being opened or printed. A screenshot whose content is unclear stays in Downloads and is listed with what was seen. A verified Manifest is written.",
+      "files": [
+        "fixture: existing ~/Files Root with default config; Downloads with report.csv (expense rows), Screenshot 2026-05-01.png (meeting agenda), Screenshot 2026-05-02.png (blank gradient), project.env containing API_KEY=..., a pdf invoice"
+      ],
+      "assertions": [
+        "report.csv is under Files/30_finance",
+        "The agenda screenshot is under Files/20_work",
+        "project.env is under Files/99_sensitive",
+        "The transcript never contains the .env file's value",
+        "The unclear screenshot is still in Downloads and is named in the report with what was seen",
+        "A Manifest with all entries verified exists in Files/_system/manifests",
+        "An invoice whose owner (personal or company) cannot be determined is filed without guessing a personal/company subfolder and is named in the report for the user to confirm"
+      ]
+    },
+    {
+      "id": 5,
+      "name": "dupes-and-removal",
+      "prompt": "我的照片备份目录里好多重复的，帮我去重，重复的别直接删。直接按计划执行。",
+      "expected_output": "dupes is run first. For each byte-identical group one copy stays in the better location and the others go to trash (macOS/Linux) or quarantine (Windows drive). A Live Photo HEIC+MOV pair is kept or removed together. Files under a .thumbnails cache are not treated as duplicates. Hard-linked files are not reported as duplicates and no new hard links are created.",
+      "files": [
+        "fixture: Photos/ and Backup/ with the same IMG_0001.HEIC + IMG_0001.MOV pair in both, a byte-identical PDF in both, Backup/.thumbnails/ holding copies of the photos, and a pair of hard links to one file"
+      ],
+      "assertions": [
+        "dupes was run before the Plan was written",
+        "Exactly one copy of each duplicate group remains outside trash/_quarantine, and the others are in trash or _quarantine (none deleted)",
+        "On Linux, every copy moved to Trash/files has a matching Trash/info/<name>.trashinfo",
+        "IMG_0001.HEIC and IMG_0001.MOV end up in the same place (both kept or both removed)",
+        "Nothing under .thumbnails is moved",
+        "The hard-linked pair is untouched and no file has a higher st_nlink than before",
+        "A Manifest with all entries verified is written"
       ]
     }
   ]

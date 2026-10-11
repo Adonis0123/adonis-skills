@@ -1,6 +1,7 @@
 {
   "version": 1,
   "root": "~/Files",
+  "naming": "en",
   "categories": [
     {
       "id": "00_inbox",
@@ -74,5 +75,6 @@
     "code": [],
     "app_data": []
   },
-  "app_settings": []
+  "app_settings": [],
+  "drives": {}
 }
