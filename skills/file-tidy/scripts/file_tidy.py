@@ -366,7 +366,9 @@ def trash_dir() -> Path:
     if system == "Darwin":
         return Path.home() / ".Trash"
     if system == "Linux":
-        data = os.environ.get("XDG_DATA_HOME") or str(Path.home() / ".local" / "share")
+        data = os.environ.get("XDG_DATA_HOME", "")
+        if not os.path.isabs(data):  # the spec says to ignore a relative value
+            data = str(Path.home() / ".local" / "share")
         return Path(data) / "Trash" / "files"
     raise SystemExit(
         f"the trash action is not supported on {system} yet; "
@@ -402,7 +404,7 @@ def write_trashinfo(dest: Path, original: Path) -> Path:
     info = trashinfo_path(dest)
     info.parent.mkdir(parents=True, exist_ok=True)
     text = ("[Trash Info]\n"
-            f"Path={urllib.parse.quote(str(original), safe='/')}\n"
+            f"Path={urllib.parse.quote(os.fsencode(original), safe='/')}\n"
             f"DeletionDate={dt.datetime.now().strftime('%Y-%m-%dT%H:%M:%S')}\n")
     with info.open("x", encoding="utf-8") as handle:
         handle.write(text)
@@ -427,6 +429,17 @@ def write_json(path: Path, data: dict, create: bool = False) -> None:
 
 def same_volume(src: Path, dest_dir: Path) -> bool:
     return src.lstat().st_dev == dest_dir.stat().st_dev
+
+
+def on_trash_volume(src: Path) -> bool:
+    """True when src shares a device with the home trash (or the nearest existing ancestor of it)."""
+    target = trash_dir()
+    while not target.exists() and target != target.parent:
+        target = target.parent
+    try:
+        return src.lstat().st_dev == target.stat().st_dev
+    except OSError:
+        return True  # let the existence and move checks report it
 
 
 def _remove(path: Path) -> None:
@@ -828,6 +841,9 @@ def resolve_plan(plan: dict, stamp: str) -> tuple[Path, list[dict], list[str]]:
             raise SystemExit(f"item {index}: refusing to move {src}: {reason}")
         if not exists(src):
             raise SystemExit(f"item {index}: source does not exist: {src}")
+        if action == "trash" and freedesktop_trash() and not on_trash_volume(src):
+            raise SystemExit(f"item {index}: source is on another mount, so trash would copy it into the "
+                             f"home trash; use move instead: {src}")
         if exists(dest):
             raise SystemExit(f"item {index}: destination already exists, refusing to overwrite: {dest}")
         key = path_key(dest)
