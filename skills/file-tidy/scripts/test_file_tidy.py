@@ -468,6 +468,28 @@ class ApplyTests(Sandbox):
         self.assertEqual(list((self.home / ".local" / "share" / "Trash" / "info").iterdir()), [])
         self.assertTrue((self.inbox / "a.txt").exists())
 
+    def test_trashinfo_path_percent_encodes_non_utf8_bytes(self) -> None:
+        if os.name == "nt":
+            self.skipTest("POSIX byte file names")
+        dest = self.home / "Trash" / "files" / "x"
+        info = FT.write_trashinfo(dest, Path(os.fsdecode(b"/srv/caf\xe9 1.txt")))
+        self.assertIn("Path=/srv/caf%E9%201.txt\n", info.read_text(encoding="utf-8"))
+
+    def test_relative_xdg_data_home_is_ignored(self) -> None:
+        env = {**home_env(self.home), "XDG_DATA_HOME": "relative/share"}
+        with mock.patch.object(FT.platform, "system", return_value="Linux"), mock.patch.dict(os.environ, env):
+            self.assertEqual(FT.trash_dir(), Path.home() / ".local" / "share" / "Trash" / "files")
+
+    def test_trash_from_another_mount_is_rejected(self) -> None:
+        self.init_root()
+        (self.inbox / "a.txt").write_text("a")
+        plan = self.write_plan([{"src": str(self.inbox / "a.txt"), "action": "trash"}])
+        with mock.patch.object(FT, "freedesktop_trash", return_value=True), \
+                mock.patch.object(FT, "on_trash_volume", return_value=False), \
+                self.assertRaisesRegex(SystemExit, "use move instead"):
+            self.run_main("apply", str(plan), "--apply")
+        self.assertTrue((self.inbox / "a.txt").exists())
+
     @unittest.skipUnless(platform.system() in {"Darwin", "Linux"}, "trash supported on macOS/Linux only")
     def test_dry_run_shows_a_stamp_placeholder_not_a_time(self) -> None:
         self.init_root()
