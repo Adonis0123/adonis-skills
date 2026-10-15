@@ -65,6 +65,7 @@ npx skills add adonis0123/adonis-skills --list
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | 根据进程和文件证据，判断桌面端 coding agent 是在干活、闲置还是已停。                                   |
 | [`installed-app-feature-inventory`](./skills/installed-app-feature-inventory)   | 从磁盘上的安装包列出一个 macOS 应用真正具备的功能。                                                    |
 | [`file-tidy`](./skills/file-tidy)                                               | 把桌面、下载和家目录的文件整理进带编号的 `~/Files`，移动可校验、可回滚。                               |
+| [`worktree-tidy`](./skills/worktree-tidy)                                       | 跨仓库找出闲置的 git worktree，确认后删除干净的那些；分支保留，MR 合并或关闭后才删。                   |
 
 ## 推荐的第三方技能
 

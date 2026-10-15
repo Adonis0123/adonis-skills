@@ -1,0 +1,4 @@
+interface:
+  display_name: "Worktree Tidy"
+  short_description: "Find and remove stale git worktrees across repositories"
+  default_prompt: "Use $worktree-tidy to scan my repositories for stale git worktrees, show the report, and remove only the ones I confirm."

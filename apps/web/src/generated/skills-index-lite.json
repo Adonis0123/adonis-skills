@@ -207,7 +207,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-11T16:04:38.000Z"
+    "updatedAt": "2026-10-12T03:05:45.000Z"
   },
   {
     "slug": "goal-gate",
@@ -385,5 +385,19 @@
       "hasSrc": false
     },
     "updatedAt": "2026-10-02T08:02:54.000Z"
+  },
+  {
+    "slug": "worktree-tidy",
+    "name": "worktree-tidy",
+    "description": "Find and remove stale git worktrees across one or many repositories: prune records of worktrees whose folder is gone, report every linked worktree with its idle days, uncommitted changes and pull/merge request state (GitHub, cnb.cool, GitLab), and remove only idle, clean ones the user confirms, keeping their branches unless the request is merged or closed. Use when the user asks, in any language, to clean up, list, audit or prune git worktrees, or when a sidebar such as Orca shows too many worktrees. Not for deleting branches without worktrees, cleaning build caches, or removing whole repositories.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    }
   }
 ]

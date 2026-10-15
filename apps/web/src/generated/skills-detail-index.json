@@ -1746,5 +1746,40 @@
         "level": 2
       }
     ]
+  },
+  {
+    "slug": "worktree-tidy",
+    "sections": [
+      {
+        "raw": "Keep the number of git worktrees down without losing work. Read [references/glossary.md](references/glossary.md) first and use its terms in reports.\n\n`TIDY=<this skill's directory>/scripts/worktree_tidy.py` is the engine (Python 3.9+, standard library only). It decides what is Stale from facts; you show the report, the user chooses, the script removes and checks again before each removal.",
+        "heading": "Worktree Tidy",
+        "level": 1
+      },
+      {
+        "raw": "- Remove only what the script reports as `removable`, and only after the user confirms the list. `remove` without `--yes` is a dry run; pass `--yes` only after confirmation.\n- Never use `git worktree remove --force`, `rm -rf` on a worktree, or a tool's own delete command (Orca's `worktree rm` also deletes branches). The script uses plain `git worktree remove`; tools such as Orca drop the worktree from their sidebar on their next scan.\n- Removing a worktree keeps its branch. Pass `--delete-branch` only when the user asked for it; the script still deletes a branch only when its Request is `merged` or `closed`.\n- Never commit, stash or discard changes to make a worktree removable. A `dirty` worktree is reported for the user to handle.",
+        "heading": "Hard rules",
+        "level": 2
+      },
+      {
+        "raw": "1. Scan. With no arguments the script scans the repository of the current folder, or the roots in the config file.\n\n   ```bash\n   python3 \"$TIDY\" scan                       # human-readable report\n   python3 \"$TIDY\" --json scan --root ~/code  # first-level repositories under a folder\n   python3 \"$TIDY\" scan --repo . --no-remote  # skip pull/merge request lookups (faster)\n   ```\n\n   Every scan first prunes records of worktrees whose folder is gone; `--no-prune` only reports them.\n\n2. Report to the user, grouped by Repository: how many are removable, which are kept and why (each Blocker), and which branches could be deleted. Lead with the removable count.\n3. Remove what the user confirms, first as a dry run, then for real:\n\n   ```bash\n   python3 \"$TIDY\" remove <path>...                          # dry run\n   python3 \"$TIDY\" remove <path>... --yes                    # keep branches\n   python3 \"$TIDY\" remove <path>... --delete-branch --yes    # also delete merged/closed branches\n   ```\n\n   Exit code 1 means at least one path failed; report each `error` as given.",
+        "heading": "Workflow",
+        "level": 2
+      },
+      {
+        "raw": "Optional `$XDG_CONFIG_HOME/worktree-tidy/config.json` (default `~/.config/worktree-tidy/config.json`):\n\n```json\n{ \"roots\": [\"~/code\", \"~/work\"], \"repos\": [\"~/notes\"], \"days\": 7, \"orca\": true }\n```\n\n- `roots`: scan every first-level folder whose `.git` is a directory. `repos`: extra repositories (a worktree path resolves to its main repository).\n- `days`: idle days before a worktree is Stale (`--days` overrides). `orca: false` (or `--no-orca`) stops reading Orca.",
+        "heading": "Configuration",
+        "level": 2
+      },
+      {
+        "raw": "- **Activity** never uses the index file: `git status`, editors and Orca refresh it without anyone working. The script runs `git --no-optional-locks status`, so scanning is not Activity.\n- **Orca** (optional): when the `orca` CLI is found (`$WORKTREE_TIDY_ORCA`, `PATH`, or the macOS app bundle), its `isPinned` and `lastActivityAt` per worktree are read. Nothing is written to Orca.\n- **Requests** are looked up by the branch's upstream name (or local name) through the host CLI chosen from the `origin` URL: `gh` (GitHub), `cnb` (cnb.cool has no branch filter, so it pages through the signed-in user's requests updated since 30 days before the branch's newest commit; other people's branches report `none`), `glab` (GitLab). A missing or failing CLI gives `unknown`, which never allows deleting a branch. Squash merges leave a branch \"not fully merged\" in git, so the Request state, not git ancestry, decides.\n- A detached worktree is removable only when its HEAD commit is on some branch, tag or remote ref.",
+        "heading": "How facts are found",
+        "level": 2
+      },
+      {
+        "raw": "Worktrees made for a one-off look at a pull request should live in a temporary folder and be removed with `git worktree remove` when the review ends; `scan` catches the rest.",
+        "heading": "Prevent the pile-up",
+        "level": 2
+      }
+    ]
   }
 ]

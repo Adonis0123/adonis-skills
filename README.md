@@ -65,6 +65,7 @@ npx skills add adonis0123/adonis-skills --list
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | Tell whether a desktop-hosted coding agent is working, idle, or stopped, from process and file evidence.                               |
 | [`installed-app-feature-inventory`](./skills/installed-app-feature-inventory)   | List what an installed macOS app can really do, from its bundle on disk.                                                               |
 | [`file-tidy`](./skills/file-tidy)                                               | Sort Desktop, Downloads and home files into one numbered `~/Files` Root with verified, reversible moves.                               |
+| [`worktree-tidy`](./skills/worktree-tidy)                                       | Find stale git worktrees across repositories and remove the idle, clean ones you confirm, keeping branches unless merged.              |
 
 ## Recommended Third-Party Skills
 
