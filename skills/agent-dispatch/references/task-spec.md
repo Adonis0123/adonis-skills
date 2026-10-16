@@ -25,7 +25,7 @@ Invariants, compatibility rules, repository instructions to read first (nearest 
 
 ## Acceptance
 
-The tests, commands, or page evidence that prove completion. Run only affected tests; no full suite unless listed here.
+The tests, commands, or page evidence that prove completion. Run only affected tests; no full suite unless listed here. Examples in the request are a floor, not the spec: also test boundaries the examples skip (empty, zero, negative, NaN, rounding of halves, binary floating point).
 
 ## Return
 
