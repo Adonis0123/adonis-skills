@@ -3,7 +3,7 @@ name: workflow-gate
 description: "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, explicit Goal management, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and full-completion pipelines. Skip trivial one-line work and clearly matching safe named-skill requests. Treat first-principles analysis as a method, not a Challenge trigger unless the user is widening the option space."
 metadata:
   author: adonis
-  version: "3.6.0"
+  version: "3.7.0"
 ---
 
 # Workflow Gate
@@ -148,5 +148,6 @@ All other runtimes use their bare slug with `Fallback alias: none`. Installation
 
 - Pick the smallest Route that protects correctness; the gate is advisory and never expands authority.
 - Create no persistent artifact from this skill alone. The selected workflow owns subsequent work.
+- A Route never implies multi-agent fan-out. When implementation could be split across agents or needs a cross-model reviewer, load `agent-dispatch` after the block to pick the tier; Direct and Light work stays single-agent by default.
 
 Worked output blocks live in two Slow-path files: `references/examples-core.md` has one example per Route; `references/examples-edge.md` covers tiebreakers, mismatches, Rule #2 negatives, Thesis S1, Architecture diagnose vs harden, re-gating, contradictory signals, and "don't ask me". Open either only when a worked output is genuinely needed — never after a cheat-card or numbered-rule match.

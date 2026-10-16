@@ -1,0 +1,48 @@
+{
+  "skill_name": "agent-dispatch",
+  "evals": [
+    {
+      "id": 1,
+      "name": "simple-copy-change-stays-direct",
+      "prompt": "我手上有 cc001 cc002 cc003、codex、grok 都登录着，你当总指挥。需求：把 Director 导出面板里按钮文案 \"Export\" 改成 \"Export video\"，中英文案都在 packages/director-editor/src/modules/export/messages.ts 里。按你的派活方式安排一下，先给出派活计划。",
+      "expected_output": "Picks L0: coordinator edits the one file itself, no worktree, no workers, no reviewer loop, no full test suite; states a short time target.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "选择 L0/直接做：总指挥自己改，不派工人",
+        "不新建 worktree",
+        "不安排跨模型评审循环",
+        "不跑全量测试",
+        "给出目标时长（约十几分钟内）"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "single-product-machine-degrades",
+      "prompt": "我同事的电脑只装了 Claude Code，一个订阅账号，没有 codex、grok、agy，也没装 sideby。他要做的需求：server 端新增一个 tRPC 接口 project.archive（server/router/routes/project.ts），web 端项目列表加「归档」按钮调用它（web/src/pages/projects/_blocks/ProjectList.tsx），两边都要测试。他想学我的方式：多 agent 并行写、另一个 AI 来 review。帮他排一个派活计划。",
+      "expected_output": "Does not assume codex/grok/agy exist; with one product and one pool it runs the two parts sequentially (or coordinator writes) instead of parallel; reviewer is a fresh Claude session given only spec + diff, not the writer; says which fallback applied.",
+      "files": ["fixtures/probe-single.json"],
+      "assertions": [
+        "不安排 codex/grok/agy 等不存在的工具",
+        "不并行跑两个工人（顺序执行或总指挥自己写）",
+        "评审由没写这份代码的新会话做，只给 spec 和 diff",
+        "明确说出用了哪种降级",
+        "工人不提交、只有一个总指挥"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "cross-package-fanout-plus-article",
+      "prompt": "这批要做三件事：1) packages/director-widget 的卡片加「复制链接」按钮；2) server/service/mcp/director/ 加一个 director_share_link 工具，卡片按钮调用它；3) 做完后写一篇给团队的技术分享，讲这个功能怎么实现的。机器上 cc001-003、codex 两个号、grok 两个号、agy 都能用。按你的方式派活，给我派活计划和每个工人的任务说明。",
+      "expected_output": "Picks L2 with at most 3 workers whose writable file sets do not overlap (widget vs server), or explains merging into one worker if the tool contract couples them; reviewer is a different product than the writer; one coordinator; workers do not commit; article goes to the drafting agent with fact check by coordinator after code lands; worker specs include target/change/constraints/ownership/acceptance.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "工人不超过 3 个",
+        "列出每个工人可改的文件且互不重叠，或说明为何合并成一个工人",
+        "评审方与写代码的不是同一家产品",
+        "工人不 commit/push/发布",
+        "文章在代码落地后由 drafting_agents 里的起草 agent（agy）写、总指挥核对事实",
+        "每个工人任务说明含目标/改动/约束/归属/验收"
+      ]
+    }
+  ]
+}

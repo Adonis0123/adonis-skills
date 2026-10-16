@@ -1,5 +1,19 @@
 [
   {
+    "slug": "agent-dispatch",
+    "name": "agent-dispatch",
+    "description": "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给 cc00x / codex / grok, 找另一个 AI 审, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    }
+  },
+  {
     "slug": "agent-symlink-init",
     "name": "agent-symlink-init",
     "description": "Initialize or migrate agent-skill symlinks in any repository. Use when a project needs `.claude/skills` linked to `.agents/skills`, `AGENTS.md` linked to `CLAUDE.md`, migration away from `.ruler`-based AI rules, or removal of legacy `sync-llm-skills` copy/sync setups. Trigger on requests about Claude/Codex skill symlinks, AGENTS/CLAUDE symlinks, `.claude/skills` setup, replacing copied skill folders with symlinks, or cleaning old ruler/sync automation.",
@@ -378,7 +392,7 @@
     "description": "Classify which workflow or skill should run when route choice matters: unresolved creative work, named-option decisions, explicit Goal management, destructive actions, architecture work, planning, debugging or ship checks, review handoff, and full-completion pipelines. Skip trivial one-line work and clearly matching safe named-skill requests. Treat first-principles analysis as a method, not a Challenge trigger unless the user is widening the option space.",
     "metadata": {
       "author": "adonis",
-      "version": "3.6.0"
+      "version": "3.7.0"
     },
     "files": {
       "hasReferences": true,
@@ -398,6 +412,7 @@
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
-    }
+    },
+    "updatedAt": "2026-10-15T13:07:53.000Z"
   }
 ]
