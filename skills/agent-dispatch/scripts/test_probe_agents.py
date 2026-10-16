@@ -62,7 +62,7 @@ class TestProbeAgents(unittest.TestCase):
                     {
                         "accounts": [
                             {"product": "claude", "command": "claude", "pool": "shared"},
-                            {"product": "claude", "command": "CLAUDE_CONFIG_DIR=~/.claude-2 claude", "pool": "shared"},
+                            {"product": "claude", "command": "CLAUDE_CONFIG_DIR=~/.claude-alt claude", "pool": "shared"},
                         ]
                     },
                     f,
