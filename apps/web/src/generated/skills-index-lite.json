@@ -2,10 +2,10 @@
   {
     "slug": "agent-dispatch",
     "name": "agent-dispatch",
-    "description": "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给 cc00x / codex / grok, 找另一个 AI 审, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill.",
+    "description": "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给多个 Claude 账号 / codex / grok, 找另一个 AI 审, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill.",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "files": {
       "hasReferences": true,
@@ -40,7 +40,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-02T08:02:51.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z"
   },
   {
     "slug": "architecture-hardening-loop",
@@ -54,7 +54,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-01T11:34:49.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z"
   },
   {
     "slug": "ardot-mcp",
@@ -335,7 +335,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-07T10:09:08.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z"
   },
   {
     "slug": "uxc-facade",
@@ -399,7 +399,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-16T07:24:09.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z"
   },
   {
     "slug": "worktree-tidy",

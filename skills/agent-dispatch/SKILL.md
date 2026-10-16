@@ -1,14 +1,24 @@
 ---
 name: agent-dispatch
-description: "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给 cc00x / codex / grok, 找另一个 AI 审, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill."
+description: "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给多个 Claude 账号 / codex / grok, 找另一个 AI 审, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill."
 metadata:
   author: adonis
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Agent Dispatch
 
 One coordinating agent decides how much machinery a task deserves. The scarce resource is the user's attention and the facts only they can confirm, not lines an agent can write. Extra workers speed up only the coding step; integration, review rounds, deploys and status reports grow with every worker. So default to the lightest tier, escalate only on evidence, and say why in one line.
+
+## Composes with
+
+Respect established authority boundaries in order:
+
+- **Order of authority**: `workflow-gate` decides _what kind_ of work (debug / plan / challenge / architecture / review); `agent-dispatch` decides _how many agents and who reviews_; then the selected runtime skill runs.
+- **Reviewer selection**: When `agentic-review-handoff` is installed, defer reviewer choice and timeout fallback to its saved Reviewer preference (`review-loop prefs`, `--host`); use agent-dispatch's own "Reviewer choice" only when it is absent.
+- **Full pipelines**: When `task-completion-loop` owns the task, it already runs its own peers and reviews; agent-dispatch only sizes workers inside it and starts no second review loop.
+- **Goals**: When a native Goal (via `goal-gate`) is active, dispatch and review as usual, report each batch as a checkpoint of that Goal, and never complete, replace or clear the Goal yourself.
+- **Delivery**: Hand integrated work to the repository's own delivery/ship skill or documented flow; if none exists, stop at a local commit made only on explicit user request.
 
 ## Step 0 — know what you can dispatch to
 
@@ -25,13 +35,13 @@ Also confirm the review skills you plan to use are installed and callable; `open
 
 ## Tier card — decide in one pass
 
-| Tier           | Pick when                                                             | Who writes                                                                                                                    | Review                                                                  | Tests                                                               | Target                               |
-| -------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------ |
-| **L0 Direct**  | read-only, copy, style, static asset, or one file, no behavior change | coordinator, current checkout, no worktree                                                                                    | none                                                                    | page evidence or none                                               | ~10 min (3-4 rounds)                 |
-| **L1 Single**  | behavior change inside one module, about 5 files or fewer             | coordinator, or 1 worker                                                                                                      | one independent pass (see Reviewer choice)                              | affected files only                                                 | 30-45 min                            |
-| **L2 Fan-out** | cross-package work that splits into file sets with no overlap         | up to `max_parallel_workers` workers, one worktree each; 0 means run the parts one after another                              | `open-code-review-loop`, round budget 2                                 | affected files per worker; one full run per batch, `--maxWorkers=2` | per batch                            |
-| **L3 Arch**    | structure pain with a user-given scope                                | `architecture-hardening-loop` (implement), or `improve-codebase-architecture` (diagnose; user-invoked only)                   | built into the loop                                                     | as L2                                                               | own slot, not inside a feature batch |
-| **Writing**    | article, proposal, weekly report, retrospective                       | the first of `drafting_agents`, else an idle code product, else the coordinator; start after the code it describes has landed | coordinator checks every fact, number, path and command against sources | the repo's doc check when the file lives in a repo                  | —                                    |
+| Tier           | Pick when                                                             | Who writes                                                                                                                    | Review                                                                            | Tests                                                               | Target                               |
+| -------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ------------------------------------ |
+| **L0 Direct**  | read-only, copy, style, static asset, or one file, no behavior change | coordinator, current checkout, no worktree                                                                                    | none                                                                              | page evidence or none                                               | ~10 min (3-4 rounds)                 |
+| **L1 Single**  | behavior change inside one module, about 5 files or fewer             | coordinator, or 1 worker                                                                                                      | one independent pass (see Reviewer choice)                                        | affected files only                                                 | 30-45 min                            |
+| **L2 Fan-out** | cross-package work that splits into file sets with no overlap         | up to `max_parallel_workers` workers, one worktree each; 0 means run the parts one after another                              | `agentic-review-handoff` (saved prefs) or `open-code-review-loop`, round budget 2 | affected files per worker; one full run per batch, `--maxWorkers=2` | per batch                            |
+| **L3 Arch**    | structure pain with a user-given scope                                | `architecture-hardening-loop` (implement), or `improve-codebase-architecture` (diagnose; user-invoked only)                   | built into the loop                                                               | as L2                                                               | own slot, not inside a feature batch |
+| **Writing**    | article, proposal, weekly report, retrospective                       | the first of `drafting_agents`, else an idle code product, else the coordinator; start after the code it describes has landed | coordinator checks every fact, number, path and command against sources           | the repo's doc check when the file lives in a repo                  | —                                    |
 
 Before acting, output one line: `Dispatch: L<n> — <decisive reason>; workers <n>; reviewer <who>; target <time>`.
 
@@ -50,7 +60,7 @@ The tiers stay the same; only who fills each role changes. Say which fallback ap
 
 ## Reviewer choice
 
-Prefer, in order: another product than the writer → a fresh session of the same product → the coordinator, when it did not write the code. When the coordinator is a different product from the worker, the coordinator running `open-code-review-delegate` already counts as cross-model review. The writer never reviews its own diff.
+Clean-context verification catches blind spots the author cannot see. When `agentic-review-handoff` is installed, follow its saved preferences (`review-loop prefs`). Otherwise prefer, in order: another product than the writer → a fresh session of the same product → the coordinator, when it did not write the code. When the coordinator is a different product from the worker, the coordinator running `open-code-review-delegate` already counts as cross-model review. The writer never reviews its own diff.
 
 ## Escalation and de-escalation
 
@@ -67,7 +77,7 @@ Prefer, in order: another product than the writer → a fresh session of the sam
 
 ## Dispatching workers
 
-Before starting workers, list each worker's writable files and confirm no two sets overlap. Overlap means L1, not L2.
+Parallel writers making uncoordinated implicit decisions create merge conflicts and incoherent architecture. Before starting workers, strictly verify each worker's writable files are disjoint. Overlap means collapse to L1 immediately rather than risking integration failure.
 
 Write each worker prompt from `references/task-spec.md`. Workers do not commit, push, deploy or publish; they return an outcome line, the touched-file list and evidence. The coordinator integrates.
 

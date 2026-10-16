@@ -4,7 +4,7 @@
     {
       "id": 1,
       "name": "simple-copy-change-stays-direct",
-      "prompt": "我手上有 cc001 cc002 cc003、codex、grok 都登录着，你当总指挥。需求：把 Director 导出面板里按钮文案 \"Export\" 改成 \"Export video\"，中英文案都在 packages/director-editor/src/modules/export/messages.ts 里。按你的派活方式安排一下，先给出派活计划。",
+      "prompt": "我手上有 三个 Claude 账号、codex、grok 都登录着，你当总指挥。需求：把 Director 导出面板里按钮文案 \"Export\" 改成 \"Export video\"，中英文案都在 packages/director-editor/src/modules/export/messages.ts 里。按你的派活方式安排一下，先给出派活计划。",
       "expected_output": "Picks L0: coordinator edits the one file itself, no worktree, no workers, no reviewer loop, no full test suite; states a short time target.",
       "files": ["fixtures/probe-full.json"],
       "assertions": [
@@ -32,7 +32,7 @@
     {
       "id": 3,
       "name": "cross-package-fanout-plus-article",
-      "prompt": "这批要做三件事：1) packages/director-widget 的卡片加「复制链接」按钮；2) server/service/mcp/director/ 加一个 director_share_link 工具，卡片按钮调用它；3) 做完后写一篇给团队的技术分享，讲这个功能怎么实现的。机器上 cc001-003、codex 两个号、grok 两个号、agy 都能用。按你的方式派活，给我派活计划和每个工人的任务说明。",
+      "prompt": "这批要做三件事：1) packages/director-widget 的卡片加「复制链接」按钮；2) server/service/mcp/director/ 加一个 director_share_link 工具，卡片按钮调用它；3) 做完后写一篇给团队的技术分享，讲这个功能怎么实现的。机器上 三个 Claude 账号、codex 两个号、grok 两个号、agy 都能用。按你的方式派活，给我派活计划和每个工人的任务说明。",
       "expected_output": "Picks L2 with at most 3 workers whose writable file sets do not overlap (widget vs server), or explains merging into one worker if the tool contract couples them; reviewer is a different product than the writer; one coordinator; workers do not commit; article goes to the drafting agent with fact check by coordinator after code lands; worker specs include target/change/constraints/ownership/acceptance.",
       "files": ["fixtures/probe-full.json"],
       "assertions": [
@@ -42,6 +42,19 @@
         "工人不 commit/push/发布",
         "文章在代码落地后由 drafting_agents 里的起草 agent（agy）写、总指挥核对事实",
         "每个工人任务说明含目标/改动/约束/归属/验收"
+      ]
+    },
+    {
+      "id": 4,
+      "name": "composed-pipeline-defers-reviewer-and-pipeline-ownership",
+      "prompt": "我们正在跑一个跨 package 的需求（packages/ui 改按钮，packages/core 改数据流，两边文件完全分开，不重叠），本机已安装 agentic-review-handoff，且用户的 reviewer 偏好配置设为 codex,grok,claude（已保存）。当前总指挥在 Claude 宿主会话下。另外上层工作流已经通过 goal-gate 启动并拥有该任务的目标契约。请按你的派活方式安排，给出派活计划，说明：1) 怎么分配工人；2) 怎么选 review 方；3) 派活与上层 goal-gate 的关系；4) 交付阶段怎么处理。",
+      "expected_output": "Picks L2 with 2 workers since file sets do not overlap; dispatches and reviews as usual inside the active goal-gate Goal, reporting batches as Goal checkpoints and never completing or replacing the Goal; defers reviewer selection and fallback to agentic-review-handoff saved preferences (using review-loop prefs / --host=claude, picking codex first with grok timeout fallback) rather than picking an ad-hoc reviewer; states that integrated work hands off to the repo delivery/ship flow without unprompted commits or direct pushing.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "跨 package 且文件不重叠选择 L2 派 2 个工人",
+        "上层 Goal 由 goal-gate 管理：照常派活和评审，每批作为该 Goal 的检查点汇报，不自行完成、替换或清除 Goal",
+        "评审方服从 agentic-review-handoff 的 saved prefs（通过 --host 选出 codex，grok 作为超时 fallback），不随意自选",
+        "工人不执行 commit/push，集成后移交给仓库既有的 delivery/ship 流程或按用户明确要求在本地 commit"
       ]
     }
   ]
