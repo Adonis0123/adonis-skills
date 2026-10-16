@@ -3,19 +3,19 @@ name: agentic-review-handoff
 description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
 metadata:
   author: adonis
-  version: "3.8.0"
+  version: "3.9.0"
 ---
 
 # Agentic Review Handoff
 
-Use direct Grok CLI calls for ordinary Grok consultation and one-shot review. Use the persistent packet/auto-loop protocol when explicitly requested or when continuing an existing packet.
+Use direct Grok CLI calls only when the user asks Grok (or a `grok00x` account) for an ordinary consult or one-shot review. Use the persistent packet/auto-loop protocol when explicitly requested or when continuing an existing packet; its Reviewer comes from the user's saved preference, Claude first by default (see Reviewer selection).
 
 ## Fast Path
 
 Route first, then load only that route's references:
 
 - **Wrong job** — stop; do not start a substitute loop. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.
-- **Ordinary Grok consult / one-shot review** (including a named `grok00x` account) → Direct Grok below. Explicit CLI commands (including `review-loop consult`), auto-loop, packet, and continuation requests take precedence. Do not start a protocol loop merely because Grok is involved.
+- **Ordinary consult / one-shot review the user addressed to Grok** (including a named `grok00x` account) → Direct Grok below. Without Grok named, use `review-loop consult` with the default peer. Explicit CLI commands (including `review-loop consult`), auto-loop, packet, and continuation requests take precedence. Do not start a protocol loop merely because Grok is involved.
 - **Same-session implementer closure** → `review-loop run`; the verified implementer context permits the default `# Review Handoff` origin.
 - **Explicit auto loop / review-fix-re-review without verified implementer context** → `review-loop run --intake`; the script starts truthfully from `# Review Intake` while retaining the auto lifecycle.
 - **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.
@@ -24,7 +24,7 @@ Route first, then load only that route's references:
 - **Maintainer-only protocol / state-machine / persistence or integrity-claim change** → `references/protocol-evolution-gate.md`. Ordinary runs do not load it (SoT: `skills/agentic-review-handoff/`; sync via `pnpm skills:install:local -- --skill agentic-review-handoff`).
 - **Removed dual-window commands** (`open` / `bind` / …): the CLI returns a migration error → use `run` / `fix-completion` / `close` / `consult`
 
-## Direct Grok — ordinary consult / one-shot review
+## Direct Grok — only when the user names Grok
 
 Use the user's existing `grok` or named `grok00x` command. Keep account selection
 in that launcher; do not recreate account configuration, copy credentials, or
@@ -71,10 +71,12 @@ Explicit invocation starts immediately once the Reviewer is known. Human interve
 A fresh `run` has no default Reviewer; omitting `--reviewer` fails with `REVIEWER_REQUIRED` before any external call. Resolve it in this order and never ask again for the same packet:
 
 1. The user named a product or account (`grok`, `grok002`, `codex003`, `cc002`, ...) → use it. An account name maps to its product (`grok00x`→grok, `codex00x`→codex, `cc00x`→claude) plus `--reviewer-command=<name>`.
-2. A parent workflow fixes the Reviewer (`architecture-hardening-loop` → Grok) → use it.
-3. `run --continue` → inherits the stored Reviewer and launcher; pass nothing.
-4. Otherwise ask once with the host question tool. Recommend an installed product other than the visible host (Claude host → Codex; Codex host → Grok; Grok host → Codex); the host's own product is allowed but not recommended.
-5. No question tool, or the user said not to ask at all → pick per step 4's recommendation and state the choice in the start line and the terminal report. "Don't ask mid-loop" (`中途不用问我`) covers rounds only; it does not skip this one start question.
+2. `run --continue` → inherits the stored Reviewer, launcher and `--fallback` list; pass nothing.
+3. Otherwise do not ask and do not pick a product yourself: pass `--host=<visible host product>` (`claude` / `codex` / `grok`) instead of `--reviewer` (consult: instead of `--peer`). The script reads the user's saved **Reviewer preference** and uses its first product as Reviewer and the rest as `--fallback`. Default: `claude,codex,grok`, host kept (`skipHost: false`), so a Claude host is reviewed by a fresh read-only Claude session. The result's `reviewerFrom` says what was picked and why; state it in the start line and the terminal report. Parent workflows (`architecture-hardening-loop`, `task-completion-loop`) use this same preference.
+
+**Reviewer preference.** Saved per user in `${XDG_CONFIG_HOME:-~/.config}/agentic-review-handoff/config.json` as `{ "order": [...], "skipHost": bool }`. When the user states a lasting preference ("prefer codex", "以后先用 claude", "不要让宿主审自己"), save it: `node "$RL" prefs --order=codex,claude,grok`, `--skip-host=true`, or `--reset` for the default; `node "$RL" prefs` shows it. `REVIEW_LOOP_REVIEWERS=codex,claude` overrides the order for one shell. A one-off request ("review this one with grok") is step 1, not a preference change.
+
+**Fallback on timeout.** When a Reviewer or consult peer times out, the script hands the same round to the next product in a new session (Reviewers are read-only, so the timed-out one left nothing behind), records it as `fallbacks: [{ from, to, reason }]` and keeps the new Reviewer for `--continue`. Only a timeout moves on; a user stop or any other failure stays `DELIVERY_UNKNOWN`. A user who named one product gets no fallback unless they asked for one; with `--host`, the preference supplies it. Report every fallback in the terminal report.
 
 `--reviewer-command` takes a bare launcher name that starts with its product (`grok*`, `codex*`, `cc*`/`claude*`) and is a zsh/bash function defined in the rc file (`.zshrc` / `.bashrc`, not a profile file) or a PATH executable; aliases and fish functions do not resolve. The adapter runs it through an interactive shell and appends the product's read-only argv; a launcher from another family (`cc002` with `--reviewer=grok`) or with no product prefix is rejected because those flags would not restrict it. The launcher's own flags still apply, so it must not add permission-widening flags. Never copy credentials or rotate accounts. Consult uses the same rule with `--peer` / `--peer-command`.
 
@@ -83,10 +85,11 @@ RL="<skill-dir>/scripts/review-loop.mjs"
 REPO="$(git rev-parse --show-toplevel)"
 
 # Start after this session implemented the change (default Review Handoff origin)
-node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--base <sha>] [--rounds 3]
+node "$RL" run --repo "$REPO" --host=claude|codex|grok [--base <sha>] [--rounds 3]      # Reviewer + fallbacks from the preference
+node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--fallback=grok] [--base <sha>] [--rounds 3]
 
 # Start an explicit auto loop without verified implementer context (Review Intake origin)
-node "$RL" run --intake --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--base <sha>] [--rounds 3]
+node "$RL" run --intake --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--fallback=grok] [--base <sha>] [--rounds 3]
 
 # After BLOCKED or concerns_require_fix: Fixer edits code, records completion, then continues
 node "$RL" fix-completion --repo "$REPO" --packet "$PACKET" --body-file /tmp/fix.md
@@ -100,7 +103,11 @@ node "$RL" close --repo "$REPO" --packet "$PACKET" --reason accept-concerns
 node "$RL" evidence --repo "$REPO" --base "$BASE_SHA" [--paths=a,b]
 
 # Advisory decision consult (not part of Verdict machine)
-node "$RL" consult --repo "$REPO" --peer=codex [--peer-command=codex002] --question-file /tmp/q.md
+node "$RL" consult --repo "$REPO" --host=claude [--skip-host] --question-file /tmp/q.md   # peer from the preference
+node "$RL" consult --repo "$REPO" --peer=codex [--peer-command=codex002] [--fallback=grok] --question-file /tmp/q.md
+
+# Reviewer preference: show / save / reset
+node "$RL" prefs [--order=claude,codex,grok] [--skip-host=true|false] [--reset]
 
 # List recorded reviewer and consult sessions + copy-ready resume commands
 # (Codex Desktop's list hides codex_exec sessions — this is the way back in)

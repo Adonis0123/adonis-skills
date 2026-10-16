@@ -254,6 +254,33 @@ const LAUNCHER_NAME_RE = /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/;
  * argument, never interpolated into shell code.
  * @param {string} name
  */
+/**
+ * Parses `--fallback` (`"claude,grok"` or an array): products to try in order when the Reviewer or consult peer times
+ * out. Reviewers are read-only, so a timed-out invoke left nothing behind and the next product starts fresh.
+ * @param {string|string[]|null|undefined} raw
+ * @param {string} primary
+ * @returns {string[]}
+ */
+export function parseFallback(raw, primary) {
+  if (raw == null || raw === true || raw === "") return [];
+  const list = (Array.isArray(raw) ? raw : String(raw).split(","))
+    .map((p) => String(p).trim().toLowerCase())
+    .filter(Boolean);
+  const seen = new Set([String(primary).toLowerCase()]);
+  for (const p of list) {
+    if (!["codex", "grok", "claude"].includes(p)) {
+      throw new Error(`--fallback takes codex|grok|claude, got ${p}`);
+    }
+    if (seen.has(p)) {
+      throw new Error(
+        `--fallback lists ${p} twice or repeats the primary product`,
+      );
+    }
+    seen.add(p);
+  }
+  return list;
+}
+
 export function assertLauncherName(name) {
   if (typeof name !== "string" || !LAUNCHER_NAME_RE.test(name)) {
     throw new Error(

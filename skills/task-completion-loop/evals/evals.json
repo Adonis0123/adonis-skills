@@ -144,12 +144,12 @@
       "id": 10,
       "name": "runtime-name-or-cli-is-not-a-real-session",
       "prompt": "这是一次只读 Skill 行为验收，不要安装依赖或启动外部进程。用户明确要求完整 task-completion-loop。skill 名称都可解析，本机也能找到 grok 和 claude CLI 文件，但当前宿主无法创建、恢复或向真实 Grok Build / Claude Code 会话发送消息，也拿不到可恢复句柄。请给出预检结果。",
-      "expected_output": "名字、catalog 或 CLI 文件存在不证明真实 runtime capability。应在三方讨论、Goal 和源码修改前返回 MISSING_DEPENDENCIES，准确列出 Grok/Claude session creation, resume handle, and message exchange proof 缺失；不得用普通 subagent 或假会话替代。",
+      "expected_output": "名字、catalog 或 CLI 文件存在不证明真实 runtime capability。应在三方讨论、Goal 和源码修改前返回 MISSING_DEPENDENCIES，准确列出 Peer / 盲审 Claude 的 session creation, resume handle, and message exchange proof 缺失；不得用普通 subagent 或假会话替代。",
       "files": [],
       "expectations": [
         "结果包含 MISSING_DEPENDENCIES",
         "不把 skill 名称或 CLI 文件存在当作真实产品会话可用证据",
-        "准确列出 Grok/Claude 会话创建、恢复句柄或消息交换能力缺失",
+        "准确列出 Peer / 盲审 Claude 会话创建、恢复句柄或消息交换能力缺失",
         "停止点在三方讨论、Goal activation 和源码修改之前",
         "不使用普通 subagent、伪造会话或复制 runtime 逻辑替代"
       ]

@@ -3,7 +3,7 @@ name: task-completion-loop
 description: "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review."
 metadata:
   author: adonis
-  version: "1.8.0"
+  version: "1.9.0"
 ---
 
 # Task Completion Loop
@@ -38,16 +38,19 @@ metadata:
 | `goal-gate`                   | Goal 决策与运行时激活      |
 | `agentic-review-handoff`      | 独立 review-fix-re-review  |
 | `architecture-hardening-loop` | 有界扫描、修复、复核、复扫 |
-| 真实 Grok Build 会话          | 独立立场与交叉质疑         |
-| 真实 Claude Code 会话         | 独立立场与盲审             |
+| 真实 Peer A 会话              | 独立立场与交叉质疑         |
+| 真实 Peer B 会话              | 独立立场与交叉质疑         |
+| 真实 Claude Code 会话         | 盲审                       |
 
 仅在用户显式要求 `grill-with-docs`，或预检发现仍有用户拥有的产品/领域决策时，要求并调用 `grill-with-docs`（其 frontmatter 默认 `disable-model-invocation: true`；文件可读即按父会话路径加载）。
 
 在讨论、Goal、源码修改前：
 
-1. 解析每个 skill 及其传递硬依赖（特别是 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、真实 Grok adapter）。invocation policy 与父会话执行路径沿用 `architecture-hardening-loop`「硬依赖与 runtime 能力」的规则：用户点名本 Loop 即授权硬依赖按用途嵌套调用；文件可读即可由父会话执行；未安装/不可读、合同不兼容或 worker/工具无法执行才算缺失。细则见 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的 Preflight policy。
-2. 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer grok|claude --question-file <md>` 完成一次真实往返（用户点名账号如 `grok002` / `cc002` 时加 `--peer-command=<名字>`，产品组合不变），并用 `review-loop sessions --repo <root> --product=grok|claude` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。Claude 还须能以 adapter 的只读控制启动。只有名字、catalog 条目或 CLI 文件存在不算可用。
+1. 解析每个 skill 及其传递硬依赖（特别是 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、非宿主 Reviewer 的真实 adapter）。invocation policy 与父会话执行路径沿用 `architecture-hardening-loop`「硬依赖与 runtime 能力」的规则：用户点名本 Loop 即授权硬依赖按用途嵌套调用；文件可读即可由父会话执行；未安装/不可读、合同不兼容或 worker/工具无法执行才算缺失。细则见 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的 Preflight policy。
+2. 选定 Peer A、Peer B（见下文「Peer 选择」），对每个 Peer 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer <product> [--fallback <未用的产品>] --question-file <md>` 完成一次真实往返（用户点名账号如 `codex002` / `cc002` / `grok002` 时加 `--peer-command=<名字>`），并用 `review-loop sessions --repo <root> --product=<product>` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。每个 Peer 都须能以 adapter 的只读控制启动；盲审用的 Claude 同样。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
+
+**Peer 选择**：Peer A、Peer B 是两个和宿主不同的产品，按 `agentic-review-handoff` 保存的 Reviewer 偏好顺序（`review-loop prefs`，默认 `claude,codex,grok`）去掉宿主后取前两个：三方收敛要三个不同产品，所以这里总是跳过宿主，偏好里的 `skipHost` 不影响。例如默认偏好下 Claude 宿主 → Codex + Grok；Codex 宿主 → Claude + Grok；Grok 宿主 → Claude + Codex。用户点名的产品或账号优先。consult 可直接传 `--host=<宿主> --skip-host`，由脚本按偏好选。某个 Peer 超时，脚本按 `--fallback` 换到两个 Peer 和宿主都没用到的已安装产品（结果里的 `fallbacks`）；没有这样的产品就不换人，按下文超时规则处理。不拿另一位 Peer 的产品顶替，否则两份立场就不独立了。
 
 缺少始终要求的能力，或缺少本轮实际需要的条件能力：
 
@@ -60,7 +63,7 @@ Task Completion Result
 - Work started: no
 ```
 
-禁止用通用 subagent 冒充 Grok/Claude、伪造会话或复制缺失 skill 逻辑：三方收敛的价值来自真正独立的模型立场，冒充会让交叉质疑退化为自我评论。代装依赖属于外部写，见「入口与授权」。
+禁止用通用 subagent 冒充 Peer 或盲审的 Claude、伪造会话或复制缺失 skill 逻辑：三方收敛的价值来自真正独立的模型立场，冒充会让交叉质疑退化为自我评论。代装依赖属于外部写，见「入口与授权」。
 
 ## 状态机
 
@@ -109,19 +112,19 @@ Task Completion Result
 
 ### A. 独立立场
 
-宿主、真实 Grok Build、真实 Claude Code 分别读取同一组文档、代码和任务账本。每方写清范围、归属、假设、风险、排除项和可证伪验证。用 `review-loop sessions` 记录 Grok / Claude 可恢复句柄；本步首条成功往返同时完成预检第 2 项。
+宿主、真实 Peer A、真实 Peer B 分别读取同一组文档、代码和任务账本。每方写清范围、归属、假设、风险、排除项和可证伪验证。用 `review-loop sessions` 记录两个 Peer 的可恢复句柄；本步首条成功往返同时完成预检第 2 项。
 
 ### 预算与并行
 
-- A 的三方立场互不依赖：宿主写自己的立场时，并行发起 Grok 与 Claude。
+- A 的三方立场互不依赖：宿主写自己的立场时，并行发起 Peer A 与 Peer B。
 - B 的两次交叉质疑互不依赖，并行发起。B 至多两轮；第二轮后仍存分歧，属技术默认值由宿主依证据裁定，属用户决策转入 C。
-- 每次外部调用设 deadline（默认与 `agentic-review-handoff` 的 Reviewer timeout 一致，20 分钟；宿主可缩短并记录）。以后台进程 + 轮询方式发起，避免宿主前台工具超时截断真实会话。进程存活时不杀、不重发；超时按 `DELIVERY_UNKNOWN` 处理：仅当本地证据证明未提交才同参数重试一次，否则本阶段记 `UNVERIFIED`，保留句柄与已得立场，下一轮从缺失的一方继续。
+- 每次外部调用设 deadline（默认与 `agentic-review-handoff` 的 Reviewer timeout 一致，20 分钟；宿主可缩短并记录）。以后台进程 + 轮询方式发起，避免宿主前台工具超时截断真实会话。进程存活时不杀、不重发；超时先由 `--fallback` 换人（见「Peer 选择」），没有可换的才按 `DELIVERY_UNKNOWN` 处理：仅当本地证据证明未提交才同参数重试一次，否则本阶段记 `UNVERIFIED`，保留句柄与已得立场，下一轮从缺失的一方继续。
 - 等后台外部调用结束：优先等发起时记下的 PID（如 `review-loop consult ... > out 2>&1 & echo $! > pid`，再 `while kill -0 "$(cat pid)" 2>/dev/null; do sleep 15; done`），或用宿主自带的后台任务完成通知。不用 `pgrep -f` / `ps | grep` 按等待命令自身也含的字符串轮询：它会匹配到等待脚本自己，循环永不结束；非用模式不可时写成 `[r]eview-loop` 这类方括号形式，让它匹配不到自身。
 - 快路径：账本无 `HUMAN_DECISION`、范围由 plan/代码唯一确定、A 三方在范围/归属/验证上无实质分歧时，B 只跑一轮，无新分歧即收敛。快路径不减少参与方，不省略 B。
 
 ### B. 交叉质疑
 
-- 把宿主 + Claude 立场交给 Grok；把宿主 + Grok 立场交给 Claude。
+- 把宿主 + Peer B 立场交给 Peer A；把宿主 + Peer A 立场交给 Peer B。
 - 双方攻击对方最强论点，并允许依据证据改口。
 - 宿主独立打开引用路径、核对当前行为，再综合证据。
 
@@ -143,8 +146,9 @@ Three-party Convergence
 - Frozen scope / exclusions:
 - Ownership and dependency direction:
 - Verification:
-- Grok session:
-- Claude session:
+- Peer A (product) session:
+- Peer B (product) session:
+- Fallbacks: none | <from → to, reason>
 - Remaining decisions: none | <list>
 ```
 
@@ -184,7 +188,7 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 仅用于无人值守 / 自主运行；有人在场回答的 human-in-the-loop 会话不套用。
 
 - 纯文本结束的回合是进度报告，不是完成证据。任务账本就是 checklist，每回合更新；回合结束时仍有 `PENDING` 且未写明 blocker，就继续，或由宿主 / 父会话发一条点名未完成项的短消息。同一任务自动续跑最多 2–3 次，之后停下交审（按下文预算规则返回 `UNVERIFIED`），让真正卡住的运行结束。
-- 本 Loop 启动的后台命令、subagent 或 Grok / Claude 会话仍在运行时，等它结束并取回输出，不把任务当作完成。
+- 本 Loop 启动的后台命令、subagent 或 Peer / Claude 会话仍在运行时，等它结束并取回输出，不把任务当作完成。
 - 不应出现的提前停止：(1) 长总结只宣布下一步、没有工具调用；(2) 提出“除非你另有安排，否则我继续”并等回复；(3) 列出待用户决策项，但按自己判断没有一项阻塞剩余工作；(4) 因回合太长或某个里程碑完成而停下汇报。状态说明与建议放在下一次工具调用的同一消息里。应当停止：没有用户就无法推进（`HUMAN_GATE`），或阻塞点是被刻意保护的对象。本节不替代高风险 / 破坏性动作的确认，也不扩大「入口与授权」。
 
 ## 终态与报告

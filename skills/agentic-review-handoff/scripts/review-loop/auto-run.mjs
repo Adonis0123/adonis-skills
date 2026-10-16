@@ -19,10 +19,12 @@ import {
   lastPhysicalH1,
   listPhysicalH1s,
 } from "./repositories.mjs";
+import { resolveFromPrefs } from "./prefs.mjs";
 import {
   assertLauncherMatchesProduct,
   assertLauncherName,
   createAdapter,
+  parseFallback,
   DELIVERY_UNKNOWN,
 } from "./adapters.mjs";
 import {
@@ -53,8 +55,8 @@ import {
 
 const DEFAULT_ROUNDS = 3;
 const REVIEWER_REQUIRED_MESSAGE =
-  "REVIEWER_REQUIRED: pass --reviewer=codex|grok|claude " +
-  "(ask the user once; recommend a product other than the current host)";
+  "REVIEWER_REQUIRED: pass --host=<your product> to use the saved Reviewer preference " +
+  "(review-loop prefs), or --reviewer=codex|grok|claude";
 
 function reviewedEvidenceIdentity({ baseSha, evidence, sourceRound }) {
   return {
@@ -140,6 +142,24 @@ Never place a literal pipe character in table cells. Use &#124; instead.`;
 export async function cmdRun(opts) {
   const repoRoot = opts.repoRoot || resolveRepoRoot(opts.cwd || process.cwd());
   const isContinue = Boolean(opts.continue || opts.cont);
+  // No Reviewer named: the saved preference picks it and the timeout fallbacks (review-loop prefs).
+  let reviewerFrom = null;
+  if (!isContinue && !(opts.reviewer ?? opts.productReviewer) && opts.host) {
+    const picked = resolveFromPrefs({
+      host: opts.host,
+      env: opts.env ?? process.env,
+    });
+    opts = {
+      ...opts,
+      reviewer: picked.reviewer,
+      fallback: opts.fallback ?? picked.fallback,
+    };
+    reviewerFrom = {
+      source: picked.prefs.source,
+      order: picked.prefs.order,
+      host: String(opts.host).toLowerCase(),
+    };
+  }
   const isIntake = opts.intake === true;
   if (isIntake && isContinue) {
     throw new Error("--intake cannot be combined with --continue");
@@ -255,6 +275,11 @@ export async function cmdRun(opts) {
     assertLauncherName(reviewerCommand);
     assertLauncherMatchesProduct(reviewerCommand, reviewer);
   }
+  // Products to try when the Reviewer times out; continue inherits the list it started with.
+  const fallback = parseFallback(
+    opts.fallback ?? (isContinue ? priorState.fallback : null),
+    reviewer,
+  );
 
   // completion=pass means every actionable in-scope concern is fixed and
   // re-reviewed within budget. Continue inherits the original authorization.
@@ -271,7 +296,9 @@ export async function cmdRun(opts) {
   // `--rounds +N` is additive authorization (T5); bare N is absolute ceiling.
   const roundsBudget = resolveRoundsBudget(opts.rounds, priorState, isContinue);
 
-  return withPacketLock(repoRoot, packetId, () =>
+  /** @type {{ from: string, to: string, reason: string }[]} */
+  const fallbacks = [];
+  const result = await withPacketLock(repoRoot, packetId, () =>
     runBody({
       ...opts,
       repoRoot,
@@ -280,11 +307,20 @@ export async function cmdRun(opts) {
       packetId,
       reviewer,
       reviewerCommand,
+      fallback,
+      fallbacks,
       completion,
       roundsBudget,
       isContinue,
     }),
   );
+  // Say how the Reviewer was chosen, and which one timed out and who took over, whatever the outcome.
+  if (!result || typeof result !== "object") return result;
+  return {
+    ...result,
+    ...(reviewerFrom ? { reviewerFrom } : {}),
+    ...(fallbacks.length ? { fallbacks } : {}),
+  };
 }
 
 /**
@@ -400,8 +436,10 @@ async function runBody(ctx) {
     repoRoot,
     packetPath: initialPacketPath,
     packetId,
-    reviewer,
-    reviewerCommand,
+    reviewer: requestedReviewer,
+    reviewerCommand: requestedCommand,
+    fallback = [],
+    fallbacks = [],
     completion,
     roundsBudget,
     isContinue,
@@ -409,6 +447,9 @@ async function runBody(ctx) {
     adapterFactory,
     adapterOpts,
   } = ctx;
+  // The Reviewer of this round: the requested one, or a fallback after it timed out.
+  let reviewer = requestedReviewer;
+  let reviewerCommand = requestedCommand;
 
   let packetPath = initialPacketPath;
   let state = loadRunState(repoRoot, packetId) ?? {};
@@ -445,6 +486,7 @@ async function runBody(ctx) {
     baseSha,
     reviewer,
     reviewerCommand,
+    fallback,
     completion,
     packetHash: roundStartPacketHash,
     roundStartPacketHash,
@@ -611,12 +653,14 @@ async function runBody(ctx) {
     sourceRound: effectiveRound,
   });
 
-  const adapter = (adapterFactory || createAdapter)(reviewer, {
-    repoRoot,
-    packetId,
-    command: reviewerCommand,
-    ...(adapterOpts || {}),
-  });
+  const makeAdapter = (product, command) =>
+    (adapterFactory || createAdapter)(product, {
+      repoRoot,
+      packetId,
+      command,
+      ...(adapterOpts || {}),
+    });
+  let adapter = makeAdapter(reviewer, reviewerCommand);
 
   const priorFindingIds =
     Array.isArray(state.findingIds) && state.findingIds.length
@@ -639,6 +683,28 @@ async function runBody(ctx) {
     effectiveRound <= 1 || !adapter.getSessionId?.()
       ? await adapter.newSession(prompt)
       : await adapter.resume(adapter.getSessionId(), prompt);
+
+  // A Reviewer that timed out returned nothing and, being read-only, changed nothing: hand the same round to the
+  // next product in --fallback, in a new session that reads the same packet. Only a timeout moves on; a stop by
+  // the user or any other failure stays DELIVERY_UNKNOWN.
+  const remaining = fallback.filter((p) => p !== reviewer);
+  while (
+    !invokeResult.ok &&
+    invokeResult.timedOut === true &&
+    remaining.length
+  ) {
+    const next = remaining.shift();
+    fallbacks.push({ from: reviewer, to: next, reason: invokeResult.error });
+    reviewer = next;
+    reviewerCommand = null;
+    saveRunState(repoRoot, packetId, {
+      ...(loadRunState(repoRoot, packetId) ?? state),
+      reviewer,
+      reviewerCommand: null,
+    });
+    adapter = makeAdapter(reviewer, null);
+    invokeResult = await adapter.newSession(prompt);
+  }
 
   if (!invokeResult.ok) {
     return deliveryUnknownReport({

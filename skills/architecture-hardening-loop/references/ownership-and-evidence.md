@@ -54,7 +54,7 @@ Every scanner pass owns its own `scanEvidence`. Evidence id is required on both 
 
 1. **E1 (first scan):** before the first scanner pass, run `review-loop evidence` on current `HEAD` + the frozen path filter. Record `{ baseSha, pathFilter, digest, coveredPaths, sourceRound }`.
 2. **E2 (post-Fix rescan):** after a Fix, take `evidence` returned by `review-loop run` / `close`. Recompute current identity on the same `baseSha` + `pathFilter`. Only if it matches, select that identity as this pass's `scanEvidence` (E2).
-3. **Terminal consult freshness:** after the terminal Grok consult, re-run `review-loop evidence` on this pass's `baseSha` / `pathFilter`. Enter `NO_ACTIONABLE_FINDINGS` only when digest equals the identity chosen **before this scanner pass**.
+3. **Terminal consult freshness:** after the terminal Reviewer consult, re-run `review-loop evidence` on this pass's `baseSha` / `pathFilter`. Enter `NO_ACTIONABLE_FINDINGS` only when digest equals the identity chosen **before this scanner pass**.
 4. **E3 (drift):** if that recomputation differs (E3), scanner/consult evidence is stale. Rescan the same scope; if a rescan is impossible, report `UNVERIFIED`. Do not complete a Goal.
 
 A post-Fix rescan compares only against the E2 selected before that rescan. Never fall back to first-scan E1.

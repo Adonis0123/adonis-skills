@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import * as autoRun from "./review-loop/auto-run.mjs";
 import * as consult from "./review-loop/consult.mjs";
 import * as sessions from "./review-loop/sessions.mjs";
+import * as prefs from "./review-loop/prefs.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,12 +83,13 @@ function help() {
     skillScriptsDir: __dirname,
     mode: "auto-loop",
     usage: [
-      "review-loop run --repo=PATH --reviewer=codex|grok|claude [--reviewer-command=LAUNCHER] [--completion=review|pass] [--until-pass] [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
+      "review-loop run --repo=PATH --host=PRODUCT | --reviewer=codex|grok|claude [--reviewer-command=LAUNCHER] [--fallback=PRODUCT[,PRODUCT]] [--completion=review|pass] [--until-pass] [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
       "review-loop run --continue --repo=PATH [--packet=PATH] [--reviewer=PRODUCT] [--reviewer-command=LAUNCHER] [--rounds=3|+N] [--paths=a,b]",
       "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
       "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
       "review-loop evidence --repo=PATH --base=SHA [--paths=a,b]",
-      "review-loop consult --repo=PATH --peer=codex|grok|claude [--peer-command=LAUNCHER] --question-file=PATH",
+      "review-loop consult --repo=PATH --host=PRODUCT [--skip-host] | --peer=codex|grok|claude [--peer-command=LAUNCHER] [--fallback=PRODUCT[,PRODUCT]] --question-file=PATH",
+      "review-loop prefs [--order=claude,codex,grok] [--skip-host=true|false] [--reset]",
       "review-loop sessions --repo=PATH [--product=codex|grok|claude]",
     ],
     removed: [
@@ -98,11 +100,12 @@ function help() {
       autoLoop:
         "single visible Fixer; headless read-only Reviewer; zero mid-loop human",
       reviewer:
-        "none on a fresh run (REVIEWER_REQUIRED); --continue inherits the prior reviewer and launcher",
+        "with --host, the saved preference (review-loop prefs; default claude,codex,grok) picks it and the timeout fallbacks; with neither --host nor --reviewer, REVIEWER_REQUIRED; --continue inherits the prior reviewer, launcher and fallbacks",
       completion:
         "pass (auto-fix PASS_WITH_CONCERNS without a second confirmation; use review to park concerns)",
       rounds: 3,
-      reviewerTimeout: "20 minutes (REVIEW_LOOP_TIMEOUT_MS override)",
+      reviewerTimeout:
+        "20 minutes (REVIEW_LOOP_TIMEOUT_MS override); on a timeout the next --fallback product takes the same round",
       reviewerProgress: "every 30 seconds while the process is alive",
       sandbox:
         "product-specific read-only controls fixed in adapters (Grok uses a tool allowlist)",
@@ -185,6 +188,8 @@ async function main() {
           ...base,
           reviewer: args.reviewer ?? args["product-reviewer"],
           reviewerCommand: launcherArg(args, "reviewer-command"),
+          fallback: args.fallback,
+          host: args.host,
           base: args.base,
           // Pass raw string so --rounds +N stays additive (do not Number() early)
           rounds: args.rounds,
@@ -230,10 +235,30 @@ async function main() {
           ...base,
           peer: args.peer ?? args.reviewer,
           peerCommand: launcherArg(args, "peer-command"),
+          fallback: args.fallback,
+          host: args.host,
+          skipHost: args["skip-host"] === true,
           questionFile: args["question-file"] ?? args.questionFile,
           question: args.question,
         });
         break;
+      case "prefs": {
+        // Show, or with --order / --skip-host / --reset save, the Reviewer preference every run and consult uses.
+        const change =
+          args.reset === true
+            ? { reset: true }
+            : {
+                ...(args.order !== undefined ? { order: args.order } : {}),
+                ...(args["skip-host"] !== undefined
+                  ? { skipHost: args["skip-host"] === true }
+                  : {}),
+              };
+        const saved = Object.keys(change).length
+          ? prefs.writePrefs(process.env, change)
+          : prefs.readPrefs(process.env);
+        result = { ok: true, status: "prefs", ...saved };
+        break;
+      }
       case "sessions":
         result = sessions.cmdSessions({
           ...base,
@@ -242,7 +267,7 @@ async function main() {
         break;
       default:
         throw new Error(
-          `Unknown command: ${command}. Try: run | fix-completion | close | evidence | consult | sessions | help`,
+          `Unknown command: ${command}. Try: run | fix-completion | close | evidence | consult | sessions | prefs | help`,
         );
     }
     print(result);

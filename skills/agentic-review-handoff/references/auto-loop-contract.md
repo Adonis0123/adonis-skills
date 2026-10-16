@@ -11,12 +11,12 @@ Authoritative machine + Reviewer contract for `review-loop run`.
 ## CLI
 
 ```text
-review-loop run --repo <root> --reviewer codex|grok|claude [--reviewer-command <launcher>] [--completion pass|review] [--base <sha>] [--rounds 3] [--intake]
+review-loop run --repo <root> --reviewer codex|grok|claude [--reviewer-command <launcher>] [--fallback <product>[,<product>]] [--completion pass|review] [--base <sha>] [--rounds 3] [--intake]
 review-loop run --continue --repo <root> [--packet <path>] [--reviewer <product>] [--reviewer-command <launcher>] [--rounds N]
 review-loop fix-completion --repo <root> --packet <path> --body-file <md>
 review-loop close --repo <root> --packet <path> --reason accept-concerns
 review-loop evidence --repo <root> --base <sha> [--paths a,b]
-review-loop consult --repo <root> --peer codex|grok|claude --question-file <md>
+review-loop consult --repo <root> --peer codex|grok|claude [--fallback <product>[,<product>]] --question-file <md>
 ```
 
 Origin rules are fail-closed:
@@ -96,7 +96,7 @@ This table is the auto-loop source of truth (scripts enforce it). Do **not** app
 | explicit `review` / `PASS_WITH_CONCERNS` | `awaiting_user_decision` | first round: `review_findings`; re-review: `re_review` | User may `close --reason accept-concerns` or `run --continue`                                    |
 | any / `BLOCKED`                          | `blocked`                | first round: `fix_handoff`; re-review: `re_review`     | Return blockers; Fixer fixes + `fix-completion` + `run --continue`                               |
 
-A fresh `run` has no default Reviewer: omitting `--reviewer` fails with `REVIEWER_REQUIRED` before any external call. The visible agent resolves it once before starting (see SKILL.md § Reviewer selection). `--reviewer-command=<launcher>` binds a named account launcher such as `grok002` to that product. `completion`, Reviewer, and launcher persist across `run --continue`; an explicit different `--reviewer` on continue drops the inherited launcher.
+A fresh `run` needs `--reviewer` or `--host`: with `--host=<product>` the saved Reviewer preference (`review-loop prefs`; default `claude,codex,grok`, host kept) supplies the Reviewer and `--fallback`, and the result carries `reviewerFrom`; with neither it fails with `REVIEWER_REQUIRED` before any external call (see SKILL.md § Reviewer selection). `--reviewer-command=<launcher>` binds a named account launcher such as `grok002` to that product. `completion`, Reviewer, launcher and `--fallback` persist across `run --continue`; an explicit different `--reviewer` on continue drops the inherited launcher. A Reviewer invoke that times out (`timedOut: true`) moves the same round to the next `--fallback` product in a new session; the run state then names that product and the result carries `fallbacks: [{ from, to, reason }]`. A user stop, a non-zero exit or empty output stays `DELIVERY_UNKNOWN` (no retry), and so does a timeout with no fallback left.
 
 ### Finding ledger (runtime `auto-run-state.json`)
 

@@ -11,7 +11,8 @@
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
-    }
+    },
+    "updatedAt": "2026-10-16T07:24:09.000Z"
   },
   {
     "slug": "agent-symlink-init",
@@ -32,7 +33,7 @@
     "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git.",
     "metadata": {
       "author": "adonis",
-      "version": "3.8.0"
+      "version": "3.9.0"
     },
     "files": {
       "hasReferences": true,
@@ -44,10 +45,10 @@
   {
     "slug": "architecture-hardening-loop",
     "name": "architecture-hardening-loop",
-    "description": "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement.",
+    "description": "Run a bounded scan-triage-fix-independent-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement.",
     "metadata": {
       "author": "adonis",
-      "version": "1.8.0"
+      "version": "1.9.0"
     },
     "files": {
       "hasReferences": true,
@@ -328,7 +329,7 @@
     "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.8.0"
+      "version": "1.9.0"
     },
     "files": {
       "hasReferences": true,
@@ -398,7 +399,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-02T08:02:54.000Z"
+    "updatedAt": "2026-10-16T07:24:09.000Z"
   },
   {
     "slug": "worktree-tidy",

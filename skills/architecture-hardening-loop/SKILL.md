@@ -1,9 +1,9 @@
 ---
 name: architecture-hardening-loop
-description: "Run a bounded scan-triage-fix-Grok-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement."
+description: "Run a bounded scan-triage-fix-independent-review-rescan loop on an explicit or uniquely resolvable user-supplied code scope until no evidence-backed architecture fixes remain. Use for implementation-inclusive architecture cleanup, DDD or high-cohesion hardening, and autonomous architecture improvement."
 metadata:
   author: adonis
-  version: "1.8.0"
+  version: "1.9.0"
 ---
 
 # Architecture Hardening Loop
@@ -12,7 +12,7 @@ metadata:
 
 常见触发：架构加固、把架构问题修干净、scan-fix-review 直到没有可修项、review 完再扫、在指定模块里自主加固。
 
-扫描器几乎总会再吐出候选项。价值是**候选准入 + 固定顺序 + 独立 Grok 复核 + 明确终态**。`0` 个架构深化候选有效；不要为了报告“有内容”而制造重构。
+扫描器几乎总会再吐出候选项。价值是**候选准入 + 固定顺序 + 独立会话复核 + 明确终态**。`0` 个架构深化候选有效；不要为了报告“有内容”而制造重构。
 
 ## Fast Path
 
@@ -51,11 +51,11 @@ metadata:
 
 用户点名本 Loop（slash / `$skill` / 明确 skill 名），或 `workflow-gate` 把 `Runtime skill` 设为本 Loop，即授权下表依赖按其声明用途被嵌套调用。`disable-model-invocation` / `allow_implicit_invocation: false` 只禁止这些 skill 在没有父编排时被孤立自动触发，**不等于**本轮不可用：优先用 host 的嵌套调用；host 仅因此不暴露入口时，父 Loop 完整读取该依赖的 `SKILL.md` 与必需 references，在当前父会话执行其声明的 report-only 阶段。这是显式父调用，不要求用户再点名每个嵌套 skill，也不要把“请同时点名 scanner”或“请修改第三方 frontmatter”写成继续方式。
 
-| 依赖                            | 用途                                 | 本机检查                                     | 缺失时提示（仅提示，不代装）                                                     |
-| ------------------------------- | ------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------- |
-| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                | 已安装、可读，且嵌套调用或父会话执行能力可用 | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |
-| `codebase-design`               | scanner Explore 的强制词汇与门槛     | 已安装且 scanner 可调用                      | 第三方 scanner companion；按其来源安装                                           |
-| `agentic-review-handoff`        | Grok consult 与 review-fix-re-review | 已安装且真实 Grok adapter 可调用             | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |
+| 依赖                            | 用途                                        | 本机检查                                          | 缺失时提示（仅提示，不代装）                                                     |
+| ------------------------------- | ------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `improve-codebase-architecture` | 扫描 + 候选 HTML 报告                       | 已安装、可读，且嵌套调用或父会话执行能力可用      | 第三方：`npx skills add mattpocock/skills --skill improve-codebase-architecture` |
+| `codebase-design`               | scanner Explore 的强制词汇与门槛            | 已安装且 scanner 可调用                           | 第三方 scanner companion；按其来源安装                                           |
+| `agentic-review-handoff`        | Reviewer 的 consult 与 review-fix-re-review | 已安装，且偏好里至少一个产品的真实 adapter 可调用 | 本仓：`npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`   |
 
 本 Skill：`npx skills add adonis0123/adonis-skills --skill architecture-hardening-loop`
 
@@ -67,14 +67,22 @@ metadata:
 
 1. 确认当前目录属于 Git 仓库；记录仓库根与工作区状态。若用户给的是附件/引用/Git 定位信息，先按“必需输入”解析并回显 commit identity 与最终 path set；解析成功不再索要 hash/路径。
 2. **解析执行能力，不把 frontmatter 当门禁**（规则见“硬依赖与 runtime 能力”）。仍不可用的情形只有：未安装/不可读、所需 worker/工具无法执行、合同不兼容或用户明确禁止。不要因为 catalog 未注入或用户没点名嵌套 skill 而停。
-3. host 须能启动 scanner 要求的独立只读 exploration worker；`agentic-review-handoff` 须能创建或恢复真实 Grok consult/review 并返回可核对结果。只有 CLI 文件或 skill 名存在不算可用。
-4. 任一硬依赖未安装/不可读、实际 worker/工具无法执行、delegation 或 Grok capability 缺失 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不静默降级、不复制逻辑、不代装。未触发 Goal 集成时，不检查或要求 `goal-gate`。
+3. host 须能启动 scanner 要求的独立只读 exploration worker；`agentic-review-handoff` 须能对偏好里至少一个产品创建或恢复真实 consult/review 并返回可核对结果。只有 CLI 文件或 skill 名存在不算可用。
+4. 任一硬依赖未安装/不可读、实际 worker/工具无法执行、delegation 或偏好里的 Reviewer 都不可用 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不静默降级、不复制逻辑、不代装。未触发 Goal 集成时，不检查或要求 `goal-gate`。
 5. 检查 `.review-handoff/**` 与 `$GIT_COMMON_DIR/info/exclude` 协议写；用户禁止且当前需要写 → `HUMAN_GATE`。
 6. 冻结调用时的代码范围。协议产物不混入 scanner scope。每次 scanner pass 前选定本轮 `scanEvidence`（初扫 E1；Fix 后用已确认的 review identity 作复扫 E2）。细节 → `references/ownership-and-evidence.md`。
 7. 若有 native Goal 状态、调用方 parent contract 或用户明确 Goal 请求，只读核对关系：`none` / `exact-same-goal` / `broader-compatible` / `conflicting/unclear`。证据可来自 native getter **或**调用方可核对的 parent contract；本步不创建 Goal。没有这些信号就记录 `Goal: not-created` 并继续。`conflicting/unclear` 服从 `goal-gate` 的 `defer`，扫描前 `HUMAN_GATE`。
 8. 记录 `Hardening Contract` 和空 `Candidate Ledger`；保留用户已有改动。
 
 步骤 6–8 互不依赖，可与依赖解析并行准备；全部完成后再启动首次扫描。
+
+## Reviewer 选择
+
+consult 和复审用同一套 Reviewer 选择，按 `agentic-review-handoff` 的用户偏好，不问用户：
+
+- 用户点名产品或账号（`codex`、`cc002`、`grok`、`grok002`）→ 用它，账号加 `--reviewer-command` / `--peer-command`；没要求就不加后备。
+- 否则只传 `--host=<当前宿主产品>`（consult 同样），由脚本读用户保存的偏好：第一个产品当 Reviewer，其余自动成为 `--fallback`。默认 `claude,codex,grok`，不跳过宿主。用户说出长期偏好时用 `review-loop prefs --order=...` 保存。
+- 超时由脚本自动换下一个产品重跑同一轮（结果里的 `fallbacks`），不算 `DELIVERY_UNKNOWN`；后备也用完才进 `HUMAN_GATE`。完成报告写明实际 Reviewer（`reviewerFrom`）和每次换人。
 
 ## 主流程
 
@@ -83,11 +91,11 @@ metadata:
   → 扫描候选项（仅扫描+报告）
   → Candidate Ledger 去重
   → Architecture Fix / Local Fix / Backlog / Reject
-  → 零 Fix？→ Grok consult 复核终态 → NO_ACTIONABLE_FINDINGS
-  → 有 Fix → Grok 事前 consult
+  → 零 Fix？→ Reviewer consult 复核终态 → NO_ACTIONABLE_FINDINGS
+  → 有 Fix → Reviewer 事前 consult
   → 条件 Goal 集成
   → 最小修改与测试
-  → Grok review-fix-re-review
+  → Reviewer review-fix-re-review
   → 原范围重新扫描
   → （有 Fix 则下一轮；否则终态 consult 或 duplicate-only 复用 verdict）→ NO_ACTIONABLE_FINDINGS
 ```
@@ -147,16 +155,16 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 **零 Fix：**
 
-- Grok `consult` 只复核终态分类。首轮零 Fix 必须 consult。复扫轮次里，若 ledger 没有新 fingerprint，且全部 disposition 已在本轮事前 consult 或 review verdict 中由 Grok 看过，则复用该 verdict 作终态复核，不再单独 consult；stop reason 记 `duplicate-only`。
+- Reviewer `consult` 只复核终态分类。首轮零 Fix 必须 consult。复扫轮次里，若 ledger 没有新 fingerprint，且全部 disposition 已在本轮事前 consult 或 review verdict 中由 Reviewer 看过，则复用该 verdict 作终态复核，不再单独 consult；stop reason 记 `duplicate-only`。
 - 按本轮 `scanEvidence` 重算 `review-loop evidence`；identity 一致才进入 `NO_ACTIONABLE_FINDINGS`，否则同范围重扫，无法重扫则 `UNVERIFIED`。匹配后立即停止，禁止再扫一轮求安心。
 - 不创建新 Goal：`none` → `not-created`；`exact-same-goal` → 完整 Done condition 有证据后按当前 runtime 的终态 schema 完成；`broader-compatible` → `active-checkpoint`；`conflicting/unclear` 到不了本分支。
 - E1 / E2 / E3 比对与 Goal 完成合同 → `references/ownership-and-evidence.md`。
 
 **有 Fix：** 进入步骤 4–7。
 
-### 4. Grok 事前 consult
+### 4. Reviewer 事前 consult
 
-修改前调用 `agentic-review-handoff` 的 DecisionConsult / `review-loop consult`，Reviewer 固定 **Grok**。提供冻结范围、契约、ledger、分类、最小修改与验证。Consult 是独立意见不是投票；普通分歧用证据收敛。Grok 新提出的范围内问题同样过证据门槛。
+修改前调用 `agentic-review-handoff` 的 DecisionConsult / `review-loop consult`，Reviewer 按「Reviewer 选择」（传 `--host`，由用户偏好决定 peer 与后备）。提供冻结范围、契约、ledger、分类、最小修改与验证。Consult 是独立意见不是投票；普通分歧用证据收敛。Reviewer 新提出的范围内问题同样过证据门槛。
 
 ### 5. 条件 Goal 集成
 
@@ -166,16 +174,16 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 只实施已确认的 `Fix`：每行追溯到本轮某个 `Fix`；`Architecture Fix` 才可动 Module/Interface/Seam，`Local Fix` 留在现有 Implementation；不添加当前问题不需要的扩展点或框架。行为变化补回归测试；纯结构变化用现有或最小测试证明公共行为不变。先针对性验证，再按影响面跑相关测试 / typecheck / build。命令未执行 → `UNVERIFIED`。
 
-### 7. Grok 复审修改
+### 7. Reviewer 复审修改
 
-调用 `agentic-review-handoff` 的自动 `run`，Reviewer 固定 **Grok**（`--reviewer=grok`，不另问用户；用户点名 Grok 账号如 `grok002` 时加 `--reviewer-command=grok002`，consult 同理用 `--peer-command`）：
+调用 `agentic-review-handoff` 的自动 `run`，Reviewer 与第 4 步同一套选择（`--host`，或用户点名的 `--reviewer`），不另问用户：
 
-| 结果                                                     | 动作                                                                                          |
-| -------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `PASS`                                                   | 进入原范围重新扫描                                                                            |
-| `BLOCKED`                                                | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                                       |
-| `PASS_WITH_CONCERNS` / `concerns_require_fix`            | 默认 `completion=pass`：把范围内 concern 当普通 Fix，记 Fix Completion 后自动续审；不询问用户 |
-| `DELIVERY_UNKNOWN` / hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                                  |
+| 结果                                                                           | 动作                                                                                          |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `PASS`                                                                         | 进入原范围重新扫描                                                                            |
+| `BLOCKED`                                                                      | 只修经证据验证的有效发现 → 记 fix completion → 继续复审                                       |
+| `PASS_WITH_CONCERNS` / `concerns_require_fix`                                  | 默认 `completion=pass`：把范围内 concern 当普通 Fix，记 Fix Completion 后自动续审；不询问用户 |
+| `DELIVERY_UNKNOWN`（`--fallback` 也用完）/ hash mismatch / deadlock / 预算耗尽 | `HUMAN_GATE`                                                                                  |
 
 本 Loop 使用默认 `completion=pass`，不得因普通 `PASS_WITH_CONCERNS` 生成二次确认；修复并续审到 `PASS` / `NO_FINDINGS` 或预算/真实异常终态。只有用户明确要求 `completion=review` 时，才允许 `awaiting_user_decision` 与 Decision Closure；不得自动接受 concern 或把 verdict 改写为 `PASS`。
 
@@ -230,7 +238,7 @@ Architecture Hardening Result
 - Rejected: <无证据或过度设计项及理由，或 none>
 - Candidate Ledger: <fingerprint、disposition、reconsider trigger>
 - Stop reason: <zero-fix-first-pass（首轮零 Fix，终态 consult 后停）| post-fix-rescan-zero（复扫有新 fingerprint 但全部非 Fix，终态 consult 后停）| duplicate-only（复扫无新 fingerprint，复用 verdict）| human-gate | missing-dependencies | evidence-drift>
-- Grok evidence: <consult；若实施过 Fix：最终 review verdict、packet 与 lifecycle，若有 Decision Closure 则记录用户命令；零 Fix：review not-run + 终态 consult，或 duplicate-only 复用的 verdict>
+- Reviewer evidence: <实际用的 Reviewer 与每次超时换人（`fallbacks`）；consult；若实施过 Fix：最终 review verdict、packet 与 lifecycle，若有 Decision Closure 则记录用户命令；零 Fix：review not-run + 终态 consult，或 duplicate-only 复用的 verdict>
 - Evidence id: <baseSha + pathFilter + digest；另列 coveredPaths 与 sourceRound>
 - Verification: <实际命令与结果，或 UNVERIFIED>
 - Goal: <completed | active-checkpoint | not-created | deferred-conflict>
