@@ -189,9 +189,13 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
             <ul className="mt-5 flex flex-wrap gap-1.5">
               {featured && (
                 <li className="nk-tag gap-1">
-                  <span
-                    className="icon-[lucide--sparkles] size-3"
-                    aria-hidden
+                  <Image
+                    src="/brand/kiki-mark.svg"
+                    alt=""
+                    width={16}
+                    height={16}
+                    unoptimized
+                    className="size-4 object-contain"
                   />
                   {featured.badge[locale]}
                 </li>

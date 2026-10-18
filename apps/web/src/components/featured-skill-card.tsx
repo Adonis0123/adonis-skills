@@ -41,8 +41,15 @@ export function FeaturedSkillCard({ view, index }: FeaturedSkillCardProps) {
             message: `${number} / Featured`,
           })}
         </span>
-        <span className="inline-flex h-[26px] items-center gap-1.5 rounded-full bg-accent px-2.5 text-xs font-semibold text-accent-foreground">
-          <span className="icon-[lucide--sparkles] size-3.5" aria-hidden />
+        <span className="inline-flex h-[26px] items-center gap-1.5 rounded-full bg-accent pr-2.5 pl-1.5 text-xs font-semibold text-accent-foreground">
+          <Image
+            src="/brand/kiki-mark.svg"
+            alt=""
+            width={18}
+            height={18}
+            unoptimized
+            className="size-[18px] object-contain"
+          />
           {entry.badge[locale]}
         </span>
       </div>
