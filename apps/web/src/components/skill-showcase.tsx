@@ -40,12 +40,12 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
             {showcase.hero.keyMoments.map((moment, index) => (
               <li
                 key={`${moment}-${index}`}
-                className="flex gap-3 rounded-xl border border-border/60 bg-background/55 p-3"
+                className="flex gap-3 rounded-xl border border-border bg-background p-3"
               >
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-[#87a6dd]/20 font-mono text-xs font-semibold text-[#5875ad]">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent font-mono text-xs font-semibold text-link">
                   {index + 1}
                 </span>
-                <span className="text-sm leading-6 text-foreground/85">
+                <span className="text-sm leading-6 text-foreground">
                   {moment}
                 </span>
               </li>
@@ -101,7 +101,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
                   {message.toolCalls?.map((toolCall) => (
                     <div
                       key={`${section.id}-${toolCall.name}`}
-                      className="rounded-xl border border-[#87a6dd]/35 bg-[#87a6dd]/8 p-3.5"
+                      className="rounded-xl border border-input bg-accent p-3.5"
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <ClayBadge
@@ -114,9 +114,9 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
                           {toolCall.summary}
                         </span>
                       </div>
-                      <p className="mt-2 flex gap-2 text-sm leading-6 text-foreground/85">
+                      <p className="mt-2 flex gap-2 text-sm leading-6 text-accent-foreground">
                         <span
-                          className="icon-[lucide--circle-check-big] mt-1 size-4 shrink-0 text-[#6f8fc7]"
+                          className="icon-[lucide--circle-check-big] mt-1 size-4 shrink-0 text-link"
                           aria-hidden
                         />
                         <span>{toolCall.result}</span>

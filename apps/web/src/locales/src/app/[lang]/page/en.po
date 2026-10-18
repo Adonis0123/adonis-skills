@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,61 +14,46 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:103
-#~ msgid "home.library.kicker"
-#~ msgstr "Library"
+#: ../../src/app/%5Blang%5D/page.tsx:44
+msgid "home.cta.browse"
+msgstr "Browse skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:105
-#~ msgid "home.library.title"
-#~ msgstr "Skill Library"
+#: ../../src/app/%5Blang%5D/page.tsx:121
+msgid "home.install.copy.aria"
+msgstr "Copy the {host} install command"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:88
-msgid "home.install.step1"
-msgstr "1. Choose a skill slug."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:89
-msgid "home.install.step2"
-msgstr "2. Run the install command."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:90
-msgid "home.install.step3"
-msgstr "3. Use the skill in your agent workflow."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:38
-msgid "home.hero.description"
-msgstr "Browse practical skills, pick a slug, and install with one command. Each skill is reusable in real workflows."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:81
-msgid "home.install.title"
-msgstr "Install Pattern"
+#: ../../src/app/%5Blang%5D/page.tsx:99
+msgid "home.install.intro"
+msgstr "Every skill works in Claude Code, Codex, Cursor, and Hermes Agent. Each skill page has the exact command."
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:34
+msgid "home.hero.description"
+msgstr "I'm Nika. I build small tools with AI and carry them around like a lantern. These are the {skillsCount} skills I reach for in my own coding work."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:96
+msgid "home.install.title"
+msgstr "Install into your agent"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:118
+msgid "home.install.scope.one"
+msgstr "Installs one skill; replace <slug> with its name."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:117
+msgid "home.install.scope.all"
+msgstr "Installs the whole collection."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:30
 msgid "home.hero.title"
-msgstr "Install production-ready skills for your AI agents."
+msgstr "Small agent skills I built and use every day."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:66
-msgid "home.cta.github"
-msgstr "Open GitHub"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:50
-msgid "home.badge.repo"
-msgstr "Repo: {skillsRepo}"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:53
-msgid "home.badge.skills"
-msgstr "Skills: {skillsCount}"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:73
-msgid "home.cta.example"
-msgstr "View Example Skill"
+#: ../../src/app/%5Blang%5D/page.tsx:59
+msgid "home.hero.hostsLabel"
+msgstr "Works with"

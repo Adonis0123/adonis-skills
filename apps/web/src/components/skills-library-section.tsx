@@ -1,100 +1,186 @@
-'use client'
+"use client";
 
-import { Trans, useLingui } from '@lingui/react/macro'
-import { AnimatePresence, motion } from 'motion/react'
-import { ClaySurface } from '@/components/ui'
-import { SkillCard } from '@/components/skill-card'
-import { VirtualGrid } from '@/components/virtual-grid/virtual-grid'
-import { useSkillSearch } from '@/components/virtual-grid/use-skill-search'
-import type { SkillListItem } from '@/lib/skills'
+import { useRef } from "react";
+import { Trans, useLingui } from "@lingui/react/macro";
+import { SkillCard } from "@/components/skill-card";
+import {
+  getEmptyResultCause,
+  useCatalogFilters,
+} from "@/components/use-catalog-filters";
+import { ClayButton } from "@/components/ui";
+import { cx } from "@/components/ui/utils";
+import { SKILL_TAG_LABELS } from "@/config/skill-tags";
+import { resolveLocaleValue } from "@/i18n/config";
+import { SKILL_TAGS, type SkillTag } from "@/lib/skill-schema";
+import type { SkillListItem } from "@/lib/skills";
 
 interface SkillsLibrarySectionProps {
-  skills: SkillListItem[]
+  skills: SkillListItem[];
 }
 
+const chipClass =
+  "clay-focus-ring inline-flex h-9 shrink-0 items-center rounded-full border px-3.5 text-sm font-semibold transition-colors pointer-coarse:h-11";
+
 export function SkillsLibrarySection({ skills }: SkillsLibrarySectionProps) {
-  const { t } = useLingui()
-  const { query, setQuery, filteredSkills, isFiltering } = useSkillSearch(skills)
+  const { t, i18n } = useLingui();
+  const locale = resolveLocaleValue(i18n.locale);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const {
+    query,
+    setQuery,
+    tag,
+    setTag,
+    filteredSkills,
+    isFiltering,
+    clearFilters,
+  } = useCatalogFilters(skills);
+  const resultCount = filteredSkills.length;
+  const totalCount = skills.length;
+  const emptyCause = getEmptyResultCause(query, tag);
+
+  const renderChip = (value: SkillTag | null, label: string) => {
+    const active = tag === value;
+    return (
+      <button
+        key={value ?? "all"}
+        type="button"
+        aria-pressed={active}
+        onClick={() => setTag(value)}
+        className={cx(
+          chipClass,
+          active
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-input bg-card text-foreground hover:bg-accent",
+        )}
+      >
+        {label}
+      </button>
+    );
+  };
 
   return (
-    <section>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="mb-1.5 font-mono text-xs uppercase tracking-[0.16em] text-clay-muted">
-            <Trans id="home.library.kicker">Library</Trans>
-          </p>
-          <h2 className="text-3xl md:text-4xl">
-            <Trans id="home.library.title">Skill Library</Trans>
-          </h2>
-        </div>
+    <section
+      id="skills"
+      aria-labelledby="skills-title"
+      className="scroll-mt-24"
+    >
+      <div className="mb-4 flex flex-wrap items-end justify-between gap-4">
+        <h2 id="skills-title" className="text-3xl md:text-4xl">
+          <Trans id="home.library.title">Skills</Trans>
+        </h2>
 
-        <ClaySurface
-          tone="base"
-          elevation="inset"
-          className="flex h-10 w-full items-center gap-2 rounded-[1rem] px-4 sm:w-72 md:w-80"
-        >
+        <div className="clay-surface clay-tone-base clay-elevation-inset flex h-12 w-full items-center gap-2.5 rounded-[1rem] px-4 clay-focus-within-ring sm:w-96">
           <span
-            className="icon-[lucide--search] size-3.5 shrink-0 text-clay-muted"
+            className="icon-[lucide--search] size-4 shrink-0 text-muted-foreground"
             aria-hidden
           />
           <input
-            type="text"
+            ref={inputRef}
+            type="search"
             value={query}
-            onChange={e => setQuery(e.target.value)}
+            onChange={(event) => setQuery(event.target.value)}
             aria-label={t({
-              id: 'home.search.input.aria',
-              message: 'Search skills',
+              id: "home.search.input.aria",
+              message: "Search skills",
             })}
             placeholder={t({
-              id: 'home.search.placeholder',
-              message: 'Search skills...',
+              id: "home.search.placeholder",
+              message: "Search in English or 中文…",
             })}
-            className="min-w-0 flex-1 bg-transparent font-mono text-[11px] text-foreground outline-none placeholder:text-clay-muted md:text-xs"
+            className="min-w-0 flex-1 appearance-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground [&::-webkit-search-cancel-button]:hidden"
           />
-          <AnimatePresence>
-            {query && (
-              <motion.button
-                type="button"
-                onClick={() => setQuery('')}
-                className="clay-focus-ring shrink-0 rounded-md p-0.5"
-                aria-label={t({
-                  id: 'home.search.clear',
-                  message: 'Clear search',
-                })}
-                initial={{ opacity: 0, scale: 0.6 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.6 }}
-                transition={{ duration: 0.15 }}
-              >
-                <span
-                  className="icon-[lucide--x] size-3 text-clay-muted"
-                  aria-hidden
-                />
-              </motion.button>
-            )}
-          </AnimatePresence>
-        </ClaySurface>
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                inputRef.current?.focus();
+              }}
+              className="clay-focus-ring -mr-2 flex size-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
+              aria-label={t({
+                id: "home.search.clear",
+                message: "Clear search",
+              })}
+            >
+              <span className="icon-[lucide--x] size-3.5" aria-hidden />
+            </button>
+          )}
+        </div>
       </div>
 
-      {filteredSkills.length > 0 ? (
-        <VirtualGrid
-          items={filteredSkills}
-          renderItem={skill => <SkillCard skill={skill} />}
-          getItemKey={skill => skill.slug}
-        />
+      <div
+        // Padding leaves room for focus rings. On mobile the right edge fades to hint that the row
+        // scrolls, and the wider end padding lets the last chip scroll fully clear of the fade.
+        className="-mx-2 mb-5 flex gap-2 overflow-x-auto py-1.5 pr-10 pl-2 [mask-image:linear-gradient(to_right,black_calc(100%-2.5rem),transparent)] [scrollbar-width:none] sm:pr-2 sm:[mask-image:none] [&::-webkit-scrollbar]:hidden"
+        role="group"
+        aria-label={t({ id: "home.filter.aria", message: "Filter by tag" })}
+      >
+        {renderChip(null, t({ id: "home.filter.all", message: "All" }))}
+        {SKILL_TAGS.map((value) =>
+          renderChip(value, SKILL_TAG_LABELS[value][locale]),
+        )}
+      </div>
+
+      <p className="sr-only" aria-live="polite">
+        <Trans id="home.search.resultCount">
+          {resultCount} of {totalCount} skills shown
+        </Trans>
+      </p>
+
+      {resultCount > 0 ? (
+        <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {filteredSkills.map((skill) => (
+            <li key={skill.slug} className="min-w-0">
+              <SkillCard skill={skill} />
+            </li>
+          ))}
+        </ul>
       ) : isFiltering ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="clay-surface clay-tone-base flex flex-col items-center px-6 py-14 text-center">
           <span
-            className="icon-[lucide--search-x] mb-4 size-10 text-clay-muted/60"
+            className="icon-[lucide--search-x] mb-4 size-10 text-muted-foreground"
             aria-hidden
           />
-          <p className="font-mono text-sm text-clay-muted">
-            <Trans id="home.search.empty">
-              No skills found for &quot;{query}&quot;
-            </Trans>
+          <p className="text-lg font-bold text-pretty">
+            {query.trim() ? (
+              <Trans id="home.search.emptyTitleQuery">
+                No skills match “{query}”
+              </Trans>
+            ) : (
+              <Trans id="home.search.emptyTitle">No matching skills</Trans>
+            )}
           </p>
+          <p className="mt-2 max-w-md text-sm text-muted-foreground text-pretty">
+            {
+              {
+                query: (
+                  <Trans id="home.search.emptyHint">
+                    Try another word, in English or Chinese.
+                  </Trans>
+                ),
+                tag: (
+                  <Trans id="home.search.emptyHintTagOnly">
+                    No skills carry this tag yet. Pick another tag.
+                  </Trans>
+                ),
+                both: (
+                  <Trans id="home.search.emptyHintTag">
+                    Try another word, or clear the tag filter.
+                  </Trans>
+                ),
+              }[emptyCause ?? "query"]
+            }
+          </p>
+          <ClayButton
+            variant="secondary"
+            size="sm"
+            className="mt-5"
+            onClick={clearFilters}
+          >
+            <Trans id="home.search.clearFilters">Clear filters</Trans>
+          </ClayButton>
         </div>
       ) : null}
     </section>
-  )
+  );
 }

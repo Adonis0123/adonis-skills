@@ -15,28 +15,38 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/theme-toggle.tsx:45
-msgid "themeToggle.switchTo"
-msgstr "切换到{nextLabel}主题"
+#~ msgid "themeToggle.switchTo"
+#~ msgstr "切换到{nextLabel}主题"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/theme-toggle.tsx:46
-msgid "themeToggle.current"
-msgstr "当前：{label}主题"
+#~ msgid "themeToggle.current"
+#~ msgstr "当前：{label}主题"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:33
+#~ msgid "themeToggle.mode.dark"
+#~ msgstr "深色"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:34
+#~ msgid "themeToggle.mode.light"
+#~ msgstr "浅色"
 
 #: ../../src/components/layout/theme-toggle.tsx:97
 #~ msgid "Current: {label} theme"
 #~ msgstr ""
 
-#. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:33
-msgid "themeToggle.mode.dark"
-msgstr "深色"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:34
-msgid "themeToggle.mode.light"
-msgstr "浅色"
-
 #: ../../src/components/layout/theme-toggle.tsx:96
 #~ msgid "Switch to {nextLabel} theme"
 #~ msgstr ""
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:25
+msgid "themeToggle.switchToDark"
+msgstr "切换到深色主题"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:26
+msgid "themeToggle.switchToLight"
+msgstr "切换到浅色主题"

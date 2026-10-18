@@ -1,102 +1,167 @@
-import Link from 'next/link'
-import { Trans } from '@lingui/react/macro'
-import { exampleSkillHref } from '@/config/site-layout'
-import { SectionReveal } from '@/components/motion/section-reveal'
-import { SkillsLibrarySection } from '@/components/skills-library-section'
-import { ClayBadge, ClayButton, ClaySurface } from '@/components/ui'
-import { initPageLingui } from '@/i18n/initLingui'
-import { LocaleLink } from '@/i18n/locale-link'
-import { getAllSkills, skillsRepo } from '@/lib/skills'
+import Image from "next/image";
+import Link from "next/link";
+import { Trans } from "@lingui/react/macro";
+import { SectionReveal } from "@/components/motion/section-reveal";
+import { CommandBlock } from "@/components/command-block";
+import { SkillsLibrarySection } from "@/components/skills-library-section";
+import { ClayButton, ClaySurface } from "@/components/ui";
+import { HOST_INSTALLS } from "@/config/hosts";
+import { siteLayoutConfig } from "@/config/site-layout";
+import { initLingui, initPageLingui } from "@/i18n/initLingui";
+import { getAllSkills } from "@/lib/skills";
 
 interface HomePageProps {
-  params: Promise<{ lang: string }>
+  params: Promise<{ lang: string }>;
 }
 
 export default async function HomePage({ params }: HomePageProps) {
-  await initPageLingui(params)
-  const skills = getAllSkills()
-  const skillsCount = skills.length
+  const i18n = initLingui(await initPageLingui(params));
+  const skills = getAllSkills();
+  const skillsCount = skills.length;
+  const hostNames = ["Claude Code", "Codex", "Cursor", "Hermes Agent"];
 
   return (
-    <main className="site-page-shell site-frame site-frame--main relative flex w-full flex-col">
+    <main
+      id="main-content"
+      className="site-page-shell site-frame site-frame--main relative flex w-full flex-col"
+    >
       <SectionReveal delay={20}>
-        <section className="clay-surface clay-tone-cream clay-elevation-floating relative overflow-hidden rounded-[1.35rem] p-5 sm:p-6 md:rounded-[1.6rem] md:p-10">
-          <div className="clay-hero-mesh pointer-events-none absolute inset-0 opacity-90" aria-hidden />
-
-          <div className="relative z-10 grid gap-6 md:gap-8 lg:grid-cols-[1.24fr_0.76fr]">
-            <div>
-              <p className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-clay-muted">
-                <span className="icon-[lucide--command] size-3.5" aria-hidden />
-                adonis-skills
-              </p>
-
-              <h1 className="max-w-3xl text-3xl leading-[1.16] text-balance sm:text-4xl md:text-6xl">
-                <Trans id="home.hero.title">Install production-ready skills for your AI agents.</Trans>
+        <section className="clay-surface clay-tone-cream clay-elevation-floating relative overflow-hidden rounded-[1.35rem] md:rounded-[1.6rem] md:bg-[linear-gradient(90deg,var(--card)_38%,var(--hero-art-bg)_64%)]">
+          <div className="relative z-10 grid items-center md:grid-cols-[1.05fr_0.95fr]">
+            <div className="p-5 sm:p-7 md:py-12 md:pl-10 md:pr-4">
+              <h1 className="text-[1.75rem] leading-[1.15] text-balance [word-break:keep-all] sm:text-4xl lg:text-5xl">
+                <Trans id="home.hero.title">
+                  Small agent skills I built and use every day.
+                </Trans>
               </h1>
 
-              <p className="mt-4 max-w-4xl text-sm leading-6 text-clay-muted sm:mt-5 md:text-base md:leading-7">
+              <p className="mt-3 max-w-xl text-sm leading-6 text-muted-foreground sm:mt-4 md:text-base md:leading-7">
                 <Trans id="home.hero.description">
-                  Browse practical skills, pick a slug, and install with one command. Each skill is reusable in real
-                  workflows.
+                  I&apos;m Nika. I build small tools with AI and carry them
+                  around like a lantern. These are the {skillsCount} skills I
+                  reach for in my own coding work.
                 </Trans>
               </p>
 
-              <div className="mt-6 grid w-full max-w-[30rem] grid-cols-1 gap-3 sm:mt-6 sm:max-w-none sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-2.5">
-                <ClayBadge
-                  tone="blue"
-                  withDot
-                  className="w-full justify-start text-left text-[11px] leading-5 [overflow-wrap:anywhere] sm:w-auto sm:text-xs"
-                >
-                  <Trans id="home.badge.repo">Repo: {skillsRepo}</Trans>
-                </ClayBadge>
-                <ClayBadge tone="neutral" withDot className="w-full justify-start px-3.5 py-1 text-[11px] sm:w-auto sm:text-xs">
-                  <Trans id="home.badge.skills">Skills: {skillsCount}</Trans>
-                </ClayBadge>
-              </div>
-
-              <div className="mt-6 flex flex-col gap-2.5 sm:mt-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-                <ClayButton asChild>
+              <div className="mt-5 flex flex-wrap items-center gap-2.5 sm:mt-6 sm:gap-3">
+                <ClayButton asChild size="md">
+                  <a href="#skills">
+                    <span
+                      className="icon-[lucide--arrow-down] size-4"
+                      aria-hidden
+                    />
+                    <Trans id="home.cta.browse">Browse skills</Trans>
+                  </a>
+                </ClayButton>
+                <ClayButton asChild variant="secondary" size="md">
                   <Link
-                    href={`https://github.com/${skillsRepo}`}
+                    href={siteLayoutConfig.repoUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full justify-center sm:w-auto"
                   >
-                    <span className="icon-[lucide--github] size-4" aria-hidden />
-                    <Trans id="home.cta.github">Open GitHub</Trans>
+                    <span
+                      className="icon-[lucide--github] size-4"
+                      aria-hidden
+                    />
+                    GitHub
                   </Link>
                 </ClayButton>
+              </div>
 
-                <ClayButton asChild variant="ghost">
-                  <LocaleLink href={exampleSkillHref} className="w-full justify-center sm:w-auto">
-                    <span className="icon-[lucide--arrow-up-right] size-4" aria-hidden />
-                    <Trans id="home.cta.example">View Example Skill</Trans>
-                  </LocaleLink>
-                </ClayButton>
+              {/* Each separator dot leads its name. The list is shifted left by one dot slot inside a
+                  clipping box, so a dot that starts a wrapped line is hidden and no line ends on a dot. */}
+              <div className="mt-5 overflow-hidden text-xs text-muted-foreground sm:text-sm">
+                <p className="-ml-5 flex flex-wrap">
+                  <span className="mr-1.5 ml-5">
+                    <Trans id="home.hero.hostsLabel">Works with</Trans>
+                  </span>
+                  {hostNames.map((name, index) => (
+                    <span
+                      key={name}
+                      className={
+                        index > 0
+                          ? "whitespace-nowrap before:inline-block before:w-5 before:text-center before:content-['·']"
+                          : "whitespace-nowrap"
+                      }
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </p>
               </div>
             </div>
 
-            <ClaySurface tone="base" elevation="inset" className="rounded-[1.08rem] p-4 sm:p-5 md:rounded-[1.2rem] md:p-6">
-              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.17em] text-clay-muted">
-                <Trans id="home.install.title">Install Pattern</Trans>
-              </p>
-              <code className="block overflow-x-auto rounded-xl border border-border/60 bg-background/55 px-3 py-3 text-[11px] leading-5 text-foreground sm:text-xs sm:leading-6 md:text-[13px]">
-                npx skills add {skillsRepo} --skill &lt;slug&gt;
-              </code>
-
-              <div className="mt-3.5 space-y-1.5 text-xs leading-6 text-clay-muted md:mt-4 md:space-y-2 md:text-sm">
-                <p><Trans id="home.install.step1">1. Choose a skill slug.</Trans></p>
-                <p><Trans id="home.install.step2">2. Run the install command.</Trans></p>
-                <p><Trans id="home.install.step3">3. Use the skill in your agent workflow.</Trans></p>
-              </div>
-            </ClaySurface>
+            {/* Light: the gradient behind the card ends in the illustration's own backdrop,
+                so its edges disappear. Dark: the art sits in a framed panel instead. */}
+            <div className="hero-art-frame hidden self-stretch md:flex md:items-center dark:p-6">
+              <Image
+                src="/brand/hero.webp"
+                alt=""
+                width={960}
+                height={614}
+                priority
+                sizes="(min-width: 1400px) 640px, 45vw"
+                className="hero-art-fade h-auto w-full dark:rounded-[1.2rem]"
+              />
+            </div>
           </div>
         </section>
       </SectionReveal>
 
-      <SectionReveal delay={130} className="mt-8 md:mt-10">
+      <SectionReveal delay={110} className="mt-6 md:mt-10">
         <SkillsLibrarySection skills={skills} />
       </SectionReveal>
+
+      <SectionReveal delay={160} className="mt-10 md:mt-14">
+        <section aria-labelledby="install-title">
+          <h2 id="install-title" className="text-2xl md:text-3xl">
+            <Trans id="home.install.title">Install into your agent</Trans>
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm text-balance text-muted-foreground md:text-base">
+            <Trans id="home.install.intro">
+              Every skill works in Claude Code, Codex, Cursor, and Hermes Agent.
+              Each skill page has the exact command.
+            </Trans>
+          </p>
+
+          {/* One row per Host so full commands fit on desktop; stacks on mobile. */}
+          <ul className="mt-5 grid gap-3">
+            {HOST_INSTALLS.map((host) => (
+              <li key={host.id} className="min-w-0">
+                <ClaySurface
+                  tone="base"
+                  elevation="raised"
+                  className="grid gap-3 rounded-[1.2rem] p-4 md:grid-cols-[13rem_minmax(0,1fr)] md:items-center md:gap-6 md:p-5"
+                >
+                  <div>
+                    <p className="text-base font-bold">{host.label}</p>
+                    <p className="text-xs text-pretty text-muted-foreground">
+                      {host.installsAll ? (
+                        <Trans id="home.install.scope.all">
+                          Installs the whole collection.
+                        </Trans>
+                      ) : (
+                        <Trans id="home.install.scope.one">
+                          Installs one skill; replace &lt;slug&gt; with its
+                          name.
+                        </Trans>
+                      )}
+                    </p>
+                  </div>
+                  <CommandBlock
+                    commands={host.commands("<slug>")}
+                    label={i18n._({
+                      id: "home.install.copy.aria",
+                      message: "Copy the {host} install command",
+                      values: { host: host.label },
+                    })}
+                  />
+                </ClaySurface>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </SectionReveal>
     </main>
-  )
+  );
 }

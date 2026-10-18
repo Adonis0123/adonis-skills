@@ -14,16 +14,16 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:32
+#: ../../src/app/%5Blang%5D/layout.tsx:48
 msgid "layout.meta.title.template"
-msgstr "%s | adonis-skills"
+msgstr "%s | Nika Skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:37
+#: ../../src/app/%5Blang%5D/layout.tsx:36
 msgid "layout.meta.description"
-msgstr "为 AI agent 开发者提供的实用技能库，可通过 npx skills add 安装。"
+msgstr "我是尼卡，用 AI 给自己做小工具。这里是我在 Claude Code、Codex、Cursor 和 Hermes Agent 里日常在用的技能。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:28
+#: ../../src/app/%5Blang%5D/layout.tsx:44
 msgid "layout.meta.title.default"
-msgstr "adonis-skills"
+msgstr "Nika Skills"

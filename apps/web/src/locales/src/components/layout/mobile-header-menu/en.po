@@ -14,14 +14,19 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:48
-#~ msgid "siteHeader.nav.github.aria"
-#~ msgstr "Open the adonis-skills repository on GitHub"
+#: ../../src/components/layout/mobile-header-menu.tsx:223
+#~ msgid "siteHeader.locale.title"
+#~ msgstr "Language"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:80
-#: ../../src/components/layout/mobile-header-menu.tsx:93
-#: ../../src/components/layout/mobile-header-menu.tsx:135
+#: ../../src/components/layout/mobile-header-menu.tsx:219
+#~ msgid "siteHeader.locale.aria"
+#~ msgstr "Switch site language"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:69
+#: ../../src/components/layout/mobile-header-menu.tsx:82
+#: ../../src/components/layout/mobile-header-menu.tsx:140
 msgid "siteHeader.menu.close"
 msgstr "Close menu"
 
@@ -31,27 +36,22 @@ msgid "siteHeader.nav.github.label"
 msgstr "GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:223
-msgid "siteHeader.locale.title"
-msgstr "Language"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:147
+#: ../../src/components/layout/mobile-header-menu.tsx:152
 msgid "siteHeader.nav.aria"
 msgstr "Main navigation"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:84
-#: ../../src/components/layout/mobile-header-menu.tsx:97
+#: ../../src/components/layout/mobile-header-menu.tsx:73
+#: ../../src/components/layout/mobile-header-menu.tsx:86
 msgid "siteHeader.menu.open"
 msgstr "Open menu"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:127
-msgid "siteHeader.menu.aria"
-msgstr "Site menu"
+#: ../../src/components/layout/mobile-header-menu.tsx:48
+msgid "siteHeader.nav.github.aria"
+msgstr "Open the adonis-skills repository on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:219
-msgid "siteHeader.locale.aria"
-msgstr "Switch site language"
+#: ../../src/components/layout/mobile-header-menu.tsx:132
+msgid "siteHeader.menu.aria"
+msgstr "Site menu"

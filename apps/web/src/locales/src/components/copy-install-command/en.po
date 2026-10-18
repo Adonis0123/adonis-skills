@@ -14,31 +14,46 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:62
-msgid "copyCommand.title.copied"
+#: ../src/components/copy-install-command.tsx:141
+#~ msgid "copyCommand.title.copied"
+#~ msgstr "Copied"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:138
+#~ msgid "copyCommand.aria.copied"
+#~ msgstr "Copied command"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:142
+#~ msgid "copyCommand.title.copy"
+#~ msgstr "Copy command"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:116
+msgid "copyCommand.live.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:81
+#: ../src/components/copy-install-command.tsx:171
 msgid "copyCommand.button.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:59
-msgid "copyCommand.aria.copied"
-msgstr "Copied command"
-
-#. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:60
+#: ../src/components/copy-install-command.tsx:144
 msgid "copyCommand.aria.copy"
 msgstr "Copy command"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:63
-msgid "copyCommand.title.copy"
+#: ../src/components/copy-install-command.tsx:168
+msgid "copyCommand.button.copy"
 msgstr "Copy command"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:82
-msgid "copyCommand.button.copy"
-msgstr "Copy Command"
+#: ../src/components/copy-install-command.tsx:174
+msgid "copyCommand.button.failed"
+msgstr "Copy failed"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:117
+msgid "copyCommand.live.failed"
+msgstr "Copy failed. Select the command and copy it manually."

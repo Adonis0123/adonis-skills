@@ -1,238 +1,140 @@
-import * as React from "react";
+import type { Components } from "react-markdown";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-interface Block {
-  type: "paragraph" | "code" | "list" | "heading" | "table";
-  content?: string;
-  lang?: string;
-  level?: number;
-  items?: string[];
-}
-
-function renderInlineMarkdown(content: string): React.ReactNode {
-  return content
-    .split(/(\*\*[^*]+\*\*|`[^`]+`)/g)
-    .filter(Boolean)
-    .map((part, index) => {
-      if (part.startsWith("**") && part.endsWith("**"))
-        return <strong key={index}>{part.slice(2, -2)}</strong>;
-
-      if (part.startsWith("`") && part.endsWith("`")) {
-        return (
-          <code
-            key={index}
-            className="rounded bg-background/70 px-1 py-0.5 text-[0.9em] text-foreground"
-          >
-            {part.slice(1, -1)}
-          </code>
-        );
-      }
-
-      return <React.Fragment key={index}>{part}</React.Fragment>;
-    });
-}
-
-function parseTable(
-  content: string,
-): { headers: string[]; rows: string[][] } | null {
-  const rows = content.split("\n").map((line) =>
-    line
-      .replace(/^\||\|$/g, "")
-      .split("|")
-      .map((cell) => cell.trim()),
+/**
+ * Stable anchor id for a heading. The detail page uses the same function for
+ * heading ids and table-of-contents links, so they always agree.
+ */
+export function headingSlug(text: string): string {
+  return (
+    text
+      .toLowerCase()
+      .normalize("NFKC")
+      .replace(/[`*_~[\]()]/g, "")
+      .replace(/[^\p{Letter}\p{Number}]+/gu, "-")
+      .replace(/^-+|-+$/g, "") || "section"
   );
-
-  if (rows.length < 2 || !rows[1].every((cell) => /^:?-{3,}:?$/.test(cell)))
-    return null;
-
-  const headers = rows[0];
-  const width = headers.length;
-  return {
-    headers,
-    rows: rows.slice(2).filter((row) => row.length === width),
-  };
 }
 
-function parseBlocks(raw: string): Block[] {
-  const lines = raw.split("\n");
-  const blocks: Block[] = [];
-  let i = 0;
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Fenced code block
-    if (line.startsWith("```")) {
-      const lang = line.slice(3).trim();
-      const codeLines: string[] = [];
-      i++;
-      while (i < lines.length && !lines[i].startsWith("```")) {
-        codeLines.push(lines[i]);
-        i++;
-      }
-      i++; // skip closing ```
-      blocks.push({ type: "code", content: codeLines.join("\n"), lang });
-      continue;
-    }
-
-    // Heading (### level)
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/);
-    if (headingMatch) {
-      blocks.push({
-        type: "heading",
-        content: headingMatch[2],
-        level: headingMatch[1].length,
-      });
-      i++;
-      continue;
-    }
-
-    // Bullet list
-    if (line.startsWith("- ") || line.startsWith("* ")) {
-      const items: string[] = [];
-      while (
-        i < lines.length &&
-        (lines[i].startsWith("- ") || lines[i].startsWith("* "))
-      ) {
-        items.push(lines[i].slice(2));
-        i++;
-      }
-      blocks.push({ type: "list", items });
-      continue;
-    }
-
-    // Table (pipe-delimited)
-    if (line.startsWith("|")) {
-      const tableLines: string[] = [];
-      while (i < lines.length && lines[i].startsWith("|")) {
-        tableLines.push(lines[i]);
-        i++;
-      }
-      blocks.push({ type: "table", content: tableLines.join("\n") });
-      continue;
-    }
-
-    // Blank line
-    if (line.trim() === "") {
-      i++;
-      continue;
-    }
-
-    // Paragraph — collect until blank line or special block start
-    const paraLines: string[] = [];
-    while (
-      i < lines.length &&
-      lines[i].trim() !== "" &&
-      !lines[i].startsWith("```") &&
-      !lines[i].match(/^#{1,6}\s/) &&
-      !lines[i].startsWith("- ") &&
-      !lines[i].startsWith("* ") &&
-      !lines[i].startsWith("|")
-    ) {
-      paraLines.push(lines[i]);
-      i++;
-    }
-    if (paraLines.length > 0) {
-      blocks.push({ type: "paragraph", content: paraLines.join(" ") });
-    }
-  }
-
-  return blocks;
-}
-
-export function renderSectionContent(raw: string): React.ReactNode {
-  const blocks = parseBlocks(raw);
-
-  return blocks.map((block, idx) => {
-    switch (block.type) {
-      case "paragraph":
-        return (
-          <p key={idx} className="text-sm leading-7 text-clay-muted">
-            {renderInlineMarkdown(block.content ?? "")}
-          </p>
-        );
-      case "code":
-        return (
-          <pre
-            key={idx}
-            className="overflow-x-auto rounded-xl border border-border/60 bg-background/55 px-3 py-3 text-xs leading-6"
-          >
-            <code>{block.content}</code>
-          </pre>
-        );
-      case "list":
-        return (
-          <ul
-            key={idx}
-            className="list-disc list-inside space-y-1 text-sm leading-7 text-clay-muted"
-          >
-            {block.items?.map((item, i) => (
-              <li key={i}>{renderInlineMarkdown(item)}</li>
-            ))}
-          </ul>
-        );
-      case "heading":
-        return (
-          <h4
-            key={idx}
-            className="mb-1 mt-2 text-sm font-semibold text-foreground"
-          >
-            {renderInlineMarkdown(block.content ?? "")}
-          </h4>
-        );
-      case "table": {
-        const table = parseTable(block.content ?? "");
-        if (!table) {
-          return (
-            <pre
-              key={idx}
-              className="overflow-x-auto rounded-xl border border-border/60 bg-background/55 px-3 py-3 text-xs leading-6"
-            >
-              <code>{block.content}</code>
-            </pre>
-          );
-        }
-
-        return (
-          <div
-            key={idx}
-            className="overflow-x-auto rounded-xl border border-border/60 bg-background/55"
-          >
-            <table className="w-full min-w-[32rem] border-collapse text-left text-xs leading-5">
-              <thead className="bg-[#87a6dd]/10 text-foreground">
-                <tr>
-                  {table.headers.map((header, headerIndex) => (
-                    <th
-                      key={`${header}-${headerIndex}`}
-                      className="border-b border-border/60 px-3 py-2 font-semibold"
-                    >
-                      {renderInlineMarkdown(header)}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {table.rows.map((row, rowIndex) => (
-                  <tr
-                    key={rowIndex}
-                    className="border-b border-border/40 last:border-b-0"
-                  >
-                    {row.map((cell, cellIndex) => (
-                      <td
-                        key={cellIndex}
-                        className="px-3 py-2 align-top text-clay-muted"
-                      >
-                        {renderInlineMarkdown(cell)}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        );
-      }
-      default:
-        return null;
-    }
+/**
+ * Gives every heading a unique anchor; repeated headings get -2, -3 suffixes.
+ * `reserved` are ids the page already uses (its own sections), so a SKILL.md heading
+ * with the same text starts at -2 instead of colliding with them.
+ */
+export function withHeadingIds<T extends { heading?: string }>(
+  sections: T[],
+  reserved: string[] = [],
+): (T & { id?: string })[] {
+  const seen = new Map<string, number>(reserved.map((id) => [id, 1]));
+  return sections.map((section) => {
+    if (!section.heading) return section;
+    const base = headingSlug(section.heading);
+    const count = (seen.get(base) ?? 0) + 1;
+    seen.set(base, count);
+    return { ...section, id: count === 1 ? base : `${base}-${count}` };
   });
+}
+
+// Short inline code (skill names, flags) stays on one line instead of breaking at a hyphen;
+// long paths may still wrap so they never push a narrow screen sideways.
+const SHORT_INLINE_CODE = 28;
+
+function isShortInlineCode(children: unknown): boolean {
+  return typeof children === "string" && children.length <= SHORT_INLINE_CODE;
+}
+
+const components: Components = {
+  p: ({ children }) => (
+    <p className="text-sm leading-7 text-foreground md:text-[15px]">
+      {children}
+    </p>
+  ),
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target={href?.startsWith("http") ? "_blank" : undefined}
+      rel={href?.startsWith("http") ? "noreferrer" : undefined}
+      className="clay-focus-ring rounded-sm text-link underline underline-offset-2"
+    >
+      {children}
+    </a>
+  ),
+  ul: ({ children }) => (
+    <ul className="list-disc space-y-1.5 pl-5 text-sm leading-7 marker:text-muted-foreground md:text-[15px]">
+      {children}
+    </ul>
+  ),
+  ol: ({ children }) => (
+    <ol className="list-decimal space-y-1.5 pl-5 text-sm leading-7 marker:text-muted-foreground md:text-[15px]">
+      {children}
+    </ol>
+  ),
+  h1: ({ children }) => (
+    <h4 className="mt-2 text-base font-bold">{children}</h4>
+  ),
+  h2: ({ children }) => (
+    <h4 className="mt-2 text-base font-bold">{children}</h4>
+  ),
+  h3: ({ children }) => (
+    <h4 className="mt-2 text-base font-bold">{children}</h4>
+  ),
+  h4: ({ children }) => <h4 className="mt-2 text-sm font-bold">{children}</h4>,
+  blockquote: ({ children }) => (
+    <blockquote className="border-l-4 border-input pl-4 text-muted-foreground">
+      {children}
+    </blockquote>
+  ),
+  pre: ({ children }) => (
+    // Wrap long lines instead of showing a scrollbar; tables keep horizontal scroll.
+    <pre className="rounded-[12px] border border-border bg-background p-4 font-mono text-[13px] leading-6 whitespace-pre-wrap [overflow-wrap:anywhere]">
+      {children}
+    </pre>
+  ),
+  code: ({ className, children }) =>
+    className?.startsWith("language-") ? (
+      <code className={className}>{children}</code>
+    ) : (
+      <code
+        className={`rounded bg-muted px-[0.2em] py-0.5 font-mono text-[0.9em] text-foreground${
+          isShortInlineCode(children) ? " whitespace-nowrap" : ""
+        }`}
+      >
+        {children}
+      </code>
+    ),
+  // Narrow screens scroll the table sideways instead of squeezing cells: inline code never wraps, and
+  // cells keep a minimum width so short labels such as "L2 Fan-out" stay on one line.
+  table: ({ children }) => (
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <table className="w-full border-collapse text-left text-sm [&_code]:whitespace-nowrap">
+        {children}
+      </table>
+    </div>
+  ),
+  thead: ({ children }) => (
+    <thead className="bg-muted text-foreground">{children}</thead>
+  ),
+  th: ({ children }) => (
+    <th className="min-w-32 border-b border-border px-3 py-2 font-semibold">
+      {children}
+    </th>
+  ),
+  td: ({ children }) => (
+    <td className="min-w-32 border-b border-border px-3 py-2 align-top">
+      {children}
+    </td>
+  ),
+  hr: () => <hr className="border-border" />,
+};
+
+/** Renders a SKILL.md section (CommonMark + GFM tables, task lists, strikethrough). */
+export function renderSectionContent(raw: string) {
+  return (
+    <div className="space-y-3">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
+        {raw}
+      </ReactMarkdown>
+    </div>
+  );
 }

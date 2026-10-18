@@ -14,46 +14,51 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:98
-msgid "siteFooter.copyright"
-msgstr "© {year} {brandName}. All rights reserved."
-
-#. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:102
-msgid "siteFooter.builtFor"
-msgstr "Built for discovering and installing agent skills."
+#~ msgid "siteFooter.builtFor"
+#~ msgstr "Built for discovering and installing agent skills."
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:55
-msgid "siteFooter.brand.tagline"
-msgstr "Discover practical agent skills and install them in seconds."
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:36
-msgid "siteFooter.link.exampleSkill"
-msgstr "Example Skill"
+#: ../../src/components/layout/site-footer.tsx:104
+msgid "siteFooter.copyright"
+msgstr "© {year} {brandName}"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:38
-msgid "siteFooter.link.githubRepository"
-msgstr "GitHub Repository"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:26
-msgid "siteFooter.group.quickLinks"
-msgstr "Quick Links"
+msgid "siteFooter.link.exampleSkill"
+msgstr "Example skill"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:40
+msgid "siteFooter.link.githubRepository"
+msgstr "GitHub repository"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:109
+msgid "siteFooter.attribution"
+msgstr "Made by <0>Nika</0> · code on GitHub <1>@{owner}</1>"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:28
+msgid "siteFooter.group.quickLinks"
+msgstr "Quick links"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:42
 msgid "siteFooter.link.readme"
 msgstr "README"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:28
+#: ../../src/components/layout/site-footer.tsx:30
 msgid "siteFooter.group.resources"
 msgstr "Resources"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:34
+#: ../../src/components/layout/site-footer.tsx:36
 msgid "siteFooter.link.skillLibrary"
-msgstr "Skill Library"
+msgstr "Skill library"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:58
+msgid "siteFooter.brand.tagline"
+msgstr "Small agent skills I built and use every day."

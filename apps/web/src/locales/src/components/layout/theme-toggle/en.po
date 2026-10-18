@@ -15,28 +15,38 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/theme-toggle.tsx:45
-msgid "themeToggle.switchTo"
-msgstr "Switch to {nextLabel} theme"
+#~ msgid "themeToggle.switchTo"
+#~ msgstr "Switch to {nextLabel} theme"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/theme-toggle.tsx:46
-msgid "themeToggle.current"
-msgstr "Current: {label} theme"
+#~ msgid "themeToggle.current"
+#~ msgstr "Current: {label} theme"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:33
+#~ msgid "themeToggle.mode.dark"
+#~ msgstr "Dark"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:34
+#~ msgid "themeToggle.mode.light"
+#~ msgstr "Light"
 
 #: ../../src/components/layout/theme-toggle.tsx:97
 #~ msgid "Current: {label} theme"
 #~ msgstr "Current: {label} theme"
 
-#. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:33
-msgid "themeToggle.mode.dark"
-msgstr "Dark"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:34
-msgid "themeToggle.mode.light"
-msgstr "Light"
-
 #: ../../src/components/layout/theme-toggle.tsx:96
 #~ msgid "Switch to {nextLabel} theme"
 #~ msgstr "Switch to {nextLabel} theme"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:25
+msgid "themeToggle.switchToDark"
+msgstr "Switch to dark theme"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/theme-toggle.tsx:26
+msgid "themeToggle.switchToLight"
+msgstr "Switch to light theme"

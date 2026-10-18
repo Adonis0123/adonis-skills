@@ -4,6 +4,9 @@
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@10.28.2",
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "dev": "turbo run dev --filter=@adonis-skills/web",
     "build": "turbo run build",
@@ -24,7 +27,11 @@
     "skills:install:local": "node --experimental-strip-types ./scripts/install-local-skills.ts",
     "skills:test:local": "node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm",
     "skills:eval-grade": "node ./scripts/grade-skill-evals.mjs",
-    "test:web-offline-font-build": "node --test ./scripts/__tests__/web-offline-font-build.test.mjs"
+    "test:web-offline-font-build": "node --test ./scripts/__tests__/web-offline-font-build.test.mjs",
+    "brand:sync": "node scripts/sync-brand-tokens.mjs --from \"${BRAND_REPO:-../adonis-brand}\"",
+    "brand:check": "node scripts/sync-brand-tokens.mjs --check",
+    "design:check": "node scripts/check-design-tokens.mjs",
+    "test:scripts": "node --experimental-strip-types --test --test-concurrency=2 ./scripts/__tests__/ardot-mcp-public.test.ts ./scripts/__tests__/chrome-dev-mcp-public.test.ts ./scripts/__tests__/uxc-facade-public.test.ts ./scripts/__tests__/finalize-new-skills.test.ts ./scripts/__tests__/finalize-skill.test.ts ./scripts/__tests__/install-local-skills.test.ts ./scripts/__tests__/workflow-gate-public.test.ts ./scripts/__tests__/grade-skill-evals.test.mjs ./scripts/__tests__/brand-tokens.test.mjs ./scripts/__tests__/check-design-tokens.test.mjs ./scripts/__tests__/generate-skills-index-sections.test.mjs"
   },
   "devDependencies": {
     "@inquirer/prompts": "^7.9.0",

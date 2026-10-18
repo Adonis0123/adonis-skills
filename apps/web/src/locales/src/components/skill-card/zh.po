@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 12:28+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,21 +14,11 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:30
-msgid "skillCard.references.no"
-msgstr "参考文档：无"
+#: ../src/components/skill-card.tsx:65
+msgid "skillCard.copy.aria"
+msgstr "复制 {skillName} 的安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:26
-msgid "skillCard.references.yes"
-msgstr "参考文档：有"
-
-#. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:39
-msgid "skillCard.src.no"
-msgstr "源码：无"
-
-#. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:35
-msgid "skillCard.src.yes"
-msgstr "源码：有"
+#: ../src/components/skill-card.tsx:45
+msgid "skillCard.tags.aria"
+msgstr "标签"

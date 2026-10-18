@@ -1,187 +1,66 @@
+@import "./brand-tokens.css";
+/* Color roles are generated from adonis-brand projects/skills/theme.json. */
+@import "./theme-roles.css";
+
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Semantic layer: names describe the role, values come only from
+ * brand-tokens.css. Components and custom.css reference these names.
+ * next-themes sets `.dark` before paint, so dark values live in one block.
+ */
 :root {
-  --background: #f0f4f9;
-  --foreground: #2a2d35;
-  --card: #ffffff;
-  --card-foreground: #2a2d35;
-  --popover: #ffffff;
-  --popover-foreground: #2a2d35;
-  --primary: #93abd7;
-  --primary-foreground: #ffffff;
-  --secondary: #b3c7ea;
-  --secondary-foreground: #ffffff;
-  --muted: #e6ebf3;
-  --muted-foreground: #8890a0;
-  --accent: #d4ddef;
-  --accent-foreground: #2a2d35;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: rgba(147, 171, 215, 0.18);
-  --input: rgba(147, 171, 215, 0.26);
-  --ring: #93abd7;
-  --chart-1: #93abd7;
-  --chart-2: #b3c7ea;
-  --chart-3: #a6bde3;
-  --chart-4: #7695ca;
-  --chart-5: #63c9a7;
-  --radius: 1rem;
+  /* Base for the small-control radius scale; see --radius-* in @theme. */
+  --radius: 0.625rem;
 
-  --clay-warm-ivory: #f0f4f9;
-  --clay-warm-peach: #b3c7ea;
-  --clay-warm-amber: #93abd7;
-  --clay-sky: #b3c7ea;
-  --clay-emerald: #63c9a7;
-
-  --clay-peach: #93abd7;
-  --clay-blue: #b3c7ea;
-  --clay-cream: #f0f4f9;
-
-  --clay-surface-bg: #ffffff;
+  --clay-surface-bg: var(--card);
   --clay-radius-card: 24px;
   --clay-radius-card-lg: 32px;
   --clay-radius-button: 50px;
 
-  --clay-shadow-card: 0 8px 24px rgba(147, 171, 215, 0.2), 0 3px 0 #b6cdee;
+  /* Soft, ink-tinted depth. Never a hard `0 Npx 0` bottom line. */
+  --clay-shadow-card:
+    0 1px 2px color-mix(in oklab, var(--shadow-tint) 5%, transparent),
+    0 8px 20px -8px color-mix(in oklab, var(--shadow-tint) 12%, transparent);
   --clay-shadow-card-hover:
-    0 14px 30px rgba(147, 171, 215, 0.28), 0 4px 0 #b6cdee;
-
-  --clay-shadow-btn-primary: 0 6px 0 #7d97c5;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #7d97c5;
-  --clay-shadow-btn-blue: 0 6px 0 #90a8d3;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #90a8d3;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(126, 150, 196, 0.28);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(126, 150, 196, 0.28);
-
-  --clay-highlight-top: inset 0 2px 0 rgba(255, 255, 255, 0.74);
+    0 2px 4px color-mix(in oklab, var(--shadow-tint) 7%, transparent),
+    0 22px 40px -10px color-mix(in oklab, var(--shadow-tint) 22%, transparent);
+  --clay-shadow-btn: 0 6px 14px -4px
+    color-mix(in oklab, var(--shadow-tint) 26%, transparent);
+  --clay-shadow-btn-hover: 0 3px 8px -3px
+    color-mix(in oklab, var(--shadow-tint) 22%, transparent);
+  /* Surfaces only (not buttons): a blurred top glow, never a crisp 1px line. */
+  --clay-highlight-top: inset 0 3px 6px -3px
+    color-mix(in oklab, var(--highlight-tint) 70%, transparent);
 
   --shadow-clay-raised: var(--clay-shadow-card);
   --shadow-clay-inset:
-    var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.45);
+    var(--clay-highlight-top),
+    inset 0 2px 6px color-mix(in oklab, var(--shadow-tint) 10%, transparent);
   --shadow-clay-floating: var(--clay-shadow-card-hover);
 
   --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
-  --font-app-heading: "Noto Serif SC Variable", "Songti SC", serif;
-  --font-app-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+  --font-app-heading: var(--font-app-sans);
+  --font-app-display: "Shantell Sans", var(--font-app-sans);
+  /* CJK fallback keeps Chinese labels in mono slots from rendering as tofu. */
+  --font-app-mono:
+    "IBM Plex Mono", "SFMono-Regular", "Noto Sans SC Variable", monospace;
 }
 
 .dark,
 :root[data-theme="dark"] {
-  --background: #12141a;
-  --foreground: #f0f2f7;
-  --card: #1a1d26;
-  --card-foreground: #f0f2f7;
-  --popover: #1e2130;
-  --popover-foreground: #f0f2f7;
-  --primary: #93abd7;
-  --primary-foreground: #ffffff;
-  --secondary: #b3c7ea;
-  --secondary-foreground: #ffffff;
-  --muted: #21252e;
-  --muted-foreground: #a0a8b8;
-  --accent: #1e2130;
-  --accent-foreground: #f0f2f7;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: rgba(147, 171, 215, 0.28);
-  --input: rgba(147, 171, 215, 0.28);
-  --ring: #93abd7;
-  --chart-1: #93abd7;
-  --chart-2: #b3c7ea;
-  --chart-3: #a6bde3;
-  --chart-4: #b3c4e2;
-  --chart-5: #63c9a7;
-
-  --clay-warm-ivory: #1a1d26;
-  --clay-warm-peach: #b3c7ea;
-  --clay-warm-amber: #93abd7;
-  --clay-sky: #b3c7ea;
-  --clay-emerald: #63c9a7;
-
-  --clay-peach: #93abd7;
-  --clay-blue: #b3c7ea;
-  --clay-cream: #1a1d26;
-
-  --clay-surface-bg: #1a1d26;
-
   --clay-shadow-card:
-    0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(147, 171, 215, 0.48);
+    0 1px 2px color-mix(in oklab, var(--shadow-tint) 40%, transparent),
+    0 14px 30px -8px color-mix(in oklab, var(--shadow-tint) 60%, transparent);
   --clay-shadow-card-hover:
-    0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(147, 171, 215, 0.56);
-
-  --clay-shadow-btn-primary: 0 6px 0 #678bc0;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #678bc0;
-  --clay-shadow-btn-blue: 0 6px 0 #678bc0;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #678bc0;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(103, 138, 189, 0.45);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(103, 138, 189, 0.45);
-
-  --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-
-  --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset:
-    var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.42);
-  --shadow-clay-floating: var(--clay-shadow-card-hover);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light):not([data-theme="light"]) {
-    --background: #12141a;
-    --foreground: #f0f2f7;
-    --card: #1a1d26;
-    --card-foreground: #f0f2f7;
-    --popover: #1e2130;
-    --popover-foreground: #f0f2f7;
-    --primary: #93abd7;
-    --primary-foreground: #ffffff;
-    --secondary: #b3c7ea;
-    --secondary-foreground: #ffffff;
-    --muted: #21252e;
-    --muted-foreground: #a0a8b8;
-    --accent: #1e2130;
-    --accent-foreground: #f0f2f7;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: rgba(147, 171, 215, 0.28);
-    --input: rgba(147, 171, 215, 0.28);
-    --ring: #93abd7;
-    --chart-1: #93abd7;
-    --chart-2: #b3c7ea;
-    --chart-3: #a6bde3;
-    --chart-4: #b3c4e2;
-    --chart-5: #63c9a7;
-
-    --clay-warm-ivory: #1a1d26;
-    --clay-warm-peach: #b3c7ea;
-    --clay-warm-amber: #93abd7;
-    --clay-sky: #b3c7ea;
-    --clay-emerald: #63c9a7;
-
-    --clay-peach: #93abd7;
-    --clay-blue: #b3c7ea;
-    --clay-cream: #1a1d26;
-
-    --clay-surface-bg: #1a1d26;
-
-    --clay-shadow-card:
-      0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(147, 171, 215, 0.48);
-    --clay-shadow-card-hover:
-      0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(147, 171, 215, 0.56);
-
-    --clay-shadow-btn-primary: 0 6px 0 #678bc0;
-    --clay-shadow-btn-primary-hover: 0 4px 0 #678bc0;
-    --clay-shadow-btn-blue: 0 6px 0 #678bc0;
-    --clay-shadow-btn-blue-hover: 0 4px 0 #678bc0;
-    --clay-shadow-btn-secondary: 0 6px 0 rgba(103, 138, 189, 0.45);
-    --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(103, 138, 189, 0.45);
-
-    --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-
-    --shadow-clay-raised: var(--clay-shadow-card);
-    --shadow-clay-inset:
-      var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.42);
-    --shadow-clay-floating: var(--clay-shadow-card-hover);
-  }
+    0 2px 4px color-mix(in oklab, var(--shadow-tint) 45%, transparent),
+    0 24px 44px -10px color-mix(in oklab, var(--shadow-tint) 70%, transparent);
+  --clay-shadow-btn: 0 6px 14px -4px
+    color-mix(in oklab, var(--shadow-tint) 70%, transparent);
+  --clay-shadow-btn-hover: 0 3px 8px -3px
+    color-mix(in oklab, var(--shadow-tint) 60%, transparent);
+  --clay-highlight-top: inset 0 3px 6px -3px
+    color-mix(in oklab, var(--highlight-tint) 7%, transparent);
 }
 
 @theme inline {
@@ -204,25 +83,41 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-halo: var(--ring-halo);
+  --color-overlay: var(--overlay);
+  --color-link: var(--link);
+  --color-hero-art-bg: var(--hero-art-bg);
+  --color-attribution: var(--attribution);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 8px);
+  /*
+   * Radius scale: chips/buttons are pills (rounded-pill or rounded-full),
+   * inputs, code blocks and inner panels 10-12px, cards 24px.
+   */
+  --radius-sm: calc(var(--radius) - 4px); /* 6px: inline links, tiny marks */
+  --radius-md: calc(var(--radius) - 2px); /* 8px: icon buttons inside panels */
+  --radius-lg: var(--radius); /* 10px: inputs, menu items */
+  --radius-xl: calc(
+    var(--radius) + 2px
+  ); /* 12px: code blocks, tables, inner panels, menus */
+  --radius-2xl: calc(var(--radius) + 6px); /* 16px: large inner panels */
+  --radius-3xl: var(--clay-radius-card); /* 24px */
+  --radius-card: var(--clay-radius-card); /* 24px: clay cards */
+  --radius-pill: var(--clay-radius-button); /* buttons, chips, badges */
 
   --font-sans: var(--font-app-sans);
   --font-heading: var(--font-app-heading);
+  --font-display: var(--font-app-display);
   --font-mono: var(--font-app-mono);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/55;
+    @apply border-border outline-ring-halo;
   }
 
   body {

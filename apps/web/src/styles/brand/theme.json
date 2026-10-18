@@ -1,0 +1,93 @@
+{
+  "updated": "2026-10-18",
+  "modes": {
+    "light": {
+      "background": "{n-2}",
+      "foreground": "{n-12}",
+      "card": "{n-1}",
+      "card-foreground": "{n-12}",
+      "popover": "{n-1}",
+      "popover-foreground": "{n-12}",
+      "primary": "{leaf-9}",
+      "primary-foreground": "{n-12}",
+      "primary-hover": "{leaf-10}",
+      "secondary": "{n-4}",
+      "secondary-foreground": "{n-12}",
+      "muted": "{n-3}",
+      "muted-foreground": "{n-11}",
+      "accent": "{leaf-3}",
+      "accent-foreground": "{leaf-12}",
+      "destructive": "{danger}",
+      "destructive-foreground": "{n-1}",
+      "border": "{n-6}",
+      "input": "{n-7}",
+      "ring": "{leaf-11}",
+      "ring-halo": "{leaf-6}",
+      "link": "{leaf-11}",
+      "overlay": {
+        "mix": "n-12",
+        "pct": 30
+      },
+      "hero-art-bg": "{art-backdrop}",
+      "attribution": "{sage}",
+      "chart-1": "{blue}",
+      "chart-2": "{amber}",
+      "chart-3": "{sage}",
+      "chart-4": "{purple}",
+      "chart-5": "{teal}",
+      "shadow-tint": "{n-12}",
+      "highlight-tint": "{n-1}"
+    },
+    "dark": {
+      "background": "{n-dark-1}",
+      "foreground": "{n-dark-12}",
+      "card": "{n-dark-2}",
+      "card-foreground": "{n-dark-12}",
+      "popover": "{n-dark-3}",
+      "popover-foreground": "{n-dark-12}",
+      "primary": "{leaf-dark-9}",
+      "primary-foreground": "{n-dark-1}",
+      "primary-hover": "{leaf-dark-10}",
+      "secondary": "{n-dark-4}",
+      "secondary-foreground": "{n-dark-12}",
+      "muted": "{n-dark-3}",
+      "muted-foreground": "{n-dark-11}",
+      "accent": "{leaf-dark-3}",
+      "accent-foreground": "{leaf-dark-11}",
+      "destructive": "{danger-light}",
+      "destructive-foreground": "{n-dark-1}",
+      "border": "{n-dark-6}",
+      "input": "{n-dark-7}",
+      "ring": "{leaf-dark-9}",
+      "ring-halo": "{leaf-dark-6}",
+      "link": "{leaf-dark-11}",
+      "overlay": {
+        "mix": "shadow-warm-dark",
+        "pct": 60
+      },
+      "hero-art-bg": "@card",
+      "shadow-tint": "{shadow-warm-dark}",
+      "highlight-tint": "{n-dark-12}"
+    }
+  },
+  "contrast": {
+    "text": 4.5,
+    "pairs": [
+      ["foreground", "background"],
+      ["foreground", "card"],
+      ["foreground", "popover"],
+      ["foreground", "muted"],
+      ["muted-foreground", "background"],
+      ["muted-foreground", "card"],
+      ["muted-foreground", "muted"],
+      ["primary-foreground", "primary"],
+      ["primary-foreground", "primary-hover"],
+      ["secondary-foreground", "secondary"],
+      ["accent-foreground", "accent"],
+      ["destructive-foreground", "destructive"],
+      ["link", "background"],
+      ["link", "card"],
+      ["link", "muted"]
+    ]
+  }
+}

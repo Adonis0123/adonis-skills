@@ -16,6 +16,7 @@
 - `.claude/skills` is a symlink to `.agents/skills` for local runtime testing.
 - `skills/desktop-agent-activity`, `skills/installed-app-feature-inventory`, and `skills/dev-environment-roi-audit` are exported from a private source (listed in `.export-manifest.json`). Treat them as generated: edit the private source, not these copies; the next export overwrites local edits.
 - `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json` are generated web build inputs. After changing public skills, run `pnpm skills:validate` and `pnpm skills:index`; never edit the index manually.
+- Every public skill needs an entry in `apps/web/content/skill-catalog.yaml` (Visitor-facing tags, summary, and use cases in English and Chinese); `pnpm skills:validate` fails without it. Keep this copy out of SKILL.md frontmatter: the Agent Skills spec allows only string `metadata` values.
 
 ## Install Targets
 
@@ -94,5 +95,6 @@ metadata: # optional
 ## Web UI Contract (`apps/web/src/**` only)
 
 - Before changing web visuals, read `docs/web-ui-clay-contract.md`; its scope and prohibitions are mandatory.
+- Colors come from the private `adonis-brand` repo (`data/palette.json`, `projects/skills/theme.json`). `apps/web/src/styles/brand-tokens.css` and `theme-roles.css` are generated: change the brand repo, then run `pnpm brand:sync`; CI runs `pnpm brand:check`.
 - Do not apply its visual rules to scripts, skills, or non-web packages.
 - In particular, never add bottom outer highlight lines such as `0 1px 0 ...` to raised or floating shadows.

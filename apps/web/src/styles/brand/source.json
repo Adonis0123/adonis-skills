@@ -1,0 +1,6 @@
+{
+  "repo": "adonis-brand",
+  "commit": "7be3e24db51c9117b60cadf77307a247a6b42cbe",
+  "dirty": false,
+  "files": ["data/palette.json", "projects/skills/theme.json"]
+}

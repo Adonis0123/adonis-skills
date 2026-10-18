@@ -1,64 +1,21 @@
 import skillsDetailData from "@/generated/skills-detail-index.json";
 import skillsListData from "@/generated/skills-index-lite.json";
 
-export interface SkillSection {
-  heading?: string;
-  level?: number;
-  raw: string;
-}
+import type { SkillDetailItem, SkillListItem } from "@/lib/skill-schema";
 
-export interface SkillShowcaseToolCall {
-  name: string;
-  summary: string;
-  result: string;
-}
+export type {
+  SkillCatalogEntry,
+  SkillDetailItem,
+  SkillListItem,
+  SkillSection,
+  SkillShowcase,
+  SkillShowcaseMessage,
+  SkillShowcaseSection,
+  SkillShowcaseToolCall,
+  SkillTag,
+} from "@/lib/skill-schema";
 
-export interface SkillShowcaseMessage {
-  role: "user" | "assistant";
-  content: string;
-  toolCalls?: SkillShowcaseToolCall[];
-}
-
-export interface SkillShowcaseSection {
-  id: string;
-  title: string;
-  intro: string;
-  messages: SkillShowcaseMessage[];
-}
-
-export interface SkillShowcase {
-  hero: {
-    title: string;
-    badge: string;
-    summary: string;
-    keyMoments: string[];
-  };
-  sections: SkillShowcaseSection[];
-}
-
-export interface SkillListItem {
-  slug: string;
-  name: string;
-  description: string;
-  metadata?: {
-    author?: string;
-    version?: string;
-  };
-  files: {
-    hasReferences: boolean;
-    hasSrc: boolean;
-    hasScripts?: boolean;
-  };
-  updatedAt?: string;
-  allowedTools?: string[];
-}
-
-export interface SkillDetailItem {
-  slug: string;
-  sections?: SkillSection[];
-  showcase?: SkillShowcase;
-}
-
+// The generator parses both files through skill-schema before writing them.
 const skills = skillsListData as SkillListItem[];
 const skillDetails = skillsDetailData as SkillDetailItem[];
 

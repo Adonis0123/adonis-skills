@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-23 18:33+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,31 +14,66 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:60
+#: ../src/components/skills-library-section.tsx:96
+msgid "home.search.resultCount"
+msgstr "{resultCount} of {totalCount} skills shown"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:91
+msgid "home.filter.all"
+msgstr "All"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:126
+msgid "home.search.clearFilters"
+msgstr "Clear filters"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:76
 msgid "home.search.clear"
 msgstr "Clear search"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:24
-msgid "home.library.kicker"
-msgstr "Library"
+#: ../src/components/skills-library-section.tsx:89
+msgid "home.filter.aria"
+msgstr "Filter by tag"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:92
-msgid "home.search.empty"
-msgstr "No skills found for \"{query}\""
+#: ../src/components/skills-library-section.tsx:116
+msgid "home.search.emptyTitle"
+msgstr "No matching skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:44
+#: ../src/components/skills-library-section.tsx:121
+msgid "home.search.emptyHintTagOnly"
+msgstr "No skills carry this tag yet. Pick another tag."
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:115
+msgid "home.search.emptyTitleQuery"
+msgstr "No skills match “{query}”"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:65
+msgid "home.search.placeholder"
+msgstr "Search in English or 中文…"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:64
 msgid "home.search.input.aria"
 msgstr "Search skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:48
-msgid "home.search.placeholder"
-msgstr "Search skills..."
+#: ../src/components/skills-library-section.tsx:54
+msgid "home.library.title"
+msgstr "Skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:27
-msgid "home.library.title"
-msgstr "Skill Library"
+#: ../src/components/skills-library-section.tsx:120
+msgid "home.search.emptyHint"
+msgstr "Try another word, in English or Chinese."
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:122
+msgid "home.search.emptyHintTag"
+msgstr "Try another word, or clear the tag filter."

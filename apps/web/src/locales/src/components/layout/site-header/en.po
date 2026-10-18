@@ -31,10 +31,14 @@ msgstr ""
 #~ msgstr "Site menu"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:69
-#: ../../src/components/layout/site-header.tsx:86
-#~ msgid "siteHeader.nav.github.aria"
-#~ msgstr "Open the adonis-skills repository on GitHub"
+#: ../../src/components/layout/site-header.tsx:116
+#~ msgid "siteHeader.locale.title"
+#~ msgstr "Language"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:112
+#~ msgid "siteHeader.locale.aria"
+#~ msgstr "Switch site language"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-header.tsx:27
@@ -42,21 +46,21 @@ msgid "siteHeader.nav.github.label"
 msgstr "GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:116
-msgid "siteHeader.locale.title"
-msgstr "Language"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:70
+#: ../../src/components/layout/site-header.tsx:68
 msgid "siteHeader.nav.aria"
 msgstr "Main navigation"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:61
+#: ../../src/components/layout/site-header.tsx:37
+msgid "siteHeader.nav.github.aria"
+msgstr "Open the adonis-skills repository on GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:59
 msgid "siteHeader.brand.subtitle"
 msgstr "skill library"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:112
-msgid "siteHeader.locale.aria"
-msgstr "Switch site language"
+#: ../../src/components/layout/site-header.tsx:47
+msgid "siteHeader.skipToContent"
+msgstr "Skip to content"
