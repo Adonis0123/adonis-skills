@@ -15,8 +15,8 @@
 - `skills/<slug>/` contains public skills indexed by the web app; `.agents/skills/` contains internal tooling and is not published.
 - `.claude/skills` is a symlink to `.agents/skills` for local runtime testing.
 - `skills/desktop-agent-activity`, `skills/installed-app-feature-inventory`, and `skills/dev-environment-roi-audit` are exported from a private source (listed in `.export-manifest.json`). Treat them as generated: edit the private source, not these copies; the next export overwrites local edits.
-- `apps/web/src/generated/skills-index-lite.json` and `apps/web/src/generated/skills-detail-index.json` are generated web build inputs. After changing public skills, run `pnpm skills:validate` and `pnpm skills:index`; never edit the index manually.
-- Every public skill needs an entry in `apps/web/content/skill-catalog.yaml` (Visitor-facing tags, summary, and use cases in English and Chinese); `pnpm skills:validate` fails without it. Keep this copy out of SKILL.md frontmatter: the Agent Skills spec allows only string `metadata` values.
+- `apps/web/src/generated/skills-index-lite.json`, `skills-detail-index.json`, and `skills-catalog-layout.json` are generated web build inputs. After changing public skills, run `pnpm skills:validate` and `pnpm skills:index`; never edit the index manually.
+- Every public skill needs an entry under `skills:` in `apps/web/content/skill-catalog.yaml` (Display Name, Scenario Group, Visitor-facing tags, summary, and use cases in English and Chinese); the same file holds the ordered `groups` and `featured` lists. `pnpm skills:validate` fails without them. Keep this copy out of SKILL.md frontmatter: the Agent Skills spec allows only string `metadata` values.
 
 ## Install Targets
 
@@ -67,6 +67,17 @@ pnpm build
 - Add `scripts/`, `references/`, `assets/`, or other documentation only when operationally needed.
 - Add `agents/openai.yaml` only for downstream OpenAI metadata integration and generate it with `pnpm skills:openai-yaml`.
 - Public skills live in `skills/`; internal skills live in `.agents/skills/` and are not indexed.
+
+### Catalog entry for a new or changed public skill
+
+When you add a public skill or change what one does, write its `apps/web/content/skill-catalog.yaml` entry yourself in the same change; do not leave it for the user. Follow the root `DESIGN.md` and the existing entries:
+
+- `displayName`: a short Title Case English name a Visitor understands without knowing the slug, plus a natural Chinese name (not a word-for-word translation). The slug stays the install identifier.
+- `group`: the one existing Scenario Group a Visitor would look in. Add a new group only when none fits; a new group needs `title`, `summary` (en/zh) and an illustration.
+- `summary` and `use_cases` in English and Chinese, written for a Visitor, not for the agent; `tags` from `SKILL_TAGS`.
+- `featured` is curated by the maintainer: change it only when asked. A newly featured skill needs its own illustration.
+- Illustrations follow `DESIGN.md` → Illustration: transparent clay art generated with Codex image generation from the hero reference, no text. Add the PNG and WebP to `adonis-brand/projects/skills/illustrations/`, register the copy in `adonis-brand/data/consumers.json`, then copy the WebP to `apps/web/public/brand/illustrations/`.
+- Then run `pnpm skills:validate` and `pnpm skills:index` and stage the regenerated `apps/web/src/generated/`. The pre-commit hook runs `scripts/precommit-skills.mjs`, which blocks a commit touching `skills/` or the catalog when validation fails or the generated index is stale.
 
 ```yaml
 ---

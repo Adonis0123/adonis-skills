@@ -32,7 +32,8 @@
     "brand:check": "node scripts/sync-brand-tokens.mjs --check",
     "design:check": "node scripts/check-design-tokens.mjs",
     "test:scripts": "node --experimental-strip-types --test --test-concurrency=2 ./scripts/__tests__/ardot-mcp-public.test.ts ./scripts/__tests__/chrome-dev-mcp-public.test.ts ./scripts/__tests__/uxc-facade-public.test.ts ./scripts/__tests__/finalize-new-skills.test.ts ./scripts/__tests__/finalize-skill.test.ts ./scripts/__tests__/install-local-skills.test.ts ./scripts/__tests__/workflow-gate-public.test.ts ./scripts/__tests__/grade-skill-evals.test.mjs ./scripts/__tests__/brand-tokens.test.mjs ./scripts/__tests__/check-design-tokens.test.mjs ./scripts/__tests__/generate-skills-index-sections.test.mjs",
-    "design:lint": "designmd lint DESIGN.md"
+    "design:lint": "designmd lint DESIGN.md",
+    "precommit:skills": "node scripts/precommit-skills.mjs"
   },
   "devDependencies": {
     "@google/design.md": "0.4.0",
@@ -45,7 +46,7 @@
     "yaml": "^2.8.1"
   },
   "simple-git-hooks": {
-    "pre-commit": "pnpm lint-staged && pnpm precommit:typecheck"
+    "pre-commit": "pnpm lint-staged && pnpm precommit:skills && pnpm precommit:typecheck"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs,jsx,json,css,md}": "prettier --write --end-of-line lf"
