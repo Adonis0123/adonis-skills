@@ -25,6 +25,7 @@ import re
 import shutil
 import subprocess
 import sys
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -328,10 +329,16 @@ def gitlab_states(slug: str, branches: Iterable[str], since: float = 0) -> Dict[
 
 
 _cnb_user: List[Optional[str]] = []
+_cnb_user_lock = threading.Lock()
 
 
 def cnb_user() -> Optional[str]:
-    """The signed-in cnb.cool username, looked up once per run."""
+    """The signed-in cnb.cool username, looked up once per run (scan asks from several threads)."""
+    with _cnb_user_lock:
+        return _cnb_user_locked()
+
+
+def _cnb_user_locked() -> Optional[str]:
     if not _cnb_user:
         rc, text = run(["cnb", "users", "get-user-info", "--verbose"])
         try:
@@ -452,9 +459,15 @@ def assess(wt: dict, orca: Dict[str, dict], now: float, days: int) -> dict:
     return info
 
 
-def scan_repo(repo: str, orca: Dict[str, dict], now: float, days: int, remote: bool, dry_run: bool) -> dict:
+def list_repo(repo: str, dry_run: bool) -> Tuple[List[str], List[dict]]:
+    """Prune, then the repository's linked worktrees in `git worktree list` order. The main worktree is
+    never reported, so it is not assessed: its `git status` is usually the slowest of the repository."""
     pruned = prune(repo, dry_run=dry_run)
-    worktrees = [assess(w, orca, now, days) for w in list_worktrees(repo) if not w.get("bare")]
+    return pruned, [w for w in list_worktrees(repo) if not w.get("bare") and not w.get("main")]
+
+
+def finish_repo(repo: str, pruned: List[str], worktrees: List[dict], remote: bool) -> dict:
+    """Attach request states to the assessed worktrees of one repository."""
     linked = [w for w in worktrees if "main" not in w["blockers"]]
     states = {}
     if remote:
@@ -471,11 +484,28 @@ def scan_repo(repo: str, orca: Dict[str, dict], now: float, days: int, remote: b
     return {"path": repo, "provider": provider, "slug": slug, "pruned": pruned, "worktrees": linked}
 
 
+def scan_repo(repo: str, orca: Dict[str, dict], now: float, days: int, remote: bool, dry_run: bool) -> dict:
+    """One repository, serially. scan() does the same steps with worktree-level parallelism."""
+    pruned, raw = list_repo(repo, dry_run)
+    return finish_repo(repo, pruned, [assess(w, orca, now, days) for w in raw], remote)
+
+
+# Each assess() is a handful of short git processes, so threads mostly wait on subprocesses.
+SCAN_WORKERS = min(16, max(4, os.cpu_count() or 4))
+
+
 def scan(repos: List[str], days: int, remote: bool, use_orca: bool, dry_run: bool = False) -> dict:
     orca = orca_worktrees() if use_orca else {}
     now = time.time()
-    with ThreadPoolExecutor(max_workers=min(6, len(repos) or 1)) as pool:
-        results = list(pool.map(lambda r: scan_repo(r, orca, now, days, remote, dry_run), repos))
+    # Three phases on one pool: list every repository, assess every worktree (one big repository no
+    # longer runs on a single thread), then ask each host about its requests. Order follows `repos`
+    # and `git worktree list`, the same as scan_repo() run one by one.
+    with ThreadPoolExecutor(max_workers=SCAN_WORKERS) as pool:
+        listings = list(pool.map(lambda r: list_repo(r, dry_run), repos))
+        futures = [[pool.submit(assess, w, orca, now, days) for w in raw] for _, raw in listings]
+        assessed = [[f.result() for f in fs] for fs in futures]
+        results = list(pool.map(lambda i: finish_repo(repos[i], listings[i][0], assessed[i], remote),
+                                range(len(repos))))
     every = [w for r in results for w in r["worktrees"]]
     return {
         "generatedAt": int(now), "days": days, "orca": bool(orca), "repos": results,

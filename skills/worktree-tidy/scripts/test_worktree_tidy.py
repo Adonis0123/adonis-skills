@@ -88,6 +88,20 @@ class ScanTests(Base):
         self.assertTrue(rows[wt]["removable"], rows[wt]["blockers"])
         self.assertEqual(report["summary"]["removable"], 1)
 
+    def test_parallel_scan_matches_serial_order_and_results(self):
+        other = Repo(self.base, "other")
+        mine = [self.repo.worktree(f"w{i}", idle=i % 2 == 0) for i in range(6)]
+        theirs = [other.worktree(f"o{i}") for i in range(3)]
+        Path(mine[1], "new.txt").write_text("x")
+        repos = [self.repo.path, other.path]
+        with mock.patch.object(WT, "SCAN_WORKERS", 4):
+            report = WT.scan(repos, 7, remote=False, use_orca=False)
+        serial = [WT.scan_repo(r, {}, report["generatedAt"], 7, False, False) for r in repos]
+        self.assertEqual([r["path"] for r in report["repos"]], repos)
+        self.assertEqual([[w["path"] for w in r["worktrees"]] for r in report["repos"]], [mine, theirs])
+        strip = lambda rs: [[{k: v for k, v in w.items() if k not in ("ageDays",)} for w in r["worktrees"]] for r in rs]
+        self.assertEqual(strip(report["repos"]), strip(serial))
+
     def test_recent_activity_blocks_removal(self):
         wt = self.repo.worktree("busy", idle=False)
         self.assertEqual(by_path(self.scan())[wt]["blockers"], ["recent"])
