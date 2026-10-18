@@ -15,11 +15,11 @@ The newest of: the last commit, the last checkout or commit recorded in the work
 _Avoid_: last used, last opened
 
 **Stale worktree**:
-A Worktree with no Activity for the threshold (default 7 days), no uncommitted changes, not locked, not pinned in a tool, and whose HEAD is reachable from some ref. Only Stale worktrees are removed.
+A Worktree with no Activity for the threshold (default 7 days), no uncommitted changes or non-regenerable ignored files, not locked, not pinned in a tool, and whose HEAD is reachable from some ref. Only Stale worktrees are removed by default. For explicit hand-removal, `--allow-recent` also permits a Worktree whose only Blocker is `recent`; it does not make that Worktree Stale. All other Blockers, re-checks before removal, and branch deletion rules still apply.
 _Avoid_: expired, dead, abandoned
 
 **Blocker**:
-A reason a Worktree is kept: `main`, `locked`, `missing`, `unreadable`, `dirty`, `pinned`, `unsaved-head` (detached HEAD on no ref), `recent`.
+A reason a Worktree is kept: `main`, `locked`, `missing`, `unreadable`, `dirty`, `ignored` (non-regenerable ignored paths), `pinned`, `unsaved-head` (detached HEAD on no ref), `recent`.
 _Avoid_: error, warning
 
 **Request**:

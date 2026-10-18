@@ -2,14 +2,16 @@
 """worktree_tidy.py: find and remove stale git worktrees across many repositories.
 
 Removing a worktree deletes its folder but keeps its branch, so it can be checked out again with
-`git worktree add`. A branch is deleted only when its pull/merge request is merged or closed.
+`git worktree add`. A branch is deleted only when its pull/merge request is merged or closed
+and its HEAD is saved on another ref.
 
   scan    prune records of worktrees whose folder is gone, then report every linked worktree
   remove  remove the given worktrees after checking each one again (dry run unless --yes)
 
 A worktree is Stale when nothing happened in it for --days days (default 7), it has no uncommitted
-changes, it is not locked, it is not pinned in a tool (Orca), and a detached HEAD is reachable from
-some ref. Only Stale worktrees are ever removed; removal uses `git worktree remove` without --force.
+changes or non-regenerable ignored files, it is not locked, it is not pinned in a tool (Orca),
+and a detached HEAD is reachable from some ref. Only Stale worktrees are removed by default; explicit --allow-recent also permits a worktree
+whose only Blocker is recent. Removal uses `git worktree remove` without --force.
 
 Python 3.9+, standard library only. Exit code 0 on success, 1 when any requested removal failed.
 """
@@ -34,6 +36,48 @@ CNB_MAX_PAGES = 20
 # Requests updated this long before a branch's newest commit are not looked at.
 REQUEST_SLACK_DAYS = 30
 DONE_STATES = ("merged", "closed")
+REGENERABLE_DIRS = set("node_modules dist build out .next .nuxt .output .svelte-kit .turbo .vite .cache "
+                       ".parcel-cache coverage .nyc_output storybook-static .vercel .wrangler target "
+                       "__pycache__ .pytest_cache .mypy_cache .ruff_cache .venv venv .tox .gradle "
+                       ".dart_tool Pods DerivedData .expo .angular generated test-results playwright-report".split())
+# Ignored path prefixes that tools recreate (husky writes its hook shims into .husky/_ on install).
+REGENERABLE_PREFIXES = {".husky/_/"}
+
+
+# Secrets are never regenerable, even inside an ignored build folder: `build/.env` dies with it.
+SECRET_SUFFIXES = (".pem", ".key", ".p12", ".pfx", ".keystore", ".jks")
+# Dependency folders: too big to walk and never hold a project's own secrets.
+UNWALKED_DIRS = {"node_modules", ".venv", "venv", "Pods", ".gradle", "DerivedData", ".cache", "target", ".git"}
+WALK_LIMIT = 5000
+
+
+def is_secret(name: str) -> bool:
+    return name == ".env" or name.startswith(".env.") or name.startswith("id_rsa") or \
+        name.startswith("id_ed25519") or name.endswith(SECRET_SUFFIXES)
+
+
+def secrets_under(folder: Path, rel: str) -> List[str]:
+    """Secret-looking files in a collapsed regenerable folder (bounded walk)."""
+    found, seen = [], 0
+    for root, dirs, files in os.walk(folder):
+        dirs[:] = [d for d in dirs if d not in UNWALKED_DIRS]
+        seen += len(files) + len(dirs)
+        found += [os.path.join(rel, os.path.relpath(os.path.join(root, f), folder)) for f in files if is_secret(f)]
+        if seen > WALK_LIMIT or len(found) >= 10:
+            break
+    return found
+
+
+def add_regenerable(names: Iterable[str]) -> None:
+    """Config "regenerable": entries containing "/" are path prefixes (a folder ending in "/" or one
+    file), the rest folder names."""
+    if not isinstance(names, list) or not all(isinstance(n, str) and n.strip("/") for n in names):
+        raise SystemExit('config "regenerable" must be a list of folder names or path prefixes, e.g. ["generated", "apps/web/.wrangler/"]')
+    for n in names:
+        if "/" in n:
+            REGENERABLE_PREFIXES.add(n.lstrip("/"))  # "dir/" or one generated file
+        else:
+            REGENERABLE_DIRS.add(n)
 
 
 def run(cmd: List[str], cwd: Optional[str] = None, timeout: int = 60, both: bool = False) -> Tuple[int, str]:
@@ -145,27 +189,59 @@ def mtime(path: Path) -> float:
         return 0.0
 
 
-def dirty_paths(wt: str) -> Optional[List[str]]:
-    """Uncommitted paths (tracked changes and untracked files, not ignored ones); None when unknown."""
+def dirty_paths(wt: str) -> Optional[Tuple[List[str], List[str]]]:
+    """Uncommitted and non-regenerable ignored paths from one status call; None when unknown."""
     # --no-optional-locks: do not refresh the index, so scanning never looks like activity.
-    rc, out = run(["git", "--no-optional-locks", "-C", wt, "status", "--porcelain=v1", "-z", "--untracked-files=normal"])
+    rc, out = run(["git", "--no-optional-locks", "-C", wt, "status", "--porcelain=v1", "-z", "--ignored=matching", "--untracked-files=normal"])
     if rc != 0:
         return None
-    paths, entries, i = [], out.split("\0"), 0
+    paths, ignored, entries, i = [], [], out.split("\0"), 0
     while i < len(entries):
         e = entries[i]
         if len(e) > 3:
-            paths.append(e[3:])
-            if e[0] in "RC":
+            path = e[3:]
+            if e.startswith("!! "):
+                parts = path.rstrip("/").split("/")
+                regenerable = any(p in REGENERABLE_DIRS for p in parts) or path.startswith(tuple(REGENERABLE_PREFIXES))
+                if not path.endswith("/"):
+                    if is_secret(parts[-1]):
+                        regenerable = False
+                    else:
+                        regenerable = regenerable or parts[-1] in (".DS_Store", "next-env.d.ts") or \
+                            path.endswith((".log", ".pyc", ".tsbuildinfo"))
+                if not regenerable:
+                    ignored.append(path)
+                elif path.endswith("/") and parts[-1] not in UNWALKED_DIRS:
+                    ignored += secrets_under(Path(wt, path), path.rstrip("/"))
+            else:
+                paths.append(path)
+            if "R" in e[:2] or "C" in e[:2]:
                 i += 1  # a rename or copy carries its source path as the next entry
         i += 1
-    return paths
+    return paths, ignored
 
 
-def head_saved(wt: str) -> bool:
-    """True when the worktree's HEAD commit is reachable from some branch, tag or remote ref."""
-    rc, out = git(wt, "for-each-ref", "--contains", "HEAD", "--count=1", "--format=%(refname)")
-    return rc == 0 and bool(out.strip())
+def head_saved(wt: str, branch: Optional[str] = None) -> bool:
+    """HEAD (or the named branch tip) must be reachable from a ref other than the branch itself."""
+    if not branch:
+        rc, out = git(wt, "for-each-ref", "--contains", "HEAD", "--count=1", "--format=%(refname)")
+        return rc == 0 and bool(out.strip())
+    # Commits only this branch has; none means another branch, tag or remote ref keeps them all.
+    # Not --all: it counts every worktree's HEAD, so the branch would vouch for itself. One graph
+    # walk; `for-each-ref --contains` takes ~10 s to prove a negative in a repo with 5000 refs.
+    rc, out = git(wt, "rev-list", "-n1", "refs/heads/" + branch, "--not", "--exclude=" + branch,
+                  "--branches", "--tags", "--remotes")
+    return rc == 0 and not out.strip()
+
+
+def unpushed_count(wt: str) -> Optional[int]:
+    """HEAD commits on no remote-tracking ref (work that exists only on this machine); None when the
+    repository has no remote refs or the count cannot be read. No fetch is performed."""
+    rc, out = git(wt, "for-each-ref", "--count=1", "--format=%(refname)", "refs/remotes")
+    if rc != 0 or not out.strip():
+        return None
+    rc, out = git(wt, "rev-list", "--count", "HEAD", "--not", "--remotes")
+    return int(out.strip()) if rc == 0 and out.strip().isdigit() else None
 
 
 def upstream_branch(wt: str) -> Optional[str]:
@@ -328,7 +404,9 @@ def assess(wt: dict, orca: Dict[str, dict], now: float, days: int) -> dict:
     """Facts and verdict for one worktree from `git worktree list`."""
     path = wt["path"]
     info = {"path": path, "branch": wt.get("branch"), "head": wt.get("head"),
-            "detached": bool(wt.get("detached")), "blockers": []}
+            "detached": bool(wt.get("detached")), "blockers": [],
+            "shortHead": "", "subject": "", "dirtyFiles": [], "ignored": 0, "ignoredFiles": [],
+            "branchSaved": False, "unpushed": None}
     if wt.get("main"):
         info["blockers"].append("main")
     if wt.get("locked"):
@@ -341,13 +419,16 @@ def assess(wt: dict, orca: Dict[str, dict], now: float, days: int) -> dict:
     gd = Path(gitdir.strip()) if rc == 0 else None
     # The index file is not used: git status, editors and Orca refresh it without anyone working.
     times = [mtime(gd / "logs" / "HEAD")] if gd else []
-    rc, ct = git(path, "log", "-1", "--format=%ct")
-    commit = float(ct.strip()) if rc == 0 and ct.strip().isdigit() else 0.0
+    rc, ct = git(path, "log", "-1", "--format=%ct%n%s")
+    stamp, _, subject = ct.partition("\n") if rc == 0 else ("", "", "")
+    commit = float(stamp) if stamp.isdigit() else 0.0
+    info.update(shortHead=(wt.get("head") or "")[:7], subject=subject.rstrip("\n"),
+                branchSaved=head_saved(path, info["branch"]), unpushed=unpushed_count(path))
     times.append(commit)
-    dirty = dirty_paths(path)
-    if dirty is None:
+    status = dirty_paths(path)
+    if status is None:
         info["blockers"].append("unreadable")
-        dirty = []
+    dirty, ignored = status if status is not None else ([], [])
     times.extend(mtime(Path(path) / p) for p in dirty[:200])
     tool = orca.get(os.path.realpath(path), {})
     times.append(tool.get("activity", 0.0))
@@ -355,13 +436,16 @@ def assess(wt: dict, orca: Dict[str, dict], now: float, days: int) -> dict:
     age = (now - last) / 86400 if last else None
     if dirty:
         info["blockers"].append("dirty")
+    if ignored:
+        info["blockers"].append("ignored")
     if tool.get("pinned"):
         info["blockers"].append("pinned")
-    if info["detached"] and not head_saved(path):
+    if info["detached"] and not info["branchSaved"]:
         info["blockers"].append("unsaved-head")
     if age is None or age < days:
         info["blockers"].append("recent")
-    info.update(dirty=len(dirty), lastActivity=int(last), commitTime=int(commit), ageDays=None if age is None else round(age, 1),
+    info.update(dirty=len(dirty), dirtyFiles=dirty[:10], ignored=len(ignored), ignoredFiles=ignored[:10],
+                lastActivity=int(last), commitTime=int(commit), ageDays=None if age is None else round(age, 1),
                 pinned=bool(tool.get("pinned")), upstream=upstream_branch(path) if info["branch"] else None)
     info["stale"] = not info["blockers"]
     info["removable"] = info["stale"]
@@ -382,7 +466,7 @@ def scan_repo(repo: str, orca: Dict[str, dict], now: float, days: int, remote: b
     for w in linked:
         req = states.get(w["path"]) or {"state": "unknown" if w["branch"] else "n/a", "url": None}
         w["request"] = req
-        w["branchDeletable"] = bool(w["branch"]) and w["removable"] and req["state"] in DONE_STATES
+        w["branchDeletable"] = bool(w["branch"]) and w["removable"] and w["branchSaved"] and req["state"] in DONE_STATES
     provider, slug = remote_of(repo)
     return {"path": repo, "provider": provider, "slug": slug, "pruned": pruned, "worktrees": linked}
 
@@ -404,7 +488,8 @@ def scan(repos: List[str], days: int, remote: bool, use_orca: bool, dry_run: boo
 
 # ── removal ───────────────────────────────────────────────────────────────────
 
-def remove(paths: List[str], days: int, delete_branch: bool, use_orca: bool, yes: bool) -> dict:
+def remove(paths: List[str], days: int, delete_branch: bool, use_orca: bool, yes: bool,
+           allow_recent: bool = False) -> dict:
     """Re-check each worktree, then remove it (and its branch when asked and the request is done)."""
     orca = orca_worktrees() if use_orca else {}
     now, results = time.time(), []
@@ -420,7 +505,7 @@ def remove(paths: List[str], days: int, delete_branch: bool, use_orca: bool, yes
             continue
         info = assess(match, orca, now, days)
         res["branch"] = info["branch"]
-        if not info["removable"]:
+        if not info["removable"] and not (allow_recent and info["blockers"] == ["recent"]):
             res["error"] = "not removable: " + ", ".join(info["blockers"])
             continue
         state = None
@@ -431,7 +516,13 @@ def remove(paths: List[str], days: int, delete_branch: bool, use_orca: bool, yes
             res["request"] = state
         if not yes:
             res["wouldRemove"] = True
-            res["wouldDeleteBranch"] = state in DONE_STATES
+            res["wouldDeleteBranch"] = state in DONE_STATES and info["branchSaved"]
+            continue
+        # The request lookup above can take a while: check again right before deleting, because
+        # `git worktree remove` deletes ignored files without asking.
+        status = dirty_paths(path)
+        if status is None or status[0] or status[1]:
+            res["error"] = "not removable: changed since it was checked"
             continue
         rc, out = git(repo, "worktree", "remove", path)
         if rc != 0:
@@ -439,11 +530,14 @@ def remove(paths: List[str], days: int, delete_branch: bool, use_orca: bool, yes
             continue
         res["removed"] = True
         if state in DONE_STATES:
-            # Squash merges leave the branch "not fully merged", so -d would refuse; the host says it is done.
-            rc, out = git(repo, "branch", "-D", info["branch"])
-            res["branchDeleted"] = rc == 0
-            if rc != 0:
-                res["branchError"] = out.strip()
+            if not head_saved(repo, info["branch"]):
+                res["branchError"] = "branch has commits that exist on no other ref; kept"
+            else:
+                # Squash merges leave the branch "not fully merged", so -d would refuse; the host says it is done.
+                rc, out = git(repo, "branch", "-D", info["branch"])
+                res["branchDeleted"] = rc == 0
+                if rc != 0:
+                    res["branchError"] = out.strip()
         prune(repo)
     return {"dryRun": not yes, "results": results,
             "failed": sum(1 for r in results if r.get("error"))}
@@ -492,6 +586,7 @@ def build_parser() -> argparse.ArgumentParser:
     r = sub.add_parser("remove", help="remove Stale worktrees (dry run unless --yes)")
     r.add_argument("paths", nargs="+", help="worktree folders")
     r.add_argument("--delete-branch", action="store_true", help="also delete branches whose request is merged or closed")
+    r.add_argument("--allow-recent", action="store_true", help="explicitly allow hand-removal when recent is the only blocker")
     r.add_argument("--yes", action="store_true", help="actually remove")
     return ap
 
@@ -499,6 +594,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[List[str]] = None) -> int:
     args = build_parser().parse_args(argv)
     cfg = load_config(args.config)
+    add_regenerable(cfg.get("regenerable", []))
     days = args.days if args.days is not None else int(cfg.get("days", DEFAULT_DAYS))
     use_orca = not args.no_orca and cfg.get("orca", True) is not False
     if args.command == "scan":
@@ -514,7 +610,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         report = scan(repos, days, remote=not args.no_remote, use_orca=use_orca, dry_run=args.no_prune)
         print(json.dumps(report, ensure_ascii=False, indent=2) if args.json else describe(report))
         return 0
-    result = remove(args.paths, days, args.delete_branch, use_orca, args.yes)
+    result = remove(args.paths, days, args.delete_branch, use_orca, args.yes, args.allow_recent)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
     else:
