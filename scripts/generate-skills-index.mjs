@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import {
   CATALOG_FILE,
+  catalogLayoutSchema,
   findCatalogIssues,
   skillDetailListSchema,
   skillListSchema,
@@ -20,6 +21,10 @@ const listOutputPath = path.join(
 const detailOutputPath = path.join(
   root,
   "apps/web/src/generated/skills-detail-index.json",
+);
+const layoutOutputPath = path.join(
+  root,
+  "apps/web/src/generated/skills-catalog-layout.json",
 );
 
 function parseFrontmatter(content) {
@@ -335,7 +340,7 @@ async function loadSkills() {
       },
       ...(updatedAt ? { updatedAt } : {}),
       ...(allowedTools?.length ? { allowedTools } : {}),
-      catalog: catalog[slug],
+      catalog: catalog.skills[slug],
     });
 
     detailItems.push({
@@ -347,6 +352,10 @@ async function loadSkills() {
 
   // Parse through the shared schema so the site never reads data it cannot type.
   return {
+    layout: catalogLayoutSchema.parse({
+      groups: catalog.groups,
+      featured: catalog.featured,
+    }),
     listItems: skillListSchema.parse(
       listItems.sort((a, b) => a.slug.localeCompare(b.slug)),
     ),
@@ -357,7 +366,7 @@ async function loadSkills() {
 }
 
 async function main() {
-  const { listItems, detailItems } = await loadSkills();
+  const { layout, listItems, detailItems } = await loadSkills();
   await fs.mkdir(path.dirname(listOutputPath), { recursive: true });
   await fs.writeFile(
     listOutputPath,
@@ -369,8 +378,13 @@ async function main() {
     `${JSON.stringify(detailItems, null, 2)}\n`,
     "utf8",
   );
+  await fs.writeFile(
+    layoutOutputPath,
+    `${JSON.stringify(layout, null, 2)}\n`,
+    "utf8",
+  );
   console.log(
-    `Generated ${listItems.length} skills -> ${listOutputPath}, ${detailOutputPath}`,
+    `Generated ${listItems.length} skills -> ${listOutputPath}, ${detailOutputPath}, ${layoutOutputPath}`,
   );
 }
 

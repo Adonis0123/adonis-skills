@@ -1,9 +1,20 @@
+import skillsCatalogLayoutData from "@/generated/skills-catalog-layout.json";
 import skillsDetailData from "@/generated/skills-detail-index.json";
 import skillsListData from "@/generated/skills-index-lite.json";
 
-import type { SkillDetailItem, SkillListItem } from "@/lib/skill-schema";
+import type {
+  CatalogGroup,
+  CatalogLayout,
+  FeaturedEntry,
+  SkillDetailItem,
+  SkillListItem,
+} from "@/lib/skill-schema";
 
 export type {
+  CatalogGroup,
+  CatalogLayout,
+  FeaturedEntry,
+  LocalizedText,
   SkillCatalogEntry,
   SkillDetailItem,
   SkillListItem,
@@ -18,6 +29,7 @@ export type {
 // The generator parses both files through skill-schema before writing them.
 const skills = skillsListData as SkillListItem[];
 const skillDetails = skillsDetailData as SkillDetailItem[];
+const catalogLayout = skillsCatalogLayoutData as CatalogLayout;
 
 export const skillsRepo =
   process.env.NEXT_PUBLIC_SKILLS_REPO || "adonis0123/adonis-skills";
@@ -57,4 +69,21 @@ export function getSkillInstallCommand(slug: string): string {
 
 export function getSkillSourceUrl(slug: string): string {
   return `https://github.com/${skillsRepo}/tree/main/skills/${slug}`;
+}
+
+/** Scenario Groups and Featured Skills, in page order. */
+export function getCatalogLayout(): CatalogLayout {
+  return catalogLayout;
+}
+
+export function getCatalogGroup(id: string): CatalogGroup | null {
+  return catalogLayout.groups.find((group) => group.id === id) ?? null;
+}
+
+export function getFeaturedEntry(slug: string): FeaturedEntry | null {
+  return catalogLayout.featured.find((entry) => entry.slug === slug) ?? null;
+}
+
+export function getIllustrationSrc(file: string): string {
+  return `/brand/illustrations/${file}`;
 }

@@ -55,6 +55,11 @@ describe("searchSkills", () => {
     expect(slugsFor("周报")).toContain("weekly-report");
   });
 
+  it("matches the Display Name in either language", () => {
+    expect(slugsFor("Agent Dispatcher")[0]).toBe("agent-dispatch");
+    expect(slugsFor("派活调度")[0]).toBe("agent-dispatch");
+  });
+
   it("ranks a name match above a description-only match", () => {
     expect(slugsFor("commit")[0]).toBe("commit");
   });

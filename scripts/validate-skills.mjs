@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import {
   CATALOG_FILE,
+  ILLUSTRATIONS_DIR,
   findCatalogIssues,
 } from "../apps/web/src/lib/skill-schema.ts";
 
@@ -48,7 +49,12 @@ async function main() {
   } catch (error) {
     errors.push(`${CATALOG_FILE} 无法读取或不是合法 YAML：${error.message}`);
   }
-  if (catalog !== undefined) errors.push(...findCatalogIssues(slugs, catalog));
+  if (catalog !== undefined) {
+    const illustrations = (await exists(path.join(root, ILLUSTRATIONS_DIR)))
+      ? await fs.readdir(path.join(root, ILLUSTRATIONS_DIR))
+      : [];
+    errors.push(...findCatalogIssues(slugs, catalog, { illustrations }));
+  }
 
   for (const entry of entries) {
     if (

@@ -53,7 +53,10 @@ function tokenMatches(token: string, field: string, words: string[]): boolean {
 function fieldsOf(skill: SkillListItem, tagLabels: TagLabels): Field[] {
   const { catalog } = skill;
   return [
-    { text: `${skill.name} ${skill.slug}`, weight: 8 },
+    {
+      text: `${catalog.displayName.en} ${catalog.displayName.zh} ${skill.name} ${skill.slug}`,
+      weight: 8,
+    },
     {
       text: catalog.tags.flatMap((tag) => [tag, ...tagLabels[tag]]).join(" "),
       weight: 5,

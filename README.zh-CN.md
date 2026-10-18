@@ -177,7 +177,7 @@ pnpm dev
 | `pnpm skills:quick-validate skills/<skill-name>` | `python3 ./.agents/skills/repo-skill-creator/scripts/quick_validate.py`        | 校验单个 skill（尤其是 frontmatter 合法性）。用于修改单个 skill 后的快速自检。                                                                                                                                                               |
 | `pnpm skills:openai-yaml <skill-dir>`            | `python3 ./.agents/skills/repo-skill-creator/scripts/generate_openai_yaml.py`  | 为 skill 生成 `agents/openai.yaml`（OpenAI skill interface 元数据）。需要 interface 元数据时使用。                                                                                                                                           |
 | `pnpm skills:validate`                           | `turbo run skills:validate --filter=@adonis-skills/web`                        | 仓库级 skills 校验。提交前/CI 前必跑。                                                                                                                                                                                                       |
-| `pnpm skills:index`                              | `turbo run skills:index --filter=@adonis-skills/web`                           | 重新生成 `apps/web/src/generated/skills-index-lite.json` 与 `apps/web/src/generated/skills-detail-index.json`。新增或修改 skill 后用于刷新 Web 数据。                                                                                        |
+| `pnpm skills:index`                              | `turbo run skills:index --filter=@adonis-skills/web`                           | 重新生成 `apps/web/src/generated/skills-index-lite.json`、`skills-detail-index.json` 与 `skills-catalog-layout.json`。新增或修改 skill 后用于刷新 Web 数据。                                                                                 |
 | `pnpm skills:install:local`                      | `node --experimental-strip-types ./scripts/install-local-skills.ts`            | 将 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。用于本地 agent 联调。                                                                                                                                          |
 | `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再确保 `.claude/skills` 指向 `.agents/skills`。用于同时验证本机 Claude/Codex 运行场景。                                                                                                                                          |
 
@@ -290,7 +290,7 @@ GitHub Actions 会执行：
 
 - `install`：按 lockfile 一致性安装依赖
 - `skills:validate`：校验 `skills/*` 的 frontmatter/schema 合法性
-- `skills:index`：重新生成 `apps/web/src/generated/skills-index-lite.json` 与 `apps/web/src/generated/skills-detail-index.json`
+- `skills:index`：重新生成 `apps/web/src/generated/skills-index-lite.json`、`skills-detail-index.json` 与 `skills-catalog-layout.json`
 - `Prepare i18n Catalogs`：将 `src/locales/**/*.po` 编译为 `*.mjs`，并重建 `src/i18n/catalog-manifest.ts`
 - `lint/typecheck/build`：校验代码规范、TypeScript 类型正确性与生产构建可用性
 

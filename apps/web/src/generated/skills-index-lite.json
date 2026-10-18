@@ -14,6 +14,11 @@
     },
     "updatedAt": "2026-10-16T10:37:28.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Agent Dispatcher",
+        "zh": "派活调度"
+      },
+      "group": "delegate",
       "tags": [
         "agent-workflow",
         "code-review"
@@ -43,6 +48,11 @@
     },
     "updatedAt": "2026-09-14T13:25:30.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Agent Config Linker",
+        "zh": "Agent 配置软链"
+      },
+      "group": "tools",
       "tags": [
         "tool-setup",
         "docs-and-ops"
@@ -74,6 +84,11 @@
     },
     "updatedAt": "2026-10-16T07:26:10.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Review Handoff",
+        "zh": "审查交接"
+      },
+      "group": "review",
       "tags": [
         "code-review",
         "agent-workflow",
@@ -105,6 +120,11 @@
     },
     "updatedAt": "2026-10-16T07:26:10.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Architecture Hardening",
+        "zh": "架构加固"
+      },
+      "group": "review",
       "tags": [
         "architecture",
         "code-review",
@@ -137,6 +157,11 @@
     },
     "updatedAt": "2026-09-16T15:29:58.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Ardot Connector",
+        "zh": "Ardot 连接器"
+      },
+      "group": "tools",
       "tags": [
         "tool-setup",
         "frontend"
@@ -167,6 +192,11 @@
     },
     "updatedAt": "2026-09-05T08:38:42.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Branch Creator",
+        "zh": "建分支"
+      },
+      "group": "git",
       "tags": [
         "git"
       ],
@@ -195,8 +225,13 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-01T11:30:46.000Z",
+    "updatedAt": "2026-10-18T11:15:26.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Chrome DevTools Bridge",
+        "zh": "Chrome 调试桥"
+      },
+      "group": "tools",
       "tags": [
         "tool-setup",
         "frontend"
@@ -226,6 +261,11 @@
     },
     "updatedAt": "2026-09-14T13:25:30.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Click-to-Source",
+        "zh": "点元素跳源码"
+      },
+      "group": "frontend",
       "tags": [
         "frontend",
         "tool-setup"
@@ -256,6 +296,11 @@
     },
     "updatedAt": "2026-09-14T13:25:32.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Plugin Architecture Coach",
+        "zh": "插件架构顾问"
+      },
+      "group": "review",
       "tags": [
         "architecture"
       ],
@@ -284,6 +329,11 @@
     },
     "updatedAt": "2026-09-23T03:58:34.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Commit Writer",
+        "zh": "写提交"
+      },
+      "group": "git",
       "tags": [
         "git"
       ],
@@ -312,6 +362,11 @@
     },
     "updatedAt": "2026-10-02T08:07:11.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Commit & Push",
+        "zh": "提交并推送"
+      },
+      "group": "git",
       "tags": [
         "git"
       ],
@@ -341,6 +396,11 @@
     },
     "updatedAt": "2026-09-14T13:25:28.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Decision-First Docs",
+        "zh": "结论先行的文档"
+      },
+      "group": "docs",
       "tags": [
         "docs-and-ops",
         "architecture"
@@ -370,6 +430,11 @@
     },
     "updatedAt": "2026-09-23T16:23:48.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Agent Activity Check",
+        "zh": "Agent 在忙吗"
+      },
+      "group": "delegate",
       "tags": [
         "agent-workflow",
         "docs-and-ops"
@@ -400,6 +465,11 @@
     },
     "updatedAt": "2026-10-02T08:30:06.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Agent Setup Audit",
+        "zh": "Agent 环境体检"
+      },
+      "group": "docs",
       "tags": [
         "docs-and-ops",
         "tool-setup"
@@ -431,6 +501,11 @@
     },
     "updatedAt": "2026-09-24T03:23:44.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Figma Connector",
+        "zh": "Figma 连接器"
+      },
+      "group": "tools",
       "tags": [
         "tool-setup",
         "frontend"
@@ -462,6 +537,11 @@
     },
     "updatedAt": "2026-10-12T03:05:45.000Z",
     "catalog": {
+      "displayName": {
+        "en": "File Tidy",
+        "zh": "文件整理"
+      },
+      "group": "docs",
       "tags": [
         "docs-and-ops"
       ],
@@ -492,6 +572,11 @@
     },
     "updatedAt": "2026-10-07T11:51:42.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Goal Contract",
+        "zh": "Goal 契约"
+      },
+      "group": "delegate",
       "tags": [
         "agent-workflow"
       ],
@@ -520,6 +605,11 @@
     },
     "updatedAt": "2026-09-23T09:55:31.000Z",
     "catalog": {
+      "displayName": {
+        "en": "App Feature Inventory",
+        "zh": "应用功能盘点"
+      },
+      "group": "docs",
       "tags": [
         "docs-and-ops"
       ],
@@ -549,6 +639,11 @@
     },
     "updatedAt": "2026-09-14T12:28:53.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Kimi Computer Use",
+        "zh": "Kimi 电脑操控"
+      },
+      "group": "tools",
       "tags": [
         "tool-setup"
       ],
@@ -577,6 +672,11 @@
     },
     "updatedAt": "2026-09-05T08:38:42.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Lingui Workflow",
+        "zh": "Lingui 日常维护"
+      },
+      "group": "frontend",
       "tags": [
         "frontend",
         "docs-and-ops"
@@ -607,6 +707,11 @@
     },
     "updatedAt": "2026-09-01T01:25:43.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Local Web Surface",
+        "zh": "本地网页入口"
+      },
+      "group": "frontend",
       "tags": [
         "frontend",
         "architecture",
@@ -639,6 +744,11 @@
     },
     "updatedAt": "2026-10-01T11:34:49.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Open Review Loop",
+        "zh": "Open Review 循环"
+      },
+      "group": "review",
       "tags": [
         "code-review",
         "agent-workflow",
@@ -671,6 +781,11 @@
     },
     "updatedAt": "2026-09-14T13:25:32.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Review Prompt Composer",
+        "zh": "审查提示词生成"
+      },
+      "group": "review",
       "tags": [
         "code-review",
         "git"
@@ -701,6 +816,11 @@
     },
     "updatedAt": "2026-10-16T07:26:10.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Finish-the-Plan Loop",
+        "zh": "一路做到完成"
+      },
+      "group": "delegate",
       "tags": [
         "agent-workflow",
         "code-review",
@@ -732,6 +852,11 @@
     },
     "updatedAt": "2026-09-23T03:58:34.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Any API to CLI",
+        "zh": "接口变命令行"
+      },
+      "group": "tools",
       "tags": [
         "tool-setup",
         "architecture"
@@ -763,6 +888,11 @@
     },
     "updatedAt": "2026-09-14T11:34:41.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Performance Audit",
+        "zh": "性能审计"
+      },
+      "group": "frontend",
       "tags": [
         "frontend",
         "docs-and-ops"
@@ -800,6 +930,11 @@
       "Bash(python:*)"
     ],
     "catalog": {
+      "displayName": {
+        "en": "Weekly Report",
+        "zh": "周报生成"
+      },
+      "group": "docs",
       "tags": [
         "docs-and-ops",
         "git"
@@ -830,6 +965,11 @@
     },
     "updatedAt": "2026-10-16T07:26:10.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Workflow Router",
+        "zh": "工作流分诊"
+      },
+      "group": "delegate",
       "tags": [
         "agent-workflow"
       ],
@@ -860,6 +1000,11 @@
     },
     "updatedAt": "2026-10-15T13:07:53.000Z",
     "catalog": {
+      "displayName": {
+        "en": "Worktree Cleanup",
+        "zh": "Worktree 清理"
+      },
+      "group": "git",
       "tags": [
         "git",
         "docs-and-ops"
