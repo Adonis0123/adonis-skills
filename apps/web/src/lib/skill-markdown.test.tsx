@@ -1,10 +1,19 @@
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   headingSlug,
   renderSectionContent,
   withHeadingIds,
 } from "./skill-markdown";
+
+const pageParams = vi.hoisted(() => ({
+  current: {} as Record<string, string>,
+}));
+vi.mock("next/navigation", () => ({ useParams: () => pageParams.current }));
+
+beforeEach(() => {
+  pageParams.current = {};
+});
 
 function render(raw: string): string {
   return renderToStaticMarkup(<>{renderSectionContent(raw)}</>);
@@ -101,5 +110,45 @@ describe("inline code wrapping", () => {
       ["agent-dispatch", true],
       ["~/.config/agent-dispatch/accounts.json", false],
     ]);
+  });
+});
+
+describe("SKILL.md links on a skill page", () => {
+  it("rewrites relative links so they do not 404 on the site", () => {
+    pageParams.current = {
+      lang: "zh",
+      slug: "installed-app-feature-inventory",
+    };
+    const html = render(
+      [
+        "See [Jianying](references/jianying-pro-macos.md),",
+        "[file tidy](../file-tidy/SKILL.md),",
+        "[usage](#usage) and [docs](https://example.com).",
+      ].join(" "),
+    );
+
+    expect(html).toContain(
+      'href="https://github.com/adonis0123/adonis-skills/blob/main/skills/installed-app-feature-inventory/references/jianying-pro-macos.md" target="_blank" rel="noopener noreferrer"',
+    );
+    expect(html).toContain('href="/zh/skills/file-tidy"');
+    expect(html).toContain('href="#usage"');
+    expect(html).toContain(
+      'href="https://example.com" target="_blank" rel="noopener noreferrer"',
+    );
+  });
+
+  it("links to the GitHub file when the other skill has no page", () => {
+    pageParams.current = { lang: "en", slug: "commit" };
+    const html = render("[draft](../not-a-public-skill/SKILL.md)");
+    expect(html).toContain(
+      'href="https://github.com/adonis0123/adonis-skills/blob/main/skills/not-a-public-skill/SKILL.md"',
+    );
+  });
+
+  it("serves relative images from raw GitHub", () => {
+    pageParams.current = { lang: "en", slug: "commit" };
+    expect(render("![flow](assets/flow.png)")).toContain(
+      'src="https://raw.githubusercontent.com/adonis0123/adonis-skills/main/skills/commit/assets/flow.png"',
+    );
   });
 });

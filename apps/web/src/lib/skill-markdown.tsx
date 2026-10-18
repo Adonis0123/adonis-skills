@@ -1,6 +1,12 @@
 import type { Components } from "react-markdown";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { linkedSkillSlug } from "@/lib/skill-link";
+import {
+  SkillMarkdownImage,
+  SkillMarkdownLink,
+} from "@/lib/skill-markdown-link";
+import { getSkillBySlug, skillsRepo } from "@/lib/skills";
 
 /**
  * Stable anchor id for a heading. The detail page uses the same function for
@@ -44,21 +50,37 @@ function isShortInlineCode(children: unknown): boolean {
   return typeof children === "string" && children.length <= SHORT_INLINE_CODE;
 }
 
+function publicLinkedSkill(href: string | undefined): string | undefined {
+  const slug = linkedSkillSlug(href);
+  return slug && getSkillBySlug(slug) ? slug : undefined;
+}
+
 const components: Components = {
   p: ({ children }) => (
     <p className="text-sm leading-7 text-foreground md:text-[15px]">
       {children}
     </p>
   ),
+  // SKILL.md links are relative to the skill folder in the repo; SkillMarkdownLink
+  // rewrites them so they do not 404 on the site (see resolveSkillMarkdownHref).
   a: ({ href, children }) => (
-    <a
+    <SkillMarkdownLink
       href={href}
-      target={href?.startsWith("http") ? "_blank" : undefined}
-      rel={href?.startsWith("http") ? "noreferrer" : undefined}
+      repo={skillsRepo}
+      publicSkill={publicLinkedSkill(href)}
       className="clay-focus-ring rounded-sm text-link underline underline-offset-2"
     >
       {children}
-    </a>
+    </SkillMarkdownLink>
+  ),
+  img: ({ src, alt, title }) => (
+    <SkillMarkdownImage
+      src={typeof src === "string" ? src : undefined}
+      alt={alt}
+      title={title}
+      repo={skillsRepo}
+      className="max-w-full rounded-xl border border-border"
+    />
   ),
   ul: ({ children }) => (
     <ul className="list-disc space-y-1.5 pl-5 text-sm leading-7 marker:text-muted-foreground md:text-[15px]">
