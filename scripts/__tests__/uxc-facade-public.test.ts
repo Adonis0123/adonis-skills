@@ -47,8 +47,16 @@ test("public uxc-facade source is portable and contains no local runtime contrac
 
 test("uxc-facade owns generic packaging while chrome-dev-mcp owns task acceptance", async () => {
   const facade = await readFile(path.join(skillDir, "SKILL.md"), "utf8");
+  const ownershipGates = await readFile(
+    path.join(skillDir, "references/ownership-gates.md"),
+    "utf8",
+  );
   const chrome = await readFile(
     path.join(repoRoot, "skills/chrome-dev-mcp/SKILL.md"),
+    "utf8",
+  );
+  const chromeUxcReference = await readFile(
+    path.join(repoRoot, "skills/chrome-dev-mcp/references/uxc-facade.md"),
     "utf8",
   );
 
@@ -62,11 +70,21 @@ test("uxc-facade owns generic packaging while chrome-dev-mcp owns task acceptanc
   assert.match(facade, /sole installer and updater/i);
   assert.match(facade, /link and readiness/i);
   assert.match(facade, /ownership gates/i);
-  assert.match(facade, /version conflict/i);
-  assert.match(facade, /GATE_FAIL|fail closed/i);
+  // The gate script lives in a reference; the skill must route to it.
+  assert.match(facade, /\(references\/ownership-gates\.md\)/);
+  assert.match(ownershipGates, /version conflict/i);
+  assert.match(ownershipGates, /GATE_FAIL=/);
   assert.match(chrome, /UXC packaging for Chrome DevTools/);
-  assert.match(chrome, /pinned UXC 0\.17\.0 facade/);
-  assert.match(chrome, /explicit compatibility and rollback path/);
+  assert.match(chrome, /pinned owned UXC/);
+  assert.match(
+    chrome,
+    /Use host-native `chrome-devtools` only when the user explicitly asks for native compatibility/,
+  );
+  assert.match(chromeUxcReference, /release: `v0\.17\.0`/);
+  assert.match(
+    chromeUxcReference,
+    /preserving native registration only for explicit compatibility and rollback/,
+  );
   assert.doesNotMatch(
     chrome.split("\n").find((line) => line.startsWith("description:")) ?? "",
     /, UXC packaging,/,
