@@ -158,7 +158,7 @@ export default async function HomePage({ params }: HomePageProps) {
                 className="absolute inset-0 size-full object-contain p-2 md:p-5"
               />
             </div>
-            <p className="speech-bubble absolute bottom-9 -left-7 hidden max-w-[230px] px-3.5 py-3 text-[13.5px] leading-[1.45] text-muted-foreground lg:block">
+            <p className="speech-bubble absolute top-9 -left-7 hidden max-w-[230px] px-3.5 py-3 text-[13.5px] leading-[1.45] text-muted-foreground lg:block">
               <Trans id="home.hero.bubble">
                 <b className="font-semibold text-foreground">
                   Hi, I&apos;m Nika.
