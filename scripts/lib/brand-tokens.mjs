@@ -79,7 +79,9 @@ export function findBrandIssues(palette, theme) {
 
   const min = theme.contrast?.text ?? 4.5;
   for (const mode of Object.keys(modes)) {
-    for (const [fg, bg] of theme.contrast?.pairs ?? []) {
+    // A pair may carry its own minimum as a third item (e.g. 3 for a bold
+    // primary button label); theme.json records why next to the pair.
+    for (const [fg, bg, pairMin] of theme.contrast?.pairs ?? []) {
       const a = resolveHex(palette, theme, mode, fg);
       const b = resolveHex(palette, theme, mode, bg);
       if (!a || !b) {
@@ -89,9 +91,10 @@ export function findBrandIssues(palette, theme) {
         continue;
       }
       const ratio = contrastRatio(a, b);
-      if (ratio < min)
+      const need = typeof pairMin === "number" ? pairMin : min;
+      if (ratio < need)
         issues.push(
-          `theme.json: ${mode} ${fg} ${a} on ${bg} ${b} is ${ratio.toFixed(2)}:1, below ${min}:1; pick a darker/lighter palette color`,
+          `theme.json: ${mode} ${fg} ${a} on ${bg} ${b} is ${ratio.toFixed(2)}:1, below ${need}:1; pick a darker/lighter palette color`,
         );
     }
   }

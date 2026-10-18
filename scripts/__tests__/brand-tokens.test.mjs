@@ -188,3 +188,20 @@ test("renderDesignMd rejects a source that hardcodes colors", () => {
     /must not define `colors`/,
   );
 });
+
+test("findBrandIssues honors a per-pair contrast minimum", () => {
+  const sageOnCream = (pair) => ({
+    modes: { light: { foreground: "{sage}", background: "{cream}" } },
+    contrast: { text: 4.5, pairs: [pair] },
+  });
+  assert.match(
+    findBrandIssues(palette, sageOnCream(["foreground", "background"])).join(
+      "\n",
+    ),
+    /below 4\.5:1/,
+  );
+  assert.deepEqual(
+    findBrandIssues(palette, sageOnCream(["foreground", "background", 2])),
+    [],
+  );
+});

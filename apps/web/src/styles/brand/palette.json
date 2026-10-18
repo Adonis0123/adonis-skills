@@ -482,6 +482,22 @@
       }
     },
     {
+      "id": "leaf-button",
+      "hex": "#65A01E",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf button"
+      }
+    },
+    {
+      "id": "leaf-button-hover",
+      "hex": "#5A9419",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf button hover"
+      }
+    },
+    {
       "id": "leaf-dark-1",
       "hex": "#0F130C",
       "group": "scale-leaf-dark",

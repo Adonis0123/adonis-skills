@@ -8,9 +8,9 @@
       "card-foreground": "{stone-12}",
       "popover": "{stone-1}",
       "popover-foreground": "{stone-12}",
-      "primary": "{leaf-9}",
-      "primary-foreground": "{stone-12}",
-      "primary-hover": "{leaf-10}",
+      "primary": "{leaf-button}",
+      "primary-foreground": "{stone-1}",
+      "primary-hover": "{leaf-button-hover}",
       "secondary": "{stone-4}",
       "secondary-foreground": "{stone-12}",
       "muted": "{stone-3}",
@@ -49,9 +49,9 @@
       "card-foreground": "{stone-dark-12}",
       "popover": "{stone-dark-3}",
       "popover-foreground": "{stone-dark-12}",
-      "primary": "{leaf-dark-9}",
-      "primary-foreground": "{stone-dark-1}",
-      "primary-hover": "{leaf-dark-10}",
+      "primary": "{leaf-button}",
+      "primary-foreground": "{stone-1}",
+      "primary-hover": "{leaf-button-hover}",
       "secondary": "{stone-dark-4}",
       "secondary-foreground": "{stone-dark-12}",
       "muted": "{stone-dark-3}",
@@ -111,11 +111,13 @@
       ],
       [
         "primary-foreground",
-        "primary"
+        "primary",
+        3
       ],
       [
         "primary-foreground",
-        "primary-hover"
+        "primary-hover",
+        3
       ],
       [
         "secondary-foreground",
@@ -141,6 +143,9 @@
         "link",
         "muted"
       ]
-    ]
+    ],
+    "exceptions": {
+      "primary-foreground/primary": "主按钮用白字配稍深叶绿 #65A01E（3.18:1）、悬停 #5A9419（3.69:1）。用户看过 A 亮叶绿墨色字 / B visualgpt #74B425 白字（2.5:1）/ C / D #4A8512 白字（4.5:1）四版对比后选 C：墨色字发闷，D 太深不新鲜。按钮字 600 字重以上，按 WCAG 非文字与粗体 3:1 下限放行；其他文字仍要 4.5:1。"
+    }
   }
 }
