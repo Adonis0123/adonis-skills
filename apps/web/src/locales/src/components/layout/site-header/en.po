@@ -42,25 +42,25 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-header.tsx:27
-msgid "siteHeader.nav.github.label"
-msgstr "GitHub"
+#~ msgid "siteHeader.nav.github.label"
+#~ msgstr "GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:68
+#: ../../src/components/layout/site-header.tsx:59
+#~ msgid "siteHeader.brand.subtitle"
+#~ msgstr "skill library"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:38
 msgid "siteHeader.nav.aria"
 msgstr "Main navigation"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:37
+#: ../../src/components/layout/site-header.tsx:51
 msgid "siteHeader.nav.github.aria"
 msgstr "Open the adonis-skills repository on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:59
-msgid "siteHeader.brand.subtitle"
-msgstr "skill library"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:47
+#: ../../src/components/layout/site-header.tsx:29
 msgid "siteHeader.skipToContent"
 msgstr "Skip to content"

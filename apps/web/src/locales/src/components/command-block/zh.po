@@ -24,21 +24,21 @@ msgstr ""
 #~ msgstr "复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:80
+#: ../src/components/command-block.tsx:98
 msgid "commandBlock.scroll.aria"
 msgstr "命令，可横向滚动查看完整内容"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:115
+#: ../src/components/command-block.tsx:167
 msgid "commandBlock.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:103
+#: ../src/components/command-block.tsx:143
 msgid "commandBlock.copy.aria"
 msgstr "复制命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:116
+#: ../src/components/command-block.tsx:169
 msgid "commandBlock.live.failed"
 msgstr "复制失败。命令已选中，请手动复制。"

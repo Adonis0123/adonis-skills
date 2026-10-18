@@ -14,11 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:65
-msgid "skillCard.copy.aria"
-msgstr "复制 {skillName} 的安装命令"
+#: ../src/components/skill-card.tsx:64
+#~ msgid "skillCard.copy.aria"
+#~ msgstr "复制 {skillName} 的安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:45
+#: ../src/components/skill-card.tsx:65
+msgid "skillCard.copy.ariaLabel"
+msgstr "复制 {displayName} 的安装命令"
+
+#. js-lingui-explicit-id
+#: ../src/components/skill-card.tsx:28
+msgid "skillCard.featured"
+msgstr "精选"
+
+#. js-lingui-explicit-id
+#: ../src/components/skill-card.tsx:50
 msgid "skillCard.tags.aria"
 msgstr "标签"

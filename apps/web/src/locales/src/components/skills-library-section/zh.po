@@ -14,66 +14,163 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:91
+#~ msgid "home.filter.all"
+#~ msgstr "全部"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:89
+#~ msgid "home.filter.aria"
+#~ msgstr "按标签筛选"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:54
+#~ msgid "home.library.title"
+#~ msgstr "技能"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:122
+#~ msgid "home.search.emptyHintTag"
+#~ msgstr "换个词试试，或者清掉标签筛选。"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:298
+#~ msgid "home.search.emptyHint"
+#~ msgstr "换个词试试，中英文都能搜。"
+
+#. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:96
+#~ msgid "home.search.placeholder"
+#~ msgstr "用中文或英文搜索…"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:287
+#~ msgid "home.search.emptyTitleQuery"
+#~ msgstr "没有匹配“{query}”的技能"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:96
+#~ msgid "home.search.placeholder.task"
+#~ msgstr "想做什么？试试“审查”“提交”“figma”…"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:420
+msgid "home.group.count"
+msgstr "{count, plural, other {# 个技能}}"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:299
+msgid "home.scenarios.titleFiltered"
+msgstr "{resultCount, plural, other {找到 # 个技能}}"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:154
+msgid "home.search.countFiltered"
+msgstr "{resultCount} / {totalCount}"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:169
 msgid "home.search.resultCount"
 msgstr "显示 {resultCount} / {totalCount} 个技能"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:91
-msgid "home.filter.all"
-msgstr "全部"
+#: ../src/components/skills-library-section.tsx:158
+msgid "home.search.count"
+msgstr "{totalCount, plural, other {# 个技能}}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:126
+#: ../src/components/skills-library-section.tsx:295
+msgid "home.scenarios.kicker"
+msgstr "按场景"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:373
 msgid "home.search.clearFilters"
 msgstr "清除筛选"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:76
+#: ../src/components/skills-library-section.tsx:144
 msgid "home.search.clear"
 msgstr "清空搜索"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:89
-msgid "home.filter.aria"
-msgstr "按标签筛选"
+#: ../src/components/skills-library-section.tsx:375
+msgid "home.search.clearSearch"
+msgstr "清空搜索"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:116
+#: ../src/components/skills-library-section.tsx:306
+msgid "home.scenarios.title"
+msgstr "按你手头的事找技能"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:175
+msgid "home.scenarios.jump.aria"
+msgstr "跳到某个场景"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:347
+msgid "home.search.emptyHint.query"
+msgstr "琪琪拿着放大镜找遍了。换个词试试，中英文都能搜。"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:358
+msgid "home.search.emptyHint.both"
+msgstr "琪琪拿着放大镜找遍了。换个词试试，或者去掉标签筛选。"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:340
 msgid "home.search.emptyTitle"
 msgstr "没有匹配的技能"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:121
+#: ../src/components/skills-library-section.tsx:353
 msgid "home.search.emptyHintTagOnly"
 msgstr "这个标签下还没有技能，换个标签看看。"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:115
-msgid "home.search.emptyTitleQuery"
+#: ../src/components/skills-library-section.tsx:336
+msgid "home.search.emptyTitle.query"
 msgstr "没有匹配“{query}”的技能"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:65
-msgid "home.search.placeholder"
-msgstr "用中文或英文搜索…"
+#: ../src/components/skills-library-section.tsx:263
+msgid "home.featured.intro"
+msgstr "一行命令就能装，在哪个 agent 里用法都一样。"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:64
+#. placeholder {0}: SKILL_TAG_LABELS[tag][locale]
+#: ../src/components/skills-library-section.tsx:190
+msgid "home.filter.clearTag.aria"
+msgstr "去掉“{0}”标签筛选"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:124
 msgid "home.search.input.aria"
 msgstr "搜索技能"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:54
-msgid "home.library.title"
-msgstr "技能"
+#: ../src/components/skills-library-section.tsx:254
+msgid "home.featured.kicker"
+msgstr "从这里开始"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:120
-msgid "home.search.emptyHint"
-msgstr "换个词试试，中英文都能搜。"
+#. placeholder {0}: SKILL_TAG_LABELS[tag][locale]
+#: ../src/components/skills-library-section.tsx:195
+msgid "home.filter.activeTag"
+msgstr "标签：{0}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:122
-msgid "home.search.emptyHintTag"
-msgstr "换个词试试，或者清掉标签筛选。"
+#: ../src/components/skills-library-section.tsx:257
+msgid "home.featured.title"
+msgstr "我最常拿起的三个技能"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:459
+msgid "home.group.viewAll"
+msgstr "查看本组全部 {count} 个"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:128
+msgid "home.search.placeholder.try"
+msgstr "想做什么？试试“审查”“提交”“figma”…"

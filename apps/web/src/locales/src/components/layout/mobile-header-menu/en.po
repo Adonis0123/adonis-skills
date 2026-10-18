@@ -24,34 +24,34 @@ msgstr ""
 #~ msgstr "Switch site language"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:69
-#: ../../src/components/layout/mobile-header-menu.tsx:82
-#: ../../src/components/layout/mobile-header-menu.tsx:140
+#: ../../src/components/layout/mobile-header-menu.tsx:38
+#~ msgid "siteHeader.nav.github.label"
+#~ msgstr "GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:65
+#: ../../src/components/layout/mobile-header-menu.tsx:84
+#: ../../src/components/layout/mobile-header-menu.tsx:142
 msgid "siteHeader.menu.close"
 msgstr "Close menu"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:38
-msgid "siteHeader.nav.github.label"
-msgstr "GitHub"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:152
+#: ../../src/components/layout/mobile-header-menu.tsx:154
 msgid "siteHeader.nav.aria"
 msgstr "Main navigation"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:73
-#: ../../src/components/layout/mobile-header-menu.tsx:86
+#: ../../src/components/layout/mobile-header-menu.tsx:69
+#: ../../src/components/layout/mobile-header-menu.tsx:88
 msgid "siteHeader.menu.open"
 msgstr "Open menu"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:48
+#: ../../src/components/layout/mobile-header-menu.tsx:40
 msgid "siteHeader.nav.github.aria"
 msgstr "Open the adonis-skills repository on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:132
+#: ../../src/components/layout/mobile-header-menu.tsx:134
 msgid "siteHeader.menu.aria"
 msgstr "Site menu"

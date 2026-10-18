@@ -42,25 +42,25 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-header.tsx:27
-msgid "siteHeader.nav.github.label"
-msgstr "GitHub"
+#~ msgid "siteHeader.nav.github.label"
+#~ msgstr "GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:68
+#: ../../src/components/layout/site-header.tsx:59
+#~ msgid "siteHeader.brand.subtitle"
+#~ msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:38
 msgid "siteHeader.nav.aria"
 msgstr "主导航"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:37
+#: ../../src/components/layout/site-header.tsx:51
 msgid "siteHeader.nav.github.aria"
 msgstr "在 GitHub 上打开 adonis-skills 仓库"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:59
-msgid "siteHeader.brand.subtitle"
-msgstr "技能库"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:47
+#: ../../src/components/layout/site-header.tsx:29
 msgid "siteHeader.skipToContent"
 msgstr "跳到正文"

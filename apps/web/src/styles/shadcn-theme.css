@@ -13,22 +13,41 @@
   /* Base for the small-control radius scale; see --radius-* in @theme. */
   --radius: 0.625rem;
 
-  --clay-surface-bg: var(--card);
-  --clay-radius-card: 24px;
-  --clay-radius-card-lg: 32px;
-  --clay-radius-button: 50px;
+  /* DESIGN.md `rounded`: xs 6, sm 10, md 12, lg 16, xl 22, plate 28. */
+  --nk-radius-xs: 6px;
+  --nk-radius-sm: 10px;
+  --nk-radius-md: 12px;
+  --nk-radius-lg: 16px;
+  --nk-radius-xl: 22px;
+  --nk-radius-plate: 28px;
 
-  /* Soft, ink-tinted depth. Never a hard `0 Npx 0` bottom line. */
-  --clay-shadow-card:
-    0 1px 2px color-mix(in oklab, var(--shadow-tint) 5%, transparent),
-    0 8px 20px -8px color-mix(in oklab, var(--shadow-tint) 12%, transparent);
+  --clay-surface-bg: var(--card);
+  --clay-radius-card: var(--nk-radius-lg);
+  --clay-radius-card-lg: var(--nk-radius-xl);
+  --clay-radius-button: 9999px;
+
+  /*
+   * DESIGN.md "Elevation & Depth": resting cards carry a 1px whisper of ink
+   * (none in dark); hover, the search bar and the primary button glow with a
+   * leaf hue. The glow is a solid --tint-border blurred by a negative spread,
+   * so no transparency or color-mix is needed. Never a hard `0 Npx 0` line.
+   */
+  --clay-shadow-card: 0 1px 2px
+    color-mix(in oklab, var(--shadow-tint) 5%, transparent);
   --clay-shadow-card-hover:
-    0 2px 4px color-mix(in oklab, var(--shadow-tint) 7%, transparent),
-    0 22px 40px -10px color-mix(in oklab, var(--shadow-tint) 22%, transparent);
-  --clay-shadow-btn: 0 6px 14px -4px
-    color-mix(in oklab, var(--shadow-tint) 26%, transparent);
-  --clay-shadow-btn-hover: 0 3px 8px -3px
-    color-mix(in oklab, var(--shadow-tint) 22%, transparent);
+    0 18px 36px -18px var(--tint-border),
+    0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
+  --clay-shadow-btn: 0 12px 26px -14px var(--tint-border);
+  --clay-shadow-btn-hover: 0 14px 30px -14px var(--tint-border);
+  --clay-shadow-glow:
+    0 24px 56px -28px var(--tint-border),
+    0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
+  --clay-shadow-pop: 0 18px 40px -18px
+    color-mix(in oklab, var(--shadow-tint) 24%, transparent);
+  /* Art plate: two flush rings (plate, then plate-border) plus a soft leaf glow below. */
+  --clay-shadow-plate:
+    0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border),
+    0 40px 80px -40px var(--tint-border);
   /* Surfaces only (not buttons): a blurred top glow, never a crisp 1px line. */
   --clay-highlight-top: inset 0 3px 6px -3px
     color-mix(in oklab, var(--highlight-tint) 70%, transparent);
@@ -37,28 +56,31 @@
   --shadow-clay-inset:
     var(--clay-highlight-top),
     inset 0 2px 6px color-mix(in oklab, var(--shadow-tint) 10%, transparent);
-  --shadow-clay-floating: var(--clay-shadow-card-hover);
+  --shadow-clay-floating: var(--clay-shadow-pop);
 
   --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
-  --font-app-heading: var(--font-app-sans);
+  /* Bricolage has no CJK glyphs: Chinese falls through to Noto Sans SC. */
+  --font-app-heading:
+    "Bricolage Grotesque Variable", "Noto Sans SC Variable", "PingFang SC",
+    sans-serif;
+  /* Wordmark only. */
   --font-app-display: "Shantell Sans", var(--font-app-sans);
   /* CJK fallback keeps Chinese labels in mono slots from rendering as tofu. */
   --font-app-mono:
     "IBM Plex Mono", "SFMono-Regular", "Noto Sans SC Variable", monospace;
 }
 
+/* Dark: depth comes from switching steps; shadows almost disappear. */
 .dark,
 :root[data-theme="dark"] {
-  --clay-shadow-card:
-    0 1px 2px color-mix(in oklab, var(--shadow-tint) 40%, transparent),
-    0 14px 30px -8px color-mix(in oklab, var(--shadow-tint) 60%, transparent);
-  --clay-shadow-card-hover:
-    0 2px 4px color-mix(in oklab, var(--shadow-tint) 45%, transparent),
-    0 24px 44px -10px color-mix(in oklab, var(--shadow-tint) 70%, transparent);
-  --clay-shadow-btn: 0 6px 14px -4px
-    color-mix(in oklab, var(--shadow-tint) 70%, transparent);
-  --clay-shadow-btn-hover: 0 3px 8px -3px
+  --clay-shadow-card: none;
+  --clay-shadow-card-hover: 0 18px 40px -20px var(--tint-border);
+  --clay-shadow-btn: none;
+  --clay-shadow-btn-hover: 0 12px 28px -16px var(--tint-border);
+  --clay-shadow-glow: 0 24px 56px -30px var(--tint-border);
+  --clay-shadow-pop: 0 18px 40px -16px
     color-mix(in oklab, var(--shadow-tint) 60%, transparent);
+  --clay-shadow-plate: 0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border);
   --clay-highlight-top: inset 0 3px 6px -3px
     color-mix(in oklab, var(--highlight-tint) 7%, transparent);
 }
@@ -86,6 +108,11 @@
   --color-ring-halo: var(--ring-halo);
   --color-overlay: var(--overlay);
   --color-link: var(--link);
+  --color-primary-hover: var(--primary-hover);
+  --color-plate: var(--plate);
+  --color-plate-border: var(--plate-border);
+  --color-tint: var(--tint);
+  --color-tint-border: var(--tint-border);
   --color-hero-art-bg: var(--hero-art-bg);
   --color-attribution: var(--attribution);
   --color-chart-1: var(--chart-1);
@@ -95,8 +122,9 @@
   --color-chart-5: var(--chart-5);
 
   /*
-   * Radius scale: chips/buttons are pills (rounded-pill or rounded-full),
-   * inputs, code blocks and inner panels 10-12px, cards 24px.
+   * Radius scale (DESIGN.md Shapes): buttons and chips are pills, inputs
+   * 10px, command boxes and menus 12px, cards 16px, featured cards 22px,
+   * illustration plates 28px, tags 6px.
    */
   --radius-sm: calc(var(--radius) - 4px); /* 6px: inline links, tiny marks */
   --radius-md: calc(var(--radius) - 2px); /* 8px: icon buttons inside panels */
@@ -105,8 +133,11 @@
     var(--radius) + 2px
   ); /* 12px: code blocks, tables, inner panels, menus */
   --radius-2xl: calc(var(--radius) + 6px); /* 16px: large inner panels */
-  --radius-3xl: var(--clay-radius-card); /* 24px */
-  --radius-card: var(--clay-radius-card); /* 24px: clay cards */
+  --radius-3xl: 24px;
+  --radius-card: var(--nk-radius-lg); /* 16px: skill cards, popovers */
+  --radius-feature: var(--nk-radius-xl); /* 22px: featured cards */
+  --radius-plate: var(--nk-radius-plate); /* 28px: illustration plates */
+  --radius-tag: var(--nk-radius-xs); /* 6px: tags */
   --radius-pill: var(--clay-radius-button); /* buttons, chips, badges */
 
   --font-sans: var(--font-app-sans);

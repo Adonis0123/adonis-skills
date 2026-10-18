@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:21
+#: ../../src/app/%5Blang%5D/not-found.tsx:38
 msgid "notFound.cta.home"
 msgstr "Back to home"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:27
+#: ../../src/app/%5Blang%5D/not-found.tsx:47
 msgid "notFound.cta.skills"
 msgstr "Browse all skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:14
+#: ../../src/app/%5Blang%5D/not-found.tsx:28
 msgid "notFound.description"
 msgstr "Nothing lives at this address. It may have been renamed or removed."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:12
+#: ../../src/app/%5Blang%5D/not-found.tsx:25
 msgid "notFound.title"
 msgstr "Page not found"

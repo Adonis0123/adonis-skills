@@ -7,76 +7,64 @@ import { getSkillInstallCommand, type SkillListItem } from "@/lib/skills";
 
 interface SkillCardProps {
   skill: SkillListItem;
+  featured?: boolean;
 }
 
-function formatDate(isoDate: string, locale: string): string {
-  try {
-    return new Intl.DateTimeFormat(locale, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(isoDate));
-  } catch {
-    return isoDate;
-  }
-}
-
-export function SkillCard({ skill }: SkillCardProps) {
+/** Catalog card (DESIGN.md skill-card): Display Name, mono slug, summary, tags, outline copy. */
+export function SkillCard({ skill, featured = false }: SkillCardProps) {
   const { t, i18n } = useLingui();
   const locale = resolveLocaleValue(i18n.locale);
-  const summary =
-    locale === "zh" ? skill.catalog.summary_zh : skill.catalog.summary;
-  const installCommand = getSkillInstallCommand(skill.slug);
-  const skillName = skill.name;
+  const { catalog } = skill;
+  const summary = locale === "zh" ? catalog.summary_zh : catalog.summary;
+  const displayName = catalog.displayName[locale];
 
   return (
-    // The title link stretches over the card (h3 is `static` so its ::after anchors to the
+    // The title link stretches over the card (h4 is `static` so its ::after anchors to the
     // article, z-2); the footer sits above it (z-3), so no interactive element nests in another.
-    <article className="clay-surface clay-tone-base clay-hover-lift relative flex h-full min-w-0 flex-col gap-3 p-5 clay-focus-link-ring md:p-6">
-      <h3 className="static text-lg leading-snug md:text-xl">
+    <article className="skill-card h-full clay-focus-link-ring">
+      {featured && (
+        <span className="type-mono absolute top-3.5 right-4 inline-flex items-center gap-1 text-[10.5px] text-link">
+          <span className="icon-[lucide--star] size-3" aria-hidden />
+          {t({ id: "skillCard.featured", message: "Featured" })}
+        </span>
+      )}
+      <h4 className="type-card-title static pr-20">
         <LocaleLink
           href={`/skills/${skill.slug}`}
           className="outline-none after:absolute after:inset-0 after:z-[2] after:rounded-[inherit] after:content-['']"
         >
-          {skillName}
+          {displayName}
         </LocaleLink>
-      </h3>
+      </h4>
+      <p className="type-mono mt-0.5 truncate text-[11.5px] text-muted-foreground">
+        {skill.slug}
+      </p>
 
-      <p className="line-clamp-3 text-sm leading-6 text-muted-foreground">
+      <p className="mt-2.5 mb-3.5 line-clamp-3 text-[13.5px] leading-[1.55] text-muted-foreground">
         {summary}
       </p>
 
-      <ul
-        className="flex flex-wrap gap-1.5"
-        aria-label={t({ id: "skillCard.tags.aria", message: "Tags" })}
-      >
-        {skill.catalog.tags.map((tag) => (
-          <li
-            key={tag}
-            className="clay-badge clay-badge--neutral px-2.5 py-0.5 text-[11px]"
-          >
-            {SKILL_TAG_LABELS[tag][locale]}
-          </li>
-        ))}
-      </ul>
-
-      <div className="z-[3] mt-auto flex items-center justify-between gap-3 pt-2 text-xs text-muted-foreground">
-        {skill.updatedAt ? (
-          <span className="inline-flex items-center gap-1.5">
-            <span className="icon-[lucide--calendar] size-3.5" aria-hidden />
-            <time dateTime={skill.updatedAt}>
-              {formatDate(skill.updatedAt, locale)}
-            </time>
-          </span>
-        ) : (
-          <span />
-        )}
+      <div className="z-[3] mt-auto flex items-end justify-between gap-2">
+        <ul
+          className="flex min-w-0 flex-wrap gap-1.5"
+          aria-label={t({ id: "skillCard.tags.aria", message: "Tags" })}
+        >
+          {/* Two tags keep the footer on one line; the detail page lists all of them. */}
+          {catalog.tags.slice(0, 2).map((tag, index) => (
+            <li
+              key={tag}
+              className={index === 0 ? "nk-tag" : "nk-tag nk-tag--neutral"}
+            >
+              {SKILL_TAG_LABELS[tag][locale]}
+            </li>
+          ))}
+        </ul>
         <CopyInstallCommandButton
-          compact
-          command={installCommand}
+          variant="outline"
+          command={getSkillInstallCommand(skill.slug)}
           label={t({
-            id: "skillCard.copy.aria",
-            message: `Copy install command for ${skillName}`,
+            id: "skillCard.copy.ariaLabel",
+            message: `Copy install command for ${displayName}`,
           })}
         />
       </div>

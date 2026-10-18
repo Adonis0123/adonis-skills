@@ -14,11 +14,11 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/locale-switcher.tsx:161
+#: ../../src/components/layout/locale-switcher.tsx:171
 msgid "localeSwitcher.menu.label"
 msgstr "语言"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/locale-switcher.tsx:108
+#: ../../src/components/layout/locale-switcher.tsx:118
 msgid "localeSwitcher.trigger.aria"
 msgstr "切换语言（当前：{currentLabel}）"

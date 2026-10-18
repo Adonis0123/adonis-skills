@@ -1,19 +1,24 @@
 import { skillsRepo } from "@/lib/skills";
 
 export interface SiteNavItem {
-  id: "github";
+  id: "skills" | "scenarios" | "install" | "github";
   href: string;
   external?: boolean;
 }
 
 export interface FooterLinkItem {
-  id: "skill-library" | "example-skill" | "github-repository" | "readme";
+  id:
+    | "skill-library"
+    | "scenarios"
+    | "install"
+    | "github-repository"
+    | "readme";
   href: string;
   external?: boolean;
 }
 
 export interface FooterLinkGroup {
-  id: "quick-links" | "resources";
+  id: "library" | "resources";
   links: FooterLinkItem[];
 }
 
@@ -38,7 +43,6 @@ const repoUrl = `https://github.com/${skillsRepo}`;
 export const siteUrl = (
   process.env.NEXT_PUBLIC_SITE_URL || "https://adonis-skills.vercel.app"
 ).replace(/\/$/, "");
-export const exampleSkillHref = "/skills/weekly-report";
 
 export const siteLayoutConfig: SiteLayoutConfig = {
   brand: {
@@ -49,6 +53,9 @@ export const siteLayoutConfig: SiteLayoutConfig = {
   repo: skillsRepo,
   repoUrl,
   headerNav: [
+    { id: "skills", href: "/skills" },
+    { id: "scenarios", href: "/#scenarios" },
+    { id: "install", href: "/#install" },
     {
       id: "github",
       href: repoUrl,
@@ -57,16 +64,11 @@ export const siteLayoutConfig: SiteLayoutConfig = {
   ],
   footerGroups: [
     {
-      id: "quick-links",
+      id: "library",
       links: [
-        {
-          id: "skill-library",
-          href: "/",
-        },
-        {
-          id: "example-skill",
-          href: exampleSkillHref,
-        },
+        { id: "skill-library", href: "/#skills" },
+        { id: "scenarios", href: "/#scenarios" },
+        { id: "install", href: "/#install" },
       ],
     },
     {

@@ -14,11 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:65
-msgid "skillCard.copy.aria"
-msgstr "Copy install command for {skillName}"
+#: ../src/components/skill-card.tsx:64
+#~ msgid "skillCard.copy.aria"
+#~ msgstr "Copy install command for {skillName}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:45
+#: ../src/components/skill-card.tsx:65
+msgid "skillCard.copy.ariaLabel"
+msgstr "Copy install command for {displayName}"
+
+#. js-lingui-explicit-id
+#: ../src/components/skill-card.tsx:28
+msgid "skillCard.featured"
+msgstr "Featured"
+
+#. js-lingui-explicit-id
+#: ../src/components/skill-card.tsx:50
 msgid "skillCard.tags.aria"
 msgstr "Tags"

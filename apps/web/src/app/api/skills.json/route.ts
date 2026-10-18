@@ -8,6 +8,8 @@ export function GET() {
   const skills = getAllSkills().map((skill) => ({
     slug: skill.slug,
     name: skill.name,
+    displayName: skill.catalog.displayName,
+    group: skill.catalog.group,
     summary: skill.catalog.summary,
     summaryZh: skill.catalog.summary_zh,
     tags: skill.catalog.tags,

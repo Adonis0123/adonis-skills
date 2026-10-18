@@ -42,11 +42,11 @@ msgstr ""
 #~ msgstr ""
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:25
+#: ../../src/components/layout/theme-toggle.tsx:28
 msgid "themeToggle.switchToDark"
 msgstr "切换到深色主题"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:26
+#: ../../src/components/layout/theme-toggle.tsx:32
 msgid "themeToggle.switchToLight"
 msgstr "切换到浅色主题"

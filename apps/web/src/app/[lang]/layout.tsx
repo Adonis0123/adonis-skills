@@ -1,4 +1,5 @@
 import "@fontsource-variable/noto-sans-sc/wght.css";
+import "@fontsource-variable/bricolage-grotesque/opsz.css";
 import "@fontsource/shantell-sans/latin-800.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";

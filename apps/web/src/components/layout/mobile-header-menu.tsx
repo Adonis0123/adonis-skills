@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Trans, useLingui } from "@lingui/react/macro";
 import { type SiteNavItem, siteLayoutConfig } from "@/config/site-layout";
 import { LocaleSwitcher } from "@/components/layout/locale-switcher";
+import { SiteNavLabel } from "@/components/layout/site-nav-label";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { usePrefersReducedMotion } from "@/components/motion/use-prefers-reduced-motion";
 import {
@@ -28,23 +29,14 @@ function getLinkProps(external?: boolean) {
 
   return {
     target: "_blank",
-    rel: "noreferrer",
+    rel: "noopener noreferrer",
   };
-}
-
-function getNavItemLabel(item: SiteNavItem) {
-  switch (item.id) {
-    case "github":
-      return <Trans id="siteHeader.nav.github.label">GitHub</Trans>;
-    default:
-      return item.id;
-  }
 }
 
 export function MobileHeaderMenu() {
   const { headerNav } = siteLayoutConfig;
   const { t } = useLingui();
-  const navAria: Record<SiteNavItem["id"], string> = {
+  const navAria: Partial<Record<SiteNavItem["id"], string>> = {
     github: t({
       id: "siteHeader.nav.github.aria",
       message: "Open the adonis-skills repository on GitHub",
@@ -178,7 +170,7 @@ export function MobileHeaderMenu() {
                       }}
                     >
                       {headerNav.map((item) => {
-                        const label = getNavItemLabel(item);
+                        const label = <SiteNavLabel id={item.id} />;
                         const itemAria = navAria[item.id];
                         const actionClassName = cx(
                           "clay-focus-ring clay-button clay-button--secondary clay-button--sm mobile-sheet-action",

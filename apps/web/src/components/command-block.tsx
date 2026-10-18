@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { useCopyToClipboard } from "@/components/copy-install-command";
+import { IconSwap } from "@/components/motion/press-scale";
 import { cx } from "@/components/ui/utils";
 
 interface CommandBlockProps {
@@ -107,10 +108,7 @@ export function CommandBlock({
               {commands.map((command, index) => (
                 // Commands can repeat in theory; index keeps keys unique and order is fixed.
                 <span key={index} className="block whitespace-pre">
-                  <span
-                    aria-hidden
-                    className="mr-2 select-none text-muted-foreground"
-                  >
+                  <span aria-hidden className="mr-2 select-none text-link">
                     $
                   </span>
                   {command}
@@ -152,17 +150,18 @@ export function CommandBlock({
           failed && "text-destructive hover:text-destructive",
         )}
       >
-        <span
-          className={cx(
-            {
-              idle: "icon-[lucide--copy]",
-              copied: "icon-[lucide--check]",
-              failed: "icon-[lucide--circle-alert]",
-            }[status],
-            "size-4",
-          )}
-          aria-hidden
-        />
+        <IconSwap swapKey={status} className="size-4">
+          <span
+            className={cx(
+              {
+                idle: "icon-[lucide--copy]",
+                copied: "icon-[lucide--check]",
+                failed: "icon-[lucide--circle-alert]",
+              }[status],
+              "size-4",
+            )}
+          />
+        </IconSwap>
       </button>
       <span className="sr-only" aria-live="polite">
         {copied && t({ id: "commandBlock.live.copied", message: "Copied" })}

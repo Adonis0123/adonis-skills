@@ -25,6 +25,10 @@ export const catalogManifest: CatalogManifest = {
     en: () => import("../locales/src/app/[lang]/skills/[slug]/page/en.mjs"),
     zh: () => import("../locales/src/app/[lang]/skills/[slug]/page/zh.mjs"),
   },
+  "src/app/[lang]/skills/page": {
+    en: () => import("../locales/src/app/[lang]/skills/page/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/skills/page/zh.mjs"),
+  },
   "src/components/command-block": {
     en: () => import("../locales/src/components/command-block/en.mjs"),
     zh: () => import("../locales/src/components/command-block/zh.mjs"),
@@ -33,9 +37,17 @@ export const catalogManifest: CatalogManifest = {
     en: () => import("../locales/src/components/copy-install-command/en.mjs"),
     zh: () => import("../locales/src/components/copy-install-command/zh.mjs"),
   },
+  "src/components/featured-skill-card": {
+    en: () => import("../locales/src/components/featured-skill-card/en.mjs"),
+    zh: () => import("../locales/src/components/featured-skill-card/zh.mjs"),
+  },
   "src/components/host-install-tabs": {
     en: () => import("../locales/src/components/host-install-tabs/en.mjs"),
     zh: () => import("../locales/src/components/host-install-tabs/zh.mjs"),
+  },
+  "src/components/layout/header-search": {
+    en: () => import("../locales/src/components/layout/header-search/en.mjs"),
+    zh: () => import("../locales/src/components/layout/header-search/zh.mjs"),
   },
   "src/components/layout/locale-switcher": {
     en: () => import("../locales/src/components/layout/locale-switcher/en.mjs"),
@@ -59,6 +71,10 @@ export const catalogManifest: CatalogManifest = {
     en: () => import("../locales/src/components/layout/site-header/en.mjs"),
     zh: () => import("../locales/src/components/layout/site-header/zh.mjs"),
   },
+  "src/components/layout/site-nav-label": {
+    en: () => import("../locales/src/components/layout/site-nav-label/en.mjs"),
+    zh: () => import("../locales/src/components/layout/site-nav-label/zh.mjs"),
+  },
   "src/components/layout/theme-toggle": {
     en: () => import("../locales/src/components/layout/theme-toggle/en.mjs"),
     zh: () => import("../locales/src/components/layout/theme-toggle/zh.mjs"),
@@ -66,6 +82,10 @@ export const catalogManifest: CatalogManifest = {
   "src/components/skill-card": {
     en: () => import("../locales/src/components/skill-card/en.mjs"),
     zh: () => import("../locales/src/components/skill-card/zh.mjs"),
+  },
+  "src/components/skills-browser": {
+    en: () => import("../locales/src/components/skills-browser/en.mjs"),
+    zh: () => import("../locales/src/components/skills-browser/zh.mjs"),
   },
   "src/components/skills-library-section": {
     en: () => import("../locales/src/components/skills-library-section/en.mjs"),

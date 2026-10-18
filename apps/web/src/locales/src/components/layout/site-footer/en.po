@@ -19,46 +19,71 @@ msgstr ""
 #~ msgstr "Built for discovering and installing agent skills."
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:104
+#: ../../src/components/layout/site-footer.tsx:38
+#~ msgid "siteFooter.link.exampleSkill"
+#~ msgstr "Example skill"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:28
+#~ msgid "siteFooter.group.quickLinks"
+#~ msgstr "Quick links"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:36
+#~ msgid "siteFooter.link.skillLibrary"
+#~ msgstr "Skill library"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:56
+#~ msgid "siteFooter.brand.tagline"
+#~ msgstr "Small agent skills I built and use every day."
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:120
 msgid "siteFooter.copyright"
 msgstr "© {year} {brandName}"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:38
-msgid "siteFooter.link.exampleSkill"
-msgstr "Example skill"
+#: ../../src/components/layout/site-footer.tsx:29
+msgid "siteFooter.link.allSkills"
+msgstr "All skills"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:40
+#: ../../src/components/layout/site-footer.tsx:36
 msgid "siteFooter.link.githubRepository"
 msgstr "GitHub repository"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:109
+#: ../../src/components/layout/site-footer.tsx:33
+msgid "siteFooter.link.installGuide"
+msgstr "Install guide"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:20
+msgid "siteFooter.group.library"
+msgstr "Library"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:125
 msgid "siteFooter.attribution"
 msgstr "Made by <0>Nika</0> · code on GitHub <1>@{owner}</1>"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:28
-msgid "siteFooter.group.quickLinks"
-msgstr "Quick links"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:42
+#: ../../src/components/layout/site-footer.tsx:39
 msgid "siteFooter.link.readme"
 msgstr "README"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:30
+#: ../../src/components/layout/site-footer.tsx:22
 msgid "siteFooter.group.resources"
 msgstr "Resources"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:36
-msgid "siteFooter.link.skillLibrary"
-msgstr "Skill library"
+#: ../../src/components/layout/site-footer.tsx:31
+msgid "siteFooter.link.scenarios"
+msgstr "Scenarios"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:58
-msgid "siteFooter.brand.tagline"
-msgstr "Small agent skills I built and use every day."
+#: ../../src/components/layout/site-footer.tsx:57
+msgid "siteFooter.brand.lantern"
+msgstr "Small agent skills I built and use every day. Carried around like a lantern."

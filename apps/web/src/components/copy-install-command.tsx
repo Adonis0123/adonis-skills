@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { useLingui } from "@lingui/react/macro";
-import { ClayButton } from "@/components/ui";
+import { IconSwap } from "@/components/motion/press-scale";
 import { cx } from "@/components/ui/utils";
 
 const COPIED_RESET_MS = 2000;
@@ -101,16 +101,21 @@ export function useCopyToClipboard(resetMs = COPIED_RESET_MS) {
 
 interface CopyInstallCommandButtonProps {
   command: string;
-  compact?: boolean;
+  /** `solid`: leaf primary fill (featured cards). `outline`: quiet card button. */
+  variant?: "solid" | "outline";
+  /** Hide the visible label below the `sm` breakpoint; the aria-label still names the action. */
+  iconOnlyOnMobile?: boolean;
   preventLinkNavigation?: boolean;
-  // Accessible name for the compact icon button; defaults to a generic label.
+  /** Accessible name, e.g. "Copy install command for Commit Writer". */
   label?: string;
   className?: string;
 }
 
+/** Copy button with a short visible label ("Copy" / "Copied") and a live announcement. */
 export function CopyInstallCommandButton({
   command,
-  compact = false,
+  variant = "solid",
+  iconOnlyOnMobile = false,
   preventLinkNavigation = false,
   label,
   className,
@@ -126,57 +131,11 @@ export function CopyInstallCommandButton({
     void copy(command);
   };
 
-  const announcement = (
-    <span className="sr-only" aria-live="polite">
-      {copied && t({ id: "copyCommand.live.copied", message: "Copied" })}
-      {failed &&
-        t({
-          id: "copyCommand.live.failed",
-          message: "Copy failed. Select the command and copy it manually.",
-        })}
-    </span>
-  );
-
   const iconClass = {
     idle: "icon-[lucide--copy]",
     copied: "icon-[lucide--check]",
     failed: "icon-[lucide--circle-alert]",
   }[status];
-
-  if (compact) {
-    return (
-      <>
-        <ClayButton
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onCopy}
-          className={cx(
-            "relative h-8 w-8 min-h-8 rounded-lg border border-border bg-background p-0 text-clay-muted shadow-none transition-[background-color,color,border-color] duration-250 ease-out hover:bg-accent hover:text-accent-foreground active:translate-y-0",
-            // Keep the 32px visual size but give touch a 44px hit area.
-            'after:absolute after:-inset-2 after:content-[""]',
-            copied && "border-attribution bg-accent text-accent-foreground",
-            failed &&
-              "border-destructive text-destructive hover:text-destructive",
-            className,
-          )}
-          aria-label={
-            label ?? t({ id: "copyCommand.aria.copy", message: "Copy command" })
-          }
-        >
-          <span
-            className={cx(
-              iconClass,
-              "size-3.5 transition-transform duration-200 ease-out",
-              copied && "scale-105",
-            )}
-            aria-hidden
-          />
-        </ClayButton>
-        {announcement}
-      </>
-    );
-  }
 
   // All three labels share one grid cell so the button keeps the widest label's width.
   const labelClass = (visible: boolean) =>
@@ -187,30 +146,49 @@ export function CopyInstallCommandButton({
 
   return (
     <>
-      <ClayButton
+      <button
         type="button"
-        variant="primary"
-        size="sm"
         onClick={onCopy}
-        className={cx("font-mono", className)}
+        aria-label={
+          label ?? t({ id: "copyCommand.aria.copy", message: "Copy command" })
+        }
+        className={cx(
+          "copy-button clay-focus-ring",
+          variant === "solid" ? "copy-button--solid" : "copy-button--outline",
+          failed && "copy-button--failed",
+          className,
+        )}
       >
-        <span className={cx(iconClass, "size-3.5")} aria-hidden />
-        <span className="grid justify-items-start">
-          <span
-            className={labelClass(status === "idle")}
-            aria-hidden={status !== "idle"}
-          >
-            {t({ id: "copyCommand.button.copy", message: "Copy command" })}
+        {/* Copy -> check pops in place; the box keeps its size so the label never shifts. */}
+        <IconSwap swapKey={status} className="size-3.5 shrink-0">
+          <span className={cx(iconClass, "size-3.5")} />
+        </IconSwap>
+        <span
+          className={cx(
+            "grid justify-items-start",
+            iconOnlyOnMobile && "max-sm:hidden",
+          )}
+          aria-hidden
+        >
+          <span className={labelClass(status === "idle")}>
+            {t({ id: "copyCommand.label.copy", message: "Copy" })}
           </span>
-          <span className={labelClass(copied)} aria-hidden={!copied}>
-            {t({ id: "copyCommand.button.copied", message: "Copied" })}
+          <span className={labelClass(copied)}>
+            {t({ id: "copyCommand.label.copied", message: "Copied" })}
           </span>
-          <span className={labelClass(failed)} aria-hidden={!failed}>
-            {t({ id: "copyCommand.button.failed", message: "Copy failed" })}
+          <span className={labelClass(failed)}>
+            {t({ id: "copyCommand.label.failed", message: "Failed" })}
           </span>
         </span>
-      </ClayButton>
-      {announcement}
+      </button>
+      <span className="sr-only" aria-live="polite">
+        {copied && t({ id: "copyCommand.live.copied", message: "Copied" })}
+        {failed &&
+          t({
+            id: "copyCommand.live.failed",
+            message: "Copy failed. Select the command and copy it manually.",
+          })}
+      </span>
     </>
   );
 }

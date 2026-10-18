@@ -28,6 +28,7 @@ export function GET() {
     "",
     "## Optional",
     "",
+    `- [All skills](${absoluteUrl("/skills")}): searchable catalog, filterable by scenario and tag.`,
     `- [Skill index as JSON](${absoluteUrl("/api/skills.json")})`,
     `- [Website](${absoluteUrl("/")}): canonical pages; cite these rather than the .md links.`,
     "",

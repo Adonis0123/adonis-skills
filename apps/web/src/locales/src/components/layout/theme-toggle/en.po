@@ -42,11 +42,11 @@ msgstr ""
 #~ msgstr "Switch to {nextLabel} theme"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:25
+#: ../../src/components/layout/theme-toggle.tsx:28
 msgid "themeToggle.switchToDark"
 msgstr "Switch to dark theme"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/theme-toggle.tsx:26
+#: ../../src/components/layout/theme-toggle.tsx:32
 msgid "themeToggle.switchToLight"
 msgstr "Switch to light theme"

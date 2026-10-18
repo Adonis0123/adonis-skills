@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Trans } from "@lingui/react/macro";
 import { notFound } from "next/navigation";
 import { HostInstallTabs } from "@/components/host-install-tabs";
@@ -14,6 +15,10 @@ import { localeAlternates } from "@/lib/seo";
 import { renderSectionContent, withHeadingIds } from "@/lib/skill-markdown";
 import {
   getAllSkills,
+  getCatalogGroup,
+  getCatalogLayout,
+  getFeaturedEntry,
+  getIllustrationSrc,
   getSkillBySlug,
   getSkillDetailBySlug,
   getSkillSourceUrl,
@@ -48,11 +53,12 @@ export async function generateMetadata({
 
   const description =
     locale === "zh" ? skill.catalog.summary_zh : skill.catalog.summary;
+  const title = `${skill.catalog.displayName[locale]} (${skill.slug})`;
   return {
-    title: skill.name,
+    title,
     description,
     alternates: localeAlternates(`/skills/${skill.slug}`, locale),
-    openGraph: { type: "article", title: skill.name, description },
+    openGraph: { type: "article", title, description },
   };
 }
 
@@ -90,16 +96,16 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
   const i18n = initLingui(locale);
   const toc: TocEntry[] = [
     {
+      id: "install",
+      label: i18n._({ id: "skillDetail.install.title", message: "Install" }),
+      level: 2,
+    },
+    {
       id: "use-cases",
       label: i18n._({
         id: "skillDetail.useCases.title",
         message: "When to reach for it",
       }),
-      level: 2,
-    },
-    {
-      id: "install",
-      label: i18n._({ id: "skillDetail.install.title", message: "Install" }),
       level: 2,
     },
     ...sections
@@ -112,6 +118,13 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
         level: Math.max(2, section.level ?? 2),
       })),
   ];
+
+  const displayName = catalog.displayName[locale];
+  const group = getCatalogGroup(catalog.group);
+  const groupNumber =
+    getCatalogLayout().groups.findIndex((item) => item.id === catalog.group) +
+    1;
+  const featured = getFeaturedEntry(skill.slug);
 
   return (
     <main
@@ -128,69 +141,131 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
         </LocaleLink>
       </SectionReveal>
 
-      <SectionReveal delay={60}>
-        <header className="clay-surface clay-tone-base clay-elevation-floating rounded-[1.6rem] p-6 md:p-9">
-          <h1 className="text-3xl leading-tight sm:text-4xl md:text-5xl">
-            {skill.name}
-          </h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
-            {summary}
-          </p>
+      <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
+        <SectionReveal delay={60} className="min-w-0">
+          <header className="h-full rounded-[22px] border border-border bg-card p-6 md:p-9">
+            <div className="flex items-start justify-between gap-5">
+              <div className="min-w-0">
+                {group && (
+                  <LocaleLink
+                    href={`/skills?group=${group.id}`}
+                    className="clay-focus-ring type-mono inline-flex max-w-full items-center gap-2 rounded-full text-[12px] text-muted-foreground transition-colors hover:text-link"
+                  >
+                    <span className="truncate">
+                      {String(groupNumber).padStart(2, "0")} ·{" "}
+                      {group.title[locale]}
+                    </span>
+                    <span
+                      className="icon-[lucide--arrow-up-right] size-3.5 shrink-0"
+                      aria-hidden
+                    />
+                  </LocaleLink>
+                )}
+                <h1 className="type-display mt-3 [word-break:keep-all] text-[clamp(2rem,1.4rem+2.4vw,3.25rem)] text-balance">
+                  {displayName}
+                </h1>
+                <p className="type-mono mt-2 text-muted-foreground">
+                  {skill.slug}
+                </p>
+              </div>
+              {group && (
+                <span className="art-avatar art-avatar--ringed hidden size-24 sm:block">
+                  <Image
+                    src={getIllustrationSrc(group.illustration)}
+                    alt=""
+                    width={1024}
+                    height={1024}
+                    sizes="96px"
+                    priority
+                  />
+                </span>
+              )}
+            </div>
 
-          <ul className="mt-4 flex flex-wrap gap-1.5">
-            {catalog.tags.map((tag) => (
-              <li key={tag}>
-                <LocaleLink
-                  href={`/?tag=${tag}#skills`}
-                  className="clay-focus-ring clay-badge clay-badge--neutral min-h-9 px-3.5 text-xs hover:bg-primary hover:text-primary-foreground pointer-coarse:min-h-11"
-                >
-                  {SKILL_TAG_LABELS[tag][locale]}
-                </LocaleLink>
-              </li>
-            ))}
-          </ul>
+            <p className="type-lede mt-5 max-w-3xl text-base text-muted-foreground md:text-lg">
+              {summary}
+            </p>
 
-          <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-            {skill.metadata?.version && (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="icon-[lucide--tag] size-4" aria-hidden />
-                <Trans id="skillDetail.version">
-                  Version {skill.metadata.version}
-                </Trans>
-              </span>
-            )}
-            {skill.updatedAt && (
-              <span className="inline-flex items-center gap-1.5">
-                <span className="icon-[lucide--calendar] size-4" aria-hidden />
-                <Trans id="skillDetail.updatedAt">
-                  Updated{" "}
-                  <time dateTime={skill.updatedAt}>
-                    {formatUpdatedAt(skill.updatedAt, lang)}
-                  </time>
-                </Trans>
-              </span>
-            )}
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-foreground underline-offset-4 hover:underline"
-            >
-              <span className="icon-[lucide--github] size-4" aria-hidden />
-              <Trans id="skillDetail.source">View source on GitHub</Trans>
-            </a>
-          </div>
-        </header>
-      </SectionReveal>
+            <ul className="mt-5 flex flex-wrap gap-1.5">
+              {featured && (
+                <li className="nk-tag gap-1">
+                  <span
+                    className="icon-[lucide--sparkles] size-3"
+                    aria-hidden
+                  />
+                  {featured.badge[locale]}
+                </li>
+              )}
+              {catalog.tags.map((tag) => (
+                <li key={tag}>
+                  <LocaleLink
+                    href={`/skills?tag=${tag}`}
+                    className="clay-focus-ring nk-tag nk-tag--neutral transition-colors hover:bg-accent hover:text-accent-foreground"
+                  >
+                    {SKILL_TAG_LABELS[tag][locale]}
+                  </LocaleLink>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
+              {skill.metadata?.version && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span className="icon-[lucide--tag] size-4" aria-hidden />
+                  <Trans id="skillDetail.version">
+                    Version {skill.metadata.version}
+                  </Trans>
+                </span>
+              )}
+              {skill.updatedAt && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className="icon-[lucide--calendar] size-4"
+                    aria-hidden
+                  />
+                  <Trans id="skillDetail.updatedAt">
+                    Updated{" "}
+                    <time dateTime={skill.updatedAt}>
+                      {formatUpdatedAt(skill.updatedAt, lang)}
+                    </time>
+                  </Trans>
+                </span>
+              )}
+              <a
+                href={sourceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-link underline-offset-4 hover:underline"
+              >
+                <span className="icon-[lucide--github] size-4" aria-hidden />
+                <Trans id="skillDetail.source">View source on GitHub</Trans>
+              </a>
+            </div>
+          </header>
+        </SectionReveal>
+
+        <SectionReveal delay={100} className="min-w-0">
+          <section
+            aria-labelledby="install"
+            className="h-full rounded-[22px] border border-tint-border bg-tint p-5 md:p-7"
+          >
+            <p className="kicker kicker-leaf">
+              <Trans id="skillDetail.install.kicker">Install</Trans>
+            </p>
+            <h2 id="install" className="type-h3 mt-2 mb-4 scroll-mt-24">
+              <Trans id="skillDetail.install.heading">
+                Add it to your agent
+              </Trans>
+            </h2>
+            <HostInstallTabs slug={skill.slug} />
+          </section>
+        </SectionReveal>
+      </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
         <div className="grid min-w-0 gap-6">
-          <SectionReveal delay={110}>
-            <ClaySurface
-              tone="base"
-              elevation="raised"
-              className="rounded-[1.3rem] p-5 md:p-7"
-            >
+          <SectionReveal delay={140}>
+            <ClaySurface tone="base" elevation="raised" className="p-5 md:p-7">
               <h2 id="use-cases" className={`${kickerClass} scroll-mt-24`}>
                 <Trans id="skillDetail.useCases.title">
                   When to reach for it
@@ -200,29 +275,16 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
                 {useCases.map((useCase) => (
                   <li
                     key={useCase}
-                    className="flex gap-2.5 text-sm leading-6 md:text-base"
+                    className="flex gap-2.5 text-[15px] leading-7 md:text-base"
                   >
                     <span
-                      className="icon-[lucide--check] mt-1 size-4 shrink-0 text-muted-foreground"
+                      className="icon-[lucide--check] mt-1.5 size-4 shrink-0 text-link"
                       aria-hidden
                     />
                     {useCase}
                   </li>
                 ))}
               </ul>
-            </ClaySurface>
-          </SectionReveal>
-
-          <SectionReveal delay={140}>
-            <ClaySurface
-              tone="base"
-              elevation="raised"
-              className="rounded-[1.3rem] p-5 md:p-7"
-            >
-              <h2 id="install" className={`${kickerClass} scroll-mt-24`}>
-                <Trans id="skillDetail.install.title">Install</Trans>
-              </h2>
-              <HostInstallTabs slug={skill.slug} />
             </ClaySurface>
           </SectionReveal>
 
@@ -236,7 +298,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
             <ClaySurface
               tone="base"
               elevation="raised"
-              className="scroll-mt-28 rounded-[1.3rem] p-5 md:p-8"
+              className="scroll-mt-28 p-5 md:p-8"
             >
               <h2 className={kickerClass}>
                 <Trans id="skillDetail.docs.title">Skill instructions</Trans>

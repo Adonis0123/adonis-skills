@@ -35,14 +35,14 @@ export function SiteBrand({
 }: SiteBrandProps) {
   const { t } = useLingui();
   const isHeader = variant === "header";
-  const logoSize = isHeader ? 40 : 28;
+  const logoSize = isHeader ? 32 : 28;
 
   return (
     <LocaleLink
       href="/"
       className={cx(
         "group clay-focus-ring inline-flex items-center rounded-xl transition-opacity hover:opacity-90",
-        isHeader ? "gap-3" : "gap-2.5",
+        "gap-2.5",
         className,
       )}
     >
@@ -58,13 +58,13 @@ export function SiteBrand({
         unoptimized
         className={cx(
           "object-contain transition-transform duration-200 ease-out group-hover:-translate-y-px",
-          isHeader ? "size-10" : "size-7",
+          isHeader ? "size-8" : "size-7",
         )}
       />
 
       {isHeader ? (
         <span className="min-w-0">
-          <BrandWordmark className="block text-2xl" />
+          <BrandWordmark className="block text-xl" />
           {subtitle ? (
             <span className="kicker mt-1 block text-clay-muted">
               {subtitle}
@@ -72,7 +72,7 @@ export function SiteBrand({
           ) : null}
         </span>
       ) : (
-        <BrandWordmark className="text-lg" />
+        <BrandWordmark className="text-xl" />
       )}
     </LocaleLink>
   );

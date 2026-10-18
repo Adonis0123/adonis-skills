@@ -14,16 +14,16 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:48
+#: ../../src/app/%5Blang%5D/layout.tsx:52
 msgid "layout.meta.title.template"
 msgstr "%s | Nika Skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:36
+#: ../../src/app/%5Blang%5D/layout.tsx:39
 msgid "layout.meta.description"
 msgstr "I am Nika. These are the agent skills I built for my own daily work in Claude Code, Codex, Cursor, and Hermes Agent."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:44
+#: ../../src/app/%5Blang%5D/layout.tsx:48
 msgid "layout.meta.title.default"
 msgstr "Nika Skills"

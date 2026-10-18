@@ -24,21 +24,21 @@ msgstr ""
 #~ msgstr "Copy"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:80
+#: ../src/components/command-block.tsx:98
 msgid "commandBlock.scroll.aria"
 msgstr "Command, scroll horizontally to see all"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:115
+#: ../src/components/command-block.tsx:167
 msgid "commandBlock.live.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:103
+#: ../src/components/command-block.tsx:143
 msgid "commandBlock.copy.aria"
 msgstr "Copy command"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:116
+#: ../src/components/command-block.tsx:169
 msgid "commandBlock.live.failed"
 msgstr "Copy failed. The command is selected; copy it manually."

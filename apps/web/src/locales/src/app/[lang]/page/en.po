@@ -14,46 +14,91 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:44
+#: ../../src/app/%5Blang%5D/page.tsx:121
+#~ msgid "home.install.copy.aria"
+#~ msgstr "Copy the {host} install command"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:34
+#~ msgid "home.hero.description"
+#~ msgstr "I'm Nika. I build small tools with AI and carry them around like a lantern. These are the {skillsCount} skills I reach for in my own coding work."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:118
+#~ msgid "home.install.scope.one"
+#~ msgstr "Installs one skill; replace <slug> with its name."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:117
+#~ msgid "home.install.scope.all"
+#~ msgstr "Installs the whole collection."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:177
+#~ msgid "home.install.intro"
+#~ msgstr "Every skill works in Claude Code, Codex, Cursor, and Hermes Agent. Each skill page has the exact command."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:174
+#~ msgid "home.install.title"
+#~ msgstr "Install into your agent"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:73
+#~ msgid "home.hero.title"
+#~ msgstr "Small agent skills I built and use every day."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:67
+msgid "home.hero.eyebrow"
+msgstr "{skillsCount} skills · updated {updatedMonth}"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:162
+msgid "home.hero.bubble"
+msgstr "<0>Hi, I'm Nika.</0> Kiki and I test every skill here in our own repos first."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:96
 msgid "home.cta.browse"
 msgstr "Browse skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:121
-msgid "home.install.copy.aria"
-msgstr "Copy the {host} install command"
+#: ../../src/app/%5Blang%5D/page.tsx:191
+msgid "home.install.lede"
+msgstr "Every skill works in Claude Code, Codex, Cursor and Hermes Agent. Install one, or the whole shelf."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:99
-msgid "home.install.intro"
-msgstr "Every skill works in Claude Code, Codex, Cursor, and Hermes Agent. Each skill page has the exact command."
+#: ../../src/app/%5Blang%5D/page.tsx:84
+msgid "home.hero.lede"
+msgstr "I'm Nika. I build small tools with AI and carry them around like a lantern. Pick one by what you're trying to do, copy one line, and it works in your agent."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:34
-msgid "home.hero.description"
-msgstr "I'm Nika. I build small tools with AI and carry them around like a lantern. These are the {skillsCount} skills I reach for in my own coding work."
+#: ../../src/app/%5Blang%5D/page.tsx:185
+msgid "home.install.kicker"
+msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:96
-msgid "home.install.title"
-msgstr "Install into your agent"
+#: ../../src/app/%5Blang%5D/page.tsx:149
+msgid "home.hero.art.alt"
+msgstr "Nika in a green hooded coat holding a lantern, walking with Kiki in a wizard hat"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:118
-msgid "home.install.scope.one"
-msgstr "Installs one skill; replace <slug> with its name."
+#: ../../src/app/%5Blang%5D/page.tsx:188
+msgid "home.install.headline"
+msgstr "One line, any agent."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:117
-msgid "home.install.scope.all"
-msgstr "Installs the whole collection."
+#: ../../src/app/%5Blang%5D/page.tsx:77
+msgid "home.hero.headline"
+msgstr "Small agent skills I use <0>every day.</0>"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:30
-msgid "home.hero.title"
-msgstr "Small agent skills I built and use every day."
+#: ../../src/app/%5Blang%5D/page.tsx:115
+msgid "home.cta.github"
+msgstr "Star on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:59
+#: ../../src/app/%5Blang%5D/page.tsx:126
 msgid "home.hero.hostsLabel"
 msgstr "Works with"

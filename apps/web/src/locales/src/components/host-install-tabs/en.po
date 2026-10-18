@@ -14,26 +14,26 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:94
+#: ../src/components/host-install-tabs.tsx:129
 msgid "install.tabs.aria"
 msgstr "Choose target agent"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:150
+#: ../src/components/host-install-tabs.tsx:198
 msgid "install.copy.aria"
 msgstr "Copy the {hostLabel} install command"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:18
+#: ../src/components/host-install-tabs.tsx:31
 msgid "install.hint.claudeCode"
 msgstr "Run this in Claude Code. The plugin installs the whole collection at once."
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:20
+#: ../src/components/host-install-tabs.tsx:38
 msgid "install.hint.hermes"
 msgstr "Run this in Hermes Agent to install this skill."
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:22
+#: ../src/components/host-install-tabs.tsx:44
 msgid "install.hint.skillsCli"
 msgstr "Use this for Codex, Cursor, or any agent the skills CLI supports. Add -g to install globally."

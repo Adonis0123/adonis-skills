@@ -21,6 +21,7 @@ function entry(path: string, lastModified?: string): MetadataRoute.Sitemap {
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
     ...entry("/"),
+    ...entry("/skills"),
     ...getAllSkills().flatMap((skill) =>
       entry(`/skills/${skill.slug}`, skill.updatedAt),
     ),

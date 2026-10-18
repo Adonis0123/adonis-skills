@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:21
+#: ../../src/app/%5Blang%5D/not-found.tsx:38
 msgid "notFound.cta.home"
 msgstr "回到首页"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:27
+#: ../../src/app/%5Blang%5D/not-found.tsx:47
 msgid "notFound.cta.skills"
 msgstr "浏览全部技能"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:14
+#: ../../src/app/%5Blang%5D/not-found.tsx:28
 msgid "notFound.description"
 msgstr "这个地址下什么都没有，可能已经改名或删掉了。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:12
+#: ../../src/app/%5Blang%5D/not-found.tsx:25
 msgid "notFound.title"
 msgstr "页面不存在"

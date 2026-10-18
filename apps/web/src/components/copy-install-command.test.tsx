@@ -3,7 +3,6 @@ import { copyTextToClipboard } from "./copy-install-command";
 
 // The Lingui macro is compiled away by SWC in Next; vitest runs uncompiled source.
 vi.mock("@lingui/react/macro", () => ({ useLingui: () => ({ t: () => "" }) }));
-vi.mock("@/components/ui", () => ({ ClayButton: () => null }));
 
 describe("copyTextToClipboard", () => {
   it("uses the Clipboard API when it succeeds", async () => {
