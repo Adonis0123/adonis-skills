@@ -18,11 +18,26 @@
       "outputs": []
     },
     "skills:index": {
-      "inputs": ["../../skills/**", "../../scripts/generate-skills-index.mjs"],
-      "outputs": ["src/generated/skills-index-lite.json", "src/generated/skills-detail-index.json"]
+      "inputs": [
+        "../../skills/**",
+        "../../scripts/generate-skills-index.mjs",
+        "content/skill-catalog.yaml",
+        "src/lib/skill-schema.ts"
+      ],
+      "outputs": [
+        "src/generated/skills-index-lite.json",
+        "src/generated/skills-detail-index.json",
+        "src/generated/skills-catalog-layout.json"
+      ]
     },
     "skills:validate": {
-      "inputs": ["../../skills/**", "../../scripts/validate-skills.mjs"],
+      "inputs": [
+        "../../skills/**",
+        "../../scripts/validate-skills.mjs",
+        "content/skill-catalog.yaml",
+        "src/lib/skill-schema.ts",
+        "public/brand/illustrations/**"
+      ],
       "outputs": []
     }
   }

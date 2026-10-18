@@ -1,0 +1,132 @@
+{
+  "groups": [
+    {
+      "id": "delegate",
+      "title": {
+        "en": "Hand work to other agents",
+        "zh": "把活交给其他 agent"
+      },
+      "summary": {
+        "en": "Decide how much help a task needs, send it to the right agent, and keep it moving until it is done.",
+        "zh": "先判断一件事要不要帮手，再派给合适的 agent，一直跟到做完。"
+      },
+      "illustration": "group-delegate.webp"
+    },
+    {
+      "id": "review",
+      "title": {
+        "en": "Get a second pair of eyes",
+        "zh": "独立代码复审"
+      },
+      "summary": {
+        "en": "Independent reviewers and review loops that stop only when the change is actually clean.",
+        "zh": "请独立的 Reviewer 审改动，修完再审，直到真的没问题。"
+      },
+      "illustration": "group-review.webp"
+    },
+    {
+      "id": "git",
+      "title": {
+        "en": "Ship clean Git history",
+        "zh": "保持 Git 历史整洁"
+      },
+      "summary": {
+        "en": "Commits, branches and worktrees that stay tidy without you thinking about them.",
+        "zh": "提交、分支和 worktree 自己保持整洁，不用你多操心。"
+      },
+      "illustration": "group-git.webp"
+    },
+    {
+      "id": "tools",
+      "title": {
+        "en": "Wire up tools and MCPs",
+        "zh": "接好工具和 MCP"
+      },
+      "summary": {
+        "en": "Connect Chrome, Figma and friends so your agent sees what you see.",
+        "zh": "接上 Chrome、Figma 这些工具，让 agent 看到你看到的东西。"
+      },
+      "illustration": "group-tools.webp"
+    },
+    {
+      "id": "frontend",
+      "title": {
+        "en": "Frontend craft",
+        "zh": "前端手艺"
+      },
+      "summary": {
+        "en": "Small helpers for the browser side: jump to source, keep i18n in shape, measure speed, serve local pages.",
+        "zh": "浏览器这一侧的小帮手：点元素跳源码、维护多语言、测性能、搭本地网页。"
+      },
+      "illustration": "group-frontend.webp"
+    },
+    {
+      "id": "docs",
+      "title": {
+        "en": "Docs & Local Cleanup",
+        "zh": "文档与本机整理"
+      },
+      "summary": {
+        "en": "Design docs and weekly reports, plus audits that keep your files and agent setup in order.",
+        "zh": "写设计文档和周报，顺手把文件和 agent 配置理清楚。"
+      },
+      "illustration": "group-docs.webp"
+    }
+  ],
+  "featured": [
+    {
+      "slug": "agent-dispatch",
+      "badge": {
+        "en": "Most used",
+        "zh": "最常用"
+      },
+      "highlights": [
+        {
+          "en": "Splits work across the AI CLIs installed on your machine, each in its own worktree.",
+          "zh": "把活拆给本机装好的 AI CLI，各用各的 worktree。"
+        },
+        {
+          "en": "Assigns an independent reviewer and cleans up the workers afterwards.",
+          "zh": "安排独立复审，做完把 worker 清理干净。"
+        }
+      ],
+      "illustration": "featured-agent-dispatch.webp"
+    },
+    {
+      "slug": "agentic-review-handoff",
+      "badge": {
+        "en": "Hands-off review",
+        "zh": "自动审查"
+      },
+      "highlights": [
+        {
+          "en": "A headless reviewer reviews, fixes and re-reviews your Git diff until it passes.",
+          "zh": "无头 Reviewer 审、修、再审你的 Git diff，直到通过。"
+        },
+        {
+          "en": "Checks pasted review comments against the code before anything is fixed.",
+          "zh": "先拿代码核对贴来的评审意见，再决定怎么修。"
+        }
+      ],
+      "illustration": "featured-agentic-review-handoff.webp"
+    },
+    {
+      "slug": "commit-push",
+      "badge": {
+        "en": "Daily driver",
+        "zh": "每天都用"
+      },
+      "highlights": [
+        {
+          "en": "Runs local checks and a remote preflight before it pushes.",
+          "zh": "推送前先跑本地验证和远端预检。"
+        },
+        {
+          "en": "Never force-pushes; stops on secrets or an unexpected push target.",
+          "zh": "从不强推，碰到密钥或意外的推送目标就停下。"
+        }
+      ],
+      "illustration": "featured-commit-push.webp"
+    }
+  ]
+}

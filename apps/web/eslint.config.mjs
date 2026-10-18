@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     ".lingui/**",
+    // Compiled Lingui catalogs (gitignored). The build recompiles them while
+    // turbo runs lint in parallel, so linting them races with file deletion.
+    "src/locales/**/*.mjs",
   ]),
 ]);
 

@@ -14,44 +14,44 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:48
-#~ msgid "siteHeader.nav.github.aria"
-#~ msgstr "在 GitHub 上打开 adonis-skills 仓库"
+#: ../../src/components/layout/mobile-header-menu.tsx:223
+#~ msgid "siteHeader.locale.title"
+#~ msgstr "语言"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:80
-#: ../../src/components/layout/mobile-header-menu.tsx:93
-#: ../../src/components/layout/mobile-header-menu.tsx:135
+#: ../../src/components/layout/mobile-header-menu.tsx:219
+#~ msgid "siteHeader.locale.aria"
+#~ msgstr "切换站点语言"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:38
+#~ msgid "siteHeader.nav.github.label"
+#~ msgstr "GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/mobile-header-menu.tsx:65
+#: ../../src/components/layout/mobile-header-menu.tsx:84
+#: ../../src/components/layout/mobile-header-menu.tsx:142
 msgid "siteHeader.menu.close"
 msgstr "关闭菜单"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:38
-msgid "siteHeader.nav.github.label"
-msgstr "GitHub"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:223
-msgid "siteHeader.locale.title"
-msgstr "语言"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:147
+#: ../../src/components/layout/mobile-header-menu.tsx:154
 msgid "siteHeader.nav.aria"
 msgstr "主导航"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:84
-#: ../../src/components/layout/mobile-header-menu.tsx:97
+#: ../../src/components/layout/mobile-header-menu.tsx:69
+#: ../../src/components/layout/mobile-header-menu.tsx:88
 msgid "siteHeader.menu.open"
 msgstr "打开菜单"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:127
-msgid "siteHeader.menu.aria"
-msgstr "站点菜单"
+#: ../../src/components/layout/mobile-header-menu.tsx:40
+msgid "siteHeader.nav.github.aria"
+msgstr "在 GitHub 上打开 adonis-skills 仓库"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/mobile-header-menu.tsx:219
-msgid "siteHeader.locale.aria"
-msgstr "切换站点语言"
+#: ../../src/components/layout/mobile-header-menu.tsx:134
+msgid "siteHeader.menu.aria"
+msgstr "站点菜单"

@@ -1,102 +1,204 @@
-import Link from 'next/link'
-import { Trans } from '@lingui/react/macro'
-import { exampleSkillHref } from '@/config/site-layout'
-import { SectionReveal } from '@/components/motion/section-reveal'
-import { SkillsLibrarySection } from '@/components/skills-library-section'
-import { ClayBadge, ClayButton, ClaySurface } from '@/components/ui'
-import { initPageLingui } from '@/i18n/initLingui'
-import { LocaleLink } from '@/i18n/locale-link'
-import { getAllSkills, skillsRepo } from '@/lib/skills'
+import Image from "next/image";
+import Link from "next/link";
+import { Trans } from "@lingui/react/macro";
+import { HostInstallTabs } from "@/components/host-install-tabs";
+import { PressScale } from "@/components/motion/press-scale";
+import { SectionReveal } from "@/components/motion/section-reveal";
+import { SkillsLibrarySection } from "@/components/skills-library-section";
+import { ClayButton } from "@/components/ui";
+import { siteLayoutConfig } from "@/config/site-layout";
+import { initLingui, initPageLingui } from "@/i18n/initLingui";
+import {
+  getAllSkills,
+  getCatalogLayout,
+  getIllustrationSrc,
+} from "@/lib/skills";
 
 interface HomePageProps {
-  params: Promise<{ lang: string }>
+  params: Promise<{ lang: string }>;
+}
+
+const HOST_NAMES = ["Claude Code", "Codex", "Cursor", "Hermes Agent"];
+
+/** The hero's single emphasis: a hand-drawn leaf stroke under the words. */
+function HandUnderline({ children }: { children?: React.ReactNode }) {
+  return (
+    <span className="hl-underline">
+      {children}
+      <svg viewBox="0 0 200 20" preserveAspectRatio="none" aria-hidden>
+        <path d="M3 14 C 50 4, 120 4, 197 11" />
+      </svg>
+    </span>
+  );
+}
+
+function formatMonth(isoDate: string | undefined, locale: string): string {
+  if (!isoDate) return "";
+  try {
+    return new Intl.DateTimeFormat(locale, {
+      year: "numeric",
+      month: "short",
+    }).format(new Date(isoDate));
+  } catch {
+    return isoDate.slice(0, 7);
+  }
 }
 
 export default async function HomePage({ params }: HomePageProps) {
-  await initPageLingui(params)
-  const skills = getAllSkills()
-  const skillsCount = skills.length
+  const locale = await initPageLingui(params);
+  const i18n = initLingui(locale);
+  const skills = getAllSkills();
+  const layout = getCatalogLayout();
+  const skillsCount = skills.length;
+  // getAllSkills sorts by updatedAt, newest first.
+  const updatedMonth = formatMonth(skills[0]?.updatedAt, locale);
 
   return (
-    <main className="site-page-shell site-frame site-frame--main relative flex w-full flex-col">
-      <SectionReveal delay={20}>
-        <section className="clay-surface clay-tone-cream clay-elevation-floating relative overflow-hidden rounded-[1.35rem] p-5 sm:p-6 md:rounded-[1.6rem] md:p-10">
-          <div className="clay-hero-mesh pointer-events-none absolute inset-0 opacity-90" aria-hidden />
-
-          <div className="relative z-10 grid gap-6 md:gap-8 lg:grid-cols-[1.24fr_0.76fr]">
-            <div>
-              <p className="mb-3 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.2em] text-clay-muted">
-                <span className="icon-[lucide--command] size-3.5" aria-hidden />
-                adonis-skills
-              </p>
-
-              <h1 className="max-w-3xl text-3xl leading-[1.16] text-balance sm:text-4xl md:text-6xl">
-                <Trans id="home.hero.title">Install production-ready skills for your AI agents.</Trans>
-              </h1>
-
-              <p className="mt-4 max-w-4xl text-sm leading-6 text-clay-muted sm:mt-5 md:text-base md:leading-7">
-                <Trans id="home.hero.description">
-                  Browse practical skills, pick a slug, and install with one command. Each skill is reusable in real
-                  workflows.
+    <main id="main-content" className="relative flex w-full flex-col">
+      <section className="hero-wash" aria-labelledby="hero-title">
+        <div className="site-frame grid items-center gap-5 pt-5 pb-6 md:grid-cols-[1.05fr_0.95fr] md:gap-14 md:pt-16 md:pb-14 lg:pt-[72px] lg:pb-16">
+          <SectionReveal delay={20} className="order-2 min-w-0 md:order-1">
+            {updatedMonth && (
+              <p className="mb-5 hidden h-[30px] items-center gap-2 rounded-full border border-border bg-card pr-3 pl-2.5 text-[13px] font-medium text-muted-foreground sm:inline-flex">
+                <span
+                  className="size-[7px] rounded-full bg-primary outline-[3px] outline-tint outline-solid"
+                  aria-hidden
+                />
+                <Trans id="home.hero.eyebrow">
+                  {skillsCount} skills · updated {updatedMonth}
                 </Trans>
               </p>
+            )}
 
-              <div className="mt-6 grid w-full max-w-[30rem] grid-cols-1 gap-3 sm:mt-6 sm:max-w-none sm:flex sm:w-auto sm:flex-wrap sm:items-center sm:gap-2.5">
-                <ClayBadge
-                  tone="blue"
-                  withDot
-                  className="w-full justify-start text-left text-[11px] leading-5 [overflow-wrap:anywhere] sm:w-auto sm:text-xs"
-                >
-                  <Trans id="home.badge.repo">Repo: {skillsRepo}</Trans>
-                </ClayBadge>
-                <ClayBadge tone="neutral" withDot className="w-full justify-start px-3.5 py-1 text-[11px] sm:w-auto sm:text-xs">
-                  <Trans id="home.badge.skills">Skills: {skillsCount}</Trans>
-                </ClayBadge>
-              </div>
+            <h1
+              id="hero-title"
+              className="type-display text-balance [word-break:keep-all]"
+            >
+              <Trans id="home.hero.headline">
+                Small agent skills I use{" "}
+                <HandUnderline>every day.</HandUnderline>
+              </Trans>
+            </h1>
 
-              <div className="mt-6 flex flex-col gap-2.5 sm:mt-7 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-                <ClayButton asChild>
+            <p className="type-lede mt-3.5 max-w-[34rem] text-[15px] text-muted-foreground md:mt-5 md:text-lg">
+              <Trans id="home.hero.lede">
+                I&apos;m Nika. I build small tools with AI and carry them around
+                like a lantern. Pick one by what you&apos;re trying to do, copy
+                one line, and it works in your agent.
+              </Trans>
+            </p>
+
+            <div className="mt-5 flex flex-wrap items-center gap-3 md:mt-7">
+              {/* Same-page hash: SmoothScrollProvider (locale layout) animates the scroll. */}
+              <PressScale>
+                <ClayButton asChild size="md">
+                  <a href="#skills">
+                    <Trans id="home.cta.browse">Browse skills</Trans>
+                    <span
+                      className="icon-[lucide--arrow-down] size-4"
+                      aria-hidden
+                    />
+                  </a>
+                </ClayButton>
+              </PressScale>
+              <PressScale>
+                <ClayButton asChild variant="secondary" size="md">
                   <Link
-                    href={`https://github.com/${skillsRepo}`}
+                    href={siteLayoutConfig.repoUrl}
                     target="_blank"
-                    rel="noreferrer"
-                    className="w-full justify-center sm:w-auto"
+                    rel="noopener noreferrer"
                   >
-                    <span className="icon-[lucide--github] size-4" aria-hidden />
-                    <Trans id="home.cta.github">Open GitHub</Trans>
+                    <span
+                      className="icon-[lucide--github] size-4"
+                      aria-hidden
+                    />
+                    <Trans id="home.cta.github">Star on GitHub</Trans>
                   </Link>
                 </ClayButton>
-
-                <ClayButton asChild variant="ghost">
-                  <LocaleLink href={exampleSkillHref} className="w-full justify-center sm:w-auto">
-                    <span className="icon-[lucide--arrow-up-right] size-4" aria-hidden />
-                    <Trans id="home.cta.example">View Example Skill</Trans>
-                  </LocaleLink>
-                </ClayButton>
-              </div>
+              </PressScale>
             </div>
 
-            <ClaySurface tone="base" elevation="inset" className="rounded-[1.08rem] p-4 sm:p-5 md:rounded-[1.2rem] md:p-6">
-              <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.17em] text-clay-muted">
-                <Trans id="home.install.title">Install Pattern</Trans>
+            {/* Each separator dot leads its name. The list is shifted left by one dot slot inside a
+                clipping box, so a dot that starts a wrapped line is hidden and no line ends on a dot. */}
+            <div className="mt-4 overflow-hidden text-[13px] text-muted-foreground md:mt-7">
+              <p className="-ml-5 flex flex-wrap">
+                <span className="mr-2 ml-5">
+                  <Trans id="home.hero.hostsLabel">Works with</Trans>
+                </span>
+                {HOST_NAMES.map((name, index) => (
+                  <span
+                    key={name}
+                    className={
+                      index > 0
+                        ? "font-medium whitespace-nowrap text-foreground before:inline-block before:w-5 before:text-center before:font-normal before:text-muted-foreground before:content-['·']"
+                        : "font-medium whitespace-nowrap text-foreground"
+                    }
+                  >
+                    {name}
+                  </span>
+                ))}
               </p>
-              <code className="block overflow-x-auto rounded-xl border border-border/60 bg-background/55 px-3 py-3 text-[11px] leading-5 text-foreground sm:text-xs sm:leading-6 md:text-[13px]">
-                npx skills add {skillsRepo} --skill &lt;slug&gt;
-              </code>
+            </div>
+          </SectionReveal>
 
-              <div className="mt-3.5 space-y-1.5 text-xs leading-6 text-clay-muted md:mt-4 md:space-y-2 md:text-sm">
-                <p><Trans id="home.install.step1">1. Choose a skill slug.</Trans></p>
-                <p><Trans id="home.install.step2">2. Run the install command.</Trans></p>
-                <p><Trans id="home.install.step3">3. Use the skill in your agent workflow.</Trans></p>
-              </div>
-            </ClaySurface>
+          <SectionReveal delay={80} className="relative order-1 md:order-2">
+            {/* Transparent art on the cream plate; the plate (not the image) changes in dark mode. */}
+            <div className="art-plate mx-2.5 my-2.5 aspect-[2/1] md:mx-0 md:aspect-[3/2]">
+              <Image
+                src={getIllustrationSrc("hero.webp")}
+                alt={i18n._({
+                  id: "home.hero.art.alt",
+                  message:
+                    "Nika in a green hooded coat holding a lantern, walking with Kiki in a wizard hat",
+                })}
+                width={1536}
+                height={1024}
+                priority
+                sizes="(min-width: 1280px) 560px, (min-width: 768px) 45vw, 100vw"
+                className="absolute inset-0 size-full object-contain p-2 md:p-5"
+              />
+            </div>
+            <p className="speech-bubble absolute bottom-9 -left-7 hidden max-w-[230px] px-3.5 py-3 text-[13.5px] leading-[1.45] text-muted-foreground lg:block">
+              <Trans id="home.hero.bubble">
+                <b className="font-semibold text-foreground">
+                  Hi, I&apos;m Nika.
+                </b>{" "}
+                Kiki and I test every skill here in our own repos first.
+              </Trans>
+            </p>
+          </SectionReveal>
+        </div>
+      </section>
+
+      <SectionReveal delay={110} className="site-frame">
+        <SkillsLibrarySection skills={skills} layout={layout} />
+      </SectionReveal>
+
+      <section
+        id="install"
+        aria-labelledby="install-title"
+        className="mt-14 scroll-mt-16 border-t border-border bg-card py-12 md:mt-[72px] md:py-16"
+      >
+        <div className="site-frame grid items-center gap-7 md:grid-cols-[0.85fr_1.15fr] md:gap-14">
+          <div>
+            <p className="kicker kicker-leaf">
+              <Trans id="home.install.kicker">Install</Trans>
+            </p>
+            <h2 id="install-title" className="type-h2 mt-2.5">
+              <Trans id="home.install.headline">One line, any agent.</Trans>
+            </h2>
+            <p className="mt-2.5 max-w-[26rem] text-base text-muted-foreground">
+              <Trans id="home.install.lede">
+                Every skill works in Claude Code, Codex, Cursor and Hermes
+                Agent. Install one, or the whole shelf.
+              </Trans>
+            </p>
           </div>
-        </section>
-      </SectionReveal>
-
-      <SectionReveal delay={130} className="mt-8 md:mt-10">
-        <SkillsLibrarySection skills={skills} />
-      </SectionReveal>
+          <div className="min-w-0 rounded-[20px] border border-border bg-background p-4 md:p-6">
+            <HostInstallTabs slug="<slug>" />
+          </div>
+        </div>
+      </section>
     </main>
-  )
+  );
 }

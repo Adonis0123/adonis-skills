@@ -13,6 +13,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Full history: skills:index reads each skill's last commit date.
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -22,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
 
       - name: Install Dependencies
@@ -33,6 +36,32 @@ jobs:
 
       - name: Generate Skills Index
         run: pnpm skills:index
+
+      - name: Check Generated Index Is Up To Date
+        run: |
+          if ! git diff --exit-code --stat -- apps/web/src/generated; then
+            echo "::error::Generated skill index is stale. Run 'pnpm skills:index' and commit apps/web/src/generated/."
+            exit 1
+          fi
+
+      - name: Check Brand Tokens Match adonis-brand Snapshot
+        run: pnpm brand:check
+
+      - name: Design Token Rules
+        run: pnpm design:check
+
+      - name: DESIGN.md Lint
+        run: pnpm design:lint
+
+      - name: Web Unit Tests
+        run: pnpm --filter @adonis-skills/web test
+
+      - name: Install zsh
+        # Skill scripts under test use `#!/usr/bin/env zsh`; ubuntu runners ship without it.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh
+
+      - name: Script Tests
+        run: pnpm test:scripts
 
       - name: Prepare i18n Catalogs
         run: pnpm --filter @adonis-skills/web run i18n -- --compile --strict

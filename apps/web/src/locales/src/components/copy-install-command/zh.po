@@ -14,31 +14,61 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:62
-msgid "copyCommand.title.copied"
+#: ../src/components/copy-install-command.tsx:141
+#~ msgid "copyCommand.title.copied"
+#~ msgstr "已复制"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:138
+#~ msgid "copyCommand.aria.copied"
+#~ msgstr "已复制命令"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:142
+#~ msgid "copyCommand.title.copy"
+#~ msgstr "复制命令"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:171
+#~ msgid "copyCommand.button.copied"
+#~ msgstr "已复制"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:168
+#~ msgid "copyCommand.button.copy"
+#~ msgstr "复制命令"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:174
+#~ msgid "copyCommand.button.failed"
+#~ msgstr "复制失败"
+
+#. js-lingui-explicit-id
+#: ../src/components/copy-install-command.tsx:177
+msgid "copyCommand.label.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:81
-msgid "copyCommand.button.copied"
+#: ../src/components/copy-install-command.tsx:185
+msgid "copyCommand.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:59
-msgid "copyCommand.aria.copied"
-msgstr "已复制命令"
+#: ../src/components/copy-install-command.tsx:174
+msgid "copyCommand.label.copy"
+msgstr "复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:60
+#: ../src/components/copy-install-command.tsx:153
 msgid "copyCommand.aria.copy"
 msgstr "复制命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:63
-msgid "copyCommand.title.copy"
-msgstr "复制命令"
+#: ../src/components/copy-install-command.tsx:187
+msgid "copyCommand.live.failed"
+msgstr "复制失败，请手动选中命令并复制。"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:82
-msgid "copyCommand.button.copy"
-msgstr "复制命令"
+#: ../src/components/copy-install-command.tsx:180
+msgid "copyCommand.label.failed"
+msgstr "失败"

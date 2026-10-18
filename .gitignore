@@ -55,3 +55,6 @@ __pycache__/
 # Eval/probe fixtures left by AI trigger-eval runs (kept on disk, not versioned).
 /grok-review-stdout.json
 /docs/design-2026-07-22-payment-retry-strategy.md
+
+# Ad-hoc verification screenshots at repo root.
+/kbd-chip.png

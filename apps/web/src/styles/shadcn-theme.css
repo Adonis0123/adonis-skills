@@ -1,187 +1,88 @@
+@import "./brand-tokens.css";
+/* Color roles are generated from adonis-brand projects/skills/theme.json. */
+@import "./theme-roles.css";
+
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * Semantic layer: names describe the role, values come only from
+ * brand-tokens.css. Components and custom.css reference these names.
+ * next-themes sets `.dark` before paint, so dark values live in one block.
+ */
 :root {
-  --background: #f0f4f9;
-  --foreground: #2a2d35;
-  --card: #ffffff;
-  --card-foreground: #2a2d35;
-  --popover: #ffffff;
-  --popover-foreground: #2a2d35;
-  --primary: #93abd7;
-  --primary-foreground: #ffffff;
-  --secondary: #b3c7ea;
-  --secondary-foreground: #ffffff;
-  --muted: #e6ebf3;
-  --muted-foreground: #8890a0;
-  --accent: #d4ddef;
-  --accent-foreground: #2a2d35;
-  --destructive: #dc2626;
-  --destructive-foreground: #ffffff;
-  --border: rgba(147, 171, 215, 0.18);
-  --input: rgba(147, 171, 215, 0.26);
-  --ring: #93abd7;
-  --chart-1: #93abd7;
-  --chart-2: #b3c7ea;
-  --chart-3: #a6bde3;
-  --chart-4: #7695ca;
-  --chart-5: #63c9a7;
-  --radius: 1rem;
+  /* Base for the small-control radius scale; see --radius-* in @theme. */
+  --radius: 0.625rem;
 
-  --clay-warm-ivory: #f0f4f9;
-  --clay-warm-peach: #b3c7ea;
-  --clay-warm-amber: #93abd7;
-  --clay-sky: #b3c7ea;
-  --clay-emerald: #63c9a7;
+  /* DESIGN.md `rounded`: xs 6, sm 10, md 12, lg 16, xl 22, plate 28. */
+  --nk-radius-xs: 6px;
+  --nk-radius-sm: 10px;
+  --nk-radius-md: 12px;
+  --nk-radius-lg: 16px;
+  --nk-radius-xl: 22px;
+  --nk-radius-plate: 28px;
 
-  --clay-peach: #93abd7;
-  --clay-blue: #b3c7ea;
-  --clay-cream: #f0f4f9;
+  --clay-surface-bg: var(--card);
+  --clay-radius-card: var(--nk-radius-lg);
+  --clay-radius-card-lg: var(--nk-radius-xl);
+  --clay-radius-button: 9999px;
 
-  --clay-surface-bg: #ffffff;
-  --clay-radius-card: 24px;
-  --clay-radius-card-lg: 32px;
-  --clay-radius-button: 50px;
-
-  --clay-shadow-card: 0 8px 24px rgba(147, 171, 215, 0.2), 0 3px 0 #b6cdee;
+  /*
+   * DESIGN.md "Elevation & Depth": resting cards carry a 1px whisper of ink
+   * (none in dark); hover, the search bar and the primary button glow with a
+   * leaf hue. The glow is a solid --tint-border blurred by a negative spread,
+   * so no transparency or color-mix is needed. Never a hard `0 Npx 0` line.
+   */
+  --clay-shadow-card: 0 1px 2px
+    color-mix(in oklab, var(--shadow-tint) 5%, transparent);
   --clay-shadow-card-hover:
-    0 14px 30px rgba(147, 171, 215, 0.28), 0 4px 0 #b6cdee;
-
-  --clay-shadow-btn-primary: 0 6px 0 #7d97c5;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #7d97c5;
-  --clay-shadow-btn-blue: 0 6px 0 #90a8d3;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #90a8d3;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(126, 150, 196, 0.28);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(126, 150, 196, 0.28);
-
-  --clay-highlight-top: inset 0 2px 0 rgba(255, 255, 255, 0.74);
+    0 18px 36px -18px var(--tint-border),
+    0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
+  --clay-shadow-btn: 0 12px 26px -14px var(--tint-border);
+  --clay-shadow-btn-hover: 0 14px 30px -14px var(--tint-border);
+  --clay-shadow-glow:
+    0 24px 56px -28px var(--tint-border),
+    0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
+  --clay-shadow-pop: 0 18px 40px -18px
+    color-mix(in oklab, var(--shadow-tint) 24%, transparent);
+  /* Art plate: two flush rings (plate, then plate-border) plus a soft leaf glow below. */
+  --clay-shadow-plate:
+    0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border),
+    0 40px 80px -40px var(--tint-border);
+  /* Surfaces only (not buttons): a blurred top glow, never a crisp 1px line. */
+  --clay-highlight-top: inset 0 3px 6px -3px
+    color-mix(in oklab, var(--highlight-tint) 70%, transparent);
 
   --shadow-clay-raised: var(--clay-shadow-card);
   --shadow-clay-inset:
-    var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.45);
-  --shadow-clay-floating: var(--clay-shadow-card-hover);
+    var(--clay-highlight-top),
+    inset 0 2px 6px color-mix(in oklab, var(--shadow-tint) 10%, transparent);
+  --shadow-clay-floating: var(--clay-shadow-pop);
 
   --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
-  --font-app-heading: "Noto Serif SC Variable", "Songti SC", serif;
-  --font-app-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+  /* Bricolage has no CJK glyphs: Chinese falls through to Noto Sans SC. */
+  --font-app-heading:
+    "Bricolage Grotesque Variable", "Noto Sans SC Variable", "PingFang SC",
+    sans-serif;
+  /* Wordmark only. */
+  --font-app-display: "Shantell Sans", var(--font-app-sans);
+  /* CJK fallback keeps Chinese labels in mono slots from rendering as tofu. */
+  --font-app-mono:
+    "IBM Plex Mono", "SFMono-Regular", "Noto Sans SC Variable", monospace;
 }
 
+/* Dark: depth comes from switching steps; shadows almost disappear. */
 .dark,
 :root[data-theme="dark"] {
-  --background: #12141a;
-  --foreground: #f0f2f7;
-  --card: #1a1d26;
-  --card-foreground: #f0f2f7;
-  --popover: #1e2130;
-  --popover-foreground: #f0f2f7;
-  --primary: #93abd7;
-  --primary-foreground: #ffffff;
-  --secondary: #b3c7ea;
-  --secondary-foreground: #ffffff;
-  --muted: #21252e;
-  --muted-foreground: #a0a8b8;
-  --accent: #1e2130;
-  --accent-foreground: #f0f2f7;
-  --destructive: #ef4444;
-  --destructive-foreground: #ffffff;
-  --border: rgba(147, 171, 215, 0.28);
-  --input: rgba(147, 171, 215, 0.28);
-  --ring: #93abd7;
-  --chart-1: #93abd7;
-  --chart-2: #b3c7ea;
-  --chart-3: #a6bde3;
-  --chart-4: #b3c4e2;
-  --chart-5: #63c9a7;
-
-  --clay-warm-ivory: #1a1d26;
-  --clay-warm-peach: #b3c7ea;
-  --clay-warm-amber: #93abd7;
-  --clay-sky: #b3c7ea;
-  --clay-emerald: #63c9a7;
-
-  --clay-peach: #93abd7;
-  --clay-blue: #b3c7ea;
-  --clay-cream: #1a1d26;
-
-  --clay-surface-bg: #1a1d26;
-
-  --clay-shadow-card:
-    0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(147, 171, 215, 0.48);
-  --clay-shadow-card-hover:
-    0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(147, 171, 215, 0.56);
-
-  --clay-shadow-btn-primary: 0 6px 0 #678bc0;
-  --clay-shadow-btn-primary-hover: 0 4px 0 #678bc0;
-  --clay-shadow-btn-blue: 0 6px 0 #678bc0;
-  --clay-shadow-btn-blue-hover: 0 4px 0 #678bc0;
-  --clay-shadow-btn-secondary: 0 6px 0 rgba(103, 138, 189, 0.45);
-  --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(103, 138, 189, 0.45);
-
-  --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-
-  --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset:
-    var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.42);
-  --shadow-clay-floating: var(--clay-shadow-card-hover);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not(.light):not([data-theme="light"]) {
-    --background: #12141a;
-    --foreground: #f0f2f7;
-    --card: #1a1d26;
-    --card-foreground: #f0f2f7;
-    --popover: #1e2130;
-    --popover-foreground: #f0f2f7;
-    --primary: #93abd7;
-    --primary-foreground: #ffffff;
-    --secondary: #b3c7ea;
-    --secondary-foreground: #ffffff;
-    --muted: #21252e;
-    --muted-foreground: #a0a8b8;
-    --accent: #1e2130;
-    --accent-foreground: #f0f2f7;
-    --destructive: #ef4444;
-    --destructive-foreground: #ffffff;
-    --border: rgba(147, 171, 215, 0.28);
-    --input: rgba(147, 171, 215, 0.28);
-    --ring: #93abd7;
-    --chart-1: #93abd7;
-    --chart-2: #b3c7ea;
-    --chart-3: #a6bde3;
-    --chart-4: #b3c4e2;
-    --chart-5: #63c9a7;
-
-    --clay-warm-ivory: #1a1d26;
-    --clay-warm-peach: #b3c7ea;
-    --clay-warm-amber: #93abd7;
-    --clay-sky: #b3c7ea;
-    --clay-emerald: #63c9a7;
-
-    --clay-peach: #93abd7;
-    --clay-blue: #b3c7ea;
-    --clay-cream: #1a1d26;
-
-    --clay-surface-bg: #1a1d26;
-
-    --clay-shadow-card:
-      0 16px 30px rgba(0, 0, 0, 0.58), 0 3px 0 rgba(147, 171, 215, 0.48);
-    --clay-shadow-card-hover:
-      0 22px 40px rgba(0, 0, 0, 0.66), 0 4px 0 rgba(147, 171, 215, 0.56);
-
-    --clay-shadow-btn-primary: 0 6px 0 #678bc0;
-    --clay-shadow-btn-primary-hover: 0 4px 0 #678bc0;
-    --clay-shadow-btn-blue: 0 6px 0 #678bc0;
-    --clay-shadow-btn-blue-hover: 0 4px 0 #678bc0;
-    --clay-shadow-btn-secondary: 0 6px 0 rgba(103, 138, 189, 0.45);
-    --clay-shadow-btn-secondary-hover: 0 4px 0 rgba(103, 138, 189, 0.45);
-
-    --clay-highlight-top: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-
-    --shadow-clay-raised: var(--clay-shadow-card);
-    --shadow-clay-inset:
-      var(--clay-highlight-top), inset 0 -2px 0 rgba(147, 171, 215, 0.42);
-    --shadow-clay-floating: var(--clay-shadow-card-hover);
-  }
+  --clay-shadow-card: none;
+  --clay-shadow-card-hover: 0 18px 40px -20px var(--tint-border);
+  --clay-shadow-btn: none;
+  --clay-shadow-btn-hover: 0 12px 28px -16px var(--tint-border);
+  --clay-shadow-glow: 0 24px 56px -30px var(--tint-border);
+  --clay-shadow-pop: 0 18px 40px -16px
+    color-mix(in oklab, var(--shadow-tint) 60%, transparent);
+  --clay-shadow-plate: 0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border);
+  --clay-highlight-top: inset 0 3px 6px -3px
+    color-mix(in oklab, var(--highlight-tint) 7%, transparent);
 }
 
 @theme inline {
@@ -204,25 +105,50 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-ring-halo: var(--ring-halo);
+  --color-overlay: var(--overlay);
+  --color-link: var(--link);
+  --color-primary-hover: var(--primary-hover);
+  --color-plate: var(--plate);
+  --color-plate-border: var(--plate-border);
+  --color-tint: var(--tint);
+  --color-tint-border: var(--tint-border);
+  --color-hero-art-bg: var(--hero-art-bg);
+  --color-attribution: var(--attribution);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  --radius-sm: calc(var(--radius) - 6px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 8px);
+  /*
+   * Radius scale (DESIGN.md Shapes): buttons and chips are pills, inputs
+   * 10px, command boxes and menus 12px, cards 16px, featured cards 22px,
+   * illustration plates 28px, tags 6px.
+   */
+  --radius-sm: calc(var(--radius) - 4px); /* 6px: inline links, tiny marks */
+  --radius-md: calc(var(--radius) - 2px); /* 8px: icon buttons inside panels */
+  --radius-lg: var(--radius); /* 10px: inputs, menu items */
+  --radius-xl: calc(
+    var(--radius) + 2px
+  ); /* 12px: code blocks, tables, inner panels, menus */
+  --radius-2xl: calc(var(--radius) + 6px); /* 16px: large inner panels */
+  --radius-3xl: 24px;
+  --radius-card: var(--nk-radius-lg); /* 16px: skill cards, popovers */
+  --radius-feature: var(--nk-radius-xl); /* 22px: featured cards */
+  --radius-plate: var(--nk-radius-plate); /* 28px: illustration plates */
+  --radius-tag: var(--nk-radius-xs); /* 6px: tags */
+  --radius-pill: var(--clay-radius-button); /* buttons, chips, badges */
 
   --font-sans: var(--font-app-sans);
   --font-heading: var(--font-app-heading);
+  --font-display: var(--font-app-display);
   --font-mono: var(--font-app-mono);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/55;
+    @apply border-border outline-ring-halo;
   }
 
   body {

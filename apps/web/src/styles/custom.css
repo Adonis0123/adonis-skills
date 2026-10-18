@@ -9,9 +9,11 @@
   --site-gutter-mobile: 20px;
   --site-gutter-desktop: 32px;
   --site-gutter: var(--site-gutter-mobile);
-  --site-max-wide: 1400px;
-  --site-max-main: 1400px;
-  --site-max-detail: 1320px;
+  /* DESIGN.md spacing.content-max */
+  --site-max-wide: 1280px;
+  --site-max-main: 1280px;
+  /* Same as the header so page content and header share one left edge. */
+  --site-max-detail: var(--site-max-wide);
   --site-max-narrow: 1080px;
 }
 
@@ -32,82 +34,36 @@
     min-height: 100%;
   }
 
+  /*
+   * Reserve the scrollbar's width on every page, so the header does not shift
+   * between short and long pages. md and up only: below that, the menu sheet's
+   * fixed overlay cannot cover a reserved gutter, and phones use overlay
+   * scrollbars anyway. Radix scroll locks (react-remove-scroll-bar) add a
+   * body margin equal to the scrollbar width; the gutter already holds that
+   * space, so cancel the margin or the page jumps left when a menu opens.
+   */
+  @media (width >= 48rem) {
+    html {
+      scrollbar-gutter: stable;
+    }
+
+    html body[data-scroll-locked] {
+      margin-right: 0 !important;
+    }
+  }
+
+  html {
+    scroll-padding-top: 5.5rem;
+  }
+
   body {
     margin: 0;
     font-family: var(--font-app-sans);
-    line-height: 1.62;
+    font-size: 15px;
+    line-height: 1.7;
     overscroll-behavior-y: none;
-    background:
-      radial-gradient(
-        900px 420px at 8% -12%,
-        rgba(147, 171, 215, 0.14),
-        transparent 62%
-      ),
-      radial-gradient(
-        860px 420px at 88% -6%,
-        rgba(147, 171, 215, 0.08),
-        transparent 62%
-      ),
-      radial-gradient(
-        760px 380px at 58% 110%,
-        rgba(147, 171, 215, 0.06),
-        transparent 68%
-      ),
-      linear-gradient(160deg, #f4f7fc 0%, var(--background) 58%, #eef2f9 100%);
+    background: var(--background);
     color: var(--foreground);
-  }
-
-  .dark body,
-  :root[data-theme="dark"] body {
-    background:
-      radial-gradient(
-        980px 460px at 10% -14%,
-        rgba(147, 171, 215, 0.12),
-        transparent 64%
-      ),
-      radial-gradient(
-        920px 430px at 88% -8%,
-        rgba(147, 171, 215, 0.06),
-        transparent 64%
-      ),
-      radial-gradient(
-        760px 360px at 56% 110%,
-        rgba(147, 171, 215, 0.06),
-        transparent 68%
-      ),
-      linear-gradient(160deg, #161617 0%, var(--background) 56%, #0f0f10 100%);
-  }
-
-  body::before {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    content: "";
-    pointer-events: none;
-    opacity: 0.12;
-    background-image: radial-gradient(
-      circle at 1px 1px,
-      rgba(45, 45, 45, 0.2) 1px,
-      transparent 0
-    );
-    background-size: 3px 3px;
-    mask-image: linear-gradient(
-      to bottom,
-      transparent 0%,
-      black 12%,
-      black 88%,
-      transparent 100%
-    );
-  }
-
-  .dark body::before,
-  :root[data-theme="dark"] body::before {
-    opacity: 0.16;
-    background-image: radial-gradient(
-      circle at 1px 1px,
-      rgba(255, 255, 255, 0.2) 1px,
-      transparent 0
-    );
   }
 
   h1,
@@ -116,6 +72,12 @@
   h4 {
     margin: 0;
     font-family: var(--font-app-heading);
+    font-weight: 750;
+    font-optical-sizing: auto;
+  }
+
+  /* Negative tracking is for Latin only; it breaks up Chinese characters. */
+  :lang(en) :is(h1, h2, h3, h4) {
     letter-spacing: -0.015em;
   }
 
@@ -148,18 +110,22 @@
   }
 
   ::selection {
-    background: rgba(147, 171, 215, 0.28);
-    color: var(--foreground);
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 }
 
 @layer components {
+  /*
+   * Clay surfaces: soft, ink-tinted depth on cream (contract: docs/web-ui-clay-contract.md).
+   * Colors come only from semantic tokens in shadcn-theme.css.
+   */
   .clay-surface {
     position: relative;
     overflow: hidden;
     border-radius: var(--clay-radius-card);
-    border: 2px solid var(--border);
-    background: var(--clay-surface-bg, #ffffff);
+    border: 1px solid var(--border);
+    background: var(--clay-surface-bg);
     box-shadow: var(--clay-shadow-card);
     isolation: isolate;
     transform: translate3d(0, 0, 0);
@@ -169,35 +135,13 @@
       border-color 200ms ease;
   }
 
-  .clay-surface::before {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    content: "";
-    border-radius: inherit;
-    background:
-      radial-gradient(
-        130% 80% at 12% 0%,
-        rgba(255, 255, 255, 0.7),
-        transparent 56%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.18) 0%,
-        rgba(255, 255, 255, 0) 24%
-      );
-    pointer-events: none;
-  }
-
   .clay-surface::after {
     position: absolute;
     inset: 0;
     z-index: 0;
     content: "";
     border-radius: inherit;
-    box-shadow:
-      var(--clay-highlight-top),
-      inset 0 -1px 0 rgba(147, 171, 215, 0.4);
+    box-shadow: var(--clay-highlight-top);
     pointer-events: none;
   }
 
@@ -211,19 +155,6 @@
   .clay-tone-blue,
   .clay-tone-cream,
   .clay-tone-muted {
-    --clay-surface-bg: #ffffff;
-  }
-
-  .dark .clay-tone-base,
-  .dark .clay-tone-peach,
-  .dark .clay-tone-blue,
-  .dark .clay-tone-cream,
-  .dark .clay-tone-muted,
-  :root[data-theme="dark"] .clay-tone-base,
-  :root[data-theme="dark"] .clay-tone-peach,
-  :root[data-theme="dark"] .clay-tone-blue,
-  :root[data-theme="dark"] .clay-tone-cream,
-  :root[data-theme="dark"] .clay-tone-muted {
     --clay-surface-bg: var(--card);
   }
 
@@ -232,42 +163,11 @@
   }
 
   .clay-elevation-inset {
-    box-shadow:
-      var(--shadow-clay-inset),
-      0 2px 0 rgba(147, 171, 215, 0.32);
+    box-shadow: var(--shadow-clay-inset);
   }
 
   .clay-elevation-floating {
     box-shadow: var(--clay-shadow-card-hover);
-  }
-
-  .dark .clay-surface,
-  :root[data-theme="dark"] .clay-surface {
-    border-color: rgba(147, 171, 215, 0.28);
-    box-shadow: var(--clay-shadow-card);
-  }
-
-  .dark .clay-surface::before,
-  :root[data-theme="dark"] .clay-surface::before {
-    background:
-      radial-gradient(
-        130% 82% at 12% 0%,
-        rgba(255, 255, 255, 0.12),
-        transparent 56%
-      ),
-      linear-gradient(
-        180deg,
-        rgba(255, 255, 255, 0.08) 0%,
-        rgba(255, 255, 255, 0) 24%
-      );
-  }
-
-  .dark .clay-surface::after,
-  :root[data-theme="dark"] .clay-surface::after {
-    box-shadow:
-      var(--clay-highlight-top),
-      inset 0 -1px 0 rgba(147, 171, 215, 0.48),
-      inset 0 0 0 1px rgba(147, 171, 215, 0.14);
   }
 
   .clay-button {
@@ -276,70 +176,66 @@
     position: relative;
     min-height: 44px;
     border-radius: var(--clay-radius-button);
-    border: 2px solid transparent;
-    font-weight: 700;
+    border: 1px solid transparent;
+    /* DESIGN.md: button text is 600+ so white on leaf clears the bold-text contrast floor. */
+    font-weight: 650;
     line-height: 1;
     transform: translate3d(0, 0, 0);
   }
 
-  .clay-button:focus-visible {
-    outline: none;
-    box-shadow:
-      0 0 0 3px color-mix(in oklab, var(--ring) 45%, transparent),
-      0 0 0 6px color-mix(in oklab, var(--background) 70%, transparent);
-  }
-
+  /* Hover changes only fill and shadow; press sinks 1px so the two states differ. */
   .clay-button:active {
-    transform: translate3d(0, 2px, 0);
+    transform: translate3d(0, 1px, 0);
   }
 
-  .clay-button--primary {
-    background: #93abd7;
-    border-color: #93abd7;
-    color: #ffffff;
-    box-shadow: var(--clay-shadow-btn-primary);
+  .clay-button--primary,
+  .clay-button--blue {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-foreground);
+    /* No inner top highlight on buttons: on a pill it reads as a second border. */
+    box-shadow: var(--clay-shadow-btn);
   }
 
-  .clay-button--primary:hover {
-    transform: translate3d(0, 2px, 0);
-    box-shadow: var(--clay-shadow-btn-primary-hover);
+  .clay-button--primary:hover,
+  .clay-button--blue:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: var(--clay-shadow-btn-hover);
+    transform: translate3d(0, -1px, 0);
+  }
+
+  /* PressScale (components/motion/press-scale.tsx) owns hover lift and press on its
+     wrapper; drop the button's own transforms there so the two never stack. */
+  .press-scale > .clay-button,
+  .press-scale > .clay-button:hover,
+  .press-scale > .clay-button:active {
+    transform: none;
   }
 
   .clay-button--secondary,
   .clay-button--ghost,
   .clay-button--outline {
-    background: transparent;
-    border-color: #93abd7;
-    color: #7a93c4;
-    box-shadow: var(--clay-shadow-btn-secondary);
+    background: var(--card);
+    border-color: var(--input);
+    color: var(--foreground);
   }
 
   .clay-button--secondary:hover,
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
-    transform: translate3d(0, 2px, 0);
-    background: rgba(147, 171, 215, 0.12);
-    box-shadow: var(--clay-shadow-btn-secondary-hover);
-  }
-
-  .clay-button--blue {
-    background: #aac0e6;
-    border-color: #aac0e6;
-    color: #ffffff;
-    box-shadow: var(--clay-shadow-btn-blue);
-  }
-
-  .clay-button--blue:hover {
-    transform: translate3d(0, 2px, 0);
-    box-shadow: var(--clay-shadow-btn-blue-hover);
+    border-color: var(--tint-border);
+    background: var(--tint);
+    color: var(--foreground);
   }
 
   .clay-button--sm {
-    @apply h-11 px-4 text-xs;
+    @apply h-10 min-h-10 px-4 text-sm;
   }
 
   .clay-button--md {
-    @apply h-12 px-5 text-sm;
+    /* DESIGN.md button height 46px, padding 0 20px */
+    @apply h-[46px] px-5 text-[15px];
   }
 
   .clay-button--lg {
@@ -349,110 +245,411 @@
   }
 
   .clay-button--icon {
-    @apply h-11 w-11;
+    @apply h-10 min-h-10 w-10;
+    border-radius: var(--nk-radius-sm);
   }
 
+  /* Badges are flat chips: brand rules keep small UI marks shadow-free. */
   .clay-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold;
     border-radius: 50px;
     border: 0;
-    background: #93abd7;
-    color: #ffffff;
-    box-shadow: 0 4px 0 #5b75aa;
-  }
-
-  .clay-badge--peach {
-    background: #93abd7;
-    color: #ffffff;
-    box-shadow: 0 4px 0 #5b75aa;
-  }
-
-  .clay-badge--neutral {
-    background: #dce4f0;
-    color: #5a7db0;
-    box-shadow: 0 4px 0 #c5d0e2;
-  }
-
-  .clay-badge--cream {
-    background: #c8d5ea;
-    color: #4a6390;
-    box-shadow: 0 4px 0 #b0bfd8;
-  }
-
-  .clay-badge--success {
-    background: #63c9a7;
-    color: #ffffff;
-    box-shadow: 0 4px 0 #4aaa8a;
+    /* Badges and selected states use accent, never the primary fill. */
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
   .clay-badge--blue {
-    background: #7695ca;
-    color: #ffffff;
-    box-shadow: 0 4px 0 #5a7db0;
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
-  .dark .clay-button--secondary,
-  .dark .clay-button--ghost,
-  .dark .clay-button--outline,
-  :root[data-theme="dark"] .clay-button--secondary,
-  :root[data-theme="dark"] .clay-button--ghost,
-  :root[data-theme="dark"] .clay-button--outline {
-    border-color: #93abd7;
-    color: #b3c7ea;
-    background: rgba(147, 171, 215, 0.14);
-    box-shadow: var(--clay-shadow-btn-secondary);
+  .clay-badge--peach {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
   }
 
-  .dark .clay-button--secondary:hover,
-  .dark .clay-button--ghost:hover,
-  .dark .clay-button--outline:hover,
-  :root[data-theme="dark"] .clay-button--secondary:hover,
-  :root[data-theme="dark"] .clay-button--ghost:hover,
-  :root[data-theme="dark"] .clay-button--outline:hover {
-    background: rgba(147, 171, 215, 0.24);
-    color: #d4ddef;
-    box-shadow: var(--clay-shadow-btn-secondary-hover);
+  .clay-badge--neutral {
+    background: var(--accent);
+    color: var(--accent-foreground);
   }
 
-  .dark .clay-button--blue,
-  :root[data-theme="dark"] .clay-button--blue {
-    background: #aac0e6;
-    border-color: #aac0e6;
-    box-shadow: var(--clay-shadow-btn-blue);
+  .clay-badge--cream {
+    background: var(--muted);
+    color: var(--foreground);
   }
 
-  .dark .clay-button--blue:hover,
-  :root[data-theme="dark"] .clay-button--blue:hover {
-    background: #bfd4f3;
-    box-shadow: var(--clay-shadow-btn-blue-hover);
+  .clay-badge--success {
+    background: var(--attribution);
+    color: var(--secondary-foreground);
+  }
+  /* ---------------------------------------------------------------------
+   * Nika Skills v3 (DESIGN.md Components). Colors are semantic roles only.
+   * ------------------------------------------------------------------- */
+
+  /* Typography tokens. Latin gets negative tracking; Chinese never does. */
+  .type-display {
+    font-family: var(--font-app-heading);
+    font-size: clamp(2.125rem, 1.2rem + 3.6vw, 4.375rem);
+    font-weight: 800;
+    line-height: 1.02;
   }
 
-  .dark .clay-badge,
-  :root[data-theme="dark"] .clay-badge {
-    background: #93abd7;
-    color: #ffffff;
-    box-shadow: 0 4px 0 #5a7db0;
+  .type-display:lang(en) {
+    letter-spacing: -0.035em;
   }
 
-  .dark .clay-badge--neutral,
-  :root[data-theme="dark"] .clay-badge--neutral {
-    background: rgba(147, 171, 215, 0.16);
-    color: #b3c7ea;
-    box-shadow: 0 4px 0 rgba(90, 125, 176, 0.3);
+  .type-display:lang(zh) {
+    font-weight: 800;
+    line-height: 1.18;
   }
 
-  .dark .clay-badge--cream,
-  :root[data-theme="dark"] .clay-badge--cream {
-    background: rgba(147, 171, 215, 0.26);
-    color: #d4ddef;
-    box-shadow: 0 4px 0 rgba(90, 125, 176, 0.35);
+  .type-h2 {
+    font-family: var(--font-app-heading);
+    font-size: clamp(1.625rem, 1.2rem + 1.4vw, 2.125rem);
+    font-weight: 750;
+    line-height: 1.1;
   }
 
-  .dark .clay-badge--success,
-  :root[data-theme="dark"] .clay-badge--success {
-    background: #4aaa8a;
-    color: #ffffff;
-    box-shadow: 0 4px 0 #3a8d72;
+  .type-h2:lang(en) {
+    letter-spacing: -0.03em;
+  }
+
+  .type-h2:lang(zh) {
+    line-height: 1.25;
+  }
+
+  .type-h3 {
+    font-family: var(--font-app-heading);
+    font-size: 1.5rem;
+    font-weight: 750;
+    line-height: 1.15;
+  }
+
+  .type-h3:lang(en) {
+    letter-spacing: -0.025em;
+  }
+
+  .type-h3:lang(zh) {
+    line-height: 1.3;
+  }
+
+  .type-card-title {
+    font-family: var(--font-app-heading);
+    font-size: 1rem;
+    font-weight: 650;
+    line-height: 1.3;
+  }
+
+  .type-card-title:lang(en) {
+    letter-spacing: -0.01em;
+  }
+
+  .type-mono {
+    font-family: var(--font-app-mono);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.6;
+  }
+
+  .type-lede {
+    font-size: 1.125rem;
+    line-height: 1.6;
+  }
+
+  .type-lede:lang(zh) {
+    line-height: 1.75;
+  }
+
+  /* Hero wash: tint at the top-left fading into the page. */
+  .hero-wash {
+    background: radial-gradient(
+      900px 440px at 8% 0%,
+      var(--tint),
+      var(--background) 64%
+    );
+  }
+
+  /* Hand-drawn leaf underline under the hero's emphasis word. */
+  .hl-underline {
+    position: relative;
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  .hl-underline > svg {
+    position: absolute;
+    left: -2%;
+    bottom: -0.16em;
+    width: 104%;
+    height: 0.32em;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .hl-underline path {
+    fill: none;
+    stroke: var(--primary);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+
+  /* Illustration plate (DESIGN.md art-plate). */
+  .art-plate {
+    position: relative;
+    border-radius: var(--nk-radius-plate);
+    background: var(--plate);
+    box-shadow: var(--clay-shadow-plate);
+  }
+
+  .art-avatar {
+    position: relative;
+    display: block;
+    flex: none;
+    overflow: hidden;
+    border-radius: 9999px;
+    background: var(--plate);
+  }
+
+  /* Inset so hat tips and lanterns near the square's corners stay inside the circle. */
+  .art-avatar > img {
+    width: 100%;
+    height: 100%;
+    padding: 8%;
+    object-fit: contain;
+  }
+
+  .art-avatar--ringed {
+    box-shadow:
+      0 0 0 4px var(--background),
+      0 0 0 5px var(--border);
+  }
+
+  .speech-bubble {
+    border: 1px solid var(--border);
+    border-radius: 16px 16px 16px 4px;
+    background: var(--card);
+    box-shadow: var(--clay-shadow-pop);
+  }
+
+  /* Search bar (DESIGN.md search-bar). */
+  .search-bar {
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: var(--card);
+    box-shadow: var(--clay-shadow-glow);
+    transition:
+      border-color 200ms ease,
+      outline-color 200ms ease;
+  }
+
+  .search-bar:focus-within {
+    border-color: var(--tint-border);
+    outline: 4px solid var(--tint);
+    outline-offset: 0;
+  }
+
+  /* Keyboard focus still gets the contract ring on top of the tint halo. */
+  .search-bar:has(:focus-visible) {
+    border-color: var(--ring);
+    outline: 3px solid var(--ring-halo);
+  }
+
+  /* Scenario chip (DESIGN.md chip). */
+  .scenario-chip {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.5rem;
+    height: 36px;
+    padding: 0 0.875rem 0 0.3125rem;
+    border: 1px solid var(--border);
+    border-radius: 9999px;
+    background: var(--card);
+    color: var(--muted-foreground);
+    font-size: 13.5px;
+    font-weight: 500;
+    white-space: nowrap;
+    transition:
+      border-color 200ms ease,
+      color 200ms ease,
+      background-color 200ms ease;
+  }
+
+  a.scenario-chip:hover {
+    border-color: var(--tint-border);
+    color: var(--foreground);
+  }
+
+  .scenario-chip[aria-disabled="true"] {
+    color: var(--muted-foreground);
+    background: var(--muted);
+    cursor: default;
+  }
+
+  .scenario-chip--selected {
+    border-color: var(--tint-border);
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  /* Cards (DESIGN.md skill-card / featured-card). */
+  .skill-card,
+  .featured-card {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--card-foreground);
+    box-shadow: var(--clay-shadow-card);
+    transform: translate3d(0, 0, 0);
+    transition:
+      transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 220ms ease,
+      border-color 200ms ease;
+  }
+
+  .skill-card {
+    min-height: 176px;
+    padding: 18px 18px 14px;
+    border-radius: var(--nk-radius-lg);
+  }
+
+  .featured-card {
+    padding: 26px;
+    border-radius: var(--nk-radius-xl);
+  }
+
+  .featured-card--lead {
+    border-color: var(--tint-border);
+    background: var(--tint);
+  }
+
+  .skill-card:hover {
+    border-color: var(--tint-border);
+    box-shadow: var(--clay-shadow-card-hover);
+    transform: translate3d(0, -2px, 0);
+  }
+
+  .featured-card:hover {
+    border-color: var(--tint-border);
+    box-shadow: var(--clay-shadow-card-hover);
+    transform: translate3d(0, -3px, 0);
+  }
+
+  /* Tags (DESIGN.md tag): first tag accent, the rest neutral. */
+  .nk-tag {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: var(--nk-radius-xs);
+    background: var(--accent);
+    color: var(--accent-foreground);
+    font-size: 11.5px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .nk-tag--neutral {
+    background: var(--muted);
+    color: var(--muted-foreground);
+  }
+
+  /* Command box (DESIGN.md command-box). */
+  .command-box {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.625rem;
+    height: 46px;
+    padding: 0 6px 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--nk-radius-md);
+    background: var(--background);
+    color: var(--muted-foreground);
+  }
+
+  .command-box code {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Small solid / outline copy buttons. */
+  .copy-button {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.375rem;
+    height: 34px;
+    padding: 0 0.75rem;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    font-size: 13px;
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+    transition:
+      background-color 200ms ease,
+      border-color 200ms ease,
+      color 200ms ease;
+  }
+
+  /* 44px touch target without growing the visual button. */
+  .copy-button::after {
+    position: absolute;
+    inset: -5px;
+    content: "";
+  }
+
+  .copy-button--solid {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  .copy-button--solid:hover {
+    border-color: var(--primary-hover);
+    background: var(--primary-hover);
+  }
+
+  .copy-button--outline {
+    height: 30px;
+    padding: 0 0.625rem;
+    border-color: var(--border);
+    background: var(--card);
+    color: var(--muted-foreground);
+    font-size: 12px;
+  }
+
+  .copy-button--outline:hover {
+    border-color: var(--tint-border);
+    color: var(--link);
+  }
+
+  .copy-button--failed {
+    border-color: var(--destructive);
+    background: var(--card);
+    color: var(--destructive);
+  }
+
+  /* Section kicker in leaf (Latin mono caps; Chinese bold sans, see .kicker). */
+  .kicker-leaf {
+    color: var(--link);
+  }
+
+  /* Footer on the cream plate. */
+  .site-footer-plate {
+    border-top: 1px solid var(--plate-border);
+    background: var(--plate);
+    color: var(--foreground);
   }
 }
 
@@ -526,29 +723,18 @@
     justify-content: center;
     border-radius: 9999px;
     padding: 0;
-    border-color: color-mix(in oklab, #93abd7 78%, #ffffff 22%);
-    background:
-      radial-gradient(
-        130% 130% at 30% 20%,
-        rgba(255, 255, 255, 0.58) 0%,
-        transparent 68%
-      ),
-      color-mix(in oklab, var(--card) 94%, #ffffff 6%);
-    box-shadow:
-      0 2px 0 rgba(113, 138, 184, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.62);
-    transform: translate3d(0, 0, 0);
-    will-change: transform;
+    border-color: var(--input);
+    background: var(--card);
+    box-shadow: var(--clay-shadow-btn);
   }
 
   .site-header-mobile-trigger:hover {
-    transform: translate3d(0, 1px, 0);
-    background: color-mix(in oklab, var(--card) 90%, #ffffff 10%);
-    box-shadow: 0 2px 0 rgba(113, 138, 184, 0.2);
+    background: var(--accent);
+    box-shadow: var(--clay-shadow-btn-hover);
   }
 
   .mobile-sheet-overlay {
-    background: rgba(15, 20, 34, 0.26);
+    background: var(--overlay);
     backdrop-filter: blur(2px);
     visibility: visible;
     transition: visibility 0s linear 0s;
@@ -578,17 +764,7 @@
     height: 100%;
     flex-direction: column;
     border-left: 1px solid var(--border);
-    background:
-      radial-gradient(
-        130% 82% at 90% 0%,
-        color-mix(in oklab, var(--primary) 14%, transparent) 0%,
-        transparent 56%
-      ),
-      linear-gradient(
-        180deg,
-        color-mix(in oklab, var(--card) 96%, #ffffff 4%) 0%,
-        var(--card) 100%
-      );
+    background: var(--card);
     box-shadow: var(--shadow-clay-floating);
   }
 
@@ -597,7 +773,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    border-bottom: 1px solid color-mix(in oklab, var(--border) 82%, transparent);
+    border-bottom: 1px solid var(--border);
     padding: 1rem 1rem 0.9rem;
   }
 
@@ -644,10 +820,8 @@
     width: 2.75rem;
     min-width: 2.75rem;
     border-radius: 9999px;
-    border-color: color-mix(in oklab, #93abd7 76%, #ffffff 24%);
-    box-shadow:
-      0 2px 0 rgba(113, 138, 184, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.58);
+    border-color: var(--input);
+    box-shadow: var(--clay-shadow-btn);
   }
 
   .safe-area-top-edge {
@@ -662,45 +836,6 @@
     padding-bottom: calc(var(--safe-area-bottom) + var(--page-space-y));
   }
 
-  .clay-hero-mesh {
-    background-image:
-      radial-gradient(
-        circle at 14% 10%,
-        rgba(147, 171, 215, 0.06) 0%,
-        transparent 52%
-      ),
-      radial-gradient(
-        circle at 84% 12%,
-        rgba(147, 171, 215, 0.04) 0%,
-        transparent 52%
-      ),
-      radial-gradient(
-        circle at 72% 82%,
-        rgba(255, 255, 255, 0.5) 0%,
-        transparent 58%
-      );
-  }
-
-  .dark .clay-hero-mesh,
-  :root[data-theme="dark"] .clay-hero-mesh {
-    background-image:
-      radial-gradient(
-        circle at 14% 10%,
-        rgba(147, 171, 215, 0.06) 0%,
-        transparent 54%
-      ),
-      radial-gradient(
-        circle at 84% 12%,
-        rgba(147, 171, 215, 0.03) 0%,
-        transparent 54%
-      ),
-      radial-gradient(
-        circle at 72% 82%,
-        rgba(147, 171, 215, 0.04) 0%,
-        transparent 60%
-      );
-  }
-
   .clay-hover-lift {
     will-change: transform, box-shadow;
     transition:
@@ -709,18 +844,63 @@
   }
 
   .clay-hover-lift:hover {
-    transform: translate3d(0, -6px, 0);
+    transform: translate3d(0, -3px, 0);
     box-shadow: var(--clay-shadow-card-hover);
   }
 
   .clay-hover-lift:active {
-    transform: translate3d(0, -2px, 0);
+    transform: translate3d(0, -1px, 0);
   }
 
-  .clay-focus-ring {
-    @apply focus-visible:outline-none;
-    @apply focus-visible:ring-2 focus-visible:ring-ring/45;
-    @apply focus-visible:ring-offset-0;
+  /*
+   * Focus indicators (contract: docs/web-ui-clay-contract.md).
+   * Drawn with `outline`, never box-shadow, so shadow utilities such as
+   * `shadow-none` cannot remove them. Only :focus-visible, so mouse clicks
+   * stay quiet. Class + pseudo-class selectors (0,2,0 and up) outrank single
+   * utilities such as `outline-none` or `border-transparent`.
+   *
+   * Borderless targets (text links, icons, the brand): a solid 2px ring with
+   * a 2px offset; there is no border, so nothing doubles up.
+   */
+  .clay-focus-ring:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Sections focused after a smooth anchor scroll (lib/smooth-scroll.ts) are
+     not controls: focus only moves the Tab start point, so no ring around them. */
+  [data-scroll-target]:focus-visible {
+    outline: none;
+  }
+
+  /*
+   * Bordered targets (clay buttons, bordered chips, clay surfaces): the border
+   * itself turns `--ring` and a translucent halo sits flush against it with no
+   * offset gap, so it reads as one ring instead of border-gap-ring.
+   * `.clay-focus-within-ring` does the same for a wrapper whose child (an
+   * input) holds focus; `.clay-focus-link-ring` only reacts to a link inside,
+   * so a card's own buttons keep a single ring.
+   */
+  .clay-focus-ring:is(.clay-button, .clay-surface, .border):focus-visible,
+  .clay-focus-within-ring:has(:focus-visible),
+  .clay-focus-link-ring:has(a:focus-visible) {
+    border-color: var(--ring);
+    outline: 3px solid var(--ring-halo);
+    outline-offset: 0;
+  }
+
+  /*
+   * Solid primary fills: border and fill are already `--primary`, so a flush
+   * translucent halo would fall under 3:1. Use a solid ring with a 2px offset;
+   * with no grey border there is nothing to double up.
+   */
+  .clay-focus-ring:is(
+      .clay-button--primary,
+      .clay-button--blue,
+      .bg-primary
+    ):focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   .shadow-clay-raised {
@@ -736,12 +916,28 @@
   }
 
   .text-clay-muted {
-    color: #8890a0;
+    color: var(--muted-foreground);
   }
 
-  .dark .text-clay-muted,
-  :root[data-theme="dark"] .text-clay-muted {
-    color: var(--muted-foreground);
+  /*
+   * Small section labels. Latin: spaced mono caps. Chinese has no case and
+   * letter-spacing breaks up its characters, and the mono stack falls back to
+   * a sans for CJK anyway, so Chinese uses the body sans at bold weight.
+   */
+  .kicker {
+    font-family: var(--font-app-mono);
+    font-size: 11px;
+    line-height: 1.5;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+  }
+
+  .kicker:lang(zh) {
+    font-family: var(--font-app-sans);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: 0.02em;
   }
 }
 

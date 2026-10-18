@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:22
+#: ../../src/app/%5Blang%5D/not-found.tsx:38
 msgid "notFound.cta.home"
-msgstr "返回首页"
+msgstr "回到首页"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:15
-msgid "notFound.description"
-msgstr "请检查标识符，并从技能库中浏览可用的技能。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:13
-msgid "notFound.title"
-msgstr "未找到技能"
+#: ../../src/app/%5Blang%5D/not-found.tsx:47
+msgid "notFound.cta.skills"
+msgstr "浏览全部技能"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/not-found.tsx:28
-msgid "notFound.cta.example"
-msgstr "查看示例技能"
+msgid "notFound.description"
+msgstr "这个地址下什么都没有，可能已经改名或删掉了。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/not-found.tsx:25
+msgid "notFound.title"
+msgstr "页面不存在"

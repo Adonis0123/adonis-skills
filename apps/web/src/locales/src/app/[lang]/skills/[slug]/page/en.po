@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,99 +14,59 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:51
-#~ msgid "common.no"
-#~ msgstr "no"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:116
-#~ msgid "skillDetail.package.title"
-#~ msgstr "Package Structure"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
-#~ msgid "skillDetail.package.references"
-#~ msgstr "references: {0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:123
-#~ msgid "skillDetail.package.src"
-#~ msgstr "src: {0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:47
-#~ msgid "common.yes"
-#~ msgstr "yes"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
-#~ msgid "skillDetail.badge.author"
-#~ msgstr "Author {0}"
-
-#. js-lingui-explicit-id
-#. placeholder {0}: skill.metadata.author
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:196
-msgid "skillDetail.meta.author"
-msgstr "{0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:133
-msgid "skillDetail.cta.back"
-msgstr "Back to Skills"
-
-#. js-lingui-explicit-id
 #: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:256
-msgid "skillDetail.complexity.basic"
-msgstr "Basic"
+msgid "skillDetail.install.heading"
+msgstr "Add it to your agent"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:244
-msgid "skillDetail.complexity.title"
-msgstr "Complexity"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:140
+msgid "skillDetail.cta.back"
+msgstr "All skills"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:317
-msgid "skillDetail.docs.title"
-msgstr "Documentation"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:248
-msgid "skillDetail.complexity.fullToolkit"
-msgstr "Full Toolkit"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:226
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:100
 msgid "skillDetail.install.title"
 msgstr "Install"
 
 #. js-lingui-explicit-id
-#. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:207
-msgid "skillDetail.updatedAt"
-msgstr "Last updated: {0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:49
-msgid "skillDetail.meta.notFoundTitle"
-msgstr "Skill Not Found"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:292
-msgid "skillDetail.source.title"
-msgstr "Source"
-
-#. js-lingui-explicit-id
 #: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:253
-msgid "skillDetail.complexity.standard"
-msgstr "Standard"
+msgid "skillDetail.install.kicker"
+msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:267
-msgid "skillDetail.tools.title"
-msgstr "Tools Used"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:330
+msgid "skillDetail.toc.title"
+msgstr "On this page"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:304
+msgid "skillDetail.docs.title"
+msgstr "Skill instructions"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:48
+msgid "skillDetail.meta.notFoundTitle"
+msgstr "Skill not found"
+
+#. js-lingui-explicit-id
+#. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:226
+msgid "skillDetail.updatedAt"
+msgstr "Updated <0>{0}</0>"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.version
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:159
-msgid "skillDetail.badge.version"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:215
+msgid "skillDetail.version"
 msgstr "Version {0}"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:241
+msgid "skillDetail.source"
+msgstr "View source on GitHub"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:105
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:270
+msgid "skillDetail.useCases.title"
+msgstr "When to reach for it"

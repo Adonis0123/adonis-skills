@@ -31,32 +31,36 @@ msgstr ""
 #~ msgstr "站点菜单"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:69
-#: ../../src/components/layout/site-header.tsx:86
-#~ msgid "siteHeader.nav.github.aria"
-#~ msgstr "在 GitHub 上打开 adonis-skills 仓库"
+#: ../../src/components/layout/site-header.tsx:116
+#~ msgid "siteHeader.locale.title"
+#~ msgstr "语言"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-header.tsx:112
+#~ msgid "siteHeader.locale.aria"
+#~ msgstr "切换站点语言"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-header.tsx:27
-msgid "siteHeader.nav.github.label"
-msgstr "GitHub"
+#~ msgid "siteHeader.nav.github.label"
+#~ msgstr "GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:116
-msgid "siteHeader.locale.title"
-msgstr "语言"
+#: ../../src/components/layout/site-header.tsx:59
+#~ msgid "siteHeader.brand.subtitle"
+#~ msgstr "技能库"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:70
+#: ../../src/components/layout/site-header.tsx:38
 msgid "siteHeader.nav.aria"
 msgstr "主导航"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:61
-msgid "siteHeader.brand.subtitle"
-msgstr "技能库"
+#: ../../src/components/layout/site-header.tsx:51
+msgid "siteHeader.nav.github.aria"
+msgstr "在 GitHub 上打开 adonis-skills 仓库"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-header.tsx:112
-msgid "siteHeader.locale.aria"
-msgstr "切换站点语言"
+#: ../../src/components/layout/site-header.tsx:29
+msgid "siteHeader.skipToContent"
+msgstr "跳到正文"

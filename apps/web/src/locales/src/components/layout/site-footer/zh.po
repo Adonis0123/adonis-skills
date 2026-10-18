@@ -14,46 +14,76 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:98
-msgid "siteFooter.copyright"
-msgstr "© {year} {brandName}. 保留所有权利。"
-
-#. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:102
-msgid "siteFooter.builtFor"
-msgstr "为发现和安装 agent 技能而构建。"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:55
-msgid "siteFooter.brand.tagline"
-msgstr "发现实用的 agent 技能，数秒内完成安装。"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:36
-msgid "siteFooter.link.exampleSkill"
-msgstr "示例技能"
+#~ msgid "siteFooter.builtFor"
+#~ msgstr "为发现和安装 agent 技能而构建。"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:38
+#~ msgid "siteFooter.link.exampleSkill"
+#~ msgstr "示例技能"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:28
+#~ msgid "siteFooter.group.quickLinks"
+#~ msgstr "快速链接"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:36
+#~ msgid "siteFooter.link.skillLibrary"
+#~ msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:56
+#~ msgid "siteFooter.brand.tagline"
+#~ msgstr "我给自己做的 agent 小技能，每天都在用。"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:120
+msgid "siteFooter.copyright"
+msgstr "© {year} {brandName}"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:29
+msgid "siteFooter.link.allSkills"
+msgstr "全部技能"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:36
 msgid "siteFooter.link.githubRepository"
 msgstr "GitHub 仓库"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:26
-msgid "siteFooter.group.quickLinks"
-msgstr "快速链接"
+#: ../../src/components/layout/site-footer.tsx:33
+msgid "siteFooter.link.installGuide"
+msgstr "安装说明"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:40
+#: ../../src/components/layout/site-footer.tsx:20
+msgid "siteFooter.group.library"
+msgstr "技能库"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:125
+msgid "siteFooter.attribution"
+msgstr "<0>尼卡</0>做的 · 代码在 GitHub <1>@{owner}</1>"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:39
 msgid "siteFooter.link.readme"
 msgstr "README"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:28
+#: ../../src/components/layout/site-footer.tsx:22
 msgid "siteFooter.group.resources"
 msgstr "资源"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:34
-msgid "siteFooter.link.skillLibrary"
-msgstr "技能库"
+#: ../../src/components/layout/site-footer.tsx:31
+msgid "siteFooter.link.scenarios"
+msgstr "按场景找"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:57
+msgid "siteFooter.brand.lantern"
+msgstr "我给自己做的 agent 小技能，每天都在用，像提灯一样随身带着。"

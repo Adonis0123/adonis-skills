@@ -41,7 +41,7 @@ function classify(stdout, { stderr = "", exitCode = 0 } = {}) {
   }
 }
 
-const endpoint = "/Users/example/.claude/scripts/chrome-devtools-mcp-safe";
+const endpoint = "/opt/example/scripts/chrome-devtools-mcp-safe";
 const envelope = (data, extra = {}) => ({
   ok: true,
   kind: "call_result",

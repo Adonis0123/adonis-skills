@@ -1,56 +1,67 @@
-'use client'
+"use client";
 
-import { useEffect, useState } from 'react'
-import { useLingui } from '@lingui/react/macro'
-import { useTheme } from 'next-themes'
-import { ClayButton } from '@/components/ui'
-import { cx } from '@/components/ui/utils'
-
-type ThemeMode = 'light' | 'dark'
+import { useLingui } from "@lingui/react/macro";
+import { useTheme } from "next-themes";
+import { ClayButton } from "@/components/ui";
+import { cx } from "@/components/ui/utils";
 
 interface ThemeToggleProps {
-  buttonClassName?: string
+  /** Show the action text next to the icon (mobile sheet). Icon-only otherwise. */
+  showLabel?: boolean;
+  buttonClassName?: string;
 }
 
-export function ThemeToggle({ buttonClassName }: ThemeToggleProps) {
-  const { t, i18n } = useLingui()
-  const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+/*
+ * Two-state light/dark toggle; with no stored choice next-themes follows the system.
+ * Icons and labels for both states are always in the markup and the `.dark` class on
+ * <html> (set by next-themes before paint) picks the visible pair, so server and client
+ * render the same tree and the right icon shows from the first frame.
+ * `display: none` also drops the hidden label from the accessible name.
+ */
+export function ThemeToggle({
+  showLabel = false,
+  buttonClassName,
+}: ThemeToggleProps) {
+  const { t } = useLingui();
+  const { resolvedTheme, setTheme } = useTheme();
 
-  useEffect(() => {
-    // We intentionally flip mounted after hydration to avoid SSR/client icon-label mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setMounted(true)
-  }, [])
-
-  if (!mounted) {
-    return <div className="h-8 w-[88px]" aria-hidden />
-  }
-
-  const theme: ThemeMode = resolvedTheme === 'dark' ? 'dark' : 'light'
-  const nextTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark'
-  const modeLabel: Record<ThemeMode, string> = {
-    dark: t({ id: 'themeToggle.mode.dark', message: 'Dark' }),
-    light: t({ id: 'themeToggle.mode.light', message: 'Light' }),
-  }
-  const label = modeLabel[theme]
-  const nextLabel = modeLabel[nextTheme]
+  const toDarkLabel = t({
+    id: "themeToggle.switchToDark",
+    message: "Switch to dark theme",
+  });
+  const toLightLabel = t({
+    id: "themeToggle.switchToLight",
+    message: "Switch to light theme",
+  });
+  const iconClassName =
+    "size-4 shrink-0 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-75 motion-safe:duration-200";
 
   return (
     <ClayButton
       type="button"
       variant="ghost"
-      size="sm"
-      onClick={() => setTheme(nextTheme)}
-      aria-label={i18n._('themeToggle.switchTo', { nextLabel })}
-      title={i18n._('themeToggle.current', { label })}
-      className={cx('rounded-full px-3.5 text-xs md:text-sm', buttonClassName)}
+      size={showLabel ? "sm" : "icon"}
+      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      className={cx(showLabel && "px-3.5 text-xs md:text-sm", buttonClassName)}
     >
+      {/* The icon previews the target theme, matching the action label. */}
       <span
-        className={theme === 'dark' ? 'icon-[lucide--moon-star] size-4' : 'icon-[lucide--sun-medium] size-4'}
+        className={cx("icon-[lucide--moon-star] dark:hidden", iconClassName)}
         aria-hidden
       />
-      <span>{label}</span>
+      <span
+        className={cx(
+          "icon-[lucide--sun-medium] hidden dark:inline-block",
+          iconClassName,
+        )}
+        aria-hidden
+      />
+      <span className={cx("dark:hidden", !showLabel && "sr-only")}>
+        {toDarkLabel}
+      </span>
+      <span className={cx("hidden dark:inline", !showLabel && "dark:sr-only")}>
+        {toLightLabel}
+      </span>
     </ClayButton>
-  )
+  );
 }

@@ -1,0 +1,749 @@
+{
+  "updated": "2026-10-18",
+  "colors": [
+    {
+      "id": "n-1",
+      "hex": "#FCFAF6",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 1"
+      }
+    },
+    {
+      "id": "n-2",
+      "hex": "#F7F2E8",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 2"
+      }
+    },
+    {
+      "id": "n-3",
+      "hex": "#F0E8DC",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 3"
+      }
+    },
+    {
+      "id": "n-4",
+      "hex": "#E9E0D1",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 4"
+      }
+    },
+    {
+      "id": "n-5",
+      "hex": "#E1D7C6",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 5"
+      }
+    },
+    {
+      "id": "n-6",
+      "hex": "#D7CCBA",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 6"
+      }
+    },
+    {
+      "id": "n-7",
+      "hex": "#C6BBA8",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 7"
+      }
+    },
+    {
+      "id": "n-8",
+      "hex": "#ADA18E",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 8"
+      }
+    },
+    {
+      "id": "n-9",
+      "hex": "#897F6E",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 9"
+      }
+    },
+    {
+      "id": "n-10",
+      "hex": "#786F5F",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 10"
+      }
+    },
+    {
+      "id": "n-11",
+      "hex": "#60584C",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 11"
+      }
+    },
+    {
+      "id": "n-12",
+      "hex": "#27221A",
+      "group": "scale-neutral",
+      "name": {
+        "en": "Warm paper 12"
+      }
+    },
+    {
+      "id": "n-dark-1",
+      "hex": "#13110C",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 1"
+      }
+    },
+    {
+      "id": "n-dark-2",
+      "hex": "#1A1712",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 2"
+      }
+    },
+    {
+      "id": "n-dark-3",
+      "hex": "#231F18",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 3"
+      }
+    },
+    {
+      "id": "n-dark-4",
+      "hex": "#2A251E",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 4"
+      }
+    },
+    {
+      "id": "n-dark-5",
+      "hex": "#322D24",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 5"
+      }
+    },
+    {
+      "id": "n-dark-6",
+      "hex": "#3B362D",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 6"
+      }
+    },
+    {
+      "id": "n-dark-7",
+      "hex": "#4C453B",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 7"
+      }
+    },
+    {
+      "id": "n-dark-8",
+      "hex": "#655E52",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 8"
+      }
+    },
+    {
+      "id": "n-dark-9",
+      "hex": "#847C6F",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 9"
+      }
+    },
+    {
+      "id": "n-dark-10",
+      "hex": "#968E80",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 10"
+      }
+    },
+    {
+      "id": "n-dark-11",
+      "hex": "#C9C1B4",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 11"
+      }
+    },
+    {
+      "id": "n-dark-12",
+      "hex": "#F4EFE7",
+      "group": "scale-neutral-dark",
+      "name": {
+        "en": "Warm char 12"
+      }
+    },
+    {
+      "id": "stone-1",
+      "hex": "#FEFEFC",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 1"
+      }
+    },
+    {
+      "id": "stone-2",
+      "hex": "#FAF9F6",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 2"
+      }
+    },
+    {
+      "id": "stone-3",
+      "hex": "#F3F2EE",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 3"
+      }
+    },
+    {
+      "id": "stone-4",
+      "hex": "#EEECE7",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 4"
+      }
+    },
+    {
+      "id": "stone-5",
+      "hex": "#E7E4DE",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 5"
+      }
+    },
+    {
+      "id": "stone-6",
+      "hex": "#E2DFD8",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 6"
+      }
+    },
+    {
+      "id": "stone-7",
+      "hex": "#D3CFC6",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 7"
+      }
+    },
+    {
+      "id": "stone-8",
+      "hex": "#B9B4A9",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 8"
+      }
+    },
+    {
+      "id": "stone-9",
+      "hex": "#8E897E",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 9"
+      }
+    },
+    {
+      "id": "stone-10",
+      "hex": "#827D72",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 10"
+      }
+    },
+    {
+      "id": "stone-11",
+      "hex": "#5E5A51",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 11"
+      }
+    },
+    {
+      "id": "stone-12",
+      "hex": "#1E1C17",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 12"
+      }
+    },
+    {
+      "id": "stone-dark-1",
+      "hex": "#121210",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 1"
+      }
+    },
+    {
+      "id": "stone-dark-2",
+      "hex": "#181815",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 2"
+      }
+    },
+    {
+      "id": "stone-dark-3",
+      "hex": "#1C1B18",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 3"
+      }
+    },
+    {
+      "id": "stone-dark-4",
+      "hex": "#22211D",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 4"
+      }
+    },
+    {
+      "id": "stone-dark-5",
+      "hex": "#282723",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 5"
+      }
+    },
+    {
+      "id": "stone-dark-6",
+      "hex": "#302E2A",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 6"
+      }
+    },
+    {
+      "id": "stone-dark-7",
+      "hex": "#3A3833",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 7"
+      }
+    },
+    {
+      "id": "stone-dark-8",
+      "hex": "#4E4B45",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 8"
+      }
+    },
+    {
+      "id": "stone-dark-9",
+      "hex": "#75716A",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 9"
+      }
+    },
+    {
+      "id": "stone-dark-10",
+      "hex": "#85817A",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 10"
+      }
+    },
+    {
+      "id": "stone-dark-11",
+      "hex": "#ADA99F",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 11"
+      }
+    },
+    {
+      "id": "stone-dark-12",
+      "hex": "#EEEDE8",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 12"
+      }
+    },
+    {
+      "id": "leaf-1",
+      "hex": "#F9FDF3",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 1"
+      }
+    },
+    {
+      "id": "leaf-2",
+      "hex": "#F2FAE5",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 2"
+      }
+    },
+    {
+      "id": "leaf-3",
+      "hex": "#E5F5CD",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 3"
+      }
+    },
+    {
+      "id": "leaf-4",
+      "hex": "#D8F0B6",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 4"
+      }
+    },
+    {
+      "id": "leaf-5",
+      "hex": "#CAE9A0",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 5"
+      }
+    },
+    {
+      "id": "leaf-6",
+      "hex": "#BADF8A",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 6"
+      }
+    },
+    {
+      "id": "leaf-7",
+      "hex": "#A4D26C",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 7"
+      }
+    },
+    {
+      "id": "leaf-8",
+      "hex": "#8AC048",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 8"
+      }
+    },
+    {
+      "id": "leaf-9",
+      "hex": "#80BF31",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 9"
+      }
+    },
+    {
+      "id": "leaf-10",
+      "hex": "#73B01F",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 10"
+      }
+    },
+    {
+      "id": "leaf-11",
+      "hex": "#43721D",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 11"
+      }
+    },
+    {
+      "id": "leaf-12",
+      "hex": "#1D370F",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf 12"
+      }
+    },
+    {
+      "id": "leaf-button",
+      "hex": "#65A01E",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf button"
+      }
+    },
+    {
+      "id": "leaf-button-hover",
+      "hex": "#5A9419",
+      "group": "scale-leaf",
+      "name": {
+        "en": "Leaf button hover"
+      }
+    },
+    {
+      "id": "leaf-dark-1",
+      "hex": "#0F130C",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 1"
+      }
+    },
+    {
+      "id": "leaf-dark-2",
+      "hex": "#141A0D",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 2"
+      }
+    },
+    {
+      "id": "leaf-dark-3",
+      "hex": "#1A260E",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 3"
+      }
+    },
+    {
+      "id": "leaf-dark-4",
+      "hex": "#20310F",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 4"
+      }
+    },
+    {
+      "id": "leaf-dark-5",
+      "hex": "#273D10",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 5"
+      }
+    },
+    {
+      "id": "leaf-dark-6",
+      "hex": "#304B10",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 6"
+      }
+    },
+    {
+      "id": "leaf-dark-7",
+      "hex": "#3C5E11",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 7"
+      }
+    },
+    {
+      "id": "leaf-dark-8",
+      "hex": "#4C7810",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 8"
+      }
+    },
+    {
+      "id": "leaf-dark-9",
+      "hex": "#80BF31",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 9"
+      }
+    },
+    {
+      "id": "leaf-dark-10",
+      "hex": "#91CB47",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 10"
+      }
+    },
+    {
+      "id": "leaf-dark-11",
+      "hex": "#B0DC75",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 11"
+      }
+    },
+    {
+      "id": "leaf-dark-12",
+      "hex": "#E2F3C7",
+      "group": "scale-leaf-dark",
+      "name": {
+        "en": "Leaf dark 12"
+      }
+    },
+    {
+      "id": "cream",
+      "hex": "#F6F1E7",
+      "group": "neutral",
+      "name": {
+        "en": "Cream"
+      }
+    },
+    {
+      "id": "line",
+      "hex": "#E2D6C2",
+      "group": "neutral",
+      "name": {
+        "en": "Plate line"
+      }
+    },
+    {
+      "id": "ink",
+      "hex": "#1E2A44",
+      "group": "neutral",
+      "name": {
+        "en": "Ink"
+      }
+    },
+    {
+      "id": "sage",
+      "hex": "#7FB685",
+      "group": "personal",
+      "name": {
+        "en": "Sage"
+      }
+    },
+    {
+      "id": "sage-deep",
+      "hex": "#5E9466",
+      "group": "personal",
+      "name": {
+        "en": "Deep sage"
+      }
+    },
+    {
+      "id": "title-green",
+      "hex": "#4E9A5C",
+      "group": "personal",
+      "name": {
+        "en": "Title green"
+      }
+    },
+    {
+      "id": "teal",
+      "hex": "#2BA5A0",
+      "group": "personal",
+      "name": {
+        "en": "Teal"
+      }
+    },
+    {
+      "id": "butter",
+      "hex": "#F7E3A1",
+      "group": "personal",
+      "name": {
+        "en": "Butter"
+      }
+    },
+    {
+      "id": "lantern",
+      "hex": "#F7C948",
+      "group": "personal",
+      "name": {
+        "en": "Lantern"
+      }
+    },
+    {
+      "id": "blue",
+      "hex": "#3F8FC4",
+      "group": "crew",
+      "name": {
+        "en": "Crew blue"
+      }
+    },
+    {
+      "id": "blue-deep",
+      "hex": "#29658E",
+      "group": "crew",
+      "name": {
+        "en": "Deep crew blue"
+      }
+    },
+    {
+      "id": "amber",
+      "hex": "#F2B35E",
+      "group": "crew",
+      "name": {
+        "en": "Crew amber"
+      }
+    },
+    {
+      "id": "amber-deep",
+      "hex": "#C98A35",
+      "group": "crew",
+      "name": {
+        "en": "Deep crew amber"
+      }
+    },
+    {
+      "id": "purple",
+      "hex": "#8571B3",
+      "group": "crew",
+      "name": {
+        "en": "Prop purple"
+      }
+    },
+    {
+      "id": "yellow",
+      "hex": "#F2C53D",
+      "group": "crew",
+      "name": {
+        "en": "Prop yellow"
+      }
+    },
+    {
+      "id": "danger",
+      "hex": "#B8432F",
+      "group": "support",
+      "name": {
+        "en": "Danger"
+      }
+    },
+    {
+      "id": "danger-light",
+      "hex": "#F08A75",
+      "group": "support",
+      "name": {
+        "en": "Light danger"
+      }
+    },
+    {
+      "id": "art-backdrop",
+      "hex": "#E4DAC8",
+      "group": "support",
+      "name": {
+        "en": "Art backdrop"
+      }
+    },
+    {
+      "id": "shadow-warm-dark",
+      "hex": "#080705",
+      "group": "support",
+      "name": {
+        "en": "Warm dark shadow"
+      }
+    }
+  ]
+}

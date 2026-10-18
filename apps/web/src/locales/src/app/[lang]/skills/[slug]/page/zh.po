@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,99 +14,59 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:51
-#~ msgid "common.no"
-#~ msgstr "无"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:116
-#~ msgid "skillDetail.package.title"
-#~ msgstr "包结构"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
-#~ msgid "skillDetail.package.references"
-#~ msgstr "参考文档：{0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:123
-#~ msgid "skillDetail.package.src"
-#~ msgstr "源码：{0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:47
-#~ msgid "common.yes"
-#~ msgstr "有"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:118
-#~ msgid "skillDetail.badge.author"
-#~ msgstr "作者 {0}"
-
-#. js-lingui-explicit-id
-#. placeholder {0}: skill.metadata.author
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:196
-msgid "skillDetail.meta.author"
-msgstr "{0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:133
-msgid "skillDetail.cta.back"
-msgstr "返回技能列表"
-
-#. js-lingui-explicit-id
 #: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:256
-msgid "skillDetail.complexity.basic"
-msgstr "基础"
+msgid "skillDetail.install.heading"
+msgstr "装进你的 agent"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:244
-msgid "skillDetail.complexity.title"
-msgstr "复杂度"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:140
+msgid "skillDetail.cta.back"
+msgstr "全部技能"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:317
-msgid "skillDetail.docs.title"
-msgstr "文档"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:248
-msgid "skillDetail.complexity.fullToolkit"
-msgstr "完整工具集"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:226
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:100
 msgid "skillDetail.install.title"
 msgstr "安装"
 
 #. js-lingui-explicit-id
-#. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:207
-msgid "skillDetail.updatedAt"
-msgstr "最后更新：{0}"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:49
-msgid "skillDetail.meta.notFoundTitle"
-msgstr "未找到技能"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:292
-msgid "skillDetail.source.title"
-msgstr "源码"
-
-#. js-lingui-explicit-id
 #: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:253
-msgid "skillDetail.complexity.standard"
-msgstr "标准"
+msgid "skillDetail.install.kicker"
+msgstr "安装"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:267
-msgid "skillDetail.tools.title"
-msgstr "使用工具"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:330
+msgid "skillDetail.toc.title"
+msgstr "本页目录"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:304
+msgid "skillDetail.docs.title"
+msgstr "技能说明"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:48
+msgid "skillDetail.meta.notFoundTitle"
+msgstr "没找到这个技能"
+
+#. js-lingui-explicit-id
+#. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:226
+msgid "skillDetail.updatedAt"
+msgstr "更新于 <0>{0}</0>"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.version
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:159
-msgid "skillDetail.badge.version"
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:215
+msgid "skillDetail.version"
 msgstr "版本 {0}"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:241
+msgid "skillDetail.source"
+msgstr "在 GitHub 查看源码"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:105
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:270
+msgid "skillDetail.useCases.title"
+msgstr "什么时候用它"

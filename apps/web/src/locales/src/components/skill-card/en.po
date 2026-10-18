@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 12:28+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:30
-msgid "skillCard.references.no"
-msgstr "references: no"
+#: ../src/components/skill-card.tsx:64
+#~ msgid "skillCard.copy.aria"
+#~ msgstr "Copy install command for {skillName}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:26
-msgid "skillCard.references.yes"
-msgstr "references: yes"
+#: ../src/components/skill-card.tsx:65
+msgid "skillCard.copy.ariaLabel"
+msgstr "Copy install command for {displayName}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:39
-msgid "skillCard.src.no"
-msgstr "src: no"
+#: ../src/components/skill-card.tsx:28
+msgid "skillCard.featured"
+msgstr "Featured"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:35
-msgid "skillCard.src.yes"
-msgstr "src: yes"
+#: ../src/components/skill-card.tsx:50
+msgid "skillCard.tags.aria"
+msgstr "Tags"

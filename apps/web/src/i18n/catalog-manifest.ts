@@ -2,59 +2,93 @@
 import type { Messages } from "@lingui/core";
 
 type CatalogModule = {
-	default?: Messages | { messages?: Messages };
-	messages?: Messages;
+  default?: Messages | { messages?: Messages };
+  messages?: Messages;
 };
 export type CatalogLoader = () => Promise<CatalogModule>;
 export type CatalogManifest = Record<string, Record<string, CatalogLoader>>;
 
 export const catalogManifest: CatalogManifest = {
-	"src/app/[lang]/layout": {
-		en: () => import("../locales/src/app/[lang]/layout/en.mjs"),
-		zh: () => import("../locales/src/app/[lang]/layout/zh.mjs"),
-	},
-	"src/app/[lang]/not-found": {
-		en: () => import("../locales/src/app/[lang]/not-found/en.mjs"),
-		zh: () => import("../locales/src/app/[lang]/not-found/zh.mjs"),
-	},
-	"src/app/[lang]/page": {
-		en: () => import("../locales/src/app/[lang]/page/en.mjs"),
-		zh: () => import("../locales/src/app/[lang]/page/zh.mjs"),
-	},
-	"src/app/[lang]/skills/[slug]/page": {
-		en: () => import("../locales/src/app/[lang]/skills/[slug]/page/en.mjs"),
-		zh: () => import("../locales/src/app/[lang]/skills/[slug]/page/zh.mjs"),
-	},
-	"src/components/copy-install-command": {
-		en: () => import("../locales/src/components/copy-install-command/en.mjs"),
-		zh: () => import("../locales/src/components/copy-install-command/zh.mjs"),
-	},
-	"src/components/layout/mobile-header-menu": {
-		en: () => import("../locales/src/components/layout/mobile-header-menu/en.mjs"),
-		zh: () => import("../locales/src/components/layout/mobile-header-menu/zh.mjs"),
-	},
-	"src/components/layout/site-brand": {
-		en: () => import("../locales/src/components/layout/site-brand/en.mjs"),
-		zh: () => import("../locales/src/components/layout/site-brand/zh.mjs"),
-	},
-	"src/components/layout/site-footer": {
-		en: () => import("../locales/src/components/layout/site-footer/en.mjs"),
-		zh: () => import("../locales/src/components/layout/site-footer/zh.mjs"),
-	},
-	"src/components/layout/site-header": {
-		en: () => import("../locales/src/components/layout/site-header/en.mjs"),
-		zh: () => import("../locales/src/components/layout/site-header/zh.mjs"),
-	},
-	"src/components/layout/theme-toggle": {
-		en: () => import("../locales/src/components/layout/theme-toggle/en.mjs"),
-		zh: () => import("../locales/src/components/layout/theme-toggle/zh.mjs"),
-	},
-	"src/components/skill-card": {
-		en: () => import("../locales/src/components/skill-card/en.mjs"),
-		zh: () => import("../locales/src/components/skill-card/zh.mjs"),
-	},
-	"src/components/skills-library-section": {
-		en: () => import("../locales/src/components/skills-library-section/en.mjs"),
-		zh: () => import("../locales/src/components/skills-library-section/zh.mjs"),
-	},
+  "src/app/[lang]/layout": {
+    en: () => import("../locales/src/app/[lang]/layout/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/layout/zh.mjs"),
+  },
+  "src/app/[lang]/not-found": {
+    en: () => import("../locales/src/app/[lang]/not-found/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/not-found/zh.mjs"),
+  },
+  "src/app/[lang]/page": {
+    en: () => import("../locales/src/app/[lang]/page/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/page/zh.mjs"),
+  },
+  "src/app/[lang]/skills/[slug]/page": {
+    en: () => import("../locales/src/app/[lang]/skills/[slug]/page/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/skills/[slug]/page/zh.mjs"),
+  },
+  "src/app/[lang]/skills/page": {
+    en: () => import("../locales/src/app/[lang]/skills/page/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/skills/page/zh.mjs"),
+  },
+  "src/components/command-block": {
+    en: () => import("../locales/src/components/command-block/en.mjs"),
+    zh: () => import("../locales/src/components/command-block/zh.mjs"),
+  },
+  "src/components/copy-install-command": {
+    en: () => import("../locales/src/components/copy-install-command/en.mjs"),
+    zh: () => import("../locales/src/components/copy-install-command/zh.mjs"),
+  },
+  "src/components/featured-skill-card": {
+    en: () => import("../locales/src/components/featured-skill-card/en.mjs"),
+    zh: () => import("../locales/src/components/featured-skill-card/zh.mjs"),
+  },
+  "src/components/host-install-tabs": {
+    en: () => import("../locales/src/components/host-install-tabs/en.mjs"),
+    zh: () => import("../locales/src/components/host-install-tabs/zh.mjs"),
+  },
+  "src/components/layout/header-search": {
+    en: () => import("../locales/src/components/layout/header-search/en.mjs"),
+    zh: () => import("../locales/src/components/layout/header-search/zh.mjs"),
+  },
+  "src/components/layout/locale-switcher": {
+    en: () => import("../locales/src/components/layout/locale-switcher/en.mjs"),
+    zh: () => import("../locales/src/components/layout/locale-switcher/zh.mjs"),
+  },
+  "src/components/layout/mobile-header-menu": {
+    en: () =>
+      import("../locales/src/components/layout/mobile-header-menu/en.mjs"),
+    zh: () =>
+      import("../locales/src/components/layout/mobile-header-menu/zh.mjs"),
+  },
+  "src/components/layout/site-brand": {
+    en: () => import("../locales/src/components/layout/site-brand/en.mjs"),
+    zh: () => import("../locales/src/components/layout/site-brand/zh.mjs"),
+  },
+  "src/components/layout/site-footer": {
+    en: () => import("../locales/src/components/layout/site-footer/en.mjs"),
+    zh: () => import("../locales/src/components/layout/site-footer/zh.mjs"),
+  },
+  "src/components/layout/site-header": {
+    en: () => import("../locales/src/components/layout/site-header/en.mjs"),
+    zh: () => import("../locales/src/components/layout/site-header/zh.mjs"),
+  },
+  "src/components/layout/site-nav-label": {
+    en: () => import("../locales/src/components/layout/site-nav-label/en.mjs"),
+    zh: () => import("../locales/src/components/layout/site-nav-label/zh.mjs"),
+  },
+  "src/components/layout/theme-toggle": {
+    en: () => import("../locales/src/components/layout/theme-toggle/en.mjs"),
+    zh: () => import("../locales/src/components/layout/theme-toggle/zh.mjs"),
+  },
+  "src/components/skill-card": {
+    en: () => import("../locales/src/components/skill-card/en.mjs"),
+    zh: () => import("../locales/src/components/skill-card/zh.mjs"),
+  },
+  "src/components/skills-browser": {
+    en: () => import("../locales/src/components/skills-browser/en.mjs"),
+    zh: () => import("../locales/src/components/skills-browser/zh.mjs"),
+  },
+  "src/components/skills-library-section": {
+    en: () => import("../locales/src/components/skills-library-section/en.mjs"),
+    zh: () => import("../locales/src/components/skills-library-section/zh.mjs"),
+  },
 };

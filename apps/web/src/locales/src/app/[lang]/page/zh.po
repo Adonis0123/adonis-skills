@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,61 +14,91 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:103
-#~ msgid "home.library.kicker"
-#~ msgstr "技能库"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:105
-#~ msgid "home.library.title"
-#~ msgstr "技能库"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:88
-msgid "home.install.step1"
-msgstr "1. 选择一个技能标识符。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:89
-msgid "home.install.step2"
-msgstr "2. 运行安装命令。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:90
-msgid "home.install.step3"
-msgstr "3. 在您的 agent 工作流中使用该技能。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:38
-msgid "home.hero.description"
-msgstr "浏览实用技能，选择标识符，一条命令即可安装。每个技能都可在真实工作流中复用。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:81
-msgid "home.install.title"
-msgstr "安装方式"
+#: ../../src/app/%5Blang%5D/page.tsx:121
+#~ msgid "home.install.copy.aria"
+#~ msgstr "复制 {host} 安装命令"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:34
-msgid "home.hero.title"
-msgstr "为您的 AI agent 安装生产级技能。"
+#~ msgid "home.hero.description"
+#~ msgstr "我是尼卡，平时用 AI 给自己做小工具，像提着一盏灯随身带着。这里是我写代码时会用到的 {skillsCount} 个技能。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:66
-msgid "home.cta.github"
-msgstr "打开 GitHub"
+#: ../../src/app/%5Blang%5D/page.tsx:118
+#~ msgid "home.install.scope.one"
+#~ msgstr "装单个技能，把 <slug> 换成技能名。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:50
-msgid "home.badge.repo"
-msgstr "仓库：{skillsRepo}"
+#: ../../src/app/%5Blang%5D/page.tsx:117
+#~ msgid "home.install.scope.all"
+#~ msgstr "一次装上全部技能。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:53
-msgid "home.badge.skills"
-msgstr "技能数：{skillsCount}"
+#: ../../src/app/%5Blang%5D/page.tsx:177
+#~ msgid "home.install.intro"
+#~ msgstr "每个技能都能装进 Claude Code、Codex、Cursor 和 Hermes Agent，具体命令在技能详情页里。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:174
+#~ msgid "home.install.title"
+#~ msgstr "装进你的 agent"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:73
-msgid "home.cta.example"
-msgstr "查看示例技能"
+#~ msgid "home.hero.title"
+#~ msgstr "我给自己做的 agent 小技能，每天都在用。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:67
+msgid "home.hero.eyebrow"
+msgstr "{skillsCount} 个技能 · {updatedMonth}更新"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:162
+msgid "home.hero.bubble"
+msgstr "<0>你好，我是尼卡。</0>这里的每个技能，我和琪琪都先在自己的仓库里用过。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:96
+msgid "home.cta.browse"
+msgstr "浏览技能"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:191
+msgid "home.install.lede"
+msgstr "每个技能都能在 Claude Code、Codex、Cursor 和 Hermes Agent 里用。可以只装一个，也可以整套装上。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:84
+msgid "home.hero.lede"
+msgstr "我是尼卡，用 AI 做些小工具，像提灯一样随身带着。按你要做的事挑一个，复制一行命令，就能在你的 agent 里用。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:185
+msgid "home.install.kicker"
+msgstr "安装"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:149
+msgid "home.hero.art.alt"
+msgstr "穿绿色兜帽外套、提着灯的尼卡，和戴巫师帽的琪琪走在一起"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:188
+msgid "home.install.headline"
+msgstr "一行命令，哪个 agent 都能装。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:77
+msgid "home.hero.headline"
+msgstr "这些 agent 小技能，我<0>每天都在用。</0>"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:115
+msgid "home.cta.github"
+msgstr "去 GitHub 点个 Star"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:126
+msgid "home.hero.hostsLabel"
+msgstr "适用于"

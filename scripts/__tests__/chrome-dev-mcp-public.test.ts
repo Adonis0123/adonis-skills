@@ -134,22 +134,34 @@ test("chrome readiness-plus-task reuses one private page discovery result", asyn
     await readFile(path.join(skillDir, "evals/trigger-eval.json"), "utf8"),
   ) as Array<{ query: string; should_trigger: boolean }>;
 
-  assert.match(skill, /readiness-plus-task fast path/);
-  assert.match(skill, /scripts\/uxc-readiness\.zsh --private-result/);
+  // A page task proves the connection and resolves its pageId from one private list_pages result.
   assert.match(
     skill,
-    /reuse that same current-turn result as both transport proof and fresh numeric `pageId` resolution/,
+    /\| Any page task\s*\| `zsh scripts\/uxc-readiness\.zsh --private-result` \| Keep the `list_pages` JSON private and use it to pick the numeric `pageId` \|/,
   );
-  assert.match(skill, /Do not run the payload-discarding mode first/);
   assert.match(
     skill,
-    /successful `list_pages` proves readiness, not the requested page operation/,
+    /A page task runs only the private mode, once; do not run the sanitized mode first/,
   );
-  assert.match(skill, /no recovery, navigation, or target ambiguity/);
   assert.match(
     skill,
-    /retry exactly once with the same path: `(?:zsh )?scripts\/uxc-readiness\.zsh` for readiness-only, or `(?:zsh )?scripts\/uxc-readiness\.zsh --private-result`/,
+    /Take `pageId` from this turn's `list_pages`, never from an earlier turn/,
   );
+  assert.match(
+    skill,
+    /re-run `list_pages` and match by URL before each batch of writes, after recovery, and after any navigation/,
+  );
+  // Readiness is not task acceptance.
+  assert.match(
+    skill,
+    /`CHROME_DEV_MCP_READY` and `list_pages` prove the connection only\. Claim a task `VERIFIED` only after the requested/,
+  );
+  // One recovery, then one retry of the same readiness command.
+  assert.match(
+    skill,
+    /run `zsh scripts\/ensure-connection\.zsh --recover` once, then repeat the same readiness command once/,
+  );
+  assert.match(skill, /Never loop on retries/);
   assert.match(
     uxcFacade,
     /installation acceptance, not the readiness-plus-task fast path/,
@@ -171,7 +183,13 @@ test("chrome readiness-plus-task reuses one private page discovery result", asyn
   );
 });
 
-test("Chrome private-result readiness keeps one managed result despite poisoned PATH", async () => {
+test("Chrome private-result readiness keeps one managed result despite poisoned PATH", async (t) => {
+  // The owned-UXC gate pins macOS release assets and fails closed (exit 69) elsewhere.
+  if (process.platform !== "darwin") {
+    t.skip("owned UXC binaries are pinned to macOS release assets");
+    return;
+  }
+
   const fixtureDir = await mkdtemp(
     path.join(os.tmpdir(), "chrome-dev-mcp-private-result-"),
   );
@@ -318,30 +336,34 @@ test("figma read-only fast path preserves identity gates and resolves Cursor CLI
     await readFile(path.join(figmaSkillDir, "evals/trigger-eval.json"), "utf8"),
   ) as Array<{ query: string; should_trigger: boolean }>;
 
+  // Current-account single-host reads skip whoami; every identity-sensitive path keeps it.
   assert.match(
     skill,
-    /single-host read-only file or node task where the user accepts the current account/,
+    /\| Figma URL or `fileKey`, current account, one host, read-only\s*\| First requested read \(below\); no `whoami`\s*\|/,
   );
   assert.match(
     skill,
-    /readiness-only, a named account, an account switch, recovery, a write, or multi-host acceptance/,
-  );
-  assert.match(skill, /do not add a separate `whoami` call/);
-  assert.match(
-    skill,
-    /For this multi-host table, use `WHOAMI` in the Proof call column for every host/,
+    /\| Bare `\/figma-mcp` \(readiness only\)\s*\| One `whoami`/,
   );
   assert.match(
     skill,
-    /Proof call: REQUESTED_READ` and `Account: NOT_READ` outside this table/,
+    /\| Named account, account switch, recovery, write, or multi-host acceptance \| One `whoami`/,
+  );
+  assert.match(skill, /so a separate `whoami` only adds a round trip/);
+  assert.match(skill, /Do not build that table for the single-host fast path/);
+  assert.match(
+    hostVerification,
+    /Use `WHOAMI` in the Proof call column for every host/,
+  );
+  assert.match(
+    skill,
+    /report `Proof call: REQUESTED_READ` and `Account: NOT_READ`/,
   );
 
   assert.match(hostVerification, /command -v cursor-agent/);
   assert.match(hostVerification, /command -v cursor-cli/);
   const cursorSection =
-    hostVerification
-      .split("## Cursor")[1]
-      ?.split("## Run the real acceptance")[0] ?? "";
+    hostVerification.split("## Cursor")[1]?.split(/\n## /)[0] ?? "";
   assert.match(cursorSection, /```zsh/);
   assert.doesNotMatch(cursorSection, /```bash/);
   assert.match(hostVerification, /read-only fast path does not use it/);

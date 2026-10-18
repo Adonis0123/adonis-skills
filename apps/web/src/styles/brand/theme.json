@@ -1,0 +1,151 @@
+{
+  "updated": "2026-10-18",
+  "modes": {
+    "light": {
+      "background": "{stone-2}",
+      "foreground": "{stone-12}",
+      "card": "{stone-1}",
+      "card-foreground": "{stone-12}",
+      "popover": "{stone-1}",
+      "popover-foreground": "{stone-12}",
+      "primary": "{leaf-button}",
+      "primary-foreground": "{stone-1}",
+      "primary-hover": "{leaf-button-hover}",
+      "secondary": "{stone-4}",
+      "secondary-foreground": "{stone-12}",
+      "muted": "{stone-3}",
+      "muted-foreground": "{stone-11}",
+      "accent": "{leaf-3}",
+      "accent-foreground": "{leaf-12}",
+      "destructive": "{danger}",
+      "destructive-foreground": "{stone-1}",
+      "border": "{stone-6}",
+      "input": "{stone-7}",
+      "ring": "{leaf-11}",
+      "ring-halo": "{leaf-6}",
+      "link": "{leaf-11}",
+      "overlay": {
+        "mix": "stone-12",
+        "pct": 30
+      },
+      "hero-art-bg": "@plate",
+      "attribution": "{sage}",
+      "chart-1": "{blue}",
+      "chart-2": "{amber}",
+      "chart-3": "{sage}",
+      "chart-4": "{purple}",
+      "chart-5": "{teal}",
+      "shadow-tint": "{stone-12}",
+      "highlight-tint": "{stone-1}",
+      "plate": "{n-2}",
+      "plate-border": "{n-6}",
+      "tint": "{leaf-2}",
+      "tint-border": "{leaf-6}"
+    },
+    "dark": {
+      "background": "{stone-dark-1}",
+      "foreground": "{stone-dark-12}",
+      "card": "{stone-dark-2}",
+      "card-foreground": "{stone-dark-12}",
+      "popover": "{stone-dark-3}",
+      "popover-foreground": "{stone-dark-12}",
+      "primary": "{leaf-button}",
+      "primary-foreground": "{stone-1}",
+      "primary-hover": "{leaf-button-hover}",
+      "secondary": "{stone-dark-4}",
+      "secondary-foreground": "{stone-dark-12}",
+      "muted": "{stone-dark-3}",
+      "muted-foreground": "{stone-dark-11}",
+      "accent": "{leaf-dark-3}",
+      "accent-foreground": "{leaf-dark-11}",
+      "destructive": "{danger-light}",
+      "destructive-foreground": "{stone-dark-1}",
+      "border": "{stone-dark-6}",
+      "input": "{stone-dark-7}",
+      "ring": "{leaf-dark-9}",
+      "ring-halo": "{leaf-dark-6}",
+      "link": "{leaf-dark-11}",
+      "overlay": {
+        "mix": "shadow-warm-dark",
+        "pct": 60
+      },
+      "hero-art-bg": "@plate",
+      "shadow-tint": "{shadow-warm-dark}",
+      "highlight-tint": "{stone-dark-12}",
+      "plate": "{n-dark-2}",
+      "plate-border": "{n-dark-6}",
+      "tint": "{leaf-dark-2}",
+      "tint-border": "{leaf-dark-6}"
+    }
+  },
+  "contrast": {
+    "text": 4.5,
+    "pairs": [
+      [
+        "foreground",
+        "background"
+      ],
+      [
+        "foreground",
+        "card"
+      ],
+      [
+        "foreground",
+        "popover"
+      ],
+      [
+        "foreground",
+        "muted"
+      ],
+      [
+        "muted-foreground",
+        "background"
+      ],
+      [
+        "muted-foreground",
+        "card"
+      ],
+      [
+        "muted-foreground",
+        "muted"
+      ],
+      [
+        "primary-foreground",
+        "primary",
+        3
+      ],
+      [
+        "primary-foreground",
+        "primary-hover",
+        3
+      ],
+      [
+        "secondary-foreground",
+        "secondary"
+      ],
+      [
+        "accent-foreground",
+        "accent"
+      ],
+      [
+        "destructive-foreground",
+        "destructive"
+      ],
+      [
+        "link",
+        "background"
+      ],
+      [
+        "link",
+        "card"
+      ],
+      [
+        "link",
+        "muted"
+      ]
+    ],
+    "exceptions": {
+      "primary-foreground/primary": "主按钮用白字配稍深叶绿 #65A01E（3.18:1）、悬停 #5A9419（3.69:1）。用户看过 A 亮叶绿墨色字 / B visualgpt #74B425 白字（2.5:1）/ C / D #4A8512 白字（4.5:1）四版对比后选 C：墨色字发闷，D 太深不新鲜。按钮字 600 字重以上，按 WCAG 非文字与粗体 3:1 下限放行；其他文字仍要 4.5:1。"
+    }
+  }
+}

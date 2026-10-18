@@ -1,6 +1,6 @@
 msgid ""
 msgstr ""
-"POT-Creation-Date: 2026-02-20 11:55+0800\n"
+"POT-Creation-Date: 2026-10-18 10:06+0800\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -14,21 +14,21 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:22
+#: ../../src/app/%5Blang%5D/not-found.tsx:38
 msgid "notFound.cta.home"
-msgstr "Back to Home"
+msgstr "Back to home"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:15
-msgid "notFound.description"
-msgstr "Check the slug and browse available skills from the library."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/not-found.tsx:13
-msgid "notFound.title"
-msgstr "Skill Not Found"
+#: ../../src/app/%5Blang%5D/not-found.tsx:47
+msgid "notFound.cta.skills"
+msgstr "Browse all skills"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/not-found.tsx:28
-msgid "notFound.cta.example"
-msgstr "View Example Skill"
+msgid "notFound.description"
+msgstr "Nothing lives at this address. It may have been renamed or removed."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/not-found.tsx:25
+msgid "notFound.title"
+msgstr "Page not found"

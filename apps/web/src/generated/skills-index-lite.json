@@ -12,7 +12,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-16T09:09:12.000Z"
+    "updatedAt": "2026-10-16T10:37:28.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Agent Dispatcher",
+        "zh": "多 Agent 调度"
+      },
+      "group": "delegate",
+      "tags": [
+        "agent-workflow",
+        "code-review"
+      ],
+      "summary": "Size a task from direct edit to parallel worktrees across installed AI CLIs and assign an independent reviewer.",
+      "summary_zh": "评估任务该单干还是分给多个 AI CLI 并行，并安排独立复审与清理。",
+      "use_cases": [
+        "Split cross-package work with non-overlapping files across 2-3 worker worktrees.",
+        "Probe which AI CLIs and quota pools exist on your machine before delegating."
+      ],
+      "use_cases_zh": [
+        "把互不重叠的跨包改动拆给 2 到 3 个 worktree 并行处理。",
+        "派活前先探测本机有哪些可用 AI CLI 和独立配额池。"
+      ]
+    }
   },
   {
     "slug": "agent-symlink-init",
@@ -25,7 +46,28 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:25:30.000Z"
+    "updatedAt": "2026-09-14T13:25:30.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Agent Config Linker",
+        "zh": "Agent 配置软链"
+      },
+      "group": "tools",
+      "tags": [
+        "tool-setup",
+        "docs-and-ops"
+      ],
+      "summary": "Link .claude/skills to .agents/skills and AGENTS.md to CLAUDE.md while cleaning up old ruler or sync scripts.",
+      "summary_zh": "把 .claude/skills 软链到 .agents/skills，并清理旧的规则同步脚本。",
+      "use_cases": [
+        "Set up .agents/skills as the single source of truth in a repository.",
+        "Migrate a project away from .ruler directories or copy-based sync-llm-skills scripts."
+      ],
+      "use_cases_zh": [
+        "在新仓库里把 .agents/skills 设为唯一技能来源并建好软链。",
+        "清理旧项目的 .ruler 目录或复制式技能同步脚本。"
+      ]
+    }
   },
   {
     "slug": "agentic-review-handoff",
@@ -40,7 +82,29 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Auto Review Loop",
+        "zh": "自动审查循环"
+      },
+      "group": "review",
+      "tags": [
+        "code-review",
+        "agent-workflow",
+        "git"
+      ],
+      "summary": "Run an automated Git review-fix-re-review loop with a headless reviewer or consult another AI on a decision.",
+      "summary_zh": "启动带无头 Reviewer 的 Git 自动审查修复循环，或找另一个 AI 咨询决策。",
+      "use_cases": [
+        "Hand your current Git diff to a headless Claude, Codex, or Grok reviewer until it passes.",
+        "Validate pasted review feedback against the codebase before applying fixes."
+      ],
+      "use_cases_zh": [
+        "改完代码后直接调无头 Claude、Codex 或 Grok 反复审改直到通过。",
+        "收到别人的评审意见后，先核对代码真伪再决定怎么修。"
+      ]
+    }
   },
   {
     "slug": "architecture-hardening-loop",
@@ -54,7 +118,29 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Architecture Hardening",
+        "zh": "架构加固"
+      },
+      "group": "review",
+      "tags": [
+        "architecture",
+        "code-review",
+        "agent-workflow"
+      ],
+      "summary": "Scan a defined code scope, filter for real architecture harm, apply minimal fixes, and re-verify until clean.",
+      "summary_zh": "在指定代码范围内扫描、筛选真问题、最小修复并独立复核，直到没有值得修的架构项。",
+      "use_cases": [
+        "Clean up module boundaries in a specific package without triggering unbounded refactors.",
+        "Triage scanner candidates with a 5-point gate so speculative abstractions get rejected."
+      ],
+      "use_cases_zh": [
+        "在明确划定的模块内做架构加固，避免无边界的全仓重构。",
+        "用五项准入条件过滤扫描器报告，筛掉过度抽象和伪问题。"
+      ]
+    }
   },
   {
     "slug": "ardot-mcp",
@@ -69,7 +155,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-16T15:29:58.000Z"
+    "updatedAt": "2026-09-16T15:29:58.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Ardot Connector",
+        "zh": "Ardot 连接器"
+      },
+      "group": "tools",
+      "tags": [
+        "tool-setup",
+        "frontend"
+      ],
+      "summary": "Set up and run the ardot-mcp-cli UXC facade with OAuth binding to inspect Ardot design files from a JSON CLI.",
+      "summary_zh": "配置并调用基于 UXC 的 ardot-mcp-cli，通过固定 JSON CLI 读取 Ardot 设计稿。",
+      "use_cases": [
+        "Complete Ardot OAuth and verify readiness with a single /ardot-mcp command.",
+        "Read Ardot design state across agents using a pinned UXC 0.22.0 binary."
+      ],
+      "use_cases_zh": [
+        "用 /ardot-mcp 完成 OAuth 授权并做脱敏连通性检查。",
+        "通过固定版本的 ardot-mcp-cli 读取设计稿节点与编辑器状态。"
+      ]
+    }
   },
   {
     "slug": "branch-creator",
@@ -83,7 +190,27 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Branch Creator",
+        "zh": "建分支"
+      },
+      "group": "git",
+      "tags": [
+        "git"
+      ],
+      "summary": "Propose or create short feat/ and hotfix/ Git branches in two shell calls using existing project terms.",
+      "summary_zh": "复用项目已有词汇，快速命名或创建简短的 feat/ 与 hotfix/ 本地 Git 分支。",
+      "use_cases": [
+        "Create a 2-word feature or hotfix branch from the current HEAD without slow remote checks.",
+        "Get a branch name recommendation while keeping your working tree untouched."
+      ],
+      "use_cases_zh": [
+        "准备写新功能或修线上紧急问题前，快速切出简短的本地分支。",
+        "只想要个顺手的分支名建议，不改动当前工作区。"
+      ]
+    }
   },
   {
     "slug": "chrome-dev-mcp",
@@ -98,7 +225,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-01T11:30:46.000Z"
+    "updatedAt": "2026-10-18T11:15:26.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Chrome DevTools Bridge",
+        "zh": "Chrome 调试接入"
+      },
+      "group": "tools",
+      "tags": [
+        "tool-setup",
+        "frontend"
+      ],
+      "summary": "Collect DOM snapshots, Console logs, Network requests, and traces from a shared Chrome via chrome-dev-mcp-cli.",
+      "summary_zh": "通过共享的 chrome-dev-mcp-cli 采集指定 Chrome 的 DOM 快照、日志、网络请求与性能轨迹。",
+      "use_cases": [
+        "Inspect live Console errors and failed fetch requests on a local dev tab.",
+        "Share one managed Chrome DevTools session safely across multiple coding agents."
+      ],
+      "use_cases_zh": [
+        "在本地调试页面时抓取真实的 Console 报错、接口返回与 DOM 快照。",
+        "让多个 Agent 安全复用同一个受控 Chrome 会话做页面取证。"
+      ]
+    }
   },
   {
     "slug": "code-inspector-init",
@@ -111,7 +259,28 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:25:30.000Z"
+    "updatedAt": "2026-09-14T13:25:30.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Click-to-Source",
+        "zh": "点元素跳源码"
+      },
+      "group": "frontend",
+      "tags": [
+        "frontend",
+        "tool-setup"
+      ],
+      "summary": "Configure or fix code-inspector-plugin across frontend bundlers so clicking a DOM element opens its source.",
+      "summary_zh": "为前端项目接入或排查 code-inspector-plugin，实现点击页面 DOM 跳转到 IDE 源码。",
+      "use_cases": [
+        "Add click-to-source navigation to a Next.js, Vite, or Webpack project in dev mode.",
+        "Fix broken hotkeys or IDE jump paths when code-inspector-plugin fails to open files."
+      ],
+      "use_cases_zh": [
+        "给 Next.js、Vite 或 Webpack 开发环境配好点击元素跳源码功能。",
+        "排查快捷键没反应或点击页面跳不到 IDE 对应代码行的问题。"
+      ]
+    }
   },
   {
     "slug": "code-plugin-architecture",
@@ -125,7 +294,27 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:25:32.000Z"
+    "updatedAt": "2026-09-14T13:25:32.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Extension Point Design",
+        "zh": "扩展点设计"
+      },
+      "group": "review",
+      "tags": [
+        "architecture"
+      ],
+      "summary": "Design, review, or refactor extension points so adding or removing a variant stays within one clear boundary.",
+      "summary_zh": "设计、评审或重构扩展点，让增删一种业务变体不必到处散落改代码。",
+      "use_cases": [
+        "Decide whether a switch statement, typed map, or lifecycle-owning core fits your variants.",
+        "Refactor scattered variant branches into a single registry and contract."
+      ],
+      "use_cases_zh": [
+        "评估当前分支逻辑该保持现状、改用类型映射表，还是抽出带生命周期的 Core。",
+        "把散落在多处的同一种扩展改动收敛到清晰的契约和注册表里。"
+      ]
+    }
   },
   {
     "slug": "commit",
@@ -138,7 +327,27 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T03:58:34.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Commit Writer",
+        "zh": "写提交"
+      },
+      "group": "git",
+      "tags": [
+        "git"
+      ],
+      "summary": "Draft an emoji Conventional Commit message or create a focused local Git commit after checking for secrets.",
+      "summary_zh": "生成带 emoji 的 Conventional Commit 消息，或在检查敏感文件后创建聚焦的本地提交。",
+      "use_cases": [
+        "Commit only staged or task-related files while updating .gitignore for build noise.",
+        "Generate a read-only commit message without staging or committing anything."
+      ],
+      "use_cases_zh": [
+        "把刚改完的一组相关文件做成干净的本地提交，顺手拦住未忽略的缓存或密钥文件。",
+        "只让 AI 看 diff 写一条符合规范的提交信息，不执行实际提交。"
+      ]
+    }
   },
   {
     "slug": "commit-push",
@@ -151,7 +360,27 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-02T08:07:11.000Z"
+    "updatedAt": "2026-10-02T08:07:11.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Commit & Push",
+        "zh": "提交并推送"
+      },
+      "group": "git",
+      "tags": [
+        "git"
+      ],
+      "summary": "Create a verified local commit with an emoji Conventional Commit message and push the current branch safely.",
+      "summary_zh": "在完成本地验证与远端预检后，生成规范提交并安全推送到当前分支上游。",
+      "use_cases": [
+        "Run relevant checks, commit the scoped changes, and push to origin in one step.",
+        "Verify that the remote branch is no longer ahead after pushing."
+      ],
+      "use_cases_zh": [
+        "跑完必要检查后直接提交并 push 当前分支，一步完成远端交付。",
+        "遇到远端领先时自动做一次干净的 rebase 重试，并核对最终领先状态。"
+      ]
+    }
   },
   {
     "slug": "decision-first-technical-writing",
@@ -165,7 +394,28 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T13:25:28.000Z"
+    "updatedAt": "2026-09-14T13:25:28.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Decision-First Docs",
+        "zh": "结论先行文档"
+      },
+      "group": "docs",
+      "tags": [
+        "docs-and-ops",
+        "architecture"
+      ],
+      "summary": "Write or review technical design docs that lead with settled decisions and label open questions explicitly.",
+      "summary_zh": "撰写或审校结论先行的技术设计文档，把已定决策与待定提案明确分开。",
+      "use_cases": [
+        "Draft an architecture or API design doc where reviewers see core decisions first.",
+        "Audit a draft design doc for hidden assumptions or unverified ordering guarantees."
+      ],
+      "use_cases_zh": [
+        "写模块或 API 设计文档时，让评审人第一眼看清已拍板的结论与边界。",
+        "检查现有设计文档里有没有把未确认的猜测混写成既定事实。"
+      ]
+    }
   },
   {
     "slug": "desktop-agent-activity",
@@ -178,7 +428,28 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T16:23:48.000Z"
+    "updatedAt": "2026-09-23T16:23:48.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Agent Activity Check",
+        "zh": "Agent 活跃检查"
+      },
+      "group": "delegate",
+      "tags": [
+        "agent-workflow",
+        "docs-and-ops"
+      ],
+      "summary": "Check whether a desktop coding agent like Orca or Claude Code is actively working, idle, or stopped.",
+      "summary_zh": "通过进程 CPU、文件修改时间和终端状态，判断桌面端的 Claude Code 或 Orca 是否还在干活。",
+      "use_cases": [
+        "Tell if a long-running Claude Code session is still editing files or just sitting idle with MCP children.",
+        "Get a quick status table across all running agent TTYs without dumping raw command logs."
+      ],
+      "use_cases_zh": [
+        "挂着跑了很久的 Claude Code 没动静时，查清楚它是在干活还是闲着挂着。",
+        "同时开了多个终端窗口时，快速汇总每个实例的运行状态和判断依据。"
+      ]
+    }
   },
   {
     "slug": "dev-environment-roi-audit",
@@ -192,7 +463,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-02T08:30:06.000Z"
+    "updatedAt": "2026-10-02T08:30:06.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Agent Setup Audit",
+        "zh": "Agent 环境体检"
+      },
+      "group": "docs",
+      "tags": [
+        "docs-and-ops",
+        "tool-setup"
+      ],
+      "summary": "Audit your local agent setup with session logs and timing tests to decide which MCPs, skills, and hooks to keep.",
+      "summary_zh": "用真实会话日志和对照实验审计本地 Agent 环境，按投入产出比精简 MCP、技能与配置。",
+      "use_cases": [
+        "Measure context token tax and startup latency across your installed MCP servers and skills.",
+        "Find unused tools or contradictory CLAUDE.md rules over a 90-day session window."
+      ],
+      "use_cases_zh": [
+        "量化每个 MCP、Skill 和 Hook 占用的常驻 Token 与启动耗时。",
+        "盘点过去 90 天从没调用过的工具或互相冲突的指令文件，逐项确认去留。"
+      ]
+    }
   },
   {
     "slug": "figma-mcp",
@@ -207,7 +499,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-24T03:23:44.000Z"
+    "updatedAt": "2026-09-24T03:23:44.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Figma Connector",
+        "zh": "Figma 连接器"
+      },
+      "group": "tools",
+      "tags": [
+        "tool-setup",
+        "frontend"
+      ],
+      "summary": "Connect, authenticate, or recover the official Figma MCP server and fall back to REST for file comments.",
+      "summary_zh": "配置、认证或恢复官方 Figma MCP 服务，并在读取设计评审评论时按规则回退到 REST API。",
+      "use_cases": [
+        "Read Figma design context on the fast path without redundant whoami calls.",
+        "Fetch and filter Figma file comments through the REST script when the MCP cannot read them."
+      ],
+      "use_cases_zh": [
+        "传入 Figma 链接直接读取设计上下文，省去多余的身份探测步骤。",
+        "需要看设计稿里的评审评论或历史讨论时，用内置脚本通过 REST 接口拉取。"
+      ]
+    }
   },
   {
     "slug": "file-tidy",
@@ -222,7 +535,27 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-12T03:05:45.000Z"
+    "updatedAt": "2026-10-12T03:05:45.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "File Tidy",
+        "zh": "文件整理"
+      },
+      "group": "docs",
+      "tags": [
+        "docs-and-ops"
+      ],
+      "summary": "Sort Downloads, Desktop, and personal files into a numbered ~/Files root with dry-run plans and full rollback.",
+      "summary_zh": "把下载目录、桌面和个人文件整理进带编号的 ~/Files 目录，支持预演、去重与一键回滚。",
+      "use_cases": [
+        "Empty your Downloads and screenshot folders into numbered finance, work, and media categories.",
+        "Find byte-identical duplicates and move old installers to Trash without deleting anything permanently."
+      ],
+      "use_cases_zh": [
+        "清空乱糟糟的桌面、下载和截图目录，按财务、工作、媒体等编号目录归档。",
+        "找出完全重复的文件和已安装应用的安装包移入废纸篓，全程可按清单回滚。"
+      ]
+    }
   },
   {
     "slug": "goal-gate",
@@ -237,7 +570,27 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-07T11:51:42.000Z"
+    "updatedAt": "2026-10-07T11:51:42.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Goal Contract",
+        "zh": "长任务目标契约"
+      },
+      "group": "delegate",
+      "tags": [
+        "agent-workflow"
+      ],
+      "summary": "Decide if a task needs a verifiable Goal contract, then draft, activate, or close it with proof across hosts.",
+      "summary_zh": "判断任务是否适合立 Goal 契约，并按宿主生成、激活或凭证据关闭长任务。",
+      "use_cases": [
+        "Turn a multi-step spec into a checkable Goal contract with explicit stop conditions.",
+        "Verify every Done item against real command or browser evidence before marking a Goal complete."
+      ],
+      "use_cases_zh": [
+        "把多步骤开发任务写成验收条件明确、带暂停边界的 /goal 提示词或契约。",
+        "在结束长任务前逐条核对命令输出或页面证据，防止没做完就提前报完成。"
+      ]
+    }
   },
   {
     "slug": "installed-app-feature-inventory",
@@ -250,7 +603,27 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T09:55:31.000Z"
+    "updatedAt": "2026-09-23T09:55:31.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "App Feature Inventory",
+        "zh": "应用功能盘点"
+      },
+      "group": "docs",
+      "tags": [
+        "docs-and-ops"
+      ],
+      "summary": "List what an installed macOS desktop app actually supports by inspecting its local bundle, registry, and strings.",
+      "summary_zh": "直接检查本机已安装 macOS 应用的包目录、注册表与文案文件，盘点它真正支持的功能。",
+      "use_cases": [
+        "Check which features or skills are shipped and enabled inside a local .app bundle on your Mac.",
+        "Compare public feature claims against the files actually installed on disk without flashing app windows."
+      ],
+      "use_cases_zh": [
+        "不弹窗打扰屏幕，直接拆看本地 .app 包里到底装了哪些命令和技能。",
+        "对比宣传文章里的功能清单，核实哪些功能在当前机器和版本上真正可用。"
+      ]
+    }
   },
   {
     "slug": "kimi-computer-use",
@@ -264,7 +637,27 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T12:28:53.000Z"
+    "updatedAt": "2026-09-14T12:28:53.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Kimi Computer Use",
+        "zh": "Kimi 电脑操控"
+      },
+      "group": "tools",
+      "tags": [
+        "tool-setup"
+      ],
+      "summary": "Install, register, diagnose, or upgrade the local Kimi Computer Use (kimi-cu) MCP service on macOS.",
+      "summary_zh": "在 macOS 上安装、注册、排查或升级本地 Kimi Computer Use (kimi-cu) MCP 服务。",
+      "use_cases": [
+        "Register kimi-cu across Claude Code, Codex, Cursor CLI, Grok, or Hermes without breaking existing configs.",
+        "Fix 'no target app' or 'mode must be full, image, or ax' errors and verify macOS permissions."
+      ],
+      "use_cases_zh": [
+        "把 kimi-cu 注册到多个 Agent 宿主配置里，并用只读命令验证连通性。",
+        "快速修复参数写错导致的调用报错，或核对辅助功能与录屏权限状态。"
+      ]
+    }
   },
   {
     "slug": "lingui-workflow",
@@ -277,7 +670,28 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-05T08:38:42.000Z"
+    "updatedAt": "2026-09-05T08:38:42.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Lingui Workflow",
+        "zh": "Lingui 日常维护"
+      },
+      "group": "frontend",
+      "tags": [
+        "frontend",
+        "docs-and-ops"
+      ],
+      "summary": "Pick and troubleshoot extract, check, compile, and manifest commands for daily catalog maintenance in Lingui.",
+      "summary_zh": "在已接入 Lingui 的项目中选择并排查提取、检查、编译与 manifest 维护命令。",
+      "use_cases": [
+        "Run the shortest command sequence after changing source copy or updating existing translations.",
+        "Debug missing translations or unset locale errors in React and Next.js App Router projects."
+      ],
+      "use_cases_zh": [
+        "改了源码文案或翻译词条后，挑最短的命令组合完成提取与编译。",
+        "排查文案没提取出来、翻译没生效或服务端组件 locale 未初始化的问题。"
+      ]
+    }
   },
   {
     "slug": "local-web-surface",
@@ -291,7 +705,29 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z"
+    "updatedAt": "2026-09-01T01:25:43.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Local Web Portal",
+        "zh": "本地网页入口"
+      },
+      "group": "frontend",
+      "tags": [
+        "frontend",
+        "architecture",
+        "tool-setup"
+      ],
+      "summary": "Build or extend a persistent macOS *.localhost web surface with loopback routing, launchd startup, and safe CRUD.",
+      "summary_zh": "构建或扩展常驻 macOS 的 *.localhost 本地网页入口，配齐精确路由、开机自启与安全读写。",
+      "use_cases": [
+        "Give a local tool a fixed *.localhost URL and a thin macOS .app opener backed by launchd.",
+        "Add ETag-protected file CRUD or local-vs-public content views without exposing private drafts."
+      ],
+      "use_cases_zh": [
+        "给自己的本地工具配一个固定 *.localhost 域名、LaunchAgent 自启和 .app 启动器。",
+        "在本地页面上安全读写 YAML/JSON 数据或预览私密文章，同时严守公开发布边界。"
+      ]
+    }
   },
   {
     "slug": "open-code-review-loop",
@@ -306,7 +742,29 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-01T11:34:49.000Z"
+    "updatedAt": "2026-10-01T11:34:49.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Open Code Review Loop",
+        "zh": "限轮审查循环"
+      },
+      "group": "review",
+      "tags": [
+        "code-review",
+        "agent-workflow",
+        "git"
+      ],
+      "summary": "Run a bounded ocr delegate review-fix-re-review loop on Git changes until an independent reviewer confirms clean.",
+      "summary_zh": "基于 ocr delegate 运行有界的代码审查、修复与复审循环，直到独立 Reviewer 确认无问题。",
+      "use_cases": [
+        "Select changed files and rules with ocr, send them to another AI product for review, and fix verified defects.",
+        "Enforce full file coverage and mutation checks so reviewers never silently edit your workspace."
+      ],
+      "use_cases_zh": [
+        "用 ocr 选定改动文件和规则，交给另一个 AI 宿主审查并自动修完经核实的问题。",
+        "强制核对文件覆盖率与只读边界，防止复审过程漏看文件或偷改工作区代码。"
+      ]
+    }
   },
   {
     "slug": "review-prompt-composer",
@@ -321,7 +779,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-14T13:25:32.000Z"
+    "updatedAt": "2026-09-14T13:25:32.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Review Prompt Composer",
+        "zh": "审查提示词生成"
+      },
+      "group": "review",
+      "tags": [
+        "code-review",
+        "git"
+      ],
+      "summary": "Generate a copy-ready Markdown review prompt with scope digest and freshness checks for another agent in the repo.",
+      "summary_zh": "在仓库内生成带范围摘要与新鲜度校验的 Markdown 评审提示词，直接复制给其他 Agent 审代码。",
+      "use_cases": [
+        "Create a self-contained review prompt for staged, unstaged, or branch changes without pasting raw diffs.",
+        "Let a second agent verify that the working tree has not drifted before starting its review."
+      ],
+      "use_cases_zh": [
+        "为暂存区、工作区或分支提交生成一份可直接复制给另一个窗口的审核提示词。",
+        "附带 SHA-256 范围摘要和只读校验命令，让接手的 Reviewer 先确认代码没变再开审。"
+      ]
+    }
   },
   {
     "slug": "task-completion-loop",
@@ -335,7 +814,29 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Plan Completion Loop",
+        "zh": "计划执行到底"
+      },
+      "group": "delegate",
+      "tags": [
+        "agent-workflow",
+        "code-review",
+        "architecture"
+      ],
+      "summary": "Drive an unfinished plan through three-party AI convergence, implementation, review, hardening, and blind audit.",
+      "summary_zh": "通过三方 AI 交叉质疑、实现验证、审查、架构加固与盲审，把半成品或方案一直推进到可验证完成。",
+      "use_cases": [
+        "Take a named spec from pending items to verified completion across Claude, Codex, and Grok.",
+        "Run automated review, architecture hardening, and a fresh Claude blind audit on the final code snapshot."
+      ],
+      "use_cases_zh": [
+        "拿着现成的 plan 或半成品任务，拉起宿主与另外两个 AI 交叉质疑后再动手实现。",
+        "在交活前用同一份最终代码快照连过代码复审、架构加固和全新 Claude 盲审三道门禁。"
+      ]
+    }
   },
   {
     "slug": "uxc-facade",
@@ -349,7 +850,28 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T03:58:34.000Z"
+    "updatedAt": "2026-09-23T03:58:34.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "API-to-CLI Wrapper",
+        "zh": "接口转 CLI"
+      },
+      "group": "tools",
+      "tags": [
+        "tool-setup",
+        "architecture"
+      ],
+      "summary": "Wrap an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC endpoint into a pinned UXC CLI link with daemon reuse.",
+      "summary_zh": "把 MCP、OpenAPI、GraphQL、gRPC 或 JSON-RPC 接口封装成固定版本的 UXC 命令行入口。",
+      "use_cases": [
+        "Design a stable JSON CLI command and ownership contract for a shared MCP server.",
+        "Reuse an expensive stdio MCP child process across agent turns with verified daemon hits."
+      ],
+      "use_cases_zh": [
+        "把开销较大的 stdio MCP 进程封装成固定命令名，让多轮调用复用同一个后台会话。",
+        "为新的服务技能制定 UXC 二进制归属、链接校验和脱敏探活合同。"
+      ]
+    }
   },
   {
     "slug": "web-performance-audit",
@@ -364,7 +886,28 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-14T11:34:41.000Z"
+    "updatedAt": "2026-09-14T11:34:41.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Performance Audit",
+        "zh": "性能审计"
+      },
+      "group": "frontend",
+      "tags": [
+        "frontend",
+        "docs-and-ops"
+      ],
+      "summary": "Run a read-only runtime performance audit on a live web app with repeatable traces, controls, and a report.",
+      "summary_zh": "对真实运行中的 Web 应用做只读运行时性能审计，用对照实验与轨迹证据定位卡顿并恢复现场。",
+      "use_cases": [
+        "Profile slow interactions, tab switches, or memory growth in a signed-in SPA without touching source code.",
+        "Compare normal vs 4× CPU slowdown runs and separate tool noise from verified product bottlenecks."
+      ],
+      "use_cases_zh": [
+        "在不改业务代码的前提下，对需要登录的复杂后台或编辑器做交互耗时与内存排查。",
+        "对比正常模式与 4 倍 CPU 降速下的表现，区分测量污染和真正值得修的瓶颈。"
+      ]
+    }
   },
   {
     "slug": "weekly-report",
@@ -385,7 +928,28 @@
       "Write",
       "Bash(git:*)",
       "Bash(python:*)"
-    ]
+    ],
+    "catalog": {
+      "displayName": {
+        "en": "Weekly Report",
+        "zh": "周报生成"
+      },
+      "group": "docs",
+      "tags": [
+        "docs-and-ops",
+        "git"
+      ],
+      "summary": "Read Git commits across one or multiple repositories and generate a project-grouped Markdown weekly report.",
+      "summary_zh": "读取单个或多个 Git 仓库的提交记录，过滤琐碎改动并按项目分组生成 Markdown 周报。",
+      "use_cases": [
+        "Summarize your commits from this week or a custom date range across all local and remote branches.",
+        "Merge new commit summaries into an existing draft in ~/.weekly-reports/ while keeping manual notes."
+      ],
+      "use_cases_zh": [
+        "周五直接从多个项目的 Git 历史里拉出本周提交，自动按项目整理成周报草稿。",
+        "生成半年或自定义时间段的工作总结，自动过滤 typo 和 merge 等琐碎记录。"
+      ]
+    }
   },
   {
     "slug": "workflow-gate",
@@ -399,12 +963,32 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z"
+    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Workflow Router",
+        "zh": "工作流分诊"
+      },
+      "group": "delegate",
+      "tags": [
+        "agent-workflow"
+      ],
+      "summary": "Route a coding request to the right workflow—direct work, debugging, grilling, planning, architecture, or review.",
+      "summary_zh": "在动手前快速判断当前请求该直接改、调试、追问方案、拆计划、做架构加固还是走复审。",
+      "use_cases": [
+        "Catch destructive actions or unresolved product choices before an agent starts writing code.",
+        "Pick the lightest workflow skill that protects correctness without over-planning simple edits."
+      ],
+      "use_cases_zh": [
+        "在写代码前拦住不可逆的高危操作，或者把还没想清楚的功能需求先导向方案追问。",
+        "避免简单改动被过度规划，也防止复杂架构或调试任务不经排查就直接硬改。"
+      ]
+    }
   },
   {
     "slug": "worktree-tidy",
     "name": "worktree-tidy",
-    "description": "Find and remove stale git worktrees across one or many repositories: prune records of worktrees whose folder is gone, report every linked worktree with its idle days, uncommitted changes and pull/merge request state (GitHub, cnb.cool, GitLab), and remove only idle, clean ones the user confirms, keeping their branches unless the request is merged or closed. Use when the user asks, in any language, to clean up, list, audit or prune git worktrees, or when a sidebar such as Orca shows too many worktrees. Not for deleting branches without worktrees, cleaning build caches, or removing whole repositories.",
+    "description": "Find and remove stale git worktrees across one or many repositories: prune records of worktrees whose folder is gone, report every linked worktree with its idle days, uncommitted changes and pull/merge request state (GitHub, cnb.cool, GitLab), and remove clean ones the user confirms (idle by default, with an explicit recent-only exception), keeping their branches unless the request is merged or closed. Use when the user asks, in any language, to clean up, list, audit or prune git worktrees, or when a sidebar such as Orca shows too many worktrees. Not for deleting branches without worktrees, cleaning build caches, or removing whole repositories.",
     "metadata": {
       "author": "adonis",
       "version": "1.0.0"
@@ -414,6 +998,27 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-15T13:07:53.000Z"
+    "updatedAt": "2026-10-18T03:42:28.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Worktree Cleanup",
+        "zh": "Worktree 清理"
+      },
+      "group": "git",
+      "tags": [
+        "git",
+        "docs-and-ops"
+      ],
+      "summary": "Scan repositories for idle Git worktrees, check PR/MR merge status, and remove only clean ones you confirm.",
+      "summary_zh": "扫描一个或多个仓库里闲置的 Git worktree，结合 PR/MR 状态只清理你确认过的干净目录。",
+      "use_cases": [
+        "Clean up leftover agent worktrees crowding your Orca sidebar or code folders without losing uncommitted work.",
+        "Check idle days and GitHub, GitLab, or cnb.cool merge state before pruning worktrees and merged branches."
+      ],
+      "use_cases_zh": [
+        "清理并行派活或看 PR 后残留的大量 worktree，释放侧边栏和磁盘目录。",
+        "结合闲置天数、未提交改动和远端 PR/MR 合并状态，安全删掉已合并的旧工作树。"
+      ]
+    }
   }
 ]
