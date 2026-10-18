@@ -56,6 +56,10 @@ jobs:
       - name: Web Unit Tests
         run: pnpm --filter @adonis-skills/web test
 
+      - name: Install zsh
+        # Skill scripts under test use `#!/usr/bin/env zsh`; ubuntu runners ship without it.
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh
+
       - name: Script Tests
         run: pnpm test:scripts
 
