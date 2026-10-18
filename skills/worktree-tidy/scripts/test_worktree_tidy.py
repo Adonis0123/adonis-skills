@@ -197,6 +197,7 @@ class RemoveTests(Base):
         Path(merged, "m.txt").write_text("m")  # an unmerged commit, as after a squash merge
         sh("git", "add", ".", cwd=merged)
         sh("git", "commit", "-qm", "work", cwd=merged)
+        sh("git", "tag", "saved-merged", cwd=merged)
         Repo.age(merged)
         opened = self.repo.worktree("opened")
         states = {"merged": "merged", "opened": "open"}
@@ -209,6 +210,264 @@ class RemoveTests(Base):
         branches = sh("git", "branch", "--format=%(refname:short)", cwd=self.repo.path).split()
         self.assertNotIn("merged", branches)
         self.assertIn("opened", branches)
+
+
+class AllowRecentTests(Base):
+    def remove(self, wt, **kw):
+        return WT.remove([wt], 7, kw.pop("delete_branch", False), kw.pop("use_orca", False),
+                         kw.pop("yes", True), allow_recent=True)["results"][0]
+
+    def test_recent_requires_opt_in_and_keeps_branch(self):
+        wt = self.repo.worktree("recent", idle=False)
+        self.assertEqual(by_path(self.scan())[wt]["blockers"], ["recent"])
+        self.assertEqual(WT.remove([wt], 7, False, False, True)["failed"], 1)
+        self.assertTrue(self.remove(wt, yes=False)["wouldRemove"])
+        self.assertTrue(Path(wt).exists())
+        self.assertTrue(self.remove(wt)["removed"])
+        self.assertFalse(Path(wt).exists())
+        self.assertIn("recent", sh("git", "branch", "--list", "recent", cwd=self.repo.path))
+
+    def test_other_blockers_still_refuse_with_recent(self):
+        for blocker in ("dirty", "ignored", "unsaved-head", "locked", "pinned", "unreadable"):
+            with self.subTest(blocker=blocker):
+                wt = self.repo.worktree(blocker, idle=False, branch=blocker != "unsaved-head")
+                if blocker == "dirty":
+                    Path(wt, "a.txt").write_text("keep edit")
+                if blocker == "ignored":
+                    Path(self.repo.path, ".git/info/exclude").write_text("local-data/\n")
+                    Path(wt, "local-data").mkdir()
+                    Path(wt, "local-data/notes.txt").write_text("keep data")
+                if blocker == "unsaved-head":
+                    sh("git", "commit", "--allow-empty", "-qm", "only here", cwd=wt)
+                if blocker == "locked":
+                    sh("git", "worktree", "lock", wt, cwd=self.repo.path)
+                orca = {wt: {"pinned": blocker == "pinned", "activity": time.time()}}
+                original = WT.dirty_paths
+                with mock.patch.object(WT, "orca_worktrees", return_value=orca), mock.patch.object(
+                        WT, "dirty_paths", side_effect=lambda path: None if blocker == "unreadable" else original(path)):
+                    row = by_path(self.scan(use_orca=True))[wt]
+                    self.assertIn(blocker, row["blockers"])
+                    self.assertIn("recent", row["blockers"])
+                    result = self.remove(wt, use_orca=True)
+                self.assertIn(blocker, result["error"])
+                self.assertFalse(result["removed"])
+                self.assertTrue(Path(wt).exists())
+
+    def test_main_missing_and_locked_alone_refuse(self):
+        self.assertFalse(self.remove(self.repo.path)["removed"])
+        self.assertFalse(self.remove(str(self.base / "missing"))["removed"])
+        wt = self.repo.worktree("locked")
+        sh("git", "worktree", "lock", wt, cwd=self.repo.path)
+        self.assertEqual(by_path(self.scan())[wt]["blockers"], ["locked"])
+        self.assertIn("locked", self.remove(wt)["error"])
+
+    def test_rescan_changes_to_stale_or_dirty(self):
+        stale = self.repo.worktree("stale", idle=False)
+        dirty = self.repo.worktree("dirty", idle=False)
+        self.assertEqual(by_path(self.scan())[stale]["blockers"], ["recent"])
+        Repo.age(stale)
+        Path(dirty, "new.txt").write_text("keep me")
+        self.assertTrue(self.remove(stale)["removed"])
+        self.assertIn("dirty", self.remove(dirty)["error"])
+        self.assertEqual(Path(dirty, "new.txt").read_text(), "keep me")
+
+    def test_change_during_request_lookup_refuses(self):
+        for ignored in (False, True):
+            with self.subTest(ignored=ignored):
+                wt = self.repo.worktree("late" + str(ignored), idle=False)
+                Path(self.repo.path, ".git/info/exclude").write_text(".env\n")
+                target = Path(wt, ".env" if ignored else "new.txt")
+                def late(repo, branches, since=0):
+                    target.write_text("keep me")
+                    return {b: {"state": "merged", "url": None} for b in branches}
+                with mock.patch.object(WT, "request_states", side_effect=late):
+                    result = self.remove(wt, delete_branch=True)
+                self.assertEqual(result["error"], "not removable: changed since it was checked")
+                self.assertEqual(target.read_text(), "keep me")
+
+    def test_branch_deletion_still_requires_done_request_and_saved_tip(self):
+        for state, saved, deleted in (("merged", True, True), ("closed", True, True),
+                                      ("open", True, False), ("unknown", True, False),
+                                      ("merged", False, False)):
+            with self.subTest(state=state, saved=saved):
+                name = state + str(saved)
+                wt = self.repo.worktree(name, idle=False)
+                sh("git", "commit", "--allow-empty", "-qm", name, cwd=wt)
+                if saved:
+                    sh("git", "tag", "saved-" + name, cwd=wt)
+                with mock.patch.object(WT, "request_states", return_value={name: {"state": state, "url": None}}):
+                    result = self.remove(wt, delete_branch=True)
+                self.assertTrue(result["removed"])
+                self.assertEqual(result["branchDeleted"], deleted)
+                exists = bool(sh("git", "branch", "--list", name, cwd=self.repo.path).strip())
+                self.assertEqual(exists, not deleted)
+
+    def test_cli_flag_and_empty_paths(self):
+        wt = self.repo.worktree("cli", idle=False)
+        proc = subprocess.run(["python3", str(SCRIPT), "--no-orca", "--json", "remove", wt,
+                               "--allow-recent", "--yes"], capture_output=True, text=True)
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertTrue(json.loads(proc.stdout)["results"][0]["removed"])
+        self.assertEqual(WT.remove([], 7, False, False, True, allow_recent=True)["results"], [])
+
+
+class SafetyContractTests(Base):
+    def ignored_worktree(self, name, paths):
+        exclude = Path(self.repo.path, ".git", "info", "exclude")
+        exclude.write_text(".env\nnode_modules/\n*.log\n.husky/_/\nsrc/generated/\nlocal-assets/\nbuild/\n")
+        wt = self.repo.worktree(name)
+        for path in paths:
+            target = Path(wt, path)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("test")
+        return wt
+
+    def test_ignored_env_blocks_scan_and_remove(self):
+        wt = self.ignored_worktree("env", [".env"])
+        row = by_path(self.scan())[wt]
+        self.assertEqual(row["ignored"], 1)
+        self.assertEqual(row["ignoredFiles"], [".env"])
+        self.assertEqual(row["dirtyFiles"], [])
+        self.assertEqual(row["blockers"], ["ignored"])
+        res = WT.remove([wt], 7, False, False, True)["results"][0]
+        self.assertIn("ignored", res["error"])
+        self.assertTrue(Path(wt, ".env").exists())
+
+    def test_regenerable_ignored_paths_do_not_block(self):
+        wt = self.ignored_worktree("cache", ["node_modules/pkg/index.js", "debug.log"])
+        row = by_path(self.scan())[wt]
+        self.assertEqual(row["ignoredFiles"], [])
+        self.assertEqual(row["ignored"], 0)
+        self.assertTrue(row["removable"])
+
+    def test_tool_generated_paths_do_not_block(self):
+        wt = self.ignored_worktree("gen", [".husky/_/pre-commit", "src/generated/index.json"])
+        row = by_path(self.scan())[wt]
+        self.assertEqual((row["ignored"], row["removable"]), (0, True))
+
+    def test_config_adds_regenerable_names_and_prefixes(self):
+        wt = self.ignored_worktree("cfg", ["local-assets/a.png"])
+        self.assertEqual(by_path(self.scan())[wt]["ignored"], 1)
+        saved = (set(WT.REGENERABLE_DIRS), set(WT.REGENERABLE_PREFIXES))
+        try:
+            WT.add_regenerable(["local-assets/"])
+            self.assertEqual(by_path(self.scan())[wt]["ignored"], 0)
+        finally:
+            WT.REGENERABLE_DIRS.clear(); WT.REGENERABLE_DIRS.update(saved[0])
+            WT.REGENERABLE_PREFIXES.clear(); WT.REGENERABLE_PREFIXES.update(saved[1])
+
+    def test_secrets_inside_regenerable_folders_still_block(self):
+        wt = self.ignored_worktree("sec", ["build/.env", "src/generated/deploy.pem", "build/app.js"])
+        row = by_path(self.scan())[wt]
+        self.assertEqual(sorted(row["ignoredFiles"]), ["build/.env", "src/generated/deploy.pem"])
+        self.assertIn("ignored", row["blockers"])
+
+    def test_secrets_in_dependency_folders_do_not_block(self):
+        wt = self.ignored_worktree("dep", ["node_modules/pkg/.env"])
+        self.assertTrue(by_path(self.scan())[wt]["removable"])
+
+    def test_regenerable_config_must_be_a_list(self):
+        with self.assertRaises(SystemExit):
+            WT.add_regenerable("generated")
+
+    def test_remove_rechecks_ignored_files_right_before_deleting(self):
+        wt = self.ignored_worktree("late", [])
+        def late_env(repo, names, since=0):
+            Path(wt, ".env").write_text("SECRET")
+            return {n: {"state": "merged", "url": None} for n in names}
+        with mock.patch.object(WT, "request_states", side_effect=late_env):
+            res = WT.remove([wt], 7, delete_branch=True, use_orca=False, yes=True)["results"][0]
+        self.assertEqual(res.get("error"), "not removable: changed since it was checked")
+        self.assertFalse(res["removed"])
+        self.assertTrue(Path(wt, ".env").exists())
+
+    def pushed_worktree(self):
+        remote = str(self.base / "remote.git")
+        sh("git", "init", "--bare", "-q", remote, cwd=self.repo.path)
+        sh("git", "remote", "add", "origin", remote, cwd=self.repo.path)
+        wt = self.repo.worktree("topic")
+        sh("git", "commit", "--allow-empty", "-qm", "published", cwd=wt)
+        sh("git", "push", "-qu", "origin", "topic", cwd=wt)
+        Repo.age(wt)
+        return wt
+
+    @staticmethod
+    def done(repo, branches, since=0):
+        return {b: {"state": "merged", "url": None} for b in branches}
+
+    def test_pushed_and_unsaved_branch_and_unpushed(self):
+        wt = self.pushed_worktree()
+        with mock.patch.object(WT, "request_states", side_effect=self.done):
+            row = by_path(self.scan(remote=True))[wt]
+            self.assertTrue(row["branchSaved"])
+            self.assertTrue(row["branchDeletable"])
+            self.assertEqual(row["unpushed"], 0)
+            self.assertEqual(row["subject"], "published")
+            self.assertEqual(row["shortHead"], row["head"][:7])
+            sh("git", "commit", "--allow-empty", "-qm", "local only", cwd=wt)
+            Repo.age(wt)
+            row = by_path(self.scan(remote=True))[wt]
+        self.assertFalse(row["branchSaved"])
+        self.assertFalse(row["branchDeletable"])
+        self.assertTrue(row["removable"])
+        self.assertEqual(row["unpushed"], 1)
+
+    def test_unpushed_is_null_without_remote_refs(self):
+        wt = self.repo.worktree("topic")
+        self.assertIsNone(by_path(self.scan())[wt]["unpushed"])
+
+    def test_remove_rechecks_branch_after_assessment(self):
+        wt = self.pushed_worktree()
+
+        def remove_saved_ref(repo, branches, since=0):
+            sh("git", "update-ref", "-d", "refs/remotes/origin/topic", cwd=repo)
+            return self.done(repo, branches, since)
+
+        with mock.patch.object(WT, "request_states", side_effect=remove_saved_ref):
+            res = WT.remove([wt], 7, True, False, True)["results"][0]
+        self.assertTrue(res["removed"])
+        self.assertFalse(res["branchDeleted"])
+        self.assertEqual(res["branchError"], "branch has commits that exist on no other ref; kept")
+        self.assertTrue(sh("git", "branch", "--list", "topic", cwd=self.repo.path).strip())
+
+    def test_unsaved_branch_dry_run_does_not_offer_deletion(self):
+        wt = self.pushed_worktree()
+        sh("git", "commit", "--allow-empty", "-qm", "local only", cwd=wt)
+        Repo.age(wt)
+        with mock.patch.object(WT, "request_states", side_effect=self.done):
+            res = WT.remove([wt], 7, True, False, False)["results"][0]
+            actual = WT.remove([wt], 7, True, False, True)["results"][0]
+        self.assertFalse(res["wouldDeleteBranch"])
+        self.assertTrue(actual["removed"])
+        self.assertFalse(actual["branchDeleted"])
+        self.assertEqual(actual["branchError"], "branch has commits that exist on no other ref; kept")
+
+    def test_path_samples_counts_rename_and_status_call_budget(self):
+        wt = self.ignored_worktree("samples", [".env"])
+        sh("git", "mv", "a.txt", "renamed.txt", cwd=wt)
+        for n in range(12):
+            Path(wt, "file-%02d" % n).write_text("test")
+        with mock.patch.object(WT, "run", wraps=WT.run) as run:
+            row = by_path(self.scan())[wt]
+        self.assertEqual(row["dirty"], 13)
+        self.assertEqual(len(row["dirtyFiles"]), 10)
+        self.assertIn("renamed.txt", row["dirtyFiles"])
+        calls = [c.args[0] for c in run.call_args_list if wt in c.args[0]]
+        self.assertLessEqual(len(calls), 6)  # previous four calls plus saved-ref and unpushed checks
+        statuses = [c for c in calls if "status" in c]
+        self.assertEqual(len(statuses), 1)
+        self.assertIn("--no-optional-locks", statuses[0])
+        self.assertIn("--ignored=matching", statuses[0])
+
+    def test_missing_and_unreadable_facts_are_safe(self):
+        wt = self.repo.worktree("missing")
+        with mock.patch.object(WT, "dirty_paths", return_value=None):
+            self.assertIn("unreadable", by_path(self.scan())[wt]["blockers"])
+        with mock.patch.object(WT.os.path, "isdir", return_value=False):
+            row = WT.assess({"path": wt, "branch": "missing"}, {}, time.time(), 7)
+        for key, value in {"shortHead": "", "subject": "", "dirtyFiles": [], "ignored": 0,
+                           "ignoredFiles": [], "branchSaved": False, "unpushed": None}.items():
+            self.assertEqual(row[key], value)
 
 
 class DiscoveryAndHostTests(Base):
