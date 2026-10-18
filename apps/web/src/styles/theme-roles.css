@@ -26,11 +26,7 @@
   --ring: var(--brand-leaf-11); /* {leaf-11} */
   --ring-halo: var(--brand-leaf-6); /* {leaf-6} */
   --link: var(--brand-leaf-11); /* {leaf-11} */
-  --overlay: color-mix(
-    in oklab,
-    var(--brand-n-12) 30%,
-    transparent
-  ); /* n-12 30% */
+  --overlay: color-mix(in oklab, var(--brand-n-12) 30%, transparent); /* n-12 30% */
   --hero-art-bg: var(--brand-art-backdrop); /* {art-backdrop} */
   --attribution: var(--brand-sage); /* {sage} */
   --chart-1: var(--brand-blue); /* {blue} */
@@ -66,11 +62,7 @@
   --ring: var(--brand-leaf-dark-9); /* {leaf-dark-9} */
   --ring-halo: var(--brand-leaf-dark-6); /* {leaf-dark-6} */
   --link: var(--brand-leaf-dark-11); /* {leaf-dark-11} */
-  --overlay: color-mix(
-    in oklab,
-    var(--brand-shadow-warm-dark) 60%,
-    transparent
-  ); /* shadow-warm-dark 60% */
+  --overlay: color-mix(in oklab, var(--brand-shadow-warm-dark) 60%, transparent); /* shadow-warm-dark 60% */
   --hero-art-bg: var(--card); /* @card */
   --shadow-tint: var(--brand-shadow-warm-dark); /* {shadow-warm-dark} */
   --highlight-tint: var(--brand-n-dark-12); /* {n-dark-12} */

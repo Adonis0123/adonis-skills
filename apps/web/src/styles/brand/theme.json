@@ -73,21 +73,66 @@
   "contrast": {
     "text": 4.5,
     "pairs": [
-      ["foreground", "background"],
-      ["foreground", "card"],
-      ["foreground", "popover"],
-      ["foreground", "muted"],
-      ["muted-foreground", "background"],
-      ["muted-foreground", "card"],
-      ["muted-foreground", "muted"],
-      ["primary-foreground", "primary"],
-      ["primary-foreground", "primary-hover"],
-      ["secondary-foreground", "secondary"],
-      ["accent-foreground", "accent"],
-      ["destructive-foreground", "destructive"],
-      ["link", "background"],
-      ["link", "card"],
-      ["link", "muted"]
+      [
+        "foreground",
+        "background"
+      ],
+      [
+        "foreground",
+        "card"
+      ],
+      [
+        "foreground",
+        "popover"
+      ],
+      [
+        "foreground",
+        "muted"
+      ],
+      [
+        "muted-foreground",
+        "background"
+      ],
+      [
+        "muted-foreground",
+        "card"
+      ],
+      [
+        "muted-foreground",
+        "muted"
+      ],
+      [
+        "primary-foreground",
+        "primary"
+      ],
+      [
+        "primary-foreground",
+        "primary-hover"
+      ],
+      [
+        "secondary-foreground",
+        "secondary"
+      ],
+      [
+        "accent-foreground",
+        "accent"
+      ],
+      [
+        "destructive-foreground",
+        "destructive"
+      ],
+      [
+        "link",
+        "background"
+      ],
+      [
+        "link",
+        "card"
+      ],
+      [
+        "link",
+        "muted"
+      ]
     ]
   }
 }
