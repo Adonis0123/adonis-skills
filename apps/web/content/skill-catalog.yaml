@@ -19,13 +19,13 @@ groups:
       zh: "先判断一件事要不要帮手，再派给合适的 agent，一直跟到做完。"
     illustration: group-delegate.webp
   - id: review
-    title: { en: "Get a second pair of eyes", zh: "找人再看一遍" }
+    title: { en: "Get a second pair of eyes", zh: "独立代码复审" }
     summary:
       en: "Independent reviewers and review loops that stop only when the change is actually clean."
       zh: "请独立的 Reviewer 审改动，修完再审，直到真的没问题。"
     illustration: group-review.webp
   - id: git
-    title: { en: "Ship clean Git history", zh: "提交干净的 Git 历史" }
+    title: { en: "Ship clean Git history", zh: "保持 Git 历史整洁" }
     summary:
       en: "Commits, branches and worktrees that stay tidy without you thinking about them."
       zh: "提交、分支和 worktree 自己保持整洁，不用你多操心。"
@@ -43,7 +43,7 @@ groups:
       zh: "浏览器这一侧的小帮手：点元素跳源码、维护多语言、测性能、搭本地网页。"
     illustration: group-frontend.webp
   - id: docs
-    title: { en: "Docs and a tidy machine", zh: "写文档，理电脑" }
+    title: { en: "Docs & Local Cleanup", zh: "文档与本机整理" }
     summary:
       en: "Design docs and weekly reports, plus audits that keep your files and agent setup in order."
       zh: "写设计文档和周报，顺手把文件和 agent 配置理清楚。"
@@ -59,7 +59,7 @@ featured:
         zh: "安排独立复审，做完把 worker 清理干净。"
     illustration: featured-agent-dispatch.webp
   - slug: agentic-review-handoff
-    badge: { en: "Review loop", zh: "自动审查" }
+    badge: { en: "Hands-off review", zh: "自动审查" }
     highlights:
       - en: "A headless reviewer reviews, fixes and re-reviews your Git diff until it passes."
         zh: "无头 Reviewer 审、修、再审你的 Git diff，直到通过。"
@@ -77,7 +77,7 @@ featured:
 
 skills:
   agent-dispatch:
-    displayName: { en: "Agent Dispatcher", zh: "派活调度" }
+    displayName: { en: "Agent Dispatcher", zh: "多 Agent 调度" }
     group: delegate
     tags: [agent-workflow, code-review]
     summary: "Size a task from direct edit to parallel worktrees across installed AI CLIs and assign an independent reviewer."
@@ -103,7 +103,7 @@ skills:
       - "清理旧项目的 .ruler 目录或复制式技能同步脚本。"
 
   agentic-review-handoff:
-    displayName: { en: "Review Handoff", zh: "审查交接" }
+    displayName: { en: "Auto Review Loop", zh: "自动审查循环" }
     group: review
     tags: [code-review, agent-workflow, git]
     summary: "Run an automated Git review-fix-re-review loop with a headless reviewer or consult another AI on a decision."
@@ -155,7 +155,7 @@ skills:
       - "只想要个顺手的分支名建议，不改动当前工作区。"
 
   chrome-dev-mcp:
-    displayName: { en: "Chrome DevTools Bridge", zh: "Chrome 调试桥" }
+    displayName: { en: "Chrome DevTools Bridge", zh: "Chrome 调试接入" }
     group: tools
     tags: [tool-setup, frontend]
     summary: "Collect DOM snapshots, Console logs, Network requests, and traces from a shared Chrome via chrome-dev-mcp-cli."
@@ -181,7 +181,7 @@ skills:
       - "排查快捷键没反应或点击页面跳不到 IDE 对应代码行的问题。"
 
   code-plugin-architecture:
-    displayName: { en: "Plugin Architecture Coach", zh: "插件架构顾问" }
+    displayName: { en: "Extension Point Design", zh: "扩展点设计" }
     group: review
     tags: [architecture]
     summary: "Design, review, or refactor extension points so adding or removing a variant stays within one clear boundary."
@@ -220,7 +220,7 @@ skills:
       - "遇到远端领先时自动做一次干净的 rebase 重试，并核对最终领先状态。"
 
   decision-first-technical-writing:
-    displayName: { en: "Decision-First Docs", zh: "结论先行的文档" }
+    displayName: { en: "Decision-First Docs", zh: "结论先行文档" }
     group: docs
     tags: [docs-and-ops, architecture]
     summary: "Write or review technical design docs that lead with settled decisions and label open questions explicitly."
@@ -233,7 +233,7 @@ skills:
       - "检查现有设计文档里有没有把未确认的猜测混写成既定事实。"
 
   desktop-agent-activity:
-    displayName: { en: "Agent Activity Check", zh: "Agent 在忙吗" }
+    displayName: { en: "Agent Activity Check", zh: "Agent 活跃检查" }
     group: delegate
     tags: [agent-workflow, docs-and-ops]
     summary: "Check whether a desktop coding agent like Orca or Claude Code is actively working, idle, or stopped."
@@ -285,7 +285,7 @@ skills:
       - "找出完全重复的文件和已安装应用的安装包移入废纸篓，全程可按清单回滚。"
 
   goal-gate:
-    displayName: { en: "Goal Contract", zh: "Goal 契约" }
+    displayName: { en: "Goal Contract", zh: "长任务目标契约" }
     group: delegate
     tags: [agent-workflow]
     summary: "Decide if a task needs a verifiable Goal contract, then draft, activate, or close it with proof across hosts."
@@ -337,7 +337,7 @@ skills:
       - "排查文案没提取出来、翻译没生效或服务端组件 locale 未初始化的问题。"
 
   local-web-surface:
-    displayName: { en: "Local Web Surface", zh: "本地网页入口" }
+    displayName: { en: "Local Web Portal", zh: "本地网页入口" }
     group: frontend
     tags: [frontend, architecture, tool-setup]
     summary: "Build or extend a persistent macOS *.localhost web surface with loopback routing, launchd startup, and safe CRUD."
@@ -350,7 +350,7 @@ skills:
       - "在本地页面上安全读写 YAML/JSON 数据或预览私密文章，同时严守公开发布边界。"
 
   open-code-review-loop:
-    displayName: { en: "Open Review Loop", zh: "Open Review 循环" }
+    displayName: { en: "Open Code Review Loop", zh: "限轮审查循环" }
     group: review
     tags: [code-review, agent-workflow, git]
     summary: "Run a bounded ocr delegate review-fix-re-review loop on Git changes until an independent reviewer confirms clean."
@@ -376,7 +376,7 @@ skills:
       - "附带 SHA-256 范围摘要和只读校验命令，让接手的 Reviewer 先确认代码没变再开审。"
 
   task-completion-loop:
-    displayName: { en: "Finish-the-Plan Loop", zh: "一路做到完成" }
+    displayName: { en: "Plan Completion Loop", zh: "计划执行到底" }
     group: delegate
     tags: [agent-workflow, code-review, architecture]
     summary: "Drive an unfinished plan through three-party AI convergence, implementation, review, hardening, and blind audit."
@@ -389,7 +389,7 @@ skills:
       - "在交活前用同一份最终代码快照连过代码复审、架构加固和全新 Claude 盲审三道门禁。"
 
   uxc-facade:
-    displayName: { en: "Any API to CLI", zh: "接口变命令行" }
+    displayName: { en: "API-to-CLI Wrapper", zh: "接口转 CLI" }
     group: tools
     tags: [tool-setup, architecture]
     summary: "Wrap an MCP, OpenAPI, GraphQL, gRPC, or JSON-RPC endpoint into a pinned UXC CLI link with daemon reuse."

@@ -16,7 +16,7 @@
     "catalog": {
       "displayName": {
         "en": "Agent Dispatcher",
-        "zh": "派活调度"
+        "zh": "多 Agent 调度"
       },
       "group": "delegate",
       "tags": [
@@ -85,8 +85,8 @@
     "updatedAt": "2026-10-16T07:26:10.000Z",
     "catalog": {
       "displayName": {
-        "en": "Review Handoff",
-        "zh": "审查交接"
+        "en": "Auto Review Loop",
+        "zh": "自动审查循环"
       },
       "group": "review",
       "tags": [
@@ -229,7 +229,7 @@
     "catalog": {
       "displayName": {
         "en": "Chrome DevTools Bridge",
-        "zh": "Chrome 调试桥"
+        "zh": "Chrome 调试接入"
       },
       "group": "tools",
       "tags": [
@@ -297,8 +297,8 @@
     "updatedAt": "2026-09-14T13:25:32.000Z",
     "catalog": {
       "displayName": {
-        "en": "Plugin Architecture Coach",
-        "zh": "插件架构顾问"
+        "en": "Extension Point Design",
+        "zh": "扩展点设计"
       },
       "group": "review",
       "tags": [
@@ -398,7 +398,7 @@
     "catalog": {
       "displayName": {
         "en": "Decision-First Docs",
-        "zh": "结论先行的文档"
+        "zh": "结论先行文档"
       },
       "group": "docs",
       "tags": [
@@ -432,7 +432,7 @@
     "catalog": {
       "displayName": {
         "en": "Agent Activity Check",
-        "zh": "Agent 在忙吗"
+        "zh": "Agent 活跃检查"
       },
       "group": "delegate",
       "tags": [
@@ -574,7 +574,7 @@
     "catalog": {
       "displayName": {
         "en": "Goal Contract",
-        "zh": "Goal 契约"
+        "zh": "长任务目标契约"
       },
       "group": "delegate",
       "tags": [
@@ -708,7 +708,7 @@
     "updatedAt": "2026-09-01T01:25:43.000Z",
     "catalog": {
       "displayName": {
-        "en": "Local Web Surface",
+        "en": "Local Web Portal",
         "zh": "本地网页入口"
       },
       "group": "frontend",
@@ -745,8 +745,8 @@
     "updatedAt": "2026-10-01T11:34:49.000Z",
     "catalog": {
       "displayName": {
-        "en": "Open Review Loop",
-        "zh": "Open Review 循环"
+        "en": "Open Code Review Loop",
+        "zh": "限轮审查循环"
       },
       "group": "review",
       "tags": [
@@ -817,8 +817,8 @@
     "updatedAt": "2026-10-16T07:26:10.000Z",
     "catalog": {
       "displayName": {
-        "en": "Finish-the-Plan Loop",
-        "zh": "一路做到完成"
+        "en": "Plan Completion Loop",
+        "zh": "计划执行到底"
       },
       "group": "delegate",
       "tags": [
@@ -853,8 +853,8 @@
     "updatedAt": "2026-09-23T03:58:34.000Z",
     "catalog": {
       "displayName": {
-        "en": "Any API to CLI",
-        "zh": "接口变命令行"
+        "en": "API-to-CLI Wrapper",
+        "zh": "接口转 CLI"
       },
       "group": "tools",
       "tags": [

@@ -57,7 +57,7 @@ describe("searchSkills", () => {
 
   it("matches the Display Name in either language", () => {
     expect(slugsFor("Agent Dispatcher")[0]).toBe("agent-dispatch");
-    expect(slugsFor("派活调度")[0]).toBe("agent-dispatch");
+    expect(slugsFor("多 Agent 调度")[0]).toBe("agent-dispatch");
   });
 
   it("ranks a name match above a description-only match", () => {

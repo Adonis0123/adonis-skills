@@ -16,7 +16,7 @@
       "id": "review",
       "title": {
         "en": "Get a second pair of eyes",
-        "zh": "找人再看一遍"
+        "zh": "独立代码复审"
       },
       "summary": {
         "en": "Independent reviewers and review loops that stop only when the change is actually clean.",
@@ -28,7 +28,7 @@
       "id": "git",
       "title": {
         "en": "Ship clean Git history",
-        "zh": "提交干净的 Git 历史"
+        "zh": "保持 Git 历史整洁"
       },
       "summary": {
         "en": "Commits, branches and worktrees that stay tidy without you thinking about them.",
@@ -63,8 +63,8 @@
     {
       "id": "docs",
       "title": {
-        "en": "Docs and a tidy machine",
-        "zh": "写文档，理电脑"
+        "en": "Docs & Local Cleanup",
+        "zh": "文档与本机整理"
       },
       "summary": {
         "en": "Design docs and weekly reports, plus audits that keep your files and agent setup in order.",
@@ -95,7 +95,7 @@
     {
       "slug": "agentic-review-handoff",
       "badge": {
-        "en": "Review loop",
+        "en": "Hands-off review",
         "zh": "自动审查"
       },
       "highlights": [
