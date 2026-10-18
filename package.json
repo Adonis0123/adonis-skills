@@ -31,9 +31,11 @@
     "brand:sync": "node scripts/sync-brand-tokens.mjs --from \"${BRAND_REPO:-../adonis-brand}\"",
     "brand:check": "node scripts/sync-brand-tokens.mjs --check",
     "design:check": "node scripts/check-design-tokens.mjs",
-    "test:scripts": "node --experimental-strip-types --test --test-concurrency=2 ./scripts/__tests__/ardot-mcp-public.test.ts ./scripts/__tests__/chrome-dev-mcp-public.test.ts ./scripts/__tests__/uxc-facade-public.test.ts ./scripts/__tests__/finalize-new-skills.test.ts ./scripts/__tests__/finalize-skill.test.ts ./scripts/__tests__/install-local-skills.test.ts ./scripts/__tests__/workflow-gate-public.test.ts ./scripts/__tests__/grade-skill-evals.test.mjs ./scripts/__tests__/brand-tokens.test.mjs ./scripts/__tests__/check-design-tokens.test.mjs ./scripts/__tests__/generate-skills-index-sections.test.mjs"
+    "test:scripts": "node --experimental-strip-types --test --test-concurrency=2 ./scripts/__tests__/ardot-mcp-public.test.ts ./scripts/__tests__/chrome-dev-mcp-public.test.ts ./scripts/__tests__/uxc-facade-public.test.ts ./scripts/__tests__/finalize-new-skills.test.ts ./scripts/__tests__/finalize-skill.test.ts ./scripts/__tests__/install-local-skills.test.ts ./scripts/__tests__/workflow-gate-public.test.ts ./scripts/__tests__/grade-skill-evals.test.mjs ./scripts/__tests__/brand-tokens.test.mjs ./scripts/__tests__/check-design-tokens.test.mjs ./scripts/__tests__/generate-skills-index-sections.test.mjs",
+    "design:lint": "designmd lint DESIGN.md"
   },
   "devDependencies": {
+    "@google/design.md": "0.4.0",
     "@inquirer/prompts": "^7.9.0",
     "is-ci": "^4.1.0",
     "lint-staged": "^16.3.2",

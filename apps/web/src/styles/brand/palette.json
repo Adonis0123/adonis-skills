@@ -194,6 +194,198 @@
       }
     },
     {
+      "id": "stone-1",
+      "hex": "#FEFEFC",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 1"
+      }
+    },
+    {
+      "id": "stone-2",
+      "hex": "#FAF9F6",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 2"
+      }
+    },
+    {
+      "id": "stone-3",
+      "hex": "#F3F2EE",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 3"
+      }
+    },
+    {
+      "id": "stone-4",
+      "hex": "#EEECE7",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 4"
+      }
+    },
+    {
+      "id": "stone-5",
+      "hex": "#E7E4DE",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 5"
+      }
+    },
+    {
+      "id": "stone-6",
+      "hex": "#E2DFD8",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 6"
+      }
+    },
+    {
+      "id": "stone-7",
+      "hex": "#D3CFC6",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 7"
+      }
+    },
+    {
+      "id": "stone-8",
+      "hex": "#B9B4A9",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 8"
+      }
+    },
+    {
+      "id": "stone-9",
+      "hex": "#8E897E",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 9"
+      }
+    },
+    {
+      "id": "stone-10",
+      "hex": "#827D72",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 10"
+      }
+    },
+    {
+      "id": "stone-11",
+      "hex": "#5E5A51",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 11"
+      }
+    },
+    {
+      "id": "stone-12",
+      "hex": "#1E1C17",
+      "group": "scale-stone",
+      "name": {
+        "en": "Stone 12"
+      }
+    },
+    {
+      "id": "stone-dark-1",
+      "hex": "#121210",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 1"
+      }
+    },
+    {
+      "id": "stone-dark-2",
+      "hex": "#181815",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 2"
+      }
+    },
+    {
+      "id": "stone-dark-3",
+      "hex": "#1C1B18",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 3"
+      }
+    },
+    {
+      "id": "stone-dark-4",
+      "hex": "#22211D",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 4"
+      }
+    },
+    {
+      "id": "stone-dark-5",
+      "hex": "#282723",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 5"
+      }
+    },
+    {
+      "id": "stone-dark-6",
+      "hex": "#302E2A",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 6"
+      }
+    },
+    {
+      "id": "stone-dark-7",
+      "hex": "#3A3833",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 7"
+      }
+    },
+    {
+      "id": "stone-dark-8",
+      "hex": "#4E4B45",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 8"
+      }
+    },
+    {
+      "id": "stone-dark-9",
+      "hex": "#75716A",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 9"
+      }
+    },
+    {
+      "id": "stone-dark-10",
+      "hex": "#85817A",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 10"
+      }
+    },
+    {
+      "id": "stone-dark-11",
+      "hex": "#ADA99F",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 11"
+      }
+    },
+    {
+      "id": "stone-dark-12",
+      "hex": "#EEEDE8",
+      "group": "scale-stone-dark",
+      "name": {
+        "en": "Stone dark 12"
+      }
+    },
+    {
       "id": "leaf-1",
       "hex": "#F9FDF3",
       "group": "scale-leaf",

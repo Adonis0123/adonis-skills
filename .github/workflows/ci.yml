@@ -50,6 +50,9 @@ jobs:
       - name: Design Token Rules
         run: pnpm design:check
 
+      - name: DESIGN.md Lint
+        run: pnpm design:lint
+
       - name: Web Unit Tests
         run: pnpm --filter @adonis-skills/web test
 

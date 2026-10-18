@@ -1,5 +1,6 @@
-// Brand palette sync. adonis-brand (private) owns the colors; this public repo
-// keeps a snapshot under apps/web/src/styles/brand/ and generates CSS from it.
+// Brand sync. adonis-brand (private) owns the colors and the design spec; this
+// public repo keeps a snapshot under apps/web/src/styles/brand/ and generates
+// CSS plus the root DESIGN.md from it.
 //
 //   node scripts/sync-brand-tokens.mjs --from <adonis-brand dir>   copy snapshot + regenerate
 //   node scripts/sync-brand-tokens.mjs                             regenerate from snapshot
@@ -11,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import {
   findBrandIssues,
   renderBrandTokensCss,
+  renderDesignMd,
   renderThemeRolesCss,
 } from "./lib/brand-tokens.mjs";
 
@@ -21,6 +23,8 @@ const files = {
   palette: path.join(snapshotDir, "palette.json"),
   theme: path.join(snapshotDir, "theme.json"),
   source: path.join(snapshotDir, "source.json"),
+  design: path.join(snapshotDir, "DESIGN.source.md"),
+  designMd: path.join(root, "DESIGN.md"),
   brandCss: path.join(stylesDir, "brand-tokens.css"),
   themeCss: path.join(stylesDir, "theme-roles.css"),
 };
@@ -44,12 +48,14 @@ async function copySnapshot(brandDir) {
   const resolved = path.resolve(brandDir);
   const palettePath = path.join(resolved, "data/palette.json");
   const themePath = path.join(resolved, "projects/skills/theme.json");
+  const designPath = path.join(resolved, "projects/skills/DESIGN.md");
   try {
     await fs.access(palettePath);
     await fs.access(themePath);
+    await fs.access(designPath);
   } catch {
     throw new Error(
-      `adonis-brand not found at ${resolved}: expected data/palette.json and projects/skills/theme.json. Pass --from <dir> or set BRAND_REPO.`,
+      `adonis-brand not found at ${resolved}: expected data/palette.json, projects/skills/theme.json and projects/skills/DESIGN.md. Pass --from <dir> or set BRAND_REPO.`,
     );
   }
   const dirty =
@@ -59,6 +65,7 @@ async function copySnapshot(brandDir) {
       "--",
       "data/palette.json",
       "projects/skills/theme.json",
+      "projects/skills/DESIGN.md",
     ]) !== "";
   const source = {
     repo: "adonis-brand",
@@ -66,7 +73,11 @@ async function copySnapshot(brandDir) {
     // Uncommitted brand edits are allowed while designing, but flagged so the
     // snapshot is re-synced after the brand repo commits them.
     dirty,
-    files: ["data/palette.json", "projects/skills/theme.json"],
+    files: [
+      "data/palette.json",
+      "projects/skills/theme.json",
+      "projects/skills/DESIGN.md",
+    ],
   };
   // adonis-brand is private: publish only what the site needs (ids, values,
   // names, contrast rules). Sources, usage notes, and decision text stay there;
@@ -94,6 +105,8 @@ async function copySnapshot(brandDir) {
   );
   await fs.writeFile(files.theme, `${JSON.stringify(publicTheme, null, 2)}\n`);
   await fs.writeFile(files.source, `${JSON.stringify(source, null, 2)}\n`);
+  // DESIGN.md is the site's public design spec, so it is copied whole.
+  await fs.copyFile(designPath, files.design);
   return source;
 }
 
@@ -111,6 +124,15 @@ async function main() {
   const outputs = [
     [files.brandCss, renderBrandTokensCss(palette, source)],
     [files.themeCss, renderThemeRolesCss(theme, source)],
+    [
+      files.designMd,
+      renderDesignMd(
+        await fs.readFile(files.design, "utf8"),
+        palette,
+        theme,
+        source,
+      ),
+    ],
   ];
 
   if (check) {
@@ -135,7 +157,7 @@ async function main() {
 
   for (const [file, content] of outputs) await fs.writeFile(file, content);
   console.log(
-    `Generated ${path.relative(root, files.brandCss)} and ${path.relative(root, files.themeCss)} from adonis-brand@${source?.commit?.slice(0, 12) ?? "unknown"}${source?.dirty ? " (dirty)" : ""}.`,
+    `Generated ${outputs.map(([file]) => path.relative(root, file)).join(", ")} from adonis-brand@${source?.commit?.slice(0, 12) ?? "unknown"}${source?.dirty ? " (dirty)" : ""}.`,
   );
 }
 
