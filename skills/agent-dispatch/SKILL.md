@@ -1,9 +1,9 @@
 ---
 name: agent-dispatch
-description: "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3), or run independent research across products before a design decision (Research); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给多个 Claude 账号 / codex / grok, 找另一个 AI 审, 调研, research how good software does it, 对比优秀设计, 多方意见, 出设计稿, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill."
+description: "Choose the lightest agent setup for a coding, review, drafting or design-research task: do it yourself, fan out to 2-3 workers with non-overlapping files across the Claude Code, Codex, Grok Build, Cursor or other CLIs and accounts on this machine, run a scoped architecture loop, or send one brief to independent researchers; pick a cross-model reviewer, test budget and cleanup; then track dispatched work, external waits and user decisions on a Run Board the user can open any time. Use when work may need delegation, or the user asks to dispatch, fan out, parallelize, run several agents or accounts, get another AI's review or independent design opinions, or asks how dispatched work is going. Chinese triggers: 派活、并行、多开、分给多个 Claude 账号 / codex / grok、找另一个 AI 审、对比优秀设计、多方意见、进度看板、派出的任务进行到哪了。Not for unrelated read-only questions, trivial edits, research with no delegation, or listing every session on the machine. If one named workflow owns the task, use this only to size workers inside it."
 metadata:
   author: adonis
-  version: "1.4.0"
+  version: "1.5.0"
 ---
 
 # Agent Dispatch
@@ -76,6 +76,21 @@ Also confirm the review skills you plan to use are installed and callable; `open
 
 Before acting, output one line: `Dispatch: L<n> — <decisive reason>; workers <n>; reviewer <who>; target <time>`.
 
+## Run Board
+
+Use it for L2, L3 and Research, and for L1 once a Worker is dispatched. It covers only the Lanes this Coordinator dispatched; for every session on the machine, point the user to `claude agents` (Agent View) or the Orca sidebar instead of starting a Run. Read `references/run-board.md` before you `init` a Run or take one over: it has the commands, the ledger, the Orca loop and why each rule exists. Terms are in `GLOSSARY.md`.
+
+The rules below shape every reply, so they live here:
+
+1. **The user is not a technician.** They never run a command, edit a file, open a path or remember an id; you do it, and you map plain requests ("现在到哪了", "A1 按推荐", "停", "再打开看板") to the commands. Speak in plain words (任务, 外部等待, 问题, 账号额度), not Lane, Wait, Ask or quota pool, and say what each choice changes for them.
+2. **Open the Board for them** with `open` at the start of a Run. If it reports failure, give the progress as text in the chat; never hand them a path to open.
+3. **Register before you start**: every Lane, every Subagent you spawn and every Wait (deploy, CI, build, background shell) with its log; give a step that waits on others `--after`.
+4. **Every question is a numbered Ask** with a recommendation, the evidence and what it blocks; an outward action (send, publish, deploy) also names recipient, channel and the full draft. When a fact is missing, such as which group to post to, the Ask asks for it; never invent it.
+5. **Record "以后都这样" as a Standing Grant** with its exact scope and the user's words; grants for deploy, send or publish last this Run only.
+6. **Lead with the state line** from `show --line` while anything runs, and never wait with a foreground `sleep`.
+7. **"停" means stop, not only pause.** Create the `STOP` file (no new Lanes start), then stop each running Lane and Wait you can (Orca `worker-stop`, the processes you started), mark them `stopped`, and tell the user which ones could not be stopped and why.
+8. **Close** the Run when everything is integrated; a sideby handoff brief carries the Run directory (and Orca run id) so the next Coordinator continues the same Run.
+
 ## Research and design
 
 Independent opinions only count when they do not share context. Run the Research tier like this:
@@ -91,18 +106,21 @@ Independent opinions only count when they do not share context. Run the Research
 
 The tiers stay the same; only who fills each role changes. Say which fallback applied in the dispatch line or final report so the user knows the review was weaker or the batch slower than ideal.
 
-| Missing                                  | Do instead                                                                                                                                                                                                   | Why                                                                             |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| A second AI product                      | Reviewer is a fresh session of the same product given only the spec, the diff and the acceptance checks, never the writer's conversation or reasoning                                                        | Independence comes mostly from not sharing the writer's context and assumptions |
-| A second account or quota pool           | L2 runs the parts sequentially in their worktrees, or in parallel sessions on the one pool once the user authorizes 多开; in-session subagents are fine for read-only work but share the coordinator's quota | Parallel sessions on one pool share the same rate limit                         |
-| `ocr` or the `open-code-review-*` skills | Reviewer reads `git diff <base>...` plus the task spec and returns findings as `file:line — problem — evidence`; the coordinator verifies each before fixing                                                 | Keeps a structured, checkable review without the tool                           |
-| `architecture-hardening-loop`            | Treat L3 as L1/L2 on the named scope with an explicit list of structural changes the user approved                                                                                                           | Avoid unbounded refactors without the loop's guardrails                         |
-| Writing skills in the drafting agent     | Paste the key writing rules into the drafting prompt, or let the coordinator write                                                                                                                           | A drafting agent without the rules produces text the coordinator must redo      |
-| A drafting agent                         | Coordinator writes, loading the writing skills itself                                                                                                                                                        | —                                                                               |
+| Missing                                  | Do instead                                                                                                                                                                                                   | Why                                                                                  |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| A second AI product                      | Reviewer is a fresh session of the same product given only the spec, the diff and the acceptance checks, never the writer's conversation or reasoning                                                        | Independence comes mostly from not sharing the writer's context and assumptions      |
+| A second account or quota pool           | L2 runs the parts sequentially in their worktrees, or in parallel sessions on the one pool once the user authorizes 多开; in-session subagents are fine for read-only work but share the coordinator's quota | Parallel sessions on one pool share the same rate limit                              |
+| `ocr` or the `open-code-review-*` skills | Reviewer reads `git diff <base>...` plus the task spec and returns findings as `file:line — problem — evidence`; the coordinator verifies each before fixing                                                 | Keeps a structured, checkable review without the tool                                |
+| `architecture-hardening-loop`            | Treat L3 as L1/L2 on the named scope with an explicit list of structural changes the user approved                                                                                                           | Avoid unbounded refactors without the loop's guardrails                              |
+| Writing skills in the drafting agent     | Paste the key writing rules into the drafting prompt, or let the coordinator write                                                                                                                           | A drafting agent without the rules produces text the coordinator must redo           |
+| A drafting agent                         | Coordinator writes, loading the writing skills itself                                                                                                                                                        | —                                                                                    |
+| Orca                                     | Headless Workers with `.jsonl` output; the HTML Board is the only view                                                                                                                                       | The Board works anywhere Python 3 runs                                               |
+| A Grok Orca agent                        | Run Grok Lanes headless with `--output-format streaming-json`; they show on the HTML Board, not in the Orca sidebar                                                                                          | Grok is not an Orca agent id; a Grok TUI under `worker-start --terminal` is untested |
+| A background wait in the host            | End the turn with the Run state line and the Board path instead of polling                                                                                                                                   | A foreground `sleep` blocks the session and hides progress                           |
 
 ## Reviewer choice
 
-Clean-context verification catches blind spots the author cannot see. When `agentic-review-handoff` is installed, follow its saved preferences (`review-loop prefs`). Otherwise prefer, in order: another product than the writer → a fresh session of the same product → the coordinator, when it did not write the code. When the user restricts dispatch to one product (e.g. only Claude accounts), the reviewer is a fresh session on a different account of that product than the writer. When the coordinator is a different product from the worker, the coordinator running `open-code-review-delegate` already counts as cross-model review. The writer never reviews its own diff. Tell the reviewer to try inputs the request's examples skip (boundaries, NaN, halves, binary floating point): a reviewer that only replays the given examples passes code that is wrong one step off them.
+Clean-context verification catches blind spots the author cannot see. When `agentic-review-handoff` is installed, follow its saved preferences (`review-loop prefs`). Otherwise prefer, in order: another product than the writer → a fresh session of the same product → the coordinator, when it did not write the code. When the user restricts dispatch to one product (e.g. only Claude accounts), the reviewer is a fresh session on a different account of that product than the writer. When the coordinator is a different product from the worker, the coordinator running `open-code-review-delegate` already counts as cross-model review. The writer never reviews its own diff, and the reviewer runs on a different quota pool from the writer when the probe has one; otherwise state the fallback in the dispatch line (the Board flags a reviewer on the writer's pool). Tell the reviewer to try inputs the request's examples skip (boundaries, NaN, halves, binary floating point): a reviewer that only replays the given examples passes code that is wrong one step off them.
 
 A reviewer prompt (e.g. for `open-code-review-delegate`) names the range (`<base>..<head>`), a requirement summary, the focus list, 100% file coverage, and "also review the tests and docs OCR excludes". For a merge commit, review the conflict resolution with `git show --remerge-diff <merge>` plus the diff against each parent. A Codex reviewer under `exec -s read-only` cannot run Vitest (no temp dirs): it marks test execution `UNVERIFIED` and the coordinator re-runs the tests.
 
@@ -116,7 +134,7 @@ A reviewer prompt (e.g. for `open-code-review-delegate`) names the range (`<base
 
 - Exactly one session dispatches, integrates, decides and reports. A second session relaying the same events doubles the user's reading and invites conflicting decisions.
 - When the user has delegated decisions, decide reversible ones yourself and log each (what, options, choice, reason); show the list at milestones and at the end, e.g. `lane B base — shared base / lane A's branch — lane A's branch — B calls A's new API`. Destructive, production, billing, auth and external-message actions still need the user.
-- Report at milestones only: tier chosen, batch integrated, blocked on the user, done.
+- Report at milestones only: tier chosen, batch integrated, blocked on the user, done. Between milestones the Board answers "what is happening"; a report separates what is running, what is waited on, and the numbered Asks.
 - One integration line per batch: a shared package and its consumer change in the same batch and merge once.
 
 ## Dispatching workers
@@ -129,25 +147,28 @@ Each lane gets its own worktree on its own short branch (one branch cannot be ch
 
 Headless launch shapes (use `<command>` reported per account by the probe):
 
-| Product     | One-shot                                                                                                                     | Next round                                         |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| Claude Code | `cd <worktree> && <command> -p "$(cat <spec>)" --output-format json --allowedTools <list> < /dev/null > out.json 2> err.log` | `<command> --resume <session_id> -p "<delta>" ...` |
-| Codex       | `<command> exec -C <worktree> -s workspace-write -o <out.md> - < <spec>`                                                     | `<command> exec resume <session> ...`              |
-| Grok Build  | `<command> --cwd <worktree> --prompt-file <spec> --output-format json --always-approve`                                      | add `--resume <session>`                           |
-| Antigravity | `<command> -p "$(cat <spec>)" --output-format json --print-timeout 0s` (drafting)                                            | add `--continue` in the same worktree              |
+| Product     | One-shot                                                                                                                                          | Next round                                         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Claude Code | `cd <worktree> && <command> -p "$(cat <spec>)" --output-format stream-json --verbose --allowedTools <list> < /dev/null > <lane>.jsonl 2> err.log` | `<command> --resume <session_id> -p "<delta>" ...` |
+| Codex       | `<command> exec --json -C <worktree> -s workspace-write -o <out.md> - < <spec> > <lane>.jsonl`                                                    | `<command> exec resume <session> ...`              |
+| Grok Build  | `<command> --cwd <worktree> --prompt-file <spec> --output-format streaming-json --allow <rule> ... > <lane>.jsonl`                                | add `--resume <session>`                           |
+| Antigravity | `<command> -p "$(cat <spec>)" --output-format json --print-timeout 0s` (drafting)                                                                 | add `--continue` in the same worktree              |
 
 Notes on these shapes:
+
+- Write each Worker's event stream into the Run directory and register it with `lane add --output`; the Board reads the current activity from it.
+- In Orca, prefer a titled Orca terminal handed to `orchestration worker-start --terminal` over a hidden headless run, so the Worker shows in the sidebar the user already watches (`references/run-board.md` § Orca mode). Grok has no Orca agent id: keep Grok Lanes headless.
 
 - Through a multi-account launcher such as sideby, the product's own arguments follow `--` (`sideby run codex:main -- exec ...`); the probe's sideby `<command>` already ends in `--`, a hand-written accounts-file command may not.
 - Codex: pass the prompt on stdin (`-`). `-i <image>` takes several values and swallows a prompt written after it, so a prompt given as an argument after `-i` is lost. `-o <file>` writes the final message, which is easier than reading the JSONL stream; add `-c tools.web_search=true` for research and `-s read-only` when nothing may change.
 
-Headless runs must never wait on a TTY: close stdin, run them in the background, and grant the edit/run permissions the worktree needs, or a worker hangs silently. For Claude, `--permission-mode acceptEdits` is not enough: Bash (`pnpm install`, git, tests) is denied under `-p` and the lane stalls. Prefer an explicit `--allowedTools` list (e.g. `"Edit Write Read Bash(pnpm:*) Bash(git:*)"`); otherwise use `--permission-mode bypassPermissions` only inside a dedicated worktree with strict Ownership in the spec. Claude's JSON carries `session_id`, `result`, `total_cost_usd` and `num_turns`. Output shapes differ: Claude returns one JSON object with `.result`, Grok one object with `.text`, Codex a JSONL stream whose `item.completed` events carry the messages; read the task-spec Return block from that text. Headless sessions also load the user's full skills and global instructions, which can dwarf a small task's cost, so give trivial reviews to the cheapest available product.
+Headless runs must never wait on a TTY: close stdin, run them in the background, and grant the edit/run permissions the worktree needs, or a worker hangs silently. For Claude, `--permission-mode acceptEdits` is not enough: Bash (`pnpm install`, git, tests) is denied under `-p` and the lane stalls. Give the narrowest explicit allow list the Lane needs (Claude `--allowedTools "Edit Write Read Bash(pnpm:*) Bash(git:*)"`, Grok `--allow <rule>`). Blanket modes (Claude `--permission-mode bypassPermissions`, Grok `--always-approve`) need the user's explicit authorization for this Run: a worktree only separates Git working files, it does not stop a command from reaching other paths, and the spec's Ownership is an instruction, not a sandbox. Claude's final `result` event carries `session_id`, `result`, `total_cost_usd` and `num_turns`. Output shapes differ: Claude streams JSON events ending in `result`, Codex a JSONL stream whose `item.completed` events carry the messages (the final message is also in `-o`), Grok `streaming-json` events with `text` deltas ending in `end`; read the task-spec Return block from that text. Headless sessions also load the user's full skills and global instructions, which can dwarf a small task's cost, so give trivial reviews to the cheapest available product.
 
 For any other CLI, check its `--help` for a non-interactive mode before dispatching; if it has none, do not use it as a worker.
 
 A fix round resumes the writer's session and sends only the review findings and the coordinator's decisions, not the whole spec again.
 
-With a multi-account manager such as sideby, interactive sessions stay the user's to start. Non-interactive `-p` / `exec` worker runs (`sideby run <ref> -- -p ...`) are fine when the user has authorized dispatch.
+With a multi-account manager such as sideby, interactive sessions stay the user's to start, with one exception: inside Orca, once the user has authorized dispatch, you may open visible Orca terminals on sideby accounts for Workers, titled `<Lane short name> · <role> · <account>` (about 20 characters, e.g. `B9 卡片 · 写 · cc003`). Non-interactive `-p` / `exec` worker runs (`sideby run <ref> -- -p ...`) are fine when the user has authorized dispatch.
 
 Round budget: at most 3 dispatch rounds per task. A fourth round means the spec was wrong; rewrite it or take the task back.
 
@@ -156,10 +177,11 @@ Round budget: at most 3 dispatch rounds per task. A fourth round means the spec 
 - Workers run only affected tests (`vitest run <files>` or `--related`).
 - One full suite per batch, before delivery, with test concurrency capped (e.g. Vitest/Jest `--maxWorkers=2`, Node `--test-concurrency=2`, pytest `-n 2`), only when no other session is running one.
 - Before ending, confirm no leftover test runners, type checkers or dev servers started by you or your workers.
-- A reviewer or test run silent for 5 minutes: read its log first instead of waiting longer.
+- A reviewer or test run silent for 5 minutes: read its log first instead of waiting longer (the Board flags these).
+- The Board watcher counts as a process you started. Leave it running across turns while the Run is active, including while dispatch is paused by `STOP`, so the page stays current; it exits only when the Run is closed.
 
 ## Completion accounting
 
 After a worker's result is integrated and committed by the coordinator, immediately reuse that worker, keep it with a stated reason, or remove its worktree with `git worktree remove --force <path>` (or `worktree-tidy` if installed), then delete its merged short branch with `git branch -d`. `--force` is expected for uncommitted lanes: their worktree holds copies of what the coordinator already integrated; confirm the integrated commit contains those changes first.
 
-Final report per task: tier, who wrote and who reviewed (including any fallback), outcome, evidence, decisions taken for the user, and what still waits on the user.
+Final report per task: tier, who wrote and who reviewed (including any fallback), outcome, evidence, decisions taken for the user, Standing Grants recorded, and what still waits on the user as numbered Asks.

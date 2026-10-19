@@ -2,17 +2,17 @@
   {
     "slug": "agent-dispatch",
     "name": "agent-dispatch",
-    "description": "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3), or run independent research across products before a design decision (Research); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给多个 Claude 账号 / codex / grok, 找另一个 AI 审, 调研, research how good software does it, 对比优秀设计, 多方意见, 出设计稿, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill.",
+    "description": "Choose the lightest agent setup for a coding, review, drafting or design-research task: do it yourself, fan out to 2-3 workers with non-overlapping files across the Claude Code, Codex, Grok Build, Cursor or other CLIs and accounts on this machine, run a scoped architecture loop, or send one brief to independent researchers; pick a cross-model reviewer, test budget and cleanup; then track dispatched work, external waits and user decisions on a Run Board the user can open any time. Use when work may need delegation, or the user asks to dispatch, fan out, parallelize, run several agents or accounts, get another AI's review or independent design opinions, or asks how dispatched work is going. Chinese triggers: 派活、并行、多开、分给多个 Claude 账号 / codex / grok、找另一个 AI 审、对比优秀设计、多方意见、进度看板、派出的任务进行到哪了。Not for unrelated read-only questions, trivial edits, research with no delegation, or listing every session on the machine. If one named workflow owns the task, use this only to size workers inside it.",
     "metadata": {
       "author": "adonis",
-      "version": "1.4.0"
+      "version": "1.5.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-16T10:37:28.000Z",
+    "updatedAt": "2026-10-19T09:46:29.000Z",
     "catalog": {
       "displayName": {
         "en": "Agent Dispatcher",
@@ -23,17 +23,17 @@
         "agent-workflow",
         "code-review"
       ],
-      "summary": "Size a task from direct edit to parallel worktrees across installed AI CLIs and assign an independent reviewer.",
-      "summary_zh": "评估任务该单干还是分给多个 AI CLI 并行，并安排独立复审与清理。",
+      "summary": "Size a task from solo edit to parallel AI CLI worktrees, assign an independent reviewer, and show a live board of what each agent is doing.",
+      "summary_zh": "评估任务该单干还是分给多个 AI CLI 并行，安排独立复审，并用看板随时显示每个 agent 在做什么。",
       "use_cases": [
         "Split cross-package work with non-overlapping files across 2-3 worker worktrees.",
-        "Probe which AI CLIs and quota pools exist on your machine before delegating.",
-        "Ask several AI products the same research brief and act only on findings they agree on."
+        "Ask several AI products the same research brief and act only on findings they agree on.",
+        "Open one board, in Orca or any browser, to see each agent's current step, pending deploys and the questions waiting on you."
       ],
       "use_cases_zh": [
         "把互不重叠的跨包改动拆给 2 到 3 个 worktree 并行处理。",
-        "派活前先探测本机有哪些可用 AI CLI 和独立配额池。",
-        "把同一份调研题目发给多个 AI 产品，只采纳多方一致的结论。"
+        "把同一份调研题目发给多个 AI 产品，只采纳多方一致的结论。",
+        "在 Orca 或浏览器里打开看板，看每个 agent 进行到哪、还在等哪些部署、哪些问题等你回答。"
       ]
     }
   },

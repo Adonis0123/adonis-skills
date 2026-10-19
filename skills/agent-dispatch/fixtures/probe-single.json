@@ -1,0 +1,26 @@
+{
+  "source": "accounts_file",
+  "products": {
+    "claude": {
+      "accounts": [
+        {
+          "id": "claude",
+          "command": "claude",
+          "pool": "claude"
+        }
+      ],
+      "quota_pools": 1
+    }
+  },
+  "code_products": ["claude"],
+  "drafting_agents": [],
+  "allow": [],
+  "allow_unmatched": [],
+  "sessions_per_pool": 1,
+  "max_parallel_workers": 0,
+  "fallback": [
+    "single-product: reviewer is a fresh session of the same product that sees only the diff and spec, never the writer's conversation",
+    "one quota pool: L2 runs workers one after another, not in parallel",
+    "no drafting agent: coordinator writes articles itself with the writing skills"
+  ]
+}

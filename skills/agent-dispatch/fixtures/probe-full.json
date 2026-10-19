@@ -1,0 +1,77 @@
+{
+  "source": "accounts_file",
+  "products": {
+    "antigravity": {
+      "accounts": [
+        {
+          "id": "agy",
+          "command": "agy",
+          "pool": "agy"
+        }
+      ],
+      "quota_pools": 1
+    },
+    "claude": {
+      "accounts": [
+        {
+          "id": "claude:001",
+          "command": "sideby run claude:001 --",
+          "pool": "claude:001"
+        },
+        {
+          "id": "claude:002",
+          "command": "sideby run claude:002 --",
+          "pool": "claude:002"
+        },
+        {
+          "id": "claude:003",
+          "command": "sideby run claude:003 --",
+          "pool": "claude:003"
+        },
+        {
+          "id": "claude:008",
+          "command": "sideby run claude:008 --",
+          "pool": "claude:008"
+        }
+      ],
+      "quota_pools": 4
+    },
+    "codex": {
+      "accounts": [
+        {
+          "id": "codex:001",
+          "command": "sideby run codex:001 --",
+          "pool": "codex:001"
+        },
+        {
+          "id": "codex:002",
+          "command": "sideby run codex:002 --",
+          "pool": "codex:002"
+        }
+      ],
+      "quota_pools": 2
+    },
+    "grok": {
+      "accounts": [
+        {
+          "id": "grok:001",
+          "command": "sideby run grok:001 --",
+          "pool": "grok:001"
+        },
+        {
+          "id": "grok:002",
+          "command": "sideby run grok:002 --",
+          "pool": "grok:002"
+        }
+      ],
+      "quota_pools": 2
+    }
+  },
+  "code_products": ["claude", "codex", "grok"],
+  "drafting_agents": ["antigravity"],
+  "allow": [],
+  "allow_unmatched": [],
+  "sessions_per_pool": 1,
+  "max_parallel_workers": 3,
+  "fallback": []
+}

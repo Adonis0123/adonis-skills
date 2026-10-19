@@ -1,0 +1,50 @@
+[
+  {
+    "query": "我有 cc001 cc002 cc003 三个 Claude 账号和 codex，这个跨 packages/web 和 packages/api 的需求帮我拆一下并行做，再找另一个 AI 审。",
+    "should_trigger": true
+  },
+  {
+    "query": "fan out this refactor across two codex sessions and one claude worker, files in packages/core and packages/ui don't overlap",
+    "should_trigger": true
+  },
+  {
+    "query": "刚才派出去的 B9 和 M3b 现在进行到哪了？我想随时打开看看",
+    "should_trigger": true
+  },
+  {
+    "query": "what are the workers you dispatched doing right now? is the deploy still building?",
+    "should_trigger": true
+  },
+  {
+    "query": "面板的排序体验不好，去调研一下优秀软件怎么做的，多找几个 AI 给意见再改",
+    "should_trigger": true
+  },
+  {
+    "query": "这个需求要不要多开几个 agent？还是你自己改就行",
+    "should_trigger": true
+  },
+  {
+    "query": "本机开了好几个 claude 后台会话，怎么一眼看到它们各自的状态？",
+    "should_trigger": false
+  },
+  {
+    "query": "list all my running Claude Code sessions on this laptop",
+    "should_trigger": false
+  },
+  {
+    "query": "把 README 里的 typo 'recieve' 改成 'receive'",
+    "should_trigger": false
+  },
+  {
+    "query": "解释一下 git worktree 和 branch 的区别",
+    "should_trigger": false
+  },
+  {
+    "query": "Orca 侧栏里的 agent 状态图标分别是什么意思？",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我 review 一下当前 diff，有没有 bug",
+    "should_trigger": false
+  }
+]
