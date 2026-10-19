@@ -2,10 +2,10 @@
   {
     "slug": "agent-dispatch",
     "name": "agent-dispatch",
-    "description": "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给多个 Claude 账号 / codex / grok, 找另一个 AI 审, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill.",
+    "description": "Decide how much agent machinery a coding task deserves before starting it: do it yourself (L0/L1), fan out to 2-3 workers with non-overlapping files across whatever Claude Code, Codex, Grok Build, Cursor or other CLIs this machine actually has (L2), or run a scoped architecture loop (L3), or run independent research across products before a design decision (Research); then pick a cross-model reviewer, test budget, time target and worker cleanup, degrading cleanly when only one AI product or one account is available. Use whenever a coordinating agent might delegate implementation, review or article drafting to other agents, or the user says dispatch, fan out, parallelize, run several agents or accounts, 派活, 并行, 多开, 分给多个 Claude 账号 / codex / grok, 找另一个 AI 审, 调研, research how good software does it, 对比优秀设计, 多方意见, 出设计稿, or complains that simple tasks drag on. Skip read-only questions, one-line edits, and requests already fully covered by a single named workflow skill.",
     "metadata": {
       "author": "adonis",
-      "version": "1.2.0"
+      "version": "1.4.0"
     },
     "files": {
       "hasReferences": true,
@@ -27,11 +27,13 @@
       "summary_zh": "评估任务该单干还是分给多个 AI CLI 并行，并安排独立复审与清理。",
       "use_cases": [
         "Split cross-package work with non-overlapping files across 2-3 worker worktrees.",
-        "Probe which AI CLIs and quota pools exist on your machine before delegating."
+        "Probe which AI CLIs and quota pools exist on your machine before delegating.",
+        "Ask several AI products the same research brief and act only on findings they agree on."
       ],
       "use_cases_zh": [
         "把互不重叠的跨包改动拆给 2 到 3 个 worktree 并行处理。",
-        "派活前先探测本机有哪些可用 AI CLI 和独立配额池。"
+        "派活前先探测本机有哪些可用 AI CLI 和独立配额池。",
+        "把同一份调研题目发给多个 AI 产品，只采纳多方一致的结论。"
       ]
     }
   },

@@ -56,6 +56,35 @@
         "评审方服从 agentic-review-handoff 的 saved prefs（通过 --host 选出 codex，grok 作为超时 fallback），不随意自选",
         "工人不执行 commit/push，集成后移交给仓库既有的 delivery/ship 流程或按用户明确要求在本地 commit"
       ]
+    },
+    {
+      "id": 5,
+      "name": "allow-list-multi-session-headless-permissions",
+      "prompt": "你是总指挥（claude:002）。只用 cc001 cc002 cc003 cc008 这几个 Claude 账号，可以多开。需求拆成三条互不重叠的 lane：A 改 packages/core，B 改 packages/web 并依赖 A 新增的 API，C 改 docs。每条 lane 要跑 pnpm install 和受影响测试。给出派活计划：账号与会话怎么分、worktree 和分支怎么建、worker 用什么启动命令和权限、修复轮怎么发、谁来 review。",
+      "expected_output": "Runs the probe with AGENT_DISPATCH_ALLOW set to the four Claude ids and a raised AGENT_DISPATCH_SESSIONS_PER_POOL, reads pools from the probe output; gives each lane its own worktree and short branch with B branched from A's branch; launches headless Claude with closed stdin in the background and an explicit --allowedTools list (or bypassPermissions confined to the worktree) rather than acceptEdits; fix rounds resume the writer's session with only the findings; reviewer is a fresh Claude session on a different account than the writer, with the coordinator re-running tests.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "用 AGENT_DISPATCH_ALLOW（或 accounts 文件 allow）限定四个账号，并按用户授权调高 sessions_per_pool",
+        "配额池以 probe 输出为准，不按账号名假设一号一池；提醒同池会话共享限流",
+        "每条 lane 独立 worktree 和短分支，B 从 A 的分支切出",
+        "Claude worker 不用 acceptEdits，改用 --allowedTools 列表或限定在专用 worktree 的 bypassPermissions，stdin 关闭并后台运行",
+        "修复轮用 --resume <session_id> 只发 review 发现和总指挥决定",
+        "reviewer 是与写代码账号不同的 Claude 新会话，测试由总指挥复跑"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "design-research-fans-out-across-products",
+      "prompt": "面板的账号置顶和排序我觉得体验不好，你去调研一下优秀软件是怎么设计的，再改。按你的派活方式安排。",
+      "expected_output": "Picks the Research tier first: one shared brief, 3+ independent researchers across available products without each other's answers, inputs checked, findings merged by agreement (2+), mockups before implementation, then an implementation tier.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "先选调研档（Research），不是直接 L0/L1 动手改",
+        "同一份调研题目发给至少 3 个独立调研者，尽量跨产品",
+        "调研者之间互不看对方答案，题目里不放总指挥自己的结论",
+        "至少两方一致的结论才进入实现",
+        "视觉改动先出设计稿再实现"
+      ]
     }
   ]
 }

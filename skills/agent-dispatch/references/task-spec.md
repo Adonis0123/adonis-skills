@@ -7,7 +7,7 @@ Copy this template into one file per worker. Every field is required; write `non
 
 ## Target
 
-Repository, worktree path, base commit, and the files or component in scope.
+Repository, worktree path, the lane's short branch and base (shared base, or the branch of the lane it depends on), and the files or component in scope.
 
 ## Change
 
@@ -21,7 +21,8 @@ Invariants, compatibility rules, repository instructions to read first (nearest 
 
 - May edit: <exact files or globs>
 - Must not edit: <files other workers own, shared packages, generated files>
-- No commit, push, deploy, publish, or messages to other sessions.
+- Pick one, delete the other: "No commit" (single-checkout work) or "Local commits on <short-branch> only, hooks must pass".
+- No push, merge into other branches, deploy, publish, or messages to other sessions.
 
 ## Acceptance
 
@@ -36,4 +37,4 @@ The tests, commands, or page evidence that prove completion. Run only affected t
 5. Confirmation that no test runner, type checker, or server you started is still running.
 ```
 
-Keep the spec self-contained: the worker cannot see the coordinator's conversation. For a follow-up round, send only the delta (what failed, what to change) plus the original spec path.
+Keep the spec self-contained: the worker cannot see the coordinator's conversation. For a follow-up round, resume the writer's session and send only the delta (review findings, the coordinator's decisions, what to change) plus the original spec path.
