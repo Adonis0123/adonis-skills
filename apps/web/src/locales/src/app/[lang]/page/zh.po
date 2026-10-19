@@ -56,7 +56,12 @@ msgstr "{skillsCount} 个技能 · {updatedMonth}更新"
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:162
 msgid "home.hero.bubble"
-msgstr "<0>你好，我是尼卡。</0>这里的每个技能，我和琪琪都先在自己的仓库里用过。"
+msgstr "<0>你好，我是尼卡。</0>这里的每个技能，我和琪琪都在自己的仓库里天天用、跑通了才放上来。"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:84
+msgid "home.hero.lede"
+msgstr "从拆活并行、独立代码复审、整洁 Git 提交到连接 Chrome 与 Figma——这里都是实战打磨过的现成技能。按手头的事挑一个，复制一行命令就能装进你的 agent。"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:96
@@ -64,17 +69,12 @@ msgid "home.cta.browse"
 msgstr "浏览技能"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:191
+#: ../../src/app/%5Blang%5D/page.tsx:192
 msgid "home.install.lede"
 msgstr "每个技能都能在 Claude Code、Codex、Cursor 和 Hermes Agent 里用。可以只装一个，也可以整套装上。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:84
-msgid "home.hero.lede"
-msgstr "我是尼卡，用 AI 做些小工具，像提灯一样随身带着。按你要做的事挑一个，复制一行命令，就能在你的 agent 里用。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:185
+#: ../../src/app/%5Blang%5D/page.tsx:186
 msgid "home.install.kicker"
 msgstr "安装"
 
@@ -84,19 +84,19 @@ msgid "home.hero.art.alt"
 msgstr "穿绿色兜帽外套、提着灯的尼卡，和戴巫师帽的琪琪走在一起"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:188
+#: ../../src/app/%5Blang%5D/page.tsx:189
 msgid "home.install.headline"
 msgstr "一行命令，哪个 agent 都能装。"
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:77
-msgid "home.hero.headline"
-msgstr "这些 agent 小技能，我<0>每天都在用。</0>"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:115
 msgid "home.cta.github"
 msgstr "去 GitHub 点个 Star"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:77
+msgid "home.hero.headline"
+msgstr "教你的编码 agent 把活<0>漂亮地干完。</0>"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:126

@@ -21,7 +21,7 @@ msgstr "%s | Nika Skills"
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/layout.tsx:39
 msgid "layout.meta.description"
-msgstr "I am Nika. These are the agent skills I built for my own daily work in Claude Code, Codex, Cursor, and Hermes Agent."
+msgstr "Battle-tested coding agent skills for delegating tasks, running independent code reviews, shipping clean Git history, and wiring up MCP tools in Claude Code, Codex, Cursor, and Hermes Agent."
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/layout.tsx:48

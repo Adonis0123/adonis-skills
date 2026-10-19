@@ -56,7 +56,12 @@ msgstr "{skillsCount} skills · updated {updatedMonth}"
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:162
 msgid "home.hero.bubble"
-msgstr "<0>Hi, I'm Nika.</0> Kiki and I test every skill here in our own repos first."
+msgstr "<0>Hi, I'm Nika.</0> Kiki and I use these skills in our own repos every day before they land here."
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:84
+msgid "home.hero.lede"
+msgstr "Battle-tested skills for delegating tasks, running independent code reviews, shipping clean Git history, and wiring up MCP tools. Pick a task, copy one line, and it runs in your agent."
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:96
@@ -64,17 +69,12 @@ msgid "home.cta.browse"
 msgstr "Browse skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:191
+#: ../../src/app/%5Blang%5D/page.tsx:192
 msgid "home.install.lede"
 msgstr "Every skill works in Claude Code, Codex, Cursor and Hermes Agent. Install one, or the whole shelf."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:84
-msgid "home.hero.lede"
-msgstr "I'm Nika. I build small tools with AI and carry them around like a lantern. Pick one by what you're trying to do, copy one line, and it works in your agent."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:185
+#: ../../src/app/%5Blang%5D/page.tsx:186
 msgid "home.install.kicker"
 msgstr "Install"
 
@@ -84,19 +84,19 @@ msgid "home.hero.art.alt"
 msgstr "Nika in a green hooded coat holding a lantern, walking with Kiki in a wizard hat"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:188
+#: ../../src/app/%5Blang%5D/page.tsx:189
 msgid "home.install.headline"
 msgstr "One line, any agent."
-
-#. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:77
-msgid "home.hero.headline"
-msgstr "Small agent skills I use <0>every day.</0>"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:115
 msgid "home.cta.github"
 msgstr "Star on GitHub"
+
+#. js-lingui-explicit-id
+#: ../../src/app/%5Blang%5D/page.tsx:77
+msgid "home.hero.headline"
+msgstr "Teach your coding agent how to <0>finish the job.</0>"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:126

@@ -55,8 +55,8 @@ export function SiteFooter() {
             <SiteBrand variant="footer" brand={brand} />
             <p className="mt-3 max-w-[300px] text-sm text-muted-foreground">
               <Trans id="siteFooter.brand.lantern">
-                Small agent skills I built and use every day. Carried around
-                like a lantern.
+                Field-tested coding skills I use every day. Carried around like
+                a lantern.
               </Trans>
             </p>
           </div>

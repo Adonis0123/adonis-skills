@@ -255,7 +255,7 @@ export function SkillsLibrarySection({
               </p>
               <h2 id="featured-title" className="type-h2 mt-2">
                 <Trans id="home.featured.title">
-                  Three skills I reach for first
+                  Three skills worth installing first
                 </Trans>
               </h2>
             </div>

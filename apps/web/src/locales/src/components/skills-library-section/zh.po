@@ -163,7 +163,7 @@ msgstr "标签：{0}"
 #. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:257
 msgid "home.featured.title"
-msgstr "我最常拿起的三个技能"
+msgstr "最值得先装上的三个技能"
 
 #. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:459

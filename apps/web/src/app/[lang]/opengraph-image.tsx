@@ -1,7 +1,7 @@
 import { OG_SIZE, renderOgCard } from "@/lib/og-card";
 import { SUPPORTED_LOCALES } from "@/i18n/config";
 
-export const alt = "Nika Skills: small agent skills I built and use every day";
+export const alt = "Nika Skills: teach your coding agent how to finish the job";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 
@@ -11,8 +11,8 @@ export function generateStaticParams() {
 
 export default async function Image() {
   return renderOgCard({
-    title: "Small agent skills I built and use every day.",
+    title: "Teach your coding agent how to finish the job.",
     description:
-      "Install them into Claude\u00A0Code, Codex, Cursor, or Hermes\u00A0Agent.",
+      "Install battle-tested skills into Claude\u00A0Code, Codex, Cursor, or Hermes\u00A0Agent.",
   });
 }

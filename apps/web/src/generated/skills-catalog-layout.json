@@ -55,8 +55,8 @@
         "zh": "前端手艺"
       },
       "summary": {
-        "en": "Small helpers for the browser side: jump to source, keep i18n in shape, measure speed, serve local pages.",
-        "zh": "浏览器这一侧的小帮手：点元素跳源码、维护多语言、测性能、搭本地网页。"
+        "en": "Sharp tools for the browser side: jump to source, keep i18n in shape, measure speed, serve local pages.",
+        "zh": "浏览器这一侧的顺手工具：点元素跳源码、维护多语言、测性能、搭本地网页。"
       },
       "illustration": "group-frontend.webp"
     },

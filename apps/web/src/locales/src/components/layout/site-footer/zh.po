@@ -49,6 +49,11 @@ msgid "siteFooter.link.allSkills"
 msgstr "全部技能"
 
 #. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:57
+msgid "siteFooter.brand.lantern"
+msgstr "实战打磨、每天在用的编码 agent 技能，像提灯一样随身带着。"
+
+#. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:36
 msgid "siteFooter.link.githubRepository"
 msgstr "GitHub 仓库"
@@ -82,8 +87,3 @@ msgstr "资源"
 #: ../../src/components/layout/site-footer.tsx:31
 msgid "siteFooter.link.scenarios"
 msgstr "按场景找"
-
-#. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:57
-msgid "siteFooter.brand.lantern"
-msgstr "我给自己做的 agent 小技能，每天都在用，像提灯一样随身带着。"

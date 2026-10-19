@@ -21,7 +21,7 @@ msgstr "%s | Nika Skills"
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/layout.tsx:39
 msgid "layout.meta.description"
-msgstr "我是尼卡，用 AI 给自己做小工具。这里是我在 Claude Code、Codex、Cursor 和 Hermes Agent 里日常在用的技能。"
+msgstr "涵盖拆活并行、独立代码复审、整洁 Git 提交与 MCP 工具连接的实战编码 agent 技能库，适用于 Claude Code、Codex、Cursor 和 Hermes Agent。"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/layout.tsx:48

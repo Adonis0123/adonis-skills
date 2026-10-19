@@ -163,7 +163,7 @@ msgstr "Tag: {0}"
 #. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:257
 msgid "home.featured.title"
-msgstr "Three skills I reach for first"
+msgstr "Three skills worth installing first"
 
 #. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:459

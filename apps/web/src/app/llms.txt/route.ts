@@ -10,7 +10,7 @@ export function GET() {
   const lines = [
     "# Nika Skills",
     "",
-    `> ${skills.length} agent skills by Nika for Claude Code, Codex, Cursor, and Hermes Agent. Each link is the raw SKILL.md.`,
+    `> ${skills.length} battle-tested coding agent skills by Nika for delegating tasks, running independent code reviews, shipping clean Git history, and wiring up MCP tools in Claude Code, Codex, Cursor, and Hermes Agent. Each link is the raw SKILL.md.`,
     "",
     "## Install",
     "",

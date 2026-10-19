@@ -75,16 +75,16 @@ export default async function HomePage({ params }: HomePageProps) {
               className="type-display text-balance [word-break:keep-all]"
             >
               <Trans id="home.hero.headline">
-                Small agent skills I use{" "}
-                <HandUnderline>every day.</HandUnderline>
+                Teach your coding agent how to{" "}
+                <HandUnderline>finish the job.</HandUnderline>
               </Trans>
             </h1>
 
             <p className="type-lede mt-3.5 max-w-[34rem] text-[15px] text-muted-foreground md:mt-5 md:text-lg">
               <Trans id="home.hero.lede">
-                I&apos;m Nika. I build small tools with AI and carry them around
-                like a lantern. Pick one by what you&apos;re trying to do, copy
-                one line, and it works in your agent.
+                Battle-tested skills for delegating tasks, running independent
+                code reviews, shipping clean Git history, and wiring up MCP
+                tools. Pick a task, copy one line, and it runs in your agent.
               </Trans>
             </p>
 
@@ -163,7 +163,8 @@ export default async function HomePage({ params }: HomePageProps) {
                 <b className="font-semibold text-foreground">
                   Hi, I&apos;m Nika.
                 </b>{" "}
-                Kiki and I test every skill here in our own repos first.
+                Kiki and I use these skills in our own repos every day before
+                they land here.
               </Trans>
             </p>
           </SectionReveal>

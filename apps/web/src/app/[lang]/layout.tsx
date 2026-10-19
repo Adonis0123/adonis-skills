@@ -39,7 +39,7 @@ export async function generateMetadata({
   const description = i18n._({
     id: "layout.meta.description",
     message:
-      "I am Nika. These are the agent skills I built for my own daily work in Claude Code, Codex, Cursor, and Hermes Agent.",
+      "Battle-tested coding agent skills for delegating tasks, running independent code reviews, shipping clean Git history, and wiring up MCP tools in Claude Code, Codex, Cursor, and Hermes Agent.",
   });
 
   return {

@@ -22,6 +22,7 @@ export default async function Image({
   return renderOgCard({
     title: skill?.name ?? "Nika Skills",
     description:
-      skill?.catalog.summary ?? "Small agent skills I built and use every day.",
+      skill?.catalog.summary ??
+      "Teach your coding agent how to finish the job.",
   });
 }
