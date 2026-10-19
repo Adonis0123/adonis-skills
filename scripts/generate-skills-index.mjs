@@ -245,6 +245,73 @@ function readGitUpdatedAt(slug) {
   }
 }
 
+// The pre-commit hook regenerates the index before the commit exists, so
+// `git log` cannot know the time of the commit being made. Treat the committed
+// index as the source of truth instead: a clean skill keeps the date HEAD
+// already ships, and a skill with uncommitted changes gets today's UTC date at
+// day precision. CI then reads back exactly what pre-commit wrote.
+export function resolveUpdatedAt({
+  dirty,
+  committed,
+  readGit,
+  now = new Date(),
+}) {
+  if (dirty) return `${now.toISOString().slice(0, 10)}T00:00:00.000Z`;
+  return committed ?? readGit();
+}
+
+// Parses `git status --porcelain=v1 -z` output into the skill slugs it touches.
+export function parseDirtySlugs(statusOutput) {
+  const slugs = new Set();
+  for (const token of statusOutput.split("\0")) {
+    const file = token.replace(/^[ MTADRCU?!]{2} /, "");
+    const match = /^skills\/([^/]+)\//.exec(file);
+    if (match) slugs.add(match[1]);
+  }
+  return slugs;
+}
+
+function loadDirtySlugs() {
+  try {
+    return parseDirtySlugs(
+      execFileSync(
+        "git",
+        [
+          "status",
+          "--porcelain=v1",
+          "-z",
+          "--untracked-files=all",
+          "--",
+          "skills/",
+        ],
+        { cwd: root, encoding: "utf8" },
+      ),
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function loadHeadUpdatedAt() {
+  try {
+    const relPath = path
+      .relative(root, listOutputPath)
+      .split(path.sep)
+      .join("/");
+    const committed = JSON.parse(
+      execFileSync("git", ["show", `HEAD:${relPath}`], {
+        cwd: root,
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "ignore"],
+        maxBuffer: 64 * 1024 * 1024,
+      }),
+    );
+    return new Map(committed.map((item) => [item.slug, item.updatedAt]));
+  } catch {
+    return new Map();
+  }
+}
+
 // Shallow clones (CI, Vercel) only see the latest commit, so `git log` would
 // stamp every skill with the same date. Reuse the committed dates instead.
 async function loadCommittedUpdatedAt() {
@@ -284,6 +351,8 @@ async function loadSkills() {
   );
   const catalog = await loadCatalog(skillEntries.map((entry) => entry.name));
   const committedUpdatedAt = await loadCommittedUpdatedAt();
+  const headUpdatedAt = loadHeadUpdatedAt();
+  const dirtySlugs = loadDirtySlugs();
   const listItems = [];
   const detailItems = [];
 
@@ -305,7 +374,13 @@ async function loadSkills() {
           }
         : undefined;
 
-    const updatedAt = committedUpdatedAt?.get(slug) ?? readGitUpdatedAt(slug);
+    const updatedAt =
+      committedUpdatedAt?.get(slug) ??
+      resolveUpdatedAt({
+        dirty: dirtySlugs.has(slug),
+        committed: headUpdatedAt.get(slug),
+        readGit: () => readGitUpdatedAt(slug),
+      });
 
     const allowedToolsRaw = frontmatter["allowed-tools"];
     const allowedTools =
