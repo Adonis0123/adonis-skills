@@ -260,6 +260,19 @@ skills:
       - "量化每个 MCP、Skill 和 Hook 占用的常驻 Token 与启动耗时。"
       - "盘点过去 90 天从没调用过的工具或互相冲突的指令文件，逐项确认去留。"
 
+  disk-tidy:
+    displayName: { en: "Disk Space Cleanup", zh: "磁盘空间清理" }
+    group: docs
+    tags: [docs-and-ops]
+    summary: "Find what filled a developer Mac's disk, rank build caches, app data and old tool versions by risk, and clean only what you approve."
+    summary_zh: "找出开发机硬盘被什么占满，把构建缓存、应用数据和旧工具版本按风险分级，只清理你确认的部分。"
+    use_cases:
+      - "Survey .next and Turborepo caches, package-manager caches, chat apps and AI agent data in parallel, then get one tiered cleanup list."
+      - "Delete only git-ignored build output that no dev server is using, and see the real space gained instead of du estimates."
+    use_cases_zh:
+      - "并行盘点 .next、Turborepo 缓存、包管理器缓存、聊天应用和 AI Agent 数据，合并成一份分级清理清单。"
+      - "只删除被 git 忽略、且没有 dev server 在用的构建产物，按清理前后的真实可用空间汇报效果。"
+
   figma-mcp:
     displayName: { en: "Figma Connector", zh: "Figma 连接器" }
     group: tools

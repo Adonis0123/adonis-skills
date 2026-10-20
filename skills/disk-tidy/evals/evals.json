@@ -1,0 +1,85 @@
+{
+  "skill_name": "disk-tidy",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "我的 Mac 硬盘又快满了，帮我看看都被什么占了，哪些可以清理。先只出一份清单给我，别删也别移动任何东西。",
+      "expected_output": "Read-only survey: free-space snapshot, slices covering build output/caches, apps, AI agent data and repos, the owner's files; one merged list in tiers A/B/C with sizes, loss and risk; caveat that du overstates because of APFS clones; Trash contents mentioned; nothing deleted.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "free-space-snapshot",
+          "text": "The report states current free and used space of the data volume as a measured number."
+        },
+        {
+          "name": "build-output-covered",
+          "text": "The report measures build output such as .next, .turbo or Cargo target folders under the code folders and says which are safe to delete."
+        },
+        {
+          "name": "agent-data-covered",
+          "text": "The report covers AI agent data (sessions, upgrade leftovers or old CLI versions)."
+        },
+        {
+          "name": "tiers",
+          "text": "Items are grouped into rebuildable / owner decides / keep (or equivalent tiers) with a size per item."
+        },
+        {
+          "name": "clone-caveat",
+          "text": "The report warns that du sizes can overstate the space actually freed (APFS clones or hard links), or reports gains only from free-space differences."
+        },
+        {
+          "name": "nothing-deleted",
+          "text": "The run deleted, moved or emptied nothing (no rm, no Trash moves, no cache clean commands executed)."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "~/work 下面那几个 Next.js 项目和它们的 worktree 太占空间了，帮我找出能安全删掉的构建缓存（.next、.turbo 这些），正在跑 dev server 的别动。先给我 dry-run 结果看看，不要真删。",
+      "expected_output": "Finds build-output folders under ~/work, checks git ignore status and running processes, marks the folder of a running dev server as blocked, shows a dry run with sizes and a du-based total, deletes nothing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "git-ignore-checked",
+          "text": "Each candidate's git ignore status is checked (git check-ignore or the skill's artifacts report)."
+        },
+        {
+          "name": "running-process-checked",
+          "text": "Running processes (dev servers or process working directories) are checked and any folder in use is excluded."
+        },
+        {
+          "name": "dry-run-only",
+          "text": "Output is a dry run listing would-delete folders with sizes; nothing was actually deleted."
+        },
+        {
+          "name": "worktrees-included",
+          "text": "Build output inside .worktrees of the repositories is included in the scan."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "上周刚清过一次硬盘，可用空间又在往下掉。帮我查查最近一周是什么东西在涨、以后还会不会继续涨，先别清理。",
+      "expected_output": "Looks for recently modified or recently grown large folders (build output, caches, app clones, sessions, worktrees), explains which keep growing and why, names the cause where it can, gives cleanup options with tiers, and cleans nothing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "recent-growth-measured",
+          "text": "The answer identifies specific folders that grew or were created recently, using modification dates or a comparison, with sizes."
+        },
+        {
+          "name": "cause-explained",
+          "text": "For at least one growing item the answer explains what recreates it (for example dev sessions rebuilding .next, browser updates leaving clones, repeated installs)."
+        },
+        {
+          "name": "recurrence-advice",
+          "text": "The answer says which items will keep growing and how to keep them in check."
+        },
+        {
+          "name": "nothing-cleaned",
+          "text": "No cache was cleaned and nothing was deleted or moved."
+        }
+      ]
+    }
+  ]
+}
