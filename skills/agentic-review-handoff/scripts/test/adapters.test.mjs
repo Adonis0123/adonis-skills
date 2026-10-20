@@ -17,6 +17,7 @@ import {
   DEFAULT_TIMEOUT_MS,
   DELIVERY_UNKNOWN,
   resolveTimeoutMs,
+  parsePiJsonl,
 } from "../review-loop/adapters.mjs";
 
 const cleanup = [];
@@ -764,4 +765,161 @@ exit 0`,
       assert.equal(leftover, "", "no launcher grandchild survives the timeout");
     },
   );
+});
+
+describe("web research opt-in", () => {
+  it("adds search/fetch only and keeps write and shell controls", () => {
+    const codex = buildArgv({
+      product: "codex",
+      mode: "new",
+      prompt: "q",
+      sessionId: null,
+      web: true,
+    });
+    assertSandboxHardcoded("codex", codex);
+    assert.ok(codex.indexOf("--search") < codex.indexOf("exec"));
+
+    const grok = buildArgv({
+      product: "grok",
+      mode: "new",
+      prompt: "q",
+      sessionId: null,
+      web: true,
+    });
+    assertSandboxHardcoded("grok", grok);
+    assert.equal(
+      grok[grok.indexOf("--tools") + 1],
+      "read_file,grep,list_dir,web_fetch",
+    );
+    assert.equal(grok.includes("--disable-web-search"), false);
+
+    const claude = buildArgv({
+      product: "claude",
+      mode: "new",
+      prompt: "q",
+      sessionId: null,
+      web: true,
+    });
+    assertSandboxHardcoded("claude", claude);
+    assert.equal(
+      claude[claude.indexOf("--allowedTools") + 1],
+      "Read,Grep,Glob,WebSearch,WebFetch",
+    );
+    assert.doesNotMatch(claude[claude.indexOf("--disallowedTools") + 1], /Web/);
+  });
+
+  it("stays off by default", () => {
+    const claude = buildArgv({
+      product: "claude",
+      mode: "new",
+      prompt: "q",
+      sessionId: null,
+    });
+    assert.match(claude[claude.indexOf("--disallowedTools") + 1], /WebSearch/);
+    const codex = buildArgv({
+      product: "codex",
+      mode: "new",
+      prompt: "q",
+      sessionId: null,
+    });
+    assert.equal(codex.includes("--search"), false);
+  });
+
+  it("refuses web for pi, which has no search tool", () => {
+    assert.throws(
+      () => createAdapter("pi", { repoRoot: tmpDir(), web: true }),
+      /pi has no web search/,
+    );
+  });
+});
+
+describe("pi adapter", () => {
+  it("builds a read-only argv around an exact session id", () => {
+    const argv = buildArgv({
+      product: "pi",
+      mode: "resume",
+      prompt: "q",
+      sessionId: "s-1",
+    });
+    assertSandboxHardcoded("pi", argv);
+    assert.equal(argv[argv.indexOf("--session-id") + 1], "s-1");
+    assert.equal(argv.at(-1), "q");
+  });
+
+  it("accepts pi launchers and pi fallbacks", () => {
+    assert.doesNotThrow(() => assertLauncherMatchesProduct("pi-kimi", "pi"));
+    assert.throws(
+      () => assertLauncherMatchesProduct("pi-kimi", "claude"),
+      /belongs to pi/,
+    );
+  });
+
+  it("parses the last assistant text and surfaces a failed model call", () => {
+    const ok = [
+      JSON.stringify({ type: "session", id: "pi-sess-1" }),
+      JSON.stringify({
+        type: "agent_end",
+        messages: [
+          { role: "user", content: [{ type: "text", text: "q" }] },
+          {
+            role: "assistant",
+            content: [{ type: "text", text: "PI_OK" }],
+            stopReason: "stop",
+          },
+        ],
+      }),
+    ].join("\n");
+    assert.deepEqual(parsePiJsonl(ok), {
+      text: "PI_OK",
+      sessionId: "pi-sess-1",
+      error: null,
+    });
+
+    const failed = JSON.stringify({
+      type: "agent_end",
+      messages: [
+        {
+          role: "assistant",
+          content: [],
+          stopReason: "error",
+          errorMessage: "OAuth refresh failed",
+        },
+      ],
+    });
+    assert.equal(parsePiJsonl(failed).error, "OAuth refresh failed");
+  });
+
+  it("opens a new session under a fresh uuid and reports pi errors as DELIVERY_UNKNOWN", async () => {
+    const repoRoot = makeRepo();
+    const bin = writeFakeBin(
+      repoRoot,
+      "fake-pi",
+      `sid=""
+while [ $# -gt 0 ]; do [ "$1" = "--session-id" ] && sid="$2"; shift; done
+printf '%s\n' "{\"type\":\"session\",\"id\":\"$sid\"}"
+printf '%s\n' '{"type":"agent_end","messages":[{"role":"assistant","content":[{"type":"text","text":"PI_OK"}]}]}'`,
+    );
+    const r = await createAdapter("pi", {
+      repoRoot,
+      bin,
+      timeoutMs: 5000,
+    }).newSession("q");
+    assert.equal(r.ok, true);
+    assert.equal(r.text, "PI_OK");
+    assert.match(r.sessionId, /^[0-9a-f-]{36}$/);
+
+    const badBin = writeFakeBin(
+      repoRoot,
+      "fake-pi-bad",
+      `printf '%s\n' '{"type":"agent_end","messages":[{"role":"assistant","content":[],"stopReason":"error","errorMessage":"401"}]}'`,
+    );
+    const bad = await createAdapter("pi", {
+      repoRoot,
+      bin: badBin,
+      timeoutMs: 5000,
+    }).newSession("q");
+    assert.equal(bad.ok, false);
+    assert.equal(bad.code, DELIVERY_UNKNOWN);
+    assert.match(bad.error, /pi run failed: 401/);
+  });
 });

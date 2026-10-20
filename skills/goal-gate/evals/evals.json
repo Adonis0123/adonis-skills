@@ -536,6 +536,38 @@
         "Constraints preserve no-commit",
         "Uses update_goal status complete only after test evidence is surfaced; otherwise leaves the goal active"
       ]
+    },
+    {
+      "id": 35,
+      "name": "shrink-regression-claude-unattended-checkpoint-evidence",
+      "source": "SKILL.md shrink (2026-10-20): old-vs-new check that moving the Unattended Continuation section into references/runtime-actions.md did not weaken the behavior",
+      "prompt": "I'm in Claude Code working through docs/release-plan.md on my own repo. There are about 6 checkpoints covering the migration script, the API wrapper, and the rollback tests. I'm going to step away for a couple hours \u2014 use goal-gate, don't stop and ask me stuff, just keep going checkpoint by checkpoint and show me real evidence (test output, not just 'looks good') when each one is done. If you get stuck on the same blocker twice in a row, tell me what it is instead of just retrying forever.",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: claude-code-slash that self-adopts and starts work in the same reply. The agent treats a text-only end of turn as a report, not proof a checkpoint is done, and keeps a checklist of the 6 checkpoints it updates with real command/test evidence rather than restating 'looks good'. It continues through checkpoints that aren't blocked instead of stopping to ask for permission, and names the blocker explicitly (rather than silently retrying) once the same issue has recurred, consistent with the continuation discipline documented in references/runtime-actions.md.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block with Decision: set-now and Runtime: claude-code-slash",
+        "Self-adopts and starts work in the same reply instead of asking for approval first",
+        "Done condition/Checkpoints reference the 6 named checkpoints (migration script, API wrapper, rollback tests) with evidence, not a vague 'looks good'",
+        "Does not stop to ask permission between checkpoints when nothing is blocking progress",
+        "Surfaces a named blocker instead of retrying indefinitely once the same issue repeats",
+        "Does not treat a text-only summary as proof a checkpoint is complete"
+      ]
+    },
+    {
+      "id": 36,
+      "name": "shrink-regression-cursor-cli-anchored-no-commit-drafting",
+      "source": "SKILL.md shrink (2026-10-20): old-vs-new check that condensing Goal Drafting (anchor-on-source, no-unrequested-delivery) still holds for a vague low-risk Cursor CLI request",
+      "prompt": "\u6211\u73b0\u5728\u5728\u7528 cursor-agent\uff0c\u9879\u76ee\u662f\u4e00\u4e2a\u73b0\u6709\u7684 Next.js \u5c0f\u5de5\u5177\u7ad9\uff0c\u6211\u60f3\u8ba9\u5b83\u628a docs/todo-list.md \u91cc\u5217\u7684\u51e0\u4e2a\u5c0f\u4f18\u5316\uff08\u56fe\u7247\u61d2\u52a0\u8f7d\u3001\u51cf\u5c11\u9996\u5c4f\u8bf7\u6c42\u3001\u4fee\u4e00\u4e0b\u79fb\u52a8\u7aef\u5e03\u5c40\u9519\u4f4d\uff09\u90fd\u505a\u5b8c\uff0c\u987a\u624b\u9a8c\u8bc1\u4e00\u4e0b\uff0c\u4e0d\u7528\u7b49\u6211\u786e\u8ba4\uff0c\u4f46\u522b\u81ea\u5df1\u63d0\u4ea4\u4ee3\u7801\u3002",
+      "expected_output": "A Goal Gate block with Decision: set-now and Runtime: cursor-cli (explicit Cursor CLI intent), adopting the contract and working in the current chat with no /goal or goal API calls. The Objective/Done condition is anchored on the three named items in docs/todo-list.md (lazy-loading images, reducing first-load requests, fixing the mobile layout) rather than a vague 'optimize the site', Verification includes an actual visual/browser check for the layout fix (not just unit tests), and Constraints/Checkpoints keep the commit explicitly out of Done because the user said not to commit \u2014 changes stay in the working tree.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block with Decision: set-now and Runtime: cursor-cli",
+        "Objective/Done condition names the three docs/todo-list.md items instead of a generic 'optimize' goal",
+        "Does not add commit/push to Done, Checkpoints, or Next given the explicit 'don't commit' instruction",
+        "Verification for the mobile layout fix includes a real visual/browser check, not only unit tests or typecheck",
+        "Adopts and works in the current chat without emitting /goal or inventing get_goal/create_goal/update_goal",
+        "Execution strategy assesses whether the three fixes are independent enough to delegate rather than assuming parallel work because there are several items"
+      ]
     }
   ]
 }

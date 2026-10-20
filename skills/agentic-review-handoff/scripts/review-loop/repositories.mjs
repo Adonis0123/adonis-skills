@@ -584,6 +584,11 @@ export function appendStageAtEof(packetPath, opts) {
   fs.renameSync(tmp, packetPath);
 
   const meta = readPacketMeta(packetPath);
+  if (!fs.readFileSync(packetPath).equals(Buffer.from(next, "utf8"))) {
+    throw new Error(
+      "packet write verification failed: disk bytes differ; inspect packet before retrying",
+    );
+  }
   const last = lastPhysicalH1(meta.text);
   if (!last) throw new Error("appendStageAtEof: no H1 after write");
   // Last H1 inside the appended chunk must be the packet's last physical H1

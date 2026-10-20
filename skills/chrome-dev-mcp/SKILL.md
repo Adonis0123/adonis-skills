@@ -1,9 +1,9 @@
 ---
 name: chrome-dev-mcp
-description: "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task."
+description: "Use this skill when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific (Lighthouse, a full trace, heap data) or the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Also use it as the verification step right after the user or this session changes a web UI or asks to accept or check a page: collect a screenshot, Console, and Network evidence before calling it done. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals or UI-change acceptance are required. A passing readiness or list_pages check proves the connection only, never the change."
 metadata:
   author: adonis
-  version: "1.6.0"
+  version: "1.7.0"
 ---
 
 # Chrome Dev MCP
@@ -75,7 +75,15 @@ Calls are serialized by the runtime and no cross-agent lock exists for multi-ste
 
 ## Report honestly
 
-`CHROME_DEV_MCP_READY` and `list_pages` prove the connection only. Claim a task `VERIFIED` only after the requested snapshot, Console, Network, Performance, or interaction call itself returned without `data.isError`. Product-page acceptance stays with the calling task.
+`CHROME_DEV_MCP_READY` and `list_pages` prove the connection only. Claim a task `VERIFIED` only after the requested snapshot, Console, Network, Performance, or interaction call itself returned without `data.isError`.
+
+When the user or this session just changed a web UI, this skill is the verification step: an agent that stops at the code diff has not seen the page. After reloading or repeating the interaction on the fresh `pageId`, collect three pieces of evidence before calling the change done, because each catches a different failure:
+
+- A `take_screenshot` with `filePath` under the runtime temp root shows the resulting UI; a snapshot or diff cannot show layout or styling.
+- `list_console_messages` read after the interaction shows new errors the change introduced.
+- The relevant `list_network_requests` entry shows the request the change should have made and its status.
+
+If one is missing, report the change `UNVERIFIED` and name the gap. A question only about Console or Network on an already open page needs just that evidence, not a screenshot.
 
 Invoke as `/chrome-dev-mcp` in Claude Code, Grok, and Cursor CLI (`cursor-agent`), `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection.
 

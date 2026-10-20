@@ -76,3 +76,9 @@ If the phase maps to a Route the gate supports, emit it. If it maps to a phase t
 - Rule #1 (destructive) overrides everything else.
 - Widening / thesis stress and named-option convergence are both Challenge; `user-intent` (ideate vs decide) and `Thesis` record the mode.
 - Architecture harden requires explicit path **and** implement intent.
+
+## Native Goal ownership and runtime policy
+
+A primary native Goal request goes directly to `goal-gate` after Rules #1/#2 clear. Creating, managing, continuing, completing, or blocking a Goal is not ordinary Plan generation, and does not alone request `task-completion-loop`. Preserve exclusions on reviewers, scanners, and execution systems.
+
+The full-completion handoff needs the whole pipeline: one work ledger, real host + Grok + Claude convergence, Goal-managed implementation, agentic review, scoped architecture hardening, and fresh final Claude audit for a named plan/spec or bounded unfinished task. Recursive dependency checks belong to that downstream owner. Invocation policy and actual host capabilities matter as much as the presence of skill files: `disable-model-invocation: true` and `allow_implicit_invocation: false` block implicit handoffs unless the user names the dependency and the host permits it. This keeps a routing decision from silently becoming permission to simulate unavailable workflows.

@@ -304,3 +304,12 @@ Workflow Gate
 ```
 
 Note: "don't ask" delegates a reversible product/design direction, so Challenge may adopt an `agent-strawman` and proceed without a redundant thesis confirmation. It never waives destructive, external-side-effect, production, auth, billing, or other hard-to-reverse gates.
+
+## Scope and spec shorthand
+
+These illustrations expand the inline rules; they are not prerequisites for a match.
+
+- `commit` covers reviewed staged work, not “fix this bug and commit”: the named skill must cover the whole request.
+- Explicit spec references include `docs/superpowers/specs/*-design.md`, `docs/ideas/*.md`, `docs/rfcs/*.md`, `docs/forms/*-spec.md`, and `designs/**/*.md`. An explicit spec/design name also qualifies. Record it in `Assumptions`; the requested next action decides Plan versus Light.
+- “Quick fix” plus “production payments” is a contradictory signal: preserve the risk in `Assumptions`. A bug still starts with read-only diagnosis under Rule #4.
+- A function/API/component state/copy/interaction with fully specified behavior needs no fresh product thesis. File or consumer count affects risk, tests, and the internal ledger, not whether to impose a user-facing plan.

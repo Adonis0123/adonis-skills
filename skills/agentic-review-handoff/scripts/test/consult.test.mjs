@@ -137,4 +137,108 @@ describe("consult", () => {
       "cc002 --resume eeeeeeee-0000-0000-0000-000000000005",
     );
   });
+
+  it("resumes a recorded consult in the same session and appends the round", async () => {
+    const dir = initTempRepo();
+    const calls = [];
+    const factory = (_product, cfg) => ({
+      product: "codex",
+      getSessionId: () => null,
+      async newSession(prompt) {
+        calls.push({ mode: "new", prompt, cfg });
+        return { ok: true, text: "Round one answer", sessionId: "s-1" };
+      },
+      async resume(sid, prompt) {
+        calls.push({ mode: "resume", sid, prompt, cfg });
+        return { ok: true, text: "Round two answer", sessionId: sid };
+      },
+    });
+    const first = await cmdConsult({
+      repoRoot: dir,
+      peer: "codex",
+      peerCommand: "codex003",
+      question: "You are the Proxy. Q1?",
+      raw: true,
+      web: true,
+      adapterFactory: factory,
+    });
+    assert.equal(calls[0].prompt, "You are the Proxy. Q1?");
+    assert.equal(calls[0].cfg.web, true);
+    assert.equal(first.round, 1);
+
+    const second = await cmdConsult({
+      repoRoot: dir,
+      resume: first.recordPath,
+      question: "Q2?",
+      raw: true,
+      adapterFactory: factory,
+    });
+    assert.equal(calls[1].mode, "resume");
+    assert.equal(calls[1].sid, "s-1");
+    assert.equal(calls[1].cfg.command, "codex003");
+    assert.equal(second.recordPath, first.recordPath);
+    assert.equal(second.round, 2);
+    assert.equal(second.resumed, true);
+    assert.equal(second.contextLost, false);
+    const rec = fs.readFileSync(first.recordPath, "utf8");
+    assert.match(rec, /## Follow-up 2\n\nQ2\?/);
+    assert.match(rec, /Round two answer/);
+    const sidecar = JSON.parse(
+      fs.readFileSync(
+        first.recordPath.replace(/\.md$/, ".session.json"),
+        "utf8",
+      ),
+    );
+    assert.equal(sidecar.round, 2);
+  });
+
+  it("keeps the advisory framing unless raw is set", async () => {
+    const dir = initTempRepo();
+    let seen;
+    await cmdConsult({
+      repoRoot: dir,
+      peer: "claude",
+      question: "A or B?",
+      adapterFactory: () => ({
+        product: "claude",
+        getSessionId: () => null,
+        async newSession(prompt) {
+          seen = prompt;
+          return { ok: true, text: "A", sessionId: null };
+        },
+        async resume() {
+          throw new Error("unused");
+        },
+      }),
+    });
+    assert.match(seen, /decision consult peer/);
+  });
+
+  it("rejects a peer that does not own the resumed session", async () => {
+    const dir = initTempRepo();
+    const first = await cmdConsult({
+      repoRoot: dir,
+      peer: "grok",
+      question: "Q1?",
+      adapterFactory: () => ({
+        product: "grok",
+        getSessionId: () => null,
+        async newSession() {
+          return { ok: true, text: "A", sessionId: "g-1" };
+        },
+        async resume() {
+          throw new Error("unused");
+        },
+      }),
+    });
+    await assert.rejects(
+      cmdConsult({
+        repoRoot: dir,
+        resume: first.recordPath,
+        peer: "claude",
+        question: "Q2?",
+      }),
+      /belongs to grok/,
+    );
+  });
 });

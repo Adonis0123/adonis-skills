@@ -58,6 +58,34 @@
         "Distinguishes repository source, installed distribution copies, and whether an existing session loaded the new skill",
         "Does not claim real per-host model acceptance from this offline evaluation; marks it UNVERIFIED"
       ]
+    },
+    {
+      "id": 5,
+      "name": "ui-check-design-parity-real-tool-call",
+      "prompt": "用 kimi 看一下当前桌面上的设置窗口是不是按稿子做的",
+      "expected_output": "Treats this as an in-scope UI check: calls list_apps only if the app identity is unknown, then get_app_state (ax first, image or full when layout matters), compares the observed window with the design, and reports differences. If no kimi-cu tool call completes, reports the check as UNVERIFIED instead of describing the window from code or the design file.",
+      "files": [],
+      "expectations": [
+        "Does not refuse because kimi-cu is already installed; treats the request as a kimi-cu UI check",
+        "Emits a real `get_app_state` call (with `list_apps` first only when the target app is unknown)",
+        "Uses a bundle id or pid for `app` and a `mode` of `ax`, `image`, or `full`",
+        "Bases the parity verdict on the observed app state, not on source code or the design alone",
+        "Reports `UNVERIFIED` if the turn ends without a completed kimi-cu tool call",
+        "Stays read-only and does not click, type, or change settings without confirmation"
+      ]
+    },
+    {
+      "id": 6,
+      "name": "install-cursor-cli-in-scope",
+      "prompt": "帮我把 Kimi Computer Use 装到 Cursor CLI 上",
+      "expected_output": "Checks the installed app with the routine service checks, points to the official Kimi Code plugin flow if it is missing, then registers kimi-cu in Cursor CLI per the Cursor CLI section of references/host-configs.md and proves connection, discovery, and a model tool call separately.",
+      "files": [],
+      "expectations": [
+        "Uses the official Kimi Code plugin flow if KimiCU.app is missing, not a reposted binary",
+        "Registers `/Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user` under the name `kimi-cu`",
+        "Uses `cursor-agent` for status and the read-only smoke",
+        "Separates connection, tool discovery, and completed model tool call"
+      ]
     }
   ]
 }

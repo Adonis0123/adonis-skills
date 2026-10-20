@@ -694,6 +694,27 @@
         "Does not imitate grill-with-docs, load its child skills directly, or write the ADR",
         "Stops before any challenge or persistence work starts"
       ]
+    },
+    {
+      "id": 51,
+      "name": "compressed-gate-authorized-design-not-drop",
+      "prompt": "我们准备下线旧表。只在立即 drop 和先归档再 drop 之间比较，替我选一个。本轮只定方案，不执行，也别加第三个选项。",
+      "expected_output": "Challenge convergence with user-intent=decide, runtime none, destructive=no and risk=high. Picks one named option and explains the rejected one in this turn, records delegation and re-gating before implementation. Reads zero references and executes no mutation.",
+      "files": []
+    },
+    {
+      "id": 52,
+      "name": "compressed-gate-creative-confirmation",
+      "prompt": "帮我重新设计工作台首页，还没有 spec。先给一个你推荐的方向，我确认之后再继续，不要先写代码。",
+      "expected_output": "Challenge with agent-strawman and grilling as selected runtime. Gives a concrete one-sentence thesis and stops for confirmation before runtime loading or implementation. Reads zero references; does not turn discovery into Plan.",
+      "files": []
+    },
+    {
+      "id": 53,
+      "name": "compressed-gate-ship-fresh-command",
+      "prompt": "这次修改能交了吗？请运行仓库已有的验证命令，读完结果再告诉我；失败就如实说，先别提交。",
+      "expected_output": "Light with runtime/fallback none and direct local work. Executes the relevant full verification command now, reports actual output and exit status, and makes no success claim on failure. Reads zero routing references and does not commit.",
+      "files": []
     }
   ]
 }

@@ -175,6 +175,24 @@
         "The response does not invent a changed file, hunk, unchanged diff, or test result that the prompt did not provide.",
         "The response stops as UNVERIFIED rather than retrying, resetting, or claiming CLEAN without current evidence."
       ]
+    },
+    {
+      "id": "second-malformed-stops",
+      "prompt": "用 Codex 审查并修复当前改动，不要提交。同一份 evidence 的初次输出和格式纠正都没通过校验。请按 open-code-review-loop 处理，别再为格式问题多花调用。",
+      "expected_output": "Runs the persistent-history validator on both outputs. Reports UNVERIFIED after the second malformed result; the pre-call gate exits nonzero and no third Reviewer call occurs, including with a fresh evidence ID.",
+      "files": []
+    },
+    {
+      "id": "six-attempts-three-rounds",
+      "prompt": "继续当前 OCR loop。前三份 evidence 都是先输出格式错误，再纠正成功并给出 FINDINGS，共调用了六次 Reviewer。修复后有了第四份 evidence。预算仍是默认三轮，请处理剩余问题，不要提交。",
+      "expected_output": "Keeps the same loop history, counts six calls as three evidence rounds, runs the gate for the fourth evidence and receives a nonzero budget-exhaustion result. Reports remaining findings and requests a bounded extension without making another Reviewer call or claiming CLEAN.",
+      "files": []
+    },
+    {
+      "id": "drift-does-not-reset-budget",
+      "prompt": "用 Grok Build 跑 OCR 修复复审。每次返回的 structuredOutput 都缺失，期间文件又变化了，已经有三份不同 evidence。继续处理，但不要自己加预算。",
+      "expected_output": "Records envelope extraction failures through validate_round.py with --product and the same history. Three distinct evidence IDs consume three rounds even without valid reviews. The gate refuses a fourth ID; no Reviewer call, history reset, or CLEAN claim follows.",
+      "files": []
     }
   ]
 }

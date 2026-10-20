@@ -112,7 +112,12 @@ def reject_unknown_fields(
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", required=True)
-    parser.add_argument("--review", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--review")
+    mode.add_argument("--check-call", action="store_true")
+    parser.add_argument("--history", help="One persistent JSON history per loop")
+    parser.add_argument("--product", choices=sorted(PRODUCTS))
+    parser.add_argument("--session-id")
     parser.add_argument("--output")
     return parser.parse_args()
 
@@ -312,12 +317,70 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def call_gate(history: list[dict[str, Any]], evidence_id: str) -> dict[str, Any]:
+    """Count evidence rounds separately from the single format correction."""
+    failures = Counter(item["evidence_id"] for item in history if not item["valid"])
+    evidence = {item["evidence_id"] for item in history}
+    rounds = len(evidence | {evidence_id})
+    reason = None
+    if any(count >= 2 for count in failures.values()):
+        reason = "UNVERIFIED: repeated malformed output"
+    elif rounds > 3:
+        reason = "HUMAN_GATE: round budget exhausted"
+    elif any(item["evidence_id"] == evidence_id and item["valid"] for item in history):
+        reason = "UNVERIFIED: evidence already reviewed"
+    return {"call_allowed": reason is None, "stop": reason,
+            "rounds_used": len(evidence), "round_budget": 3}
+
+
+def read_history(path: Path) -> list[dict[str, Any]]:
+    history = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+    if not isinstance(history, list) or any(
+        not isinstance(item, dict)
+        or not isinstance(item.get("evidence_id"), str)
+        or not EVIDENCE_ID_PATTERN.fullmatch(item["evidence_id"])
+        or type(item.get("valid")) is not bool
+        for item in history
+    ):
+        raise ValueError("Invalid loop history; preserve it and stop")
+    return history
+
+
 def main() -> int:
     args = parse_args()
     try:
-        result = validate(load_object(args.bundle), load_object(args.review))
-    except (OSError, ValueError, json.JSONDecodeError) as error:
-        result = {"valid": False, "clean": False, "errors": [str(error)]}
+        bundle = load_object(args.bundle)
+        evidence_id = canonical_evidence_id(bundle)
+        if evidence_id is None or bundle.get("evidence_id") != evidence_id:
+            raise ValueError("bundle.evidence_id does not match canonical bundle material")
+        if args.check_call and not args.history:
+            raise ValueError("--check-call requires --history")
+        history_path = Path(args.history).expanduser() if args.history else None
+        history = read_history(history_path) if history_path else []
+        gate = call_gate(history, evidence_id)
+        if args.check_call or (history_path and not gate["call_allowed"]):
+            result = {"valid": gate["call_allowed"], "clean": False, **gate}
+        else:
+            try:
+                review = load_object(args.review)
+                if args.product:
+                    from extract_product_output import extract, normalize_reviewer_identity
+                    review = normalize_reviewer_identity(
+                        args.product, review, extract(args.product, review), args.session_id
+                    )
+                result = validate(bundle, review)
+            except (OSError, ValueError) as error:
+                result = {"valid": False, "clean": False, "errors": [str(error)]}
+            if history_path:
+                history.append({"evidence_id": evidence_id, "valid": result["valid"]})
+                history_path.parent.mkdir(parents=True, exist_ok=True)
+                history_path.write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
+                result.update(call_gate(history, evidence_id))
+                if result["valid"]:
+                    result["stop"] = None  # A completed review is not a retry failure.
+    except (OSError, ValueError) as error:
+        result = {"valid": False, "clean": False, "call_allowed": False,
+                  "stop": "UNVERIFIED", "errors": [str(error)]}
 
     rendered = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
     if args.output:

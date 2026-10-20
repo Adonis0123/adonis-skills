@@ -1,12 +1,13 @@
 /**
  * `review-loop sessions` — list recorded reviewer channel sessions and print
- * copy-ready resume commands per product (codex / grok / claude).
+ * copy-ready resume commands per product (codex / grok / claude / pi).
  *
  * Read-only: scans `.review-handoff/runtime/<branch>/<packet>/reviewer-session.json`
  * written by the adapter bookkeeping (T1). Command forms verified 2026-07-22:
  *   codex  interactive `codex resume <id>` / headless `codex exec resume <id> "<prompt>"`
  *   claude interactive `claude --resume <id>` / headless `claude -p --resume <id> "<prompt>"`
  *   grok   interactive `grok -r <id>` / headless `grok -r <id> -p "<prompt>"`
+ *   pi     interactive `pi --session-id <id>` / headless `pi -p --session-id <id> "<prompt>"`
  * Note: Codex Desktop's session list hides `codex_exec`-originated sessions —
  * the resume commands below are the reliable way back in.
  */
@@ -34,6 +35,10 @@ const RESUME_FORMS = {
   grok: (id, cmd = "grok") => ({
     interactive: `${cmd} -r ${id}`,
     headless: `${cmd} -r ${id} -p "${PROMPT_PLACEHOLDER}"`,
+  }),
+  pi: (id, cmd = "pi") => ({
+    interactive: `${cmd} --session-id ${id}`,
+    headless: `${cmd} -p --session-id ${id} "${PROMPT_PLACEHOLDER}"`,
   }),
 };
 

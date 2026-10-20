@@ -28,6 +28,14 @@
     "should_trigger": true
   },
   {
+    "query": "用 kimi 看一下当前桌面上的设置窗口是不是按稿子做的",
+    "should_trigger": true
+  },
+  {
+    "query": "Use kimi-cu to check whether the Preferences window in my running app matches the Figma design.",
+    "should_trigger": true
+  },
+  {
     "query": "Use Codex native computer use to open Finder and drag the report into the Shared folder.",
     "should_trigger": false
   },

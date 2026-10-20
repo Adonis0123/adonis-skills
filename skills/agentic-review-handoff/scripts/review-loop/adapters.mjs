@@ -6,8 +6,10 @@
  * - Subprocesses always start with cwd = repoRoot.
  * - Non-zero / empty / timeout → DELIVERY_UNKNOWN (no retry).
  * - Resume degrades to newSession only on the mechanical whitelist (a/b/c).
+ * - `web: true` adds only search/fetch tools; write and shell controls stay hardcoded.
  */
 import { spawn } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
@@ -42,7 +44,7 @@ const GRAY_ZONE_RE =
 const IMMEDIATE_REJECT_MS = 5_000;
 
 /**
- * @typedef {'codex'|'grok'|'claude'} Product
+ * @typedef {'codex'|'grok'|'claude'|'pi'} Product
  * @typedef {{ ok: true, text: string, sessionId: string|null, degraded?: boolean, reason?: string }} AdapterOk
  * @typedef {{ ok: false, code: typeof DELIVERY_UNKNOWN, error: string, exitCode?: number|null, timedOut?: boolean, stopped?: boolean }} AdapterFail
  * @typedef {AdapterOk|AdapterFail} AdapterResult
@@ -70,14 +72,21 @@ const IMMEDIATE_REJECT_MS = 5_000;
  *   globalStopPath?: string,
  *   packetStopPath?: string,
  *   sessionStorePath?: string|null,
+ *   web?: boolean,
  * }} opts
  */
 export function createAdapter(product, opts) {
   const p = String(product || "").toLowerCase();
-  if (p !== "codex" && p !== "grok" && p !== "claude") {
+  if (!PRODUCTS.includes(p)) {
     throw new Error(`unknown product adapter: ${product}`);
   }
   if (!opts?.repoRoot) throw new Error("createAdapter: repoRoot required");
+  const web = opts.web === true;
+  if (web && p === "pi") {
+    throw new Error(
+      "pi has no web search tool; drop web or pick codex|grok|claude",
+    );
+  }
 
   const timeoutMs = resolveTimeoutMs(opts.timeoutMs);
   const progressIntervalMs =
@@ -149,6 +158,7 @@ export function createAdapter(product, opts) {
         bin,
         command,
         env: opts.env,
+        web,
         timeoutMs,
         progressIntervalMs,
         onProgress,
@@ -201,6 +211,7 @@ export function createAdapter(product, opts) {
         bin,
         command,
         env: opts.env,
+        web,
         timeoutMs,
         progressIntervalMs,
         onProgress,
@@ -268,8 +279,8 @@ export function parseFallback(raw, primary) {
     .filter(Boolean);
   const seen = new Set([String(primary).toLowerCase()]);
   for (const p of list) {
-    if (!["codex", "grok", "claude"].includes(p)) {
-      throw new Error(`--fallback takes codex|grok|claude, got ${p}`);
+    if (!PRODUCTS.includes(p)) {
+      throw new Error(`--fallback takes ${PRODUCTS.join("|")}, got ${p}`);
     }
     if (seen.has(p)) {
       throw new Error(
@@ -294,6 +305,7 @@ export function assertLauncherName(name) {
 // restricts the product it was built for.
 const LAUNCHER_FAMILIES = [
   [/^grok/i, "grok"],
+  [/^pi/i, "pi"],
   [/^codex/i, "codex"],
   [/^(claude|cc(\d|[-_.]|$))/i, "claude"],
 ];
@@ -330,22 +342,34 @@ export function resolveSpawn({ bin, command, argv, shell }) {
   return { file: sh, args: ["-ic", '"$0" "$@"', command, ...argv] };
 }
 
+export const PRODUCTS = ["codex", "grok", "claude", "pi"];
+
 function defaultBin(product) {
   if (product === "codex") return "codex";
   if (product === "grok") return "grok";
+  if (product === "pi") return "pi";
   return "claude";
 }
 
 /**
  * Build argv for a product. Read-only controls are hardcoded (never caller-controlled).
- * @param {{ product: Product, mode: 'new'|'resume', prompt: string, sessionId: string|null, outFile?: string }} args
+ * `web` adds search/fetch only (Proxy research); write and shell stay denied.
+ * @param {{ product: Product, mode: 'new'|'resume', prompt: string, sessionId: string|null, outFile?: string, web?: boolean }} args
  */
-export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
+export function buildArgv({
+  product,
+  mode,
+  prompt,
+  sessionId,
+  outFile,
+  web = false,
+}) {
   if (product === "codex") {
-    // codex -a never exec -s read-only --skip-git-repo-check -o <file> [resume <uuid>] "<prompt>"
+    // codex -a never [--search] exec -s read-only --skip-git-repo-check -o <file> [resume <uuid>] "<prompt>"
     const argv = [
       "-a",
       "never",
+      ...(web ? ["--search"] : []),
       "exec",
       "-s",
       "read-only",
@@ -374,7 +398,7 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
       "--output-format",
       "json",
       "--tools",
-      "read_file,grep,list_dir",
+      web ? "read_file,grep,list_dir,web_fetch" : "read_file,grep,list_dir",
       "--disallowed-tools",
       "search_tool,use_tool",
       "--deny",
@@ -382,20 +406,41 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
       "--permission-mode",
       "dontAsk",
       "--no-subagents",
-      "--disable-web-search",
+      ...(web ? [] : ["--disable-web-search"]),
     );
     return argv;
   }
 
+  if (product === "pi") {
+    // pi -p --mode json --no-mcp --tools read,grep,find,ls --session-id <uuid> "<prompt>"
+    // --session-id opens the exact session, creating it on the first call.
+    if (!sessionId)
+      throw new Error(
+        "pi requires a sessionId (new sessions get a fresh uuid)",
+      );
+    return [
+      "-p",
+      "--mode",
+      "json",
+      "--no-mcp",
+      "--tools",
+      "read,grep,find,ls",
+      "--session-id",
+      sessionId,
+      prompt,
+    ];
+  }
+
   // claude --safe-mode --permission-mode dontAsk -p [ --resume id ] --tools ... --output-format json "<prompt>"
   // T0: allowedTools alone failed write isolation; disallowedTools required.
+  const tools = web ? "Read,Grep,Glob,WebSearch,WebFetch" : "Read,Grep,Glob";
   const argv = [
     "--safe-mode",
     "--permission-mode",
     "dontAsk",
     "--strict-mcp-config",
     "--tools",
-    "Read,Grep,Glob",
+    tools,
     "-p",
   ];
   if (mode === "resume") {
@@ -404,9 +449,11 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
   }
   argv.push(
     "--allowedTools",
-    "Read,Grep,Glob",
+    tools,
     "--disallowedTools",
-    "Write,Edit,MultiEdit,NotebookEdit,Bash,Agent,WebFetch,WebSearch",
+    web
+      ? "Write,Edit,MultiEdit,NotebookEdit,Bash,Agent"
+      : "Write,Edit,MultiEdit,NotebookEdit,Bash,Agent,WebFetch,WebSearch",
     "--output-format",
     "json",
     prompt,
@@ -424,6 +471,7 @@ export function buildArgv({ product, mode, prompt, sessionId, outFile }) {
  *   bin: string,
  *   command?: string|null,
  *   env?: NodeJS.ProcessEnv,
+ *   web?: boolean,
  *   timeoutMs: number,
  *   progressIntervalMs: number,
  *   onProgress?: (event: {
@@ -465,12 +513,16 @@ export function invokeProduct(cfg) {
       path.join(os.tmpdir(), "review-loop-adapter-"),
     );
     const outFile = path.join(tmpDir, "out.txt");
+    // pi has no server-assigned id: a new session opens under a uuid we pick.
+    const requestedSessionId =
+      cfg.product === "pi" && cfg.mode === "new" ? randomUUID() : cfg.sessionId;
     const argv = buildArgv({
       product: cfg.product,
       mode: cfg.mode,
       prompt: cfg.prompt,
-      sessionId: cfg.sessionId,
+      sessionId: requestedSessionId,
       outFile: cfg.product === "codex" ? outFile : undefined,
+      web: cfg.web === true,
     });
 
     let stdout = "";
@@ -616,6 +668,21 @@ export function invokeProduct(cfg) {
           if (!text.trim()) text = stdout;
           const sidLine = combined.match(/session id:\s*([0-9a-f-]{36})/i);
           sessionId = sidLine?.[1] ?? cfg.sessionId;
+        } else if (cfg.product === "pi") {
+          const run = parsePiJsonl(stdout);
+          if (run.error) {
+            finish({
+              ok: false,
+              code: DELIVERY_UNKNOWN,
+              error: `pi run failed: ${run.error.slice(0, 2000)}`,
+              exitCode,
+              timedOut: false,
+              stopped: false,
+            });
+            return;
+          }
+          text = run.text;
+          sessionId = run.sessionId ?? requestedSessionId;
         } else if (cfg.product === "grok") {
           const json = tryParseJson(stdout) ?? tryParseJson(combined);
           if (json) {
@@ -679,6 +746,41 @@ export function invokeProduct(cfg) {
       });
     });
   });
+}
+
+/**
+ * pi --mode json prints one event per line; the run's answer is the last
+ * assistant message in `agent_end`. pi exits 0 even when the model call
+ * failed (stopReason "error"), so that case is surfaced as an error.
+ * @param {string} stdout
+ * @returns {{ text: string, sessionId: string|null, error: string|null }}
+ */
+export function parsePiJsonl(stdout) {
+  let sessionId = null;
+  let messages = null;
+  for (const line of String(stdout ?? "").split("\n")) {
+    const t = line.trim();
+    if (!t.startsWith("{")) continue;
+    let event;
+    try {
+      event = JSON.parse(t);
+    } catch {
+      continue;
+    }
+    if (event.type === "session" && event.id) sessionId = String(event.id);
+    if (event.type === "agent_end" && Array.isArray(event.messages)) {
+      messages = event.messages;
+    }
+  }
+  const last = (messages ?? []).filter((m) => m?.role === "assistant").at(-1);
+  if (last?.stopReason === "error") {
+    return { text: "", sessionId, error: String(last.errorMessage || "error") };
+  }
+  const text = (Array.isArray(last?.content) ? last.content : [])
+    .filter((c) => c?.type === "text")
+    .map((c) => c.text)
+    .join("");
+  return { text, sessionId, error: null };
 }
 
 function tryParseJson(s) {
@@ -758,9 +860,20 @@ export function assertSandboxHardcoded(product, argv) {
     if (approval === -1 || argv[approval + 1] !== "never") {
       throw new Error("codex no-prompt approval flag missing");
     }
-  } else if (product === "grok") {
+  } else if (product === "pi") {
     if (
-      argv[argv.indexOf("--tools") + 1] !== "read_file,grep,list_dir" ||
+      argv[argv.indexOf("--tools") + 1] !== "read,grep,find,ls" ||
+      !argv.includes("--no-mcp")
+    ) {
+      throw new Error("pi read-only tool controls missing");
+    }
+  } else if (product === "grok") {
+    const tools = argv[argv.indexOf("--tools") + 1];
+    if (
+      ![
+        "read_file,grep,list_dir",
+        "read_file,grep,list_dir,web_fetch",
+      ].includes(tools) ||
       argv[argv.indexOf("--deny") + 1] !== "MCPTool" ||
       argv[argv.indexOf("--disallowed-tools") + 1] !== "search_tool,use_tool"
     ) {

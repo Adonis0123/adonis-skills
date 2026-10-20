@@ -172,6 +172,117 @@ def bundle_with_supplemental_markdown() -> tuple[dict, dict]:
     return current_bundle, review
 
 
+class RoundBudgetCliTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.directory = tempfile.TemporaryDirectory()
+        self.addCleanup(self.directory.cleanup)
+        self.root = Path(self.directory.name)
+        self.bundle_path = self.root / "bundle.json"
+        self.review_path = self.root / "raw.json"
+        self.history_path = self.root / "history.json"
+        self.set_evidence(1)
+
+    def set_evidence(self, number: int) -> None:
+        self.bundle = bundle()
+        self.bundle["background"] = str(number)
+        self.bundle["evidence_id"] = validate_round.canonical_evidence_id(self.bundle)
+        self.bundle_path.write_text(json.dumps(self.bundle), encoding="utf-8")
+
+    def run_cli(self, *args: str) -> tuple[int, dict]:
+        process = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--bundle", str(self.bundle_path),
+             "--history", str(self.history_path), *args],
+            capture_output=True, text=True, check=False,
+        )
+        return process.returncode, json.loads(process.stdout)
+
+    def submit(self, payload: object, product: str = "codex") -> tuple[int, dict]:
+        self.review_path.write_text(json.dumps(payload), encoding="utf-8")
+        return self.run_cli("--review", str(self.review_path), "--product", product)
+
+    def test_second_schema_failure_blocks_all_further_calls(self) -> None:
+        calls = 0
+        for _ in range(6):
+            code, gate = self.run_cli("--check-call")
+            if code:
+                break
+            calls += 1
+            code, result = self.submit({})
+            self.assertEqual(code, 2)
+        self.assertEqual(calls, 2)
+        self.assertFalse(result["call_allowed"])
+        self.assertIn("UNVERIFIED", result["stop"])
+        self.assertEqual(gate["rounds_used"], 1)
+        self.set_evidence(2)
+        code, result = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertIn("UNVERIFIED", result["stop"])
+
+    def test_six_calls_are_three_rounds_not_permission_for_round_four(self) -> None:
+        calls = 0
+        for number in range(1, 7):
+            self.set_evidence(number)
+            code, gate = self.run_cli("--check-call")
+            if code:
+                break
+            calls += 1
+            self.assertEqual(self.submit({})[0], 2)
+            self.assertEqual(self.run_cli("--check-call")[0], 0)
+            review = finding_review()
+            review["evidence_id"] = self.bundle["evidence_id"]
+            calls += 1
+            self.assertEqual(self.submit(review)[0], 0)
+        self.assertEqual(calls, 6)
+        self.assertEqual(number, 4)
+        self.assertEqual(gate["rounds_used"], 3)
+        self.assertFalse(gate["call_allowed"])
+        self.assertIn("round budget exhausted", gate["stop"])
+        for number in (5, 6):
+            self.set_evidence(number)
+            self.assertEqual(self.run_cli("--check-call")[0], 2)
+
+    def test_extraction_and_json_failures_share_the_correction_limit(self) -> None:
+        self.assertEqual(self.submit({"text": "looks clean"}, "grok-build")[0], 2)
+        self.assertEqual(self.run_cli("--check-call")[0], 0)
+        self.review_path.write_text("not JSON", encoding="utf-8")
+        code, result = self.run_cli("--review", str(self.review_path), "--product", "grok-build")
+        self.assertEqual(code, 2)
+        self.assertFalse(result["call_allowed"])
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+
+    def test_fresh_evidence_after_failure_consumes_round(self) -> None:
+        for number in range(1, 4):
+            self.set_evidence(number)
+            self.assertEqual(self.run_cli("--check-call")[0], 0)
+            self.assertEqual(self.submit({})[0], 2)
+        self.set_evidence(4)
+        code, result = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual(result["rounds_used"], 3)
+
+    def test_valid_correction_can_be_clean_without_terminal_error(self) -> None:
+        self.assertEqual(self.submit({})[0], 2)
+        self.assertEqual(self.run_cli("--check-call")[0], 0)
+        review = clean_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        code, result = self.submit(review)
+        self.assertEqual(code, 0)
+        self.assertTrue(result["clean"])
+        self.assertIsNone(result["stop"])
+        self.assertEqual(result["rounds_used"], 1)
+        before = self.history_path.read_bytes()
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+        self.assertEqual(self.submit(review)[0], 2)
+        self.assertEqual(self.history_path.read_bytes(), before)
+
+    def test_corrupt_history_fails_closed(self) -> None:
+        self.history_path.write_text('{}', encoding="utf-8")
+        code, result = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertFalse(result["call_allowed"])
+        self.assertEqual(result["stop"], "UNVERIFIED")
+
+
 class ValidateRoundTest(unittest.TestCase):
     def test_accepts_full_coverage_no_findings(self) -> None:
         result = validate_round.validate(bundle(), clean_review())

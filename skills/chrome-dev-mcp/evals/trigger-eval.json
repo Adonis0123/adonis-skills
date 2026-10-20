@@ -81,14 +81,22 @@
   },
   {
     "query": "我改完了首页的弹窗样式，帮我打开 localhost:3000 截图验收一下。",
-    "should_trigger": false
+    "should_trigger": true
   },
   {
     "query": "Figma 稿已经对过了，现在需要产品页面的运行时截图当验收证据。",
-    "should_trigger": false
+    "should_trigger": true
   },
   {
     "query": "我已经在 ego-browser 里开着这个页面了，帮我看看点按钮时 Console 有没有报错、那个请求返回什么，不用换浏览器。",
     "should_trigger": false
+  },
+  {
+    "query": "改完 UI 了，用 chrome-dev-mcp 看一下设置页有没有问题。",
+    "should_trigger": true
+  },
+  {
+    "query": "设置页的样式改好了，帮我验收这个页面。",
+    "should_trigger": true
   }
 ]

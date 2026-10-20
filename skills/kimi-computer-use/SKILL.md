@@ -1,9 +1,9 @@
 ---
 name: kimi-computer-use
-description: "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes, or fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'. Not for general desktop automation once kimi-cu already works, and not a replacement for a host's native Computer Use."
+description: "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes; fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'; or look at and verify a running macOS app UI through kimi-cu, such as checking whether a window matches a design. Not for general desktop automation, messaging, or purchasing, and not a replacement for a host's native Computer Use."
 metadata:
   author: adonis
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Kimi Computer Use
@@ -54,7 +54,7 @@ Per-host config paths, registration commands, status commands, and the read-only
 2. Call `get_app_state` with `mode: "ax"` for text and accessibility-first inspection; use `image` or `full` only when layout or pixels matter.
 3. Use the smallest action that achieves the requested result.
 4. Call `get_app_state` again after every mutation and verify the observable result.
-5. Report `UNVERIFIED` when a host discovers the server but its selected model never emits a real tool call.
+5. When the user asks you to look at or verify a running UI, your own completed `get_app_state` result is the evidence. A UI check that ends with zero `kimi-cu` tool calls is `UNVERIFIED`: a host can connect the server and list its tools while the model still never emits a call, and a description from code, memory, or a design file is not an observation of the screen.
 
 ### get_app_state arguments
 

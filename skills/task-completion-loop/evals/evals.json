@@ -324,6 +324,47 @@
         "提问后停止，不启动 Grok/Claude 会话、Goal 或源码修改",
         "不返回 MISSING_DEPENDENCIES 或 UNVERIFIED"
       ]
+    },
+    {
+      "id": 23,
+      "name": "background-peer-call-waits-on-pid",
+      "prompt": "用 task-completion-loop 把 docs/plans/export-queue.md 做完。Grok 那边一次回复常常要五六分钟，前台工具会超时，你把它丢后台跑，等它回来再继续。",
+      "expected_output": "Agent 以后台方式发起 Peer 调用并在发起时记下 PID（如 `& echo $! > pid`），之后用 `while kill -0 \"$(cat pid)\"` 等待或改用宿主自带的后台完成通知；拿到输出后才继续交叉质疑。不写 `pgrep -f` / `ps | grep` 按命令字符串轮询的循环；超过 deadline 才走 --fallback 或 DELIVERY_UNKNOWN。",
+      "files": [],
+      "expectations": [
+        "发起后台调用时记录 PID，或说明使用宿主后台完成通知",
+        "等待命令是 kill -0 PID 循环或宿主完成通知，不是按命令行字符串匹配",
+        "不写 pgrep -f 或 ps | grep 轮询循环",
+        "进程存活时不杀、不重发，超时才按 --fallback / DELIVERY_UNKNOWN 处理",
+        "拿到 Peer 输出后才进入下一步"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "stuck-pgrep-waiter-is-replaced",
+      "prompt": "上次跑 task-completion-loop 卡了四十分钟，那个 `while pgrep -f \"review-loop consult\"; do sleep 15; done` 一直不退出，可 Claude 早就回完了。这次继续同一个 plan，等外部审查时别再这样。",
+      "expected_output": "Agent 解释卡住原因：等待循环自身的命令行含同一字符串，pgrep -f / ps | grep 匹配到了等待者自己。改为按发起时记下的 PID 用 kill -0 等待或用宿主完成通知；只有确实不得不用模式时才用 `[r]eview-loop` 方括号形式并说明原因。不重发已完成的 Claude 调用，先读取已有输出。",
+      "files": [],
+      "expectations": [
+        "说出卡住原因是等待脚本匹配到自身命令行",
+        "新的等待用 kill -0 PID 或宿主完成通知",
+        "方括号 [r]eview-loop 只作为最后手段并说明原因",
+        "不重新提交已经完成的 Claude 调用，先取回已有输出",
+        "不另造第二套轮询方案"
+      ]
+    },
+    {
+      "id": 25,
+      "name": "host-background-notice-instead-of-polling",
+      "prompt": "在 Claude Code 里跑 task-completion-loop 收尾 packages/sync 的 plan，最后那轮 Claude 盲审放后台就行，跑完提醒我结果。",
+      "expected_output": "Agent 用宿主的后台执行能力（如 run_in_background）发起盲审，依赖宿主的完成通知取回输出，不另写 sleep / pgrep 轮询循环；通知到达前不把任务报告为完成，拿到盲审结论后再按 evidence 规则给出 Result。",
+      "files": [],
+      "expectations": [
+        "使用宿主自带的后台完成通知，或记录 PID 后 kill -0 等待",
+        "不写 pgrep -f / ps | grep 轮询",
+        "盲审未返回前不声称完成",
+        "盲审返回后按同一 evidence id 给出结果"
+      ]
     }
   ]
 }

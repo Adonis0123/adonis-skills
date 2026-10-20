@@ -1,6 +1,6 @@
 ---
 name: agentic-review-handoff
-description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git."
+description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git and review/consult intent; ordinary implementation or commit-only requests do not start a review loop."
 metadata:
   author: adonis
   version: "3.9.0"
@@ -12,11 +12,11 @@ Use direct Grok CLI calls only when the user asks Grok (or a `grok00x` account) 
 
 ## Fast Path
 
-Route first, then load only that route's references:
+Choose a route before loading references:
 
-- **Wrong job** — stop; do not start a substitute loop. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.
+- **Wrong job** — stop; do not start a substitute loop. Ordinary implementation or commit-only requests (including "commit only, no review") do not authorize review. The parent job is `architecture-hardening-loop` or a diagnose-only architecture scan; the user asked only for a copy-ready review prompt; or they named only `/codex:review` / Grok `/review`.
 - **Ordinary consult / one-shot review the user addressed to Grok** (including a named `grok00x` account) → Direct Grok below. Without Grok named, use `review-loop consult` with the default peer. Explicit CLI commands (including `review-loop consult`), auto-loop, packet, and continuation requests take precedence. Do not start a protocol loop merely because Grok is involved.
-- **Same-session implementer closure** → `review-loop run`; the verified implementer context permits the default `# Review Handoff` origin.
+- **Explicit review-fix-re-review with same-session implementer context** → `review-loop run`; the verified implementer context permits the default `# Review Handoff` origin.
 - **Explicit auto loop / review-fix-re-review without verified implementer context** → `review-loop run --intake`; the script starts truthfully from `# Review Intake` while retaining the auto lifecycle.
 - **Decision consult** → `review-loop consult`; **session recovery** → `review-loop sessions`. This file is sufficient; load no references.
 - **Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without implementer context** → classic `intake`; ambiguity defaults to Intake.
@@ -105,13 +105,16 @@ node "$RL" evidence --repo "$REPO" --base "$BASE_SHA" [--paths=a,b]
 # Advisory decision consult (not part of Verdict machine)
 node "$RL" consult --repo "$REPO" --host=claude [--skip-host] --question-file /tmp/q.md   # peer from the preference
 node "$RL" consult --repo "$REPO" --peer=codex [--peer-command=codex002] [--fallback=grok] --question-file /tmp/q.md
+# Multi-round: continue the same peer session; the follow-up is appended to the same record.
+# --web adds search/fetch only (pi has none); --raw sends the file without the advisory framing.
+node "$RL" consult --repo "$REPO" --resume <recordPath from the last result> [--web] [--raw] --question-file /tmp/q2.md
 
 # Reviewer preference: show / save / reset
 node "$RL" prefs [--order=claude,codex,grok] [--skip-host=true|false] [--reset]
 
 # List recorded reviewer and consult sessions + copy-ready resume commands
 # (Codex Desktop's list hides codex_exec sessions — this is the way back in)
-node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude]
+node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude|pi]
 ```
 
 | Concept  | Rule                                                                                                         |
@@ -175,9 +178,9 @@ These survive every path (auto loop and classic):
 2. **Never fabricate `# Review Handoff` without implementer context** — reviewers use `# Review Intake` instead. Violation → evidence trust boundary breaks; re-reviewers cannot independently re-attest findings.
 3. **H1 body is append-only at EOF; frontmatter is rewritten atomically once per stage** — never mid-file insert or leave `last_anchor` / `lifecycle_state` stale. Violation → physical last H1 diverges from frontmatter; packet is unusable.
 
-## Classic compatibility path (prompt-protocol only)
+## Classic compatibility path
 
-**Compatibility path — prompt-protocol only (no script guarantees).** Use only when auto loop cannot express the intent:
+**Compatibility path — agent-selected stages, scripted writes.** Use only when auto loop cannot express the intent:
 
 | `classic_reason`      | When                                                                                                 |
 | --------------------- | ---------------------------------------------------------------------------------------------------- |
@@ -187,7 +190,7 @@ These survive every path (auto loop and classic):
 
 **Why classic for these:** classic is still the prompt-protocol path for review-only packets, pasted feedback validation, and manual packet continuation. It can stop at a portable Fix Handoff without authorizing the auto loop. Auto budget exit (`budget_exhausted` on final BLOCKED round, including `--rounds 1`) is not the same as classic "stop at Fix Handoff and wait for a human fixer."
 
-Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without an explicit closed-loop request defaults to classic `intake`. Explicit auto-loop or review-fix-re-review intent without verified implementer context uses `review-loop run --intake`. Visible same-session implementation context uses default `review-loop run`. If context is ambiguous, choose an Intake origin so the protocol never fabricates an implementer Handoff.
+Fresh-eyes "review this" / "second pair of eyes" / "audit this diff" without an explicit closed-loop request defaults to classic `intake`. Explicit auto-loop or review-fix-re-review intent without verified implementer context uses `review-loop run --intake`. Explicit review-fix-re-review with visible same-session implementation context uses default `review-loop run`. If context is ambiguous, choose an Intake origin so the protocol never fabricates an implementer Handoff.
 
 Steps when classic is correct:
 
@@ -202,12 +205,12 @@ Steps when classic is correct:
    ```
    Closed set only — exactly one of those three reasons. Never write these fields onto auto packets.
 4. Resolve optional source-prompt provenance via `source-prompt-addressing.md`.
-5. Append the stage's required H1 group (packet-anatomy templates); rewrite frontmatter atomically.
+5. Write the required H1 group to `$BODY_FILE`, then append and sync frontmatter: `node "$RL" classic-append --repo "$REPO" --packet "$PACKET" --body-file "$BODY_FILE" --anchor "$ANCHOR" --lifecycle "$LIFECYCLE"`. The script verifies disk bytes before reporting success.
 6. Apply **classic** lifecycle/archive actions from `packet-addressing.md` (not the auto-loop map) after Verdicts.
 
 ### Classic write rules (summary)
 
-- Body H1 sections are append-only (model-written; **no** claim-free stage writer / hash guard).
+- Body H1 sections are append-only; classic has no auto-loop hash guard.
 - Review / feedback-validation typically appends `# Review Intake` or `# Review Handoff` → `# Review Findings` → (conditional) `# Fix Handoff`.
 - Fix stage appends `# Fix Completion`; re-review appends `# Re-review`.
 - Full templates and Stage Defaults: `packet-anatomy.md`. Classic lifecycle: `packet-addressing.md`. Auto lifecycle: `auto-loop-contract.md` + scripts.
@@ -228,9 +231,5 @@ Steps when classic is correct:
 
 - Reviewer suggests, never rewrites the subject under review by default. Implementer or user decides fixes. (Packet artifact writes are not "rewriting the subject" — see Read-only Boundary.)
 - Style preferences are marked `Preference` or omitted — never reported as bugs.
-- Never write "looks good" without listing what was checked.
-- Never claim a command passed unless it actually ran in this session.
+- Report checks actually run and their results.
 - When paths or branches matter, verify `pwd`, `git rev-parse --show-toplevel`, branch, and `git status` before quoting them.
-- Never write a `# Review Handoff` section unless you are the implementer with implementation context.
-- Never modify a previously-written H1 section. Append a new round suffix `(round N)` if the same kind of section needs to recur.
-- Always atomically rewrite frontmatter after appending; never leave `last_anchor` / `lifecycle_state` stale.

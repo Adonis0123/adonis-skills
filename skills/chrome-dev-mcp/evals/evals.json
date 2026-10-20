@@ -137,6 +137,47 @@
         "Reports fixture-error from the Console result and marks the task VERIFIED only after list_console_messages returned without data.isError",
         "Does not navigate, and does not print other tabs' URLs or titles"
       ]
+    },
+    {
+      "id": 11,
+      "name": "ui-change-acceptance",
+      "prompt": "改完设置页了，用 /chrome-dev-mcp 验收",
+      "expected_output": "Treats the request as UI-change acceptance: proves the connection with private readiness, reloads or repeats the interaction on a fresh pageId, then collects a take_screenshot saved with filePath under the runtime temp root, list_console_messages read after the interaction, and the relevant list_network_requests entry before calling the change done.",
+      "files": [],
+      "expectations": [
+        "Does not treat CHROME_DEV_MCP_READY or list_pages alone as VERIFIED",
+        "Saves a screenshot with filePath under the runtime temp root to show the resulting UI",
+        "Reads Console messages after the interaction to look for new errors",
+        "Reads the relevant Network request to confirm the change made the expected request",
+        "Reports the change UNVERIFIED and names the gap if any of the three is missing",
+        "Keeps the shared-browser rules: one recovery, no daemon restart, no killing Chrome, pageId from this turn's list_pages, no printing the page list or tokens"
+      ]
+    },
+    {
+      "id": 12,
+      "name": "console-only-no-screenshot",
+      "prompt": "看看这个页面 Console 里为什么有红色报错",
+      "expected_output": "Treats the request as a Console diagnosis on an already open page: reads list_console_messages with a fresh pageId and explains the errors without requiring a screenshot.",
+      "files": [],
+      "expectations": [
+        "Calls list_console_messages with a pageId from this turn's list_pages",
+        "Does not require a screenshot or Network evidence for a pure Console question",
+        "Does not print the page list or unrelated tab data"
+      ]
+    },
+    {
+      "id": 13,
+      "name": "ui-change-acceptance-with-request",
+      "prompt": "我把首页弹窗的提交按钮改成调新接口了，你用 chrome-dev-mcp 在 localhost:3000 上看一下是不是正常",
+      "expected_output": "Treats the request as UI-change acceptance: finds the localhost:3000 tab by URL in this turn's list_pages, opens the dialog and clicks submit, then reports a screenshot saved under the runtime temp root, Console errors after the click, and the new API request with its status before saying the change works.",
+      "files": [],
+      "expectations": [
+        "Repeats the interaction (open dialog, click submit) on a pageId from this turn's list_pages",
+        "Saves a screenshot with filePath under the runtime temp root showing the result",
+        "Reads Console after the click and reports any new errors",
+        "Finds the new API request in Network and reports its status",
+        "Does not call the change done on readiness or list_pages alone, and marks it UNVERIFIED if any of the three is missing"
+      ]
     }
   ]
 }

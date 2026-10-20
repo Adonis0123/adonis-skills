@@ -9,6 +9,14 @@
  *   node /abs/path/to/skills/agentic-review-handoff/scripts/review-loop.mjs <command> [options]
  */
 import path from "node:path";
+import fs from "node:fs";
+import {
+  resolveRepoRoot,
+  resolveBranch,
+  validatePacketPath,
+  appendStageAtEof,
+  runtimeDir,
+} from "./review-loop/repositories.mjs";
 import { fileURLToPath } from "node:url";
 import * as autoRun from "./review-loop/auto-run.mjs";
 import * as consult from "./review-loop/consult.mjs";
@@ -86,9 +94,11 @@ function help() {
       "review-loop run --repo=PATH --host=PRODUCT | --reviewer=codex|grok|claude [--reviewer-command=LAUNCHER] [--fallback=PRODUCT[,PRODUCT]] [--completion=review|pass] [--until-pass] [--intake] [--base=SHA] [--rounds=3] [--packet=PATH] [--paths=a,b]",
       "review-loop run --continue --repo=PATH [--packet=PATH] [--reviewer=PRODUCT] [--reviewer-command=LAUNCHER] [--rounds=3|+N] [--paths=a,b]",
       "review-loop fix-completion --repo=PATH --packet=PATH --body-file=PATH",
+      "review-loop classic-append --repo=PATH --packet=PATH --body-file=PATH --anchor=ANCHOR --lifecycle=STATE",
       "review-loop close --repo=PATH --packet=PATH --reason=accept-concerns",
       "review-loop evidence --repo=PATH --base=SHA [--paths=a,b]",
-      "review-loop consult --repo=PATH --host=PRODUCT [--skip-host] | --peer=codex|grok|claude [--peer-command=LAUNCHER] [--fallback=PRODUCT[,PRODUCT]] --question-file=PATH",
+      "review-loop consult --repo=PATH --host=PRODUCT [--skip-host] | --peer=codex|grok|claude|pi [--peer-command=LAUNCHER] [--fallback=PRODUCT[,PRODUCT]] [--web] [--raw] --question-file=PATH",
+      "review-loop consult --repo=PATH --resume=CONSULT_RECORD [--fallback=PRODUCT[,PRODUCT]] [--web] [--raw] --question-file=PATH",
       "review-loop prefs [--order=claude,codex,grok] [--skip-host=true|false] [--reset]",
       "review-loop sessions --repo=PATH [--product=codex|grok|claude]",
     ],
@@ -169,6 +179,37 @@ async function main() {
   try {
     let result;
     switch (command) {
+      case "classic-append": {
+        const repo = resolveRepoRoot(base.repoRoot ?? base.cwd);
+        const { packetPath, packetId, meta } = validatePacketPath(
+          repo,
+          resolveBranch(repo),
+          base.packetPath,
+          { activeOnly: true },
+        );
+        if (
+          meta.frontmatter.mode !== "classic" ||
+          fs.existsSync(
+            path.join(runtimeDir(repo, packetId), "auto-run-state.json"),
+          )
+        ) {
+          throw new Error(
+            "classic-append requires a classic packet without auto runtime state",
+          );
+        }
+        const written = appendStageAtEof(packetPath, {
+          sectionMarkdown: fs.readFileSync(base.bodyFile, "utf8"),
+          lastAnchor: args.anchor,
+          lifecycleState: args.lifecycle,
+        });
+        result = {
+          ok: true,
+          packetPath,
+          lastAnchor: written.lastAnchor,
+          lifecycleState: written.lifecycleState,
+        };
+        break;
+      }
       case "run": {
         if (
           args["no-sandbox"] ||
@@ -240,6 +281,9 @@ async function main() {
           skipHost: args["skip-host"] === true,
           questionFile: args["question-file"] ?? args.questionFile,
           question: args.question,
+          resume: args.resume ?? null,
+          raw: args.raw === true,
+          web: args.web === true,
         });
         break;
       case "prefs": {

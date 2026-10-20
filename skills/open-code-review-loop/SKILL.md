@@ -185,32 +185,28 @@ exactly once as `reviewed` or `skipped`. Emit only evidence-backed, actionable
 findings. Tests that need temporary writes belong to host verification and are
 not a reason to weaken the Reviewer sandbox.
 
-A fresh `evidence_id` consumes one round; one same-evidence schema
-correction does not. Drift creates a new ID, so the next Reviewer call
-consumes another round. A read-only Reviewer timeout is `UNVERIFIED`.
-Extract the product's final structured object — not prose braces, and not
-Grok's human-readable `text` field:
+Keep one `LOOP_HISTORY` outside the repo across corrections and drift.
+Before every Reviewer call, run this gate; only exit 0 permits the call:
 
 ```bash
-python3 <skill-dir>/scripts/extract_product_output.py \
-  --product "$REVIEWER_PRODUCT" \
-  --input "$ROUND_DIR/raw-review.json" \
-  --output "$ROUND_DIR/review.json" \
-  [--session-id "$RECORDED_SESSION_ID"]
+python3 <skill-dir>/scripts/validate_round.py --check-call \
+  --bundle "$ROUND_DIR/bundle.json" --history "$LOOP_HISTORY"
 ```
 
-The extractor replaces Reviewer identity with host-observed product/session
-data. Then validate:
+A fresh evidence ID consumes one of 3 rounds; one same-session format
+correction uses the same round. A timeout is `UNVERIFIED`. Validate each raw envelope so extraction failures enter the history:
 
 ```bash
 python3 <skill-dir>/scripts/validate_round.py \
   --bundle "$ROUND_DIR/bundle.json" \
-  --review "$ROUND_DIR/review.json" \
-  --output "$ROUND_DIR/validation.json"
+  --review "$ROUND_DIR/raw-review.json" --product "$REVIEWER_PRODUCT" \
+  --history "$LOOP_HISTORY" --output "$ROUND_DIR/validation.json" \
+  [--session-id "$RECORDED_SESSION_ID"]
 ```
 
-Malformed output gets one same-session correction. Still invalid →
-`UNVERIFIED`. Do not reinterpret prose as a verdict.
+The validator reuses `extract_product_output.py`. Its gate stops a second
+malformed result as `UNVERIFIED` and refuses round 4: format correction
+supplies no new evidence.
 
 ### Phase 3: Detect evidence drift
 

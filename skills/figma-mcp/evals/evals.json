@@ -225,6 +225,54 @@
         "Names a supported host (Claude Code, Codex, Cursor, Grok) for the write",
         "Does not register or borrow identity to reach the official MCP"
       ]
+    },
+    {
+      "id": 17,
+      "name": "implement-task-is-not-auth-only",
+      "prompt": "/figma-mcp https://www.figma.com/design/ABC/Settings?node-id=12-3 按这个稿子把设置页做成 React",
+      "expected_output": "The skill's frontmatter description covers a /figma-mcp plus design-URL-plus-node-id request to implement a page as an implement/match job, not only as an install, auth, or account-recovery job.",
+      "files": [],
+      "setup": "Static check against skills/figma-mcp/SKILL.md; no live tool calls.",
+      "expectations": [
+        "Description explicitly names implementing or matching a UI from a Figma design URL or file key as a job this skill covers",
+        "Description's implement/match job is not gated behind install, authenticate, switch-accounts, recover, or verify language only"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "implement-path-names-design-to-code-and-requires-following",
+      "prompt": "/figma-mcp https://www.figma.com/design/ABC/Settings?node-id=12-3 把这个设置页实现出来，要跟设计稿一致，还原度要高",
+      "expected_output": "The implement path names figma-design-to-code as the owner of the visual work and requires following its workflow through to a finished, matched screen before the task counts as done.",
+      "files": [],
+      "setup": "Static check against skills/figma-mcp/SKILL.md; no live tool calls.",
+      "expectations": [
+        "SKILL.md names figma-design-to-code (the plugin command or the skill://figma/figma-design-to-code/SKILL.md resource) on the implement/match path",
+        "SKILL.md states that this workflow must be followed through to a finished or matched screen, not merely loaded once"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "install-or-switch-account-still-in-scope",
+      "prompt": "帮我在 Cursor 里装一下官方 Figma MCP，并把账号切换成我工作用的那个，不涉及任何设计稿。",
+      "expected_output": "A prompt that only asks to install or switch the Figma MCP account, with no design URL or implement task, is still in this skill's scope.",
+      "files": [],
+      "setup": "Static check against skills/figma-mcp/SKILL.md; no live tool calls.",
+      "expectations": [
+        "Description still explicitly covers install, authenticate, switch accounts, recover, or verify jobs for the official Figma MCP server",
+        "Description names at least two of Codex, Claude Code, Cursor, or Grok Build as supported hosts for this job"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "metadata-or-screenshot-alone-is-not-implementation",
+      "prompt": "/figma-mcp https://www.figma.com/design/ABC/Settings?node-id=12-3 先看一下截图就行，不用真的做出来。",
+      "expected_output": "The skill never claims that a metadata read, a get_design_context dump, or a screenshot alone counts as having implemented or matched the design.",
+      "files": [],
+      "setup": "Static check against skills/figma-mcp/SKILL.md; no live tool calls.",
+      "expectations": [
+        "SKILL.md explicitly states that a get_metadata call, a get_design_context dump, or a screenshot is evidence for the design-to-code workflow, not a finished implementation on its own",
+        "SKILL.md contains no language claiming the implement/match task is complete after a single read or screenshot without following figma-design-to-code"
+      ]
     }
   ]
 }

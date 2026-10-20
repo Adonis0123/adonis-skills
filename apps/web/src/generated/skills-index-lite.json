@@ -74,7 +74,7 @@
   {
     "slug": "agentic-review-handoff",
     "name": "agentic-review-handoff",
-    "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git.",
+    "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git and review/consult intent; ordinary implementation or commit-only requests do not start a review loop.",
     "metadata": {
       "author": "adonis",
       "version": "3.9.0"
@@ -84,7 +84,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Auto Review Loop",
@@ -217,17 +217,17 @@
   {
     "slug": "chrome-dev-mcp",
     "name": "chrome-dev-mcp",
-    "description": "This skill should be used when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific, needs Lighthouse, a full trace, or heap data, or when the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Establish or recover the shared managed connection and prove it with a real list_pages call. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals are required. It is not a page-acceptance entry point: a passing readiness or list_pages check proves the connection only, and product-page verification stays with the calling task.",
+    "description": "Use this skill when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific (Lighthouse, a full trace, heap data) or the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Also use it as the verification step right after the user or this session changes a web UI or asks to accept or check a page: collect a screenshot, Console, and Network evidence before calling it done. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals or UI-change acceptance are required. A passing readiness or list_pages check proves the connection only, never the change.",
     "metadata": {
       "author": "adonis",
-      "version": "1.6.0"
+      "version": "1.7.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-18T11:15:26.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Chrome DevTools Bridge",
@@ -242,10 +242,12 @@
       "summary_zh": "通过共享的 chrome-dev-mcp-cli 采集指定 Chrome 的 DOM 快照、日志、网络请求与性能轨迹。",
       "use_cases": [
         "Inspect live Console errors and failed fetch requests on a local dev tab.",
+        "After a UI change, accept the page with a screenshot, Console, and Network evidence.",
         "Share one managed Chrome DevTools session safely across multiple coding agents."
       ],
       "use_cases_zh": [
         "在本地调试页面时抓取真实的 Console 报错、接口返回与 DOM 快照。",
+        "改完界面后用截图、控制台和网络请求做验收。",
         "让多个 Agent 安全复用同一个受控 Chrome 会话做页面取证。"
       ]
     }
@@ -526,17 +528,17 @@
   {
     "slug": "figma-mcp",
     "name": "figma-mcp",
-    "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts.",
+    "description": "Use this skill for every /figma-mcp invocation, which covers two jobs. First, implement or match a UI from a Figma design URL or file key (e.g. '/figma-mcp <url> 按设计稿把这个页面做成 React', '/figma-mcp <url> 还原度要高'): hand the visual work to figma-design-to-code and follow it through to a finished screen, not stop at a metadata read or a screenshot. Second, install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read task, including the implement/match path, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts.",
     "metadata": {
       "author": "adonis",
-      "version": "1.5.0"
+      "version": "1.6.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-24T03:23:44.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Figma Connector",
@@ -551,10 +553,12 @@
       "summary_zh": "配置、认证或恢复官方 Figma MCP 服务，并在读取设计评审评论时按规则回退到 REST API。",
       "use_cases": [
         "Read Figma design context on the fast path without redundant whoami calls.",
+        "Implement a screen from a Figma URL by following the design-to-code workflow.",
         "Fetch and filter Figma file comments through the REST script when the MCP cannot read them."
       ],
       "use_cases_zh": [
         "传入 Figma 链接直接读取设计上下文，省去多余的身份探测步骤。",
+        "拿着设计稿链接还原界面时，按设计转代码流程来做。",
         "需要看设计稿里的评审评论或历史讨论时，用内置脚本通过 REST 接口拉取。"
       ]
     }
@@ -600,14 +604,14 @@
     "description": "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes.",
     "metadata": {
       "author": "adonis",
-      "version": "2.2.0"
+      "version": "2.3.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-07T11:51:42.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Goal Contract",
@@ -665,16 +669,16 @@
   {
     "slug": "kimi-computer-use",
     "name": "kimi-computer-use",
-    "description": "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes, or fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'. Not for general desktop automation once kimi-cu already works, and not a replacement for a host's native Computer Use.",
+    "description": "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes; fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'; or look at and verify a running macOS app UI through kimi-cu, such as checking whether a window matches a design. Not for general desktop automation, messaging, or purchasing, and not a replacement for a host's native Computer Use.",
     "metadata": {
       "author": "adonis",
-      "version": "0.3.0"
+      "version": "0.4.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-14T12:28:53.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Kimi Computer Use",
@@ -688,10 +692,12 @@
       "summary_zh": "在 macOS 上安装、注册、排查或升级本地 Kimi Computer Use (kimi-cu) MCP 服务。",
       "use_cases": [
         "Register kimi-cu across Claude Code, Codex, Cursor CLI, Grok, or Hermes without breaking existing configs.",
+        "Check a running Mac screen through kimi-cu; a UI check with no tool call is not done.",
         "Fix 'no target app' or 'mode must be full, image, or ax' errors and verify macOS permissions."
       ],
       "use_cases_zh": [
         "把 kimi-cu 注册到多个 Agent 宿主配置里，并用只读命令验证连通性。",
+        "用 kimi-cu 查看正在运行的 Mac 界面；没真正调用工具就不算看过。",
         "快速修复参数写错导致的调用报错，或核对辅助功能与录屏权限状态。"
       ]
     }
@@ -779,7 +785,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-01T11:34:49.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Open Code Review Loop",
@@ -851,7 +857,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Plan Completion Loop",
@@ -1000,7 +1006,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-16T07:26:10.000Z",
+    "updatedAt": "2026-10-20T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Workflow Router",

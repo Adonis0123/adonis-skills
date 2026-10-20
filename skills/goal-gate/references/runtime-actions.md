@@ -88,3 +88,11 @@ There is no verified product goal API or `/goal` command. Cursor skills may be i
 ## Unknown
 
 Capabilities are uncertain, so do not auto-execute. Emit a portable contract with `Next: ask approval` and let the user start it. Output a contract, not an executable command.
+
+## Unattended Continuation Discipline
+
+Only for unattended or autonomous runs; leave it out of human-in-the-loop sessions, where someone is there to answer.
+
+- A text-only end of turn is a report, not proof the contract is done. Keep the Done items in a checklist the agent updates (to-do tool or file). If a turn ends with items open and no blocker stated, continue, or have the harness or parent send a short message naming the open items. Stop after two or three automatic continuations on the same task so a genuinely stuck run ends and can be reviewed.
+- If a background command or subagent the agent started is still running, wait for it and use its output instead of treating the contract as done.
+- Unwanted stops while owed work remains: (1) a long summary that announces the next step with no tool call; (2) an offer to carry on unless the user prefers otherwise; (3) a list of decisions for the user when none blocks the rest; (4) stopping to report because the turn was long or a milestone is done. Put status notes and recommendations in the same message as the next tool call. Wanted stops: nothing can move without the user, or the blocker is deliberately protected. This never overrides the Safety Gate or confirmation for risky or destructive actions.

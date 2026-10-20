@@ -3,66 +3,60 @@ name: goal-gate
 description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
 metadata:
   author: adonis
-  version: "2.2.0"
+  version: "2.3.0"
 ---
 
 # Goal Gate
 
-`/goal-gate` writes and gates contracts. It does not turn the session into product Goal mode. Only a host with a verified goal facility can do that: Codex via `create_goal`, Grok via the user-run `/goal <objective>`, Claude Code via user `/goal` plus transcript evaluation. Cursor CLI has no verified product `/goal` or goal API; it soft-adopts the contract in the current chat and uses Cursor's native chat resume for continuity.
-
-The contract's value is that it makes "done" checkable against what the user asked for. Most real use is "the plan is agreed, start now and verify it yourself", so the hot path is: emit one honest block, start working, and close with evidence. Anything that does not serve that path is ceremony.
-
-Independent from `workflow-gate`: consume a `Workflow Gate` block when one is present, but do not require one.
+`/goal-gate` drafts and gates durable goal contracts; it doesn't activate product Goal mode itself — only a host's verified facility can. The value is a checkable "done": most real use is "plan's agreed, start now, verify yourself", so the hot path is one honest block, start working, close with evidence — else it's ceremony. Independent from `workflow-gate`: consume a `Workflow Gate` block when present, don't require one.
 
 ## Fast Path
 
-Read **this file only** by default; if the host already injected it, do not re-read it. Load **at most one** reference, and only when needed:
+Read **this file only** by default; skip re-reading if the host already injected it. Load **at most one** reference, only when needed:
 
-1. Detect runtime with the ordered rules below. Explicit Cursor CLI intent wins over the model-provider name.
+1. Detect runtime with the ordered rules below — explicit Cursor CLI intent wins over the model name.
 2. Classify Goal Fit, then run the Safety Gate.
-3. Check Goal authorization, pick one Decision from the table, and emit one `Goal Gate` block per selected runtime.
-4. If `set-now`, execute the runtime row. Load `references/runtime-actions.md` only when that row is not enough to act.
-5. Load `references/copy-ready-goals.md` only when drafting a user-copyable prompt; `references/examples.md` only when a worked example is needed.
+3. Check Goal authorization, pick one Decision, and emit one `Goal Gate` block per selected runtime.
+4. If `set-now`, execute the runtime row; load `references/runtime-actions.md` only when the row isn't enough.
+5. Load `references/copy-ready-goals.md` only for a user-copyable prompt, `references/examples.md` only for a worked example.
 
 Do not invent goal APIs.
 
 ## Runtime Detection
 
-Apply the first matching rule. This order resolves host names that overlap with available tools:
+Apply the first matching rule — this order resolves overlapping host/tool names:
 
-1. `cursor-cli`: the user names Cursor CLI, `cursor-agent`, or `cursor-cli`, or the host is Cursor CLI. This wins even when the selected model is Grok or Claude or ambient goal tools exist. Cursor has no verified `/goal` or goal API; chat resume restores conversation context only.
-2. Prompt-only slash runtime: the user asks only for text to copy or review. Use `grok-slash`, `codex-slash`, or `claude-code-slash` from the named host. A Grok session exposing `update_goal` is still `grok-slash` for this prompt-only request because no product action was requested.
-3. `codex-tooling`: `get_goal` or `create_goal` is available and the request is not prompt-only. A status-only Codex `update_goal` may also be present.
-4. `grok-tooling`: Grok-style `update_goal` is available, neither `get_goal` nor `create_goal` is available, and the request is not prompt-only. Only a user-run `/goal` can activate it.
-5. Named host without verified tooling: use that host's slash runtime for Grok, Codex, or Claude Code.
-6. `unknown`: emit a portable contract, never an executable command.
+1. `cursor-cli`: user names Cursor CLI/`cursor-agent`, or host is Cursor CLI — wins over a Grok/Claude model or ambient goal tools; no verified `/goal`/API, resume restores context only.
+2. Prompt-only slash: user wants only text to copy/review → `grok-slash`/`codex-slash`/`claude-code-slash`; Grok with `update_goal` is still `grok-slash` here (no product action asked).
+3. `codex-tooling`: `get_goal`/`create_goal` present, not prompt-only (status-only `update_goal` may coexist).
+4. `grok-tooling`: only Grok-style `update_goal`, not prompt-only — only user-run `/goal` activates it.
+5. Named host, no verified tooling → its slash runtime.
+6. `unknown`: portable contract, never a command.
 
-Never borrow one runtime's fields for another. If the user explicitly requests both a slash prompt and a tooling action, or multiple runtimes, emit one independently usable block per requested runtime.
+Never borrow one runtime's fields for another; multiple requested runtimes each get their own block.
 
 ## Goal Fit
 
-Prefer a goal when all are true: the task is larger than one normal turn; it has one durable end state; completion can be verified from evidence the agent can surface in the transcript; the agent can make useful progress without frequent steering; stop or ask conditions can be stated up front.
+Prefer a goal when: larger than one turn, one durable end state, verifiable from surfaced evidence, progress without steering, and statable stop/ask conditions.
 
-Avoid a goal for single-step lookups, typo fixes, small edits, or commit-message work; open-ended exploration with no stopping condition; product or architecture choices that still need `grilling` (Route: Challenge); destructive, irreversible, billing, auth, production-data, or schema-breaking work before explicit approval; a loose backlog of unrelated tasks.
+Avoid a goal for lookups, typos, small edits, commit messages, unbounded exploration, an unresolved `grilling` (Route: Challenge) decision, a loose backlog, or anything the Safety Gate holds.
 
-For vague but low-risk work, prefer a goal with safe defaults over a clarification loop. Ask only when the answer materially changes cost, risk, ownership, product direction, or write boundaries.
+For vague low-risk work, prefer safe defaults over a clarification loop; ask only if the answer changes cost, risk, ownership, or write boundaries.
 
 ## Safety Gate
 
-Before any automatic action, check for conditions that must keep a human in the loop. If any holds, do not auto-set: emit `Decision: suggest` or `Decision: defer` and ask first, even when goal fit is high.
+Before any automatic action, check conditions that must keep a human in the loop; if any holds, do not auto-set — emit `Decision: suggest` or `defer` and ask first, even at high goal fit.
 
-- Destructive, irreversible, billing, auth, production-data, or schema-breaking action whose concrete scope is not yet authorized. Check the action and existing approval, not domain keywords: read-only diagnosis and explicitly authorized isolated local tests can proceed. Prior approval covers only its stated paths, environment, and effects; a new production target, security change, or expanded effect needs its own gate.
-- A goal is already active **and** the new objective conflicts with it, or the user has not chosen how to handle it. Never replace or mutate it silently; ask whether to continue, complete, block, pause, clear, or replace it (`Decision: defer`). Same-goal management covers an exact objective match and a contained checkpoint whose parent Goal's objective, frozen scope, and Done condition explicitly include it and whose parent pipeline the user already authorized. Verify containment from evidence; it never permits scope expansion or narrowing the parent's Done condition.
-- The objective still needs a design or scoping decision that `grilling` (Route: Challenge) should resolve.
-- Verification cannot run, so completion could never be proven.
+- Destructive, irreversible, billing, auth, production-data, or schema-breaking action whose concrete scope isn't yet authorized. Check the action and existing approval, not domain keywords — read-only diagnosis and explicitly authorized isolated local tests can proceed. Prior approval covers only its stated paths, environment, and effects; a new production target, security change, or expanded effect needs its own gate.
+- A goal is already active **and** the new objective conflicts with it, or the user hasn't chosen how to handle it. Never replace or mutate it silently — ask whether to continue, complete, block, pause, clear, or replace it (`Decision: defer`). Same-goal management covers an exact objective match, or a contained checkpoint whose parent Goal's frozen scope and Done condition already include it with the parent pipeline authorized. Verify containment from evidence; it never permits scope expansion or narrowing the parent's Done condition.
+- The objective still needs a design/scoping decision that `grilling` (Route: Challenge) should resolve.
+- Verification can't run, so completion could never be proven.
 
-An auto-started goal hands the agent a long leash; that is only safe when the end state is reversible-or-approved, unambiguous, and checkable. When in doubt, `suggest`. High-risk work can still get a discovery-first or approval-first draft, but never present a production write, destructive migration, auth rewrite, billing change, or regulated-domain decision as immediately executable.
+An auto-started goal hands the agent a long leash — safe only when the end state is reversible-or-approved, unambiguous, and checkable; when in doubt, `suggest`. High-risk work can still get a discovery-first or approval-first draft, but never as immediately executable for a production write, destructive migration, auth rewrite, billing change, or regulated-domain decision.
 
 ## Goal Authorization and Decision
 
-Creating, replacing, completing, or blocking a native product Goal is a state change separate from doing the task. It is authorized only when the user or system explicitly asks to use, set, create, continue, complete, or block a Goal; invokes `$goal-gate` or `/goal-gate`; or invokes a parent workflow whose declared contract owns a Goal. A large, autonomous, or high-fit task does **not** by itself authorize `create_goal`, `update_goal`, or a user-run `/goal`.
-
-When the work is authorized but native Goal state is not, adopt the contract in the transcript and keep working: native-capable runtimes report `Decision: suggest` / `Next: adopt goal and continue`; transcript-only runtimes may report `set-now` because no product state changes. Neither claims a native Goal became Active, and neither stops for a redundant approval round. Goal fit is not a second permission gate for already authorized work.
+Creating, replacing, completing, or blocking a native Goal is separate from doing the task — authorized only by an explicit ask to use/set/create/continue/complete/block a Goal, a `$goal-gate`/`/goal-gate` invocation, or a parent workflow whose contract owns a Goal. Large, autonomous, or high-fit work does **not** by itself authorize `create_goal`, `update_goal`, or a user-run `/goal` — fit isn't a second permission gate. When authorized but native state isn't, adopt the contract in the transcript and keep working without claiming Active (first two rows).
 
 | Situation                                                                                | Decision             | Next                                                      |
 | ---------------------------------------------------------------------------------------- | -------------------- | --------------------------------------------------------- |
@@ -81,40 +75,35 @@ When the work is authorized but native Goal state is not, adopt the contract in 
 | Diagnose-only `Route: Architecture` without a goal request                               | `none` (fit `low`)   | Preserve stop-after-report                                |
 | Runtime `unknown`                                                                        | do not auto-execute  | `ask approval`                                            |
 
-A contained checkpoint reports progress but leaves completion to the parent Goal owner. Never call a completion action, or tell the user to clear a goal, merely to make replacement convenient.
+A contained checkpoint reports progress but leaves completion to the parent owner; never complete or clear a goal merely to make replacement convenient.
 
 ### Runtime action on `set-now`
 
-| Runtime                                      | Next                                                                  | Do now                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| -------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `cursor-cli`                                 | `adopt goal and continue`; same-chat resume → `continue adopted goal` | No `/goal`. No `get_goal` / `create_goal` / `update_goal`. Work in this chat; report evidence in the transcript. Resume restores chat context only. Prompt-only → `suggest` / `provide prompt` with a plain prompt. Ask/Plan modes are read-only — say so instead of claiming writes started.                                                                                                                                                                      |
-| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                                 | Emit the block and a full copy-ready `/goal` first, then **stop**. No implementation. No `update_goal`. `/goal-gate` ≠ `/goal`. Without explicit Goal authorization → `suggest` / `adopt goal and continue`, still no `update_goal` until Active.                                                                                                                                                                                                                  |
-| `grok-tooling` (Active, same/contained)      | `continue active goal`                                                | Work the contract. Checkpoint with Grok `message`. No second `/goal`. No `create_goal` / `get_goal`. `completed: true` only after the full parent Done condition is proven.                                                                                                                                                                                                                                                                                        |
-| `grok-tooling` (Active, Done proven)         | `report via update_goal`                                              | Grok `completed: true` plus a concise evidence `message`. Never Codex `status`.                                                                                                                                                                                                                                                                                                                                                                                    |
-| `grok-slash`                                 | usually `provide prompt`                                              | Copy-ready `/goal`. Soft-adopt only if the user also authorized execution without durable mode.                                                                                                                                                                                                                                                                                                                                                                    |
-| `codex-tooling` (no active, explicit Goal)   | `create goal`                                                         | `get_goal` then `create_goal` with the `Objective`. No token budget unless asked. Without explicit Goal authorization → `suggest` / `adopt goal and continue`; no `create_goal`.                                                                                                                                                                                                                                                                                   |
-| `codex-tooling` (same/contained, not done)   | `continue active goal`                                                | Keep working. No `create_goal`, no replacement, no terminal `update_goal`. A contained checkpoint cannot complete the parent.                                                                                                                                                                                                                                                                                                                                      |
-| `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                              | Codex `status: "complete"` after evidence, or `status: "blocked"` only after the same blocker persists ≥3 consecutive goal turns. Never Grok `message` / `completed` / `blocked_reason`.                                                                                                                                                                                                                                                                           |
-| `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                             | Self-adopt and start working in the same reply. `Prompt: none` unless the user asked for a reusable prompt or a fresh-session handoff — the block already is the contract. Claude: surface verification in the transcript; the evaluator does not read files or run commands, and gets the condition text, not the `/goal` turn: the condition must be a standalone checkable end state, never a bare go-ahead such as "去做吧" (`references/runtime-actions.md`). |
-| `unknown`                                    | `ask approval`                                                        | Portable contract only.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Runtime                                      | Next                                                        | Do now                                                                                                   |
+| -------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `cursor-cli`                                 | `adopt goal and continue`; resume → `continue adopted goal` | Work in this chat; no `/goal`/API; report evidence in transcript.                                        |
+| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                       | Emit block + copy-ready `/goal`, then stop; no `update_goal` until Active.                               |
+| `grok-tooling` (Active, same/contained)      | `continue active goal`                                      | Work the contract; checkpoint via `message`; `completed: true` only once Done is proven.                 |
+| `grok-tooling` (Active, Done proven)         | `report via update_goal`                                    | `completed: true` + evidence `message`; never Codex `status`.                                            |
+| `grok-slash`                                 | usually `provide prompt`                                    | Copy-ready `/goal`; soft-adopt only if execution is authorized too.                                      |
+| `codex-tooling` (no active, explicit Goal)   | `create goal`                                               | `get_goal` then `create_goal`; no token budget unless asked.                                             |
+| `codex-tooling` (same/contained, not done)   | `continue active goal`                                      | Keep working; no `create_goal`, replacement, or terminal `update_goal`.                                  |
+| `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                    | `status: "complete"` after evidence, or `"blocked"` after ≥3-turn persistent blocker; never Grok fields. |
+| `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                   | Self-adopt and start now; `Prompt: none` unless asked; surface verification in transcript.               |
+| `unknown`                                    | `ask approval`                                              | Portable contract only.                                                                                  |
 
-Why an explicitly requested Grok Goal waits: Codex `create_goal` can activate from the agent; Grok cannot. A false Active session produces `Goal is not Active` failures.
+Exceptions (soft-adopt opt-outs, `Goal is not Active` recovery, Ask/Plan limits, Claude's standalone-condition rule) live in `references/runtime-actions.md`.
 
 ## Goal Drafting
 
-A contract is only as good as its Done condition. Write it so the user could check it without asking you what you meant.
+A contract is only as good as its Done condition — write it so the user could check it without asking what you meant.
 
-- **Anchor on the user's source.** When the request names a plan, spec, PRD, TAPD item, Figma node, or earlier agreed summary, the Objective and Done condition point at that source and its acceptance items (e.g. "spec 验收 1–11", "Figma 126981-1056780"). If you exclude, defer, or reinterpret any source item, name it on a `Stop or ask when` / Constraints line as your own call to confirm. Silent narrowing is what later turns "done" into "你没按文档做".
-- **Verify on the user's acceptance path.** If the user will judge the result in a page, device, design, or command, Verification must exercise that path for each acceptance item (real interaction in the named browser tool, Figma comparison of the named nodes, the actual command) — unit tests and typecheck are necessary, not sufficient. When the user adds `/chrome-dev-mcp`, `/ego-browser`, or "做完要自己验收", that browser check is part of Done.
-- **Add no unrequested delivery.** Do not put commit, push, MR, deploy, message sending, or external writes into Done or Checkpoints unless the user asked. Default: changes stay in the working tree.
-- Include concrete outcome, verification evidence, constraints protecting unrelated behavior/data/secrets/default branches/public contracts, write boundaries, an execution strategy, bounded iteration, and pause conditions (credentials, payments, production data, destructive actions, legal/medical/financial judgment, copyrighted assets, unclear ownership, repeated blockers).
-- No placeholders (`[path]`, `TODO`, `TBD`) in a copyable draft unless the user asked for a template. For unfamiliar or specialized domains, write a discovery-first goal (project docs, sample data, official references, runtime evidence) instead of inventing domain rules.
+- **Anchor on the user's source**: point Objective/Done at any named plan, spec, PRD, TAPD item, or Figma node and its acceptance items; name an excluded/reinterpreted item on `Stop or ask when`/Constraints — silent narrowing is what later turns "done" into "你没按文档做".
+- **Verify on the acceptance path**: if the user will judge it in a page, device, design, or command, Verification exercises that path per item — tests/typecheck aren't sufficient alone.
+- **No unrequested delivery**: commit/push/MR/deploy/messaging go into Done/Checkpoints only if asked; otherwise changes stay in the working tree.
+- **Execution strategy** follows dependency order, shared state, write overlap, and independent verification — never size alone; the main agent keeps review and final integration.
 
-For Chinese-first users, write the copy-ready prompt in Chinese. Keep the `/goal` prefix only for verified slash runtimes; Cursor CLI gets a plain prompt. Add numbered options only when a choice materially changes scope, risk, or direction; add an English mirror only when asked or needed for portability.
-
-**Execution strategy.** Decide single-agent vs delegated vs parallel from dependency order, shared context or state, write overlap, output volume, independently verifiable subtasks, coordination cost, and runtime support — never from size alone. One agent for tightly coupled or sequential work; subagents for bounded self-contained tasks or high-volume read-only research; parallel only without shared mutable state or conflicting writes. An installed orchestration skill (e.g. `subagent-driven-development`, `dispatching-parallel-agents`) is optional. The main agent passes constraints down, reviews returned work, resolves conflicts, and runs final integration verification; subagents never declare the whole goal complete. Fall back to one agent when subagents are unavailable or not worth the coordination.
-
-If a slash-runtime `/goal` is saved to a file or the user asks to validate one, run `scripts/lint-goal-prompt.py <file>` and fix what it reports. Not for Cursor CLI's plain prompt: apply `references/copy-ready-goals.md` § Quality Checks directly, and never add `/goal` merely to satisfy the script.
+For unfamiliar domains, prefer discovery-first over inventing rules. `references/copy-ready-goals.md`: per-field craft, Chinese/English shapes, and the Quality Checks a copy-ready draft must pass.
 
 ## Output Contract
 
@@ -127,31 +116,25 @@ Goal Gate
 - Goal fit: <low | medium | high>
 - Objective: <one durable objective or n/a>
 - Done condition: <verifiable stopping condition or n/a>
-- Verification: <commands/artifacts/evidence the agent must surface or n/a>
+- Verification: <commands/artifacts/evidence to surface or n/a>
 - Constraints: <scope/safety/must-not-change limits or n/a>
-- Execution strategy: <single-agent vs delegated vs parallel and why, or n/a>
+- Execution strategy: <single-agent/delegated/parallel + why, or n/a>
 - Checkpoints: <progress reporting cadence or n/a>
 - Stop or ask when: <blocked/risky/ambiguous/destructive/budget condition or n/a>
 - Prompt: <runtime-specific goal prompt, "see Recommended /goal below", or none>
 - Next: <create goal | continue active goal | wait for user /goal | adopt goal and continue | continue adopted goal | report via update_goal | provide prompt | ask approval | continue without goal | route elsewhere>
 ```
 
-Keep it concise. If the prompt is longer than one short line, write `Prompt: see Recommended /goal below` and put the copy-ready prompt right under the block. On Grok with `Next: wait for user /goal`, the copy-ready `/goal` comes first under the block, then stop.
+Keep it concise; a longer prompt gets `Prompt: see Recommended /goal below` under the block — on Grok's `wait for user /goal` it comes first, then stop.
 
-For a Chinese-first copy-ready prompt, use as needed: `推荐执行版（中文，可直接复制）`, `默认选择理由` (required whenever you filled a gap with a default, so the user can see and override the assumption), `可选调整`, `你可以直接回复`, and `Goal Draft (English-compatible)` when requested. Every executable copy-ready prompt carries an `执行编排：` or `Execution strategy:` line, shorter than the outcome and verification unless delegation is the main risk.
+Chinese-first copy-ready prompts include `推荐执行版（中文，可直接复制）`, `默认选择理由` (when defaulting), and an `执行编排：` / `Execution strategy:` line; see `references/copy-ready-goals.md` for full templates.
 
 ## Closing an adopted contract
 
-The final report is where false completion happens. Map each Done item to the evidence you surfaced (command + result, screenshot or page state, Figma comparison), and mark anything not exercised on the acceptance path as `UNVERIFIED` with the reason. Say "done" only when every Done item has evidence; otherwise report what is proven, what is `UNVERIFIED`, and what remains. A native Goal is completed only through its runtime row after this mapping holds.
+The final report is where false completion happens: map each Done item to surfaced evidence (command+result, screenshot, Figma comparison), marking anything unexercised `UNVERIFIED` with a reason — say "done" only when every item has evidence. A native Goal completes only through its runtime row.
 
-### Unattended continuation
-
-Only for unattended or autonomous runs; leave it out of human-in-the-loop sessions, where someone is there to answer.
-
-- A text-only end of turn is a report, not proof the contract is done. Keep the Done items in a checklist the agent updates (to-do tool or file). If a turn ends with items open and no blocker stated, continue, or have the harness or parent send a short message naming the open items. Stop after two or three automatic continuations on the same task so a genuinely stuck run ends and can be reviewed.
-- If a background command or subagent the agent started is still running, wait for it and use its output instead of treating the contract as done.
-- Unwanted stops while owed work remains: (1) a long summary that announces the next step with no tool call; (2) an offer to carry on unless the user prefers otherwise; (3) a list of decisions for the user when none blocks the rest; (4) stopping to report because the turn was long or a milestone is done. Put status notes and recommendations in the same message as the next tool call. Wanted stops: nothing can move without the user, or the blocker is deliberately protected. This never overrides the Safety Gate or confirmation for risky or destructive actions.
+Unattended runs: `references/runtime-actions.md` covers continuation discipline — why a text-only turn isn't proof of done, how many auto-continuations to allow, and which stops are blocked vs owed.
 
 ## Workflow-Gate Relationship
 
-If a `Workflow Gate` block is available: `Route: Plan`, implement/harden `Route: Architecture` with `architecture-hardening-loop`, long-running `Light + systematic-debugging`, and broad `verification-before-completion` are stronger goal-fit signals. `Route: Direct`, small `Light`, and `Review-Handoff` are weaker unless the user explicitly wants a goal. Unresolved `Route: Challenge` and diagnose-only `Architecture` follow the Decision table; re-evaluate after Challenge resolves or the report becomes a scoped implementation. Do not rewrite the workflow-gate route. If the user is asking which workflow to use, emit `Decision: defer`, `Next: route elsewhere`.
+A `Workflow Gate` block is a Goal Fit signal, not a second decision table: implement/harden `Route: Architecture` (`architecture-hardening-loop`), long `Light`+`systematic-debugging`, and broad `verification-before-completion` raise fit; `Route: Direct`, small `Light`, and `Review-Handoff` lower it unless the user wants a goal. Unresolved `Route: Challenge` and diagnose-only `Architecture` already have rows above. Never rewrite the route; a routing question is `Decision: defer`, `Next: route elsewhere`.

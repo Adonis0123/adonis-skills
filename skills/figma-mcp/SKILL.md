@@ -1,9 +1,9 @@
 ---
 name: figma-mcp
-description: "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts."
+description: "Use this skill for every /figma-mcp invocation, which covers two jobs. First, implement or match a UI from a Figma design URL or file key (e.g. '/figma-mcp <url> 按设计稿把这个页面做成 React', '/figma-mcp <url> 还原度要高'): hand the visual work to figma-design-to-code and follow it through to a finished screen, not stop at a metadata read or a screenshot. Second, install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read task, including the implement/match path, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts."
 metadata:
   author: adonis
-  version: "1.5.0"
+  version: "1.6.0"
 ---
 
 # Figma MCP
@@ -12,21 +12,21 @@ Use the official remote server `https://mcp.figma.com/mcp` through each host's n
 
 ## Pick the proof before calling a tool
 
-Most invocations are `/figma-mcp <figma URL> <UI task>` on the current account in one host. That is the read-only fast path: the first requested official read proves server discovery, tool availability, and authentication, so a separate `whoami` only adds a round trip.
+Most invocations are `/figma-mcp <figma URL> <UI task>` on the current account in one host, whether that task is inspecting the design or implementing/matching it. That is the read-only fast path: the first requested official read proves server discovery, tool availability, and authentication, so a separate `whoami` only adds a round trip.
 
-| Invocation payload                                                       | Proof                                                    |
-| ------------------------------------------------------------------------ | -------------------------------------------------------- |
-| Figma URL or `fileKey`, current account, one host, read-only             | First requested read (below); no `whoami`                |
-| Bare `/figma-mcp` (readiness only)                                       | One `whoami`; reply only `FIGMA_MCP_READY`               |
-| Named account, account switch, recovery, write, or multi-host acceptance | One `whoami`; compare privately when an account is named |
-| File needed but no URL/`fileKey`                                         | Stop; ask for the URL (`FILE_ACCESS: UNVERIFIED`)        |
+| Invocation payload                                                                                            | Proof                                                    |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Figma URL or `fileKey`, current account, one host, read-only — inspecting, implementing, or matching a design | First requested read (below); no `whoami`                |
+| Bare `/figma-mcp` (readiness only)                                                                            | One `whoami`; reply only `FIGMA_MCP_READY`               |
+| Named account, account switch, recovery, write, or multi-host acceptance                                      | One `whoami`; compare privately when an account is named |
+| File needed but no URL/`fileKey`                                                                              | Stop; ask for the URL (`FILE_ACCESS: UNVERIFIED`)        |
 
 On task success, continue the requested work; do not emit `FIGMA_MCP_READY` or identity details mid-task. Server configuration, an OAuth page, a callback, and a tool list are separate evidence layers; none of them replaces the required call.
 
 ## Read-only fast path
 
 1. Parse the URL: `/design/:fileKey/:name?node-id=1-2` gives nodeId `1:2`; `/design/:fileKey/branch/:branchKey/...` uses `branchKey` as `fileKey`; `/make/:key` uses nodeId `0:1` with `get_design_context` only; `/board/` is FigJam and uses `get_figjam`.
-2. Choose the first read. To confirm access or list pages, use `get_metadata` (no prerequisite). For implementation, load `figma-design-to-code` first (the Figma plugin's `/figma-design-to-code`, or MCP resource `skill://figma/figma-design-to-code/SKILL.md`), then call `get_design_context`. If a design-to-code workflow skill is already driving the task, it owns the workflow; this skill only supplies the proof and read rules.
+2. Choose the first read. To confirm access or list pages, use `get_metadata` (no prerequisite). When the task is to implement or match a design, load `figma-design-to-code` first and follow it — see "Implement or match a design" below — before calling `get_design_context`.
 3. Match node IDs to the tool. Instance sublayer IDs such as `I10:20;30:40` are accepted only by `get_design_context` and `get_metadata`. `get_screenshot`, `get_variable_defs`, and `download_assets` require a plain `123:456` ID, so pass the instance root (`10:20`, the part after `I` and before the first `;`) or a non-instance ancestor instead of retrying the same ID.
 4. If the read returns forbidden or not-found, stop. A Figma-originated error already proves tools and auth, so add at most one `whoami`, and only when no read reached Figma. Report `FILE_ACCESS: UNVERIFIED` with the one missing item (URL, share permission, or plan feature). Do not probe other files. A node ID copied from docs or memory that is not found was usually deleted or re-created; re-derive it from the user's current URL or the parent's `get_metadata` rather than guessing.
 5. If the tool is absent or the server requires authentication, recover by layer (below), then retry the requested read directly; its success is the post-recovery proof.
@@ -34,6 +34,10 @@ On task success, continue the requested work; do not emit `FIGMA_MCP_READY` or i
 When a status line helps, report `Proof call: REQUESTED_READ` and `Account: NOT_READ`.
 
 The official MCP exposes no file-comments tool. When the task needs design review comments (read, filter resolved threads, or audit whether they were applied), say so at the start instead of treating it as an auth failure, then follow [references/rest-comments.md](references/rest-comments.md).
+
+## Implement or match a design
+
+`/figma-mcp` plus a design URL or file key where the user wants the UI built or matched (low 还原度 complaints land here) still starts on this skill's proof path above, but the pixel-fidelity work itself is not this skill's job: load `figma-design-to-code` (the Figma plugin's `/figma-design-to-code`, or MCP resource `skill://figma/figma-design-to-code/SKILL.md`) and follow its workflow through to a finished, matched screen. The reasoning is division of labor, not duplication — this file's job is proving host, account, and tool access across four very different clients; getting fidelity right needs iterative screenshot comparison and Code Connect lookups that already live in `figma-design-to-code`, so repeating that procedure here would just drift out of sync with it. Treat one `get_metadata` call, one `get_design_context` dump, or a screenshot as evidence for that workflow, never as the finished implementation on its own. If a design-to-code skill is already driving the task, defer the build steps to it and keep supplying only the proof and read rules above.
 
 ## Tool prerequisites
 
