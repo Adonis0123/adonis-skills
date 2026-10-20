@@ -1,0 +1,217 @@
+[
+  {
+    "what": "uv package cache",
+    "tier": "A",
+    "clean": "uv cache prune (or uv cache clean)",
+    "paths": ["~/.cache/uv", "~/Library/Caches/uv"]
+  },
+  {
+    "what": "npm cache and npx packages",
+    "tier": "A",
+    "clean": "npm cache clean --force; remove ~/.npm/_npx",
+    "paths": ["~/.npm"]
+  },
+  {
+    "what": "pnpm content store",
+    "tier": "A",
+    "clean": "pnpm store prune (old store versions such as v3 can go whole)",
+    "paths": [
+      "~/Library/pnpm/store/*",
+      "~/.local/share/pnpm/store/*",
+      "~/.pnpm-store"
+    ]
+  },
+  {
+    "what": "pnpm metadata and dlx cache",
+    "tier": "A",
+    "clean": "remove the folder",
+    "paths": ["~/Library/Caches/pnpm", "~/.cache/pnpm"]
+  },
+  {
+    "what": "Yarn cache",
+    "tier": "A",
+    "clean": "yarn cache clean",
+    "paths": ["~/Library/Caches/Yarn", "~/.cache/yarn", "~/.yarn/berry/cache"]
+  },
+  {
+    "what": "Bun install cache",
+    "tier": "A",
+    "clean": "bun pm cache rm",
+    "paths": ["~/.bun/install/cache"]
+  },
+  {
+    "what": "pip cache",
+    "tier": "A",
+    "clean": "pip cache purge",
+    "paths": ["~/Library/Caches/pip", "~/.cache/pip"]
+  },
+  {
+    "what": "Go module and build cache",
+    "tier": "A",
+    "clean": "go clean -modcache -cache",
+    "paths": ["~/go/pkg/mod", "~/Library/Caches/go-build", "~/.cache/go-build"]
+  },
+  {
+    "what": "Cargo registry cache",
+    "tier": "A",
+    "clean": "cargo cache --autoclean, or remove registry/cache",
+    "paths": ["~/.cargo/registry"]
+  },
+  {
+    "what": "Gradle and Maven caches",
+    "tier": "A",
+    "clean": "remove caches/ (Gradle) or the stale artifacts (Maven)",
+    "paths": ["~/.gradle/caches", "~/.m2/repository"]
+  },
+  {
+    "what": "Homebrew download cache",
+    "tier": "A",
+    "clean": "brew cleanup --prune=all",
+    "paths": ["~/Library/Caches/Homebrew"]
+  },
+  {
+    "what": "Playwright and Puppeteer browsers (old revisions)",
+    "tier": "A",
+    "clean": "keep the revision the projects pin; remove older ones",
+    "paths": [
+      "~/Library/Caches/ms-playwright",
+      "~/.cache/ms-playwright",
+      "~/.cache/puppeteer"
+    ]
+  },
+  {
+    "what": "Xcode DerivedData, archives, device support, simulators",
+    "tier": "A",
+    "clean": "remove DerivedData; xcrun simctl delete unavailable; remove old iOS DeviceSupport",
+    "paths": [
+      "~/Library/Developer/Xcode/DerivedData",
+      "~/Library/Developer/Xcode/iOS DeviceSupport",
+      "~/Library/Developer/Xcode/Archives",
+      "~/Library/Developer/CoreSimulator"
+    ]
+  },
+  {
+    "what": "Docker Desktop virtual disk",
+    "tier": "B",
+    "clean": "start Docker, docker system df, then docker system prune; or reset in Docker Desktop",
+    "paths": ["~/Library/Containers/com.docker.docker/Data/vms/*/data"]
+  },
+  {
+    "what": "OrbStack data",
+    "tier": "B",
+    "clean": "orb prune / OrbStack settings",
+    "paths": ["~/.orbstack", "~/Library/Group Containers/*.dev.orbstack"]
+  },
+  {
+    "what": "Codex plugin upgrade leftovers",
+    "tier": "A",
+    "clean": "keep the newest marketplace-upgrade-* per account, remove the rest while no upgrade runs",
+    "paths": ["~/.codex*/.tmp/marketplaces/.staging"]
+  },
+  {
+    "what": "Codex standalone releases",
+    "tier": "A",
+    "clean": "keep the release `current` points to and the previous one",
+    "paths": ["~/.codex/packages/standalone/releases"]
+  },
+  {
+    "what": "Claude Code CLI versions",
+    "tier": "A",
+    "clean": "keep the newest and any version a running session uses",
+    "paths": ["~/.local/share/claude/versions"]
+  },
+  {
+    "what": "Cursor agent CLI versions",
+    "tier": "A",
+    "clean": "keep the linked one and any a running process uses",
+    "paths": ["~/.local/share/cursor-agent/versions"]
+  },
+  {
+    "what": "Grok CLI downloads",
+    "tier": "A",
+    "clean": "keep the version ~/.grok/bin links to and any running one",
+    "paths": ["~/.grok*/downloads"]
+  },
+  {
+    "what": "AI agent session transcripts",
+    "tier": "B",
+    "clean": "remove sessions older than the owner wants to resume",
+    "paths": [
+      "~/.codex*/sessions",
+      "~/.claude*/projects",
+      "~/.grok*/sessions",
+      "~/.cursor/chats",
+      "~/Library/Application Support/orca/codex-runtime-home/home/sessions"
+    ]
+  },
+  {
+    "what": "Claude desktop local VM image",
+    "tier": "B",
+    "clean": "turn off the local agent / Cowork feature if unused; it downloads again when needed",
+    "paths": ["~/Library/Application Support/Claude/vm_bundles"]
+  },
+  {
+    "what": "Chrome site storage and on-device model",
+    "tier": "B",
+    "clean": "chrome://settings/content/all sorted by size; on-device model via chrome://flags",
+    "paths": [
+      "~/Library/Application Support/Google/Chrome/*/Service Worker/CacheStorage",
+      "~/Library/Application Support/Google/Chrome/OptGuideOnDeviceModel"
+    ]
+  },
+  {
+    "what": "Chrome code-sign clones left by updates",
+    "tier": "A",
+    "clean": "quit Chrome and restart the Mac; macOS removes them",
+    "paths": ["/private/var/folders/*/*/X/com.google.Chrome.code_sign_clone"]
+  },
+  {
+    "what": "WeChat chat media and files",
+    "tier": "B",
+    "clean": "WeChat > Settings > Storage > Manage",
+    "paths": ["~/Library/Containers/com.tencent.xinWeChat"]
+  },
+  {
+    "what": "WeCom (企业微信) data",
+    "tier": "B",
+    "clean": "WeCom > Settings > General > Storage, or uninstall",
+    "paths": ["~/Library/Containers/com.tencent.WeWorkMac"]
+  },
+  {
+    "what": "Feishu / Lark data and caches",
+    "tier": "B",
+    "clean": "Feishu > Settings > General > Storage > Clear cache",
+    "paths": [
+      "~/Library/Application Support/LarkShell",
+      "~/Library/Caches/LarkShell"
+    ]
+  },
+  {
+    "what": "Alfred clipboard history",
+    "tier": "B",
+    "clean": "Alfred > Features > Clipboard History: shorten or clear",
+    "paths": ["~/Library/Application Support/Alfred/Databases"]
+  },
+  {
+    "what": "iOS device backups",
+    "tier": "B",
+    "clean": "Finder > device > Manage Backups",
+    "paths": ["~/Library/Application Support/MobileSync/Backup"]
+  },
+  {
+    "what": "App auto-updater downloads",
+    "tier": "A",
+    "clean": "remove the folder",
+    "paths": [
+      "~/Library/Caches/*updater*",
+      "~/Library/Caches/*.ShipIt",
+      "~/Library/Application Support/Caches/*updater*"
+    ]
+  },
+  {
+    "what": "Trash",
+    "tier": "B",
+    "clean": "only the owner empties it",
+    "paths": ["~/.Trash"]
+  }
+]

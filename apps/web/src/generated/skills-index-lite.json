@@ -489,6 +489,41 @@
     }
   },
   {
+    "slug": "disk-tidy",
+    "name": "disk-tidy",
+    "description": "Free disk space on a developer's Mac (Linux partly) when the disk is nearly full: measure where the space went across build output, package-manager caches, app data, AI agent data, old tool versions and worktrees, fan the read-only survey out to subagents, merge it into a tiered cleanup list, clean only what the user approves, and report the real gain from free space before and after. Use whenever the user says the disk or SSD is (almost) full, asks what is eating space, what can be cleaned or deleted to free space, or why free space keeps shrinking, in any language, Chinese included. Hands organizing personal files to file-tidy and removing git worktrees to worktree-tidy. Not for organizing files without a space problem, a single known cache command, or system files that need sudo.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    },
+    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Disk Space Cleanup",
+        "zh": "磁盘空间清理"
+      },
+      "group": "docs",
+      "tags": [
+        "docs-and-ops"
+      ],
+      "summary": "Find what filled a developer Mac's disk, rank build caches, app data and old tool versions by risk, and clean only what you approve.",
+      "summary_zh": "找出开发机硬盘被什么占满，把构建缓存、应用数据和旧工具版本按风险分级，只清理你确认的部分。",
+      "use_cases": [
+        "Survey .next and Turborepo caches, package-manager caches, chat apps and AI agent data in parallel, then get one tiered cleanup list.",
+        "Delete only git-ignored build output that no dev server is using, and see the real space gained instead of du estimates."
+      ],
+      "use_cases_zh": [
+        "并行盘点 .next、Turborepo 缓存、包管理器缓存、聊天应用和 AI Agent 数据，合并成一份分级清理清单。",
+        "只删除被 git 忽略、且没有 dev server 在用的构建产物，按清理前后的真实可用空间汇报效果。"
+      ]
+    }
+  },
+  {
     "slug": "figma-mcp",
     "name": "figma-mcp",
     "description": "Use this skill whenever the user invokes /figma-mcp or asks to install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read-only task, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts.",
