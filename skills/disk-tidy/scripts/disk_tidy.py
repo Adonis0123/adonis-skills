@@ -19,9 +19,11 @@ Python 3.9+, standard library only. Exit code 0 on success, 1 when any requested
 from __future__ import annotations
 
 import argparse
+import functools
 import glob
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -39,6 +41,11 @@ MODULES_CACHE = os.path.join("node_modules", ".cache")
 # Folders never walked: dependencies and git internals hold no build output of the project itself.
 SKIP_DIRS = {"node_modules", ".git", ".venv", "venv", "Pods", ".gradle", "DerivedData"}
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
+# Processes that read or write build output. Editors, shells, agents and MCP servers often sit in a
+# repository root for hours without touching its caches, so they do not block a deletion.
+BUILDER = re.compile(r"next(-server)?\b|\bvite\b|webpack|turbo\b|\bnuxt\b|astro|svelte-kit|remotion|storybook|"
+                     r"\b(tsup|rollup|esbuild|parcel|rspack|cargo|rustc|jest|vitest|playwright)\b|"
+                     r"\b(npm|pnpm|yarn|bun)( run)? (dev|build|start|test|watch|preview)\b|\btsc\b.*--watch")
 
 
 def history_file() -> Path:
@@ -84,6 +91,11 @@ def process_cwds() -> Dict[str, List[str]]:
         return cwds
     if not shutil.which("lsof"):
         return cwds
+    # lsof gives only the short command name ("node"); ps gives the arguments that say what runs.
+    args = {}
+    for line in subprocess.run(["ps", "-axo", "pid=,args="], capture_output=True, text=True).stdout.splitlines():
+        pid, _, rest = line.strip().partition(" ")
+        args[pid] = rest.strip()
     out = subprocess.run(["lsof", "-d", "cwd", "-Fpcn"], capture_output=True, text=True).stdout
     pid = cmd = ""
     for line in out.splitlines():
@@ -93,7 +105,7 @@ def process_cwds() -> Dict[str, List[str]]:
         elif tag == "c":
             cmd = value
         elif tag == "n":
-            cwds.setdefault(value, []).append(f"{pid}: {cmd}")
+            cwds.setdefault(value, []).append(f"{pid}: {args.get(pid, cmd)[:160]}")
     return cwds
 
 
@@ -101,8 +113,32 @@ def inside(path: str, folder: str) -> bool:
     return path == folder or path.startswith(folder.rstrip("/") + "/")
 
 
-def busy_in(folder: str, cwds: Dict[str, List[str]]) -> List[str]:
-    return [cmd for cwd, cmds in cwds.items() if inside(cwd, folder) for cmd in cmds]
+@functools.lru_cache(maxsize=None)
+def work_tree(path: str) -> Optional[str]:
+    out = subprocess.run(["git", "-C", path, "rev-parse", "--show-toplevel"], capture_output=True, text=True)
+    return (out.stdout.strip() or None) if out.returncode == 0 else None
+
+
+def busy_in(path: str, cwds: Dict[str, List[str]]) -> List[str]:
+    """Processes that may be using the build output at `path`.
+
+    Any process working inside the folder itself counts. Otherwise only a build or dev process counts,
+    working in the package that owns the folder and in the same git work tree: a dev server in a
+    nested worktree (repo/.worktrees/x) uses that worktree's output, not the main checkout's.
+    """
+    package = package_of(path)
+    tree = work_tree(package) if os.path.isdir(package) else None
+    found = []
+    for cwd, cmds in cwds.items():
+        if inside(cwd, path):
+            found.extend(cmds)
+            continue
+        if not inside(cwd, package):
+            continue
+        builders = [cmd for cmd in cmds if BUILDER.search(cmd.partition(": ")[2])]
+        if builders and (not os.path.isdir(cwd) or work_tree(cwd) == tree):
+            found.extend(builders)
+    return found
 
 
 def git_ignored(path: str) -> Optional[bool]:
@@ -148,8 +184,7 @@ def package_of(path: str) -> str:
 def assess(path: str, cwds: Dict[str, List[str]]) -> Dict[str, object]:
     """Facts about one artifact folder; cleanable when git ignores it and nothing runs in its package."""
     ignored = git_ignored(path)
-    # Dev servers run in the package folder that owns the build output.
-    busy = busy_in(package_of(path), cwds)
+    busy = busy_in(path, cwds)
     blockers = []
     if ignored is None:
         blockers.append("not-in-git")

@@ -1,6 +1,6 @@
 ---
 name: disk-tidy
-description: "Free disk space on a developer's Mac (Linux partly) when the disk is nearly full: measure where the space went across build output, package-manager caches, app data, AI agent data, old tool versions and worktrees, fan the read-only survey out to subagents, merge it into a tiered cleanup list, clean only what the user approves, and report the real gain from free space before and after. Use whenever the user says the disk or SSD is (almost) full, asks what is eating space, what can be cleaned or deleted to free space, or why free space keeps shrinking, in any language, Chinese included. Hands organizing personal files to file-tidy and removing git worktrees to worktree-tidy. Not for organizing files without a space problem, a single known cache command, or system files that need sudo."
+description: "Free disk space on a developer's Mac (Linux partly) when the disk is nearly full: measure where the space went across build output, package-manager caches, app data, AI agent data, old tool versions and worktrees, fan the read-only survey out to subagents, merge it into a tiered cleanup list, clean only what the user approves, and report the real gain from free space before and after. Use whenever the user says the disk or SSD is (almost) full, asks what is eating space, what can be cleaned or deleted to free space, or why free space keeps shrinking, in any language, Chinese included. Hands organizing personal files to file-tidy and removing git worktrees to worktree-tidy. Not for organizing files without a space problem, a single known cache command, system files that need sudo, iCloud or other cloud storage plans, or disks of remote servers, containers and Kubernetes nodes."
 metadata:
   author: adonis
   version: "1.0.0"
@@ -30,7 +30,15 @@ Each rule protects something that is hard to get back.
 
 Run `python3 "$TIDY" free --note before-cleanup`. Every call is appended to `~/.local/state/disk-tidy/free.jsonl` and compared with the previous snapshot, so "it shrank again since last time" gets a measured answer; when there is no earlier snapshot, say the weekly change cannot be computed. Start `du -xhd1 ~ | sort -hr | head -30` in the background: it can take many minutes on a large home and tells you which top-level folders to look into.
 
-macOS has no `timeout` command. Bound a slow `du` with `perl -e 'alarm shift; exec @ARGV' 300 du -sk <dir>`, or run it in the background, rather than letting one scan stall the survey.
+macOS has no `timeout` command. Bound every slow `du`, including each one inside a loop, so one huge folder cannot stall the survey:
+
+```bash
+ls -d ~/code/*/ | while read -r dir; do
+  perl -e 'alarm shift; exec @ARGV' 120 du -sk "$dir" || echo "timeout $dir"
+done
+```
+
+Find the code roots instead of assuming them: the user's words first, then folders holding several git repositories (`find ~ -maxdepth 3 -name .git -prune -not -path '*/Library/*' 2>/dev/null`, grouped by parent). Ask when it is unclear which roots to scan.
 
 ### 2. Survey in slices
 
@@ -61,7 +69,7 @@ Show A and B as tables with size, what is lost, and the risk, with an A total th
 
 ### 5. Clean what was picked
 
-- **Build output**: `python3 "$TIDY" clean <artifacts.json>` as a dry run, then `--yes`. It deletes only known build-output folder names that git ignores and that no process works in, re-checks each just before deletion, and prints the free-space gain.
+- **Build output**: `python3 "$TIDY" clean <artifacts.json>` as a dry run, then `--yes`. It deletes only known build-output folder names that git ignores and that no dev or build process uses (editors, shells and agents sitting in a repository root do not count; any process inside the folder itself does), re-checks each just before deletion, and prints the free-space gain.
 - **Caches**: the tool's own cleaner from the hotspots list.
 - **Old versions and leftovers**: list exact targets with sizes, check running binaries (`lsof -p <pid>` for each session) and launcher links, keep current and previous, then delete. Re-run each tool's `--version` afterwards.
 - **Worktrees**: the worktree-tidy skill. Removing worktrees frees less than `du` suggests because `node_modules` is cloned.
