@@ -35,8 +35,8 @@
     },
     {
       "id": 2,
-      "prompt": "~/work 下面那几个 Next.js 项目和它们的 worktree 太占空间了，帮我找出能安全删掉的构建缓存（.next、.turbo 这些），正在跑 dev server 的别动。先给我 dry-run 结果看看，不要真删。",
-      "expected_output": "Finds build-output folders under ~/work, checks git ignore status and running processes, marks the folder of a running dev server as blocked, shows a dry run with sizes and a du-based total, deletes nothing.",
+      "prompt": "我代码目录里那几个 Next.js 项目和它们的 worktree 太占空间了，帮我找出能安全删掉的构建缓存（.next、.turbo 这些），正在跑 dev server 的别动。先给我 dry-run 结果看看，不要真删。",
+      "expected_output": "Finds the code roots, then build-output folders under them, checks git ignore status and running processes, marks the folder of a running dev server as blocked, shows a dry run with sizes and a du-based total, deletes nothing.",
       "files": [],
       "assertions": [
         {

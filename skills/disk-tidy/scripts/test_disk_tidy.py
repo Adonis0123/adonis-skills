@@ -115,6 +115,33 @@ class Assess(Base):
         fact = DT.assess(str(self.repo / "web/node_modules/.cache"), cwds)
         self.assertEqual(fact["blockers"], ["busy"])
 
+    def test_editor_or_agent_in_repo_root_does_not_block(self) -> None:
+        (self.repo / ".gitignore").write_text("node_modules/\n.turbo/\n")
+        make(self.repo / "node_modules/.cache/a")
+        cwds = {str(self.repo): ["1: /Applications/Code.app/Contents/MacOS/Electron", "2: claude --resume",
+                                 "3: npm exec @modelcontextprotocol/server-github", "4: -/bin/zsh -l"]}
+        self.assertTrue(DT.assess(str(self.repo / "node_modules/.cache"), cwds)["cleanable"])
+
+    def test_any_process_inside_the_folder_blocks(self) -> None:
+        make(self.repo / "web/.next/cache/a")
+        cwds = {str(self.repo / "web/.next/cache"): ["8: -/bin/zsh"]}
+        self.assertEqual(DT.assess(str(self.repo / "web/.next"), cwds)["blockers"], ["busy"])
+
+    def test_dev_server_in_nested_worktree_does_not_block_main_checkout(self) -> None:
+        (self.repo / "a.txt").write_text("a")
+        git("add", ".", cwd=str(self.repo))
+        git("-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-qm", "init", cwd=str(self.repo))
+        wt = self.repo / ".worktrees/feat"
+        git("worktree", "add", "-q", str(wt), cwd=str(self.repo))
+        (self.repo / ".gitignore").write_text(".turbo/\n.worktrees/\n")
+        make(self.repo / ".turbo/a")
+        (wt / "web").mkdir()
+        cwds = {str(wt / "web"): ["9: node node_modules/.bin/next dev"]}
+        self.assertTrue(DT.assess(str(self.repo / ".turbo"), cwds)["cleanable"])
+        cwds = {str(self.repo / "web"): ["10: next-server (v16.3.0)"]}
+        (self.repo / "web").mkdir()
+        self.assertEqual(DT.assess(str(self.repo / ".turbo"), cwds)["blockers"], ["busy"])
+
     def test_process_in_sibling_folder_does_not_block(self) -> None:
         make(self.repo / "web/.next/a")
         cwds = {str(self.repo / "webapp"): ["1: node"], str(self.repo / "server"): ["2: node"]}
