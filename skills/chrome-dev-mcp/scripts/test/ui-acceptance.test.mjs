@@ -102,3 +102,42 @@ test("ordinary navigation and scraping stay out of scope", () => {
     );
   }
 });
+
+test("no-request UI changes still require a successful Network read", () => {
+  assert.match(
+    skill,
+    /When no request is expected.*successfully read empty Network list/,
+  );
+  assert.match(skill, /Do not invent or replay a request/);
+  const noRequest = evals.find((entry) => entry.name === "ui-style-no-request");
+  assert.ok(noRequest, "no-request UI acceptance eval is missing");
+  assert.ok(
+    noRequest.expectations.some((e) => /Reads Network evidence/.test(e)),
+  );
+  assert.ok(
+    noRequest.expectations.some((e) =>
+      /Does not mark.*UNVERIFIED solely/.test(e),
+    ),
+  );
+});
+
+test("missing expected requests and failed Network reads remain unverified", () => {
+  assert.match(
+    skill,
+    /An expected request that is absent, or a Network call that fails.*UNVERIFIED/,
+  );
+  const missing = evals.find(
+    (entry) => entry.name === "ui-submit-request-missing",
+  );
+  assert.ok(missing, "missing expected request eval is missing");
+  assert.ok(
+    missing.expectations.some((e) =>
+      /missing expected request.*UNVERIFIED/.test(e),
+    ),
+  );
+  assert.ok(
+    missing.expectations.some((e) =>
+      /Does not label an expected request as not applicable/.test(e),
+    ),
+  );
+});

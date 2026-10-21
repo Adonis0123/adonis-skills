@@ -715,6 +715,21 @@
       "prompt": "这次修改能交了吗？请运行仓库已有的验证命令，读完结果再告诉我；失败就如实说，先别提交。",
       "expected_output": "Light with runtime/fallback none and direct local work. Executes the relevant full verification command now, reports actual output and exit status, and makes no success claim on failure. Reads zero routing references and does not commit.",
       "files": []
+    },
+    {
+      "id": 54,
+      "name": "explicit-review-handoff-without-git-fails-closed",
+      "prompt": "请用独立 agent 对这个目录执行 fresh-eyes review，修完再 re-review 到 PASS。已经确认该目录不在 Git 仓库中；不要初始化 Git，也不要改成当前助手自己审查。",
+      "expected_route": "failure-block",
+      "expectations": [
+        "Emits Workflow Gate Failure with Result MISSING_DEPENDENCIES and Intended route Review-Handoff",
+        "Identifies the missing Git repository required by agentic-review-handoff",
+        "Does not silently downgrade the requested independent review protocol to inline review",
+        "Does not initialize Git, edit files, or claim review completion",
+        "Does not generalize this failure into a ban on ordinary read-only analysis of pasted code",
+        "Reading only SKILL.md is sufficient to fail closed; references_loaded_count == 0",
+        "Missing is exactly Git repository; does not rely on route-adjustments.md to discover the prerequisite"
+      ]
     }
   ]
 }

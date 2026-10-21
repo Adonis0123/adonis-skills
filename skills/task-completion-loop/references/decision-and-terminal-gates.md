@@ -19,12 +19,12 @@ Invocation policy follows `architecture-hardening-loop` § 硬依赖与 runtime 
 
 ## Goal ownership
 
-| Goal relationship     | Behavior                                                                                             | Completion owner                     |
-| --------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `none`                | Create this Loop's Goal after the safety gate clears                                                 | `created-by-loop`                    |
-| `exact-same-goal`     | `Decision: set-now`, `Next: continue active goal`; do not ask again, create, or replace              | this Skill                           |
-| `broader-compatible`  | The parent objective, scope, and Done condition explicitly contain this Loop checkpoint; continue it | parent orchestrator; checkpoint only |
-| `conflicting/unclear` | `Decision: defer`; return `HUMAN_GATE`                                                               | none                                 |
+| Goal relationship     | Behavior                                                                                                                | Completion owner                                                                               |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `none`                | Follow Goal Gate's returned `Decision` / `Next`; adopt the transcript contract or create a native Goal only as directed | `not-created` for transcript adoption; `created-by-loop` only after successful native creation |
+| `exact-same-goal`     | `Decision: set-now`, `Next: continue active goal`; do not ask again, create, or replace                                 | this Skill                                                                                     |
+| `broader-compatible`  | The parent objective, scope, and Done condition explicitly contain this Loop checkpoint; continue it                    | parent orchestrator; checkpoint only                                                           |
+| `conflicting/unclear` | `Decision: defer`; return `HUMAN_GATE`                                                                                  | none                                                                                           |
 
 Evidence for the relationship may come from a native getter, product state, or a caller-supplied checkable parent contract. Only `created-by-loop` / `exact-same-goal` are completed by this Skill; `broader-compatible` always reports `Goal: active-checkpoint` and leaves completion to the parent owner.
 

@@ -19,7 +19,7 @@ Fallback-only. Do not load this file for Architecture / Review-Handoff / Challen
 - _Architecture + unresolved scope → Architecture + `Runtime skill: none`:_ first try user-supplied attachment/reference/Git locators plus one cheap repo signal; only then ask one minimal scope question and do not load a scanner. _Why:_ scanners without a frozen file set become whole-repo thrash, while making users repeat already-resolvable scope wastes a full round trip.
 - _Architecture → Light/Challenge:_ the ask is really a bug symptom or product decision rather than structure work. _Why:_ bugs belong to systematic-debugging; named-option decisions belong to Challenge convergence.
 - _architecture-hardening-loop → improve-codebase-architecture:_ user asked only for diagnosis/report. _Why:_ harden loops mutate code; diagnose must not silently upgrade.
-- _Review-Handoff → inline review:_ no git repo or no packet needed. _Why:_ `agentic-review-handoff` requires a git repo.
+- _Review-Handoff + missing Git repository:_ follow SKILL.md Rule #6 and its failure contract.
 
 ## Re-gate mid-task
 

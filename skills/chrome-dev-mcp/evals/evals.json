@@ -178,6 +178,35 @@
         "Finds the new API request in Network and reports its status",
         "Does not call the change done on readiness or list_pages alone, and marks it UNVERIFIED if any of the three is missing"
       ]
+    },
+    {
+      "id": 14,
+      "name": "ui-style-no-request",
+      "prompt": "设置页只改了 CSS 间距，用 /chrome-dev-mcp 验收。页面已加载，目标交互不触发接口。测试工具证据：当前页 pageId=3；截图保存成功且布局正确；Console 读取成功无新增错误；交互后的 list_network_requests 成功返回空列表。判断是否通过，不额外制造请求。",
+      "expectations": [
+        "Uses a fresh pageId for the requested UI check.",
+        "Requires a saved screenshot and post-interaction Console evidence.",
+        "Reads Network evidence even though no request is expected.",
+        "Accepts a successfully read empty Network list as an observation when the change expects no request.",
+        "Does not mark the change UNVERIFIED solely because no request exists.",
+        "Does not replay or invent a request to satisfy acceptance."
+      ],
+      "files": [],
+      "expected_output": "Requires screenshot, Console and a successful Network read; accepts no observed request only because none is expected."
+    },
+    {
+      "id": 15,
+      "name": "ui-submit-request-missing",
+      "prompt": "提交按钮已改为调用 /api/save，用 /chrome-dev-mcp 验收。测试工具证据：当前页 pageId=3；点击后截图保存成功且样式正确；Console 读取成功无新增错误；交互后的 list_network_requests 成功返回空列表。判断验收结果，不重复提交。",
+      "expectations": [
+        "Requires evidence for the expected /api/save request and its status after the interaction.",
+        "Reports the missing expected request as a gap and keeps the change UNVERIFIED.",
+        "Does not use a successful screenshot or clean Console as proof that submission works.",
+        "Does not label an expected request as not applicable.",
+        "Does not replay the submission to manufacture evidence."
+      ],
+      "files": [],
+      "expected_output": "Keeps UI acceptance UNVERIFIED because the expected /api/save request is missing, without repeating submission."
     }
   ]
 }

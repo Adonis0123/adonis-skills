@@ -23,7 +23,8 @@ python3 scripts/figma_rest.py comments <fileKey> \
   --out threads.json
 ```
 
-- `--metadata` keeps only comments whose `node_id` is in that subtree. It accepts raw XML or the MCP JSON array of `{type, text}` entries; the first entry is often just a "Currently selected nodes" preamble, which the script skips by reading every entry.
+- `--metadata` keeps only comments whose `node_id` is in that subtree. It accepts raw XML, the MCP JSON array of `{type, text}` entries, or an object containing that array in `content`; the first entry is often just a "Currently selected nodes" preamble, which the script skips by reading every entry.
+- Explicit metadata must contain valid XML with node IDs; empty or invalid metadata and empty `--scope-ids` fail before requesting comments. Omit both scope options only when the whole file is intended.
 - `--resolved only|exclude|all` filters by root resolution. Report the open threads anyway when they matter; skipping them silently hides unresolved decisions.
 - Output per thread: `order_id` (the `#1283` number shown in Figma), `node_id`, `node_offset`, author, `resolved`, `message`, and time-ordered `replies`. stderr prints `FIGMA_REST: N threads (R resolved, O open)`.
 - Errors: 401 = token rejected, 403 = expired or missing `file_comments:read`, 404 = file not shared with the token's account.

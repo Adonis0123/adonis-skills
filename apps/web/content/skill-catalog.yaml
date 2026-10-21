@@ -316,6 +316,19 @@ skills:
       - "把多步骤开发任务写成验收条件明确、带暂停边界的 /goal 提示词或契约。"
       - "在结束长任务前逐条核对命令输出或页面证据，防止没做完就提前报完成。"
 
+  grill-autopilot:
+    displayName: { en: "Grill Autopilot", zh: "自动方案拷问" }
+    group: delegate
+    tags: [agent-workflow]
+    summary: "Have one AI grill your plan and another AI answer for you, researching reuse first, so you only see the few questions that truly need you."
+    summary_zh: "让一个 AI 拷问方案、另一个 AI 先查现成方案再替你回答，你只需要回答少数真正要你拍板的问题。"
+    use_cases:
+      - "Pair any two of Claude Code, Codex, Grok or pi accounts to stress-test a design and get a decision log with evidence for every choice."
+      - "Settle library and pattern choices by checking your repo, GitHub and the web before writing anything new."
+    use_cases_zh:
+      - "任选 Claude Code、Codex、Grok、pi 中的两个账号一问一答地拷问设计，最后拿到每条都附证据的决策日志。"
+      - "选库、选模式前先查仓库、GitHub 和网上的成熟做法，能复用就不重写。"
+
   installed-app-feature-inventory:
     displayName: { en: "App Feature Inventory", zh: "应用功能盘点" }
     group: docs

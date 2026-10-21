@@ -339,7 +339,7 @@ test("figma read-only fast path preserves identity gates and resolves Cursor CLI
   // Current-account single-host reads skip whoami; every identity-sensitive path keeps it.
   assert.match(
     skill,
-    /\| Figma URL or `fileKey`, current account, one host, read-only\s*\| First requested read \(below\); no `whoami`\s*\|/,
+    /\| Figma URL or `fileKey`, current account, one host, read-only — inspecting, implementing, or matching a design\s*\| First requested read \(below\); no `whoami`\s*\|/,
   );
   assert.match(
     skill,
@@ -347,7 +347,7 @@ test("figma read-only fast path preserves identity gates and resolves Cursor CLI
   );
   assert.match(
     skill,
-    /\| Named account, account switch, recovery, write, or multi-host acceptance \| One `whoami`/,
+    /\| Named account, account switch, recovery, write, or multi-host acceptance\s*\| One `whoami`/,
   );
   assert.match(skill, /so a separate `whoami` only adds a round trip/);
   assert.match(skill, /Do not build that table for the single-host fast path/);

@@ -22,7 +22,9 @@ REQUIRED_GROUPS = [
 REQUIRED_PATTERNS = dict(REQUIRED_GROUPS)
 
 PLACEHOLDERS = [
-    r"\[[^\]]+\]",
+    # A complete inline link has a label, not a bracket placeholder.
+    # Keep scanning its destination and label for the other placeholder forms.
+    r"\[[^\]]+\](?!\([^\s()]+\))",
     r"<[^>]+>",
     r"\bTODO\b",
     r"\bTBD\b",

@@ -154,9 +154,9 @@ Opt-in review-only terminal path when lifecycle is `awaiting_user_decision` afte
   before the configured deadline.
 - The adapter owns the only automatic invocation deadline. STOP remains the
   explicit user cancellation path.
-- Non-zero / empty / timeout / STOP → conservative `DELIVERY_UNKNOWN`; the adapter does not retry these failures automatically. The visible Fixer diagnoses local startup faults before escalating to the user; this status alone is not a confirmation gate.
+- Non-zero / empty / STOP → conservative `DELIVERY_UNKNOWN`; the adapter does not retry these failures automatically. Only an explicit `timedOut: true` permits the run/consult script to advance to the next configured fallback product, as described above. A timeout with no remaining fallback also returns `DELIVERY_UNKNOWN`. The visible Fixer diagnoses local startup faults before escalating to the user; this status alone is not a confirmation gate.
 - Proven failure before submission permits one Fixer-driven retry after an invocation-local correction under existing authorization. Socket operations, shared-service repair, and account configuration changes are outside this skill. See `environment-recovery.md`. The adapter does not repair the environment or guarantee non-delivery.
-- Real timeout, empty output without pre-submission proof, and ambiguous connection failure remain non-retryable automatically. STOP is cancellation, not a repair trigger.
+- A real timeout does not authorize resubmission to the same product. Configured fallback starts a new session with the next product and records the switch; it does not prove non-delivery of the timed-out invocation. Empty output without pre-submission proof and ambiguous connection failure do not activate fallback or automatic retry. STOP is cancellation, not a repair trigger.
 - Resume degrades to newSession only for: missing session id, T0 resume unsupported, CLI "session not found".
 - Gray-zone connection failures do **not** degrade (would double-review).
 - External packet rewrite between calls → hash mismatch refuse + stop.

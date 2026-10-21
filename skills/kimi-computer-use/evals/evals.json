@@ -34,12 +34,12 @@
       "id": 3,
       "name": "diagnose-no-target-app-fast-path",
       "prompt": "kimi-cu 报 `no target app`。我在 Hermes 里调 get_app_state 传的是 app=\"Google Chrome\"，连着失败三次之后 Hermes 又说 MCP server 'kimi-cu' is unreachable after 3 consecutive failures。是不是权限掉了？要不要重启服务或者重装？",
-      "expected_output": "Identifies both messages as argument errors and a client fuse, not a permission or service failure: `app` must be the bundle id `com.google.Chrome` (or a pid from list_apps) and `mode` must be full/image/ax. Advises waiting for the Hermes cooldown, retrying with valid arguments, optionally `hermes mcp test kimi-cu`, and explicitly declines to restart the service, reinstall, or kill kimi-cu processes.",
+      "expected_output": "Identifies the shown bad app argument and the Hermes client fuse. Uses com.google.Chrome or a discovered pid and a valid mode, waits for cooldown, then retries read-only get_app_state. Stops only after success; a failed retry continues layered diagnosis, and an unavailable retry is UNVERIFIED. Does not infer overall service or permission health from the original errors or immediately restart or reinstall.",
       "files": [],
       "expectations": [
-        "Takes the Diagnose fast path: fixes arguments first and does not run service-status/xpc-ping/reinstall as the primary remedy",
+        "Fixes arguments first and retries read-only get_app_state after cooldown; stops only after success, otherwise continues layered diagnosis or reports UNVERIFIED when no retry is possible",
         "States that `app` requires a bundle id such as `com.google.Chrome`, not the display name `Google Chrome`",
-        "Explains the Hermes `unreachable after 3 consecutive failures` message as a temporary client fuse caused by bad calls",
+        "Attributes this client fuse to bad calls using the supplied preceding argument errors, without claiming the fuse message alone proves the cause or permission health",
         "Does not restart the OS service, reinstall the app, or mass-kill kimi-cu processes",
         "Uses the Hermes tool name form `mcp__kimi_cu__get_app_state` or refers to the Hermes section of host-configs.md if host-specific detail is needed"
       ]
@@ -85,6 +85,20 @@
         "Registers `/Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user` under the name `kimi-cu`",
         "Uses `cursor-agent` for status and the read-only smoke",
         "Separates connection, tool discovery, and completed model tool call"
+      ]
+    },
+    {
+      "id": 7,
+      "name": "corrected-call-fails-and-fuse-cause-unknown",
+      "prompt": "Offline decision exercise; do not operate the desktop. A kimi-cu get_app_state call failed with no target app. I fixed it to app=com.google.Chrome and mode=ax, but the read-only retry timed out. Hermes now says unreachable after 3 consecutive failures; the other preceding failures are unavailable. Is the service healthy and may we stop? What if the cooldown prevents any retry?",
+      "expected_output": "Does not stop or claim service health. Continues layered service-status/xpc-ping and host discovery/runtime checks for the corrected timeout. Treats the fuse cause as unresolved without the preceding failure evidence. If cooldown prevents retry, reports runtime UNVERIFIED rather than success. Describes checks only; performs no desktop action.",
+      "files": [],
+      "expectations": [
+        "A corrected call timeout continues layered diagnosis instead of ending the argument-error fast path",
+        "Does not claim service or permission health based on the original argument error",
+        "Does not attribute all fuse failures to bad arguments without preceding-call evidence",
+        "A retry that cannot run leaves runtime verification UNVERIFIED",
+        "Keeps the exercise offline and does not execute desktop actions"
       ]
     }
   ]

@@ -135,16 +135,20 @@ Default `completion=pass` treats `PASS_WITH_CONCERNS` as more work: the visible 
 structured stdout only when the model finishes. While the child process is
 alive, do not kill it, retry it, or start a second Reviewer because stdout is
 silent. Trust the adapter's progress line and deadline; use STOP only when the
-user intentionally cancels. A real timeout remains `DELIVERY_UNKNOWN` with no
-automatic retry, because delivery state is ambiguous.
+user intentionally cancels. A real timeout must not trigger resubmission to the
+same product. Only the script may advance through the configured fallback list
+as described above; without a remaining fallback, report `DELIVERY_UNKNOWN`.
+Fallback does not prove that the timed-out invocation was never delivered.
 
 **Keep startup failures local.** Report the concrete failure once; do not turn a
 review into Docker/service repair. Never move or delete sockets, start shared
 services, or alter account configuration as part of this skill. A failed optional
 consult does not block independent work; mark that peer's opinion unavailable.
 A required review remains blocked, not passed. Do not silently switch accounts or
-reviewers. For ambiguous delivery or timeout, inspect the existing session rather
-than resubmitting. See `references/environment-recovery.md` only if needed.
+reviewers. The script's configured timeout fallback is the sole automatic
+product-switch path; report every switch. For other ambiguous delivery, or after
+fallback is unavailable or exhausted, inspect the existing session rather than
+resubmitting. See `references/environment-recovery.md` only if needed.
 
 Contract details: `references/auto-loop-contract.md`.
 

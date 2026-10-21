@@ -22,7 +22,7 @@ Every subcommand takes --out FILE; a one-line summary goes to stderr.
 import argparse
 import json
 import os
-import re
+import xml.etree.ElementTree as ET
 import sys
 import urllib.error
 import urllib.parse
@@ -61,22 +61,43 @@ def get(path, params, token):
 def load_scope(args):
     if args.scope_ids:
         with open(args.scope_ids, encoding="utf-8") as fh:
-            return set(fh.read().split())
+            scope = set(fh.read().split())
+        if not scope:
+            sys.exit("FIGMA_REST: empty scope ids; supply node ids or omit --scope-ids for all comments")
+        return scope
     if not args.metadata:
         return None
     with open(args.metadata, encoding="utf-8") as fh:
         raw = fh.read()
     try:
         entries = json.loads(raw)
-        raw = "\n".join(e.get("text", "") for e in entries if isinstance(e, dict))
-    except (json.JSONDecodeError, AttributeError):
+    except json.JSONDecodeError:
         pass
-    return set(re.findall(r'\sid="([^"]+)"', raw))
+    else:
+        if isinstance(entries, dict):
+            entries = entries.get("content")
+        if not isinstance(entries, list):
+            sys.exit("FIGMA_REST: invalid metadata; supply raw XML or MCP text content")
+        raw = "\n".join(
+            e["text"] for e in entries
+            if isinstance(e, dict) and isinstance(e.get("text"), str)
+        )
+    try:
+        root = ET.fromstring(raw)
+    except ET.ParseError:
+        try:
+            root = ET.fromstring("<scope>" + raw + "</scope>")
+        except ET.ParseError:
+            sys.exit("FIGMA_REST: invalid metadata XML; supply the complete node metadata")
+    scope = {node.attrib["id"] for node in root.iter() if node.attrib.get("id")}
+    if not scope:
+        sys.exit("FIGMA_REST: metadata has no scope ids; supply node metadata or omit --metadata for all comments")
+    return scope
 
 
 def cmd_comments(args, token):
-    comments = get(f"/files/{args.file_key}/comments", {"as_md": "true"}, token)["comments"]
     scope = load_scope(args)
+    comments = get(f"/files/{args.file_key}/comments", {"as_md": "true"}, token)["comments"]
     replies = {}
     for c in comments:
         if c.get("parent_id"):

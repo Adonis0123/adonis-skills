@@ -155,6 +155,25 @@ for name, text, code, diagnostic in [
     CASES.append({"name": name, "text": text, "returncode": code, "stderr_contains": diagnostic})
 
 
+for name, reference, code in [
+    ("valid-markdown-plan-link", "[PLAN](docs/PLAN.md)", 0),
+    ("valid-markdown-url", "[Acceptance criteria](https://example.test/spec#done)", 0),
+    ("reject-link-todo-label", "[TODO](docs/PLAN.md)", 1),
+    ("reject-link-placeholder-target", "[PLAN]([path])", 1),
+    ("reject-link-angle-placeholder-target", "[PLAN](<file>)", 1),
+    ("reject-link-todo-target", "[PLAN](TODO)", 1),
+    ("reject-empty-link-target", "[PLAN]()", 1),
+    ("reject-unfinished-link", "[PLAN](docs/PLAN.md", 1),
+    ("reject-plain-bracket-placeholder", "[path]", 1),
+]:
+    CASES.append({
+        "name": name,
+        "text": VALID_GOAL_EN.replace("docs/PLAN.md", reference, 1),
+        "returncode": code,
+        "stderr_contains": "unresolved placeholder" if code else "",
+    })
+
+
 def run_case(tmp_dir: Path, case: dict[str, object]) -> list[str]:
     path = tmp_dir / f"{case['name']}.txt"
     path.write_text(str(case["text"]), encoding="utf-8")

@@ -81,7 +81,7 @@ When the user or this session just changed a web UI, this skill is the verificat
 
 - A `take_screenshot` with `filePath` under the runtime temp root shows the resulting UI; a snapshot or diff cannot show layout or styling.
 - `list_console_messages` read after the interaction shows new errors the change introduced.
-- The relevant `list_network_requests` entry shows the request the change should have made and its status.
+- Read `list_network_requests` after the interaction. The relevant `list_network_requests` entry shows the request the change should have made and its status. When no request is expected (for example a CSS-only change or local UI toggle), a successfully read empty Network list is valid evidence: state that no request was expected or observed. Do not invent or replay a request to satisfy this check. An expected request that is absent, or a Network call that fails, leaves the change `UNVERIFIED`.
 
 If one is missing, report the change `UNVERIFIED` and name the gap. A question only about Console or Network on an already open page needs just that evidence, not a screenshot.
 

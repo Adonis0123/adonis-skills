@@ -84,7 +84,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Auto Review Loop",
@@ -227,7 +227,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Chrome DevTools Bridge",
@@ -538,7 +538,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Figma Connector",
@@ -611,7 +611,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Goal Contract",
@@ -630,6 +630,41 @@
       "use_cases_zh": [
         "把多步骤开发任务写成验收条件明确、带暂停边界的 /goal 提示词或契约。",
         "在结束长任务前逐条核对命令输出或页面证据，防止没做完就提前报完成。"
+      ]
+    }
+  },
+  {
+    "slug": "grill-autopilot",
+    "name": "grill-autopilot",
+    "description": "Run a grill-with-docs design interview where one AI asks and another AI answers on the user's behalf, researching reuse on GitHub and the web, so the user is only asked about side effects, facts only they know, or hard-to-reverse choices with weak evidence. Any pairing of Claude Code, Codex, Grok or pi accounts. Ends with a decision log, glossary updates and proposed decision records; optionally hands off to planning, a goal or an implementation loop. Use when the user wants a plan or design grilled without answering every question, says 'grill it for me', 'auto grill', 'answer the grill yourself', or asks two agents to interview and answer each other. Chinese triggers: 自动 grill、替我回答、两个 agent 一问一答、别问我、自己拷问方案。Not for grilling the user directly (use grill-with-docs) or reviewing code (use agentic-review-handoff).",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    },
+    "updatedAt": "2026-10-21T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Grill Autopilot",
+        "zh": "自动方案拷问"
+      },
+      "group": "delegate",
+      "tags": [
+        "agent-workflow"
+      ],
+      "summary": "Have one AI grill your plan and another AI answer for you, researching reuse first, so you only see the few questions that truly need you.",
+      "summary_zh": "让一个 AI 拷问方案、另一个 AI 先查现成方案再替你回答，你只需要回答少数真正要你拍板的问题。",
+      "use_cases": [
+        "Pair any two of Claude Code, Codex, Grok or pi accounts to stress-test a design and get a decision log with evidence for every choice.",
+        "Settle library and pattern choices by checking your repo, GitHub and the web before writing anything new."
+      ],
+      "use_cases_zh": [
+        "任选 Claude Code、Codex、Grok、pi 中的两个账号一问一答地拷问设计，最后拿到每条都附证据的决策日志。",
+        "选库、选模式前先查仓库、GitHub 和网上的成熟做法，能复用就不重写。"
       ]
     }
   },
@@ -678,7 +713,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Kimi Computer Use",
@@ -785,7 +820,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Open Code Review Loop",
@@ -857,7 +892,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Plan Completion Loop",
@@ -1006,7 +1041,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-20T00:00:00.000Z",
+    "updatedAt": "2026-10-21T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Workflow Router",

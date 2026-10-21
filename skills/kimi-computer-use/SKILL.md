@@ -82,7 +82,7 @@ Registration does not make `kimi-cu` the default:
 
 ## Diagnose failures
 
-Fast path: if the error text is `no target app` or `mode must be full, image, or ax`, fix the tool arguments per the table above and stop. The service is fine; skip the checks below.
+Fast path: if the error text is `no target app` or `mode must be full, image, or ax`, fix the tool arguments per the table above and retry the read-only `get_app_state` call. If a client fuse is active, wait for its cooldown before this retry. Stop only after the corrected call completes successfully; that proves the tested call path works, not every host or permission. If the corrected call still fails, continue the layered checks below. If the retry cannot run, report runtime verification as `UNVERIFIED`. An argument error alone does not prove the service is healthy.
 
 Otherwise work from the service outward:
 
@@ -94,7 +94,7 @@ Otherwise work from the service outward:
    - server connected;
    - tools discovered;
    - model actually emitted and completed a tool call.
-6. If Hermes reports `MCP server 'kimi-cu' is unreachable after 3 consecutive failures`, it is a client fuse tripped by bad calls, not a permission outage. Wait for the cooldown, retry with valid arguments, and re-check with `hermes mcp test kimi-cu`.
+6. If Hermes reports `MCP server 'kimi-cu' is unreachable after 3 consecutive failures`, treat it as a client fuse, not evidence of its root cause. Attribute it to bad arguments only when the preceding failed calls show those errors; otherwise keep the cause unresolved. Wait for the cooldown, retry with valid arguments, and re-check with `hermes mcp test kimi-cu` if the retry fails. Do not infer permission health from the fuse message.
 
 If states one and two pass but three fails, test one other officially supported host model before declaring a model-adapter incompatibility. Do not rewrite a working MCP config to compensate for a model that prints tool-call markup as text.
 
