@@ -2,3 +2,5 @@
 /SKILL\.md:\s*author: adonis$
 # Portability guard test that lists forbidden private markers on purpose.
 ^skills/web-performance-audit/scripts/test_public_portability\.py:\s*"private project marker"
+# Vendored third-party minified markdown-it (MIT): its regex tables contain an email-shaped token.
+^skills/agent-dispatch/scripts/vendor/markdown-it-[0-9.]+\.min\.js:
