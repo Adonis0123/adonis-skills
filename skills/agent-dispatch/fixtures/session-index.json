@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "sessions": {
+    "coord": {
+      "entries": [{"run": "published", "runTitle": "test", "lane": null, "laneTitle": null, "role": "coordinator", "board": "<board>", "url": "<url>"}]
+    },
+    "worker": {
+      "entries": [{"run": "published", "runTitle": "test", "lane": "L", "laneTitle": "new lane", "role": "worker", "board": "<board>", "url": "<url>#lane-L"}]
+    }
+  }
+}

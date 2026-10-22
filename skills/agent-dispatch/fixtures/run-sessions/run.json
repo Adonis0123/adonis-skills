@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "id": "sessions-preview",
+  "objective": "B9 卡片改造并部署 test",
+  "state": "active",
+  "created_at": "2026-10-19T13:01:05Z",
+  "orca_run": null,
+  "coordinator": "claude:002",
+  "lanes": [
+    {
+      "kind": "lane",
+      "round": 1,
+      "started_at": "2026-10-19T13:01:05Z",
+      "id": "B9",
+      "title": "B9 卡片",
+      "role": "write",
+      "account": "claude:003",
+      "pool": "claude:003",
+      "branch": "feat/b9",
+      "output": "B9.jsonl",
+      "state": "working",
+      "updated_at": "2026-10-19T13:01:05Z",
+      "session": "6e9c249d-9a58-427f-bd46-95697fc8897a"
+    },
+    {
+      "kind": "lane",
+      "round": 1,
+      "started_at": "2026-10-19T13:01:05Z",
+      "id": "M3b",
+      "title": "M3b 修复审查",
+      "role": "review",
+      "account": "claude:003",
+      "pool": "claude:003",
+      "reviews": "B9",
+      "state": "working",
+      "updated_at": "2026-10-19T13:01:05Z",
+      "session": "d731f90c-2e74-4b28-91ef-a46e4ffbe612",
+      "output": "ended.jsonl"
+    },
+    {
+      "kind": "lane",
+      "round": 1,
+      "started_at": "2026-10-19T13:01:05Z",
+      "id": "WP6",
+      "title": "WP6 卡片用共用组件",
+      "role": "write",
+      "state": "queued",
+      "after": [
+        "deploy",
+        "M3b"
+      ],
+      "updated_at": "2026-10-19T13:01:05Z"
+    }
+  ],
+  "waits": [
+    {
+      "state": "running",
+      "started_at": "2026-10-19T13:01:05Z",
+      "id": "deploy",
+      "title": "部署 test",
+      "stage": "server 已好，web 构建中",
+      "log": "deploy-log.txt",
+      "updated_at": "2026-10-19T13:01:05Z"
+    }
+  ],
+  "asks": [
+    {
+      "state": "open",
+      "asked_at": "2026-10-19T13:01:05Z",
+      "id": "A1",
+      "question": "M2+M3b 之后再部署一次 test，按同样流程直接部署吗？",
+      "recommend": "是，只限 test",
+      "evidence": "上次 pnpm deploy:test 成功，server 和 web 都通过",
+      "blocks": "WP6 联调",
+      "outward": false,
+      "lane": "B9",
+      "delivery": "paste-needed"
+    }
+  ],
+  "grants": [],
+  "updated_at": "2026-10-19T13:01:05Z"
+}

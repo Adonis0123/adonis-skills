@@ -4,6 +4,7 @@ apps/web/src/generated/
 skills/desktop-agent-activity/
 skills/installed-app-feature-inventory/
 skills/dev-environment-roi-audit/
+skills/agent-dispatch/
 .export-manifest.json
 # Written by scripts/sync-brand-tokens.mjs; brand:check compares them byte for byte, so formatting breaks CI.
 apps/web/src/styles/brand/

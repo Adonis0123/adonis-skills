@@ -6,7 +6,9 @@
       "name": "simple-copy-change-stays-direct",
       "prompt": "我手上有三个 Claude 账号、codex、grok 都登录着，你当总指挥。需求：把 packages/web 里的导出按钮文案 \"Export\" 改成 \"Export video\"，中英文案都在 packages/web/src/modules/export/messages.ts 里。按你的派活方式安排一下，先给出派活计划。",
       "expected_output": "Picks L0: coordinator edits the one file itself, no worktree, no workers, no reviewer loop, no full test suite; states a short time target.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "选择 L0/直接做：总指挥自己改，不派工人",
         "不新建 worktree",
@@ -19,15 +21,18 @@
       "id": 2,
       "name": "single-product-machine-degrades",
       "prompt": "我同事的电脑只装了 Claude Code，一个订阅账号，没有 codex、grok、agy，也没有多账号管理器。他要做的需求：packages/api 端新增一个接口 project.archive（packages/api/src/routes/project.ts），packages/web 端项目列表加「归档」按钮调用它（packages/web/src/components/ProjectList.tsx），两边都要测试。他想学我的方式：多 agent 并行写、另一个 AI 来 review。帮他排一个派活计划。",
-      "expected_output": "Does not assume codex/grok/agy exist; with one product and one pool it runs the two parts sequentially (or coordinator writes) instead of parallel; reviewer is a fresh Claude session given only spec + diff, not the writer; says which fallback applied.",
-      "files": ["fixtures/probe-single.json"],
+      "expected_output": "Does not assume codex/grok/agy exist; with one product and one pool it runs the two parts sequentially (or coordinator writes) instead of parallel; reviewer is a fresh Claude session given only spec + diff, not the writer; says which fallback applied. Also points out that on a Claude-only single-account machine Claude Code's native subagents, agent view or Agent Teams are the lighter path, and only starts a Run if the user wants the Board/Asks.",
+      "files": [
+        "fixtures/probe-single.json"
+      ],
       "assertions": [
         "不安排 codex/grok/agy 等不存在的工具",
         "不并行跑两个工人（顺序执行或总指挥自己写）",
         "评审由没写这份代码的新会话做，只给 spec 和 diff",
         "明确说出用了哪种降级",
         "未授权时工人不提交",
-        "只有一个总指挥"
+        "只有一个总指挥",
+        "指出机器上只有 Claude 单账号时，Claude Code 原生的 subagents / agent view（claude agents）/ Agent Teams 是更轻的路径，Run 看板的价值在跨产品跨账号"
       ]
     },
     {
@@ -35,9 +40,11 @@
       "name": "cross-package-fanout-plus-article",
       "prompt": "这批要做三件事：1) packages/web 的卡片加「复制链接」按钮（packages/web/src/components/ShareCard.tsx）；2) packages/api 加一个 share_link 接口（packages/api/src/routes/share.ts），卡片按钮调用它；3) 做完后写一篇给团队的技术分享，讲这个功能怎么实现的。机器上三个 Claude 账号、codex 两个号、grok 两个号、agy 都能用。按你的方式派活，给我派活计划和每个工人的任务说明。",
       "expected_output": "Picks L2 with at most 3 workers whose writable file sets do not overlap (web vs api), or explains merging into one worker if the tool contract couples them; reviewer is a different product than the writer; one coordinator; workers do not commit; article goes to the drafting agent with fact check by coordinator after code lands; worker specs include target/change/constraints/ownership/acceptance.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
-        "工人不超过 3 个",
+        "同时写代码的工人不超过 3 个（审查和起草不算）",
         "列出每个工人可改的文件且互不重叠，或说明为何合并成一个工人",
         "评审方与写代码的不是同一家产品",
         "未授权时工人不 commit；任何情况下工人都不 push 或发布",
@@ -50,7 +57,9 @@
       "name": "composed-pipeline-defers-reviewer-and-pipeline-ownership",
       "prompt": "我们正在跑一个跨 package 的需求（packages/ui 改按钮，packages/core 改数据流，两边文件完全分开，不重叠），本机已安装 agentic-review-handoff，且用户的 reviewer 偏好配置设为 codex,grok,claude（已保存）。当前总指挥在 Claude 宿主会话下。另外上层工作流已经通过 goal-gate 启动并拥有该任务的目标契约。请按你的派活方式安排，给出派活计划，说明：1) 怎么分配工人；2) 怎么选 review 方；3) 派活与上层 goal-gate 的关系；4) 交付阶段怎么处理。",
       "expected_output": "Picks L2 with 2 workers since file sets do not overlap; dispatches and reviews as usual inside the active goal-gate Goal, reporting batches as Goal checkpoints and never completing or replacing the Goal; defers reviewer selection and fallback to agentic-review-handoff saved preferences (using review-loop prefs / --host=claude, picking codex first with grok timeout fallback) rather than picking an ad-hoc reviewer; states that integrated work hands off to the repo delivery/ship flow without unprompted commits or direct pushing.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "跨 package 且文件不重叠选择 L2 派 2 个工人",
         "上层 Goal 由 goal-gate 管理：照常派活和评审，每批作为该 Goal 的检查点汇报，不自行完成、替换或清除 Goal",
@@ -62,15 +71,18 @@
       "id": 5,
       "name": "allow-list-multi-session-headless-permissions",
       "prompt": "你是总指挥（claude:002）。只用 cc001 cc002 cc003 cc008 这几个 Claude 账号，可以多开。需求拆成三条互不重叠的 lane：A 改 packages/core，B 改 packages/web 并依赖 A 新增的 API，C 改 docs。每条 lane 要跑 pnpm install 和受影响测试。给出派活计划：账号与会话怎么分、worktree 和分支怎么建、worker 用什么启动命令和权限、修复轮怎么发、谁来 review。",
-      "expected_output": "Runs the probe with AGENT_DISPATCH_ALLOW set to the four Claude ids and a raised AGENT_DISPATCH_SESSIONS_PER_POOL, reads pools from the probe output; gives each lane its own worktree and short branch with B branched from A's branch; launches headless Claude with closed stdin in the background and an explicit --allowedTools list (or an explicit --allowedTools list (the prompt does not authorize blanket permission modes such as bypassPermissions; a worktree is not a permission boundary)) rather than acceptEdits; fix rounds resume the writer's session with only the findings; reviewer is a fresh Claude session on a different account than the writer, with the coordinator re-running tests.",
-      "files": ["fixtures/probe-full.json"],
+      "expected_output": "Runs the probe with AGENT_DISPATCH_ALLOW set to the four Claude ids and a raised AGENT_DISPATCH_SESSIONS_PER_POOL, reads pools from the probe output; gives each lane its own worktree and short branch with B branched from A's branch; launches headless Claude with closed stdin in the background and an explicit --allowedTools list (or an explicit --allowedTools list (the prompt does not authorize blanket permission modes such as bypassPermissions; a worktree is not a permission boundary)) rather than acceptEdits; fix rounds resume the writer's session with only the findings; reviewer is a fresh Claude session on a different account than the writer, with the coordinator re-running tests. Claude headless workers are started with --settings '{\"crossSessionInbound\":\"accept\"}' so fix-round messages reach them without changing the account's global settings.",
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "用 AGENT_DISPATCH_ALLOW（或 accounts 文件 allow）限定四个账号，并按用户授权调高 sessions_per_pool",
         "配额池以 probe 输出为准，不按账号名假设一号一池；提醒同池会话共享限流",
         "每条 lane 独立 worktree 和短分支，B 从 A 的分支切出",
         "Claude worker 不用 acceptEdits，改用最小的 --allowedTools 列表；bypassPermissions 只在用户明确授权时使用，并说明 worktree 不是权限隔离；stdin 关闭并后台运行",
         "修复轮用 --resume <session_id> 只发 review 发现和总指挥决定",
-        "reviewer 是与写代码账号不同的 Claude 新会话，测试由总指挥复跑"
+        "reviewer 是与写代码账号不同的 Claude 新会话，测试由总指挥复跑",
+        "Claude headless worker 启动命令带 --settings '{\"crossSessionInbound\":\"accept\"}'（只对该 worker 生效）以接收修复轮消息，而不是改全局 settings"
       ]
     },
     {
@@ -78,7 +90,9 @@
       "name": "design-research-fans-out-across-products",
       "prompt": "面板的账号置顶和排序我觉得体验不好，你去调研一下优秀软件是怎么设计的，再改。按你的派活方式安排。",
       "expected_output": "Picks the Research tier first: one shared brief, 3+ independent researchers across available products without each other's answers, inputs checked, findings merged by agreement (2+), mockups before implementation, then an implementation tier.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "先选调研档（Research），不是直接 L0/L1 动手改",
         "同一份调研题目发给至少 3 个独立调研者，尽量跨产品",
@@ -100,12 +114,13 @@
       ],
       "assertions": [
         "调用 dispatch_board.py show（或 --line）读取台账，而不是凭记忆回答",
-        "回复第一行是 `进行中：N 项任务在做 · M 项外部等待 · K 个问题等你回答` 格式",
+        "回复第一行是 `show --line` 给出的状态行（如 `正在忙：N 个任务在做 · M 项等外部结果 · K 个问题等你答复`），不改写成别的格式",
         "只报告台账里有的事实：B9 在改 ChapterEditorSurface.tsx、部署在 web 构建 42/60、WP6 排队等部署和 M3b",
         "指出 M3b 审查和 B9 用的是同一个账号额度",
         "把 A1 作为待回答的问题列出，带推荐",
         "协调者自己执行 open 打开看板，不让用户跑命令或找路径",
-        "用白话（任务、外部等待、问题），不对用户说 Lane、Wait、Ask"
+        "用白话（任务、外部等待、问题），不对用户说 Lane、Wait、Ask",
+        "不把复制 fixture 带来的文件时间说成真实进展（如“刚才还有动静”）"
       ]
     },
     {
@@ -113,7 +128,9 @@
       "name": "standing-grant-for-deploy-is-scoped",
       "prompt": "M2+M3b 这批之后要再部署一次 test。以后都按照推荐的来改吧，部署也是。",
       "expected_output": "Records a Standing Grant with exact scope (deploy to test with the same flow) and the user's words; marks it as an outward grant that lasts this Run only; does not extend it to production or other environments; asks once if the scope is unclear.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "登记长期授权，写明范围（只限部署到 test、同样流程）和用户原话",
         "说明部署类授权只在本次 Run 有效",
@@ -126,7 +143,9 @@
       "name": "outward-ask-carries-recipient-and-draft",
       "prompt": "WP5 已经上 test 了。群里打招呼的消息你看着办，需要我确认的一起列给我。",
       "expected_output": "Raises a numbered Ask for the group message with a recommendation, evidence, what it blocks and a full draft text; because the prompt names no group or channel, the Ask asks which group and channel instead of inventing them; does not send anything.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "提问带编号（如 A1）",
         "给出推荐答案和依据",
@@ -138,13 +157,13 @@
     {
       "id": 10,
       "name": "global-session-list-is-not-a-dispatch",
-      "prompt": "我本机开了好几个 claude 后台会话，怎么一眼看到它们各自的状态？",
-      "expected_output": "Does not start a Run or a Board; points to existing global views such as `claude agents` (Agent View) or the Orca sidebar, because the Run Board only covers Lanes a Coordinator dispatched.",
+      "prompt": "列出本机所有会话",
+      "expected_output": "Detect sideby sessions --json at runtime; explain its valid schemaVersion 1 list in plain words. Do not create a Run. Fall back to claude agents / Orca sidebar if absent, malformed or timed out.",
       "files": [],
       "assertions": [
-        "不创建 Run 或看板",
-        "指向 `claude agents` 或 Orca 侧栏这类全局视图",
-        "说明 Run 看板只覆盖协调者派出的 Lane"
+        "Uses sideby sessions when available",
+        "Keeps machine-wide listing in sideby, not a Run",
+        "Uses legacy views only as fallback"
       ]
     },
     {
@@ -188,7 +207,9 @@
       "name": "authorized-local-commits-stay-on-lane-branch",
       "prompt": "按 L2 拆成 packages/ui 和 packages/core 两条 lane。这次允许每个 worker 在自己的分支上本地提交，但不许推送。给出两个 worker 的任务说明里 Ownership 那一段。",
       "expected_output": "Each spec's Ownership picks 'Local commits on <short-branch> only, hooks must pass', keeps no push, merge into other branches, deploy or publish, and lists disjoint editable files per lane.",
-      "files": ["fixtures/probe-full.json"],
+      "files": [
+        "fixtures/probe-full.json"
+      ],
       "assertions": [
         "Ownership 选“只在本 lane 短分支本地提交，hooks 必须通过”",
         "明确不 push、不合并到其他分支、不部署或发布",
@@ -212,6 +233,40 @@
         "在副本里创建 STOP，WP6 不启动",
         "副本里 B9、M3b 标为 stopped，部署 test 仍为进行中并说明原因",
         "用白话告诉用户哪些已停、哪些还在跑，不让用户自己执行命令"
+      ]
+    },
+    {
+      "id": 15,
+      "name": "reply-local-worker-question",
+      "prompt": "回复 worker 问题：A1 按推荐。Worker 是协调者派出的本地会话。",
+      "expected_output": "Read the Ask recommendation and linked session. Detect sideby send --help, send the exact answer when available, records the answer with ask answer, and reports the actual sideby receipt in chat without inventing success. Orca Worker uses orchestration reply. Use existing product fallback if unsupported. No per-message approval for this local Worker; external messages still need authorization.",
+      "files": [
+        "fixtures/run-sessions/run.json",
+        "fixtures/run-sessions/sessions.json"
+      ],
+      "assertions": [
+        "Detects send support",
+        "Reports the actual delivered/read/paste-needed receipt without inventing success",
+        "Uses orca orchestration reply only for a Lane that has an Orca dispatch id; with orca_run null it neither invents an Orca path nor sends an Orca Worker through sideby",
+        "Does not request per-message approval for authorized local Worker"
+      ]
+    },
+    {
+      "id": 16,
+      "name": "fix-round-files-old-result-and-keeps-watching",
+      "prompt": "这是演练，不要真的启动任何 Worker。你是总指挥，Run 台账在 fixtures/run-midrun（先复制到临时目录，再用 --run 指向副本）。B9 的审查发现了 2 个问题，要让 B9 原来的 Claude 会话续跑修掉。写出你会依次执行的台账命令和续跑命令，然后说明之后你怎么等它做完。",
+      "expected_output": "Before resuming, raises B9's round with a new --output stream file (not the ended B9.jsonl), points the resumed run's stdout at that file, and keeps a `watch` running in the background so B9's end wakes the Coordinator instead of waiting for the user; no foreground sleep; the user runs nothing.",
+      "files": [
+        "fixtures/probe-full.json",
+        "fixtures/run-midrun/run.json",
+        "fixtures/run-midrun/B9.jsonl"
+      ],
+      "assertions": [
+        "续跑前执行 lane set --id B9 --round 2，并带上新的 --output 文件，不复用 B9.jsonl",
+        "续跑命令的输出重定向到这个新文件",
+        "用后台方式运行 dispatch_board.py watch 等 B9 结束，而不是等用户回复",
+        "没有前台 sleep，也不让用户执行命令",
+        "台账里 B9 新一轮的 output 路径和续跑命令实际写入的文件是同一个"
       ]
     }
   ]

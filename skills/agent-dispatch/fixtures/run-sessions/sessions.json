@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "sessions": [
+    {
+      "account": "claude:003",
+      "accountLabel": "cc003",
+      "family": "claude",
+      "sessionId": "6e9c249d-9a58-427f-bd46-95697fc8897a",
+      "title": "B9 卡片",
+      "label": "cc003 · B9 卡片 · 6e9c249d",
+      "status": "needs-you",
+      "guessed": false,
+      "resumeCommand": "sideby resume 6e9c249d-9a58-427f-bd46-95697fc8897a"
+    },
+    {
+      "account": "claude:003",
+      "accountLabel": "cc003",
+      "family": "claude",
+      "sessionId": "d731f90c-2e74-4b28-91ef-a46e4ffbe612",
+      "title": "M3b 修复审查",
+      "label": "cc003 · M3b 修复审查 · d731f90c",
+      "status": "idle",
+      "guessed": false,
+      "resumeCommand": "sideby resume d731f90c-2e74-4b28-91ef-a46e4ffbe612"
+    }
+  ],
+  "problems": []
+}

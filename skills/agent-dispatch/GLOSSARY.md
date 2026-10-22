@@ -11,7 +11,7 @@ One dispatch of a task: the set of Lanes started by one Coordinator decision.
 _Avoid_: job, batch (a batch is a group of Lanes integrated together inside a Run)
 
 **Lane**:
-One independent piece of work inside a Run, with its own task, branch and worktree.
+One independent piece of work inside a Run, with its own task; write Lanes also get their own branch and worktree.
 _Avoid_: task, part, slot
 
 **Worker**:
@@ -27,7 +27,7 @@ The single session that starts Lanes, integrates their results, decides and repo
 _Avoid_: orchestrator, lead, host
 
 **Board**:
-The view of one Run that shows each Lane's Worker, state and current activity.
+The milestone report of one Run, written only at milestones and served by no process: what each Lane produced, decisions, outputs and open Asks. Live status belongs to sideby's Panel, not the Board.
 _Avoid_: dashboard, monitor, status page
 
 **Wait**:

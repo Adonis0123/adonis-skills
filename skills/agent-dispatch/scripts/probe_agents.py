@@ -13,8 +13,9 @@ from __future__ import annotations
 import json
 import os
 import shutil
-import subprocess
 from typing import Callable
+from sideby_sessions import SessionReader
+from sideby_cli import read_json
 
 # product id -> CLI binaries that provide it
 PRODUCTS = {
@@ -150,14 +151,8 @@ def from_sideby_aliases() -> dict[str, str]:
     """Short commands such as cc001 -> claude:001, from sideby's config."""
     if not shutil.which("sideby"):
         return {}
-    try:
-        out = subprocess.run(
-            ["sideby", "config", "get", "aliases", "--json"], capture_output=True, text=True, timeout=20
-        )
-        data = json.loads(out.stdout)
-    except (OSError, subprocess.SubprocessError, ValueError):
-        return {}
-    return parse_aliases(data.get("value") if isinstance(data, dict) else None)
+    data = read_json(['config', 'get', 'aliases'], timeout=20)
+    return parse_aliases(data['value']) if data is not None else {}
 
 
 def get_aliases(file_data: dict | None) -> dict[str, str]:
@@ -175,14 +170,8 @@ def from_sideby() -> tuple[list[dict], str] | None:
     """Read accounts from sideby multi-account manager if available."""
     if not shutil.which("sideby"):
         return None
-    try:
-        out = subprocess.run(
-            ["sideby", "list", "--json"], capture_output=True, text=True, timeout=20
-        )
-        data = json.loads(out.stdout)
-    except (OSError, subprocess.SubprocessError, ValueError):
-        return None
-    if not isinstance(data, dict):
+    data = read_json(['list'], timeout=20)
+    if data is None:
         return None
     accounts = []
     for acc in data.get("accounts", []):
@@ -212,7 +201,7 @@ def from_sideby() -> tuple[list[dict], str] | None:
     return accounts, "sideby"
 
 
-def probe() -> dict:
+def probe(sessions=None) -> dict:
     found: dict[str, list[dict]] = {}
     sources: list[str] = []
     file_data = read_accounts_file()
@@ -287,7 +276,31 @@ def probe() -> dict:
     code = [p for p in CODE_PRODUCTS if p in products]
     pools = sum(products[p]["quota_pools"] for p in code)
 
+    if sessions is None:
+        sessions = SessionReader().read()
+    account_pools = {a["id"]: a["pool"] for p in code for a in found[p]}
+    busy_sessions = {pool: [] for pool in account_pools.values()}
+    # LiveSession has no interactive/worker flag. Conservatively reserve every busy
+    # session, except explicitly identified sessions belonging to this Run.
+    owned = set(parse_allow(os.environ.get("AGENT_DISPATCH_OWNED_SESSIONS", "")))
+    coordinator = (os.environ.get("AGENT_DISPATCH_COORDINATOR_SESSION")
+                   or os.environ.get("CLAUDE_CODE_SESSION_ID")
+                   or os.environ.get("CODEX_THREAD_ID"))
+    if coordinator:
+        owned.add(coordinator)
+    for session in (sessions or {}).get("sessions", []):
+        pool = account_pools.get(session.get("account"))
+        sid = session.get("sessionId")
+        if pool and sid not in owned and session.get("status") == "busy" and sid not in busy_sessions[pool]:
+            busy_sessions[pool].append(sid)
+    available_slots = {pool: max(0, sessions_per_pool - len(rows)) for pool, rows in busy_sessions.items()}
+    capacity = max(0, sum(available_slots.values()) - 1)
     fallback = []
+    for pool, rows in busy_sessions.items():
+        if rows:
+            fallback.append(f"{pool}: {len(rows)} busy user sessions reserved; {available_slots[pool]} worker slots available")
+    if sessions and sessions.get("problems"):
+        fallback.append("sideby sessions reported problems; occupancy may be incomplete")
     if len(code) < 2:
         fallback.append(
             "single-product: reviewer is a fresh session of the same product "
@@ -308,12 +321,14 @@ def probe() -> dict:
         "allow": allow,
         "allow_unmatched": allow_unmatched,
         "sessions_per_pool": sessions_per_pool,
+        "busy_sessions": busy_sessions,
+        "available_slots": available_slots,
         # pools bound quota, sessions_per_pool bounds concurrency; the
         # coordinator holds one session slot, its own pool may host workers.
         # Above 1 session per pool the user raised the limit, so no cap of 3.
         "max_parallel_workers": max(
             0,
-            pools * sessions_per_pool - 1 if sessions_per_pool > 1 else min(3, pools - 1),
+            capacity if sessions_per_pool > 1 else min(3, capacity),
         ),
         "fallback": fallback,
     }
