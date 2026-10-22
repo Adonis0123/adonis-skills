@@ -80,16 +80,16 @@ skills:
     displayName: { en: "Agent Dispatcher", zh: "多 Agent 调度" }
     group: delegate
     tags: [agent-workflow, code-review]
-    summary: "Size a task from solo edit to parallel AI CLI worktrees, assign an independent reviewer, and show a live board of what each agent is doing."
-    summary_zh: "评估任务该单干还是分给多个 AI CLI 并行，安排独立复审，并用看板随时显示每个 agent 在做什么。"
+    summary: "Size a task from solo edit to parallel AI CLI worktrees, pick an independent reviewer, and step in the moment a worker finishes."
+    summary_zh: "评估任务该单干还是分给多个 AI CLI 并行，安排独立复审，哪个 AI 一做完就接手验收。"
     use_cases:
       - "Split cross-package work with non-overlapping files across 2-3 worker worktrees."
       - "Ask several AI products the same research brief and act only on findings they agree on."
-      - "Open one board, in Orca or any browser, to see each agent's current step, pending deploys and the questions waiting on you."
+      - "Open one board in Orca or any browser to see what each agent produced and what waits on you; it refreshes itself and keeps what you expanded."
     use_cases_zh:
       - "把互不重叠的跨包改动拆给 2 到 3 个 worktree 并行处理。"
       - "把同一份调研题目发给多个 AI 产品，只采纳多方一致的结论。"
-      - "在 Orca 或浏览器里打开看板，看每个 agent 进行到哪、还在等哪些部署、哪些问题等你回答。"
+      - "在 Orca 或浏览器里打开看板，看每个 agent 做出了什么、替你定了哪些事、哪些问题等你回答；页面自己刷新，展开的内容不会收起。"
 
   agent-symlink-init:
     displayName: { en: "Agent Config Linker", zh: "Agent 配置软链" }
