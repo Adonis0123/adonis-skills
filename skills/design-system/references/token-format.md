@@ -13,8 +13,8 @@
     "<主题 id>": {
       "name": "显示名",
       "scale": { "light": [12 阶], "dark": [12 阶] },          // 引用名 {accent-1} … {accent-12}
-      "solid": "#…",                // 主按钮底，引用名 {accent-solid}
-      "solid-foreground": "#…"      // 主按钮字，引用名 {accent-solid-foreground}
+      "solid": "#…",                // 主按钮底，引用名 {accent-solid}；深浅不同时写 { "light": "#…", "dark": "#…" }
+      "solid-foreground": "#…"      // 主按钮字，引用名 {accent-solid-foreground}；同样可分深浅
     }
   },
   "roles": {                        // 语义角色，名字用 shadcn 的成对写法

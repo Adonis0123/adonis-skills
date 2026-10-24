@@ -40,7 +40,8 @@ def palette(theme, mode):
     p.update({f"fn-{k}": v for k, v in TOKENS["functional"].items() if k != "source"})
     t = TOKENS["themes"][theme]
     p.update({f"accent-{i + 1}": v for i, v in enumerate(t["scale"][mode])})
-    p["accent-solid"], p["accent-solid-foreground"] = t["solid"], t["solid-foreground"]
+    pick = lambda v: v[mode] if isinstance(v, dict) else v  # 按钮色可深浅共用，也可写 {"light": …, "dark": …}
+    p["accent-solid"], p["accent-solid-foreground"] = pick(t["solid"]), pick(t["solid-foreground"])
     return p
 
 

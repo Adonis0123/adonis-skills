@@ -427,7 +427,7 @@
     "description": "Run a shared multi-site design system where every product swaps only its interface accent color: analyze any website's theme colors and roles, wire a new site or plugin to the semantic tokens, and lint plugins for hard-coded colors, fallback values and unknown roles. Use when the user gives a URL and asks what its theme or palette is, asks to connect a site to the design system, add an accent theme, or check whether a plugin follows the theme contract. Skip one-off styling tweaks, logo or illustration work, and plugin-architecture refactors (code-plugin-architecture).",
     "metadata": {
       "author": "adonis",
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     "files": {
       "hasReferences": true,
