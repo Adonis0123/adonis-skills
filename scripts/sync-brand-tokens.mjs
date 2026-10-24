@@ -80,7 +80,7 @@ async function copySnapshot(brandDir) {
   const accent = theme.designSystem?.accent;
   if (!accent)
     throw new Error(
-      `${themePath} has no designSystem.accent; add e.g. "designSystem": { "accent": "teal" }.`,
+      `${themePath} has no designSystem.accent; add "designSystem": { "accent": "<theme id from design-system/tokens.json>" }.`,
     );
   // adonis-brand is private: publish only values (scales, the chosen theme,
   // role formulas). Notes and sources stay there; `source.commit` points back.

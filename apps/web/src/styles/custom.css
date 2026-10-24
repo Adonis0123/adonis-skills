@@ -446,7 +446,7 @@
 
   .search-bar:focus-within {
     border-color: var(--ring);
-    outline: 3px solid var(--ring-halo);
+    outline: 4px solid var(--selected);
     outline-offset: 0;
   }
 
@@ -525,7 +525,7 @@
 
   .featured-card--lead {
     border-color: var(--border-strong);
-    background: var(--card);
+    background: var(--selected);
   }
 
   .skill-card:hover {

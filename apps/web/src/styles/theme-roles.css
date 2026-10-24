@@ -18,16 +18,16 @@
   --border-strong: var(--brand-neutral-7); /* {neutral-7} */
   --input: var(--brand-neutral-6); /* {neutral-6} */
   --hover: var(--brand-neutral-2); /* {neutral-2} */
-  --primary: var(--brand-teal-solid); /* {accent-solid} */
-  --primary-foreground: var(--brand-teal-solid-foreground); /* {accent-solid-foreground} */
-  --accent: color-mix(in srgb, var(--brand-teal-9) 12%, var(--card)); /* color-mix(in srgb, {accent-9} 12%, {card}) */
-  --accent-foreground: var(--brand-teal-11); /* {accent-11} */
-  --selected: color-mix(in srgb, var(--brand-teal-9) 12%, var(--card)); /* color-mix(in srgb, {accent-9} 12%, {card}) */
-  --nav-active: color-mix(in srgb, var(--brand-teal-9) 15%, transparent); /* color-mix(in srgb, {accent-9} 15%, transparent) */
-  --nav-active-foreground: var(--brand-teal-11); /* {accent-11} */
-  --link: var(--brand-teal-11); /* {accent-11} */
-  --ring: var(--brand-teal-8); /* {accent-8} */
-  --page-tint: linear-gradient(color-mix(in srgb, var(--brand-teal-9) 10%, var(--background)) 0, var(--background) 180px); /* linear-gradient(color-mix(in srgb, {accent-9} 10%, {background}) 0, {background} 180px) */
+  --primary: var(--brand-leaf-solid); /* {accent-solid} */
+  --primary-foreground: var(--brand-leaf-solid-foreground); /* {accent-solid-foreground} */
+  --accent: color-mix(in srgb, var(--brand-leaf-9) 12%, var(--card)); /* color-mix(in srgb, {accent-9} 12%, {card}) */
+  --accent-foreground: var(--brand-leaf-11); /* {accent-11} */
+  --selected: color-mix(in srgb, var(--brand-leaf-9) 12%, var(--card)); /* color-mix(in srgb, {accent-9} 12%, {card}) */
+  --nav-active: color-mix(in srgb, var(--brand-leaf-9) 15%, transparent); /* color-mix(in srgb, {accent-9} 15%, transparent) */
+  --nav-active-foreground: var(--brand-leaf-11); /* {accent-11} */
+  --link: var(--brand-leaf-11); /* {accent-11} */
+  --ring: var(--brand-leaf-8); /* {accent-8} */
+  --page-tint: linear-gradient(color-mix(in srgb, var(--brand-leaf-9) 10%, var(--background)) 0, var(--background) 180px); /* linear-gradient(color-mix(in srgb, {accent-9} 10%, {background}) 0, {background} 180px) */
   --track: var(--brand-neutral-4); /* {neutral-4} */
   --success: var(--brand-success); /* {fn-success} */
   --warning: var(--brand-warning); /* {fn-warning} */
@@ -40,7 +40,7 @@
   --danger-text: var(--brand-red-11); /* {red-11} */
   --disabled: var(--brand-neutral-3); /* {neutral-3} */
   --disabled-foreground: var(--brand-neutral-8); /* {neutral-8} */
-  --chart-1: var(--brand-teal-9); /* {accent-9} */
+  --chart-1: var(--brand-leaf-9); /* {accent-9} */
   --chart-2: var(--brand-info); /* {fn-info} */
   --chart-3: var(--brand-success); /* {fn-success} */
   --chart-4: var(--brand-warning); /* {fn-warning} */
@@ -68,16 +68,16 @@
   --border-strong: var(--brand-neutral-dark-7); /* {neutral-7} */
   --input: var(--brand-neutral-dark-6); /* {neutral-6} */
   --hover: var(--brand-neutral-dark-3); /* {neutral-3} */
-  --primary: var(--brand-teal-solid); /* {accent-solid} */
-  --primary-foreground: var(--brand-teal-solid-foreground); /* {accent-solid-foreground} */
-  --accent: color-mix(in srgb, var(--brand-teal-dark-9) 20%, var(--card)); /* color-mix(in srgb, {accent-9} 20%, {card}) */
-  --accent-foreground: var(--brand-teal-dark-11); /* {accent-11} */
-  --selected: color-mix(in srgb, var(--brand-teal-dark-9) 20%, var(--card)); /* color-mix(in srgb, {accent-9} 20%, {card}) */
-  --nav-active: color-mix(in srgb, var(--brand-teal-dark-9) 24%, transparent); /* color-mix(in srgb, {accent-9} 24%, transparent) */
-  --nav-active-foreground: var(--brand-teal-dark-11); /* {accent-11} */
-  --link: var(--brand-teal-dark-11); /* {accent-11} */
-  --ring: var(--brand-teal-dark-8); /* {accent-8} */
-  --page-tint: linear-gradient(color-mix(in srgb, var(--brand-teal-dark-9) 10%, var(--background)) 0, var(--background) 180px); /* linear-gradient(color-mix(in srgb, {accent-9} 10%, {background}) 0, {background} 180px) */
+  --primary: var(--brand-leaf-solid); /* {accent-solid} */
+  --primary-foreground: var(--brand-leaf-solid-foreground); /* {accent-solid-foreground} */
+  --accent: color-mix(in srgb, var(--brand-leaf-dark-9) 20%, var(--card)); /* color-mix(in srgb, {accent-9} 20%, {card}) */
+  --accent-foreground: var(--brand-leaf-dark-11); /* {accent-11} */
+  --selected: color-mix(in srgb, var(--brand-leaf-dark-9) 20%, var(--card)); /* color-mix(in srgb, {accent-9} 20%, {card}) */
+  --nav-active: color-mix(in srgb, var(--brand-leaf-dark-9) 24%, transparent); /* color-mix(in srgb, {accent-9} 24%, transparent) */
+  --nav-active-foreground: var(--brand-leaf-dark-11); /* {accent-11} */
+  --link: var(--brand-leaf-dark-11); /* {accent-11} */
+  --ring: var(--brand-leaf-dark-8); /* {accent-8} */
+  --page-tint: linear-gradient(color-mix(in srgb, var(--brand-leaf-dark-9) 10%, var(--background)) 0, var(--background) 180px); /* linear-gradient(color-mix(in srgb, {accent-9} 10%, {background}) 0, {background} 180px) */
   --track: var(--brand-neutral-dark-4); /* {neutral-4} */
   --success: var(--brand-success); /* {fn-success} */
   --warning: var(--brand-warning); /* {fn-warning} */
@@ -90,7 +90,7 @@
   --danger-text: var(--brand-red-dark-11); /* {red-11} */
   --disabled: var(--brand-neutral-dark-3); /* {neutral-3} */
   --disabled-foreground: var(--brand-neutral-dark-8); /* {neutral-8} */
-  --chart-1: var(--brand-teal-dark-9); /* {accent-9} */
+  --chart-1: var(--brand-leaf-dark-9); /* {accent-9} */
   --chart-2: var(--brand-info); /* {fn-info} */
   --chart-3: var(--brand-success); /* {fn-success} */
   --chart-4: var(--brand-warning); /* {fn-warning} */

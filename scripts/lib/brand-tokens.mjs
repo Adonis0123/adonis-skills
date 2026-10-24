@@ -121,7 +121,7 @@ export function scaleValues(ds, mode) {
   return values;
 }
 
-/** CSS variable name for a scale reference, e.g. accent-9 in dark -> --brand-teal-dark-9. */
+/** CSS variable name for a scale reference, e.g. accent-9 of the leaf theme in dark -> --brand-leaf-dark-9. */
 function brandVar(ds, mode, key) {
   const suffix = mode === "dark" ? "-dark" : "";
   if (key.startsWith("fn-")) return `--brand-${key.slice(3)}`;
