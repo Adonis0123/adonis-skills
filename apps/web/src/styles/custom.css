@@ -366,7 +366,7 @@
   .hero-wash {
     background: radial-gradient(
       900px 440px at 8% 0%,
-      var(--accent),
+      var(--tint),
       var(--background) 64%
     );
   }
@@ -399,7 +399,7 @@
   .art-plate {
     position: relative;
     border-radius: var(--nk-radius-plate);
-    background: var(--muted);
+    background: var(--plate);
     box-shadow: var(--clay-shadow-plate);
   }
 
@@ -409,7 +409,7 @@
     flex: none;
     overflow: hidden;
     border-radius: 9999px;
-    background: var(--muted);
+    background: var(--plate);
   }
 
   /* Inset so hat tips and lanterns near the square's corners stay inside the circle. */
@@ -445,8 +445,8 @@
   }
 
   .search-bar:focus-within {
-    border-color: var(--ring);
-    outline: 4px solid var(--selected);
+    border-color: var(--tint-border);
+    outline: 4px solid var(--tint);
     outline-offset: 0;
   }
 
@@ -524,8 +524,8 @@
   }
 
   .featured-card--lead {
-    border-color: var(--border-strong);
-    background: var(--selected);
+    border-color: var(--tint-border);
+    background: var(--tint);
   }
 
   .skill-card:hover {
@@ -641,10 +641,10 @@
     color: var(--link);
   }
 
-  /* Footer one step darker than the page. */
+  /* Footer on the warm paper plate. */
   .site-footer-plate {
-    border-top: 1px solid var(--border);
-    background: var(--muted);
+    border-top: 1px solid var(--plate-border);
+    background: var(--plate);
     color: var(--foreground);
   }
 }

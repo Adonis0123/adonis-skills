@@ -28,27 +28,23 @@
 
   /*
    * DESIGN.md "Elevation & Depth": resting cards carry a 1px whisper of ink
-   * (none in dark); hover, the search bar and the primary button lift on a
-   * soft neutral shadow. The design system keeps the accent off shadows, so
-   * every shadow is --shadow-tint. Never a hard `0 Npx 0` line.
+   * (none in dark); the primary button and the search bar glow with the
+   * design-system --shadow-accent (none in dark); card hovers and popovers
+   * lift on a neutral --shadow-tint. Never a hard `0 Npx 0` line.
    */
   --clay-shadow-card: 0 1px 2px
     color-mix(in oklab, var(--shadow-tint) 5%, transparent);
   --clay-shadow-card-hover:
     0 18px 36px -18px color-mix(in oklab, var(--shadow-tint) 18%, transparent),
     0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
-  --clay-shadow-btn: 0 12px 26px -14px
-    color-mix(in oklab, var(--shadow-tint) 16%, transparent);
-  --clay-shadow-btn-hover: 0 14px 30px -14px
-    color-mix(in oklab, var(--shadow-tint) 22%, transparent);
-  --clay-shadow-glow:
-    0 24px 56px -28px color-mix(in oklab, var(--shadow-tint) 14%, transparent),
-    0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
+  --clay-shadow-btn: var(--shadow-accent);
+  --clay-shadow-btn-hover: var(--shadow-accent);
+  --clay-shadow-glow: var(--shadow-accent);
   --clay-shadow-pop: 0 18px 40px -18px
     color-mix(in oklab, var(--shadow-tint) 24%, transparent);
-  /* Art plate: two flush rings (muted, then border) plus a soft shadow below. */
+  /* Art plate: two flush rings (plate, then plate-border) plus a soft shadow below. */
   --clay-shadow-plate:
-    0 0 0 10px var(--muted), 0 0 0 11px var(--border),
+    0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border),
     0 40px 80px -40px color-mix(in oklab, var(--shadow-tint) 18%, transparent);
   /* Surfaces only (not buttons): a blurred top glow, never a crisp 1px line. */
   --clay-highlight-top: inset 0 3px 6px -3px
@@ -78,14 +74,9 @@
   --clay-shadow-card: none;
   --clay-shadow-card-hover: 0 18px 40px -20px
     color-mix(in oklab, var(--shadow-tint) 60%, transparent);
-  --clay-shadow-btn: none;
-  --clay-shadow-btn-hover: 0 12px 28px -16px
-    color-mix(in oklab, var(--shadow-tint) 60%, transparent);
-  --clay-shadow-glow: 0 24px 56px -30px
-    color-mix(in oklab, var(--shadow-tint) 60%, transparent);
   --clay-shadow-pop: 0 18px 40px -16px
     color-mix(in oklab, var(--shadow-tint) 60%, transparent);
-  --clay-shadow-plate: 0 0 0 10px var(--muted), 0 0 0 11px var(--border);
+  --clay-shadow-plate: 0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border);
   --clay-highlight-top: inset 0 3px 6px -3px
     color-mix(in oklab, var(--highlight-tint) 7%, transparent);
 }
@@ -127,6 +118,10 @@
   --color-danger-text: var(--danger-text);
   --color-disabled: var(--disabled);
   --color-disabled-foreground: var(--disabled-foreground);
+  --color-tint: var(--tint);
+  --color-tint-border: var(--tint-border);
+  --color-plate: var(--plate);
+  --color-plate-border: var(--plate-border);
   /* Site helpers generated next to the roles (see theme-roles.css). */
   --color-ring-halo: var(--ring-halo);
   --color-overlay: var(--overlay);

@@ -91,6 +91,36 @@
         "#FF9592",
         "#FFD1D9"
       ]
+    },
+    "paper": {
+      "light": [
+        "#FCFAF6",
+        "#F7F2E8",
+        "#F0E8DC",
+        "#E9E0D1",
+        "#E1D7C6",
+        "#D7CCBA",
+        "#C6BBA8",
+        "#ADA18E",
+        "#897F6E",
+        "#786F5F",
+        "#60584C",
+        "#27221A"
+      ],
+      "dark": [
+        "#13110C",
+        "#1A1712",
+        "#231F18",
+        "#2A251E",
+        "#322D24",
+        "#3B362D",
+        "#4C453B",
+        "#655E52",
+        "#847C6F",
+        "#968E80",
+        "#C9C1B4",
+        "#F4EFE7"
+      ]
     }
   },
   "functional": {
@@ -176,7 +206,12 @@
       "chart-2": "{fn-info}",
       "chart-3": "{fn-success}",
       "chart-4": "{fn-warning}",
-      "chart-5": "{fn-orange}"
+      "chart-5": "{fn-orange}",
+      "tint": "{accent-2}",
+      "tint-border": "{accent-6}",
+      "shadow-accent": "0 12px 26px -14px {accent-6}",
+      "plate": "{paper-2}",
+      "plate-border": "{paper-6}"
     },
     "dark": {
       "background": "{neutral-1}",
@@ -219,7 +254,12 @@
       "chart-2": "{fn-info}",
       "chart-3": "{fn-success}",
       "chart-4": "{fn-warning}",
-      "chart-5": "{fn-orange}"
+      "chart-5": "{fn-orange}",
+      "tint": "{accent-2}",
+      "tint-border": "{accent-6}",
+      "shadow-accent": "none",
+      "plate": "{paper-2}",
+      "plate-border": "{paper-6}"
     }
   }
 }

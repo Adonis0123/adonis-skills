@@ -61,7 +61,7 @@ export default async function HomePage({ params }: HomePageProps) {
             {updatedMonth && (
               <p className="mb-5 hidden h-[30px] items-center gap-2 rounded-full border border-border bg-card pr-3 pl-2.5 text-[13px] font-medium text-muted-foreground sm:inline-flex">
                 <span
-                  className="size-[7px] rounded-full bg-primary outline-[3px] outline-accent outline-solid"
+                  className="size-[7px] rounded-full bg-primary outline-[3px] outline-tint outline-solid"
                   aria-hidden
                 />
                 <Trans id="home.hero.eyebrow">

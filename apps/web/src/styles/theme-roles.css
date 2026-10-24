@@ -45,6 +45,11 @@
   --chart-3: var(--brand-success); /* {fn-success} */
   --chart-4: var(--brand-warning); /* {fn-warning} */
   --chart-5: var(--brand-orange); /* {fn-orange} */
+  --tint: var(--brand-leaf-2); /* {accent-2} */
+  --tint-border: var(--brand-leaf-6); /* {accent-6} */
+  --shadow-accent: 0 12px 26px -14px var(--brand-leaf-6); /* 0 12px 26px -14px {accent-6} */
+  --plate: var(--brand-paper-2); /* {paper-2} */
+  --plate-border: var(--brand-paper-6); /* {paper-6} */
   /* Site helpers: no design-system role covers these. */
   --ring-halo: color-mix(in srgb, var(--ring) 30%, transparent);
   --overlay: color-mix(in srgb, var(--brand-neutral-12) 30%, transparent);
@@ -95,6 +100,11 @@
   --chart-3: var(--brand-success); /* {fn-success} */
   --chart-4: var(--brand-warning); /* {fn-warning} */
   --chart-5: var(--brand-orange); /* {fn-orange} */
+  --tint: var(--brand-leaf-dark-2); /* {accent-2} */
+  --tint-border: var(--brand-leaf-dark-6); /* {accent-6} */
+  --shadow-accent: none; /* none */
+  --plate: var(--brand-paper-dark-2); /* {paper-2} */
+  --plate-border: var(--brand-paper-dark-6); /* {paper-6} */
   /* Site helpers: no design-system role covers these. */
   --ring-halo: color-mix(in srgb, var(--ring) 18%, transparent);
   --overlay: color-mix(in srgb, var(--brand-neutral-dark-1) 60%, transparent);

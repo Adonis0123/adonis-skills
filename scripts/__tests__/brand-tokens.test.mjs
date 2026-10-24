@@ -142,6 +142,21 @@ test("resolveRoles follows scale and role references per mode", () => {
   assert.equal(dark["warning-text"], "#FFCA16");
 });
 
+test("every scale in tokens.json is published and referenceable", () => {
+  const withPaper = structuredClone(tokens);
+  withPaper.scales.paper = {
+    light: ramp("#F7F2E8", "#27221A"),
+    dark: ramp("#1A1712", "#F4EFE7"),
+  };
+  withPaper.roles.light.plate = "{paper-2}";
+  const picked = pickDesignSystem(withPaper, "teal");
+  assert.equal(resolveRoles(picked, "light").roles.plate, "#F7F2E8");
+  assert.match(
+    renderBrandTokensCss(picked, null),
+    /--brand-paper-dark-2: #1a1712;/,
+  );
+});
+
 test("solidHex mixes over an opaque base like check.py", () => {
   assert.equal(solidHex("#ABCDEF"), "#abcdef");
   assert.equal(solidHex("color-mix(in srgb, #000000 50%, #ffffff)"), "#808080");
@@ -225,7 +240,7 @@ test("renderDesignMd injects solid colors and legacy aliases before typography",
   );
   assert.match(out, /colors:\n {2}background: "#f9f9fb"\n/);
   assert.match(out, / {2}accent: "#deebec"\n/);
-  assert.match(out, / {2}tint: "#deebec"\n/);
+  assert.match(out, / {2}primary-hover: "#5fd4c8"\n/);
   assert.match(out, / {2}background-dark: "#111113"\n/);
   assert.match(out, /\ntypography:/);
   assert.doesNotMatch(out, /page-tint/);

@@ -9,7 +9,6 @@ const REF = /\{([a-z0-9-]+)\}/g;
 const MIX =
   /^color-mix\(in srgb, (#[0-9a-f]{6}) (\d+)%, (#[0-9a-f]{6}|transparent)\)$/i;
 const MODES = ["light", "dark"];
-const SCALES = ["neutral", "amber", "red"];
 
 // Text / background / minimum, copied from design-system/check.py. A
 // background written as [role, base] is a translucent role laid on base.
@@ -46,15 +45,11 @@ export const SITE_HELPERS = {
   },
 };
 
-// projects/skills/DESIGN.md (owned by adonis-brand) still names a few roles
-// from the previous site theme; its `colors` map lists them under the design
-// system role that replaced them so `{colors.x}` references keep resolving.
+// projects/skills/DESIGN.md (owned by adonis-brand) still names a role from
+// the previous site theme; its `colors` map lists it under the design system
+// role that replaced it so `{colors.x}` references keep resolving.
 export const DESIGN_MD_ALIASES = {
   "primary-hover": "primary",
-  tint: "accent",
-  "tint-border": "ring",
-  plate: "muted",
-  "plate-border": "border",
 };
 
 function luminance(hex) {
@@ -86,7 +81,7 @@ export function pickDesignSystem(tokens, accent) {
     updated: tokens.updated,
     accent,
     scales: Object.fromEntries(
-      SCALES.map((name) => [
+      Object.keys(tokens.scales).map((name) => [
         name,
         { light: tokens.scales[name].light, dark: tokens.scales[name].dark },
       ]),
@@ -107,7 +102,7 @@ const pick = (value, mode) =>
 /** Scale steps and constants a role may reference, as #rrggbb, for one mode. */
 export function scaleValues(ds, mode) {
   const values = {};
-  for (const name of SCALES)
+  for (const name of Object.keys(ds.scales ?? {}))
     (ds.scales[name]?.[mode] ?? []).forEach((hex, i) => {
       values[`${name}-${i + 1}`] = hex;
     });

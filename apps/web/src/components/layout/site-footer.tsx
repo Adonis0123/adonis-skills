@@ -115,7 +115,7 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="site-frame flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4 pb-5 text-[13px] text-muted-foreground">
+      <div className="site-frame flex flex-wrap items-center justify-between gap-2 border-t border-plate-border pt-4 pb-5 text-[13px] text-muted-foreground">
         <p>
           <Trans id="siteFooter.copyright">
             © {year} {brandName}
