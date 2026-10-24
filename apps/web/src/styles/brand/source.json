@@ -1,9 +1,9 @@
 {
   "repo": "adonis-brand",
-  "commit": "af970db4e8862a88b96ef367ea6fbcec22c9e8b1",
-  "dirty": false,
+  "commit": "4ac3a8642766a9cd388271e157a802bb7e064ff9",
+  "dirty": true,
   "files": [
-    "data/palette.json",
+    "design-system/tokens.json",
     "projects/skills/theme.json",
     "projects/skills/DESIGN.md"
   ]

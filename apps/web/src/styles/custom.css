@@ -63,6 +63,9 @@
     line-height: 1.7;
     overscroll-behavior-y: none;
     background: var(--background);
+    /* Design system page-tint: a faint accent wash over the top 180px. */
+    background-image: var(--page-tint);
+    background-repeat: no-repeat;
     color: var(--foreground);
   }
 
@@ -199,8 +202,6 @@
 
   .clay-button--primary:hover,
   .clay-button--blue:hover {
-    background: var(--primary-hover);
-    border-color: var(--primary-hover);
     box-shadow: var(--clay-shadow-btn-hover);
     transform: translate3d(0, -1px, 0);
   }
@@ -224,8 +225,8 @@
   .clay-button--secondary:hover,
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
-    border-color: var(--tint-border);
-    background: var(--tint);
+    border-color: var(--border-strong);
+    background: var(--hover);
     color: var(--foreground);
   }
 
@@ -265,8 +266,8 @@
   }
 
   .clay-badge--peach {
-    background: var(--secondary);
-    color: var(--secondary-foreground);
+    background: var(--muted);
+    color: var(--foreground);
   }
 
   .clay-badge--neutral {
@@ -280,8 +281,8 @@
   }
 
   .clay-badge--success {
-    background: var(--attribution);
-    color: var(--secondary-foreground);
+    background: var(--success-soft);
+    color: var(--foreground);
   }
   /* ---------------------------------------------------------------------
    * Nika Skills v3 (DESIGN.md Components). Colors are semantic roles only.
@@ -365,7 +366,7 @@
   .hero-wash {
     background: radial-gradient(
       900px 440px at 8% 0%,
-      var(--tint),
+      var(--accent),
       var(--background) 64%
     );
   }
@@ -398,7 +399,7 @@
   .art-plate {
     position: relative;
     border-radius: var(--nk-radius-plate);
-    background: var(--plate);
+    background: var(--muted);
     box-shadow: var(--clay-shadow-plate);
   }
 
@@ -408,7 +409,7 @@
     flex: none;
     overflow: hidden;
     border-radius: 9999px;
-    background: var(--plate);
+    background: var(--muted);
   }
 
   /* Inset so hat tips and lanterns near the square's corners stay inside the circle. */
@@ -444,8 +445,8 @@
   }
 
   .search-bar:focus-within {
-    border-color: var(--tint-border);
-    outline: 4px solid var(--tint);
+    border-color: var(--ring);
+    outline: 3px solid var(--ring-halo);
     outline-offset: 0;
   }
 
@@ -477,7 +478,7 @@
   }
 
   a.scenario-chip:hover {
-    border-color: var(--tint-border);
+    border-color: var(--border-strong);
     color: var(--foreground);
   }
 
@@ -488,7 +489,7 @@
   }
 
   .scenario-chip--selected {
-    border-color: var(--tint-border);
+    border-color: var(--accent);
     background: var(--accent);
     color: var(--accent-foreground);
   }
@@ -523,18 +524,18 @@
   }
 
   .featured-card--lead {
-    border-color: var(--tint-border);
-    background: var(--tint);
+    border-color: var(--border-strong);
+    background: var(--card);
   }
 
   .skill-card:hover {
-    border-color: var(--tint-border);
+    border-color: var(--border-strong);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -2px, 0);
   }
 
   .featured-card:hover {
-    border-color: var(--tint-border);
+    border-color: var(--border-strong);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -3px, 0);
   }
@@ -615,11 +616,6 @@
     color: var(--primary-foreground);
   }
 
-  .copy-button--solid:hover {
-    border-color: var(--primary-hover);
-    background: var(--primary-hover);
-  }
-
   .copy-button--outline {
     height: 30px;
     padding: 0 0.625rem;
@@ -630,14 +626,14 @@
   }
 
   .copy-button--outline:hover {
-    border-color: var(--tint-border);
+    border-color: var(--border-strong);
     color: var(--link);
   }
 
   .copy-button--failed {
-    border-color: var(--destructive);
+    border-color: var(--danger-text);
     background: var(--card);
-    color: var(--destructive);
+    color: var(--danger-text);
   }
 
   /* Section kicker in leaf (Latin mono caps; Chinese bold sans, see .kicker). */
@@ -645,10 +641,10 @@
     color: var(--link);
   }
 
-  /* Footer on the cream plate. */
+  /* Footer one step darker than the page. */
   .site-footer-plate {
-    border-top: 1px solid var(--plate-border);
-    background: var(--plate);
+    border-top: 1px solid var(--border);
+    background: var(--muted);
     color: var(--foreground);
   }
 }

@@ -147,7 +147,7 @@ export function CommandBlock({
           // Expand the touch target to 44px without growing the visual button.
           'before:absolute before:-inset-1.5 before:content-[""]',
           copied && "text-foreground",
-          failed && "text-destructive hover:text-destructive",
+          failed && "text-danger-text hover:text-danger-text",
         )}
       >
         <IconSwap swapKey={status} className="size-4">

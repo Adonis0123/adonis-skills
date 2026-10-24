@@ -8,18 +8,18 @@ Decisions: `docs/decision-2026-10-18-brand-palette-from-adonis-brand.md` (colors
 
 ## Tokens
 
-| Layer                | Source of truth                           | In this repo                                       |
-| -------------------- | ----------------------------------------- | -------------------------------------------------- |
-| Brand                | `adonis-brand/data/palette.json`          | `apps/web/src/styles/brand-tokens.css` (generated) |
-| Semantic color roles | `adonis-brand/projects/skills/theme.json` | `apps/web/src/styles/theme-roles.css` (generated)  |
-| Design spec          | `adonis-brand/projects/skills/DESIGN.md`  | `DESIGN.md` (generated)                            |
-| Semantic (non-color) | `DESIGN.md` tokens, implemented here      | `apps/web/src/styles/shadcn-theme.css`             |
-| Component            | this repo                                 | `custom.css`, `components/**`, `app/**`            |
+| Layer                | Source of truth                                                                                                                                                      | In this repo                                       |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Brand                | `adonis-brand/design-system/tokens.json` (scales of the accent theme picked by `projects/skills/theme.json` `designSystem.accent`, currently `teal`)                 | `apps/web/src/styles/brand-tokens.css` (generated) |
+| Semantic color roles | `adonis-brand/design-system/tokens.json` `roles`, plus four site helpers (`ring-halo`, `overlay`, `shadow-tint`, `highlight-tint`) in `scripts/lib/brand-tokens.mjs` | `apps/web/src/styles/theme-roles.css` (generated)  |
+| Design spec          | `adonis-brand/projects/skills/DESIGN.md`                                                                                                                             | `DESIGN.md` (generated)                            |
+| Semantic (non-color) | `DESIGN.md` tokens, implemented here                                                                                                                                 | `apps/web/src/styles/shadcn-theme.css`             |
+| Component            | this repo                                                                                                                                                            | `custom.css`, `components/**`, `app/**`            |
 
 - Never edit generated files. Change `adonis-brand`, commit and push it, then run `pnpm brand:sync` (reads `$BRAND_REPO`, default `../adonis-brand`) and commit the snapshot in `apps/web/src/styles/brand/` with the regenerated CSS and `DESIGN.md`.
-- `pnpm brand:check` (CI) fails when generated files no longer match the snapshot, when the snapshot came from uncommitted brand changes, or when any text pair in `theme.json` falls below 4.5:1. `pnpm design:lint` (CI) runs `designmd lint` on `DESIGN.md`.
-- Components must not contain hex, `rgb()`, `color-mix`, `/NN` opacity modifiers, or Tailwind palette colors (`emerald-*`, `slate-*`, `black`, `white`). Add a semantic role in `theme.json` instead. `pnpm design:check` (CI) enforces this; the only exceptions are the generated files and the shadow formulas in `shadcn-theme.css`.
-- `apps/web/src/lib/og-card.tsx` cannot read CSS variables, so it reads colors by id from `apps/web/src/styles/brand/palette.json`, never from hex literals.
+- `pnpm brand:check` (CI) fails when generated files no longer match the snapshot, when the snapshot came from uncommitted brand changes, or when a design-system text pair falls below its minimum (the pairs mirror `design-system/check.py`). `pnpm design:lint` (CI) runs `designmd lint` on `DESIGN.md`.
+- Components must not contain hex, `rgb()`, `color-mix`, `/NN` opacity modifiers, or Tailwind palette colors (`emerald-*`, `slate-*`, `black`, `white`). Use a design-system role (`--primary`, `--accent`, `--selected`, `--border-strong`, `--danger-text`, …); if none fits, add the role to the design system in adonis-brand first. `pnpm design:check` (CI) enforces this; the only exceptions are the generated files and the shadow formulas in `shadcn-theme.css`.
+- `apps/web/src/lib/og-card.tsx` cannot read CSS variables, so it resolves light-mode roles from `apps/web/src/styles/brand/design-system.json`, never from hex literals.
 
 ## Brand Assets
 

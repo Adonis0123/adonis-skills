@@ -2,28 +2,36 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
 import { siteUrl } from "@/config/site-layout";
-import brandPalette from "@/styles/brand/palette.json";
+import designSystem from "@/styles/brand/design-system.json";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
-// ImageResponse cannot read CSS variables, so read the brand palette snapshot
-// (synced from adonis-brand) directly instead of copying hex values here.
-function brandHex(id: string): string {
-  const color = brandPalette.colors.find((entry) => entry.id === id);
-  if (!color)
+// ImageResponse cannot read CSS variables, so resolve light-mode roles from
+// the design-system snapshot (synced from adonis-brand) instead of copying hex
+// values here. Only plain scale references ("{neutral-2}") are supported.
+function roleHex(role: keyof typeof designSystem.roles.light): string {
+  const ref = /^\{(neutral|accent)-(\d+)\}$/.exec(
+    designSystem.roles.light[role],
+  );
+  const scale =
+    ref?.[1] === "accent"
+      ? designSystem.theme.scale.light
+      : designSystem.scales.neutral.light;
+  const hex = ref ? scale[Number(ref[2]) - 1] : undefined;
+  if (!hex)
     throw new Error(
-      `Brand color "${id}" is missing from apps/web/src/styles/brand/palette.json`,
+      `Design-system role "${role}" is not a plain scale step in apps/web/src/styles/brand/design-system.json`,
     );
-  return color.hex;
+  return hex;
 }
 
-// Same scale steps as the page: background n-2, text n-12 / n-11, link leaf-11, border n-6.
+// Same roles as the page in light mode.
 const palette = {
-  cream: brandHex("n-2"),
-  ink: brandHex("n-12"),
-  inkSoft: brandHex("n-11"),
-  accent: brandHex("leaf-11"),
-  line: brandHex("n-6"),
+  cream: roleHex("background"),
+  ink: roleHex("foreground"),
+  inkSoft: roleHex("muted-foreground"),
+  accent: roleHex("link"),
+  line: roleHex("border"),
 };
 
 // Paths are relative to apps/web, the working directory for `next build`.

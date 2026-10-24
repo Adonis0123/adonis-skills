@@ -1,9 +1,61 @@
-// Pure functions behind scripts/sync-brand-tokens.mjs. The palette and theme
-// come from the private adonis-brand repo (data/palette.json and
-// projects/skills/theme.json); this module turns a public-safe snapshot of
-// them (ids, values, names, contrast rules) into CSS.
+// Pure functions behind scripts/sync-brand-tokens.mjs. Colors come from the
+// design system in the private adonis-brand repo (design-system/tokens.json);
+// projects/skills/theme.json picks the accent theme. This module turns a
+// public-safe snapshot of them (scales, the chosen theme, role formulas) into
+// CSS, following the same reference rules as design-system/check.py.
 
 const HEX = /^#[0-9a-f]{6}$/i;
+const REF = /\{([a-z0-9-]+)\}/g;
+const MIX =
+  /^color-mix\(in srgb, (#[0-9a-f]{6}) (\d+)%, (#[0-9a-f]{6}|transparent)\)$/i;
+const MODES = ["light", "dark"];
+const SCALES = ["neutral", "amber", "red"];
+
+// Text / background / minimum, copied from design-system/check.py. A
+// background written as [role, base] is a translucent role laid on base.
+export const CONTRAST_PAIRS = [
+  ["foreground", "background", 4.5],
+  ["foreground", "card", 4.5],
+  ["muted-foreground", "card", 4.5],
+  ["muted-foreground", "background", 4.5],
+  ["primary-foreground", "primary", 4.5],
+  ["link", "card", 4.5],
+  ["accent-foreground", "accent", 4.5],
+  ["nav-active-foreground", ["nav-active", "sidebar"], 4.5],
+  ["foreground", "selected", 4.5],
+  ["warning-text", "card", 4.5],
+  ["danger-text", "card", 4.5],
+  ["subtle-foreground", "card", 3],
+];
+
+// The design system has no roles for these, but the site's overlays, focus
+// halo and clay shadows need them. They are derived from design-system values
+// only, so switching the accent or the mode still moves them.
+export const SITE_HELPERS = {
+  light: {
+    "ring-halo": "color-mix(in srgb, var(--ring) 30%, transparent)",
+    overlay: "color-mix(in srgb, {neutral-12} 30%, transparent)",
+    "shadow-tint": "{neutral-12}",
+    "highlight-tint": "{neutral-1}",
+  },
+  dark: {
+    "ring-halo": "color-mix(in srgb, var(--ring) 18%, transparent)",
+    overlay: "color-mix(in srgb, {neutral-1} 60%, transparent)",
+    "shadow-tint": "{neutral-1}",
+    "highlight-tint": "{neutral-12}",
+  },
+};
+
+// projects/skills/DESIGN.md (owned by adonis-brand) still names a few roles
+// from the previous site theme; its `colors` map lists them under the design
+// system role that replaced them so `{colors.x}` references keep resolving.
+export const DESIGN_MD_ALIASES = {
+  "primary-hover": "primary",
+  tint: "accent",
+  "tint-border": "ring",
+  plate: "muted",
+  "plate-border": "border",
+};
 
 function luminance(hex) {
   const channel = (start) => {
@@ -19,111 +71,156 @@ export function contrastRatio(a, b) {
   return (light + 0.05) / (dark + 0.05);
 }
 
-function paletteIndex(palette) {
-  const index = new Map();
-  for (const color of palette.colors ?? []) index.set(color.id, color);
-  return index;
+/**
+ * Public subset of design-system/tokens.json for one accent theme: values
+ * only. Notes and `source` fields stay in adonis-brand; they name private paths.
+ */
+export function pickDesignSystem(tokens, accent) {
+  const theme = tokens.themes?.[accent];
+  if (!theme)
+    throw new Error(
+      `design-system/tokens.json has no theme "${accent}"; set projects/skills/theme.json designSystem.accent to one of: ${Object.keys(tokens.themes ?? {}).join(", ")}`,
+    );
+  const { source: _source, ...functional } = tokens.functional;
+  return {
+    updated: tokens.updated,
+    accent,
+    scales: Object.fromEntries(
+      SCALES.map((name) => [
+        name,
+        { light: tokens.scales[name].light, dark: tokens.scales[name].dark },
+      ]),
+    ),
+    functional,
+    theme: {
+      scale: theme.scale,
+      solid: theme.solid,
+      "solid-foreground": theme["solid-foreground"],
+    },
+    roles: tokens.roles,
+  };
+}
+
+const pick = (value, mode) =>
+  typeof value === "object" && value !== null ? value[mode] : value;
+
+/** Scale steps and constants a role may reference, as #rrggbb, for one mode. */
+export function scaleValues(ds, mode) {
+  const values = {};
+  for (const name of SCALES)
+    (ds.scales[name]?.[mode] ?? []).forEach((hex, i) => {
+      values[`${name}-${i + 1}`] = hex;
+    });
+  for (const [name, hex] of Object.entries(ds.functional ?? {}))
+    values[`fn-${name}`] = hex;
+  (ds.theme.scale?.[mode] ?? []).forEach((hex, i) => {
+    values[`accent-${i + 1}`] = hex;
+  });
+  values["accent-solid"] = pick(ds.theme.solid, mode);
+  values["accent-solid-foreground"] = pick(ds.theme["solid-foreground"], mode);
+  return values;
+}
+
+/** CSS variable name for a scale reference, e.g. accent-9 in dark -> --brand-teal-dark-9. */
+function brandVar(ds, mode, key) {
+  const suffix = mode === "dark" ? "-dark" : "";
+  if (key.startsWith("fn-")) return `--brand-${key.slice(3)}`;
+  if (key === "accent-solid" || key === "accent-solid-foreground") {
+    const shared =
+      typeof ds.theme[key === "accent-solid" ? "solid" : "solid-foreground"] !==
+      "object";
+    return `--brand-${ds.accent}${key.slice(6)}${shared ? "" : suffix}`;
+  }
+  const [, name, step] = /^([a-z]+)-(\d+)$/.exec(key);
+  return `--brand-${name === "accent" ? ds.accent : name}${suffix}-${step}`;
+}
+
+/** Resolves every role of one mode to a CSS value with literal hex colors. */
+export function resolveRoles(ds, mode) {
+  const values = scaleValues(ds, mode);
+  const roles = ds.roles[mode] ?? {};
+  const out = {};
+  const errors = [];
+  const resolve = (role, depth = 0) => {
+    if (role in out) return out[role];
+    const text = roles[role].replace(REF, (_, key) => {
+      if (key in values) return values[key];
+      if (key in roles && key !== role && depth < 8)
+        return resolve(key, depth + 1);
+      errors.push(
+        `design-system.json: ${mode}.${role} refers to {${key}}, which is neither a scale step nor a role; fix design-system/tokens.json in adonis-brand`,
+      );
+      return "#000000";
+    });
+    out[role] = text;
+    return text;
+  };
+  for (const role of Object.keys(roles)) resolve(role);
+  return { roles: out, errors };
+}
+
+function rgb(hex) {
+  return [1, 3, 5].map((i) => Number.parseInt(hex.slice(i, i + 2), 16));
+}
+
+/** A #hex or simple color-mix as a solid #rrggbb; transparent sits on base. */
+export function solidHex(value, base) {
+  if (HEX.test(value)) return value.toLowerCase();
+  const m = MIX.exec(value);
+  if (!m) return null;
+  const [, a, pct, b] = m;
+  const under = b === "transparent" ? base : b;
+  if (!under) return null;
+  const p = Number(pct) / 100;
+  const mixed = rgb(a).map((x, i) =>
+    Math.round(x * p + rgb(under)[i] * (1 - p)),
+  );
+  return `#${mixed.map((x) => x.toString(16).padStart(2, "0")).join("")}`;
 }
 
 /**
  * Validates the snapshot and returns human-readable problems; each one names
- * the file, the token, and how to fix it.
+ * the value and how to fix it.
  */
-export function findBrandIssues(palette, theme) {
+export function findBrandIssues(ds) {
   const issues = [];
-  const index = paletteIndex(palette);
-  const seen = new Set();
-
-  for (const color of palette.colors ?? []) {
-    if (seen.has(color.id))
-      issues.push(
-        `palette.json: duplicate id "${color.id}"; keep one entry per id`,
-      );
-    seen.add(color.id);
-    if (!HEX.test(color.hex ?? ""))
-      issues.push(
-        `palette.json: "${color.id}" hex "${color.hex}" must be #rrggbb`,
-      );
-  }
-
-  const modes = theme.modes ?? {};
-  if (!modes.light) issues.push("theme.json: missing modes.light");
-
-  for (const [mode, roles] of Object.entries(modes)) {
-    for (const [role, value] of Object.entries(roles)) {
-      const ref = typeof value === "object" ? value.mix : value;
-      if (typeof value === "object" && !(value.pct > 0 && value.pct <= 100))
-        issues.push(`theme.json: ${mode}.${role} pct must be 1-100`);
-      if (typeof ref !== "string") {
-        issues.push(
-          `theme.json: ${mode}.${role} must be "{id}", "@role", or {"mix", "pct"}`,
-        );
-        continue;
-      }
-      const id = ref.replace(/^\{|\}$/g, "");
-      if (ref.startsWith("@")) {
-        const target = ref.slice(1);
-        if (!(target in roles) && !(target in (modes.light ?? {})))
-          issues.push(
-            `theme.json: ${mode}.${role} refers to unknown role "${ref}"`,
-          );
-      } else if (!index.has(id)) {
-        issues.push(
-          `theme.json: ${mode}.${role} refers to "${id}", which is not in palette.json; add it there first`,
-        );
-      }
+  for (const mode of MODES) {
+    if (!ds.roles?.[mode]) {
+      issues.push(`design-system.json: missing roles.${mode}`);
+      continue;
     }
+    for (const [key, hex] of Object.entries(scaleValues(ds, mode)))
+      if (!HEX.test(hex ?? ""))
+        issues.push(
+          `design-system.json: ${mode} ${key} "${hex}" must be #rrggbb`,
+        );
   }
-
   if (issues.length > 0) return issues;
 
-  const min = theme.contrast?.text ?? 4.5;
-  for (const mode of Object.keys(modes)) {
-    // A pair may carry its own minimum as a third item (e.g. 3 for a bold
-    // primary button label); theme.json records why next to the pair.
-    for (const [fg, bg, pairMin] of theme.contrast?.pairs ?? []) {
-      const a = resolveHex(palette, theme, mode, fg);
-      const b = resolveHex(palette, theme, mode, bg);
+  for (const mode of MODES) {
+    const { roles, errors } = resolveRoles(ds, mode);
+    issues.push(...errors);
+    if (errors.length > 0) continue;
+    const card = solidHex(roles.card);
+    for (const [fg, bg, need] of CONTRAST_PAIRS) {
+      const [bgRole, baseRole] = Array.isArray(bg) ? bg : [bg, "card"];
+      const base = baseRole === "card" ? card : solidHex(roles[baseRole]);
+      const a = solidHex(roles[fg] ?? "");
+      const b = solidHex(roles[bgRole] ?? "", base);
       if (!a || !b) {
         issues.push(
-          `theme.json: contrast pair ${fg}/${bg} in ${mode} must resolve to solid colors (no mix)`,
+          `design-system.json: ${mode} ${fg}/${bgRole} does not resolve to solid colors; text roles must be #hex, backgrounds #hex or color-mix(in srgb, X p%, Y)`,
         );
         continue;
       }
       const ratio = contrastRatio(a, b);
-      const need = typeof pairMin === "number" ? pairMin : min;
       if (ratio < need)
         issues.push(
-          `theme.json: ${mode} ${fg} ${a} on ${bg} ${b} is ${ratio.toFixed(2)}:1, below ${need}:1; pick a darker/lighter palette color`,
+          `design-system.json: ${mode} ${fg} ${a} on ${bgRole} ${b} is ${ratio.toFixed(2)}:1, below ${need}:1; fix the theme in adonis-brand and run design-system/check.py`,
         );
     }
   }
   return issues;
-}
-
-/** Resolves a role to a solid #rrggbb, following @role references; null for mixes. */
-export function resolveHex(palette, theme, mode, role, depth = 0) {
-  const modes = theme.modes;
-  const value = modes[mode]?.[role] ?? modes.light?.[role];
-  if (value === undefined || typeof value === "object" || depth > 8)
-    return null;
-  if (value.startsWith("@"))
-    return resolveHex(palette, theme, mode, value.slice(1), depth + 1);
-  return (
-    paletteIndex(palette)
-      .get(value.replace(/^\{|\}$/g, ""))
-      ?.hex.toLowerCase() ?? null
-  );
-}
-
-function roleValue(value) {
-  const ref = typeof value === "object" ? value.mix : value;
-  const css = ref.startsWith("@")
-    ? `var(--${ref.slice(1)})`
-    : `var(--brand-${ref.replace(/^\{|\}$/g, "")})`;
-  return typeof value === "object"
-    ? `color-mix(in oklab, ${css} ${value.pct}%, transparent)`
-    : css;
 }
 
 function header(source) {
@@ -138,55 +235,72 @@ function header(source) {
   ].join("\n");
 }
 
-/** Brand layer: one --brand-<id> variable per palette color, with its provenance. */
-export function renderBrandTokensCss(palette, source) {
-  const lines = (palette.colors ?? []).map(
-    (color) =>
-      `  --brand-${color.id}: ${color.hex.toLowerCase()}; /* ${color.name.en} (${color.group}) */`,
-  );
+/** Brand layer: one --brand-* variable per scale step of the chosen theme. */
+export function renderBrandTokensCss(ds, source) {
+  const lines = [];
+  const seen = new Set();
+  for (const mode of MODES)
+    for (const [key, hex] of Object.entries(scaleValues(ds, mode))) {
+      const name = brandVar(ds, mode, key);
+      if (seen.has(name)) continue;
+      seen.add(name);
+      lines.push(`  ${name}: ${hex.toLowerCase()}; /* ${mode} ${key} */`);
+    }
   return `${header(source)}\n:root {\n${lines.join("\n")}\n}\n`;
 }
 
-/** Semantic color roles for light and dark mode, all pointing at --brand-* tokens. */
-export function renderThemeRolesCss(theme, source) {
-  const block = (roles) =>
-    Object.entries(roles)
-      .map(([role, value]) => {
-        const ref =
-          typeof value === "object" ? `${value.mix} ${value.pct}%` : value;
-        return `  --${role}: ${roleValue(value)}; /* ${ref} */`;
-      })
-      .join("\n");
-  const parts = [header(source), `:root {\n${block(theme.modes.light)}\n}`];
-  if (theme.modes.dark)
-    parts.push(
-      `.dark,\n:root[data-theme="dark"] {\n${block(theme.modes.dark)}\n}`,
+/** Semantic roles for light and dark mode; references become var(). */
+export function renderThemeRolesCss(ds, source) {
+  const block = (mode) => {
+    const roles = ds.roles[mode];
+    const values = scaleValues(ds, mode);
+    const toCss = (formula) =>
+      formula.replace(REF, (_, key) =>
+        key in values ? `var(${brandVar(ds, mode, key)})` : `var(--${key})`,
+      );
+    const lines = Object.entries(roles).map(
+      ([role, formula]) => `  --${role}: ${toCss(formula)}; /* ${formula} */`,
     );
-  return `${parts.join("\n\n")}\n`;
+    lines.push("  /* Site helpers: no design-system role covers these. */");
+    for (const [role, formula] of Object.entries(SITE_HELPERS[mode]))
+      lines.push(`  --${role}: ${toCss(formula)};`);
+    return lines.join("\n");
+  };
+  return `${[
+    header(source),
+    `:root {\n${block("light")}\n}`,
+    `.dark,\n:root[data-theme="dark"] {\n${block("dark")}\n}`,
+  ].join("\n\n")}\n`;
 }
 
 /**
  * Root DESIGN.md (google-labs-code/design.md format) from the brand repo's
- * projects/skills/DESIGN.md: injects a `colors` map resolved from the theme so
- * hex values live only in palette.json. Dark roles get a `-dark` suffix; mixes
- * (translucent overlays) are skipped because they are not solid colors.
+ * projects/skills/DESIGN.md: injects a `colors` map resolved from the design
+ * system so hex values live only in tokens.json. Dark roles get a `-dark`
+ * suffix; gradients and translucent roles without a base are skipped.
  */
-export function renderDesignMd(designSource, palette, theme, source) {
+export function renderDesignMd(designSource, ds, source) {
   const match = /^---\n([\s\S]*?)\n---\n/.exec(designSource);
   if (!match) throw new Error("DESIGN.md source has no YAML front matter.");
   if (/^colors:/m.test(match[1]))
     throw new Error(
-      "DESIGN.md source must not define `colors`; they come from theme.json.",
+      "DESIGN.md source must not define `colors`; they come from design-system/tokens.json.",
     );
   const colorLines = [];
   for (const [mode, suffix] of [
     ["light", ""],
     ["dark", "-dark"],
   ]) {
-    for (const role of Object.keys(theme.modes[mode] ?? {})) {
-      const hex = resolveHex(palette, theme, mode, role);
-      if (hex) colorLines.push(`  ${role}${suffix}: "${hex}"`);
+    const { roles } = resolveRoles(ds, mode);
+    const hexes = {};
+    for (const [role, value] of Object.entries(roles)) {
+      const hex = solidHex(value, solidHex(roles.card));
+      if (hex) hexes[role] = hex;
     }
+    for (const [alias, role] of Object.entries(DESIGN_MD_ALIASES))
+      if (hexes[role] && !(alias in hexes)) hexes[alias] = hexes[role];
+    for (const [role, hex] of Object.entries(hexes))
+      colorLines.push(`  ${role}${suffix}: "${hex}"`);
   }
   const from = source?.commit
     ? `adonis-brand@${source.commit.slice(0, 12)}`

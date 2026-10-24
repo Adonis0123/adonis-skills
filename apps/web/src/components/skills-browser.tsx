@@ -312,8 +312,8 @@ export function SkillsBrowser({
                         className={cx(
                           "clay-focus-ring inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-colors pointer-coarse:h-10",
                           selected
-                            ? "border-tint-border bg-accent text-accent-foreground"
-                            : "border-border bg-card text-muted-foreground hover:border-tint-border hover:text-foreground",
+                            ? "border-accent bg-accent text-accent-foreground"
+                            : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground",
                         )}
                       >
                         {selected && (

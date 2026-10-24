@@ -83,7 +83,7 @@ export function HeaderSearch() {
     <form
       role="search"
       onSubmit={onSubmit}
-      className="clay-focus-within-ring flex h-10 w-60 items-center gap-2 rounded-[10px] border border-border bg-card pr-2 pl-3 text-muted-foreground transition-colors focus-within:border-tint-border xl:w-64"
+      className="clay-focus-within-ring flex h-10 w-60 items-center gap-2 rounded-[10px] border border-border bg-card pr-2 pl-3 text-muted-foreground transition-colors focus-within:border-ring xl:w-64"
     >
       <span className="icon-[lucide--search] size-4 shrink-0" aria-hidden />
       <input

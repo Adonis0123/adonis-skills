@@ -1,6 +1,8 @@
-// Brand sync. adonis-brand (private) owns the colors and the design spec; this
-// public repo keeps a snapshot under apps/web/src/styles/brand/ and generates
-// CSS plus the root DESIGN.md from it.
+// Brand sync. adonis-brand (private) owns the colors (its design system,
+// design-system/tokens.json) and the design spec; projects/skills/theme.json
+// picks the accent theme (`designSystem.accent`). This public repo keeps a
+// snapshot under apps/web/src/styles/brand/ and generates CSS plus the root
+// DESIGN.md from it.
 //
 //   node scripts/sync-brand-tokens.mjs --from <adonis-brand dir>   copy snapshot + regenerate
 //   node scripts/sync-brand-tokens.mjs                             regenerate from snapshot
@@ -11,6 +13,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   findBrandIssues,
+  pickDesignSystem,
   renderBrandTokensCss,
   renderDesignMd,
   renderThemeRolesCss,
@@ -20,8 +23,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const stylesDir = path.join(root, "apps/web/src/styles");
 const snapshotDir = path.join(stylesDir, "brand");
 const files = {
-  palette: path.join(snapshotDir, "palette.json"),
-  theme: path.join(snapshotDir, "theme.json"),
+  designSystem: path.join(snapshotDir, "design-system.json"),
   source: path.join(snapshotDir, "source.json"),
   design: path.join(snapshotDir, "DESIGN.source.md"),
   designMd: path.join(root, "DESIGN.md"),
@@ -44,66 +46,50 @@ function git(dir, gitArgs) {
   }).trim();
 }
 
+const BRAND_FILES = [
+  "design-system/tokens.json",
+  "projects/skills/theme.json",
+  "projects/skills/DESIGN.md",
+];
+
 async function copySnapshot(brandDir) {
   const resolved = path.resolve(brandDir);
-  const palettePath = path.join(resolved, "data/palette.json");
-  const themePath = path.join(resolved, "projects/skills/theme.json");
-  const designPath = path.join(resolved, "projects/skills/DESIGN.md");
+  const [tokensPath, themePath, designPath] = BRAND_FILES.map((file) =>
+    path.join(resolved, file),
+  );
   try {
-    await fs.access(palettePath);
-    await fs.access(themePath);
-    await fs.access(designPath);
+    await Promise.all(
+      BRAND_FILES.map((file) => fs.access(path.join(resolved, file))),
+    );
   } catch {
     throw new Error(
-      `adonis-brand not found at ${resolved}: expected data/palette.json, projects/skills/theme.json and projects/skills/DESIGN.md. Pass --from <dir> or set BRAND_REPO.`,
+      `adonis-brand not found at ${resolved}: expected ${BRAND_FILES.join(", ")}. Pass --from <dir> or set BRAND_REPO.`,
     );
   }
   const dirty =
-    git(resolved, [
-      "status",
-      "--porcelain",
-      "--",
-      "data/palette.json",
-      "projects/skills/theme.json",
-      "projects/skills/DESIGN.md",
-    ]) !== "";
+    git(resolved, ["status", "--porcelain", "--", ...BRAND_FILES]) !== "";
   const source = {
     repo: "adonis-brand",
     commit: git(resolved, ["rev-parse", "HEAD"]),
     // Uncommitted brand edits are allowed while designing, but flagged so the
     // snapshot is re-synced after the brand repo commits them.
     dirty,
-    files: [
-      "data/palette.json",
-      "projects/skills/theme.json",
-      "projects/skills/DESIGN.md",
-    ],
+    files: BRAND_FILES,
   };
-  // adonis-brand is private: publish only what the site needs (ids, values,
-  // names, contrast rules). Sources, usage notes, and decision text stay there;
-  // `source.commit` points back to them.
-  const palette = JSON.parse(await fs.readFile(palettePath, "utf8"));
-  const theme = JSON.parse(await fs.readFile(themePath, "utf8"));
-  const publicPalette = {
-    updated: palette.updated,
-    colors: palette.colors.map(({ id, hex, group, name }) => ({
-      id,
-      hex,
-      group,
-      name: { en: name.en },
-    })),
-  };
-  const publicTheme = {
-    updated: theme.updated,
-    modes: theme.modes,
-    contrast: theme.contrast,
-  };
+  const theme = await readJson(themePath);
+  const accent = theme.designSystem?.accent;
+  if (!accent)
+    throw new Error(
+      `${themePath} has no designSystem.accent; add e.g. "designSystem": { "accent": "teal" }.`,
+    );
+  // adonis-brand is private: publish only values (scales, the chosen theme,
+  // role formulas). Notes and sources stay there; `source.commit` points back.
+  const designSystem = pickDesignSystem(await readJson(tokensPath), accent);
   await fs.mkdir(snapshotDir, { recursive: true });
   await fs.writeFile(
-    files.palette,
-    `${JSON.stringify(publicPalette, null, 2)}\n`,
+    files.designSystem,
+    `${JSON.stringify(designSystem, null, 2)}\n`,
   );
-  await fs.writeFile(files.theme, `${JSON.stringify(publicTheme, null, 2)}\n`);
   await fs.writeFile(files.source, `${JSON.stringify(source, null, 2)}\n`);
   // DESIGN.md is the site's public design spec, so it is copied whole.
   await fs.copyFile(designPath, files.design);
@@ -114,22 +100,20 @@ async function main() {
   const source = from
     ? await copySnapshot(from)
     : await readJson(files.source).catch(() => null);
-  const palette = await readJson(files.palette);
-  const theme = await readJson(files.theme);
+  const designSystem = await readJson(files.designSystem);
 
-  const issues = findBrandIssues(palette, theme);
+  const issues = findBrandIssues(designSystem);
   if (issues.length > 0)
     throw new Error(`Brand snapshot is invalid:\n- ${issues.join("\n- ")}`);
 
   const outputs = [
-    [files.brandCss, renderBrandTokensCss(palette, source)],
-    [files.themeCss, renderThemeRolesCss(theme, source)],
+    [files.brandCss, renderBrandTokensCss(designSystem, source)],
+    [files.themeCss, renderThemeRolesCss(designSystem, source)],
     [
       files.designMd,
       renderDesignMd(
         await fs.readFile(files.design, "utf8"),
-        palette,
-        theme,
+        designSystem,
         source,
       ),
     ],
