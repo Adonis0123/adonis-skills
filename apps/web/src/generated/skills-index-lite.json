@@ -422,6 +422,41 @@
     }
   },
   {
+    "slug": "design-system",
+    "name": "design-system",
+    "description": "Run a shared multi-site design system where every product swaps only its interface accent color: analyze any website's theme colors and roles, wire a new site or plugin to the semantic tokens, and lint plugins for hard-coded colors, fallback values and unknown roles. Use when the user gives a URL and asks what its theme or palette is, asks to connect a site to the design system, add an accent theme, or check whether a plugin follows the theme contract. Skip one-off styling tweaks, logo or illustration work, and plugin-architecture refactors (code-plugin-architecture).",
+    "metadata": {
+      "author": "adonis",
+      "version": "0.1.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    },
+    "updatedAt": "2026-10-24T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Shared Design System",
+        "zh": "共用设计系统"
+      },
+      "group": "frontend",
+      "tags": [
+        "frontend"
+      ],
+      "summary": "Share one design system across sites: analyze a site's theme colors, wire sites to tokens, lint plugins for hard-coded colors.",
+      "summary_zh": "多个站点共用一套设计系统：分析任意站点的主题色，把站点接到语义 token 上，并检查插件有没有写死颜色。",
+      "use_cases": [
+        "Give a URL and get its accent color, neutral tone, button contrast and selected-state pattern, each marked measured or inferred.",
+        "Add a new accent theme or connect a site, then lint its plugins for hard-coded colors, fallback values and unknown roles."
+      ],
+      "use_cases_zh": [
+        "丢一个网址，拿回它的强调色、中性色冷暖、按钮对比度和选中态做法，每项标明实测还是推断。",
+        "新增一套强调色主题或接入一个站点，再检查插件里写死的颜色、后备色和不存在的角色。"
+      ]
+    }
+  },
+  {
     "slug": "desktop-agent-activity",
     "name": "desktop-agent-activity",
     "description": "Use when 查 Orca/Claude Code 是否还在干活. Process+files first.",
