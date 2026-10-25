@@ -1,9 +1,9 @@
 ---
 name: figma-mcp
-description: "Use this skill for every /figma-mcp invocation, which covers two jobs. First, implement or match a UI from a Figma design URL or file key (e.g. '/figma-mcp <url> 按设计稿把这个页面做成 React', '/figma-mcp <url> 还原度要高'): hand the visual work to figma-design-to-code and follow it through to a finished screen, not stop at a metadata read or a screenshot. Second, install, authenticate, switch accounts, recover, or verify the official Figma MCP server across Codex, Claude Code, Cursor, or Grok Build. Keep registration account-neutral and each supported host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write, and multi-host checks; for a current-account single-host read task, including the implement/match path, let the first requested official read prove tool and auth readiness without a redundant identity call. Also use it to read, filter, or audit Figma file comments (resolved review threads, design review feedback), which the MCP cannot read, and to decide when a read may fall back to the Figma REST API with the user's token, such as on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts."
+description: "Handles every /figma-mcp invocation, which covers two jobs. First, implement or match a UI from a Figma design URL or file key (e.g. '/figma-mcp 按设计稿把这个页面做成 React', '/figma-mcp 还原度要高'): hand the visual work to figma-design-to-code and follow through to a finished screen, not just a metadata read or screenshot. Second, install, authenticate, switch accounts, recover or verify the official Figma MCP server in Codex, Claude Code, Cursor or Grok Build, keeping registration account-neutral and each host's OAuth flow authoritative. Use whoami for readiness, named-account, recovery, write and multi-host checks; for a current-account single-host read, including implement/match, let the first official read prove readiness instead of a separate identity call. Also read, filter, or audit Figma file comments (resolved review threads), which the MCP cannot read, and decide when to fall back to the Figma REST API with the user's token, e.g. on hosts outside the MCP Catalog like pi. Never copy OAuth tokens between hosts."
 metadata:
   author: adonis
-  version: "1.6.0"
+  version: "1.6.1"
 ---
 
 # Figma MCP

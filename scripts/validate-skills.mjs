@@ -20,6 +20,29 @@ function parseFrontmatter(content) {
   return YAML.parse(match[1]) || {};
 }
 
+// Agent Skills spec (agentskills.io/specification) and Claude's skill authoring
+// guide: description is 1-1024 characters and cannot contain XML tags.
+export const DESCRIPTION_MAX_LENGTH = 1024;
+
+export function descriptionProblems(rawDescription) {
+  const description = rawDescription.trim();
+  const problems = [];
+  if (description.length < 20)
+    problems.push(
+      "frontmatter.description 过短（至少 20 字符，供工具选择器展示）",
+    );
+  if (description.length > DESCRIPTION_MAX_LENGTH)
+    problems.push(
+      `frontmatter.description 有 ${description.length} 字符，超过 Agent Skills 上限 ${DESCRIPTION_MAX_LENGTH}；删掉重复的触发词或把细节移进 SKILL.md 正文`,
+    );
+  const tags = description.match(/<\/?[A-Za-z][^<>]*>/g);
+  if (tags)
+    problems.push(
+      `frontmatter.description 含 XML 标签 ${tags.join(" ")}，Agent Skills 不允许；改用不带尖括号的写法（如 URL 代替 <url>）`,
+    );
+  return problems;
+}
+
 async function exists(targetPath) {
   try {
     await fs.access(targetPath);
@@ -100,12 +123,8 @@ async function main() {
     ) {
       errors.push(`[${entry.name}] frontmatter.description 不能为空`);
     } else {
-      const description = frontmatter.description.trim();
-      if (description.length < 20) {
-        errors.push(
-          `[${entry.name}] frontmatter.description 过短（至少 20 字符，供工具选择器展示）`,
-        );
-      }
+      for (const problem of descriptionProblems(frontmatter.description))
+        errors.push(`[${entry.name}] ${problem}`);
     }
 
     if (
@@ -153,7 +172,11 @@ async function main() {
   console.log("Skills 校验通过");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+)
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });

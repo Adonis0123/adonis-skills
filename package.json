@@ -31,7 +31,7 @@
     "brand:sync": "node scripts/sync-brand-tokens.mjs --from \"${BRAND_REPO:-../adonis-brand}\"",
     "brand:check": "node scripts/sync-brand-tokens.mjs --check",
     "design:check": "node scripts/check-design-tokens.mjs",
-    "test:scripts": "node --experimental-strip-types --test --test-concurrency=2 ./scripts/__tests__/ardot-mcp-public.test.ts ./scripts/__tests__/chrome-dev-mcp-public.test.ts ./scripts/__tests__/uxc-facade-public.test.ts ./scripts/__tests__/finalize-new-skills.test.ts ./scripts/__tests__/finalize-skill.test.ts ./scripts/__tests__/install-local-skills.test.ts ./scripts/__tests__/workflow-gate-public.test.ts ./scripts/__tests__/grade-skill-evals.test.mjs ./scripts/__tests__/brand-tokens.test.mjs ./scripts/__tests__/check-design-tokens.test.mjs ./scripts/__tests__/generate-skills-index-sections.test.mjs ./scripts/__tests__/generate-skills-index-updated-at.test.mjs",
+    "test:scripts": "node --experimental-strip-types --test --test-concurrency=2 ./scripts/__tests__/ardot-mcp-public.test.ts ./scripts/__tests__/chrome-dev-mcp-public.test.ts ./scripts/__tests__/uxc-facade-public.test.ts ./scripts/__tests__/finalize-new-skills.test.ts ./scripts/__tests__/finalize-skill.test.ts ./scripts/__tests__/install-local-skills.test.ts ./scripts/__tests__/workflow-gate-public.test.ts ./scripts/__tests__/grade-skill-evals.test.mjs ./scripts/__tests__/brand-tokens.test.mjs ./scripts/__tests__/check-design-tokens.test.mjs ./scripts/__tests__/generate-skills-index-sections.test.mjs ./scripts/__tests__/generate-skills-index-updated-at.test.mjs ./scripts/__tests__/validate-skills.test.mjs",
     "design:lint": "designmd lint DESIGN.md",
     "precommit:skills": "node scripts/precommit-skills.mjs"
   },
