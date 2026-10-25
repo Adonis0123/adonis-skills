@@ -23,7 +23,7 @@ claude plugin eval . --eval-dir evals/agent-dispatch --runs 3 --ablation with-wi
 
 在仓库根目录运行。套件生成在 `evals/agent-dispatch/`，这个目录已加入 gitignore。`claude plugin eval` 不接受放在 `skills/` 里的测评目录。
 
-加载组只装这一个 skill。对照组完全拿不到它，包括装在 home 目录里的副本。每条断言是一个单独的 LLM 评分器，所以用例得分是满足的断言占比，报告会点名没过的那条。`result.json` 里每条用例有 `score`、`scoreWithout`、`delta` 三个值。评审模型看到的 transcript 中间段会被省略，长任务里埋在中间的步骤可能被判成“没做”。`partial: true` 表示这次没跑完。以 API 错误结束的 run（例如 "You've hit your session limit"）直接记 0 分不评，run log 末尾会统计条数；这些用例换个账号重跑。`--case` 只支持单个普通 `*` 通配（不支持 `[..]`、`{..}`），要重跑多条用例，就把它们生成的目录复制到另一个 gitignore 的目录，再用 `--eval-dir` 指过去。用到 Run 台账 fixture 的用例会告诉 agent：台账是静态快照，后台 `watch` 只需说明怎么挂。原因是副本里没有任何东西在跑，文件放满 5 分钟后 `watch` 就会唤醒，最后一条回复变成报告这个假沉默，而不是回答用户。有些断言写了台账命令，对照组不可能知道，所以 delta 里有一部分是“认不认识命令”，不全是“选档更准”。
+加载组只装这一个 skill。对照组完全拿不到它，包括装在 home 目录里的副本。每条断言是一个单独的 LLM 评分器，所以用例得分是满足的断言占比，报告会点名没过的那条。`result.json` 里每条用例有 `score`、`scoreWithout`、`delta` 三个值。评审模型看到的 transcript 中间段会被省略，长任务里埋在中间的步骤可能被判成“没做”。`partial: true` 表示这次没跑完。以 API 错误结束的 run（例如 "You've hit your session limit"）直接记 0 分不评，run log 末尾会统计条数；这些用例换个账号重跑。`--case` 只支持单个普通 `*` 通配（不支持 `[..]`、`{..}`），要重跑多条用例，就把它们生成的目录复制到另一个 gitignore 的目录，再用 `--eval-dir` 指过去。用到 Run 台账 fixture 的用例会告诉 agent：台账是静态快照，后台 `watch` 只需说明怎么挂。原因是副本里没有任何东西在跑，文件放满 5 分钟后 `watch` 就会唤醒，最后一条回复变成报告这个假沉默，而不是回答用户。有些断言写了台账命令，对照组不可能知道，所以 delta 里有一部分是“认不认识命令”，不全是“选档更准”。沙箱里没有 `sideby`，所以列了 `fixtures/sideby-stub/sideby` 的用例会拿到一个替身：它用 fixture 数据回答 `sessions`、`send` 等几条命令，输出格式和真 CLI 的 `--json` 一致，消息不会真的发出；提示里会让 agent 把它放到 `PATH` 上。台账和 sideby 用例的评分器看完整过程，因为正确的最终回答不一定会重复它用了哪条命令。套件生成脚本和替身的单元测试：`python3 -m unittest discover -s skills/agent-dispatch/evals -p 'test_*.py'`。
 
 ## B. 自己做对比派活的结果对比
 
@@ -67,4 +67,12 @@ python3 $B/compare.py <dir>/results.jsonl --md <dir>/report.md
 
 ## 触发测评
 
-[`trigger-eval-set.json`](trigger-eval-set.json) 配合 skill-creator 的 `scripts/run_eval.py` 使用。如果机器上已经装了 agent-dispatch，装好的那份会先被调用，新旧 description 都会显示“未触发”。所以要在没装这个 skill 的机器上跑。
+[`trigger-eval-set.json`](trigger-eval-set.json) 列出应该加载和不该加载这个 skill 的提示词。每条生成一个用例，用 `--ablation none` 运行（默认会多跑一组加载不了 skill 的对照组）：
+
+```bash
+python3 skills/agent-dispatch/evals/build_plugin_eval.py --trigger
+claude plugin eval . --eval-dir evals/agent-dispatch-trigger --runs 3 --ablation none --allow-tools Bash Write Edit \
+  --trust-plugin --no-publish -j 4 --output-dir <out> --json <out>/result.json
+```
+
+每条用例只有一个免费评分器：Skill 工具加载了 agent-dispatch（`NN-fires`），或者从没加载（`NN-stays-off`，`min: 0` 且 `max: 0`）。运行时只看得到这一份 skill，装在 home 目录里的副本抢不到先手。skill-creator 的 `scripts/run_eval.py` 在装了这个 skill 的机器上会把每条都读成“未触发”，原因就在这里。每次最多 15 轮，开始动手干活的 run 可能会撞到这个上限。

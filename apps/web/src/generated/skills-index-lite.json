@@ -2,10 +2,10 @@
   {
     "slug": "agent-dispatch",
     "name": "agent-dispatch",
-    "description": "Choose the lightest agent setup for a coding, review, drafting or design-research task: do it yourself, fan out to 2-3 workers with independent parts across the Claude Code, Codex, Grok Build, Cursor or other CLIs and accounts on this machine, run a scoped architecture loop, or send one brief to independent researchers; pick a cross-model reviewer, test budget and cleanup; track dispatched work, external waits and user decisions on a Run Board. Use when work may need delegation, or the user asks to dispatch, fan out, parallelize, run several agents or accounts, get another AI's review or independent design opinions, or asks how dispatched work is going. Chinese triggers: 派活、并行、多开、分给多个 Claude 账号 / codex / grok、找另一个 AI 审、对比优秀设计、多方意见、进度看板、派出的任务进行到哪了。Not for unrelated read-only questions, trivial edits, research with no delegation, a single review of an existing diff (agentic-review-handoff), or the machine-wide session list (sideby sessions). Inside another named workflow, only size its workers.",
+    "description": "Choose the lightest agent setup for a coding, review, drafting or design-research task: do it yourself, fan out to 2-3 workers with independent parts across the Claude Code, Codex, Grok Build, Cursor or other CLIs and accounts on this machine, run a scoped architecture loop, or send one brief to independent researchers; pick a cross-model reviewer, test budget and cleanup; track dispatched work, external waits and user decisions on a Run Board. Use when work may need delegation, or the user asks to dispatch, fan out, parallelize, run several agents or accounts, get another AI's review or independent design opinions, or asks how dispatched work is going. Chinese triggers: 派活、并行、要不要多开几个 agent、分给多个 Claude 账号 / codex / grok、找另一个 AI 审、对比优秀设计、多方意见、进度看板、派出的任务进行到哪了。Not for unrelated read-only questions, trivial edits, research with no delegation, a single review of an existing diff (agentic-review-handoff), or the machine-wide session list (sideby sessions). Inside another named workflow, only size its workers.",
     "metadata": {
       "author": "adonis",
-      "version": "1.10.0"
+      "version": "1.10.1"
     },
     "files": {
       "hasReferences": true,

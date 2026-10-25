@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+"""Eval stand-in for sideby: answers from sessions.json beside it; nothing is sent anywhere.
+
+Output shapes follow `sideby <command> --json` schemaVersion 1. Unsupported commands exit 2.
+"""
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+HERE = Path(__file__).resolve().parent
+SEND_HELP = """sideby send <account|session> "<text>" [--image <path>]... [--lang en|zh] [--json]
+
+Tell another running session something. <session> is a session id or its first 8 characters (see `sideby sessions`).
+A Claude Code session gets it at once; Codex, Grok Build and pi need the user to paste one line sideby copies.
+Exit: 0 delivered or kept for pasting; 1 no such running session or several to choose from; 2 malformed command line."""
+
+
+def sessions():
+    return json.loads((HERE / "sessions.json").read_text(encoding="utf-8"))
+
+
+def out(data, as_json, text):
+    print(json.dumps(data, ensure_ascii=False, indent=2) if as_json else text)
+    return 0
+
+
+def find(target):
+    rows = [s for s in sessions()["sessions"]
+            if s["sessionId"].startswith(target) or target in (s["account"], s.get("accountLabel"))]
+    return rows
+
+
+def send(args, as_json):
+    if "--help" in args or "-h" in args:
+        print(SEND_HELP)
+        return 0
+    words = [a for a in args if not a.startswith("--")]
+    if len(words) < 2:
+        print("sideby send: needs a target and the text", file=sys.stderr)
+        return 2
+    target, text = words[0], words[1]
+    rows = find(target)
+    if len(rows) != 1:
+        print(f"sideby send: {'no running session' if not rows else 'several sessions'} match {target}", file=sys.stderr)
+        return 1
+    s = rows[0]
+    msg_id = "m" + s["sessionId"][:6]
+    file = f"~/.local/state/sideby/messages/{s['sessionId'][:8]}/{msg_id}.md"
+    claude = s["family"] == "claude"
+    receipt = {
+        "id": msg_id, "to": s.get("label", s["sessionId"]), "toSessionId": s["sessionId"], "toAccount": s["account"],
+        "status": "delivered" if claude else "paste-needed", "file": file, "attachments": [],
+        "pasteText": f"Read the message sideby kept for you at {file}",
+        "sentAt": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    if not claude:
+        receipt["note"] = f"{s['family']} has no channel sideby can deliver to; paste the line into its tab."
+    with (HERE / "sent.log").open("a", encoding="utf-8") as log:
+        log.write(json.dumps({"to": s["sessionId"], "text": text}, ensure_ascii=False) + "\n")
+    return out({"schemaVersion": 1, "message": receipt, "copied": not claude}, as_json,
+               f"{receipt['status']}: {receipt['to']}")
+
+
+def main(argv):
+    as_json = "--json" in argv
+    args = [a for a in argv if a != "--json"]
+    cmd = args[:1]
+    if cmd == ["sessions"] and args[1:2] == ["copy"] and len(args) > 2:
+        rows = find(args[2])
+        if len(rows) != 1:
+            return 1
+        return out({"schemaVersion": 1, "reference": rows[0]["label"]}, as_json, rows[0]["label"])
+    if cmd == ["sessions"]:
+        data = sessions()
+        return out(data, as_json, "\n".join(f"{s['label']}  {s['status']}" for s in data["sessions"]))
+    if cmd == ["send"]:
+        return send(args[1:], as_json)
+    if cmd == ["messages"]:
+        return out({"schemaVersion": 1, "messages": []}, as_json, "no messages")
+    if cmd == ["list"]:
+        accounts = sorted({(s["family"], s["account"]) for s in sessions()["sessions"]})
+        return out({"schemaVersion": 1, "accounts": [{"family": f, "ref": r, "sameLogin": []} for f, r in accounts]},
+                   as_json, "\n".join(r for _, r in accounts))
+    if args[:3] == ["config", "get", "aliases"]:
+        return out({"schemaVersion": 1, "value": {}}, as_json, "{}")
+    if cmd == ["ui"]:
+        print("sideby ui: the Panel cannot open in this eval sandbox (no desktop)", file=sys.stderr)
+        return 1
+    if cmd in (["--version"], ["-v"]):
+        print("sideby eval-stub")
+        return 0
+    print(f"sideby eval-stub: {' '.join(args) or '(no command)'} is not available here", file=sys.stderr)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

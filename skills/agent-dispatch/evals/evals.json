@@ -148,7 +148,7 @@
       "name": "global-session-list-is-not-a-dispatch",
       "prompt": "列出本机所有会话",
       "expected_output": "Detect sideby sessions --json at runtime; explain its valid schemaVersion 1 list in plain words. Do not create a Run. Fall back to claude agents / Orca sidebar if absent, malformed or timed out.",
-      "files": [],
+      "files": ["fixtures/sideby-stub/sideby"],
       "assertions": [
         "Uses sideby sessions when available",
         "Keeps machine-wide listing in sideby, not a Run",
@@ -229,7 +229,8 @@
       "expected_output": "Read the Ask recommendation and linked session. Detect sideby send --help, send the exact answer when available, records the answer with ask answer, and reports the actual sideby receipt in chat without inventing success. Orca Worker uses orchestration reply. Use existing product fallback if unsupported. No per-message approval for this local Worker; external messages still need authorization.",
       "files": [
         "fixtures/run-sessions/run.json",
-        "fixtures/run-sessions/sessions.json"
+        "fixtures/run-sessions/sessions.json",
+        "fixtures/sideby-stub/sideby"
       ],
       "assertions": [
         "Detects send support",

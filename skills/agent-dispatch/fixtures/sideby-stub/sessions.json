@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "sessions": [
+    {
+      "account": "claude:003",
+      "accountLabel": "cc003",
+      "family": "claude",
+      "sessionId": "6e9c249d-9a58-427f-bd46-95697fc8897a",
+      "title": "B9 卡片",
+      "label": "cc003 · B9 卡片 · 6e9c249d",
+      "status": "needs-you",
+      "guessed": false,
+      "resumeCommand": "sideby resume 6e9c249d-9a58-427f-bd46-95697fc8897a"
+    },
+    {
+      "account": "claude:003",
+      "accountLabel": "cc003",
+      "family": "claude",
+      "sessionId": "d731f90c-2e74-4b28-91ef-a46e4ffbe612",
+      "title": "M3b 修复审查",
+      "label": "cc003 · M3b 修复审查 · d731f90c",
+      "status": "idle",
+      "guessed": false,
+      "resumeCommand": "sideby resume d731f90c-2e74-4b28-91ef-a46e4ffbe612"
+    },
+    {
+      "account": "claude:001",
+      "accountLabel": "cc001",
+      "family": "claude",
+      "sessionId": "0b51c7e2-4d1f-4a8e-9c3a-5e2f7d9a1b64",
+      "title": "登录页改版",
+      "label": "cc001 · 登录页改版 · 0b51c7e2",
+      "status": "busy",
+      "guessed": false,
+      "resumeCommand": "sideby resume 0b51c7e2-4d1f-4a8e-9c3a-5e2f7d9a1b64"
+    },
+    {
+      "account": "codex:team",
+      "accountLabel": "codex-team",
+      "family": "codex",
+      "sessionId": "3f9a2c71-8e65-4b0d-a1f4-c2d7e8b90a15",
+      "title": "API 限流审查",
+      "label": "codex-team · API 限流审查 · 3f9a2c71",
+      "status": "idle",
+      "guessed": true,
+      "resumeCommand": "sideby resume 3f9a2c71-8e65-4b0d-a1f4-c2d7e8b90a15"
+    }
+  ],
+  "problems": []
+}

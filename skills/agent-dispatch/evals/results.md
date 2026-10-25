@@ -2,6 +2,32 @@
 
 Newest run first. Add a section per measured change; keep old sections for comparison. How to run each check: [README.md](README.md).
 
+## 2026-10-26 · skill 1.10.1 · claude-opus-5-5 (judge: sonnet) · Claude Code 2.1.309
+
+Follow-up on the UNVERIFIED items of 2026-10-25.
+
+### A. Cases 10 and 15 with a sideby stand-in
+
+The sandbox has no `sideby`, so both cases could only describe what they would do. `fixtures/sideby-stub/sideby` now answers `sessions`, `send` and a few other commands from fixture data in the real `--json` shapes, and sideby cases are judged on the whole trace (case 10's with-skill answer was right but did not name its source, and the judge saw only the last message).
+
+| Case                                     | before with | before without | after with | after without | Run                                                                           |
+| ---------------------------------------- | ----------- | -------------- | ---------- | ------------- | ----------------------------------------------------------------------------- |
+| 10-global-session-list-is-not-a-dispatch | 0.56        | 0.00           | 1.00       | 0.89          | run6, 3 per arm, $2.53 (run5 with last-message judging: 0.00 vs 0.56, $11.70) |
+| 15-reply-local-worker-question           | 0.58        | 0.17           | 1.00       | 0.92          | run5, 3 per arm                                                               |
+
+In case 15 every with-skill run sent the answer through the stand-in and reported its `delivered` receipt. The small delta on both cases is expected: the stand-in makes the right command easy to find for the baseline too.
+
+### Trigger eval (`build_plugin_eval.py --trigger`, `--ablation none`)
+
+| Description                                             | should load (6 prompts × 3)                                                  | should not load (6 × 3) | Cost                                                      |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------- | ----------------------- | --------------------------------------------------------- |
+| 1.10.0                                                  | 16/18: prompt 06 "这个需求要不要多开几个 agent？还是你自己改就行" loaded 1/3 | 18/18                   | $12.32 (ran as two arms by mistake; with-skill arm shown) |
+| 1.10.1: Chinese trigger "多开" → "要不要多开几个 agent" | 18/18 (prompt 06 alone: 6/6, $1.19)                                          | 18/18                   | $7.54                                                     |
+
+Prompt 11 (Orca sidebar icons) hits the 15-turn cap in every with-skill run while searching for Orca, but never loads the skill.
+
+Spend for this follow-up: $35.28.
+
 ## 2026-10-25 · skill 1.10.0 · claude-opus-5-5 (judge: sonnet) · Claude Code 2.1.309
 
 ### A. With vs without the skill (`claude plugin eval --ablation with-without`)
@@ -48,8 +74,7 @@ Per case (`-` = not run or every run ended on an API error). "Latest" is the new
 
 Remaining with-skill failures:
 
-- 15 (0.58): the sandbox has no `sideby`, so replying to a local worker cannot be shown end to end. UNVERIFIED, not a skill change.
-- 10 (0.56): the global session list question; the sandbox also lacks `sideby`, so the agent cannot run `sideby sessions` it should route to. UNVERIFIED.
+- 15 (0.58) and 10 (0.56): the sandbox had no `sideby`; resolved on 2026-10-26 (above).
 - 02 a05, 05 a02, 06 a05, 07 a08, 08 a04, 12 a04, 20 a01: one or two runs out of 2-3 missed one assertion each; no repeated pattern across cases, not acted on.
 
 ### B. Solo vs dispatch outcome benchmark (`bench/run_bench.py`)
@@ -76,6 +101,6 @@ Remaining with-skill failures:
 | Article gap: budgets and gates lived only in prose         | skill                                                                                                                                                                                                 | `dispatch_board.py` enforces max 3 rounds, `--budget-usd`, overlapping `--owns` write Lanes and reviewer-in-writer-session refusal (`scripts/test_harness_limits.py`)                                                                |
 | run2 incomplete                                            | account hit its session limit                                                                                                                                                                         | README: API-error runs score 0; rerun them on another account, subsets via a copied `--eval-dir`                                                                                                                                     |
 
-UNVERIFIED: the trigger eval (skill-creator `run_eval.py`) cannot run on this machine because the installed agent-dispatch shadows the candidate description (see README).
+The trigger eval (skill-creator `run_eval.py`) could not run on this machine because the installed agent-dispatch shadows the candidate description; replaced on 2026-10-26 by `build_plugin_eval.py --trigger` (above).
 
 Total spend for this round: A $230.54 (runs 1-4 plus the interrupted rerun), B $32.50, smoke $0.47: $263.51.
