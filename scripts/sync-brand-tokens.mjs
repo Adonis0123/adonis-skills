@@ -37,7 +37,12 @@ const fromIndex = args.indexOf("--from");
 const from = fromIndex >= 0 ? args[fromIndex + 1] : undefined;
 
 async function readJson(file) {
-  return JSON.parse(await fs.readFile(file, "utf8"));
+  const text = await fs.readFile(file, "utf8");
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(`${file} is not valid JSON: ${error.message}`);
+  }
 }
 
 function git(dir, gitArgs) {

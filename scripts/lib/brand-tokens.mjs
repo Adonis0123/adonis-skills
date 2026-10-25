@@ -10,20 +10,33 @@ const MIX =
   /^color-mix\(in srgb, (#[0-9a-f]{6}) (\d+)%, (#[0-9a-f]{6}|transparent)\)$/i;
 const MODES = ["light", "dark"];
 
-// Text / background / minimum, copied from design-system/check.py. A
-// background written as [role, base] is a translucent role laid on base.
+// Text / background / minimum, copied from design-system/check.py (keep the
+// two lists identical; scripts/__tests__/brand-tokens.test.mjs compares them
+// when the brand repo is checked out next to this one). A background written
+// as [role, base] is a translucent role laid on base.
 export const CONTRAST_PAIRS = [
   ["foreground", "background", 4.5],
   ["foreground", "card", 4.5],
   ["muted-foreground", "card", 4.5],
   ["muted-foreground", "background", 4.5],
-  ["primary-foreground", "primary", 4.5],
+  // Deliberately below 4.5: white weight-500 text on a saturated accent pill,
+  // as in ByteDance Arco / Semi; a 4.5 accent turns grey ("not that color").
+  ["primary-foreground", "primary", 3],
   ["link", "card", 4.5],
   ["accent-foreground", "accent", 4.5],
   ["nav-active-foreground", ["nav-active", "sidebar"], 4.5],
   ["foreground", "selected", 4.5],
   ["warning-text", "card", 4.5],
   ["danger-text", "card", 4.5],
+  ["foreground", "tint", 4.5],
+  ["accent-foreground", "tint", 4.5],
+  ["foreground", "plate", 4.5],
+  ["danger-text", ["danger-soft", "card"], 4.5],
+  ["warning-text", ["warning-soft", "card"], 4.5],
+  ["success-text", ["success-soft", "card"], 4.5],
+  // Focus rings are non-text (WCAG 1.4.11 asks 3:1); subtle text is
+  // placeholders and hints only.
+  ["ring", "card", 3],
   ["subtle-foreground", "card", 3],
 ];
 
@@ -45,12 +58,10 @@ export const SITE_HELPERS = {
   },
 };
 
-// projects/skills/DESIGN.md (owned by adonis-brand) still names a role from
-// the previous site theme; its `colors` map lists it under the design system
-// role that replaced it so `{colors.x}` references keep resolving.
-export const DESIGN_MD_ALIASES = {
-  "primary-hover": "primary",
-};
+// Roles projects/skills/DESIGN.md may name that the design system dropped;
+// the `colors` map lists them under the replacing role so `{colors.x}`
+// references keep resolving. Empty while DESIGN.md uses only current roles.
+export const DESIGN_MD_ALIASES = {};
 
 function luminance(hex) {
   const channel = (start) => {
@@ -71,6 +82,13 @@ export function contrastRatio(a, b) {
  * only. Notes and `source` fields stay in adonis-brand; they name private paths.
  */
 export function pickDesignSystem(tokens, accent) {
+  const missing = ["scales", "functional", "themes", "roles"].filter(
+    (key) => typeof tokens?.[key] !== "object" || tokens[key] === null,
+  );
+  if (missing.length > 0)
+    throw new Error(
+      `design-system/tokens.json is missing ${missing.map((key) => `"${key}"`).join(", ")}; it must have scales, functional, themes and roles (see design-system/README.md in adonis-brand)`,
+    );
   const theme = tokens.themes?.[accent];
   if (!theme)
     throw new Error(
@@ -136,22 +154,37 @@ export function resolveRoles(ds, mode) {
   const roles = ds.roles[mode] ?? {};
   const out = {};
   const errors = [];
-  const resolve = (role, depth = 0) => {
+  const visiting = [];
+  const fix = "fix design-system/tokens.json in adonis-brand";
+  const resolve = (role) => {
     if (role in out) return out[role];
+    if (typeof roles[role] !== "string") {
+      errors.push(
+        `design-system.json: ${mode}.${role} is ${JSON.stringify(roles[role])}, not a string; write a #hex, a {scale-step} or {role} reference, or a color-mix(); ${fix}`,
+      );
+      return (out[role] = "#000000");
+    }
+    if (visiting.includes(role)) {
+      errors.push(
+        `design-system.json: ${mode} roles refer to each other in a loop (${[...visiting.slice(visiting.indexOf(role)), role].join(" -> ")}); point one of them at a scale step; ${fix}`,
+      );
+      return "#000000";
+    }
+    visiting.push(role);
     const text = roles[role].replace(REF, (_, key) => {
       if (key in values) return values[key];
-      if (key in roles && key !== role && depth < 8)
-        return resolve(key, depth + 1);
+      if (key in roles) return resolve(key);
       errors.push(
-        `design-system.json: ${mode}.${role} refers to {${key}}, which is neither a scale step nor a role; fix design-system/tokens.json in adonis-brand`,
+        `design-system.json: ${mode}.${role} refers to {${key}}, which is neither a scale step nor a role; ${fix}`,
       );
       return "#000000";
     });
+    visiting.pop();
     out[role] = text;
     return text;
   };
   for (const role of Object.keys(roles)) resolve(role);
-  return { roles: out, errors };
+  return { roles: out, errors: [...new Set(errors)] };
 }
 
 function rgb(hex) {
@@ -193,9 +226,20 @@ export function findBrandIssues(ds) {
   if (issues.length > 0) return issues;
 
   for (const mode of MODES) {
+    const missing = [
+      ...new Set(
+        CONTRAST_PAIRS.flatMap(([fg, bg]) => [fg, ...[bg].flat()]).filter(
+          (role) => !(role in ds.roles[mode]),
+        ),
+      ),
+    ];
+    for (const role of missing)
+      issues.push(
+        `design-system.json: roles.${mode} has no "${role}", which the contrast check needs; add it to design-system/tokens.json in adonis-brand`,
+      );
     const { roles, errors } = resolveRoles(ds, mode);
     issues.push(...errors);
-    if (errors.length > 0) continue;
+    if (missing.length > 0 || errors.length > 0) continue;
     const card = solidHex(roles.card);
     for (const [fg, bg, need] of CONTRAST_PAIRS) {
       const [bgRole, baseRole] = Array.isArray(bg) ? bg : [bg, "card"];

@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
+  CONTRAST_PAIRS,
   contrastRatio,
   findBrandIssues,
   pickDesignSystem,
@@ -90,6 +94,13 @@ const tokens = {
       "warning-text": "{amber-12}",
       "danger-text": "{red-11}",
       success: "{fn-success}",
+      ring: "{accent-11}",
+      tint: "{accent-2}",
+      plate: "{neutral-1}",
+      "success-text": "{neutral-12}",
+      "success-soft": "color-mix(in srgb, {fn-success} 16%, transparent)",
+      "warning-soft": "color-mix(in srgb, {amber-1} 20%, transparent)",
+      "danger-soft": "color-mix(in srgb, {red-1} 16%, transparent)",
       "page-tint":
         "linear-gradient(color-mix(in srgb, {accent-9} 10%, {background}) 0, {background} 180px)",
     },
@@ -111,6 +122,13 @@ const tokens = {
       "warning-text": "{amber-11}",
       "danger-text": "{red-11}",
       success: "{fn-success}",
+      ring: "{accent-11}",
+      tint: "{accent-2}",
+      plate: "{neutral-1}",
+      "success-text": "{neutral-12}",
+      "success-soft": "color-mix(in srgb, {fn-success} 16%, transparent)",
+      "warning-soft": "color-mix(in srgb, {amber-1} 20%, transparent)",
+      "danger-soft": "color-mix(in srgb, {red-1} 16%, transparent)",
       "page-tint":
         "linear-gradient(color-mix(in srgb, {accent-9} 10%, {background}) 0, {background} 180px)",
     },
@@ -180,6 +198,77 @@ test("reports unknown references and low contrast with a fix hint", () => {
   assert.match(issues, /dark muted-foreground .* below 4\.5:1/);
 });
 
+test("white text on a saturated accent passes at 3:1 but not below", () => {
+  const vivid = structuredClone(ds);
+  vivid.theme.solid = { light: "#568C11", dark: "#64A400" };
+  vivid.theme["solid-foreground"] = "#FFFFFF";
+  assert.deepEqual(findBrandIssues(vivid), []);
+  vivid.theme.solid = { light: "#568C11", dark: "#7FBF1F" };
+  assert.match(
+    findBrandIssues(vivid).join("\n"),
+    /dark primary-foreground #ffffff on primary #7fbf1f is 2\.\d\d:1, below 3:1/,
+  );
+});
+
+test("names a role the contrast check needs but the snapshot lacks", () => {
+  const broken = structuredClone(ds);
+  delete broken.roles.light["nav-active"];
+  const issues = findBrandIssues(broken).join("\n");
+  assert.match(issues, /roles\.light has no "nav-active"/);
+  assert.doesNotMatch(issues, /does not resolve/);
+});
+
+test("reports a role loop and a non-string role instead of crashing", () => {
+  const broken = structuredClone(ds);
+  broken.roles.dark.link = "{accent-foreground}";
+  broken.roles.dark["accent-foreground"] = "{link}";
+  broken.roles.light.tint = 42;
+  const issues = findBrandIssues(broken).join("\n");
+  assert.match(
+    issues,
+    /dark roles refer to each other in a loop \((link -> accent-foreground -> link|accent-foreground -> link -> accent-foreground)\)/,
+  );
+  assert.match(issues, /light\.tint is 42, not a string/);
+});
+
+test("pickDesignSystem names the section tokens.json lacks", () => {
+  const { functional: _functional, ...rest } = tokens;
+  assert.throws(
+    () => pickDesignSystem(rest, "teal"),
+    /tokens\.json is missing "functional"/,
+  );
+});
+
+// check.py lives in the private brand repo; compare only when it is checked
+// out next to this repo (or at BRAND_REPO).
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+const checkPy = path.join(
+  path.resolve(repoRoot, process.env.BRAND_REPO ?? "../adonis-brand"),
+  "design-system/check.py",
+);
+test(
+  "CONTRAST_PAIRS matches design-system/check.py",
+  { skip: !fs.existsSync(checkPy) && "brand repo not checked out" },
+  () => {
+    const block = /^PAIRS = \[\n([\s\S]*?)\n\]/m.exec(
+      fs.readFileSync(checkPy, "utf8"),
+    )[1];
+    const fromPy = [
+      ...block.matchAll(
+        /^\s*\("([a-z-]+)", (?:"([a-z-]+)"|\("([a-z-]+)", "([a-z-]+)"\)), ([\d.]+)\)/gm,
+      ),
+    ].map(([, fg, bg, layer, base, need]) => [
+      fg,
+      bg ?? [layer, base],
+      Number(need),
+    ]);
+    assert.deepEqual(CONTRAST_PAIRS, fromPy);
+  },
+);
+
 test("reports scale values that are not #rrggbb", () => {
   const broken = structuredClone(ds);
   broken.scales.neutral.light[0] = "#12345";
@@ -218,7 +307,7 @@ test("generated CSS carries provenance and maps references to var()", () => {
   assert.doesNotMatch(rolesCss, /#[0-9a-f]{6}/i);
 });
 
-test("renderDesignMd injects solid colors and legacy aliases before typography", () => {
+test("renderDesignMd injects solid colors before typography", () => {
   const designSource = [
     "---",
     "version: alpha",
@@ -240,7 +329,6 @@ test("renderDesignMd injects solid colors and legacy aliases before typography",
   );
   assert.match(out, /colors:\n {2}background: "#f9f9fb"\n/);
   assert.match(out, / {2}accent: "#deebec"\n/);
-  assert.match(out, / {2}primary-hover: "#5fd4c8"\n/);
   assert.match(out, / {2}background-dark: "#111113"\n/);
   assert.match(out, /\ntypography:/);
   assert.doesNotMatch(out, /page-tint/);
