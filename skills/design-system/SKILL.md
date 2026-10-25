@@ -4,7 +4,7 @@ description: >-
   Run a shared multi-site design system where every product swaps only its interface accent color: analyze any website's theme colors and roles, wire a new site or plugin to the semantic tokens, and lint plugins for hard-coded colors, fallback values and unknown roles. Use when the user gives a URL and asks what its theme or palette is, asks to connect a site to the design system, add an accent theme, or check whether a plugin follows the theme contract. Skip one-off styling tweaks, logo or illustration work, and plugin-architecture refactors (code-plugin-architecture).
 metadata:
   author: adonis
-  version: "0.2.1"
+  version: "0.3.0"
 ---
 
 # Design System
@@ -74,7 +74,17 @@ python3 scripts/check_tokens.py <design-system>/tokens.json
 3. 组件里只写语义角色 `var(--primary)` 等；把原有写死的颜色逐个换成最接近的角色，换不上就记下来问用户，不新造角色。
 4. 跑第 3 节的插件检查，再用真实页面看浅色、深色各一遍。
 
-**新主题（新的界面强调色）**：在 `themes` 里加一项：12 阶色阶（浅、深各一套）、`solid`、`solid-foreground`。按钮先试“强调色原色 + 近黑字”，对比度不过 4.5 再考虑加深配白字。跑 `check_tokens.py`，全部通过才算加完。按钮配白字还是深字有口味成分，做成样本给用户挑。
+**新主题（新的界面强调色）**：在 `themes` 里加一项：12 阶色阶（浅、深各一套）、`solid`、`solid-foreground`，`solid` 按下面的按钮规则定。跑 `check_tokens.py`，全部通过才算加完。
+
+**按钮规则**：
+
+- 颜色：保留主题色相，OKLCH chroma 拉到色域上限，再调亮度。白字在浅色模式约 4:1、深色模式约 3:1，所以 `solid` 通常写成 `{ "light": …, "dark": … }`。
+- 字：白色，字重 500，不用 600。
+- 形状：主按钮用胶囊圆角（`radius.pill`）；次按钮用黑白（浅色黑底白字，深色白底黑字）。
+- 对比度：主按钮白字只要求 ≥ 3.0，低于 WCAG AA 的 4.5，是有意取舍：字节 Arco、Semi 和即梦的实心按钮都是饱和色配白字，实测约 3。`check_tokens.py` 按 3.0 检查这一对。
+- 否掉的做法：原色配近黑字（不好看）；把原色加深到 4.5 再配白字（发灰，不像原来的颜色）；原色配同色相深字（不自然）。
+- 产品本身是黑白的，就照实用黑白按钮，深浅模式反相。
+- 拿不准时做浅深两种模式的样本，给用户看实物再定。
 
 ## 3. 检查插件是否守契约
 

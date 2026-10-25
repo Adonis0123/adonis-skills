@@ -33,15 +33,15 @@
 
 ## 检查脚本测哪些对比度
 
-| 文字                          | 底                               | 最低                    |
-| ----------------------------- | -------------------------------- | ----------------------- |
-| `foreground`                  | `background`、`card`、`selected` | 4.5                     |
-| `muted-foreground`            | `background`、`card`             | 4.5                     |
-| `primary-foreground`          | `primary`                        | 4.5                     |
-| `link`                        | `card`                           | 4.5                     |
-| `accent-foreground`           | `accent`                         | 4.5                     |
-| `nav-active-foreground`       | `nav-active` 叠在 `sidebar` 上   | 4.5                     |
-| `warning-text`、`danger-text` | `card`                           | 4.5                     |
-| `subtle-foreground`           | `card`                           | 3.0（只给占位符和提示） |
+| 文字                          | 底                               | 最低                                           |
+| ----------------------------- | -------------------------------- | ---------------------------------------------- |
+| `foreground`                  | `background`、`card`、`selected` | 4.5                                            |
+| `muted-foreground`            | `background`、`card`             | 4.5                                            |
+| `primary-foreground`          | `primary`                        | 3.0（饱和原色配白字，见 SKILL.md「按钮规则」） |
+| `link`                        | `card`                           | 4.5                                            |
+| `accent-foreground`           | `accent`                         | 4.5                                            |
+| `nav-active-foreground`       | `nav-active` 叠在 `sidebar` 上   | 4.5                                            |
+| `warning-text`、`danger-text` | `card`                           | 4.5                                            |
+| `subtle-foreground`           | `card`                           | 3.0（只给占位符和提示）                        |
 
 缺这些角色时脚本会报错。不需要某个角色的设计系统，把对应行从脚本的 `PAIRS` 里删掉。

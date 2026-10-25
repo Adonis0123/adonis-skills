@@ -22,7 +22,9 @@ PAIRS = [
     ("foreground", "card", 4.5),
     ("muted-foreground", "card", 4.5),
     ("muted-foreground", "background", 4.5),
-    ("primary-foreground", "primary", 4.5),
+    # 有意低于 4.5：主按钮是饱和原色配白字、字重 500、胶囊圆角。原色加深到 4.5 会发灰，
+    # 配近黑字又不好看；字节 Arco、Semi、即梦的实心按钮白字也在 3 左右。见 SKILL.md「按钮规则」
+    ("primary-foreground", "primary", 3.0),
     ("link", "card", 4.5),
     ("accent-foreground", "accent", 4.5),
     ("nav-active-foreground", ("nav-active", "sidebar"), 4.5),
