@@ -4,6 +4,24 @@ How the Coordinator keeps a Run ledger and shows it to the user. Terms (Run, Lan
 
 Live status and messaging belong to sideby's Panel: its 会话 page lists every session, its status, and lets the user send to one (`sideby sessions --json` is the same list for the Coordinator). The Board does not duplicate that. It is a milestone report: a static page the user can open at any moment to read what the Run set out to do, what is done and decided, and what is waiting on them. Answers come back in the Coordinator's chat.
 
+## Contents
+
+- Rules for every reply while a Run is open
+- Three views, one ledger
+- Who does what
+- Ledger location
+- Commands
+- What the Coordinator reads
+- Rules the Board enforces or exposes
+- Worker event streams
+- Orca mode
+- Without Orca, or without background waits
+- Handoff
+- sideby sessions, messages and the session index
+- Results and decisions
+- The report page
+- Verification
+
 ## Rules for every reply while a Run is open
 
 These shape what you say and do from `init` until `close`. Read them before you start or take over a Run.
