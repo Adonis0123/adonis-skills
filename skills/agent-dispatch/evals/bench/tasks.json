@@ -1,0 +1,54 @@
+{
+  "version": 1,
+  "tasks": [
+    {
+      "id": "T1",
+      "commit": "ab9ecaa8bbc6ec389d3a7ac8672a8df6cf5cbdef",
+      "title": "file-tidy: harden Linux trash for byte names, other mounts and relative XDG_DATA_HOME",
+      "prompt": "file-tidy's Linux (freedesktop) trash support in `skills/file-tidy/scripts/file_tidy.py` has three bugs.\n\n1. `write_trashinfo(dest, original)` breaks on file names that are not valid UTF-8 (e.g. a POSIX name containing byte 0xE9). The `Path=` line must percent-encode the raw file-name bytes, keeping `/` unescaped: for original `os.fsdecode(b\"/srv/caf\\xe9 1.txt\")` the file must contain `Path=/srv/caf%E9%201.txt`.\n\n2. `trash_dir()` honours a relative `XDG_DATA_HOME`. The XDG spec says a relative value must be ignored; on Linux with `XDG_DATA_HOME=relative/share` it must return `~/.local/share/Trash/files`.\n\n3. Trashing an item that lives on another mount (e.g. a USB drive) silently copies it into the home trash. Add a module-level function `on_trash_volume(src: Path) -> bool` that reports whether `src` is on the same device as the home trash (use the nearest existing ancestor if the trash folder does not exist yet). When planning an apply (`apply <plan> --apply`), a `trash` item on a freedesktop system (`freedesktop_trash()` true) whose source is not on the trash volume must abort with `SystemExit` whose message contains `use move instead`, before anything moves.\n\nTests run with `python3 -m unittest discover -s skills/file-tidy/scripts -p 'test_*.py'`; add tests for each case. Nice to have: mention in the Undo section of `skills/file-tidy/SKILL.md` that trash refuses items on another mount.",
+      "hidden_tests": ["skills/file-tidy/scripts/test_file_tidy.py"],
+      "accept": [
+        "python3 -m unittest discover -s skills/file-tidy/scripts -p 'test_*.py'"
+      ],
+      "needs_node_modules": false,
+      "parts": "One module: file_tidy.py plus its test file; the SKILL.md line is a one-sentence doc touch, not worth a separate worker.",
+      "verified": {
+        "parent_fails": true,
+        "commit_passes": true
+      }
+    },
+    {
+      "id": "T2",
+      "commit": "09d3be909fa5db65cf1f1dcaa9a88c43ae1cae93",
+      "title": "worktree-tidy: keep ignored secrets and unpushed branch commits",
+      "prompt": "`skills/worktree-tidy/scripts/worktree_tidy.py` can lose work: `git worktree remove` silently deletes ignored files (e.g. `.env`), and `--delete-branch` runs `branch -D` after a merged request even if local commits were added later.\n\nRequired:\n- `dirty_paths(path)` makes exactly one `git --no-optional-locks status ... --ignored=matching` call and returns `(dirty, ignored)` or None. Ignored paths are fine when regenerable: any segment in module set `REGENERABLE_DIRS` (node_modules, build, generated, ... and similar), a prefix in `REGENERABLE_PREFIXES` (`.husky/_/`), or `*.log`. Secrets (`.env`, `.env.*`, `id_rsa*`, `*.pem`, `*.key`, ...) are never regenerable, even inside collapsed build/generated folders (walk them, but not node_modules). Other ignored paths add Blocker `ignored`. Scan uses at most 6 subprocess calls per worktree.\n- `add_regenerable(list)` extends those sets (entries with `/` are prefixes); non-list raises SystemExit; config key `regenerable`.\n- Each row adds `shortHead`, `subject`, `dirtyFiles` (max 10, rename targets included), `ignored` (count), `ignoredFiles` (max 10), `branchSaved` (branch commits all on another branch/tag/remote ref), `unpushed` (HEAD commits on no remote ref; null without remote refs). Missing folders: empty/0/False/None.\n- `branchDeletable` and dry-run `wouldDeleteBranch` also require `branchSaved`.\n- `remove(paths, days, delete_branch, use_orca, yes, allow_recent=False)` and CLI `--allow-recent`: allow removal when blockers are exactly `[\"recent\"]`.\n- Right before removing, re-check status; on change error `not removable: changed since it was checked`. Before deleting a branch re-check it; if unsaved keep it with `branchError` `branch has commits that exist on no other ref; kept`.\n\nDocument these in SKILL.md (nice-to-have).",
+      "hidden_tests": ["skills/worktree-tidy/scripts/test_worktree_tidy.py"],
+      "accept": [
+        "python3 -m unittest discover -s skills/worktree-tidy/scripts -p 'test_*.py'"
+      ],
+      "needs_node_modules": false,
+      "parts": "Mostly one module (worktree_tidy.py); SKILL.md and references/glossary.md docs can go to a second worker, but the code changes in dirty_paths/assess/remove are interdependent and should not be split.",
+      "verified": {
+        "parent_fails": true,
+        "commit_passes": true
+      }
+    },
+    {
+      "id": "T3",
+      "commit": "40087abbbbbbd331ff2bd43e63a75bdc791b8d97",
+      "title": "validate-skills: enforce the 1024-character, tag-free description and fit figma-mcp in it",
+      "prompt": "`scripts/validate-skills.mjs` only checks that a skill `description` is at least 20 characters. The Agent Skills spec also requires at most 1024 characters and no XML tags, and `skills/figma-mcp/SKILL.md` currently violates both (it is over 1024 characters and contains `<url>`).\n\nRequired:\n- Export `DESCRIPTION_MAX_LENGTH` (1024) and `descriptionProblems(rawDescription)` from `scripts/validate-skills.mjs`. It trims the input, counts characters (not bytes), and returns an array of problem strings (empty when fine). Keep the existing too-short message (contains `过短`). For an over-long description the message must include the actual length as `<n> 字符` (e.g. `1025 字符`) and the fix hint `删掉重复的触发词`. For XML-like tags the message must list the tags found (e.g. `<url>`); plain comparisons such as `count < 30 and > 5` are not tags.\n- `main()` must report each problem per skill, and importing the module must not run validation (only run `main()` when the file is executed directly).\n- Shorten the `skills/figma-mcp/SKILL.md` description to at most 1024 characters with no angle-bracket tags, keeping its meaning; bump its `metadata.version` patch.\n- `pnpm skills:validate` must pass.\n\nNice to have: add `./scripts/__tests__/validate-skills.test.mjs` to the root `test:scripts` script and regenerate the skills index with `pnpm skills:index`.",
+      "hidden_tests": ["scripts/__tests__/validate-skills.test.mjs"],
+      "accept": [
+        "node --experimental-strip-types --test scripts/__tests__/validate-skills.test.mjs",
+        "pnpm skills:validate"
+      ],
+      "needs_node_modules": true,
+      "parts": "Two independent file sets: scripts/validate-skills.mjs (+ package.json test:scripts) and skills/figma-mcp/SKILL.md description rewrite; they only meet at the final pnpm skills:validate.",
+      "verified": {
+        "parent_fails": true,
+        "commit_passes": true
+      }
+    }
+  ]
+}

@@ -19,7 +19,7 @@ Invariants, compatibility rules, repository instructions to read first (nearest 
 
 ## Ownership
 
-- May edit: <exact files or globs>
+- May edit: <exact files or globs> (register the same list with `lane add --owns`)
 - Must not edit: <files other workers own, shared packages, generated files>
 - Pick one, delete the other: "No commit" (the default) or "Local commits on <short-branch> only, hooks must pass" (only when the user authorized commits for this Run; a worktree alone is not that authorization).
 - No push, merge into other branches, deploy, publish, or messages to other sessions.

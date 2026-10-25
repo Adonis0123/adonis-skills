@@ -9,7 +9,7 @@
       "files": ["fixtures/probe-full.json"],
       "assertions": [
         "选择 L0/直接做：总指挥自己改，不派工人",
-        "不新建 worktree",
+        "计划里没有新建 worktree 的步骤（解释为什么不建不算违规）",
         "不安排跨模型评审循环",
         "不跑全量测试",
         "给出目标时长（约十几分钟内）"
@@ -28,7 +28,7 @@
         "明确说出用了哪种降级",
         "未授权时工人不提交",
         "只有一个总指挥",
-        "指出机器上只有 Claude 单账号时，Claude Code 原生的 subagents / agent view（claude agents）/ Agent Teams 是更轻的路径，Run 看板的价值在跨产品跨账号"
+        "点名 Claude Code 原生的更轻路径（subagents、agent view `claude agents`、Agent Teams 至少一种）适合单产品单账号，Run 看板的价值在跨产品跨账号"
       ]
     },
     {
@@ -43,7 +43,7 @@
         "评审方与写代码的不是同一家产品",
         "未授权时工人不 commit；任何情况下工人都不 push 或发布",
         "文章在代码落地后由总指挥自己写并核对事实；用户没要求时不默认派给 agy",
-        "每个工人任务说明含目标/改动/约束/归属/验收"
+        "若派出写代码的工人，每个工人任务说明含目标/改动/约束/归属/验收；总指挥自己写时不适用"
       ]
     },
     {
@@ -71,7 +71,7 @@
         "每条 lane 独立 worktree 和短分支，B 从 A 的分支切出",
         "Claude worker 不用 acceptEdits，改用最小的 --allowedTools 列表；bypassPermissions 只在用户明确授权时使用，并说明 worktree 不是权限隔离；stdin 关闭并后台运行",
         "修复轮用 --resume <session_id> 只发 review 发现和总指挥决定",
-        "reviewer 是与写代码账号不同的 Claude 新会话，测试由总指挥复跑",
+        "reviewer 是与写代码账号不同的 Claude 新会话",
         "Claude headless worker 启动命令带 --settings '{\"crossSessionInbound\":\"accept\"}'（只对该 worker 生效）以接收修复轮消息，而不是改全局 settings"
       ]
     },
@@ -103,10 +103,10 @@
       "assertions": [
         "调用 dispatch_board.py show（或 --line）读取台账，而不是凭记忆回答",
         "回复第一行是 `show --line` 给出的状态行（如 `正在忙：N 个任务在做 · M 项等外部结果 · K 个问题等你答复`），不改写成别的格式",
-        "只报告台账里有的事实：B9 在改 ChapterEditorSurface.tsx、部署在 web 构建 42/60、WP6 排队等部署和 M3b",
+        "只报告台账里有的事实：B9 在改章节编辑器（ChapterEditorSurface.tsx，说成“章节编辑器组件”也算）、部署在 web 构建 42/60、WP6 排队等部署和 M3b",
         "指出 M3b 审查和 B9 用的是同一个账号额度",
         "把 A1 作为待回答的问题列出，带推荐",
-        "协调者自己执行 open 打开看板，不让用户跑命令或找路径",
+        "协调者自己执行 open 打开看板（打不开时在对话里汇报进度），不让用户跑命令或找路径",
         "用白话（任务、外部等待、问题），不对用户说 Lane、Wait、Ask",
         "不把复制 fixture 带来的文件时间说成真实进展（如“刚才还有动静”）"
       ]
@@ -138,7 +138,7 @@
       "assertions": [
         "提问带编号（如 A1）",
         "给出推荐答案和依据",
-        "写出完整草稿正文",
+        "写出完整草稿正文（缺群名等事实时可用占位，前提是在 Ask 里问清楚）",
         "没给群名和渠道时，在 Ask 里问清楚，不编造",
         "不自行发送消息"
       ]
@@ -188,7 +188,7 @@
         "不说看板已经打开",
         "不让用户自己打开文件路径",
         "调用 show 读取台账副本",
-        "在对话里用文字汇报台账里的进度（B9 在改 ChapterEditorSurface.tsx、部署在 web 构建 42/60、A1 待回答），不补造"
+        "在对话里用文字汇报台账里的进度（B9 在改章节编辑器 ChapterEditorSurface.tsx、部署在 web 构建 42/60、A1 待回答），不补造"
       ]
     },
     {
@@ -253,7 +253,7 @@
         "续跑命令的输出重定向到这个新文件",
         "用后台方式运行 dispatch_board.py watch 等 B9 结束，而不是等用户回复",
         "没有前台 sleep，也不让用户执行命令",
-        "台账里 B9 新一轮的 output 路径和续跑命令实际写入的文件是同一个"
+        "台账里 B9 新一轮的 output 路径和续跑命令实际写入的文件是同一个（相对路径按 Run 目录解析，和绝对路径指向同一文件也算）"
       ]
     },
     {

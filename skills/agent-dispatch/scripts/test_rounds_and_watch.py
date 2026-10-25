@@ -91,6 +91,19 @@ class RoundsAndWatch(BoardTestCase):
             _, out, _ = self.run_cli("--run", rd, "watch", "--timeout", "60", "--interval", "1")
         self.assertIn("内没有任务结束", out)
 
+    def test_watch_does_not_wake_again_for_a_lane_that_was_already_silent(self):
+        rd, stream = self.start()
+        write_jsonl(stream, [{"type": "assistant", "message": {"content": [{"type": "text", "text": "在改"}]}}])
+        os.utime(stream, (1, 1))  # silent since long before the watch started
+        self.assertEqual(board.watch_events(board.derive(board.load_run(rd)))["A"][0], "stale")
+        ages = iter(range(1_000))  # the silence text carries an age that changes on every read
+        clock = iter(range(1_000_000, 1_010_000, 50))  # long after the stream's mtime, so the Lane stays silent
+        with mock.patch.object(board, "plain_age", side_effect=lambda _s: f"{next(ages)} 分钟"), \
+                mock.patch.object(board.time, "sleep"), mock.patch.object(board.time, "time", side_effect=lambda: next(clock)):
+            _, out, _ = self.run_cli("--run", rd, "watch", "--timeout", "60", "--interval", "1")
+        self.assertIn("内没有任务结束", out)
+        self.assertNotIn("没有动静，去看日志", out)
+
     def test_technical_details_skip_duplicates_and_short_times_read_plainly(self):
         rd, _ = self.start()
         self.run_cli("--run", rd, "lane", "set", "--id", "A", "--state", "done")

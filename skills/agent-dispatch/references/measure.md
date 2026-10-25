@@ -21,12 +21,12 @@ Say the same numbers in one line of the final report.
 
 ## Paired benchmark (before changing tier rules)
 
-Run this before changing a tier threshold, the split rule or the Writing/Research defaults, and cite its table in the change.
+Run this before changing a tier threshold, the split rule or the Writing/Research defaults, and after upgrading the model or a host CLI the skill dispatches to (what a stronger model can hold in one loop changes). Change one rule per benchmarked change and cite its table, so a regression points at one cause.
 
 1. Pick 3-5 golden tasks from real past Runs, each with acceptance checks that decide pass or fail without judgment (tests, a command, a page check). Ten is better; three is enough to start.
 2. For each task, run two variants from the same base commit in fresh worktrees: **solo** (one coordinator session does it, L1) and **dispatched** (the tier this skill picks).
 3. Run each variant at least 3 times. Failures can appear in only some runs; one run per variant hides them.
 4. Record per run: acceptance pass/fail, total cost (Coordinator plus every Lane), wall time from first prompt to integrated result, fix rounds, integration breaks.
-5. Compare in one table: pass rate, median cost, median wall time, breaks. Dispatching earns its tier only where its pass rate is at least solo's and it saves wall time the user cares about; otherwise lower the tier for that kind of task.
+5. Compare per task, then in total: each task's solo and dispatched passes (e.g. 3/3 vs 2/3), marking tasks that flipped; then pass rate, median cost, median wall time, breaks. A task that flipped in only one run is read from its transcript before it counts. Dispatching earns its tier only where it completes at least as many tasks as solo, no task got worse, and it saves wall time the user cares about; otherwise lower the tier for that kind of task.
 
-Keep the tasks, prompts and table next to the change that used them, so the next change can rerun them.
+The tools are in `evals/`: `evals/bench/run_bench.py` and `compare.py` run this benchmark on real commits of the skill's repository (`evals/bench/tasks.json`), and `evals/README.md` gives the commands for it and for the cheaper with-vs-without-skill behavior check. Add each run's table to `evals/results.md`, so the next change can rerun the same tasks and compare.

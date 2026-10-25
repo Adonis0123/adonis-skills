@@ -32,10 +32,10 @@ These shape what you say and do from `init` until `close`. Read them before you 
 4. **Register before you start**: every Lane, every Subagent you spawn and every Wait (deploy, CI, build, background shell) with its log; a step that waits on others gets `--after`. A fix round or resume is `lane set --round N --output <new stream>` before it starts: the old round's result moves to history, and the script refuses to reuse the ended stream, which would keep showing the old result as current.
 5. **Every question is a numbered Ask** with a recommendation, the evidence and what it blocks. A message to a local session this Coordinator dispatched or the user named needs no per-message approval; messages to people or external channels are outward actions and also name recipient, channel and the full draft. When a fact is missing, the Ask asks for it; never invent it, and never fill in a recipient or channel the user did not name: an outward Ask whose recipient or channel is missing asks for each one in its question, and any guess you offer is labeled as your recommendation (`--channel "待你确认（建议：飞书）"`), not a settled fact. Say a message reached a Worker only when the send command's own result says so (`sideby send --json` receipt, Orca `reply` result); if you did not or could not send it, say so, why, and what happens next.
 6. **Answers come in your chat**; record them with `ask answer`. A message the user sends from the sideby Panel arrives as a cross-session message.
-7. **Record "以后都这样" as a Standing Grant** with its exact scope and the user's words; grants for deploy, external send or publish last this Run only.
+7. **Record "以后都这样" as a Standing Grant** with its exact scope and the user's words (`grant add`). Your reply to that message answers it before any status news: it quotes the scope and the words back, says that a grant for deploy, external send or publish lasts this Run only and never widens to another environment, and, when the scope is unclear (which environment, which kind of change), asks once as a numbered Ask.
 8. **Keep a `watch` running in the background** after you dispatch or ask (Claude Code: `run_in_background`); it exits when a Lane ends, fails, needs the user or goes silent, so finished work does not sit idle while you wait for the user's reply. Lead each reply with the state line from `show --line`; never wait with a foreground `sleep`.
 9. **"停" means stop, not only pause.** Create the `STOP` file, stop each running Lane and Wait you can, mark them `stopped`, and say which ones could not be stopped and why.
-10. **Close** the Run when everything is integrated; a handoff brief carries the Coordinator Session Reference, the Run directory and the Orca run id so the next Coordinator continues the same Run.
+10. **Close** the Run when everything is integrated. While a Wait still runs or an Ask is unanswered, do not close: say what blocks the close (`close` refuses and names them; `--force` only when the user asks to close anyway); a handoff brief carries the Coordinator Session Reference, the Run directory and the Orca run id so the next Coordinator continues the same Run.
 
 ## Three views, one ledger
 
@@ -62,12 +62,13 @@ The user is treated as a non-technical reader: every command on this page is run
 
 ## Commands
 
-`B` below is `python3 <this skill>/scripts/dispatch_board.py`. Pass `--run <dir>` (printed by `init`) or set `AGENT_DISPATCH_RUN`; with a single active Run in the repo neither is needed.
+`B` below is `python3 <this skill>/scripts/dispatch_board.py`; in a shell define it as a function (`B() { python3 <this skill>/scripts/dispatch_board.py "$@"; }`), not a variable: zsh runs `$B` as one command name and fails with exit 127. Pass `--run <dir>` (printed by `init`) or set `AGENT_DISPATCH_RUN`; with a single active Run in the repo neither is needed.
 
 ```bash
-B init --objective "<what this Run delivers>" --account <coordinator account> --coordinator-session <session id> [--orca-run <orca run id>]
+B init --objective "<what this Run delivers>" --account <coordinator account> --coordinator-session <session id> [--budget-usd 20] [--orca-run <orca run id>]
+B run set --budget-usd 30           # only after the user agreed to spend more
 B lane add --id B9 --title "B9 卡片" --role write --account claude:003 --pool claude:003 \
-  --branch feat/b9 --worktree <worktree> --output <run dir>/B9.jsonl [--dispatch <orca dispatch id>] [--session <session id>] --state working
+  --branch feat/b9 --worktree <worktree> --owns "packages/web/src/b9/**" --output <run dir>/B9.jsonl [--dispatch <orca dispatch id>] [--session <session id>] --state working
 B lane add --id R-B9 --title "B9 审" --role review --reviews B9 --account codex:002 --pool codex:002 --output ...
 B lane add --id S1 --kind subagent --parent coordinator --title "S1 查 catalog" --state working
 B lane set --id B9 --state done --note "集成到 main：3 个文件" [--round 2]
@@ -91,10 +92,10 @@ B grant add --scope "部署到 test，同样流程" --words "以后都按照推�
 B open [--panel]                 # open the Board once (Orca reuses the tab showing it, else system browser); exit 3 = not opened, report in chat
 B show --line                    # the Run state line for the top of a reply; never writes files
 B show --all                     # every active Run on this machine
-B close                          # archive; leaves the final report at the Board path
+B close [--force]                # archive; leaves the final report at the Board path; refuses while a Wait runs or an Ask is open
 ```
 
-Roles: `write`, `review`, `research`, `draft`. Lane states: `queued`, `working`, `needs-you`, `done`, `failed`, `stopped`. Wait states: `running`, `done`, `failed`, `stopped`. Relative `--output` / `--log` paths, given on the command line or in a hand-made ledger, resolve against the Run directory, not the shell's current directory. `show --line` names the page once it exists.
+Roles: `write`, `review`, `research`, `draft`. Lane states: `queued`, `working`, `needs-you`, `done`, `failed`, `stopped`. Wait states: `running`, `done`, `failed`, `stopped`. Relative `--output` / `--log` paths, given on the command line or in a hand-made ledger, resolve against the Run directory, not the shell's current directory. `show` names the page once it exists; `show --line` never prints a path, so it leads a reply as is (`show --json` carries the path as `board`).
 
 `init` and `lane add` publish the static Board before the session index. Milestone commands also refresh it: `step add/set`, `lane set` with `--state`, `--round`, `--result(-file)` or `--summary(-file)`, `wait set --state`, `decision add`, `artifact add`, `commit add`, `ask add/answer`, and `close`. Explicit `open` refreshes before opening. `show` never writes, including the deprecated compatibility flag `--html`. Other ledger commands save the ledger and rebuild the index; they recreate a missing Board before publishing. Nothing writes on a timer. Unchanged content leaves the file untouched, using its fingerprint. `--after` lists Lane or Wait ids; the Board shows the ones not yet `done` as "等：…".
 
@@ -116,6 +117,10 @@ Read state with `show --line` and `show`; read each Worker's whole summary (at m
 | A new round needs a new stream; the old round's result is filed into history                                                                                    | Resumed Lanes kept reading their ended round-1 stream: the card said both 进行中 and 做完了, and results listed rework as done                |
 | A Lane silent for 5 minutes while `working` is flagged by `show`; read its log before waiting longer                                                            | The Coordinator sat in `Bash: sleep` for 59 minutes                                                                                           |
 | A stream that ended while the Lane is still `working` is flagged "待主控 AI 汇总"                                                                               | Finished Workers were indistinguishable from busy ones                                                                                        |
+| A fourth round (`lane set --round 4`) is refused; rewrite the spec as a new Lane or take the task back                                                          | Fix rounds kept going past the point where the spec was clearly wrong                                                                         |
+| A write Lane whose `--owns` overlaps another active write Lane is refused                                                                                       | Two parallel writers edited the same shared type and both merges broke                                                                        |
+| A review Lane in the same `--session` as the Lane it reviews is refused                                                                                         | A writer reviewing its own diff misses its own blind spots                                                                                    |
+| With `--budget-usd`, no new Lane starts once known spend reaches the budget; `show --line` prints spend against it                                              | Runs had no spending limit outside the prompt                                                                                                 |
 | A reviewer on the same quota pool as the Lane it reviews is flagged                                                                                             | A reviewer on the writer's account weakens review and burns one pool                                                                          |
 
 ## Worker event streams

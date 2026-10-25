@@ -58,3 +58,6 @@ __pycache__/
 
 # Ad-hoc verification screenshots at repo root.
 /kbd-chip.png
+
+# Generated `claude plugin eval` suites (rebuild: python3 skills/<skill>/evals/build_plugin_eval.py) and their results.
+/evals/agent-dispatch*/

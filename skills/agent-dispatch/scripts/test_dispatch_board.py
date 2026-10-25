@@ -335,9 +335,13 @@ class TestRenderAndCli(BoardTestCase):
             self.assertNotIn("A1 部署吗？", f.read())
         self.run_cli("ask", "add", "--id", "A1b", "--question", "部署吗？", "--recommend", "是", "--evidence", "同样流程", "--blocks", "WP6")
         code, line, _ = self.run_cli("show", "--line")
-        self.assertEqual(line.strip(), f"正在忙：1 个任务在做 · 1 项等外部结果 · 1 个问题等你答复 · 看板文件：{page_path}")
+        self.assertEqual(line.strip(), "正在忙：1 个任务在做 · 1 项等外部结果 · 1 个问题等你答复")  # leads a reply: no path
+        self.assertEqual(json.loads(self.run_cli("show", "--json")[1])["board"], page_path)
         self.assertIn("cli", self.run_cli("show", "--all")[1])
-        self.assertEqual(self.run_cli("close")[0], 0)
+        code, _, err = self.run_cli("close")  # an open question or running wait blocks the close
+        self.assertNotEqual(code, 0)
+        self.assertIn("A1b", err)
+        self.assertEqual(self.run_cli("close", "--force")[0], 0)
         self.assertIn("现在没有正在跑的任务", self.run_cli("show", "--all")[1])
         with open(page_path, encoding="utf-8") as f:
             closed = f.read()
@@ -1108,7 +1112,7 @@ class StaticReport(BoardTestCase):
         name = os.path.basename(self.root.rstrip("/"))
         self.assertIn(f'<code title="{self.root}">{name} · abc1234</code>', page)  # repository by name, path on hover
         self.assertNotIn("_blank", page)  # embedded browsers such as Orca's refuse popups
-        self.run_cli("--run", self.run_dir, "close")
+        self.run_cli("--run", self.run_dir, "close", "--force")
         self.assertIn("本次任务已结束", Path(self.page).read_text(encoding="utf-8"))
 
     def test_no_file_write_when_content_is_unchanged(self):

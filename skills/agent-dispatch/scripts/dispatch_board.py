@@ -34,6 +34,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import datetime as dt
+import fnmatch
 import hashlib
 import html
 import re
@@ -61,6 +62,7 @@ WAIT_STATES = ("running", "done", "failed", "stopped")
 ACTIVE_LANE_STATES = ("queued", "working", "needs-you")
 LEDGER = "run.json"
 STOP = "STOP"
+MAX_ROUNDS = 3  # the first run plus 2 fix rounds (SKILL.md "Dispatching workers")
 TAIL_BYTES = 4_000_000
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 DIR_NAME = ".agent-dispatch"
@@ -355,7 +357,7 @@ def apply_fields(row: dict, fields: dict) -> None:
             continue
         if key in PATH_FIELDS and value:
             value = os.path.abspath(os.path.expanduser(value))  # the viewer may run from another directory
-        if key in ("after", "files") and isinstance(value, str):
+        if key in ("after", "files", "owns") and isinstance(value, str):
             value = [v.strip() for v in value.split(",") if v.strip()]
         row[key] = value
 
@@ -374,14 +376,80 @@ def add_lane(run: dict, fields: dict, now: float | None = None, run_dir: str | N
         raise BoardError(f"unknown Lane state {state}; use one of {', '.join(LANE_STATES)}")
     if fields.get("kind") == "subagent" and not fields.get("parent"):
         raise BoardError("a Subagent needs --parent <lane id or 'coordinator'>")
+    budget = run.get("budget_usd")
+    if isinstance(budget, (int, float)) and fields.get("kind") != "subagent":
+        spent = run_spend(run)
+        if spent >= budget:
+            raise BoardError(f"the Run has spent ${spent:.2f} of its ${budget:.2f} budget, so no new Lane may start; "
+                             "ask the user (an Ask with the spend so far) before raising it with `run set --budget-usd <dollars>`")
     lane = {"kind": "lane", "round": 1, "started_at": now_iso(now)}
     apply_fields(lane, fields)
     lane["state"] = state
     lane["updated_at"] = now_iso(now)
     if state not in ACTIVE_LANE_STATES:
         lane["ended_at"] = now_iso(now)
+    check_lane_rules(run, lane)
     run["lanes"].append(lane)
     return lane
+
+
+def _pattern_base(pattern: str) -> str:
+    """The literal directory part of a path or glob: `packages/core/**` -> `packages/core`."""
+    parts = []
+    for part in pattern.strip().lstrip("./").strip("/").split("/"):
+        if any(ch in part for ch in "*?["):
+            break
+        parts.append(part)
+    return "/".join(parts)
+
+
+def owns_overlap(a: str, b: str) -> bool:
+    """Conservative: two ownership entries overlap when one could match a file the other also covers."""
+    a, b = a.strip().lstrip("./").strip("/"), b.strip().lstrip("./").strip("/")
+    if not a or not b:
+        return False
+    if a == b or fnmatch.fnmatch(a, b) or fnmatch.fnmatch(b, a):
+        return True
+    base_a, base_b = _pattern_base(a), _pattern_base(b)
+    a_dir, b_dir = base_a != a, base_b != b  # a glob covers everything under its literal base
+    if a_dir and (b == base_a or b.startswith(base_a + "/") or not base_a):
+        return True
+    if b_dir and (a == base_b or a.startswith(base_b + "/") or not base_b):
+        return True
+    return False
+
+
+def check_lane_rules(run: dict, lane: dict) -> None:
+    """Hard limits the harness enforces instead of trusting the prompt (writable sets, self-review)."""
+    if lane.get("role") == "write" and lane.get("owns") and lane.get("state") in ACTIVE_LANE_STATES:
+        for other in run["lanes"]:
+            if other["id"] == lane["id"] or other.get("role") != "write" or other.get("state") not in ACTIVE_LANE_STATES:
+                continue
+            for mine in lane["owns"]:
+                clash = next((theirs for theirs in other.get("owns") or [] if owns_overlap(mine, theirs)), None)
+                if clash:
+                    raise BoardError(f"{lane['id']} may edit {mine}, which overlaps {other['id']}'s {clash}: parallel writers need "
+                                     "disjoint files, so merge the two into one Lane, or land the shared part first and fan out after")
+    target = lane.get("reviews")
+    if lane.get("role") == "review" and target and lane.get("session"):
+        writer = next((l for l in run["lanes"] if l["id"] == target), None)
+        if writer and writer.get("session") == lane["session"]:
+            raise BoardError(f"{lane['id']} would review {target} in the writer's own session {lane['session']}: "
+                             "the writer never reviews its own diff; start a fresh session (another account or product) for the review")
+
+
+def run_spend(run: dict) -> float:
+    """Known dollars across every Lane and archived round; unknown costs count as nothing, never as zero spend proof."""
+    total = 0.0
+    for lane in run["lanes"]:
+        current = lane.get("cost")
+        session = lane.get("session")
+        if current is None and lane.get("output"):
+            info = summarize_events(read_tail(resolve(run, lane.get("output"))))
+            current, session = info.get("cost"), session or info.get("session")
+        prior, _ = prior_rounds(lane, session)
+        total += (current if isinstance(current, (int, float)) else 0.0) + prior
+    return total
 
 
 def set_lane(run: dict, key: str, fields: dict, now: float | None = None) -> dict:
@@ -389,11 +457,18 @@ def set_lane(run: dict, key: str, fields: dict, now: float | None = None) -> dic
     if fields.get("state") and fields["state"] not in LANE_STATES:
         raise BoardError(f"unknown Lane state {fields['state']}; use one of {', '.join(LANE_STATES)}")
     current = int(lane.get("round") or 1) if str(lane.get("round") or 1).isdigit() else 1
+    if fields.get("round") is not None and fields["round"] > MAX_ROUNDS:
+        raise BoardError(f"round {fields['round']} of {lane['id']} is past the {MAX_ROUNDS}-round budget (the first run plus "
+                         f"{MAX_ROUNDS - 1} fix rounds), which means the spec was wrong: rewrite the spec and start a new Lane "
+                         f"(`lane add --id {lane['id']}-v2`), or take the task back into the Coordinator")
     if fields.get("round") is not None and fields["round"] > current:
         archive_round(run, lane, current, fields, now)
     if fields.get("round") is not None and fields.get("note") is not None:
         lane.setdefault("history", []).append({"round": fields["round"], "note": fields["note"], "at": now_iso(now)})
     previous_state = lane["state"]
+    candidate = dict(lane)
+    apply_fields(candidate, fields)
+    check_lane_rules(run, candidate)
     apply_fields(lane, fields)
     if lane["state"] not in ACTIVE_LANE_STATES:
         lane.setdefault("ended_at", lane.get("updated_at") if previous_state not in ACTIVE_LANE_STATES else now_iso(now))
@@ -1089,6 +1164,10 @@ def state_line(view: dict, board_path: str | None = None) -> str:
         return f"已全部结束：共 {len(view['lanes'])} 项任务；还有 {k} 个问题没答{where}"
     if view.get("paused"):
         return f"正在叫停：不再派新活，正等 {n} 个任务、{m} 个外部流程收尾；还有 {k} 个问题等你答复{where}"
+    budget = view["run"].get("budget_usd")
+    if isinstance(budget, (int, float)):
+        spent = sum(l["cost"] for l in view["lanes"] if isinstance(l.get("cost"), (int, float)))
+        where = (f" · 已知花费 ${spent:.2f} / 预算 ${budget:.2f}" + ("，已到上限，不再派新活" if spent >= budget else "")) + where
     if n or m or k:
         return f"正在忙：{n} 个任务在做 · {m} 项等外部结果 · {k} 个问题等你答复{where}"
     return f"目前没有正在跑的任务，也没有问题等你回答{where}"
@@ -1334,9 +1413,11 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--run-id")
     init.add_argument("--orca-run", help="Orca orchestration Run id, to read worker liveness")
     init.add_argument("--coordinator-session")
+    init.add_argument("--budget-usd", type=float, help="stop starting new Lanes once known spend reaches this many dollars")
     config = sub.add_parser("run")
     config.add_argument("action", choices=("set",))
-    config.add_argument("--coordinator-session", required=True)
+    config.add_argument("--coordinator-session")
+    config.add_argument("--budget-usd", type=float, help="raise or set the Run budget after the user agreed")
     init.add_argument("--account", help="the Coordinator's account, e.g. claude:008")
 
     lane = sub.add_parser("lane", help="add or update a Lane or Subagent")
@@ -1355,6 +1436,7 @@ def build_parser() -> argparse.ArgumentParser:
     summary.add_argument("--summary", help=f"the Worker's short final summary; the Board shows at most {SUMMARY_LINES} lines")
     summary.add_argument("--summary-file", help="read and persist the short summary from a UTF-8 file")
     lane.add_argument("--files", help="comma-separated touched paths")
+    lane.add_argument("--owns", help="comma-separated paths or globs a write Lane may edit; overlapping active write Lanes are refused")
     lane.add_argument("--cost", type=float)
 
     step = sub.add_parser("step", help="record overall milestones")
@@ -1406,7 +1488,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     opener = sub.add_parser("open", help="write the Board report and open it once (Orca tab, else the system browser)")
     opener.add_argument("--panel", action="store_true", help="also open sideby's Panel (`sideby ui`) for live sessions and messages")
-    sub.add_parser("close", help="close the Run and move it to archive/")
+    closer = sub.add_parser("close", help="close the Run and move it to archive/")
+    closer.add_argument("--force", action="store_true", help="close although an external wait still runs or a question is unanswered")
     return p
 
 
@@ -1417,7 +1500,7 @@ def in_run_dir(run_dir: str, path: str) -> str:
 
 
 def lane_fields(args: argparse.Namespace) -> dict:
-    keys = ("id", "title", "role", "account", "pool", "branch", "worktree", "output", "dispatch", "session", "note", "reviews", "parent", "kind", "state", "round", "after", "result", "summary", "files", "evidence", "commits", "cost")
+    keys = ("id", "title", "role", "account", "pool", "branch", "worktree", "output", "dispatch", "session", "note", "reviews", "parent", "kind", "state", "round", "after", "result", "summary", "files", "owns", "evidence", "commits", "cost")
     return {k: getattr(args, k) for k in keys if getattr(args, k, None) is not None}
 
 
@@ -1476,21 +1559,22 @@ def existing_board(run_dir: str) -> str | None:
 
 
 
-def watch_events(view: dict) -> dict[str, str]:
-    """What the Coordinator must act on, per Lane: a stream end, a failure, a question, silence."""
+def watch_events(view: dict) -> dict[str, tuple[str, str]]:
+    """What the Coordinator must act on, per Lane, as (kind, text): a stream end, a failure, a question, silence.
+    watch compares kinds only: the silence text carries an age that changes every minute."""
     events = {}
     for lane in view["lanes"]:
         if lane["state"] not in ("working", "needs-you"):
             continue
         name = str(lane.get("title") or lane["id"])
         if lane["state"] == "needs-you":
-            events[lane["id"]] = f"{name}：在等回答"
+            events[lane["id"]] = ("needs-you", f"{name}：在等回答")
         elif lane.get("ended"):
-            events[lane["id"]] = f"{name}：{'跑报错了' if lane.get('stream_failed') else '做完了'}，去汇总验收"
+            events[lane["id"]] = ("ended", f"{name}：{'跑报错了' if lane.get('stream_failed') else '做完了'}，去汇总验收")
         elif lane.get("stale"):
-            events[lane["id"]] = f"{name}：{plain_age(lane['silent_for'])}没有动静，去看日志"
+            events[lane["id"]] = ("stale", f"{name}：{plain_age(lane['silent_for'])}没有动静，去看日志")
         elif lane.get("orca", {}).get("liveness") == "exited":
-            events[lane["id"]] = f"{name}：窗口已关闭"
+            events[lane["id"]] = ("exited", f"{name}：窗口已关闭")
     return events
 
 
@@ -1508,9 +1592,9 @@ def watch(run_dir: str, timeout: int, interval: int) -> int:
         return 0
     # Only a change wakes the Coordinator: things already pending at start were seen when it chose to wait.
     def report(events: dict) -> int:
-        fresh = {k: v for k, v in events.items() if before.get(k) != v}
-        print("\n".join(fresh.values()))
-        pending = [v for k, v in events.items() if k not in fresh]
+        fresh = {k: v for k, v in events.items() if before.get(k, ("",))[0] != v[0]}
+        print("\n".join(text for _, text in fresh.values()))
+        pending = [text for k, (_, text) in events.items() if k not in fresh]
         if pending:
             print("仍待处理：" + "；".join(pending))
         return 0
@@ -1522,7 +1606,7 @@ def watch(run_dir: str, timeout: int, interval: int) -> int:
             print("Run 已叫停")
             return 0
         view, now_events = current()
-        if any(before.get(k) != v for k, v in now_events.items()):
+        if any(before.get(k, ("",))[0] != v[0] for k, v in now_events.items()):
             return report(now_events)
     print(f"{plain_age(timeout)}内没有任务结束；{state_line(view)}。需要的话再挂一次 watch")
     return 0
@@ -1543,9 +1627,9 @@ def show_once(run_dir: str, args: argparse.Namespace) -> None:
     view["paused"] = stopped(run_dir)
     board = existing_board(run_dir)
     if args.json:
-        print(json.dumps({k: v for k, v in view.items() if k != "run"} | {"line": state_line(view, board)}, ensure_ascii=False, default=str))
-    elif args.line:
-        print(state_line(view, board))
+        print(json.dumps({k: v for k, v in view.items() if k != "run"} | {"line": state_line(view), "board": board}, ensure_ascii=False, default=str))
+    elif args.line:  # leads a reply as is, so no file path (the user never gets one)
+        print(state_line(view))
     else:
         sys.stdout.write(render_text(view, board))
 
@@ -1571,6 +1655,8 @@ def _main(argv: list[str] | None = None) -> int:
             with ledger_lock(run_dir):
                 run = load_run(run_dir)
                 run["coordinator_session"] = args.coordinator_session or detect_coordinator()
+                if args.budget_usd is not None:
+                    run["budget_usd"] = args.budget_usd
                 save_run(run_dir, run, report=True)
             print(run_dir)
             return 0
@@ -1601,10 +1687,20 @@ def _main(argv: list[str] | None = None) -> int:
             return 0 if where != "none" else 3
         run = load_run(run_dir)
         if args.cmd == "close":
+            view = derive(run)
+            blocking = [f"外部等待 {w['id']}" for w in view["running_waits"]] + [f"问题 {a['id']}" for a in view["open_asks"]]
+            if blocking and not args.force:
+                raise BoardError(f"not closed: {'、'.join(blocking)} still open; settle them (wait set / ask answer) and "
+                                 "tell the user what blocks the close, or pass --force when the user asked to close anyway")
             print(close_run(run_dir, run))
             return 0
         if args.cmd == "run":
-            run["coordinator_session"] = args.coordinator_session
+            if args.coordinator_session is None and args.budget_usd is None:
+                raise BoardError("run set needs --coordinator-session or --budget-usd")
+            if args.coordinator_session is not None:
+                run["coordinator_session"] = args.coordinator_session
+            if args.budget_usd is not None:
+                run["budget_usd"] = args.budget_usd
         elif args.cmd == "lane":
             fields = lane_fields(args)
             if fields.get("output"):
