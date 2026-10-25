@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-24",
+  "updated": "2026-10-25",
   "accent": "leaf",
   "scales": {
     "neutral": {
@@ -121,6 +121,36 @@
         "#C9C1B4",
         "#F4EFE7"
       ]
+    },
+    "green": {
+      "light": [
+        "#FBFEFC",
+        "#F4FBF6",
+        "#E6F6EB",
+        "#D6F1DF",
+        "#C4E8D1",
+        "#ADDDC0",
+        "#8ECEAA",
+        "#5BB98B",
+        "#30A46C",
+        "#2B9A66",
+        "#218358",
+        "#193B2D"
+      ],
+      "dark": [
+        "#0E1512",
+        "#121B17",
+        "#132D21",
+        "#113B29",
+        "#174933",
+        "#20573E",
+        "#28684A",
+        "#2F7C57",
+        "#30A46C",
+        "#33B074",
+        "#3DD68C",
+        "#B1F1CB"
+      ]
     }
   },
   "functional": {
@@ -140,7 +170,7 @@
         "#CAE9A0",
         "#BADF8A",
         "#A4D26C",
-        "#8AC048",
+        "#6CA021",
         "#80BF31",
         "#73B01F",
         "#43721D",
@@ -161,8 +191,11 @@
         "#E2F3C7"
       ]
     },
-    "solid": "#65A01E",
-    "solid-foreground": "#111111"
+    "solid": {
+      "light": "#568C11",
+      "dark": "#64A400"
+    },
+    "solid-foreground": "#FFFFFF"
   },
   "roles": {
     "light": {
@@ -199,7 +232,7 @@
       "warning-soft": "color-mix(in srgb, {fn-warning} 20%, transparent)",
       "danger-soft": "color-mix(in srgb, {fn-danger} 16%, transparent)",
       "warning-text": "{amber-12}",
-      "danger-text": "{red-11}",
+      "danger-text": "{red-12}",
       "disabled": "{neutral-3}",
       "disabled-foreground": "{neutral-8}",
       "chart-1": "{accent-9}",
@@ -211,7 +244,8 @@
       "tint-border": "{accent-6}",
       "shadow-accent": "0 12px 26px -14px {accent-6}",
       "plate": "{paper-2}",
-      "plate-border": "{paper-6}"
+      "plate-border": "{paper-6}",
+      "success-text": "{green-12}"
     },
     "dark": {
       "background": "{neutral-1}",
@@ -259,7 +293,8 @@
       "tint-border": "{accent-6}",
       "shadow-accent": "none",
       "plate": "{paper-2}",
-      "plate-border": "{paper-6}"
+      "plate-border": "{paper-6}",
+      "success-text": "{green-11}"
     }
   }
 }

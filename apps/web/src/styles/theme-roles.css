@@ -37,7 +37,7 @@
   --warning-soft: color-mix(in srgb, var(--brand-warning) 20%, transparent); /* color-mix(in srgb, {fn-warning} 20%, transparent) */
   --danger-soft: color-mix(in srgb, var(--brand-danger) 16%, transparent); /* color-mix(in srgb, {fn-danger} 16%, transparent) */
   --warning-text: var(--brand-amber-12); /* {amber-12} */
-  --danger-text: var(--brand-red-11); /* {red-11} */
+  --danger-text: var(--brand-red-12); /* {red-12} */
   --disabled: var(--brand-neutral-3); /* {neutral-3} */
   --disabled-foreground: var(--brand-neutral-8); /* {neutral-8} */
   --chart-1: var(--brand-leaf-9); /* {accent-9} */
@@ -50,6 +50,7 @@
   --shadow-accent: 0 12px 26px -14px var(--brand-leaf-6); /* 0 12px 26px -14px {accent-6} */
   --plate: var(--brand-paper-2); /* {paper-2} */
   --plate-border: var(--brand-paper-6); /* {paper-6} */
+  --success-text: var(--brand-green-12); /* {green-12} */
   /* Site helpers: no design-system role covers these. */
   --ring-halo: color-mix(in srgb, var(--ring) 30%, transparent);
   --overlay: color-mix(in srgb, var(--brand-neutral-12) 30%, transparent);
@@ -73,7 +74,7 @@
   --border-strong: var(--brand-neutral-dark-7); /* {neutral-7} */
   --input: var(--brand-neutral-dark-6); /* {neutral-6} */
   --hover: var(--brand-neutral-dark-3); /* {neutral-3} */
-  --primary: var(--brand-leaf-solid); /* {accent-solid} */
+  --primary: var(--brand-leaf-solid-dark); /* {accent-solid} */
   --primary-foreground: var(--brand-leaf-solid-foreground); /* {accent-solid-foreground} */
   --accent: color-mix(in srgb, var(--brand-leaf-dark-9) 20%, var(--card)); /* color-mix(in srgb, {accent-9} 20%, {card}) */
   --accent-foreground: var(--brand-leaf-dark-11); /* {accent-11} */
@@ -105,6 +106,7 @@
   --shadow-accent: none; /* none */
   --plate: var(--brand-paper-dark-2); /* {paper-2} */
   --plate-border: var(--brand-paper-dark-6); /* {paper-6} */
+  --success-text: var(--brand-green-dark-11); /* {green-11} */
   /* Site helpers: no design-system role covers these. */
   --ring-halo: color-mix(in srgb, var(--ring) 18%, transparent);
   --overlay: color-mix(in srgb, var(--brand-neutral-dark-1) 60%, transparent);
