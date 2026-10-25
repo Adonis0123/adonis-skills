@@ -30,7 +30,12 @@ The tests, commands, or page evidence that prove completion. Run only affected t
 
 ## Return
 
-Write the full report to <run dir>/<lane>-report.md and a summary of at most 10 lines to <run dir>/<lane>-summary.md. Write the summary in the user's language (Chinese for a Chinese-speaking user), for a reader who does not code: one item per line. Its first sentence says in plain words what now works or what was found (e.g. "导出按钮改成了 Export video，中英文都已更新。"); the Board card shows only that sentence to a non-technical reader, so no `OUTCOME:`, ids or file paths there. Your final message is that summary plus both paths, nothing else.
+Write the full report to <run dir>/<lane>-report.md and a summary of at most 10 lines to <run dir>/<lane>-summary.md, in the user's language (Chinese for a Chinese-speaking user). The summary has two parts:
+
+1. **First sentence, for the user**: what now works or what was found, in plain words for a reader who does not code (e.g. "导出按钮改成了 Export video，中英文都已更新。"). End it with a full stop (。 or .) on its own line: the Board card shows only this sentence and cuts at the first full stop, so no `OUTCOME:`, ids or file paths in it.
+2. **Remaining lines, for the Coordinator**, one item per line, each written even when empty (`none`): `Decisions:` choices you made that the spec did not settle; `Deviations:` anything you did differently from the spec, and why; `UNVERIFIED:` checks you could not run or that failed; `Files:` how many files you touched and any outside May edit. The Coordinator integrates from these lines without reading the full report, so a decision missing here is lost.
+
+Your final message is that summary plus both paths, nothing else.
 
 The full report has:
 
@@ -43,4 +48,4 @@ The full report has:
 
 Keep the spec self-contained: the worker cannot see the coordinator's conversation. For a follow-up round, resume the writer's session and send only the delta (review findings, the coordinator's decisions, what to change) plus the original spec path.
 
-Register both files with `lane set --summary-file <lane>-summary.md --result-file <lane>-report.md`. The Coordinator reads only the summary; the full report goes to the Board's report page, or to a subagent when a detail must be checked (see `context-budget.md`).
+Register both files with `lane set --summary-file <lane>-summary.md --result-file <lane>-report.md`. The Coordinator reads the whole summary (both parts), not the full report; the full report goes to the Board's report page, or to a subagent when a detail must be checked (see `context-budget.md`).

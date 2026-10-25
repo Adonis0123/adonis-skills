@@ -4,12 +4,27 @@ How the Coordinator keeps a Run ledger and shows it to the user. Terms (Run, Lan
 
 Live status and messaging belong to sideby's Panel: its 会话 page lists every session, its status, and lets the user send to one (`sideby sessions --json` is the same list for the Coordinator). The Board does not duplicate that. It is a milestone report: a static page the user can open at any moment to read what the Run set out to do, what is done and decided, and what is waiting on them. Answers come back in the Coordinator's chat.
 
+## Rules for every reply while a Run is open
+
+These shape what you say and do from `init` until `close`. Read them before you start or take over a Run.
+
+1. **The user is not a technician.** They never run a command, edit a file, open a path or remember an id; you do it, and you map plain requests ("现在到哪了", "A1 按推荐", "停", "再打开看板") to the commands. Speak in plain words (任务, 外部等待, 问题, 账号额度), not Lane, Wait, Ask or quota pool, and say what each choice changes for them.
+2. **Open the Board for them once** with `open` (add `--panel` to also start sideby's Panel). Record your own session with `init --coordinator-session <id>`. If opening fails, report progress in chat; never hand the user a path.
+3. **Record deliverables as they happen**: milestones with `step add/set`, choices with `decision add`, results and verification with `lane set --summary-file/--result-file/--evidence`, files with `artifact add`, commits with `commit add`; each round with `lane set --round N --note`.
+4. **Register before you start**: every Lane, every Subagent you spawn and every Wait (deploy, CI, build, background shell) with its log; a step that waits on others gets `--after`. A fix round or resume is `lane set --round N --output <new stream>` before it starts: the old round's result moves to history, and the script refuses to reuse the ended stream, which would keep showing the old result as current.
+5. **Every question is a numbered Ask** with a recommendation, the evidence and what it blocks. A message to a local session this Coordinator dispatched or the user named needs no per-message approval; messages to people or external channels are outward actions and also name recipient, channel and the full draft. When a fact is missing, the Ask asks for it; never invent it, and never fill in a recipient or channel the user did not name: an outward Ask whose recipient or channel is missing asks for each one in its question, and any guess you offer is labeled as your recommendation (`--channel "待你确认（建议：飞书）"`), not a settled fact. Say a message reached a Worker only when the send command's own result says so (`sideby send --json` receipt, Orca `reply` result); if you did not or could not send it, say so, why, and what happens next.
+6. **Answers come in your chat**; record them with `ask answer`. A message the user sends from the sideby Panel arrives as a cross-session message.
+7. **Record "以后都这样" as a Standing Grant** with its exact scope and the user's words; grants for deploy, external send or publish last this Run only.
+8. **Keep a `watch` running in the background** after you dispatch or ask (Claude Code: `run_in_background`); it exits when a Lane ends, fails, needs the user or goes silent, so finished work does not sit idle while you wait for the user's reply. Lead each reply with the state line from `show --line`; never wait with a foreground `sleep`.
+9. **"停" means stop, not only pause.** Create the `STOP` file, stop each running Lane and Wait you can, mark them `stopped`, and say which ones could not be stopped and why.
+10. **Close** the Run when everything is integrated; a handoff brief carries the Coordinator Session Reference, the Run directory and the Orca run id so the next Coordinator continues the same Run.
+
 ## Three views, one ledger
 
-| View         | When                                                          | What it shows                                                                                                                                                       |
-| ------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| sideby Panel | `sideby` on PATH                                              | Live: every session, busy / idle / needs-you, copy and "Send to it". `B open --panel` runs `sideby ui --background` for the user.                                  |
-| Orca sidebar | `orca status --json` reports `result.runtime.reachable: true` | Live: one titled terminal per Worker under the Coordinator; click to watch or take over.                                                                           |
+| View         | When                                                          | What it shows                                                                                                                                                                                       |
+| ------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| sideby Panel | `sideby` on PATH                                              | Live: every session, busy / idle / needs-you, copy and "Send to it". `B open --panel` runs `sideby ui --background` for the user.                                                                   |
+| Orca sidebar | `orca status --json` reports `result.runtime.reachable: true` | Live: one titled terminal per Worker under the Coordinator; click to watch or take over.                                                                                                            |
 | Board        | always                                                        | Milestone report: objective, milestones, Lane cards with their summaries and full reports, decisions, outputs, commits, open Asks, Standing Grants. Written at milestones; an open tab re-reads it. |
 
 The Coordinator writes the ledger through `scripts/dispatch_board.py`, which serializes each read/modify/write with a per-Run lock. Workers never write it; their activity is read from their event streams (and from Orca liveness when the Lane has a `--dispatch` id) and printed by `show`.
@@ -69,7 +84,7 @@ When the user says "停", the Coordinator runs `touch <run dir>/STOP`: `lane add
 
 ## What the Coordinator reads
 
-Read state with `show --line` and `show`; read each Worker's summary (at most 10 lines, see `task-spec.md` Return). Never Read the Board HTML, `run.json`, `.jsonl` streams, `session-index.json` or full reports into the conversation: Claude Code re-injects a changed file's diff after every change, and the page inlines a Markdown library. Send a report path or screenshot to a subagent and take back text. The rules and the measurements behind them are in SKILL.md "Keep the Coordinator's context small".
+Read state with `show --line` and `show`; read each Worker's whole summary (at most 10 lines: one plain sentence for the user, then decisions, deviations and UNVERIFIED items for you; see `task-spec.md` Return). Never Read the Board HTML, `run.json`, `.jsonl` streams, `session-index.json` or full reports into the conversation: Claude Code re-injects a changed file's diff after every change, and the page inlines a Markdown library. Send a report path or screenshot to a subagent and take back text. Activity times ("N 秒前有动静", silence flags) come from the stream file's modification time, so right after a ledger is copied, restored or handed over they are fresh and mean nothing: report what the ledger and stream contents say and call the time unknown. The rules and the measurements behind them are in `context-budget.md`.
 
 ## Rules the Board enforces or exposes
 
@@ -79,9 +94,9 @@ Read state with `show --line` and `show`; read each Worker's summary (at most 10
 | An Ask needs question, recommendation, evidence and what it blocks; an outward Ask adds recipient, channel and full draft. The script refuses an incomplete Ask | "可以直接部署吗？" without a recommendation; "群里打招呼的消息由你来发" with no recipient or text; "AGENTS.md 那 3 行" the user could not see |
 | Number Asks `A1`, `A2`; the user answers in the Coordinator's chat                                                                                              | Orca shows a Worker waiting on a question as still working                                                                                    |
 | A Standing Grant records scope and the user's words; an outward grant (deploy, send, publish) lasts this Run only; ask once when the scope is unclear           | "以后都按照推荐的来改吧" became a rule nobody wrote down                                                                                      |
-| A finished Lane wakes the Coordinator through `watch`, not the user's next reply                                                                                  | Four Lanes ended and sat for about an hour while the Coordinator waited on an unrelated Ask                                                   |
-| A new round needs a new stream; the old round's result is filed into history                                                                                  | Resumed Lanes kept reading their ended round-1 stream: the card said both 进行中 and 做完了, and results listed rework as done                   |
-| A Lane silent for 5 minutes while `working` is flagged by `show`; read its log before waiting longer                                                                     | The Coordinator sat in `Bash: sleep` for 59 minutes                                                                                           |
+| A finished Lane wakes the Coordinator through `watch`, not the user's next reply                                                                                | Four Lanes ended and sat for about an hour while the Coordinator waited on an unrelated Ask                                                   |
+| A new round needs a new stream; the old round's result is filed into history                                                                                    | Resumed Lanes kept reading their ended round-1 stream: the card said both 进行中 and 做完了, and results listed rework as done                |
+| A Lane silent for 5 minutes while `working` is flagged by `show`; read its log before waiting longer                                                            | The Coordinator sat in `Bash: sleep` for 59 minutes                                                                                           |
 | A stream that ended while the Lane is still `working` is flagged "待主控 AI 汇总"                                                                               | Finished Workers were indistinguishable from busy ones                                                                                        |
 | A reviewer on the same quota pool as the Lane it reviews is flagged                                                                                             | A reviewer on the writer's account weakens review and burns one pool                                                                          |
 
@@ -129,7 +144,6 @@ Notes from the pilot:
 
 A sideby handoff brief includes the Coordinator Session Reference from `sideby sessions copy <coordinator-session-id> --as reference --json` when available. Append `Run directory: <run dir>` to that reference so the receiving Coordinator can find the ledger. If unavailable, name the Coordinator account and session id explicitly. The brief names the Run directory and, in Orca mode, the Orca run id. The next Coordinator sets `AGENT_DISPATCH_RUN` (and `orca orchestration run-use <id>`) and continues the same Run; it does not start a new one.
 
-
 ## sideby sessions, messages and the session index
 
 `sideby sessions --json` must exit 0 with `schemaVersion: 1`, a valid `sessions` array and `problems` array; each command looks it up at most once, with a 10-second timeout. Missing commands, timeouts and malformed responses fall back to stream/Orca behavior. A matched session supplies its Label and status for `show`; `needs-you` means "等你回答". `idle` plus a successful ended stream reads "待主控 AI 汇总"; it does not mark integration done or unblock dependencies. `busy` overrides an old ended stream. Silence warnings (`STALE_SECONDS`) apply only without a usable session status.
@@ -143,9 +157,26 @@ Record your own session at `init --coordinator-session <id>` (or later `run set 
 Every ledger command learns stream session ids under the ledger lock, atomically saves `run.json`, and rebuilds `<state>/session-index.json` from all active ledgers, under `<state>/index.lock`, so sideby can show which Run and task a session belongs to:
 
 ```json
-{"schemaVersion": 1, "revision": 7, "generatedAt": "2026-10-20T08:00:00Z",
- "sessions": {"<session id>": {"entries": [{"run": "<run id>", "runTitle": "<objective>", "lane": "B9", "laneTitle": "B9 卡片",
-   "role": "coordinator|write|review|research|draft|worker|subagent", "board": "<board path>", "url": "file://<board path>#lane-B9"}]}}}
+{
+  "schemaVersion": 1,
+  "revision": 7,
+  "generatedAt": "2026-10-20T08:00:00Z",
+  "sessions": {
+    "<session id>": {
+      "entries": [
+        {
+          "run": "<run id>",
+          "runTitle": "<objective>",
+          "lane": "B9",
+          "laneTitle": "B9 卡片",
+          "role": "coordinator|write|review|research|draft|worker|subagent",
+          "board": "<board path>",
+          "url": "file://<board path>#lane-B9"
+        }
+      ]
+    }
+  }
+}
 ```
 
 The portable contract fixture is `fixtures/session-index.json`; `<board>` and `<url>` are replaced by the consumer's state location. Both projects can use it without sharing a runtime library.

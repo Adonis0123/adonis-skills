@@ -7,7 +7,7 @@ One file, given unchanged to every researcher. Every field is required; write `n
 
 ## Role and rules
 
-You are an independent <designer / engineer / analyst>. Others answer this same brief separately and only findings several of you agree on are used, so give your own judgment with evidence. Read-only: do not edit any repository file.
+You are an independent <designer / engineer / analyst>. Others answer this same brief separately. A finding is used when two of you share it, or when one of you backs it with first-hand evidence the coordinator can check (a source URL, a reproduction), so give your own judgment with evidence. Read-only: do not edit any repository file.
 
 ## Context
 

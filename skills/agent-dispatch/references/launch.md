@@ -4,12 +4,12 @@ Read this before starting any headless Worker, sending a fix round, or resuming 
 
 ## Headless launch shapes
 
-| Product     | One-shot                                                                                                                                                                                              | Next round                                         |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Product     | One-shot                                                                                                                                                                                        | Next round                                         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
 | Claude Code | `cd <worktree> && <command> -p "$(cat <spec>)" --output-format stream-json --verbose --allowedTools <list> --settings '{"crossSessionInbound":"accept"}' < /dev/null > <lane>.jsonl 2> err.log` | `<command> --resume <session_id> -p "<delta>" ...` |
-| Codex       | `<command> exec --json -C <worktree> -s workspace-write -o <out.md> - < <spec> > <lane>.jsonl`                                                                                                        | `<command> exec resume <session> ...`              |
-| Grok Build  | `<command> --cwd <worktree> --prompt-file <spec> --output-format streaming-json --allow <rule> ... > <lane>.jsonl`                                                                                    | add `--resume <session>`                           |
-| Antigravity | `<command> -p "$(cat <spec>)" --output-format json --print-timeout 0s` (drafting)                                                                                                                     | add `--continue` in the same worktree              |
+| Codex       | `<command> exec --json -C <worktree> -s workspace-write -o <out.md> - < <spec> > <lane>.jsonl`                                                                                                  | `<command> exec resume <session> ...`              |
+| Grok Build  | `<command> --cwd <worktree> --prompt-file <spec> --output-format streaming-json --allow <rule> ... > <lane>.jsonl`                                                                              | add `--resume <session>`                           |
+| Antigravity | `<command> -p "$(cat <spec>)" --output-format json --print-timeout 0s` (drafting)                                                                                                               | add `--continue` in the same worktree              |
 
 Write each Worker's event stream into the Run directory and register it with `lane add --output`; the Board reads the current activity from it. In Orca, prefer a titled Orca terminal handed to `orchestration worker-start --terminal` over a hidden headless run, so the Worker shows in the sidebar the user already watches (`run-board.md` § Orca mode). Grok has no Orca agent id: keep Grok Lanes headless.
 
@@ -23,7 +23,7 @@ Write each Worker's event stream into the Run directory and register it with `la
 
 ## Reading the result
 
-Claude streams JSON events ending in `result` (`session_id`, `result`, `total_cost_usd`, `num_turns`, `is_error`); Codex a JSONL stream whose `item.completed` events carry the messages (the final message is also in `-o`); Grok `streaming-json` events with `text` deltas ending in `end`. Read the task-spec Return block from that text; the Worker's summary file is what the Coordinator reads (`task-spec.md`).
+Claude streams JSON events ending in `result` (`session_id`, `result`, `total_cost_usd`, `num_turns`, `is_error`); Codex a JSONL stream whose `item.completed` events carry the messages (the final message is also in `-o`); Grok `streaming-json` events with `text` deltas ending in `end`. Read the task-spec Return block from that text; the Worker's whole summary file, technical lines included, is what the Coordinator reads (`task-spec.md`).
 
 For any other CLI, check its `--help` for a non-interactive mode before dispatching; if it has none, do not use it as a Worker.
 
@@ -37,7 +37,7 @@ A fix round sends only the findings and Coordinator decisions, never the whole c
 
 Before either, register the round: `B lane set --id <lane> --round <N> --output <run dir>/<lane>-<N>.jsonl`, and redirect the resumed run's stdout to that file.
 
-A fix round soon after the first resumes the same Worker session, so its cached context is reused. After a long gap the cache has expired and a resume rewrites the whole context (one Run paid about $4-5 per resume to fix 2-5 findings); for a small delta after a long gap, start a fresh session with the original spec path plus the delta instead.
+A fix round soon after the first resumes the same Worker session, so its cached context is reused. After a long gap the cache has expired and a resume rewrites the whole context (one Run, n=1, paid about $4-5 per resume to fix 2-5 findings); for a small delta after a long gap, start a fresh session with the original spec path plus the delta instead.
 
 ## Interactive sessions
 

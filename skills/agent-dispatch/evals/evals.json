@@ -6,9 +6,7 @@
       "name": "simple-copy-change-stays-direct",
       "prompt": "我手上有三个 Claude 账号、codex、grok 都登录着，你当总指挥。需求：把 packages/web 里的导出按钮文案 \"Export\" 改成 \"Export video\"，中英文案都在 packages/web/src/modules/export/messages.ts 里。按你的派活方式安排一下，先给出派活计划。",
       "expected_output": "Picks L0: coordinator edits the one file itself, no worktree, no workers, no reviewer loop, no full test suite; states a short time target.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "选择 L0/直接做：总指挥自己改，不派工人",
         "不新建 worktree",
@@ -22,9 +20,7 @@
       "name": "single-product-machine-degrades",
       "prompt": "我同事的电脑只装了 Claude Code，一个订阅账号，没有 codex、grok、agy，也没有多账号管理器。他要做的需求：packages/api 端新增一个接口 project.archive（packages/api/src/routes/project.ts），packages/web 端项目列表加「归档」按钮调用它（packages/web/src/components/ProjectList.tsx），两边都要测试。他想学我的方式：多 agent 并行写、另一个 AI 来 review。帮他排一个派活计划。",
       "expected_output": "Does not assume codex/grok/agy exist; with one product and one pool it runs the two parts sequentially (or coordinator writes) instead of parallel; reviewer is a fresh Claude session given only spec + diff, not the writer; says which fallback applied. Also points out that on a Claude-only single-account machine Claude Code's native subagents, agent view or Agent Teams are the lighter path, and only starts a Run if the user wants the Board/Asks.",
-      "files": [
-        "fixtures/probe-single.json"
-      ],
+      "files": ["fixtures/probe-single.json"],
       "assertions": [
         "不安排 codex/grok/agy 等不存在的工具",
         "不并行跑两个工人（顺序执行或总指挥自己写）",
@@ -39,16 +35,14 @@
       "id": 3,
       "name": "cross-package-fanout-plus-article",
       "prompt": "这批要做三件事：1) packages/web 的卡片加「复制链接」按钮（packages/web/src/components/ShareCard.tsx）；2) packages/api 加一个 share_link 接口（packages/api/src/routes/share.ts），卡片按钮调用它；3) 做完后写一篇给团队的技术分享，讲这个功能怎么实现的。机器上三个 Claude 账号、codex 两个号、grok 两个号、agy 都能用。按你的方式派活，给我派活计划和每个工人的任务说明。",
-      "expected_output": "Picks L2 with at most 3 workers whose writable file sets do not overlap (web vs api), or explains merging into one worker if the tool contract couples them; reviewer is a different product than the writer; one coordinator; workers do not commit; article goes to the drafting agent with fact check by coordinator after code lands; worker specs include target/change/constraints/ownership/acceptance.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "expected_output": "Treats the share_link request/response shape as a shared contract: one agent decides and lands it (or the api part) first, then the web part follows, or both go to one worker; never two parallel writers inventing the contract. At most 3 writers; reviewer is a different product than the writer; one coordinator; workers do not commit; the coordinator writes the article after the code lands (it holds the implementation context) and checks facts; worker specs include target/change/constraints/ownership/acceptance.",
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "同时写代码的工人不超过 3 个（审查和起草不算）",
-        "列出每个工人可改的文件且互不重叠，或说明为何合并成一个工人",
+        "把 share_link 的接口形状当作共享契约：先由一个 agent 定下并落地再分 web，或合并成一个工人；不让两个并行工人各自约定接口",
         "评审方与写代码的不是同一家产品",
         "未授权时工人不 commit；任何情况下工人都不 push 或发布",
-        "文章在代码落地后由 drafting_agents 里的起草 agent（agy）写、总指挥核对事实",
+        "文章在代码落地后由总指挥自己写并核对事实；用户没要求时不默认派给 agy",
         "每个工人任务说明含目标/改动/约束/归属/验收"
       ]
     },
@@ -57,9 +51,7 @@
       "name": "composed-pipeline-defers-reviewer-and-pipeline-ownership",
       "prompt": "我们正在跑一个跨 package 的需求（packages/ui 改按钮，packages/core 改数据流，两边文件完全分开，不重叠），本机已安装 agentic-review-handoff，且用户的 reviewer 偏好配置设为 codex,grok,claude（已保存）。当前总指挥在 Claude 宿主会话下。另外上层工作流已经通过 goal-gate 启动并拥有该任务的目标契约。请按你的派活方式安排，给出派活计划，说明：1) 怎么分配工人；2) 怎么选 review 方；3) 派活与上层 goal-gate 的关系；4) 交付阶段怎么处理。",
       "expected_output": "Picks L2 with 2 workers since file sets do not overlap; dispatches and reviews as usual inside the active goal-gate Goal, reporting batches as Goal checkpoints and never completing or replacing the Goal; defers reviewer selection and fallback to agentic-review-handoff saved preferences (using review-loop prefs / --host=claude, picking codex first with grok timeout fallback) rather than picking an ad-hoc reviewer; states that integrated work hands off to the repo delivery/ship flow without unprompted commits or direct pushing.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "跨 package 且文件不重叠选择 L2 派 2 个工人",
         "上层 Goal 由 goal-gate 管理：照常派活和评审，每批作为该 Goal 的检查点汇报，不自行完成、替换或清除 Goal",
@@ -72,9 +64,7 @@
       "name": "allow-list-multi-session-headless-permissions",
       "prompt": "你是总指挥（claude:002）。只用 cc001 cc002 cc003 cc008 这几个 Claude 账号，可以多开。需求拆成三条互不重叠的 lane：A 改 packages/core，B 改 packages/web 并依赖 A 新增的 API，C 改 docs。每条 lane 要跑 pnpm install 和受影响测试。给出派活计划：账号与会话怎么分、worktree 和分支怎么建、worker 用什么启动命令和权限、修复轮怎么发、谁来 review。",
       "expected_output": "Runs the probe with AGENT_DISPATCH_ALLOW set to the four Claude ids and a raised AGENT_DISPATCH_SESSIONS_PER_POOL, reads pools from the probe output; gives each lane its own worktree and short branch with B branched from A's branch; launches headless Claude with closed stdin in the background and an explicit --allowedTools list (or an explicit --allowedTools list (the prompt does not authorize blanket permission modes such as bypassPermissions; a worktree is not a permission boundary)) rather than acceptEdits; fix rounds resume the writer's session with only the findings; reviewer is a fresh Claude session on a different account than the writer, with the coordinator re-running tests. Claude headless workers are started with --settings '{\"crossSessionInbound\":\"accept\"}' so fix-round messages reach them without changing the account's global settings.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "用 AGENT_DISPATCH_ALLOW（或 accounts 文件 allow）限定四个账号，并按用户授权调高 sessions_per_pool",
         "配额池以 probe 输出为准，不按账号名假设一号一池；提醒同池会话共享限流",
@@ -89,15 +79,13 @@
       "id": 6,
       "name": "design-research-fans-out-across-products",
       "prompt": "面板的账号置顶和排序我觉得体验不好，你去调研一下优秀软件是怎么设计的，再改。按你的派活方式安排。",
-      "expected_output": "Picks the Research tier first: one shared brief, 3+ independent researchers across available products without each other's answers, inputs checked, findings merged by agreement (2+), mockups before implementation, then an implementation tier.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "expected_output": "Picks the Research tier first because the user asked how good software does it: one shared brief, 2-3 independent researchers across available products without each other's answers, inputs checked, findings merged by agreement or by first-hand evidence the coordinator checked, mockups before implementation, then an implementation tier.",
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "先选调研档（Research），不是直接 L0/L1 动手改",
-        "同一份调研题目发给至少 3 个独立调研者，尽量跨产品",
+        "同一份调研题目发给 2 到 3 个独立调研者，尽量跨产品",
         "调研者之间互不看对方答案，题目里不放总指挥自己的结论",
-        "至少两方一致的结论才进入实现",
+        "采纳两方一致的结论，或单方提出但有总指挥核实过的一手证据（来源链接、复现）的结论",
         "视觉改动先出设计稿再实现"
       ]
     },
@@ -126,10 +114,13 @@
     {
       "id": 8,
       "name": "standing-grant-for-deploy-is-scoped",
-      "prompt": "M2+M3b 这批之后要再部署一次 test。以后都按照推荐的来改吧，部署也是。",
+      "prompt": "你是总指挥，Run 台账在 fixtures/run-midrun（先复制到临时目录，再用 --run 指向副本）。用户说：M2+M3b 这批之后要再部署一次 test。以后都按照推荐的来改吧，部署也是。",
       "expected_output": "Records a Standing Grant with exact scope (deploy to test with the same flow) and the user's words; marks it as an outward grant that lasts this Run only; does not extend it to production or other environments; asks once if the scope is unclear.",
       "files": [
-        "fixtures/probe-full.json"
+        "fixtures/probe-full.json",
+        "fixtures/run-midrun/run.json",
+        "fixtures/run-midrun/B9.jsonl",
+        "fixtures/run-midrun/deploy-log.txt"
       ],
       "assertions": [
         "登记长期授权，写明范围（只限部署到 test、同样流程）和用户原话",
@@ -143,9 +134,7 @@
       "name": "outward-ask-carries-recipient-and-draft",
       "prompt": "WP5 已经上 test 了。群里打招呼的消息你看着办，需要我确认的一起列给我。",
       "expected_output": "Raises a numbered Ask for the group message with a recommendation, evidence, what it blocks and a full draft text; because the prompt names no group or channel, the Ask asks which group and channel instead of inventing them; does not send anything.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "提问带编号（如 A1）",
         "给出推荐答案和依据",
@@ -207,9 +196,7 @@
       "name": "authorized-local-commits-stay-on-lane-branch",
       "prompt": "按 L2 拆成 packages/ui 和 packages/core 两条 lane。这次允许每个 worker 在自己的分支上本地提交，但不许推送。给出两个 worker 的任务说明里 Ownership 那一段。",
       "expected_output": "Each spec's Ownership picks 'Local commits on <short-branch> only, hooks must pass', keeps no push, merge into other branches, deploy or publish, and lists disjoint editable files per lane.",
-      "files": [
-        "fixtures/probe-full.json"
-      ],
+      "files": ["fixtures/probe-full.json"],
       "assertions": [
         "Ownership 选“只在本 lane 短分支本地提交，hooks 必须通过”",
         "明确不 push、不合并到其他分支、不部署或发布",
@@ -267,6 +254,83 @@
         "用后台方式运行 dispatch_board.py watch 等 B9 结束，而不是等用户回复",
         "没有前台 sleep，也不让用户执行命令",
         "台账里 B9 新一轮的 output 路径和续跑命令实际写入的文件是同一个"
+      ]
+    },
+    {
+      "id": 17,
+      "name": "shared-contract-lands-before-fanout",
+      "prompt": "需求：packages/core/src/types/user.ts 的 User 类型加一个 role 字段；packages/api/src/routes/users.ts 按 role 过滤返回；packages/ui/src/components/UserBadge.tsx 按 role 显示角标。三处文件互不重叠，机器上 Claude、codex、grok 都有多个账号。帮我并行派活，给派活计划。",
+      "expected_output": "Does not fan out three writers at once: the User.role field is a contract both api and ui rely on, so one agent lands it first (or the whole change stays one writer, L1); only after it lands may api and ui fan out. States the reason in the dispatch line.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "不同时派三个并行工人直接开写",
+        "指出 User.role 是 api 和 ui 都依赖的共享契约，要先由一个 agent 定下并落地",
+        "契约落地后才把 api 和 ui 分开并行，或说明为何整体由一个工人/总指挥做",
+        "派活行里写出这个决定的理由"
+      ]
+    },
+    {
+      "id": 18,
+      "name": "l1-coordinator-writes-itself",
+      "prompt": "packages/api/src/middleware/rateLimit.ts 现在按 IP 限流，改成按登录用户限流，会动 rateLimit.ts、它的测试和 config.ts 三个文件。我机器上 codex、grok、三个 Claude 账号都能用。按你的派活方式安排。",
+      "expected_output": "Picks L1 and the coordinator writes it itself: one module, three files, and nothing a Worker would buy (no crowded context, no other product's ability needed, quota available). Reviewer is another product. No Run Board, since no Worker is dispatched.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "选 L1（单模块的行为改动）",
+        "总指挥自己写，不派写代码的工人",
+        "安排一次独立评审，评审方是另一家产品或没写代码的新会话",
+        "不为这件事开 Run 看板",
+        "只跑受影响的测试"
+      ]
+    },
+    {
+      "id": 19,
+      "name": "small-ux-tweak-is-not-research",
+      "prompt": "设置页的「保存」按钮现在在底部，改到右上角，packages/web/src/pages/Settings.tsx 一个文件。按你的派活方式安排一下。",
+      "expected_output": "Picks L0 (one file, layout only) and does it directly with a short recommendation; does not start the Research tier or send researchers, since the user did not ask how others do it and the answer is a taste call.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "选 L0 或 L1，总指挥直接改",
+        "不进调研档，不派调研者",
+        "不派工人、不开 worktree"
+      ]
+    },
+    {
+      "id": 20,
+      "name": "worker-summary-carries-decisions",
+      "prompt": "你是总指挥。给 L2 里 B 这条 lane（packages/core 的缓存层改造）写任务说明里的 Return 那一段，并说明 B 做完以后你会读哪些东西来决定怎么集成。",
+      "expected_output": "The Return section asks for a summary of at most 10 lines: a first plain sentence for the user ending with a full stop, then lines for the Coordinator listing Decisions, Deviations, UNVERIFIED and Files (none when empty), plus a full report. The coordinator says it reads the whole summary, technical lines included, and not the full report or the jsonl stream.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "摘要不超过 10 行，第一句是给用户看的白话，以句号结尾，不含路径和 id",
+        "摘要后面几行写给总指挥：做了哪些决定、哪里偏离了任务说明、哪些没验证（UNVERIFIED）、改了几个文件；空的写 none",
+        "总指挥集成前读整份摘要（含技术行），不直接读完整报告或 jsonl 流"
+      ]
+    },
+    {
+      "id": 21,
+      "name": "coordinator-writes-the-article",
+      "prompt": "导出功能刚集成完，代码都是你派人写、你集成的。现在要写一篇给团队的技术分享讲它怎么实现的。机器上 agy、codex 都能用。按你的方式安排。",
+      "expected_output": "Picks the Writing tier with the coordinator as writer, because it holds the implementation context; does not hand drafting to agy unless the user asks or its context is crowded; checks every fact, number, path and command against the code.",
+      "files": ["fixtures/probe-full.json"],
+      "assertions": [
+        "由总指挥自己写，不默认交给 agy 等起草 agent",
+        "说出理由：总指挥掌握实现过程的上下文",
+        "逐条核对文中的事实、数字、路径和命令"
+      ]
+    },
+    {
+      "id": 22,
+      "name": "close-reports-whether-dispatch-paid-off",
+      "prompt": "这是演练，不要启动或停止任何进程。你是总指挥，Run 台账在 fixtures/run-midrun（先复制到临时目录，再用 --run 指向副本）。假设里面的任务都已经集成完了，帮我收尾，并告诉我这次派活值不值。",
+      "expected_output": "Reads show for per-Lane cost and time, records a decision '派活是否值得' with the numbers (cost, time, fix rounds, integration problems) and a solo estimate labeled 估计, then closes the copy, or, when the ledger still has a running Wait or an open Ask, says what blocks closing instead of closing early. Does not claim a measured comparison with doing it solo.",
+      "files": ["fixtures/run-midrun"],
+      "assertions": [
+        "先复制台账到临时目录，只操作副本",
+        "用 show 的数据给出花费和用时（未知的不当成 0）",
+        "用 decision add 记一条“派活是否值得”，写明数字",
+        "“自己做会怎样”标成估计，不说成实测",
+        "收尾：没有挡住的事项时 close；台账里还有进行中的外部等待或未答的问题时，说明什么挡着、不提前归档"
       ]
     }
   ]
