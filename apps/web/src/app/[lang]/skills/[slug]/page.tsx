@@ -251,7 +251,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
         <SectionReveal delay={100} className="min-w-0">
           <section
             aria-labelledby="install"
-            className="h-full rounded-[22px] border border-tint-border bg-tint p-5 md:p-7"
+            className="h-full rounded-[22px] border border-tint-border bg-tint p-5 md:p-7 dark:bg-card"
           >
             <p className="kicker kicker-leaf">
               <Trans id="skillDetail.install.kicker">Install</Trans>

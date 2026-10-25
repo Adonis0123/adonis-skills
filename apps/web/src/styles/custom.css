@@ -180,8 +180,8 @@
     min-height: 44px;
     border-radius: var(--clay-radius-button);
     border: 1px solid transparent;
-    /* DESIGN.md: button text is 600+ so white on leaf clears the bold-text contrast floor. */
-    font-weight: 650;
+    /* Design system button rule: weight 500, never 600 (heavy at 13-15px Chinese). */
+    font-weight: 500;
     line-height: 1;
     transform: translate3d(0, 0, 0);
   }
@@ -200,8 +200,15 @@
     box-shadow: var(--clay-shadow-btn);
   }
 
+  /* Hover deepens the fill with the --primary-hover-veil (shadcn-theme.css).
+     A transparent border lets the veil cover the edge too. */
   .clay-button--primary:hover,
   .clay-button--blue:hover {
+    border-color: transparent;
+    background-image: linear-gradient(
+      var(--primary-hover-veil),
+      var(--primary-hover-veil)
+    );
     box-shadow: var(--clay-shadow-btn-hover);
     transform: translate3d(0, -1px, 0);
   }
@@ -225,7 +232,7 @@
   .clay-button--secondary:hover,
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
-    border-color: var(--border-strong);
+    border-color: var(--tint-border);
     background: var(--hover);
     color: var(--foreground);
   }
@@ -478,7 +485,7 @@
   }
 
   a.scenario-chip:hover {
-    border-color: var(--border-strong);
+    border-color: var(--tint-border);
     color: var(--foreground);
   }
 
@@ -529,13 +536,13 @@
   }
 
   .skill-card:hover {
-    border-color: var(--border-strong);
+    border-color: var(--tint-border);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -2px, 0);
   }
 
   .featured-card:hover {
-    border-color: var(--border-strong);
+    border-color: var(--tint-border);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -3px, 0);
   }
@@ -594,7 +601,7 @@
     border: 1px solid transparent;
     border-radius: 9px;
     font-size: 13px;
-    font-weight: 650;
+    font-weight: 500;
     line-height: 1;
     white-space: nowrap;
     transition:
@@ -610,10 +617,20 @@
     content: "";
   }
 
+  /* Solid copy is a primary button: pill, and the same hover veil. */
   .copy-button--solid {
     border-color: var(--primary);
+    border-radius: 9999px;
     background: var(--primary);
     color: var(--primary-foreground);
+  }
+
+  .copy-button--solid:hover {
+    border-color: transparent;
+    background-image: linear-gradient(
+      var(--primary-hover-veil),
+      var(--primary-hover-veil)
+    );
   }
 
   .copy-button--outline {
@@ -626,7 +643,7 @@
   }
 
   .copy-button--outline:hover {
-    border-color: var(--border-strong);
+    border-color: var(--tint-border);
     color: var(--link);
   }
 
@@ -646,6 +663,32 @@
     border-top: 1px solid var(--plate-border);
     background: var(--plate);
     color: var(--foreground);
+  }
+
+  /*
+   * Dark mode keeps one family of surfaces: the cool neutral steps. Warm
+   * paper (plate) and the dark leaf wash (tint) read as brown and olive next
+   * to it, so plates, the footer and the lead card sit on neutral steps and
+   * keep the accent only in their borders.
+   */
+  .dark .art-plate {
+    background: var(--card);
+    box-shadow:
+      0 0 0 10px var(--card),
+      0 0 0 11px var(--border);
+  }
+
+  .dark .art-avatar {
+    background: var(--card);
+  }
+
+  .dark .site-footer-plate {
+    border-top-color: var(--border);
+    background: var(--background);
+  }
+
+  .dark .featured-card--lead {
+    background: var(--card);
   }
 }
 

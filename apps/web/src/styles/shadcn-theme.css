@@ -21,6 +21,17 @@
   --nk-radius-xl: 22px;
   --nk-radius-plate: 28px;
 
+  /*
+   * Primary hover veil: 14% shadow ink laid over the solid fill (custom.css).
+   * The ink is dark in both modes, so hover deepens the accent and raises
+   * white-text contrast; the design system has no primary-hover role.
+   */
+  --primary-hover-veil: color-mix(
+    in oklab,
+    var(--shadow-tint) 14%,
+    transparent
+  );
+
   --clay-surface-bg: var(--card);
   --clay-radius-card: var(--nk-radius-lg);
   --clay-radius-card-lg: var(--nk-radius-xl);

@@ -18,7 +18,7 @@ Decisions: `docs/decision-2026-10-18-brand-palette-from-adonis-brand.md` (colors
 
 - Never edit generated files. Change `adonis-brand`, commit and push it, then run `pnpm brand:sync` (reads `$BRAND_REPO`, default `../adonis-brand`) and commit the snapshot in `apps/web/src/styles/brand/` with the regenerated CSS and `DESIGN.md`.
 - `pnpm brand:check` (CI) fails when generated files no longer match the snapshot, when the snapshot came from uncommitted brand changes, or when a design-system text pair falls below its minimum (the pairs mirror `design-system/check.py`). `pnpm design:lint` (CI) runs `designmd lint` on `DESIGN.md`.
-- Components must not contain hex, `rgb()`, `color-mix`, `/NN` opacity modifiers, or Tailwind palette colors (`emerald-*`, `slate-*`, `black`, `white`). Use a design-system role (`--primary`, `--accent`, `--selected`, `--border-strong`, `--danger-text`, …); if none fits, add the role to the design system in adonis-brand first. `pnpm design:check` (CI) enforces this; the only exceptions are the generated files and the shadow formulas in `shadcn-theme.css`.
+- Components must not contain hex, `rgb()`, `color-mix`, `/NN` opacity modifiers, or Tailwind palette colors (`emerald-*`, `slate-*`, `black`, `white`). Use a design-system role (`--primary`, `--accent`, `--selected`, `--border-strong`, `--danger-text`, …); if none fits, add the role to the design system in adonis-brand first. `pnpm design:check` (CI) enforces this; the only exceptions are the generated files and the shadow-ink formulas in `shadcn-theme.css` (shadows and `--primary-hover-veil`).
 - `apps/web/src/lib/og-card.tsx` cannot read CSS variables, so it resolves light-mode roles from `apps/web/src/styles/brand/design-system.json`, never from hex literals.
 
 ## Brand Assets
@@ -42,6 +42,9 @@ Decisions: `docs/decision-2026-10-18-brand-palette-from-adonis-brand.md` (colors
 
 - Reuse the primitives in `apps/web/src/components/ui/*` instead of ad hoc wrappers; keep radius, border, and shadow behavior token-driven.
 - Every interactive element shows a visible focus indicator on `:focus-visible` only, drawn with `outline` (never box-shadow) so shadow utilities cannot hide it. Bordered controls turn their border `--ring` and add a flush 3px `--ring-halo` outline with no offset; borderless links and solid `--primary` fills use a solid 2px `--ring` outline with a 2px offset. Wrappers around inputs or stretched card links use `.clay-focus-within-ring`.
+- Buttons use weight 500. Solid `--primary` buttons are pills with white text; on hover they lay `--primary-hover-veil` over the fill (the design system has no hover color), so hover is visible in both modes.
+- Hover borders on cards, chips, secondary and outline buttons turn `--tint-border`, never grey.
+- Dark mode keeps one family of surfaces (neutral steps): `.dark` rules in `custom.css` move plates, the footer and `tint` panels onto `--card` / `--background` and keep `--tint-border` as the only accent.
 - Never add hard bottom lines such as `0 1px 0 ...` to raised, floating, or button shadows.
 
 ## Motion
