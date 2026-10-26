@@ -21,7 +21,16 @@ export const CONTRAST_PAIRS = [
   ["muted-foreground", "background", 4.5],
   // Deliberately below 4.5: white weight-500 text on a saturated accent pill,
   // as in ByteDance Arco / Semi; a 4.5 accent turns grey ("not that color").
-  ["primary-foreground", "primary", 3],
+  // Raised from 3 to 4 on 2026-10-26: dark mode now reuses the light button color.
+  ["primary-foreground", "primary", 4],
+  ["primary-foreground", "primary-hover", 4],
+  ["primary-foreground", "primary-active", 4],
+  ["secondary-foreground", "secondary", 4.5],
+  ["secondary-foreground", "secondary-active", 4.5],
+  ["danger-solid-foreground", "danger-solid", 4.5],
+  ["danger-solid-foreground", "danger-solid-active", 4.5],
+  ["accent-foreground", "accent-active", 4.5],
+  ["info-text", ["info-soft", "card"], 4.5],
   ["link", "card", 4.5],
   ["accent-foreground", "accent", 4.5],
   ["nav-active-foreground", ["nav-active", "sidebar"], 4.5],
@@ -107,12 +116,24 @@ export function pickDesignSystem(tokens, accent) {
     functional,
     theme: {
       scale: theme.scale,
-      solid: theme.solid,
-      "solid-foreground": theme["solid-foreground"],
+      ...Object.fromEntries(
+        SOLID_FIELDS.filter((f) => theme[f] !== undefined).map((f) => [
+          f,
+          theme[f],
+        ]),
+      ),
     },
     roles: tokens.roles,
   };
 }
+
+/** The theme's button colors; a role references each as {accent-<field>}, e.g. {accent-solid-hover}. */
+const SOLID_FIELDS = [
+  "solid",
+  "solid-foreground",
+  "solid-hover",
+  "solid-active",
+];
 
 const pick = (value, mode) =>
   typeof value === "object" && value !== null ? value[mode] : value;
@@ -129,8 +150,9 @@ export function scaleValues(ds, mode) {
   (ds.theme.scale?.[mode] ?? []).forEach((hex, i) => {
     values[`accent-${i + 1}`] = hex;
   });
-  values["accent-solid"] = pick(ds.theme.solid, mode);
-  values["accent-solid-foreground"] = pick(ds.theme["solid-foreground"], mode);
+  for (const field of SOLID_FIELDS)
+    if (ds.theme[field] !== undefined)
+      values[`accent-${field}`] = pick(ds.theme[field], mode);
   return values;
 }
 
@@ -138,10 +160,8 @@ export function scaleValues(ds, mode) {
 function brandVar(ds, mode, key) {
   const suffix = mode === "dark" ? "-dark" : "";
   if (key.startsWith("fn-")) return `--brand-${key.slice(3)}`;
-  if (key === "accent-solid" || key === "accent-solid-foreground") {
-    const shared =
-      typeof ds.theme[key === "accent-solid" ? "solid" : "solid-foreground"] !==
-      "object";
+  if (SOLID_FIELDS.includes(key.slice(7))) {
+    const shared = typeof ds.theme[key.slice(7)] !== "object";
     return `--brand-${ds.accent}${key.slice(6)}${shared ? "" : suffix}`;
   }
   const [, name, step] = /^([a-z]+)-(\d+)$/.exec(key);

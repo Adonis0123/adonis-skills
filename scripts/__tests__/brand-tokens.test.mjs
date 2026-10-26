@@ -85,6 +85,17 @@ const tokens = {
       "subtle-foreground": "{neutral-9}",
       primary: "{accent-solid}",
       "primary-foreground": "{accent-solid-foreground}",
+      "primary-hover": "{accent-solid}",
+      "primary-active": "{accent-solid}",
+      secondary: "{neutral-12}",
+      "secondary-foreground": "{neutral-1}",
+      "secondary-active": "{neutral-12}",
+      "danger-solid": "{red-12}",
+      "danger-solid-foreground": "{neutral-1}",
+      "danger-solid-active": "{red-12}",
+      "accent-active": "{accent-1}",
+      "info-text": "{neutral-12}",
+      "info-soft": "color-mix(in srgb, {fn-info} 16%, transparent)",
       accent: "color-mix(in srgb, {accent-9} 12%, {card})",
       "accent-foreground": "{accent-11}",
       selected: "color-mix(in srgb, {accent-9} 12%, {card})",
@@ -113,6 +124,17 @@ const tokens = {
       "subtle-foreground": "{neutral-9}",
       primary: "{accent-solid}",
       "primary-foreground": "{accent-solid-foreground}",
+      "primary-hover": "{accent-solid}",
+      "primary-active": "{accent-solid}",
+      secondary: "{neutral-12}",
+      "secondary-foreground": "{neutral-1}",
+      "secondary-active": "{neutral-12}",
+      "danger-solid": "{red-12}",
+      "danger-solid-foreground": "{neutral-1}",
+      "danger-solid-active": "{red-12}",
+      "accent-active": "{accent-1}",
+      "info-text": "{neutral-12}",
+      "info-soft": "color-mix(in srgb, {fn-info} 16%, transparent)",
       accent: "color-mix(in srgb, {accent-9} 20%, {card})",
       "accent-foreground": "{accent-11}",
       selected: "color-mix(in srgb, {accent-9} 20%, {card})",
@@ -175,6 +197,20 @@ test("every scale in tokens.json is published and referenceable", () => {
   );
 });
 
+test("the theme's hover and active button colors are published and referenceable", () => {
+  const withStates = structuredClone(tokens);
+  withStates.themes.teal["solid-hover"] = { light: "#007D79", dark: "#009591" };
+  withStates.themes.teal["solid-active"] = "#006E6B";
+  withStates.roles.light["primary-hover"] = "{accent-solid-hover}";
+  withStates.roles.dark["primary-active"] = "{accent-solid-active}";
+  const picked = pickDesignSystem(withStates, "teal");
+  assert.equal(resolveRoles(picked, "light").roles["primary-hover"], "#007D79");
+  assert.equal(resolveRoles(picked, "dark").roles["primary-active"], "#006E6B");
+  const css = renderBrandTokensCss(picked, null);
+  assert.match(css, /--brand-teal-solid-hover-dark: #009591;/);
+  assert.match(css, /--brand-teal-solid-active: #006e6b;/);
+});
+
 test("solidHex mixes over an opaque base like check.py", () => {
   assert.equal(solidHex("#ABCDEF"), "#abcdef");
   assert.equal(solidHex("color-mix(in srgb, #000000 50%, #ffffff)"), "#808080");
@@ -198,15 +234,15 @@ test("reports unknown references and low contrast with a fix hint", () => {
   assert.match(issues, /dark muted-foreground .* below 4\.5:1/);
 });
 
-test("white text on a saturated accent passes at 3:1 but not below", () => {
+test("white text on a saturated accent passes at 4:1 but not below", () => {
   const vivid = structuredClone(ds);
-  vivid.theme.solid = { light: "#568C11", dark: "#64A400" };
+  vivid.theme.solid = "#568C11";
   vivid.theme["solid-foreground"] = "#FFFFFF";
   assert.deepEqual(findBrandIssues(vivid), []);
-  vivid.theme.solid = { light: "#568C11", dark: "#7FBF1F" };
+  vivid.theme.solid = { light: "#568C11", dark: "#64A400" };
   assert.match(
     findBrandIssues(vivid).join("\n"),
-    /dark primary-foreground #ffffff on primary #7fbf1f is 2\.\d\d:1, below 3:1/,
+    /dark primary-foreground #ffffff on primary #64a400 is 3\.\d\d:1, below 4:1/,
   );
 });
 
