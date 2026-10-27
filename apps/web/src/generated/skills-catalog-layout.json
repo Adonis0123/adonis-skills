@@ -71,6 +71,18 @@
         "zh": "写设计文档和周报，顺手把文件和 agent 配置理清楚。"
       },
       "illustration": "group-docs.webp"
+    },
+    {
+      "id": "create",
+      "title": {
+        "en": "Make images and video",
+        "zh": "生成图片和视频"
+      },
+      "summary": {
+        "en": "Start from one line, pick proven prompts and templates, then hand a precise brief to the image or video tool you have.",
+        "zh": "说一句需求，挑现成的好提示词和模板，再把写好的生成单交给你手上的生图或视频工具。"
+      },
+      "illustration": "group-create.webp"
     }
   ],
   "featured": [

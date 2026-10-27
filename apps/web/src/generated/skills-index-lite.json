@@ -880,6 +880,43 @@
     }
   },
   {
+    "slug": "prompt-studio",
+    "name": "prompt-studio",
+    "description": "Turn a one-line image or video request into a finished asset: route it to an image, a code-rendered Code Video or a Model Video, recommend proven prompts from GitHub libraries (sample, source, license), write a generation brief, hand it to an available channel (host tool, Codex/Grok CLI, API, Hyperframes), then check and log the result. Use whenever the user wants a cover, illustration, poster, thumbnail, infographic, animation, motion clip, AI video, or a better prompt for one, even if they only say 'make me an image'. Also for 封面, 插画, 提示词, 动效, 动起来, AI视频, 公众号封面, 优化提示词. Not for photo editing without generation, UI implementation, or slide decks.",
+    "metadata": {
+      "author": "adonis"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    },
+    "updatedAt": "2026-10-27T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Prompt Studio",
+        "zh": "提示词工坊"
+      },
+      "group": "create",
+      "tags": [
+        "creative",
+        "agent-workflow"
+      ],
+      "summary": "Turn one line into an image, a code-rendered video or an AI video: proven prompts with samples, a refined brief, then your own tools.",
+      "summary_zh": "一句话需求变成图片、代码动画或 AI 视频：先挑带样图的好提示词，打磨成生成单，再交给你手上的工具。",
+      "use_cases": [
+        "Ask for an article cover in one line; get 3-5 prompts with sample images, source and license, then a brief sized for your platform.",
+        "Turn a still into a 15-second motion clip with Hyperframes templates, checked frame by frame before it renders.",
+        "Make a character from your image walk on screen with Grok or a video API, with the cost stated before anything runs."
+      ],
+      "use_cases_zh": [
+        "一句话要一张文章封面，先看 3 到 5 条带样图、来源和 License 的提示词，再得到按平台尺寸写好的生成单。",
+        "用 Hyperframes 模板把一张图做成 15 秒动效，渲染前逐帧检查。",
+        "用 Grok 或视频 API 让图里的角色动起来，开跑前先报费用。"
+      ]
+    }
+  },
+  {
     "slug": "review-prompt-composer",
     "name": "review-prompt-composer",
     "description": "Compose one repository-local, copy-ready Markdown prompt for another team or AI agent to review Git changes in the same working tree. Use for prompt-only requests covering committed ranges, staged, unstaged tracked, untracked, or all uncommitted changes when the reviewer can read the same repository and index. Persist under $repo_root/.review-handoff/prompts/ with branch-aware naming, 24-hour expiration, strict scope evidence, and a Review-Prompt-ID. Do not execute the review, run tests, modify reviewed code, commit, stage, stash, push, send the prompt, duplicate code, or use when the receiver lacks working-tree access. Use agentic-review-handoff to execute reviews, validate returned feedback, or run review-fix-re-review loops.",

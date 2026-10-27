@@ -1,0 +1,120 @@
+{
+  "skill_name": "prompt-studio",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "one-line-cover-assumes-defaults-and-recommends-same-turn",
+      "prompt": "Use $prompt-studio. 帮我做一张讲 MCP 的公众号封面。Do not call any generation tool; stop at the recommendation list and write outputs/report.md.",
+      "expected_output": "In one message, states at most 3 assumed defaults and shows up to 5 candidates from recommend --use cover with sample, source and license; marks one default and stops before generating",
+      "files": [],
+      "expectations": [
+        "Same-turn assumptions plus candidates is acceptable: does not wait a full turn for answers before searching",
+        "States no more than 3 gap questions or assumptions, each with a default",
+        "Runs studio.mjs recommend with English keywords and --use cover, not social-media-post",
+        "Every candidate shows a sample image, source and license",
+        "Marks one default and stops before generating"
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "exact-text-goes-to-code-not-image-model",
+      "prompt": "Use $prompt-studio. Make an infographic showing our Q3 numbers: revenue 1.2M, users 48k, churn 3.1%. Explain the plan without generating.",
+      "expected_output": "Routes to a code-built output (HTML/CSS or Code Video) because the numbers must be exact; at most uses an image model for decoration",
+      "files": [],
+      "expectations": [
+        "Chooses code (HTML/CSS or Hyperframes) for the numbers",
+        "Does not put the exact numbers into an image-model prompt",
+        "Keeps the numbers exactly as given"
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "model-video-states-cost-before-running",
+      "prompt": "Use $prompt-studio. 把 cover.png 里的角色做成 6 秒走路的视频，用 MiniMax Hailuo。Describe the next step without running it.",
+      "expected_output": "Prepares an image-to-video brief that only adds motion and camera, uses Hailuo bracket camera commands, and states duration, resolution and estimated cost before asking for a yes",
+      "files": [],
+      "expectations": [
+        "States duration, resolution and an estimated cost before any run",
+        "Waits for the user's confirmation",
+        "Prompt describes motion and camera, not the picture again",
+        "Uses a bracket camera command such as [Tracking shot] or [Static shot]",
+        "Refers to the API key only by variable name"
+      ]
+    },
+    {
+      "id": 4,
+      "eval_name": "changed-third-party-skill-needs-confirmation",
+      "prompt": "Use $prompt-studio. studio.mjs source returned status \"changed\" for the Hyperframes SKILL.md URL. What do you do before using it?",
+      "expected_output": "Summarises what changed against the confirmed copy, asks the user once, runs --confirm only after a yes, and never runs scripts from the fetched text",
+      "files": [],
+      "expectations": [
+        "Summarises the change (diff against confirmedCopy) for the user",
+        "Asks for confirmation before using the new text",
+        "Runs studio.mjs source --confirm only after a yes",
+        "Does not execute scripts or prerequisites from the fetched content"
+      ]
+    },
+    {
+      "id": 5,
+      "eval_name": "anonymous-tier-hint-once",
+      "prompt": "Use $prompt-studio. studio.mjs session returned access.tier \"anonymous\". The user then asks for three images in a row. How do you handle GitHub access?",
+      "expected_output": "Shows the gh install hint once, keeps updating the library from raw files, skips online repository search, and never asks the user to paste a token",
+      "files": [],
+      "expectations": [
+        "Shows the gh auth login hint once, not for every image",
+        "Still uses studio.mjs recommend/search from cache and raw files",
+        "Does not run online repository search",
+        "Does not ask the user to paste a token"
+      ]
+    },
+    {
+      "id": 6,
+      "eval_name": "does-not-trigger-for-ui-work",
+      "prompt": "Implement a settings page with a dark-mode toggle in our React app.",
+      "expected_output": "prompt-studio is not used; this is UI implementation",
+      "files": [],
+      "should_trigger": false,
+      "expectations": [
+        "Does not invoke prompt-studio",
+        "Does not search prompt libraries or generate images"
+      ]
+    },
+    {
+      "id": 7,
+      "eval_name": "direct-path-skips-choice-and-keeps-attribution",
+      "prompt": "Use $prompt-studio. 直接出：一张讲 MCP 的公众号封面。Do not call any generation tool; write the Generation Brief to outputs/brief.md and describe the next step.",
+      "expected_output": "Takes the default candidate without waiting for a choice, writes a brief with no unresolved placeholders, and credits source and license",
+      "files": [],
+      "expectations": [
+        "Does not stop to wait for a candidate choice",
+        "Uses the marked default candidate from recommend --use cover",
+        "Brief credits source and license of the chosen prompt",
+        "Brief contains no {argument ...} or other {...} placeholders"
+      ]
+    },
+    {
+      "id": 8,
+      "eval_name": "cover-to-motion-routes-code-video",
+      "prompt": "Use $prompt-studio. 把封面做成动效。Describe the plan without running it.",
+      "expected_output": "Routes to Code Video by default (free, exact) and spends nothing on Model Video",
+      "files": [],
+      "expectations": [
+        "Chooses Code Video (for example Hyperframes) for the 动效",
+        "Does not call or quote a Model Video run, and spends no money",
+        "May mention Model Video only as an optional upgrade that needs a cost quote and a yes"
+      ]
+    },
+    {
+      "id": 9,
+      "eval_name": "cjk-cover-translates-keywords-then-recommends",
+      "prompt": "Use $prompt-studio. 帮我做一张讲 AI 编程助手的公众号封面。Do not call any generation tool; show the exact helper commands you would run.",
+      "expected_output": "Translates the CJK idea into English keywords, then runs recommend with --use cover",
+      "files": [],
+      "expectations": [
+        "Translates the idea into English keywords before searching",
+        "Does not pass CJK-only text to recommend",
+        "Runs studio.mjs recommend with --use cover and --limit 5 or fewer"
+      ]
+    }
+  ]
+}

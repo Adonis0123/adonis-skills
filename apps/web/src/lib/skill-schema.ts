@@ -11,6 +11,7 @@ export const SKILL_TAGS = [
   "tool-setup",
   "frontend",
   "docs-and-ops",
+  "creative",
 ] as const;
 
 export type SkillTag = (typeof SKILL_TAGS)[number];

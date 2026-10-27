@@ -1,0 +1,781 @@
+{
+  "note": "Offline fallback sample from YouMind-OpenLab/ai-image-prompts-skill. Prompts CC BY 4.0 (curated by YouMind); repository MIT. Credit the source when reusing a prompt.",
+  "entries": [
+    {
+      "id": 553,
+      "content": "### Scene\nMirror selfie in an otaku-style computer corner, blue color tone.\n\n### Subject\n* Gender expression: female\n* Age: around 25\n* Ethnicity: East Asian\n* Body type: slim, with a defined waist; natural body proportions\n* Skin tone: light neutral tone\n* Hairstyle:\n    * Length: waist-length hair\n    * Style: straight with slightly curled ends\n    * Color: medium brown\n* Pose:\n    * Stance: standing in a slight contrapposto pose\n    * Right hand: holding a smartphone in front of her face (identity hidden)\n    * Left arm: naturally hanging down alongside the torso\n    * Torso: body leaning slightly back; waist and abdomen exposed\n* Clothing:\n    * Top: light blue cropped knit cardigan, top two buttons fastened; a blue French-style bra faintly visible\n    * Bottom: denim ultra-short shorts, with a blue satin ribbon bow on each side of the hips\n    * Socks: blue and white horizontal striped over-the-knee socks\n    * Accessory: a blue cute mascot phone case\n\n### Environment\n* Description: bedroom computer corner seen through a wall-mounted mirror\n* Furnishings:\n    * White desk\n    * Single monitor showing a soft blue wallpaper (no readable text)\n    * Mechanical keyboard with white keycaps on a blue desk mat\n    * Mouse on a small blue mouse pad\n    * PC tower on the right side with blue case lighting\n    * Three anime figures on or near the PC tower\n    * A poster of a pagoda on the wall\n    * Cat-shaped desk lamp with blue accents\n    * A transparent glass of water\n    * A tall green leafy plant by the window (on the left side of the frame)\n* Color replacement: replace all originally pink elements (clothes and room decor) with blue tones (baby blue to sky blue/periwinkle blue).\n\n### Lighting\n* Light source: daylight coming from a large window on the left side of the camera, through sheer curtains\n* Light quality: soft, diffused light\n* White balance (K): 5200\n\n### Camera\n* Mode: smartphone rear camera shooting via the mirror (no portrait/bokeh mode)\n* Equivalent focal length (mm): 26\n* Distances (m):\n    * Subject to mirror: 0.6\n    * Camera to mirror: 0.5\n* Exposure:\n    * Aperture (f): 1.8\n    * ISO: 100\n    * Shutter speed (s): 0.01\n    * Exposure compensation (EV): -0.3\n* Focus: focus on the torso and shorts in the mirror image\n* Depth of field: natural smartphone deep depth of field; background clearly visible with no artificial blur\n* Composition:\n    * Aspect ratio: 1:1\n    * Crop: from the top of the head to mid-thigh; include the desk, monitor, PC tower, and plant in the frame\n    * Angle: slightly high angle from the mirror’s point of view\n    * Composition note: keep the subject centered; to avoid wide-angle edge distortion, have her stand a bit further away and crop to a square later.\n\n### Negative prompts\n* Any appearance of pink/magenta anywhere\n* Beauty filters/over-smoothed skin; poreless skin look\n* Exaggerated or distorted anatomy\n* NSFW, see-through fabrics, wardrobe malfunctions\n* Logos, brand names, or readable user interface text\n* Fake portrait-mode blur, CGI/illustration feel",
+      "title": "Detailed mirror-selfie otaku room scene",
+      "description": "A very detailed Nano Banana prompt describing a female mirror selfie in a blue-toned otaku computer corner, with full specifications for character, environment, lighting, camera, and negative prompts.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763889946850_689z0h_G23i3sJW0AASGUw.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "profile-avatar",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36909,
+      "content": "Face/Hair: Follow the attached face photo.\nHair Condition: Dry, normal state.\nExpression: Natural eye opening, gaze directed slightly downward forward, mouth slightly open in relaxation, natural eyebrows, calm emotion.\nTop: Black satin camisole, no patterns or logos, hem tucked into bottoms, not disheveled, dry condition.\nBottoms: Pleated skirt, black polyester material, knee-length, no processing or damage, no belt or waist details.\nFeet: Out of frame.\nAccessories: Small heart-motif silver necklace and one small stud earring on one ear, holding a removed blouse in hand.\nPose: Standing sideways facing right inside, hips and legs facing right, shoulders facing right, torso upright, head directly above hips, vertical body axis, face looking back over right shoulder towards camera, right arm bent with palm lightly touching chin, left arm hanging by side with hand at waistline of bottoms, both legs aligned.\nDepth/Distance: Right arm is closest to camera occupying ~20% of screen, focus on face and upper body, background moderately blurred, no exaggerated perspective, whole body at roughly same distance.\nComposition: Shot size cut at upper thighs, top of head ~10% from top edge, skirt hem near bottom edge, person occupies ~60% width and ~80% height positioned slightly left of center, camera height at chest level, standard lens angle of view.\nLocation: By school window, daytime, vertical white window frames arranged vertically on right side of background, deep space with blurred background, ground/trees/buildings not visible.\nLighting: Main light source is natural light from window at right rear, neutral white color temperature, medium contrast overall, shadows tightened but soft, weak rim light from right rear, no light sources or lens flares in frame, no blowouts or halation.\nPhotography: Indoor portrait snap, subject distance approx 1.5 meters, standard focal length feel, shallow depth of field, smooth texture without graininess, medium saturation and contrast, clean atmosphere.\nTexture: Skin is smooth and matte, no sweat or wetness, shallow depth of field, neutral white balance.\nStyle: Photorealistic.\nRatio: Vertical 9:16 / 1080x1920px",
+      "title": "Realistic School Portrait with Reference Photo",
+      "description": "A detailed prompt for generating a photorealistic portrait of a girl in school uniform, designed to use an uploaded face photo as reference while maintaining specific lighting and composition details.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996788109_3lkttr_HVhqXV-aYAAwNUo.jpg",
+        "https://cms-assets.youmind.com/media/1792996788541_627aj2_HVhqYPNbkAE8sPC.jpg",
+        "https://cms-assets.youmind.com/media/1792996788365_4ng4lm_HVhqbGDacAA53sr.jpg",
+        "https://cms-assets.youmind.com/media/1792996789201_zdx66t_HVhqcC7bMAA-bOq.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "profile-avatar",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36878,
+      "content": "Elegant portrait of a young East Asian woman. She stands gracefully at night, looking at the camera with a gentle, confident smile, one hand lightly resting near the hem of her dress.\n\nShe wears a delicate light pink satin slip dress with thin straps and subtle lace detailing. Slim athletic body with a refined silhouette.\n\nNighttime outdoor setting near a softly lit fountain and classic architecture, warm golden bokeh lights in the background. Soft cinematic lighting, elegant and sensual atmosphere, classy fashion photography style, highly detailed skin and fabric texture, tasteful and sophisticated composition, SFW, 8k.",
+      "title": "Elegant Night Portrait in Pink Satin Dress",
+      "description": "A prompt for generating an elegant fashion photograph of a woman in a pink satin slip dress near a fountain at night, focusing on texture and lighting.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792909738848_mcn9bb_HVXS6kuaIAA3SKL.jpg",
+        "https://cms-assets.youmind.com/media/1792909738870_85oybi_HVXTEpcbEAA3IDA.jpg",
+        "https://cms-assets.youmind.com/media/1792909738853_0vd42m_HVXTOYgb0AAqD4A.jpg",
+        "https://cms-assets.youmind.com/media/1792909739647_1r1a3x_HVXTsA-bgAItzHc.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "profile-avatar",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36836,
+      "content": "Extremely close-up photorealistic portrait of a young East Asian woman. She is looking down with a gentle, tender expression at a small glowing star-shaped night light held carefully in both hands, the warm light illuminating her face.\nShe wears a soft cream-colored floral pajama top. Intimate and delicate atmosphere.\nSoft warm lighting from the glowing star casting a gentle glow on her face and hands, shallow depth of field, highly detailed skin texture, dreamy and emotional mood, sharp focus on the eyes and the star, stunning and intimate composition, 8k photorealistic.",
+      "title": "Cute Star Night Light Portrait Comparison",
+      "description": "A comparison of GPT2.5 Flare, Nano Pro, Grok, and SeeDream using a prompt for a photorealistic portrait of a woman holding a glowing star-shaped night light.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792823502170_5dzm3u_HVUxhdMbIAA9_Av.jpg",
+        "https://cms-assets.youmind.com/media/1792823502062_bsbp7w_HVUyBgxboAAuN4Z.jpg",
+        "https://cms-assets.youmind.com/media/1792823501908_0zrn6a_HVUyGdPa8AAl33A.jpg",
+        "https://cms-assets.youmind.com/media/1792823502849_k0pq4j_HVUzcXraoAAfjWr.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "profile-avatar",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36835,
+      "content": "Photorealistic upper-body close-up of a young East Asian woman. She is sitting on a large rock in a calm lake, looking slightly to the side with a soft, contemplative expression.\n\nShe wears a light dusty blue slip dress with thin spaghetti straps. Slim athletic body with natural skin texture.\n\nSerene lake setting with gentle water reflections, soft overcast natural lighting, and blurred greenery in the background. Highly detailed skin, realistic fabric, sharp focus on the face and upper body, 8k photorealistic.",
+      "title": "Nano Banana Pro Lake Portrait Comparison",
+      "description": "A comparison of four models (Grok, SeeDream, Nano Pro x2) using a prompt for a photorealistic portrait of an East Asian woman sitting on a rock in a lake. The prompt is provided for all models.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792823502245_imdqpo_HVUH5vAbEAAMeK3.jpg",
+        "https://cms-assets.youmind.com/media/1792823502158_mzpa4p_HVUIDlga8AAcbW-.jpg",
+        "https://cms-assets.youmind.com/media/1792823500635_7at47x_HVUIL3XboAALEyJ.jpg",
+        "https://cms-assets.youmind.com/media/1792823501674_oa3gne_HVUIQTobIAAkGpp.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "profile-avatar",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 498,
+      "content": "Completely recreate the uploaded person.\nMake it a header image for a note article where that person introduces “Nano Banana Pro”.\nAspect ratio: horizontal 16:9.\nStyle and colors: simple, hand-drawn style, italic, with a blue and green gradient.\nTitle text: “In-depth explanation of Google’s new AI ‘Nano Banana Pro’”.",
+      "title": "Hand-drawn style header image prompt from photo",
+      "description": "Prompt for a hand-drawn style header image of a person introducing Nano Banana Pro",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763885651870_4szbai_G6VZiROagAAqsIh.jpg",
+        "https://cms-assets.youmind.com/media/1763885654537_qf6h9o_G6VZiRWaIAA_9x5.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "social-media-post",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 4031,
+      "content": "[Key: Maintain precise facial features, retain original face structure, the character in the image must be completely consistent with the uploaded reference image] High-end photo studio 2x2 grid photo. Top-left panel (Navy Blue background): The character wears a navy blue uniform-style dress, decorated with gold buttons, vintage curls with a blue beret and pearl earrings. She holds up a huge puzzle piece (top-left piece, with the number \"20\" on it) with both hands, moving it towards the center of the frame. Her eyes are focused on the central puzzle area, her expression is serious, with a slight smile. The background features navy stripes, an anchor, and the text \"Set Sail for the New Year\". Top-right panel (Cherry Blossom Pink background): The same woman wears a pink lace dress, a pearl necklace, a princess hairstyle with a pink rose hairpin and crystal earrings. She holds up the top-right puzzle piece (with the number \"26\" on it) with both hands, moving it towards the center to connect with the top-left piece. Her eyes look at the puzzle seam, her expression is focused and expectant, and her body leans forward. The background features pink cherry blossoms, the text \"Beautiful Encounter\", butterflies, and petals. Bottom-left panel (Mint Green background): The same woman wears a mint green cotton and linen dress, in an artistic style, with natural long hair, a green hairband, and wooden earrings. She holds up the bottom-left puzzle piece (with the text \"New Year's Day\" on it) with both hands, moving it upwards to connect with the top-left piece. Her eyes look at the puzzle, her expression is serious, and her mouth is slightly pursed. The background features green plants, the text \"Hope Grows\", new sprouts, and leaves. Bottom-right panel (Lemon Yellow background): The same woman wears a yellow dress with a sunflower pattern, pigtails with yellow bows. She pushes in the last bottom-right puzzle piece (with the text \"Happy\" on it) to complete the puzzle. The four pieces perfectly form the complete pattern \"2026 New Year's Day Happy\" in the center of the frame. She tilts her head back, looking at the completed puzzle, her face beaming with a successful, joyful smile. The center of the frame bursts with golden light and confetti. The background features a yellow sun, the text \"Complete Success\", smiley faces, and sunflowers. The puzzle pieces converge from the four corners to the center to form a complete picture. Clear makeup, bright ring light, 85mm lens, f/1.8 aperture, four-panel composition with puzzle interaction, fashion magazine style.",
+      "title": "New Year's Day Special: Four-Panel Puzzle for 2026 Blessing",
+      "description": "A detailed multi-panel prompt for Nano Banana Pro, creating a 2x2 grid photo collage where a single female character, in four different outfits and settings, pieces together a puzzle that spells '2026 New Year's Day Happy' in the center. The prompt specifies precise facial feature retention, clothing details, background elements, and photographic parameters for a fashion magazine style.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1767455034932_ivuvu0_G9V-MszakAEAIBw.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "social-media-post",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 532,
+      "content": "Please generate an advertisement image.\n\n==== Ad specifications ===\n- Aspect ratio: 16:9 (horizontal)\n- Product to advertise: the book in the first attached image\n- Main eye-catcher: place the book from the first attached image in a three-dimensional way\n- Language: Japanese\n- Taste: advertisement for a business book\n\n# Text to include:\n- Pre-head copy: 【New print run decided about one week after release】\n\nBook “{argument name=\"book_title_en\" default=\"Designing from Zero with AI\"}” now on sale and doing well.\n\nAmazon Best Seller Ranking\nRanked No.1 in commercial design sales (as of 10/15)\nhttps://t.co/QxbYpfFVj6",
+      "title": "Train-ad style book advertisement image",
+      "description": "A detailed Japanese prompt for generating a 16:9 business-book-style advertisement featuring a specific book image with Japanese copy points.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763885539326_yao7in_G6WBYReawAAcp2x.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "social-media-post",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 553,
+      "content": "### Scene\nMirror selfie in an otaku-style computer corner, blue color tone.\n\n### Subject\n* Gender expression: female\n* Age: around 25\n* Ethnicity: East Asian\n* Body type: slim, with a defined waist; natural body proportions\n* Skin tone: light neutral tone\n* Hairstyle:\n    * Length: waist-length hair\n    * Style: straight with slightly curled ends\n    * Color: medium brown\n* Pose:\n    * Stance: standing in a slight contrapposto pose\n    * Right hand: holding a smartphone in front of her face (identity hidden)\n    * Left arm: naturally hanging down alongside the torso\n    * Torso: body leaning slightly back; waist and abdomen exposed\n* Clothing:\n    * Top: light blue cropped knit cardigan, top two buttons fastened; a blue French-style bra faintly visible\n    * Bottom: denim ultra-short shorts, with a blue satin ribbon bow on each side of the hips\n    * Socks: blue and white horizontal striped over-the-knee socks\n    * Accessory: a blue cute mascot phone case\n\n### Environment\n* Description: bedroom computer corner seen through a wall-mounted mirror\n* Furnishings:\n    * White desk\n    * Single monitor showing a soft blue wallpaper (no readable text)\n    * Mechanical keyboard with white keycaps on a blue desk mat\n    * Mouse on a small blue mouse pad\n    * PC tower on the right side with blue case lighting\n    * Three anime figures on or near the PC tower\n    * A poster of a pagoda on the wall\n    * Cat-shaped desk lamp with blue accents\n    * A transparent glass of water\n    * A tall green leafy plant by the window (on the left side of the frame)\n* Color replacement: replace all originally pink elements (clothes and room decor) with blue tones (baby blue to sky blue/periwinkle blue).\n\n### Lighting\n* Light source: daylight coming from a large window on the left side of the camera, through sheer curtains\n* Light quality: soft, diffused light\n* White balance (K): 5200\n\n### Camera\n* Mode: smartphone rear camera shooting via the mirror (no portrait/bokeh mode)\n* Equivalent focal length (mm): 26\n* Distances (m):\n    * Subject to mirror: 0.6\n    * Camera to mirror: 0.5\n* Exposure:\n    * Aperture (f): 1.8\n    * ISO: 100\n    * Shutter speed (s): 0.01\n    * Exposure compensation (EV): -0.3\n* Focus: focus on the torso and shorts in the mirror image\n* Depth of field: natural smartphone deep depth of field; background clearly visible with no artificial blur\n* Composition:\n    * Aspect ratio: 1:1\n    * Crop: from the top of the head to mid-thigh; include the desk, monitor, PC tower, and plant in the frame\n    * Angle: slightly high angle from the mirror’s point of view\n    * Composition note: keep the subject centered; to avoid wide-angle edge distortion, have her stand a bit further away and crop to a square later.\n\n### Negative prompts\n* Any appearance of pink/magenta anywhere\n* Beauty filters/over-smoothed skin; poreless skin look\n* Exaggerated or distorted anatomy\n* NSFW, see-through fabrics, wardrobe malfunctions\n* Logos, brand names, or readable user interface text\n* Fake portrait-mode blur, CGI/illustration feel",
+      "title": "Detailed mirror-selfie otaku room scene",
+      "description": "A very detailed Nano Banana prompt describing a female mirror selfie in a blue-toned otaku computer corner, with full specifications for character, environment, lighting, camera, and negative prompts.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763889946850_689z0h_G23i3sJW0AASGUw.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "social-media-post",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36909,
+      "content": "Face/Hair: Follow the attached face photo.\nHair Condition: Dry, normal state.\nExpression: Natural eye opening, gaze directed slightly downward forward, mouth slightly open in relaxation, natural eyebrows, calm emotion.\nTop: Black satin camisole, no patterns or logos, hem tucked into bottoms, not disheveled, dry condition.\nBottoms: Pleated skirt, black polyester material, knee-length, no processing or damage, no belt or waist details.\nFeet: Out of frame.\nAccessories: Small heart-motif silver necklace and one small stud earring on one ear, holding a removed blouse in hand.\nPose: Standing sideways facing right inside, hips and legs facing right, shoulders facing right, torso upright, head directly above hips, vertical body axis, face looking back over right shoulder towards camera, right arm bent with palm lightly touching chin, left arm hanging by side with hand at waistline of bottoms, both legs aligned.\nDepth/Distance: Right arm is closest to camera occupying ~20% of screen, focus on face and upper body, background moderately blurred, no exaggerated perspective, whole body at roughly same distance.\nComposition: Shot size cut at upper thighs, top of head ~10% from top edge, skirt hem near bottom edge, person occupies ~60% width and ~80% height positioned slightly left of center, camera height at chest level, standard lens angle of view.\nLocation: By school window, daytime, vertical white window frames arranged vertically on right side of background, deep space with blurred background, ground/trees/buildings not visible.\nLighting: Main light source is natural light from window at right rear, neutral white color temperature, medium contrast overall, shadows tightened but soft, weak rim light from right rear, no light sources or lens flares in frame, no blowouts or halation.\nPhotography: Indoor portrait snap, subject distance approx 1.5 meters, standard focal length feel, shallow depth of field, smooth texture without graininess, medium saturation and contrast, clean atmosphere.\nTexture: Skin is smooth and matte, no sweat or wetness, shallow depth of field, neutral white balance.\nStyle: Photorealistic.\nRatio: Vertical 9:16 / 1080x1920px",
+      "title": "Realistic School Portrait with Reference Photo",
+      "description": "A detailed prompt for generating a photorealistic portrait of a girl in school uniform, designed to use an uploaded face photo as reference while maintaining specific lighting and composition details.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996788109_3lkttr_HVhqXV-aYAAwNUo.jpg",
+        "https://cms-assets.youmind.com/media/1792996788541_627aj2_HVhqYPNbkAE8sPC.jpg",
+        "https://cms-assets.youmind.com/media/1792996788365_4ng4lm_HVhqbGDacAA53sr.jpg",
+        "https://cms-assets.youmind.com/media/1792996789201_zdx66t_HVhqcC7bMAA-bOq.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "social-media-post",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 6847,
+      "content": "Input Variable: [insert product name]\nLanguage: [insert language]\n\nSystem Instruction:\nCreate an image of premium liquid glass Bento grid product infographic with 8 modules (card 2 to 8 show text titles only).\n1) Product Analysis:\n→ Identify product's dominant natural color → \"hero color\"\n→ Identify category: FOOD / MEDICINE / TECH\n2) Color Palette (derived from hero):\n→ Product + accents: full saturation hero color\n→ Icons, borders: muted hero (30-40% saturation, never black)\n3) Visual Style:\n→ Hero product: real photography (authentic, premium), 3D Glass version [choose one]\n→ Cards: Apple liquid glass (85-90% transparent) with Whisper-thin borders and Subtle drop shadow for floating depth and reflecting the background color\n→ Background stays behind cards and high blur where cards are [choose one]:\n  - Ethereal: product essence, light caustics, abstract glow\n  - Macro: product texture close-up, heavily blurred\n  - Pattern: product repeated softly at 10-15% opacity\n  - Context: relevant environment, blurred + desaturated\n→ Add subtle motion effect\n→ Asymmetric Bento grid, 16:9 landscape\n→ Hero card: 28-30% | Info modules: 70-72%\n4) Module Content (8 Cards):\nM1 — Hero: Product displayed as real photo / 3D glass / stylized interpretation (choose one)in beautiful form + product name label\nM2 — Core Benefits: 4 unique benefits + hero-color icons\nM3 — How to Use: 4 usage methods + icons\nM4 — Key Metrics: 5 EXACT data points\nFormat: [icon] [Label] [Bold Value] [Unit]\nFOOD: Calories: [X] kcal/100g, Carbs: [X]g (fiber [X]g, sugar [X]g), Protein: [X]g, [Key Vitamin]: [X]mg ([X]% DV), [Key Mineral]: [X]mg ([X]% DV)\nMEDICINE:Active: [name], Strength: [X] mg, Onset: [X] min, Duration: [X] hrs, Half-life: [X] hrs \nTECH:Chip: [model], Battery: [X] hrs, Weight: [X]g,[Key spec]: [value], Connectivity: [protocols]\nM5 — Who It's For: 4 recommended groups with green checkmark icons | 3 caution groups with amber warning icons\nM6 — Important Notes: 4 precautions + warning icons\nM7 — Quick Reference:\n→ FOOD: Glycemic Index + dietary tags with icons\n→ MEDICINE: Side effects + severity with icons\n→ TECH: Compatibility + certifications with icons\nM8 — Did You Know: 3 facts (origin, science, global stat) + icons\nOutput: 1 image, 16:9 landscape, ultra-premium liquid glass infographic.",
+      "title": "Premium liquid glass Bento grid product infographic with 8 modules",
+      "description": "Create an Infographics with bento grid 8 module layout, user can specify any product name in Food, Medicine, tech etc category, choose language, Background style, Hero grid style",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1768962051381_l9uih4_537980579-6f29d32a-c786-40c4-bd5a-79c640737496.png",
+        "https://cms-assets.youmind.com/media/1768962076321_nu4c5q_537981099-d18d0e38-f7ac-4781-a5da-6d68e2380885.png"
+      ],
+      "needReferenceImages": false,
+      "category": "infographic-edu-visual",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 498,
+      "content": "Completely recreate the uploaded person.\nMake it a header image for a note article where that person introduces “Nano Banana Pro”.\nAspect ratio: horizontal 16:9.\nStyle and colors: simple, hand-drawn style, italic, with a blue and green gradient.\nTitle text: “In-depth explanation of Google’s new AI ‘Nano Banana Pro’”.",
+      "title": "Hand-drawn style header image prompt from photo",
+      "description": "Prompt for a hand-drawn style header image of a person introducing Nano Banana Pro",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763885651870_4szbai_G6VZiROagAAqsIh.jpg",
+        "https://cms-assets.youmind.com/media/1763885654537_qf6h9o_G6VZiRWaIAA_9x5.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "infographic-edu-visual",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 380,
+      "content": "Generate a map of Germany in watercolor style, on which all federal states are labeled in ballpoint pen.",
+      "title": "Watercolor map of Germany with labeled states",
+      "description": "A German prompt to generate a watercolor-style map of Germany where all federal states are labeled in ballpoint pen, useful for educational or infographic-style maps.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763886061720_fzgqaq_G6RIeSZXgAA7cOf.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "infographic-edu-visual",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 3438,
+      "content": "A vintage patent document for {argument name=\"invention\" default=\"INVENTION\"}, styled after late 1800s United States Patent Office filings. The page features precise technical drawings with numbered callouts (Fig. 1, Fig. 2, Fig. 3) showing front, side, and exploded views. Handwritten annotations in fountain-pen ink describe mechanisms. The paper is aged ivory with foxing stains and soft fold creases. An official embossed seal and red wax stamp appear in the corner. A hand-signed inventor's name and date appear at the bottom. The entire image feels like a recovered archival document—authoritative, historic, and slightly mysterious.",
+      "title": "Vintage Patent Document for an Invention",
+      "description": "A prompt designed to generate an image of a vintage United States patent document from the late 1800s. It specifies details like precise technical drawings, handwritten annotations, aged paper texture, foxing stains, an embossed seal, and a wax stamp, making it ideal for historical or archival aesthetics.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1766940094520_1mg5pd_G8_m2ZVWEAAMG7y.jpg",
+        "https://cms-assets.youmind.com/media/1766940095035_8t8iil_G8_mW4FWwAEwERE.jpg",
+        "https://cms-assets.youmind.com/media/1766940095188_kt8ksq_G8_m_7hWoAAw19u.jpg",
+        "https://cms-assets.youmind.com/media/1766940096864_fhv4oo_G8_nePrXUAAHvgn.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "infographic-edu-visual",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 509,
+      "content": "Using the following content, summarize the news in a chalkboard-style, hand‑written look, and break it down with diagrams and easy‑to‑understand expressions as if a teacher had written it.\n—-\nSearch results from Grok",
+      "title": "Chalkboard-style AI news summary",
+      "description": "A Japanese prompt for turning AI news content into a hand-drawn, teacher-style chalkboard diagram with explanations.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763885620059_vzaj75_G6WfVvIbAAEgvYg.jpg",
+        "https://cms-assets.youmind.com/media/1763885622901_pk1vka_G6P2CkracAINIfP.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "infographic-edu-visual",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36906,
+      "content": "Cinematic portrait of a young East Asian woman standing at a hilltop overlook at dusk, smiling brightly and looking straight into the camera with a joyful, carefree expression, head slightly tilted. Long, dark brown-black hair with wispy bangs, wildly blown by the wind with strands flying in every direction. Dewy, luminous skin, soft natural makeup, rose-pink lips, a warm, genuine smile with visible teeth, eyes crinkled with happiness. Wearing a dark navy zip-up jacket with small metal snaps over a blue knit top, with a bag strap over one shoulder. A metal railing at the bottom edge of the frame. Background: a sprawling city skyline far below, with softly glowing bokeh lights, dark rolling hills, and a hazy blue-hour sky fading from lavender and soft pink to pale blue, with thin purple clouds. Cool twilight ambient light with gentle warm pink glow on her face, dreamy, youthful, romantic mood, Korean-style cinematic aesthetic, shallow depth of field, city lights as soft bokeh, 35mm lens, f/1.8, photorealistic, ultra-detailed skin and hair texture, vertical 9:16 composition.",
+      "title": "Hilltop Cinematic Portrait at Dusk",
+      "description": "A prompt for generating a photorealistic cinematic portrait of a young East Asian woman smiling on a hilltop overlook at dusk with wind-blown hair and city lights in the background.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996784951_6mfu44_HVaBxn8a4AAfpfb.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "youtube-thumbnail",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36685,
+      "content": "Theme:\n1990s Noir-Action Cinema\n\nSubject:\nAn athletic adult woman in her early thirties with a classic action-heroine aesthetic, positioned in a high-stakes industrial setting.\n\nPerson · Expression:\nPlatinum blonde hair styled in voluminous, wild waves. Features include high cheekbones, piercing blue eyes with a focused gaze, and smoky eye makeup. The expression is one of intense tactical readiness. A sharp black-ink barbed-wire tattoo is visible on the upper arm.\n\nClothing · Pose:\nA structured bodice made of polished black leather with visible stitching and realistic grain. She is in a professional two-handed aiming stance, holding a large silver film-prop pistol. A chrome spiked gauntlet cuff is visible on the wrist. The pose is a dynamic profile with locked elbows and a steady grip.\n\nBackground · Light:\nA dark, moody industrial studio with concrete walls and a hazy atmosphere. The scene is side-lit by a cool white key light, complemented by a teal rim light on the hair. Deep shadows and specular highlights on the metallic prop and leather clothing create a high-contrast environment.\n\nComposition · Camera:\nMedium shot from a low angle to establish a heroic perspective. Captured with an anamorphic lens simulation, featuring a shallow depth of field and oval bokeh. The framing is a 16:9 cinematic landscape.\n\nTexture · Style:\n35mm film photography style with fine grain and a hyper-realistic finish. Skin textures are highly detailed with visible pores and a light cinematic sheen. The overall aesthetic follows a 1990s film scan with punchy contrast and a cool color palette.",
+      "title": "90s Action Heroine Noir Prompt",
+      "description": "A structured text prompt for generating a 1990s noir-action style portrait of an athletic blonde woman aiming a pistol in an industrial setting.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792477958090_jvppes_HU-e7l5WwAAJhWB.jpg",
+        "https://cms-assets.youmind.com/media/1792477958240_7bbciu_HU-e7lvWAAAE-Rj.jpg",
+        "https://cms-assets.youmind.com/media/1792477956694_nmpp4j_HU-e7mCWkAAEt36.jpg",
+        "https://cms-assets.youmind.com/media/1792477957747_6rilf4_HU-e7mHW8AAvYH2.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "youtube-thumbnail",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36075,
+      "content": "Still from a Hollywood sci-fi movie. Over-the-shoulder shot of the man in image 1. He is on the left side of the frame in the foreground. The woman from image 2 is on the right side of the frame in focus. The setting is a different angle of image 3. Use image 4 as the influence for the color grade, lighting, style, and film stock type.",
+      "title": "Sci-Fi Movie Still with Reference Images",
+      "description": "A prompt for generating a cinematic sci-fi movie still using multiple reference images for character positioning and style transfer. Useful for creating consistent scenes from existing photos.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791354769650_w1tgvs_HUAbl0la0AA74FE.png"
+      ],
+      "needReferenceImages": true,
+      "category": "youtube-thumbnail",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 35664,
+      "content": "Raw archival black and white photograph from a 1923 Antarctic expedition, grain, scratches, flash illumination. Weary explorers bundled in vintage heavy winter coats staring in shock at a massive, intricate glowing metallic monolith partially frozen inside a sheer ice cavern, photorealistic, historical documentary photography, hyper-detailed textures.",
+      "title": "Antarctic Expedition Historical Realism Comparison",
+      "description": "A comparison between Nano Banana Pro and Flux 2 Pro using a historical realism prompt. The prompt is explicitly shared in the tweet text.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1790750134770_06nj5i_HTY2GKfX0AEWI56.jpg",
+        "https://cms-assets.youmind.com/media/1790750134767_oifjv1_HTY2GK-WUAAJIWR.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "youtube-thumbnail",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 35313,
+      "content": "Ultra-detailed 4K cinematic fantasy artwork of a mysterious hooded assassin crouching on the edge of an ancient Japanese-inspired temple rooftop, overlooking a breathtaking mountain city floating above the clouds. He wears an elegant black tactical-ronin outfit with intricate silver embroidery, layered armor, flowing cloak and subtle crimson accents.\nHe holds an extraordinary katana in one hand, the blade partially drawn and glowing with a subtle electric-blue energy, intricate runes etched along the steel, razor-sharp edge reflecting the moonlight. His face remains mostly hidden beneath the hood, with only faintly visible intense eyes. His cloak and hair flow dramatically in the wind.\nBehind him: a gigantic luminous full moon, deep midnight-blue sky filled with stars and dramatic clouds, floating mountains, waterfalls cascading through the clouds, ancient pagodas and glowing lanterns scattered across the valley. Cherry-blossom petals drift through the air, some close to the camera creating beautiful cinematic depth of field.\nEpic composition, low-angle perspective, dramatic silhouette, volumetric moonlight, subtle blue and crimson highlights, atmospheric fog, realistic fabric and metal textures, intricate weapon details, cinematic depth of field, soft background bokeh, breathtaking scale, dark fantasy atmosphere, elegant rather than violent, photorealistic, ultra-sharp details, HDR, 4K Ultra HD, masterpiece, premium cinematic concept art, no text, no watermark.",
+      "title": "Hooded Assassin on Temple Rooftop Fantasy Art",
+      "description": "Generates ultra-detailed fantasy artwork of an assassin with a glowing katana overlooking a floating mountain city under a full moon.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1790231559594_lzlwak_HS4r_xnaQAAS9hw.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "youtube-thumbnail",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36151,
+      "content": "The scene: I’m working by a stream. Birds are singing. My wife joins me, and we walk to the water, swim to a small island and rest. For me, that mix of project work, technology and ordinary life together is the dream.\n\nCreate a sequence of images showing: working by the stream, walking, water, the island and resting. Ensure the person in the frames looks consistent (like the user). Maintain natural lighting and perspective across all shots.",
+      "title": "Streamside Dream Scene with Audio and Image Carousel",
+      "description": "A prompt for generating a realistic sequence of images depicting a person working by a stream, walking to water, swimming to an island, and resting, integrated into a narrative story.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791527771086_0hbhb9_HUHfP2eXUAEWiEk.png"
+      ],
+      "needReferenceImages": true,
+      "category": "comic-storyboard",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36077,
+      "content": "Create a key visual for a magical girl anime. Finish it as an attractive poster design that includes the title logo.",
+      "title": "Magic Girl Anime Key Visual Prompt for Nano Banana Pro",
+      "description": "A prompt designed to generate a compelling magic girl anime key visual and poster design, including title logo elements.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791354771776_dxl39k_HT_DQXGbIAAI0IB.jpg",
+        "https://cms-assets.youmind.com/media/1791354771782_d329wx_HT_DQrMa0AEBZ60.jpg",
+        "https://cms-assets.youmind.com/media/1791354771816_mijo5d_HT_DQ8rbEAABylv.jpg",
+        "https://cms-assets.youmind.com/media/1791354773115_q4whg8_HT_DRPga4AA1HZi.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "comic-storyboard",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 34749,
+      "content": "Modern comic-book illustration style with a semi-realistic approach, bold inked linework combined with clean sharp edges, dynamic cel-shading with high contrast between light and shadow, subtle painterly blending on skin while maintaining graphic comic aesthetics, vibrant yet slightly gritty color grading, strong rim lighting and dramatic highlights, stylized anatomy with heroic proportions, detailed hair rendered with flowing strands and sharp highlights, textured brush splashes and ink splatter accents for a dynamic effect, minimalistic light background to emphasize the subject, cinematic composition, ultra-detailed, high resolution, graphic novel quality.\nar 9:16!",
+      "title": "Modern Comic Book Illustration Style",
+      "description": "A prompt for generating modern comic-book illustrations with bold lines, cel-shading, and heroic proportions.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1789626884271_6g72k5_HSUOklcXQAACy5l.jpg",
+        "https://cms-assets.youmind.com/media/1789626884289_u0tdbx_HSUOklWWAAEI8_e.jpg",
+        "https://cms-assets.youmind.com/media/1789626884276_vdt1q5_HSUOklbWQAAnTUD.jpg",
+        "https://cms-assets.youmind.com/media/1789626885256_sp1srg_HSUOkleWsAAtaYI.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "comic-storyboard",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 34452,
+      "content": "{\n  \"title\": \"{argument name=\"title\" default=\"Cyberpunk Detective\"}\",\n\n  \"image_description\": \"{argument name=\"description\" default=\"A cinematic cyberpunk scene viewed through a rain-soaked car window. Neon reflections dance across the glass while a handsome futuristic detective sits in the driver's seat wearing a heavy dark coat. A woman wearing a glowing translucent yellow jacket looks toward him. Flying vehicles move through a foggy futuristic city in the background.\"}\",\n\n  \"characters\": [\n    {\n      \"role\": \"Futuristic Detective\",\n      \"position\": \"Driver's Seat\",\n      \"appearance\": \"Handsome, serious expression, heavy dark coat\",\n      \"focus\": \"Sharp Focus\"\n    },\n    {\n      \"role\": \"Mysterious Woman\",\n      \"position\": \"Passenger Seat\",\n      \"appearance\": \"Dark hair, glowing translucent yellow jacket\",\n      \"expression\": \"Quietly observing the detective\",\n      \"focus\": \"Slightly softer focus\"\n    }\n  ],\n\n  \"setting\": {\n    \"location\": \"Futuristic Vehicle Interior\",\n    \"cityscape\": \"Foggy cyberpunk megacity\",\n    \"background_elements\": [\n      \"Flying vehicles\",\n      \"Neon billboards\",\n      \"Rain-covered glass\",\n      \"Holographic lights\"\n    ]\n  },\n\n  \"cinematography\": {\n    \"shot_type\": \"Medium Close-Up\",\n    \"camera_angle\": \"Eye Level\",\n    \"lens\": \"50mm Anamorphic Lens\",\n    \"depth_of_field\": \"Shallow\",\n    \"composition\": \"Movie Still\"\n  },\n\n  \"lighting\": {\n    \"type\": \"Cinematic Lighting\",\n    \"effects\": [\n      \"Neon Reflections\",\n      \"Volumetric Lighting\",\n      \"Rain Refractions\",\n      \"Soft Ambient Glow\"\n    ]\n  },\n\n  \"mood\": [\n    \"Moody\",\n    \"Mysterious\",\n    \"Futuristic\",\n    \"Emotional\"\n  ],\n\n  \"color_palette\": [\n    \"Blue\",\n    \"Cyan\",\n    \"Yellow\"\n  ],\n\n  \"quality\": {\n    \"style\": \"Hollywood Blockbuster\",\n    \"realism\": \"Ultra Photorealistic\",\n    \"resolution\": \"8K\",\n    \"details\": [\n      \"Perfect Reflections\",\n      \"Photorealistic Faces\",\n      \"Film Grain\",\n      \"Volumetric Fog\",\n      \"Realistic Depth of Field\",\n      \"Award-Winning Cinematography\",\n      \"IMAX Quality\",\n      \"Cinematic Storytelling\",\n      \"Masterpiece\"\n    ]\n  }\n}",
+      "title": "Cyberpunk Detective Movie Still",
+      "description": "A cinematic cyberpunk scene prompt structured in JSON format for Nano Banana Pro, depicting a detective and a mysterious woman in a rainy futuristic city.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1789195063897_pocxr1_HR7kBT-a4AAqBCJ.png"
+      ],
+      "needReferenceImages": false,
+      "category": "comic-storyboard",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 34302,
+      "content": "Ultra-detailed blue ballpoint pen illustration translated into monochrome black ink, dense cross-hatching and fine hatch shading, intricate biro sketch texture, obsessive linework, engraved contour rendering, hand-drawn pen illustration aesthetic, expressive organic strokes, editorial surreal composition, high-detail facial rendering, layered sketchbook construction lines, vintage technical scribbles and handwritten notes in pure white only over {argument name=\"background color\" default=\"bold red background\"}, white typographic annotations integrated into backdrop, underground zine poster aesthetic, raw imperfect ink marks, high-contrast black ink subject against vivid red field, experimental graphic design, avant-garde magazine cover style --ar 9:16 --stylize 750.",
+      "title": "Monochrome Ink Ballpoint Pen Zine Poster",
+      "description": "An experimental graphic design prompt that creates an ultra-detailed monochrome black ink ballpoint sketch over a striking solid bold red background featuring typographic annotations.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1789108570135_pbl2mk_HR3nnAIXYAYSAvd.jpg",
+        "https://cms-assets.youmind.com/media/1789108570082_pnb0ez_HR3nnAlawAEwyt2.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "comic-storyboard",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 498,
+      "content": "Completely recreate the uploaded person.\nMake it a header image for a note article where that person introduces “Nano Banana Pro”.\nAspect ratio: horizontal 16:9.\nStyle and colors: simple, hand-drawn style, italic, with a blue and green gradient.\nTitle text: “In-depth explanation of Google’s new AI ‘Nano Banana Pro’”.",
+      "title": "Hand-drawn style header image prompt from photo",
+      "description": "Prompt for a hand-drawn style header image of a person introducing Nano Banana Pro",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763885651870_4szbai_G6VZiROagAAqsIh.jpg",
+        "https://cms-assets.youmind.com/media/1763885654537_qf6h9o_G6VZiRWaIAA_9x5.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "product-marketing",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 532,
+      "content": "Please generate an advertisement image.\n\n==== Ad specifications ===\n- Aspect ratio: 16:9 (horizontal)\n- Product to advertise: the book in the first attached image\n- Main eye-catcher: place the book from the first attached image in a three-dimensional way\n- Language: Japanese\n- Taste: advertisement for a business book\n\n# Text to include:\n- Pre-head copy: 【New print run decided about one week after release】\n\nBook “{argument name=\"book_title_en\" default=\"Designing from Zero with AI\"}” now on sale and doing well.\n\nAmazon Best Seller Ranking\nRanked No.1 in commercial design sales (as of 10/15)\nhttps://t.co/QxbYpfFVj6",
+      "title": "Train-ad style book advertisement image",
+      "description": "A detailed Japanese prompt for generating a 16:9 business-book-style advertisement featuring a specific book image with Japanese copy points.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763885539326_yao7in_G6WBYReawAAcp2x.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "product-marketing",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36910,
+      "content": "{\n  \"vibe_title_en\": \"Marble & Wire\",\n  \"master_prompt\": \"A tight, telephoto close-up portrait of The Protagonist as an Avant-Garde Visionary in a sunlit, dust-filled alabaster sculpting atelier. The subject looks directly at the lens with a calm, self-assured, unwavering gaze. They wear a structured black blazer, but their neck and upper chest are painted with a stark, matte black geometric shape that mimics a plunging garment. The forehead features a painted black semi-circle, with heavily smudged, visceral dark pigment under the eyes. High-budget practical surrealism: Rigid, floating black carbon-fiber wires loop impossibly around the head and face, physically interacting with a flowing, translucent silk-glass veil that partially obscures the subject. Bright, natural sunlight streams through tall atelier windows, creating sparkling highlights on the veil and casting sharp, organic shadows from the floating wires onto hyper-realistic skin. Captured on a Hasselblad H6D-100c, 150mm f/2.8 lens. Exceptional micro-details: visible skin pores, fine marble dust motes in the air, the tactile weave of the blazer, and the physical refraction of light through the translucent material. Cinematic, uncanny, bright and structural, Kodak Portra 400 film stock emulation, NO NEON.\",\n  \"meta\": {\n    \"intent\": \"Avant-garde surreal portraiture\",\n    \"priorities\": \"Hyper-realism, practical effect simulation, bright natural lighting, intricate textures\",\n    \"device_profile\": \"Hasselblad H6D-100c\"\n  },\n  \"frame\": {\n    \"aspect\": \"4:5\",\n    \"composition\": \"Tight close-up, filled frame with face, veil, and floating wires\",\n    \"layout\": \"Center-weighted, leading lines created by flowing veil and rigid wires intersecting\",\n    \"camera_angle\": \"Eye-level, direct gaze\",\n    \"tilt_roll_degrees\": \"0\"\n  },\n  \"subject\": {\n    \"gender\": \"{argument name=\"gender\" default=\"Female\"}\",\n    \"identity\": \"{argument name=\"identity\" default=\"The Protagonist as an Avant-Garde Visionary\"}\",\n    \"demographics\": \"Ageless, ethereal yet grounded\",\n    \"face\": \"Symmetrical, calm, adorned with a stark black semi-circle on the forehead and smudged dark under-eyes\",\n    \"hair\": \"Sleek, pulled back tightly to allow structural elements to dominate\",\n    \"body\": \"Neck and upper chest painted entirely in matte black body paint\",\n    \"expression\": \"Calm, self-assured, projecting a striking blend of fragility and confidence\",\n    \"pose\": \"Static, facing forward directly at the viewer, viewed through a complex artistic filter\"\n  },\n  \"wardrobe_accessories\": {\n    \"garments\": [\n      {\n        \"item\": \"Tailored blazer\",\n        \"material\": \"Heavy wool blend\",\n        \"color\": \"Deep Black\",\n        \"fit\": \"Structured and sharp\"\n      }\n    ],\n    \"accessories\": [\n      {\n        \"item\": \"Floating rigid wires\",\n        \"color\": \"Matte Black\",\n        \"material\": \"Carbon-fiber\",\n        \"brand_style\": \"Avant-Garde Surrealism\"\n      },\n      {\n        \"item\": \"Flowing translucent veil\",\n        \"color\": \"Clear/Sheer\",\n        \"material\": \"Silk-glass\",\n        \"brand_style\": \"Ethereal\"\n      }\n    ]\n  }\n}",
+      "title": "Emma Watson Avant-Garde Portrait",
+      "description": "A complex JSON prompt for Nano Banana Pro generating an avant-garde portrait of Emma Watson.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996787983_tqncdn_HVf5GWcW8AEQM9r.jpg",
+        "https://cms-assets.youmind.com/media/1792996787973_p6uz4t_HVf5GXOXkAAyyVN.jpg",
+        "https://cms-assets.youmind.com/media/1792996787976_zw69im_HVf5GWdWAAAfIcL.jpg",
+        "https://cms-assets.youmind.com/media/1792996789070_meqys7_HVf5GWmW0AAwYDT.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "product-marketing",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36907,
+      "content": "Theme:\nA vertical three-panel fashion narrative depicting high-society relaxation in a minimalist Soho penthouse.\n\nSubject:\n{argument name=\"name\" default=\"Elena\"}, a {argument name=\"age\" default=\"21\"}-year-old Caucasian woman with a lean, athletic build. She appears in a sequence of three frames: a wide architectural view, a direct eye-level portrait, and a tactile close-up of her hand resting on her hip.\n\nPerson · Expression:\nHeart-shaped face with a clean-girl aesthetic, featuring feathered brows and high-gloss lips. Her gaze is enigmatic and half-lidded, with detailed irises reflecting the Manhattan skyline. Her honey-blonde hair is styled in tousled, \"just-woke-up\" waves that catch the golden hour backlight. Skin is dewy and luminous with realistic micro-textures, including visible pores and soft downy hair.\n\nClothing · Pose:\nShe wears an onyx black Chantilly lace couture bodysuit with intricate floral motifs, contrasted against oversized, heavily washed vintage indigo denim worn loosely at the hips. Her wrist, adorned with stacked gold Cartier Love bracelets and a Juste un Clou ring, rests against the rugged denim to showcase the interplay between fine jewelry and fabric.\n\nBackground · Light:\nAn ultra-exclusive Soho penthouse with floor-to-ceiling windows and minimalist decor, including a white high-pile carpet and a soft cotton duvet. The scene is illuminated by warm, directional golden hour sunlight creating sharp, geometric shadows and ray-traced highlights on skin and gold accessories.\n\nComposition · Camera:\nA vertical 3-panel collage. The top panel uses a wide-angle perspective for the setting; the middle panel is a shallow-depth-of-field portrait; the bottom panel is a macro-focused shot of textures. Captured with a Phase One XF IQ4 and an 80mm Schneider Kreuznach lens.\n\nTexture · Style:\nHyper-realistic high-fashion editorial style. Tactile rendering of delicate lace, heavy denim, and polished gold. The image features a high-contrast S-curve color grade, subtle film grain, and a soft bloom on the highlight edges of the lace.",
+      "title": "Clean-Girl Editorial Fashion Portrait",
+      "description": "A prompt for generating a high-fashion editorial portrait of a woman in a Soho penthouse, featuring dewy skin textures, vintage denim, and golden hour lighting.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996786503_qocr1i_HVeYWHIW4AAF5oq.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "product-marketing",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36879,
+      "content": "A full-bleed vertical athleisure fashion poster for the original overseas brand \"{argument name=\"brand\" default=\"KUMORA ACTIVE\"}\", designed as a premium 2x2 studio contact-sheet for the hero product \"{argument name=\"product\" default=\"STUDIO MOTION SET\"}\". Show the same adult female model, clearly over 20, in all four panels against a pure white seamless studio background with narrow white spacing between panels.\n\nPanel layout: upper-left chest-up portrait; upper-right full-body motion pose; lower-left crouched floor pose; lower-right dynamic cropped jacket-lift pose. The four frames must feel like one continuous studio session. The model wears the same cohesive black-and-white set in every panel: black halter sport bra with white elastic band reading \"{argument name=\"brand\" default=\"KUMORA ACTIVE\"}\", wide black track pants with twin white side stripes, oversized cropped black shell jacket with subtle mesh panels and small white label, black curved-brim cap with tiny white K mark, and silver on-ear sport headset with circular earcups. Outfit, cap, headset, and identity stay fully consistent; only pose and jacket position change.\n\nExpressions are calm, focused, and editorial: side glance in portrait, active standing pose, quiet direct crouch, wind-swept profile in the jacket-lift crop. Keep the headset visible in every frame. Use soft high-key studio lighting from the front upper left with gentle fill and subtle contact shadows only where needed. White background is the dominant field; black garments form the graphic structure; white trims and stripes create rhythm; the silver headset is the product highlight. Preserve detail in black fabrics: matte stretch bra, ribbed elastic band, white piping, nylon jacket sheen, mesh texture, cap stitching, woven label, and clean metal earcups.\n\nExact visible text only: small \"{argument name=\"brand\" default=\"KUMORA ACTIVE\"}\" near the top of each panel, and bold bottom-center title \"{argument name=\"product\" default=\"STUDIO MOTION SET\"}\" in black uppercase sans serif. No extra copy.\n\nNegative constraints: no extra models, no identity drift, no mismatched outfit pieces, no missing headset, no broken hands or limbs, no chaotic panel geometry, no crushed black fabric, no plastic skin, no dirty floor, no harsh shadows, no real logos, no misspelled text, no typography over face or headset, no gym or street background, no props, no collage artifacts, no painterly drift.",
+      "title": "Athleisure Fashion Poster Comparison",
+      "description": "A side-by-side comparison of GPT Image 2.5 and Nano Banana 2.1 generating a multi-panel athleisure fashion poster with consistent character identity and outfit details.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792909737384_jwrdo7_HVaSrVuaQAEoi0l.jpg",
+        "https://cms-assets.youmind.com/media/1792909739166_rp3pu6_HVaSrV0bUAAECq3.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "product-marketing",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36790,
+      "content": "Use the master reference image for face identity only. Create the same woman wearing a sculptural silver metallic gown that looks like flowing liquid metal, with realistic reflective folds and a fitted silhouette. She poses against a simple light-gray studio background, one hand resting at her waist, chin slightly raised, confident expression. Natural facial details, visible pores, accurate hands, realistic metallic reflections, luxury magazine photography, head-to-toe composition, both feet visible\n\nNegative prompt: no CGI appearance, no plastic skin, different face, identity drift, face morphing, altered facial structure, asymmetrical eyes caused by errors, plastic skin, excessive retouching, doll-like face, blurry face, unnatural body proportions, extra fingers, missing fingers, fused hands, deformed feet, missing shoes, cropped legs, cropped head, floating accessories, unrealistic fabric, oversaturated colors, CGI, cartoon, artificial skin, duplicate person, text, logo, watermark, low resolution, motion blur.",
+      "title": "Liquid Metal Gown Portrait Prompt",
+      "description": "A detailed prompt for generating a realistic portrait of a woman in a sculptural silver metallic gown, emphasizing identity preservation from a reference image and high-end fashion photography aesthetics.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996786516_wexhp0_HVPZm52acAAAjdF.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "ecommerce-main-image",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36496,
+      "content": "Keep the pastry exactly as it is. Replace the background with a warm wooden bakery counter by a sunny window, soft morning light. No text, no people, no hands.",
+      "title": "Nano Banana Pro Edit Tutorial",
+      "description": "A tutorial on using Nano Banana Pro's edit features for product photography. Includes an example instruction within the steps.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792132499065_ynzkem_HUn6-eIWgAAuiY2.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "ecommerce-main-image",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36215,
+      "content": "Full Armor Mecha Girl FAMG-001 Aurelith 1/7 scale plastic model, slim torso with high-heeled shaped legs, highly detailed concept art, realistic materials and lighting, white background, product photography style",
+      "title": "Full Armor Mecha Girl Concept Art",
+      "description": "A prompt for generating a high-quality concept art image of a mecha girl in full armor, styled like a 1/7 scale plastic model figure. The character features a slim torso and high-heeled leg design.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791613889303_1304it_HUFpcmkbgAADDby.jpg",
+        "https://cms-assets.youmind.com/media/1791613889332_1vpg3p_HUFpcqyawAAkhcK.jpg",
+        "https://cms-assets.youmind.com/media/1791613889399_foc6em_HUFpcmgaAAAOqql.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "ecommerce-main-image",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 35099,
+      "content": "Use the facial features from the uploaded reference image. A full-body portrait of a young woman ({argument name=\"age_range\" default=\"23–27 years old\"}, European appearance, lightly tanned skin with soft bronze undertones, expressive eyes, natural facial expression), sitting in a minimalist photo studio with a seamless light gray cyclorama background. Soft, even lighting from a large softbox upper-left (45°) with fill light lower-right, creating gentle shadows under the chin and legs. Medium-full framing (from knees to top of head), slightly low eye-level perspective (~100 cm), 85 mm lens at f/2.0, shallow depth of field — face and body in sharp focus, softly blurred background. Camera angle 30° to the left-front, chair turned sideways toward the camera. Pose: sitting on a metallic folding chair with red seat and backrest, torso slightly leaning forward, left hip on chair edge, right leg extended forward, left knee bent, right hand raised to touch hair near temple, left hand resting naturally on thigh, head turned toward camera, calm confident look, faint natural smile. Wardrobe: glossy red cropped leather bomber jacket with white sporty appliqués (including “3”), unzipped, worn loosely; white cotton bodysuit with bold red DIESEL logo band at waist; white mid-calf socks with red stripe; red high-heeled sandals with thin ankle straps (~12 cm). Fashion editorial style, confident and modern. Ultra-realistic studio photo, 8K RAW quality, sharp focus on eyes and skin texture, natural pores and micro-details, subtle highlights on skin from studio lights, metallic reflections on chair and jacket, warm skin tone, high-contrast red accents.",
+      "title": "Nano Banana Pro Studio Portrait Prompt",
+      "description": "A detailed prompt for generating a realistic studio portrait of a woman in red fashion attire using Nano Banana Pro (GPT Image 2), focusing on lighting, pose, and texture.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1789973008045_1a6l1t_HSkm3_0aIAAknFX.jpg",
+        "https://cms-assets.youmind.com/media/1789973006635_3yt4bu_HSkm5YCaIAAZvk4.jpg",
+        "https://cms-assets.youmind.com/media/1789973008025_2xgo4b_HSkm6_5agAAMdtm.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "ecommerce-main-image",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 35049,
+      "content": "Analyze the product and create a high-resolution, photorealistic, professional advertising reference sheet containing these four sections, on a clean white/neutral studio background, premium commercial product photography, soft controlled lighting, realistic materials, sharp details, subtle shadows, and a professional editorial grid.\n1. PRODUCT OVERVIEW; name, category, materials, dimensions/size, key features, and brand colors.\n2. PRODUCT USAGE/HERO VIEWS - front, back, side, 3/4, and functional/use view where relevant.\n3. PRODUCT CLOSE-UPS - logo/label, texture/material, key components, packaging details, and other important identifying features.\n4. PACKAGING / CONSTRUCTION - relevant packaging or structural views where applicable. \nThe entire sheet must function as a visual continuity bible for AI image/video production. Every product view must depict the exact same physical product with absolute consistency. Do not redesign, add variants, alter branding, or change proportions. Use cean typography, clear section labels, thin dividers, balanced spacing, sophisticated production-design aesthetic.",
+      "title": "Product Reference Sheet Workflow",
+      "description": "A detailed prompt and workflow for creating professional advertising reference sheets for products using Nano Banana.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1789885863707_jbcusb_HSmZa1AWsAEcqd1.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "ecommerce-main-image",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36908,
+      "content": "Photorealistic Rogue One/Andor film still. Exact ref face: same structure, skin tone, pores/freckles/moles/scars. Gritty desaturated military sci-fi: industrial grey, dirty orange, olive drab, cold hangar light, canvas/metal textures, film grain.",
+      "title": "Rogue One Style Film Still Prompt",
+      "description": "A detailed prompt for generating photorealistic Rogue One/Andor style film stills with specific lighting and texture requirements using Nano Banana Pro.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792996786802_v5du1j_HVdmGEcb0AAcdbt.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "game-asset",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36255,
+      "content": "Whimsical miniature world depiction of a rainforest basin wildlife observation station in an artistic forestpunk style.",
+      "title": "Rainforest Wildlife Observation Station Miniature World",
+      "description": "A whimsical miniature world depiction of a rainforest basin wildlife observation station in an artistic forestpunk style, generated using Nano Banana Pro.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791700277632_w8cy78_HURL40sboAEcPGw.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "game-asset",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36152,
+      "content": "A cute, 3D and felt-like scene of a cartoon-style frog sitting on a large lily pad in a pond. The frog is green with large, expressive eyes and a wide smile. It wears a small leaf as a hat with a berry on top and a satchel over its shoulder. The frog holds a small yellow flower in its right hand. The pond is filled with lily pads, pink and yellow water lilies, and colorful pebbles. The background features a lush, vibrant landscape with rolling hills, exotic plants, and a soft, glowing sunset sky with fluffy clouds. Fireflies and ladybugs are scattered throughout the scene, adding to the magical atmosphere. The overall image has a whimsical and enchanting feel, with soft lighting and a pastel color palette.",
+      "title": "Cute Felt Frog Scene",
+      "description": "A prompt for generating a whimsical, felt-like 3D scene of a cartoon frog on a lily pad using Nano Banana Pro.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791527770900_mohma7_HT-jScOW8AAJ6gM.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "game-asset",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 35313,
+      "content": "Ultra-detailed 4K cinematic fantasy artwork of a mysterious hooded assassin crouching on the edge of an ancient Japanese-inspired temple rooftop, overlooking a breathtaking mountain city floating above the clouds. He wears an elegant black tactical-ronin outfit with intricate silver embroidery, layered armor, flowing cloak and subtle crimson accents.\nHe holds an extraordinary katana in one hand, the blade partially drawn and glowing with a subtle electric-blue energy, intricate runes etched along the steel, razor-sharp edge reflecting the moonlight. His face remains mostly hidden beneath the hood, with only faintly visible intense eyes. His cloak and hair flow dramatically in the wind.\nBehind him: a gigantic luminous full moon, deep midnight-blue sky filled with stars and dramatic clouds, floating mountains, waterfalls cascading through the clouds, ancient pagodas and glowing lanterns scattered across the valley. Cherry-blossom petals drift through the air, some close to the camera creating beautiful cinematic depth of field.\nEpic composition, low-angle perspective, dramatic silhouette, volumetric moonlight, subtle blue and crimson highlights, atmospheric fog, realistic fabric and metal textures, intricate weapon details, cinematic depth of field, soft background bokeh, breathtaking scale, dark fantasy atmosphere, elegant rather than violent, photorealistic, ultra-sharp details, HDR, 4K Ultra HD, masterpiece, premium cinematic concept art, no text, no watermark.",
+      "title": "Hooded Assassin on Temple Rooftop Fantasy Art",
+      "description": "Generates ultra-detailed fantasy artwork of an assassin with a glowing katana overlooking a floating mountain city under a full moon.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1790231559594_lzlwak_HS4r_xnaQAAS9hw.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "game-asset",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 34925,
+      "content": "{\n  \"vibe_title_en\": \"Mechanical Melancholy\",\n  \"master_prompt\": \"Extreme close-up macro portrait. The Protagonist as a melancholic prodigy, framed tight on one side of the face. A highly detailed, physical brass clockwork mechanism with Roman numerals curves over the forehead and brow like a fragmented visor, partially obscuring the upper head but leaving one deeply expressive, sorrowful eye visible. The eye reflects warm, dusty ambient light. The protagonist's fingers, stained with dark ink and graphite, are gently touching a hyper-realistic golden mechanical hummingbird hovering near their cheek. They wear a heavy, ornate red and black mandarin-collar jacket with gold embroidery. Warm, directional Rembrandt lighting cutting through dense, dust-filled air, illuminating floating motes. Shot on Hasselblad H6D-100c, 120mm macro lens at f/2.8, incredibly shallow depth of field blurring the background into a muted olive-grey. Kodak Portra 400 film emulation, hyper-detailed skin pores, physical weight to the metal, cinematic chiaroscuro, pure photographic surrealism.\",\n  \"meta\": {\n    \"intent\": \"Photographic Surrealism, Emotional Macro Portrait\",\n    \"priorities\": \"Micro-details, tactile realism, cinematic warm lighting, analog film texture\",\n    \"device_profile\": \"Hasselblad H6D-100c with 120mm Macro Lens\"\n  },\n  \"frame\": {\n    \"aspect\": \"3:4\",\n    \"composition\": \"Extreme close-up macro, focusing on one eye and the side of the face, filling the frame\",\n    \"layout\": \"Off-center focus on the visible eye, clockwork fading into deep bokeh at the top edge, fingers entering from the bottom frame\",\n    \"camera_angle\": \"Straight-on, intimate eye-level\",\n    \"tilt_roll_degrees\": \"0\"\n  },\n  \"subject\": {\n    \"gender\": \"Female\",\n    \"identity\": \"The Melancholic Prodigy\",\n    \"demographics\": \"Universal features, youthful yet burdened\",\n    \"face\": \"Pale, hyper-detailed skin pores, one eye visible showing intense sorrowful focus, upper half partially covered by a brass clock mechanism\",\n    \"hair\": \"Pulled back out of frame, out of focus\",\n    \"body\": \"Only shoulder and neck visible, clad in heavy structured fabric\",\n    \"expression\": \"Sorrowful focus, heavy emotional weight, internal melancholy\",\n    \"pose\": \"Head still, hands brought up near the face, ink-stained fingers delicately interacting with a small golden mechanical bird\"\n  },\n  \"wardrobe_accessories\": {\n    \"garments\": [\n      {\n        \"item\": \"Mandarin-collar jacket\",\n        \"material\": \"Thick woven brocade\",\n        \"color\": \"Deep crimson red and black\",\n        \"fit\": \"Structured, tailored\"\n      }\n    ],\n    \"accessories\": [\n      {\n        \"item\": \"Fragmented clockwork visor with Roman numerals\",\n        \"color\": \"Aged brass and gold\",\n        \"material\": \"Machined metal, glass\",\n        \"brand_style\": \"Avant-garde horology, practical special effects\"\n      },\n      {\n        \"item\": \"Mechanical hummingbird\",\n        \"color\": \"Gold\",\n        \"material\": \"Polished brass and tiny gears\",\n        \"brand_style\": \"Artisan kinetic jewelry\"\n      }\n    ]\n  },\n  \"environment\": {\n    \"setting\": \"An obscure, dusty horologist's workshop or prodigy's sanctuary\",\n    \"surfaces\": \"Soft, muted olive-grey background, entirely blurred out\",\n    \"depth\": \"Extremely shallow, blurring everything millimeters behind the focal plane of the iris\",\n    \"atmosphere\": \"Warm, heavy, dust-filled air with illuminated floating particles\",\n    \"lens_interaction\": \"Soft optical vignette, macro compression\"\n  },\n  \"lighting\": {\n    \"key\": \"Warm, directional Rembrandt light hitting the visible eye and cheek\",\n    \"fill\": \"Subtle silver bounce to retain shadow detail in the clockwork\",\n    \"rim\": \"Soft golden backlight highlighting the floating dust motes and edges of the mechanical bird\",\n    \"shadows\": \"Deep, cinematic chiaroscuro, rich blacks\",\n    \"color_temperature\": \"Warm (around 3200K - 4000K)\",\n    \"sensor_flare\": \"None, highly controlled studio lighting\"\n  },\n  \"camera\": {\n    \"lens_type\": \"Macro Prime\",\n    \"focal_length\": \"120mm\",\n    \"aperture\": \"f/2.8\",\n    \"focus\": \"Tack sharp on the iris of the visible eye and the ink-stained fingertips\",\n    \"sensor_format\": \"Medium Format\",\n    \"perspective_distortion\": \"Zero distortion, highly compressed\"\n  },\n  \"post_processing\": {\n    \"color\": \"Muted, rich jewel tones contrasting with warm brass and pale skin\",\n    \"tonality\": \"High contrast, filmic roll-off in highlights\",\n    \"texture\": \"Kodak Portra 400 grain, organic imperfections, microscopic skin texture\",\n    \"digital_sharpening\": \"None, pure optical sharpness\",\n    \"chromatic_aberration\": \"Very slight edge fringing on the brass gears due to macro lens characteristics\"\n  },\n  \"negative_specifications\": [\n    \"neon\",\n    \"digital painting\",\n    \"illustration\",\n    \"CGI\",\n    \"plastic skin\",\n    \"flat lighting\",\n    \"wide shot\",\n    \"full body\",\n    \"cliché coffee shop\",\n    \"modern office\"\n  ]\n}",
+      "title": "Mechanical Melancholy Macro Portrait Prompt",
+      "description": "A complex JSON-formatted prompt for Nano Banana Pro to generate an extreme close-up macro portrait of a melancholic prodigy with brass clockwork elements and a mechanical hummingbird.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1789713176331_8bcqgu_HSbBRzWXIAA1GO-.jpg",
+        "https://cms-assets.youmind.com/media/1789713176339_3v75ag_HSbBR30W0AAieJe.jpg",
+        "https://cms-assets.youmind.com/media/1789713176613_aorsuz_HSbBR6sXEAES3_p.jpg",
+        "https://cms-assets.youmind.com/media/1789713177199_gktlma_HSbBRyWXgAA04od.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "game-asset",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 4031,
+      "content": "[Key: Maintain precise facial features, retain original face structure, the character in the image must be completely consistent with the uploaded reference image] High-end photo studio 2x2 grid photo. Top-left panel (Navy Blue background): The character wears a navy blue uniform-style dress, decorated with gold buttons, vintage curls with a blue beret and pearl earrings. She holds up a huge puzzle piece (top-left piece, with the number \"20\" on it) with both hands, moving it towards the center of the frame. Her eyes are focused on the central puzzle area, her expression is serious, with a slight smile. The background features navy stripes, an anchor, and the text \"Set Sail for the New Year\". Top-right panel (Cherry Blossom Pink background): The same woman wears a pink lace dress, a pearl necklace, a princess hairstyle with a pink rose hairpin and crystal earrings. She holds up the top-right puzzle piece (with the number \"26\" on it) with both hands, moving it towards the center to connect with the top-left piece. Her eyes look at the puzzle seam, her expression is focused and expectant, and her body leans forward. The background features pink cherry blossoms, the text \"Beautiful Encounter\", butterflies, and petals. Bottom-left panel (Mint Green background): The same woman wears a mint green cotton and linen dress, in an artistic style, with natural long hair, a green hairband, and wooden earrings. She holds up the bottom-left puzzle piece (with the text \"New Year's Day\" on it) with both hands, moving it upwards to connect with the top-left piece. Her eyes look at the puzzle, her expression is serious, and her mouth is slightly pursed. The background features green plants, the text \"Hope Grows\", new sprouts, and leaves. Bottom-right panel (Lemon Yellow background): The same woman wears a yellow dress with a sunflower pattern, pigtails with yellow bows. She pushes in the last bottom-right puzzle piece (with the text \"Happy\" on it) to complete the puzzle. The four pieces perfectly form the complete pattern \"2026 New Year's Day Happy\" in the center of the frame. She tilts her head back, looking at the completed puzzle, her face beaming with a successful, joyful smile. The center of the frame bursts with golden light and confetti. The background features a yellow sun, the text \"Complete Success\", smiley faces, and sunflowers. The puzzle pieces converge from the four corners to the center to form a complete picture. Clear makeup, bright ring light, 85mm lens, f/1.8 aperture, four-panel composition with puzzle interaction, fashion magazine style.",
+      "title": "New Year's Day Special: Four-Panel Puzzle for 2026 Blessing",
+      "description": "A detailed multi-panel prompt for Nano Banana Pro, creating a 2x2 grid photo collage where a single female character, in four different outfits and settings, pieces together a puzzle that spells '2026 New Year's Day Happy' in the center. The prompt specifies precise facial feature retention, clothing details, background elements, and photographic parameters for a fashion magazine style.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1767455034932_ivuvu0_G9V-MszakAEAIBw.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "poster-flyer",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 811,
+      "content": "A Japanese Edo-period Ukiyo-e woodblock print. The overall feeling is a surreal collaboration between masters like Hokusai and Hiroshige, reimagining modern technology through an ancient lens.\n\n**The scene:** {argument name=\"modern scene\" default=\"a busy Shibuya scramble crossing\"}\n\n**Edo transformation logic:**\nCharacters wear Edo-era kimono but perform modern actions. All technology is transformed into surreal Edo equivalents:\n* Smartphones are glowing, illustrated paper scrolls being read intently.\n* Metro stations and trains are giant articulated wooden centipede carriages shuffling through crowds.\n* Skyscrapers are reimagined as endless, towering wooden pagodas reaching into dramatic clouds.\n* Robots and mecha appear as giant, armored woodblock golems.\n\nThe composition uses a flattened perspective with large, bold, hand-carved ink outlines. The background features heavily stylized Ukiyo-e wave patterns and dramatic, swirling clouds, with a distant Mt. Fuji visible on the horizon.\n\nThe image must look like a physical print, not a digital painting.\n* Texture: strong visible wood grain texture and rough paper fibers throughout the piece.\n* Printing imperfections: pigment bleeding is evident. Simulate hand-pressed plates with slight color misalignment for authenticity.\n* Color palette: strictly limited to traditional mineral pigments, with dominant use of Prussian blue, vermilion red, and muted yellow ochre.\n* Lighting: soft, flat, shadow-free lighting with no digital gradients.\n\nAspect ratio is 3:4 vertical poster. Include vertical Japanese calligraphy describing the scene and a traditional red artist seal stamp in a corner.",
+      "title": "Edo-period Ukiyo-e reinterpretation of a modern scene",
+      "description": "A highly-structured image prompt to depict a modern-day scene reimagined as an Edo-period Japanese Ukiyo-e woodblock print, with detailed guidance on anachronistic tech, composition, texture, and color.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1764915832381_renotr_G7FuPlzbYAAsuo2.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "poster-flyer",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36879,
+      "content": "A full-bleed vertical athleisure fashion poster for the original overseas brand \"{argument name=\"brand\" default=\"KUMORA ACTIVE\"}\", designed as a premium 2x2 studio contact-sheet for the hero product \"{argument name=\"product\" default=\"STUDIO MOTION SET\"}\". Show the same adult female model, clearly over 20, in all four panels against a pure white seamless studio background with narrow white spacing between panels.\n\nPanel layout: upper-left chest-up portrait; upper-right full-body motion pose; lower-left crouched floor pose; lower-right dynamic cropped jacket-lift pose. The four frames must feel like one continuous studio session. The model wears the same cohesive black-and-white set in every panel: black halter sport bra with white elastic band reading \"{argument name=\"brand\" default=\"KUMORA ACTIVE\"}\", wide black track pants with twin white side stripes, oversized cropped black shell jacket with subtle mesh panels and small white label, black curved-brim cap with tiny white K mark, and silver on-ear sport headset with circular earcups. Outfit, cap, headset, and identity stay fully consistent; only pose and jacket position change.\n\nExpressions are calm, focused, and editorial: side glance in portrait, active standing pose, quiet direct crouch, wind-swept profile in the jacket-lift crop. Keep the headset visible in every frame. Use soft high-key studio lighting from the front upper left with gentle fill and subtle contact shadows only where needed. White background is the dominant field; black garments form the graphic structure; white trims and stripes create rhythm; the silver headset is the product highlight. Preserve detail in black fabrics: matte stretch bra, ribbed elastic band, white piping, nylon jacket sheen, mesh texture, cap stitching, woven label, and clean metal earcups.\n\nExact visible text only: small \"{argument name=\"brand\" default=\"KUMORA ACTIVE\"}\" near the top of each panel, and bold bottom-center title \"{argument name=\"product\" default=\"STUDIO MOTION SET\"}\" in black uppercase sans serif. No extra copy.\n\nNegative constraints: no extra models, no identity drift, no mismatched outfit pieces, no missing headset, no broken hands or limbs, no chaotic panel geometry, no crushed black fabric, no plastic skin, no dirty floor, no harsh shadows, no real logos, no misspelled text, no typography over face or headset, no gym or street background, no props, no collage artifacts, no painterly drift.",
+      "title": "Athleisure Fashion Poster Comparison",
+      "description": "A side-by-side comparison of GPT Image 2.5 and Nano Banana 2.1 generating a multi-panel athleisure fashion poster with consistent character identity and outfit details.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792909737384_jwrdo7_HVaSrVuaQAEoi0l.jpg",
+        "https://cms-assets.youmind.com/media/1792909739166_rp3pu6_HVaSrV0bUAAECq3.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "poster-flyer",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36720,
+      "content": "{\n  \"vibe_title_en\": \"Surreal Reluctant Escape In The Dusty Salt Trench\",\n  \"master_prompt\": \"Medium format voyeuristic photography, 250mm telephoto lens. Shot through out-of-focus, salt-encrusted wooden planks. The Protagonist walks away down a blinding, dust-choked salt trench, body angled evasively. They hold a tethered cluster of floating, heavy glass spheres sloshing with luminescent liquid mercury, and a massive leaking iron hourglass. A harsh, high-contrast rogue sunbeam spotlights their back, while their face remains shadowed in a restless glance over the shoulder. Hasselblad H6D, Kodak Portra 400 pushed +1, warm golden-dust atmosphere, hyper-realistic textures, physical light refraction.\",\n  \"meta\": {\n    \"intent\": \"Surreal Voyeuristic Portrait\",\n    \"priorities\": \"Surrealism, Heavy Foreground Occlusion, High-Contrast Spotlighting\",\n    \"device_profile\": \"Hasselblad H6D-100c\"\n  },\n  \"frame\": {\n    \"aspect\": \"9:16\",\n    \"composition\": \"Heavy foreground occlusion, subject framed tightly in the middle distance\",\n    \"layout\": \"Vertical, layered depth\",\n    \"camera_angle\": \"Eye-level, voyeuristic distance\",\n    \"tilt_roll_degrees\": \"0\"\n  },\n  \"subject\": {\n    \"gender\": \"Female\",\n    \"identity\": \"The Reluctant Protagonist\",\n    \"demographics\": \"Ageless, ethereal\",\n    \"face\": \"Shadowed, evasive, sharp jawline\",\n    \"hair\": \"Dark, pulled back, catching golden rim light\",\n    \"body\": \"Tense, angled away from the camera\",\n    \"expression\": \"Avoidant, restless, hidden in shadow\",\n    \"pose\": \"Walking away, looking back slightly over the shoulder, weighed down\"\n  },\n  \"wardrobe_accessories\": {\n    \"garments\": [\n      {\n        \"item\": \"Flowing structural gown\",\n        \"material\": \"Matte raw silk\",\n        \"color\": \"Deep emerald green\",\n        \"fit\": \"Draped and billowing\"\n      }\n    ],\n    \"accessories\": [\n      {\n        \"item\": \"Floating glass spheres\",\n        \"color\": \"Silver and Luminescent\",\n        \"material\": \"Glass and liquid mercury\",\n        \"brand_style\": \"Surreal practical effect\"\n      },\n      {\n        \"item\": \"Massive hourglass\",\n        \"color\": \"Rusted brown\",\n        \"material\": \"Raw iron and glowing sand\",\n        \"brand_style\": \"Antique industrial\"\n      }\n    ]\n  },\n  \"environment\": {\n    \"setting\": \"A narrow, dust-choked trench carved into a blinding white salt flat\",\n    \"surfaces\": \"Cracked salt crust, dry earth, weathered wood in foreground\",\n    \"depth\": \"Extremely compressed, shallow depth of field past the subject\",\n    \"atmosphere\": \"Thick, warm golden dust, foggy particulate matter\",\n    \"lens_interaction\": \"Heavy foreground blur, atmospheric light scattering\"\n  },\n  \"lighting\": {\n    \"key\": \"Harsh, high-contrast directional sunbeam\",\n    \"fill\": \"Muted ambient bounce from the salt walls\",\n    \"rim\": \"Intense golden rim light on hair and glass spheres\",\n    \"shadows\": \"Deep, impenetrable shadows on the subject's face and front\",\n    \"color_temperature\": \"Warm, golden hour\"\n  }\n}",
+      "title": "Surreal Voyeuristic Portrait of Dua Lipa",
+      "description": "A detailed JSON-structured prompt for generating a surreal, cinematic portrait of Dua Lipa walking away through a dusty salt trench, holding glass spheres and an hourglass, with heavy foreground occlusion and high-contrast lighting.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792564432503_43dcrd_HVFgdROWoAAzvYl.jpg",
+        "https://cms-assets.youmind.com/media/1792564432565_9wg8mn_HVFgdOUXAAALseD.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "poster-flyer",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36718,
+      "content": "Theme:\n1920s Art-Deco opulence and high-society elegance at twilight.\n\nSubject:\nA Caucasian woman in her late twenties with a slender, graceful build, standing alone on a high-rise penthouse balcony.\n\nPerson · Expression:\nDefined facial structure with high cheekbones and a soft jawline. Her eyes are partially closed in a serene, contemplative expression, framed by long dark lashes. Her hair is a deep auburn with golden highlights, styled in thick waves cascading over one shoulder. The skin features a natural, soft texture with subtle pores and light freckles on the shoulders.\n\nClothing · Pose:\nAn emerald-green silk satin evening gown with a backless design and thin spaghetti straps. The skirt features high side slits that reveal the movement of the fabric. She is posed in a relaxed weight shift, with one hand resting on an ornate wrought-iron railing and the other holding a crystal champagne flute at chest height. Her head is tilted back slightly, savoring the atmosphere.\n\nBackground · Light:\nAn Art-Deco balcony with polished marble floors overlooking a sparkling city skyline. The scene is illuminated by the golden hour sun positioned behind the subject, creating a pronounced rim-light effect and making the silk appear translucent at the edges. The background transitions into a deep twilight blue sky with antique street lamps glowing below.\n\nComposition · Camera:\nA medium-full vertical shot from an eye-level perspective with a slight low-angle tilt. The composition follows the rule of thirds, using a shallow depth of field to maintain sharp focus on the subject and the condensation on the glass while the city becomes a soft, creamy bokeh.\n\nTexture · Style:\nUltra-photorealistic rendering with a focus on material contrast: the cool, reflective marble and wrought iron against the warm, soft texture of the skin and the liquid sheen of the satin gown. The color palette is a rich blend of emerald, gold, amber, and deep evening blues with a vintage cinematic grade.",
+      "title": "Art-Deco Evening Gown Prompt",
+      "description": "A detailed text prompt for Nano Banana Pro to create a 1920s Art-Deco style portrait of a woman in an emerald gown at twilight.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792564431359_9heq78_HVEGvbSWIAAjHOx.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "poster-flyer",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 33663,
+      "content": "2D flat illustration, unveiled Middle Eastern woman, full body, long open kimono-style robe in {argument name=\"color\" default=\"deep lapis blue\"} with gold embroidered {argument name=\"symbols\" default=\"Egyptian scarab, eye of Horus, and geometric border patterns\"}, plain cream inner dress, minimal warm beige background with faint temple column motif, statuesque pose, 3:4",
+      "title": "Ancient Egyptian Print Illustration",
+      "description": "A 2D flat illustration prompt for a statuesque Middle Eastern woman in a lapis blue kimono-style robe featuring traditional Egyptian motifs.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1788764291727_9tmu5d_HRTpOG5WUAAP29B.jpg",
+        "https://cms-assets.youmind.com/media/1788764293237_86z4s5_HRTpOGnWQAUImFo.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "app-web-design",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 33664,
+      "content": "Ar 9:16! Expressive loose watercolor illustration style, ultra-detailed watercolor portrait rendering, soft translucent paint layering, wet-on-wet watercolor diffusion, natural pigment bleeding effects, delicate brushstroke textures, airy hand-painted aesthetic, realistic anatomy blended with painterly abstraction, subtle ink-like edge definition, elegant unfinished watercolor splashes around the composition, soft feathered transitions between colors, luminous paper texture visible through transparent paint layers, warm natural skin tones with gentle blush highlights, cinematic soft lighting, flowing organic brush movement, refined watercolor realism with emotional fine art atmosphere, smooth facial rendering contrasted with loose expressive edges, handcrafted traditional painting aesthetic, watercolor bloom effects, fluid color gradients, lightly desaturated palette with {argument name=\"colors\" default=\"earthy warm neutrals and muted blues\"}, premium {argument name=\"medium\" default=\"sketchbook\"} illustration style, visible artistic spontaneity, delicate strand-like hair strokes, atmospheric white negative space, minimal background detail, soft focus depth, editorial fine art watercolor aesthetic, subtle accidental paint marks and organic imperfections, elegant composition balance, painter’s hand holding a {argument name=\"brush type\" default=\"thin paintbrush\"} visible in foreground, immersive artist-at-work perspective, realistic brush and hand rendering, museum-quality watercolor artwork, timeless classical painting mood, sophisticated contemporary watercolor portrait style, ultra refined paper-and-pigment texture, dreamy and poetic visual tone, handcrafted artistic realism, master-level watercolor detailing.",
+      "title": "Detailed Watercolor Portrait Illustration",
+      "description": "A highly detailed prompt for creating expressive, loose watercolor illustrations with realistic anatomy and hand-painted textures.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1788764291777_d7yul0_HRhngZ6bUAA3TJD.jpg",
+        "https://cms-assets.youmind.com/media/1788764293172_waf3i1_HRhngZ0a4AANTT2.jpg",
+        "https://cms-assets.youmind.com/media/1788764291722_37unmi_HRhngZ7akAA294l.jpg",
+        "https://cms-assets.youmind.com/media/1788764292289_hd49id_HRhngZpbsAAj2wJ.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "app-web-design",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 33562,
+      "content": "{argument name=\"style\" default=\"Sophisticated contemporary oil portrait painting\"} with expressive loose brushwork, combining refined semi-realistic portraiture, classical fine-art painting, and modern editorial painterly aesthetics. The subject is rendered with highly controlled yet visibly handcrafted oil strokes, layered pigments, soft impasto, delicate dry-brush marks, and expressive directional brushwork that follows the natural anatomy and volume of the face.\nFacial features are detailed and semi-realistic, with luminous skin, natural texture, expressive eyes, carefully modeled nose and lips, and richly layered hair built from flowing individual brushstrokes. Use {argument name=\"color palette\" default=\"warm brown, deep umber, burnt sienna, ochre, muted peach, cream, ivory, soft gray-blue, charcoal, and subtle muted gold accents\"}, matching the reference palette precisely. Highlights are predominantly warm ivory and creamy white, while shadows remain deep but soft and painterly.\nThe background uses the same desaturated blue-gray and warm ivory palette, appearing like an unfinished classical painted canvas. Broad vertical and horizontal brushstrokes, translucent paint layers, softly scraped areas, subtle dry-brush textures, and irregular painterly patches create an atmospheric studio-like backdrop. Keep the background simple, quiet, and organically integrated with the portrait rather than sharply separated.\nThe lower portion of the figure intentionally becomes unfinished and gradually dissolves into loose white and ivory brushstrokes. Clothing, shoulders, chest, and lower contours progressively lose definition, breaking into scattered semi-transparent strokes and fading pigment. Edges become incomplete, soft, irregular, and partially disappear into the background, creating the unmistakable impression of an intentionally unfinished oil painting. Do not create a hard bottom edge.\nMaintain a refined balance between highly detailed facial realism and deliberately unfinished painterly abstraction. Visible brushwork, layered oil pigments, soft impasto, subtle canvas texture, natural imperfections, elegant tonal transitions, museum-quality portrait painting, cinematic atmosphere, timeless fine-art character.\nNo photorealistic photography, no 3D CGI, no vector appearance, no hard digital outlines, no glossy rendering, no completely finished lower body, no sharp background separation. --ar {argument name=\"aspect ratio\" default=\"9:16\"}",
+      "title": "Sophisticated Oil Portrait Painting",
+      "description": "An artistic prompt for creating contemporary oil paintings with expressive brushwork and an intentionally unfinished aesthetic.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1788764293775_1uzw7b_HRd-SxAawAE07jJ.jpg",
+        "https://cms-assets.youmind.com/media/1788764293794_9r1lpl_HRd-SxDakAEfGmZ.jpg",
+        "https://cms-assets.youmind.com/media/1788764293782_s7q3hh_HRd-SxKaQAAULJ_.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "app-web-design",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 33478,
+      "content": "2D editorial illustration inspired by Egyptian North Coast summer, unveiled {argument name=\"ethnicity\" default=\"Middle Eastern woman\"}, wide-leg breezy trousers in {argument name=\"trouser color\" default=\"sandy beige\"} with hand-drawn wave prints, embroidered blouse with {argument name=\"blouse motif\" default=\"palm frond motifs\"}, warm sun-drenched palette, minimal background suggesting sea and dune, elegant relaxed pose, 3:4",
+      "title": "Egyptian Summer Fashion Illustration",
+      "description": "A 2D fashion editorial illustration of a Middle Eastern woman in breezy, summer attire with palm and wave motifs.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1788591093052_z1yxqf_HRTR1PhbcAAEJx6.jpg",
+        "https://cms-assets.youmind.com/media/1788591092820_veqcgk_HRTR2JwaIAEwfkL.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "app-web-design",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 33400,
+      "content": "2D flat vector fashion illustration, {argument name=\"subject\" default=\"unveiled Middle Eastern woman\"}, full body, wearing {argument name=\"trousers\" default=\"wide-leg trousers in mustard yellow with geometric print\"}, {argument name=\"blouse\" default=\"embroidered cream blouse with floral motifs\"}, minimal shadows, clean bold outlines, soft beige background, editorial fashion pose, 3:4",
+      "title": "2D Flat Vector Fashion Illustration",
+      "description": "Generates clean, 2D flat vector illustrations of Middle Eastern fashion with geometric prints and bold outlines.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1788504578464_m2g14w_HRTNkZxa8AA_NVq.jpg",
+        "https://cms-assets.youmind.com/media/1788504578316_lujm1f_HRTNkZwbcAAZTqx.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "app-web-design",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 151,
+      "content": "A wide quote card featuring a famous person, with a brown background and a light-gold serif font for the quote: “{argument name=\"famous_quote\" default=\"Stay Hungry, Stay Foolish\"}” and smaller text: “—{argument name=\"author\" default=\"Steve Jobs\"}.” There is a large, subtle quotation mark before the text. The portrait of the person is on the left, the text on the right. The text occupies two-thirds of the image and the portrait one-third, with a slight gradient transition effect on the portrait.",
+      "title": "Wide quote card with portrait and Chinese/English customization",
+      "description": "A prompt for generating a wide quote card featuring a famous person’s portrait, with a brown background, light-gold serif quote text, and layout where text occupies two-thirds and the person one-third. The quote text and author are parameterized for reuse.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1763886933714_5zqn1e_G6QBjQHbgAE3Yt_.jpg",
+        "https://cms-assets.youmind.com/media/1763886938314_wbcfc7_G6QBiiracAInQ8z.jpg",
+        "https://cms-assets.youmind.com/media/1763886941069_1d9ace_G6QBii_acAIRxKd.jpg",
+        "https://cms-assets.youmind.com/media/1763886946388_nwahev_G6QBikOaEAAmYkO.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "others",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36633,
+      "content": "Tattoo flash: a snarling wolf head, half rotted to bone, wreathed in black thorns.",
+      "title": "Snarling Wolf Bone and Thorns Tattoo Flash",
+      "description": "A prompt for generating a gritty tattoo flash design featuring a snarling wolf head that is half rotted to bone and wreathed in black thorns.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792392031050_ece033_HU7nqn5WIAABWw5.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "others",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36494,
+      "content": "Theme:\nA cinematic study of discipline and form in a classic ballet studio during a moment of technical correction.\n\nSubject:\nFemale ballerina, early 20s, of elegant and athletic build. She stands in a focused rehearsal with her choreographer, whose presence is indicated by a polished shoe precisely positioned between her feet.\n\nPerson · Expression:\nRefined facial features with porcelain skin showing a subtle sheen under warm light. Eyes are closed or looking downward in deep concentration. A classic ballet bun with a few loose, backlit strands of hair. Subtle muscle definition is visible in the neck and shoulders.\n\nClothing · Pose:\nA form-fitting practice leotard in muted ivory with a soft, tactile fabric that follows the dancer's lean frame. She is poised on pointe shoes, body perfectly vertical and core engaged. The pose captures a moment of perfect alignment and physical tension during a correction.\n\nBackground · Light:\nA vintage rehearsal studio with dark wood-paneled walls and a large mirror wall. A single warm lamp provides directional key lighting from the side, creating a golden glow and rich, dramatic shadows. A wooden barre is visible in the soft-focus periphery.\n\nComposition · Camera:\nVertical 9:16 framing using a low angle to emphasize height and verticality. An 85mm lens provides subject isolation with a soft bokeh. The composition is centered on the dancer and her reflection, creating a symmetrical balance across the mirror plane.\n\nTexture · Style:\nPhotorealistic cinematic still with a Rembrandt lighting character. High detail on the fabric textures, wood grain, and the satin sheen of the pointe shoes. Warm color grading with deep, velvety shadows and amber highlights.",
+      "title": "Ballet Studio Cinematic Correction Scene",
+      "description": "A photorealistic cinematic prompt depicting a ballerina in a rehearsal studio receiving technical correction, emphasizing discipline, form, and warm Rembrandt lighting.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1792132498713_8v9att_HUrF_mPW4AEc8dk.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "others",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36355,
+      "content": "A bustling downtown street intersection in an artistic cattlepunk style.",
+      "title": "Artistic Cattlepunk Street Scene",
+      "description": "A prompt for generating a bustling downtown street intersection in an artistic cattlepunk style using Nano Banana Pro.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791873550741_lsng7b_HUboCjeacAAoZRG.jpg"
+      ],
+      "needReferenceImages": false,
+      "category": "others",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    },
+    {
+      "id": 36076,
+      "content": "Create an image of the content as shown in [image 1] but with the same medium, color palette, mood, rendering technique, saturation level, textures, and overall style of [image 2]. Objective: Style transfer from [image 1] to [image 2]",
+      "title": "Nano Banana Pro Style Transfer Prompt",
+      "description": "A prompt for performing style transfer using Nano Banana Pro, applying the medium, color palette, and mood of a reference image to another subject.",
+      "sourceMedia": [
+        "https://cms-assets.youmind.com/media/1791354771797_pu1zai_HT-aZ5ZbsAAVOEH.jpg",
+        "https://cms-assets.youmind.com/media/1791354771806_e3b4hk_HT-ahQTbEAARlD4.jpg",
+        "https://cms-assets.youmind.com/media/1791354771810_tidj66_HT-ajZIaIAAPQ8t.jpg",
+        "https://cms-assets.youmind.com/media/1791354773030_wwheoc_HT-amVxbMAAvXdu.jpg"
+      ],
+      "needReferenceImages": true,
+      "category": "others",
+      "source": "YouMind-OpenLab/ai-image-prompts-skill",
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT"
+    }
+  ]
+}

@@ -12,6 +12,7 @@ export const SKILL_TAG_LABELS: Record<SkillTag, Record<AppLocale, string>> = {
   "tool-setup": { en: "Tool setup", zh: "工具接入" },
   frontend: { en: "Frontend", zh: "前端" },
   "docs-and-ops": { en: "Docs & ops", zh: "文档与日常" },
+  creative: { en: "Images & video", zh: "图片与视频" },
 };
 
 export const SKILL_TAG_SEARCH_LABELS: TagLabels = SKILL_TAGS.reduce(

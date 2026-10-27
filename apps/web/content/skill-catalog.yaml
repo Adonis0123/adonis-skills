@@ -48,6 +48,12 @@ groups:
       en: "Design docs and weekly reports, plus audits that keep your files and agent setup in order."
       zh: "写设计文档和周报，顺手把文件和 agent 配置理清楚。"
     illustration: group-docs.webp
+  - id: create
+    title: { en: "Make images and video", zh: "生成图片和视频" }
+    summary:
+      en: "Start from one line, pick proven prompts and templates, then hand a precise brief to the image or video tool you have."
+      zh: "说一句需求，挑现成的好提示词和模板，再把写好的生成单交给你手上的生图或视频工具。"
+    illustration: group-create.webp
 
 featured:
   - slug: agent-dispatch
@@ -408,6 +414,21 @@ skills:
     use_cases_zh:
       - "用 ocr 选定改动文件和规则，交给另一个 AI 宿主审查并自动修完经核实的问题。"
       - "强制核对文件覆盖率与只读边界，防止复审过程漏看文件或偷改工作区代码。"
+
+  prompt-studio:
+    displayName: { en: "Prompt Studio", zh: "提示词工坊" }
+    group: create
+    tags: [creative, agent-workflow]
+    summary: "Turn one line into an image, a code-rendered video or an AI video: proven prompts with samples, a refined brief, then your own tools."
+    summary_zh: "一句话需求变成图片、代码动画或 AI 视频：先挑带样图的好提示词，打磨成生成单，再交给你手上的工具。"
+    use_cases:
+      - "Ask for an article cover in one line; get 3-5 prompts with sample images, source and license, then a brief sized for your platform."
+      - "Turn a still into a 15-second motion clip with Hyperframes templates, checked frame by frame before it renders."
+      - "Make a character from your image walk on screen with Grok or a video API, with the cost stated before anything runs."
+    use_cases_zh:
+      - "一句话要一张文章封面，先看 3 到 5 条带样图、来源和 License 的提示词，再得到按平台尺寸写好的生成单。"
+      - "用 Hyperframes 模板把一张图做成 15 秒动效，渲染前逐帧检查。"
+      - "用 Grok 或视频 API 让图里的角色动起来，开跑前先报费用。"
 
   review-prompt-composer:
     displayName: { en: "Review Prompt Composer", zh: "审查提示词生成" }
