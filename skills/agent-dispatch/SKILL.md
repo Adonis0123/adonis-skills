@@ -4,7 +4,7 @@ description: "Choose the lightest agent setup for a coding, review, drafting or 
 license: MIT
 metadata:
   author: adonis
-  version: "1.10.1"
+  version: "1.10.2"
 ---
 
 # Agent Dispatch

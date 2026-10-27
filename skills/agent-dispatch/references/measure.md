@@ -8,12 +8,13 @@ Before `close`, read `show` and record one decision:
 
 ```bash
 B decision add --what "派活是否值得" --choice "值得|不值得|说不清" \
-  --why "<lanes> 个任务，共 \$<cost>，用时 <wall time>；修复 <n> 轮；集成出问题 <n> 次；自己做估计 <time / cost, marked 估计>" \
+  --why "<lanes> 个任务，共 \$<cost>，用时 <wall time>；修复 <n> 轮；集成出问题 <n> 次；复审抓到摘要未报的问题 <n> 条；自己做估计 <time / cost, marked 估计>" \
   --options "自己做（L1）"
 ```
 
 - Cost and time come from `show` (Lane costs add up across rounds; unknown costs are unknown, never zero).
 - "集成出问题" counts merge conflicts, merges that broke a build or test, and Lanes re-dispatched because the split was wrong.
+- "复审抓到摘要未报的问题" counts reviewer findings the Worker's summary did not mention: the main evidence that a cross-product review paid for itself.
 - The solo estimate is a guess; label it 估计. Never present it as measured.
 - `close` archives the ledger under `archive/<run-id>/`, so these decisions can be collected later without a separate log.
 
