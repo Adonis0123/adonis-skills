@@ -43,6 +43,8 @@ pnpm typecheck
 pnpm build
 ```
 
+`pnpm dev` serves the web app at `http://localhost:3000`. After a UI change, open it and check a screenshot before reporting done.
+
 - Use `pnpm skills:new` for the normal create, validate, and index flow.
 - Add OpenAI metadata only when needed, using `pnpm skills:openai-yaml`.
 - For app/runtime changes, run the relevant lint, typecheck, and build checks.
