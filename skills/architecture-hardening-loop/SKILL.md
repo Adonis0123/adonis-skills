@@ -73,6 +73,7 @@ metadata:
 6. 冻结调用时的代码范围。协议产物不混入 scanner scope。每次 scanner pass 前选定本轮 `scanEvidence`（初扫 E1；Fix 后用已确认的 review identity 作复扫 E2）。细节 → `references/ownership-and-evidence.md`。
 7. 若有 native Goal 状态、调用方 parent contract 或用户明确 Goal 请求，只读核对关系：`none` / `exact-same-goal` / `broader-compatible` / `conflicting/unclear`。证据可来自 native getter **或**调用方可核对的 parent contract；本步不创建 Goal。没有这些信号就记录 `Goal: not-created` 并继续。`conflicting/unclear` 服从 `goal-gate` 的 `defer`，扫描前 `HUMAN_GATE`。
 8. 记录 `Hardening Contract` 和空 `Candidate Ledger`；保留用户已有改动。
+9. 列出经验目录 `${AGENT_LESSONS_DIR:-$HOME/.local/state/agent-lessons}/architecture-hardening-loop/`，只读 cue 与本范围形态相符的条目，作为 scanner 的提示传入。经验不是证据：不能替代五项准入，与当前代码冲突时以代码为准。
 
 步骤 6–8 互不依赖，可与依赖解析并行准备；全部完成后再启动首次扫描。
 
@@ -226,6 +227,14 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 ## 完成报告
 
+报告前最多写一条新经验到上述目录，每条一个 `<slug>.md`，三项缺一不写：
+
+- `cue`：什么形态的代码或范围适用。写形状，不写本仓库的文件名、模块名或业务事实。
+- `lesson`：哪类候选值得 Fix、哪类该 Reject 或 Backlog，以及原因。
+- `evidence`：Reviewer verdict、Evidence id，或复扫前后的对照。
+
+只因 `NO_ACTIONABLE_FINDINGS` 不构成经验；没有对照证据就不写。与已有条目重复时更新那条。经验文件不写评审打分、凭证或私有数据。
+
 ```text
 Architecture Hardening Result
 - Scope: <解析后的文件集合；另列用户原始定位信息与 commit/working-tree provenance>
@@ -241,6 +250,7 @@ Architecture Hardening Result
 - Reviewer evidence: <实际用的 Reviewer 与每次超时换人（`fallbacks`）；consult；若实施过 Fix：最终 review verdict、packet 与 lifecycle，若有 Decision Closure 则记录用户命令；零 Fix：review not-run + 终态 consult，或 duplicate-only 复用的 verdict>
 - Evidence id: <baseSha + pathFilter + digest；另列 coveredPaths 与 sourceRound>
 - Verification: <实际命令与结果，或 UNVERIFIED>
+- Lessons: <读取的条目 | 新写或更新的条目 + evidence | none（理由）>
 - Goal: <completed | active-checkpoint | not-created | deferred-conflict>
 ```
 

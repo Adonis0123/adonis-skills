@@ -202,6 +202,18 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 
 Phase 1 的 deadline、B 轮数与 Phase 4 的 2 轮盲审是本 Skill 的全部预算。预算见底既不是完成理由，也不是用户决策：它不改变代码是否正确，用户也无实质取舍可做。宿主可续跑时继续；必须交还控制时返回 `UNVERIFIED`、保持 Goal active，并从未完成证据继续，不要求用户重复授权。
 
+### 跨任务经验
+
+经验目录：`${AGENT_LESSONS_DIR:-$HOME/.local/state/agent-lessons}/task-completion-loop/`，每条一个 `<slug>.md`。它在 skill 目录外，更新 skill 不会覆盖，也不会进仓库。
+
+- Phase 0 读仓库指令后，列出该目录，只读 cue 与本任务形态相符的条目。经验只是提示；与当前代码、证据或用户决策冲突时，以后者为准。
+- 终态报告前，最多写一条新经验，三项缺一不写：
+  - `cue`：遇到什么形态的情况适用。写情况的形状，不写本仓库的文件名、函数名或业务事实。
+  - `lesson`：这次学到什么做法或坑。
+  - `evidence`：哪个 evidence id、门禁或盲审结论证明它，以及对比的是哪两种做法。
+- 只因结果 `COMPLETED` 不构成经验；没有可对照的证据就不写。与已有条目重复时更新那条，不新增。
+- 经验文件不得写入评审打分、凭证或用户私有数据。
+
 ```text
 Task Completion Result
 - Scope / exclusions:
@@ -216,5 +228,6 @@ Task Completion Result
 - Final Claude audit: <fresh session + evidence id>
 - Fixed / Backlog / Rejected:
 - Protocol, Git, and external actions:
+- Lessons: <读取的条目 | 新写或更新的条目 + evidence | none（理由）>
 - Result: COMPLETED | HUMAN_GATE | MISSING_DEPENDENCIES | UNVERIFIED
 ```

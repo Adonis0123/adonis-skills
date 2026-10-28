@@ -68,3 +68,5 @@ Before delivering, perform an added-guarantee audit of the final artifact, inclu
 - field names and types agree across data and API contracts;
 - pending choices are not encoded as finalized behavior;
 - unverified claims are labeled rather than silently completed.
+
+For a new document or substantial restructure that someone will implement from, run a re-implementation test when the host can start a fresh subagent. Give it only the document and the sources the document links, never this conversation. Ask it to list every place where implementing would force a guess: a parameter default, error handling, an output shape, a state transition, or a choice between patterns. Each guess either becomes an explicit contract in the document or a labeled pending choice. Skip this test for focused edits, and say in the delivery note when it was skipped because no fresh subagent was available.
