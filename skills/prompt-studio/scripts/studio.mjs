@@ -8,7 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildCandidates, writeGallery } from "./gallery.mjs";
+import { buildCandidates, serveGallery, writeGallery } from "./gallery.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const SEED_FILE = path.join(HERE, "..", "assets", "seed-prompts.json");
@@ -1135,12 +1135,12 @@ export function galleryPage({
     file,
     title,
     request,
-    query,
+    runId: id,
     candidates: built.candidates,
-    generatedAt: now,
   });
   return {
     file,
+    runId: id,
     url: `file://${file}`,
     shown: built.candidates.map((c) => c.id),
     missing: built.missing,
@@ -1263,9 +1263,10 @@ const USAGE = `Usage: node studio.mjs <command> [options]
   cover-check <files...> [--title "..."] [--size WxH] [--out DIR]
                                       Size check plus 340px / 120px-crop / title-overlay previews (needs ffmpeg)
   gallery --json '{"runId","title","request","query","candidates":[{"id","fit","model","ratio","adapted","default"}]}'
-          [--project DIR] [--out FILE]
-                                      Write <records>/gallery/<runId>.html: sample images, full prompt,
-                                      source and license per candidate; open it for the user
+          [--project DIR] [--out FILE] [--serve [--timeout-min 30]]
+                                      Write <records>/gallery/<runId>.html (sample images, editable prompt,
+                                      source, license). --serve hosts it on 127.0.0.1, prints the url, waits
+                                      for the user's 选这个 click and prints {pick}; run it in the background
   brief --json '<fields>' [--project DIR]
                                       Write briefs/<runId>.md (source, license, channel, model, output, prompt)
   github "<topic>" [--limit 10]       Search GitHub repositories (needs gh or a token)
@@ -1335,8 +1336,23 @@ export async function main(argv = process.argv.slice(2)) {
         project,
         out: typeof flags.out === "string" ? flags.out : fields.out,
       });
-      out(result);
-      if (result.missing.length) process.exitCode = 1;
+      if (result.missing.length) {
+        out(result);
+        process.exitCode = 1;
+        return;
+      }
+      if (!flags.serve) return out(result);
+      // Serve mode: print the URL now, then block until the user clicks 选这个
+      // (or the timeout) and print the pick; run it in the background.
+      const pick = await serveGallery({
+        file: result.file,
+        ids: result.shown,
+        pickFile: result.file.replace(/\.html$/, ".pick.json"),
+        timeoutMs: (Number(flags["timeout-min"]) || 30) * 60 * 1000,
+        onReady: (url) => out({ ...result, url, waiting: "pick" }),
+      });
+      out({ pick });
+      if (pick.status !== "picked") process.exitCode = 3;
       return;
     }
     case "brief": {

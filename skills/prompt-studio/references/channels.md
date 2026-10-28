@@ -21,7 +21,7 @@ These are discovery signals, not readiness checks: a CLI version does not prove 
 1. A Channel the user named in this request.
 2. The Channel the Style Pack names as preferred.
 3. The current host's own tool.
-4. Other detected Channels: list them with what each can produce and let the user pick.
+4. Other detected Channels: pick the first one that can produce the output type and say which in one line; ask only when none fits or the choice costs money.
 
 ## Invocation
 

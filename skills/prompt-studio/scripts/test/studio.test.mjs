@@ -1,4 +1,4 @@
-import { buildCandidates, renderGallery } from "../gallery.mjs";
+import { buildCandidates, renderGallery, serveGallery } from "../gallery.mjs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -829,10 +829,46 @@ describe("gallery", () => {
     assert.ok(html.includes("plugs in"));
     assert.ok(html.includes("https://img/a.jpg"));
     assert.ok(!html.includes("javascript:alert"));
-    assert.ok(html.includes("默认推荐"));
+    assert.ok(html.includes("推荐"));
+    assert.ok(html.includes("<textarea"));
+  });
+
+  it("serves the page and resolves with the clicked pick", async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "ps-serve-"));
+    const file = path.join(dir, "g.html");
+    fs.writeFileSync(file, "<p>page</p>");
+    let base;
+    const done = serveGallery({
+      file,
+      ids: [7],
+      pickFile: path.join(dir, "g.pick.json"),
+      onReady: (u) => (base = u),
+    });
+    while (!base) await new Promise((r) => setTimeout(r, 5));
+    assert.equal(await (await fetch(base)).text(), "<p>page</p>");
+    const bad = await fetch(`${base}pick`, {
+      method: "POST",
+      body: '{"id":9}',
+    });
+    assert.equal(bad.status, 400);
+    await fetch(`${base}pick`, {
+      method: "POST",
+      body: JSON.stringify({ id: 7, number: 1, edited: true, prompt: "new" }),
+    });
+    const pick = await done;
+    assert.equal(pick.status, "picked");
+    assert.equal(pick.prompt, "new");
+    assert.equal(JSON.parse(fs.readFileSync(pick.pickFile, "utf8")).id, 7);
+  });
+
+  it("emits a page script that parses", () => {
+    const { candidates } = buildCandidates([{ id: 7 }], entries);
+    const html = renderGallery({ title: "t", candidates });
+    const js = html.split("<script>")[1].split("</script>")[0];
+    assert.doesNotThrow(() => new Function(js));
   });
 
   it("shows an empty state without candidates", () => {
-    assert.ok(renderGallery({ candidates: [] }).includes("没有合适的候选"));
+    assert.ok(renderGallery({ candidates: [] }).includes("没找到合适的案例"));
   });
 });

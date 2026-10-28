@@ -11,7 +11,7 @@
         "Same-turn assumptions plus candidates is acceptable: does not wait a full turn for answers before searching",
         "States no more than 3 gap questions or assumptions, each with a default",
         "Runs studio.mjs recommend with English keywords and --use cover, not social-media-post",
-        "Every candidate shows a sample image, source and license",
+        "Builds a candidate page with `studio.mjs gallery` (sample images, prompt, source and license live there) and lists candidates in chat as short numbered lines",
         "Marks one default and stops before generating"
       ]
     },
@@ -173,10 +173,10 @@
       "files": [],
       "expectations": [
         "Offers 2-3 visually distinct directions",
-        "Each candidate shows its prompt text (or a 300-character excerpt), sample image URL, source and license in the chat",
-        "Builds a candidate page with `studio.mjs gallery` and gives its path",
+        "Builds a candidate page with `studio.mjs gallery` (with --serve when a background shell exists) and gives its link",
+        "Chat lists each candidate as one short numbered line with a fit reason, without pasting commands or JSON",
         "Does not plan or run image generation for the directions before the user picks",
-        "Ends by asking the user to choose"
+        "Ends by asking the user to click 选这个 or reply a number"
       ]
     },
     {
@@ -202,6 +202,19 @@
         "Asks numbered questions, each with a recommended answer",
         "Checks for a Style Pack or existing covers itself instead of asking the user about them",
         "Does not search or show candidates before the user answers"
+      ]
+    },
+    {
+      "id": 17,
+      "eval_name": "edited-pick-becomes-the-brief",
+      "prompt": "Use $prompt-studio. 用户在候选页点了第 2 个，--serve 输出：{\"pick\":{\"status\":\"picked\",\"id\":\"7428\",\"number\":2,\"edited\":true,\"prompt\":\"A luminous neon pointillism illustration of an AI hub plugging into many tools, dark navy background, no text.\"}}。这是一张公众号封面，项目目录是当前目录。Do not run generation; write the Generation Brief and stop.",
+      "expected_output": "Uses the edited prompt as the base of the brief, keeps attribution for prompt 7428",
+      "files": [],
+      "expectations": [
+        "Builds the brief from the user's edited prompt, not the original library text",
+        "Keeps source and CC BY 4.0 attribution for prompt 7428",
+        "Does not ask the user to pick again",
+        "Does not run generation"
       ]
     }
   ]
