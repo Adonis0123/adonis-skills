@@ -89,7 +89,7 @@
         "Does not stop to wait for a candidate choice",
         "Uses the marked default candidate from recommend --use cover",
         "Brief credits source and license of the chosen prompt",
-        "Brief contains no {argument ...} or other {...} placeholders"
+        "Brief contains no unresolved template placeholders; literal JSON object braces are allowed"
       ]
     },
     {
@@ -114,6 +114,67 @@
         "Translates the idea into English keywords before searching",
         "Does not pass CJK-only text to recommend",
         "Runs studio.mjs recommend with --use cover and --limit 5 or fewer"
+      ]
+    },
+    {
+      "id": 10,
+      "eval_name": "prompt-only-keeps-json-and-stops-before-generation",
+      "prompt": "Use $prompt-studio. Improve this image prompt only; keep JSON format and do not generate: {\"subject\":\"{argument name=\\\"subject\\\" default=\\\"cat\\\"}\",\"style\":\"watercolor\"}. Use the default subject.",
+      "expected_output": "Returns a complete JSON image prompt with cat as subject, preserves JSON braces, and does not generate or require a candidate choice.",
+      "files": [],
+      "expectations": [
+        "Replaces the subject placeholder with cat",
+        "Preserves valid JSON object structure",
+        "Stops after delivering the prompt without generation"
+      ]
+    },
+    {
+      "id": 11,
+      "eval_name": "general-chatbot-prompt-near-miss",
+      "prompt": "Optimize the system prompt for our customer-support chatbot so it asks for an order number before troubleshooting.",
+      "expected_output": "Does not use prompt-studio because this is not an image or video prompt.",
+      "files": [],
+      "should_trigger": false,
+      "expectations": [
+        "Does not invoke prompt-studio",
+        "Does not search image prompt libraries or probe generation channels"
+      ]
+    },
+    {
+      "id": 12,
+      "eval_name": "brief-path-and-project-records",
+      "prompt": "Use $prompt-studio. The selected image prompt is ready. Project is ./campaign; write the Generation Brief to ./outputs/brief.md for an asset at ./outputs/cover.png. Explain the helper commands only; do not run or generate.",
+      "expected_output": "Uses campaign consistently for project-scoped commands, distinguishes the brief destination from outputPath, and explains copying the completed helper brief to the requested path.",
+      "files": [],
+      "expectations": [
+        "Uses --project ./campaign for brief, log and rate if shown",
+        "Uses ./outputs/cover.png as outputPath",
+        "Explains that brief writes under the records directory and the requested brief path needs a separate write",
+        "Does not run generation"
+      ]
+    },
+    {
+      "id": 13,
+      "eval_name": "channel-gets-prompt-content-not-records-file",
+      "prompt": "Use $prompt-studio. 帮我做一张小红书插画，主题是周末咖啡馆，用 Grok 生成。The prompt choice is up to you (直接出). Do not run generation; write the Generation Brief and show the exact channel command you would run.",
+      "expected_output": "Writes the brief with studio.mjs brief, then hands the channel only the prompt content, not the provenance file with its metadata header",
+      "files": [],
+      "expectations": [
+        "Writes the brief through studio.mjs brief",
+        "The channel command passes only the prompt content (e.g. extracted content or a content-only file), not the whole records brief with title/source/license metadata",
+        "Keeps source and license attribution in the brief record"
+      ]
+    },
+    {
+      "id": 14,
+      "eval_name": "cover-directions-wait-for-choice",
+      "prompt": "Use $prompt-studio. 帮我做一张讲 MCP 的公众号封面，先给我看几个方向。",
+      "expected_output": "Shows 2-3 visually distinct candidate directions as text/sample images and waits for the user's pick; does not generate any direction images before the choice",
+      "files": [],
+      "expectations": [
+        "Offers 2-3 visually distinct directions",
+        "Does not plan or run image generation for the directions before the user picks",
+        "Ends by asking the user to choose"
       ]
     }
   ]

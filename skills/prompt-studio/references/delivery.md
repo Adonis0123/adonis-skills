@@ -22,11 +22,11 @@ Best results for a first-time user: finish the work with layer 2 (current text, 
 
 | Source               | Risk                             | Rule                                                                                                                                                                                 |
 | -------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Prompt library data  | Low: text and image links        | `studio.mjs sync` / `search` check the remote ETag and pull when it changed. No confirmation                                                                                         |
+| Prompt library data  | Low: text and image links        | `recommend`, `sync`, and `search --category <slugs>` check ETags; bare `search` reads cache or bundled seed only. No confirmation                                                    |
 | Template blocks      | Medium: code enters the project  | Search the latest catalog each time. Before `add`, list files and destination, then wait for a yes                                                                                   |
 | Another skill's text | High: instructions for the agent | `studio.mjs source <raw-url>`: `new` or `changed` → summarise the content (or the diff against `confirmedCopy`) for the user, then `--confirm` after their yes. `unchanged` → use it |
 
-Each source is checked at most every 10 minutes. Offline, rate-limited or failing checks fall back to the cached copy; say how old it is (`fetchedAt`).
+Fetch checks are throttled to once per 10 minutes. Offline or failing library checks can use cache or the bundled seed; report `origin` and `cacheNote`, and `fetchedAt` only where returned. For skill text, inspect both `status` and `fetch`: `unchanged` means equal to the confirmed copy, not necessarily freshly fetched. A cached `new` or `changed` copy still needs confirmation; `unavailable` provides no usable text.
 
 ## GitHub access
 
@@ -36,7 +36,7 @@ Each source is checked at most every 10 minutes. Offline, rate-limited or failin
 | `token` (`GITHUB_TOKEN` or `GH_TOKEN`) | `curl` with the token                  | Everything                                          |
 | `anonymous`                            | `raw.githubusercontent.com` files only | Updates still work; online repository search is off |
 
-GitHub's REST API allows 60 requests per hour per IP without login and 5,000 per hour when authenticated; search endpoints are stricter. Raw file downloads do not use the REST quota. When rate-limited the helper waits for `X-RateLimit-Reset` and serves the cache; do not retry in a loop.
+GitHub's REST API allows 60 requests per hour per IP without login and 5,000 per hour when authenticated; search endpoints are stricter. Raw file downloads do not use the REST quota. When rate-limited, cached fetches return immediately and suppress new requests until `X-RateLimit-Reset`; do not retry in a loop.
 
 ## Licenses
 

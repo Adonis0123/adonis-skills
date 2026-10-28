@@ -5,15 +5,14 @@
 - Primary: YouMind `ai-image-prompts-skill` data (10,000+ prompts, split by use, synced twice a day). `studio.mjs` reads its raw JSON directly; installing YouMind's skill is not needed.
 - Offline: `assets/seed-prompts.json`, 5 samples per category from the same source.
 - Fields: `id`, `title`, `description`, `content` (the prompt), `sourceMedia` (sample images), `needReferenceImages`. There is no popularity or model field, so ranking uses: keyword match → your look at the sample → the user's own scores.
-- Find candidates with `studio.mjs recommend "<English keywords>" --use cover|illustration|infographic|avatar|thumbnail|comic|product|game|app --limit 5`: it syncs only the matching categories and returns ranked candidates with flags. Look at the sample images of those ≤5 results, not a top-30 list. Translate CJK ideas to English keywords first.
-- Drop a candidate whose `hasPlaceholders` is true until every `{argument ...}` is resolved (a Generation Brief never contains `{...}`), and drop `needReferenceImages` candidates when the user has no photo to give.
+- Follow SKILL.md for recommendation commands, candidate filtering and placeholder resolution; this reference adds image-specific adaptation and quality checks.
 - Many prompts were written for Nano Banana or GPT Image. Some are long JSON-style prompts; keep their structure when it carries layout, otherwise convert to prose for the target model.
 
 Category slugs (check `studio.mjs sync` for the current list): `profile-avatar`, `social-media-post`, `infographic-edu-visual`, `youtube-thumbnail`, `comic-storyboard`, `product-marketing`, `ecommerce-main-image`, `game-asset`, `poster-flyer`, `app-web-design`, `others`. `social-media-post` (~22 MB) and `product-marketing` (~13 MB) are large; search them only when the request fits.
 
 ## Covers and thumbnails
 
-A cover competes in a feed at about 340 px wide (and as a 1:1 crop at about 100 px). Quiet editorial minimalism disappears there. For covers use `recommend --use cover` (never `social-media-post`, which is large and off-target), then apply:
+A cover competes in a feed at about 340 px wide (and as a 1:1 crop at about 100 px). Quiet editorial minimalism disappears there. After the cover search in SKILL.md, apply:
 
 - One subject, big: it fills at least 60% of the safe area's height; a face or character shown close (waist-up or closer) beats a full figure with props.
 - A readable emotion or action: surprise, determination, a mid-motion gesture. A neutral smile reads as nothing at thumbnail size.
@@ -22,14 +21,14 @@ A cover competes in a feed at about 340 px wide (and as a 1:1 crop at about 100 
 - Few, large shapes; no fine detail the eye has to hunt for.
 - Design for the title the platform lays over the image. Many feeds and editors (WeChat drafts and cards, for example) print the title in white over the bottom ~40% with a soft dark gradient. Put the subject and hook in the upper ~55%, keep the bottom band low in detail and mid-to-dark in tone so white text reads, and never put the face there. The Style Pack says whether this applies.
 
-Cover gate (in addition to the checks below): run `studio.mjs cover-check <files> --title "<title>" --size WxH`, which writes the 340 px, 120 px-crop and title-overlay previews (needs ffmpeg), and look at them. Manual equivalent: downscale to 340 px wide and to the 1:1 centre crop at 120 px, look at both, and answer in one line each: what is it, and what is the feeling? If either is unclear, regenerate. When the platform overlays the title, also make a title preview with the real title and look at it — the title must be readable and must not cover the face or the hook:
+Cover gate (in addition to the checks below): run `studio.mjs cover-check <files> --title "<title>" --size WxH`, which writes the 340 px, 120 px-crop and title previews (needs ffmpeg), and look at them. Its title preview is a short bar on the 340 px sheet, not the platform's bottom ~40% band, so it cannot answer whether a feed title covers the face. Manual equivalent for the two small views: downscale to 340 px wide and to the 1:1 centre crop at 120 px, look at both, and answer in one line each: what is it, and what is the feeling? If either is unclear, regenerate. When the platform overlays the title, also make the preview below with the real title and look at it — the title must be readable and must not cover the face or the hook:
 
 ```bash
 printf '%s\n%s' "<title line 1>" "<title line 2>" > title.txt
 ffmpeg -i cover.png -vf "drawbox=y=ih*0.58:w=iw:h=ih*0.42:color=black@0.35:t=fill,drawtext=fontfile=<CJK font>:textfile=title.txt:fontcolor=white:fontsize=h*0.075:line_spacing=15:x=w*0.03:y=h*0.64" title-preview.png
 ```
 
-Offer 2–3 cover directions side by side (for example different background colours or hooks) and let the user pick.
+When showing cover candidates, make them differ in direction (hook or background colour), not just wording, so the pick in SKILL.md step 3 is a real choice. Do not generate the directions before that pick unless the user said 直接出 / just make it.
 
 ## Rewriting a chosen prompt
 

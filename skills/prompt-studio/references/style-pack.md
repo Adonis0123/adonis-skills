@@ -8,11 +8,17 @@ A Style Pack is a Markdown file the user owns. It holds the house style; this sk
 2. The path in `PROMPT_STUDIO_STYLE_PACK`
 3. Otherwise there is no Style Pack and no house style is added.
 
-`node scripts/studio.mjs style-pack --project <dir>` reports which one was found. A project file may simply point at a shared one ("See /path/to/style-pack.md").
+`studio.mjs style-pack --project <dir>` reports which one was found. A project file shorter than 2000 characters may point at a shared pack. The helper follows one hop only when the path sits in backticks, contains `style-pack`, and ends in `.md`:
+
+```text
+Use `../brand/style-pack.md`.
+```
+
+A bare "See /path/to/style-pack.md" is left as the pack itself, so the house style becomes that sentence.
 
 ## Format
 
-Use these five sections. Leave a section out when it does not apply.
+Use the sections below. Leave a section out when it does not apply.
 
 ```markdown
 # Style Pack: <name>
@@ -49,8 +55,9 @@ Use these five sections. Leave a section out when it does not apply.
 
 - Preferred image channel: codex
 - API key variable for video: MINIMAX_API_KEY
-- Records directory: .prompt-studio
 ```
+
+The helper does not parse a records directory from this Markdown. Set `PROMPT_STUDIO_RECORDS` to override the default `<project>/.prompt-studio` and keep it consistent for brief, log and rate.
 
 ## How to apply it
 

@@ -1,10 +1,10 @@
 # Glossary
 
 **Request Brief**:
-The user's one-line request after the gap questions: use, aspect ratio, subject, style, and for video the duration. For a Code Video it follows the Hyperframes spec fields; write a number wherever you would have written an adjective.
+The user's request plus the assumed defaults (use, aspect ratio, subject, style, and for video the duration). Defaults are stated in the same message as the search; they are not a turn of questions. For a Code Video it follows the Hyperframes spec fields; write a number wherever you would have written an adjective.
 
 **Generation Brief**:
-The final instruction a Channel runs: the chosen prompt (rewritten for the user's content, with the Style Pack applied and adapted to the target model), parameters and reference images. Any Channel can run it unchanged.
+The rewritten prompt a Channel runs (`content`: structure kept, subject replaced, Style Pack applied, adapted to the target model), plus parameters and reference images. The file `studio.mjs brief` writes is the provenance record around that prompt.
 _Avoid_: prompt file, job
 
 **Channel**:
