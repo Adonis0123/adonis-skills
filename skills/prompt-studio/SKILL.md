@@ -42,11 +42,13 @@ Speed matters more than a perfect Request Brief: a wrong default costs one reply
 - In ONE user-facing message, state assumed defaults for each missing gap (at most 3: use and ratio, subject, style or mood), and search within the output type chosen above; show the candidates in that same turn. Image-library `recommend` is only for image candidates, not exact-data stills or video plans.
 - Skip any gap the request already answers. When improving a supplied prompt, revise it directly; search only if a missing technique needs a reference.
 - For an asset request, pause for the candidate choice. If the user said 直接出 / just make it, take the default candidate and continue.
+- Interview first instead when the user asks to discuss or be grilled (先聊聊 / 问我几个问题 / grill), or the asset carries brand or taste weight (a series, a brand cover, a campaign key visual) and the request names no style. Ask in rounds like the `grilling` skill: number each question, give your recommended answer, ask only questions whose prerequisites are settled, at most 2 rounds. Look facts up yourself (Style Pack, existing covers in the project) instead of asking. Then search.
 
 ### 4. Recommend (≤5 candidates)
 
 - Images: `studio.mjs recommend "<English keywords>" --use cover|illustration|infographic|avatar|thumbnail|comic|product|game|app --limit 5 --project <dir>`. Same `--project` as session, brief, log and rate, so saved scores affect this ranking.
   - Translate CJK ideas into English keywords first; a CJK-only query returns `error: translate-to-english` and does not search.
+  - Describe the picture, not the topic. The library holds visual prompts, so `isometric tech illustration` finds tech art while `MCP protocol` finds nothing. Send 2–3 visual directions in one call separated by `|` (for example `isometric tech illustration | glowing network nodes | 3d cute robot mascot`); each result keeps its best direction and lists the words it `matched`. Ranking weights rare words above generic ones (`ai`, `tech`) and rewards matching more of a direction.
   - Covers use `--use cover`, never `social-media-post`. For `cover` / `thumbnail`, put the subject in the keywords (for example `MCP connector AI tools`) and omit the word `cover`: the flag already scopes the category, and the word mostly matches fashion magazines.
   - Read `cacheNote`: a skipped large category was not searched. Add `--allow-large` only when that category is where the request belongs (product shots, social posts).
 - Look at the sample images of the returned ≤5 only, not 30. Resolve flagged placeholders from the request or safe defaults; drop a candidate only when essential inputs remain missing. Drop `needReferenceImages` candidates when suitable user references are unavailable.
@@ -54,7 +56,13 @@ Speed matters more than a perfect Request Brief: a wrong default costs one reply
 - Code Video: search templates per `references/code-video.md`. Model Video: start from `references/model-video.md`.
 - If nothing in those results fits and `access.onlineSearch` is true, `studio.mjs github "<topic>"` finds libraries; check a new library's license before use. When `onlineSearch` is false, skip `github`: the anonymous hint already explained it, and the command returns no repositories.
 
-Show each candidate with sample image, one-line fit, target model, ratio, source and license. Model and ratio may be your proposed adaptation, not library metadata; label them accordingly. If a sample cannot be opened, mark visual fit `UNVERIFIED`. Mark one default.
+Show the candidates as a gallery page, because a terminal cannot render the sample images:
+
+1. `studio.mjs gallery --project <dir> --json '{"runId":"...","title":"...","request":"<user request>","query":"<keywords>","candidates":[{"id":<id>,"fit":"<one line, user language>","model":"...","ratio":"...","adapted":"<your rewritten prompt, optional>","default":true}]}'`. The script fills in sample images, the full prompt text, source and license from the library, writes `<records>/gallery/<runId>.html` and prints its `file` and `url`. A non-empty `missing` means an id was not in the library: fix it and rerun.
+2. Open it for the user (`open <file>` where available) and give the path.
+3. In the chat message too, list each candidate: number, title, one-line fit, the first ~300 characters of the prompt, the sample image URL, source and license. The user must see the prompt and the case even if the page does not open.
+
+Model and ratio may be your proposed adaptation, not library metadata; the page labels them 建议. If a sample cannot be opened, mark visual fit `UNVERIFIED`. Mark one default. For Code Video and Model Video plans, pass templates or reference clips as candidates with `content`, `title`, `images`, `source` and `license` filled in yourself.
 
 ### 5. Write the Generation Brief
 

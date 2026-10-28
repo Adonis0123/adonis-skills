@@ -8,6 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildCandidates, writeGallery } from "./gallery.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const SEED_FILE = path.join(HERE, "..", "assets", "seed-prompts.json");
@@ -370,14 +371,15 @@ function escapeRegExp(s) {
 
 // ASCII tokens match on word boundaries ("art" must not hit "start"); CJK has no
 // word boundaries, so it keeps substring matching.
-function countHits(tokens, text) {
+function tokenMatcher(t) {
+  return /^[a-z0-9]+$/.test(t)
+    ? (lower) => new RegExp(`\\b${escapeRegExp(t)}\\b`).test(lower)
+    : (lower) => lower.includes(t);
+}
+
+function matchedTokens(matchers, text) {
   const lower = String(text || "").toLowerCase();
-  return tokens.reduce((n, t) => {
-    const hit = /^[a-z0-9]+$/.test(t)
-      ? new RegExp(`\\b${escapeRegExp(t)}\\b`).test(lower)
-      : lower.includes(t);
-    return n + (hit ? 1 : 0);
-  }, 0);
+  return matchers.filter(([, m]) => m(lower)).map(([t]) => t);
 }
 
 export function loadRatings(project, env = process.env) {
@@ -428,18 +430,52 @@ export function loadEntries({ cache = cacheDir(), categories = [] } = {}) {
 const MAGAZINE_RE =
   /\b(magazine|vogue|elle|cosmo|harper'?s|gq|editorial\s+cover|magazine\s+cover)\b/i;
 
+// `a b | c d` searches two keyword groups; an entry keeps its best group score.
+export function splitQueries(query) {
+  return String(query || "")
+    .split("|")
+    .map((q) => q.trim())
+    .filter(Boolean);
+}
+
+// Generic words ("ai", "tech") sit in most entries and must not outrank a rare
+// subject word: each token is weighted by inverse document frequency.
+function idfWeights(docs, tokens) {
+  const n = docs.length || 1;
+  const weights = new Map();
+  for (const t of tokens) {
+    const m = tokenMatcher(t);
+    const df = docs.reduce((c, d) => c + (m(d) ? 1 : 0), 0);
+    weights.set(t, Math.log(1 + n / (1 + df)));
+  }
+  return weights;
+}
+
+// Small prior for prompts that are ready to reuse: detailed but not a wall of
+// JSON, several sample images, no placeholders left to fill.
+function readiness(e, content, hasPlaceholders) {
+  let q = 0;
+  if (content.length >= 200 && content.length <= 2500) q += 0.5;
+  if (e.sourceMedia.length > 1) q += 0.3;
+  if (hasPlaceholders) q -= 0.3;
+  return q;
+}
+
 export function searchEntries(
   entries,
   query,
   { limit = 30, ratings = new Map(), dropTokens = [] } = {},
 ) {
   const drop = new Set(dropTokens.map((t) => String(t).toLowerCase()));
-  const tokens = tokenize(query).filter((t) => !drop.has(t));
+  const groups = splitQueries(query).map((q) =>
+    tokenize(q).filter((t) => !drop.has(t)),
+  );
+  const allTokens = [...new Set(groups.flat())];
   // Stopword-only queries match nothing. If dropTokens removed every token
   // (e.g. recommend --use cover with query "cover"), fall through and list by rating.
-  if (!tokens.length && String(query || "").trim() && drop.size === 0)
+  if (!allTokens.length && String(query || "").trim() && drop.size === 0)
     return [];
-  const scored = [];
+  const unique = [];
   const seen = new Set();
   for (const e of entries) {
     // The same prompt can sit in several categories: list it once.
@@ -447,14 +483,45 @@ export function searchEntries(
     seen.add(String(e.id));
     // A recommendation without a sample image cannot be judged: skip it.
     if (!Array.isArray(e.sourceMedia) || e.sourceMedia.length === 0) continue;
-    const titleHits = countHits(tokens, e.title);
-    const descHits = countHits(tokens, e.description);
-    const contentHits = countHits(tokens, e.content);
-    // Body text alone is weak evidence: count it only with a title/description
-    // hit or when at least two distinct tokens appear in it.
-    const contentScore =
-      titleHits || descHits || contentHits >= 2 ? contentHits : 0;
-    let match = 3 * titleHits + 2 * descHits + contentScore;
+    unique.push(e);
+  }
+  const docs = unique.map((e) =>
+    `${e.title || ""} ${e.description || ""} ${e.content || ""}`.toLowerCase(),
+  );
+  const idf = idfWeights(docs, allTokens);
+  const matchers = allTokens.map((t) => [t, tokenMatcher(t)]);
+  const scored = [];
+  for (const e of unique) {
+    const inTitle = new Set(matchedTokens(matchers, e.title));
+    const inDesc = new Set(matchedTokens(matchers, e.description));
+    const inContent = new Set(matchedTokens(matchers, e.content));
+    let best = { match: 0, matched: [] };
+    for (const tokens of groups.length ? groups : [[]]) {
+      // Body text alone is weak evidence: count it only with a title/description
+      // hit or when at least two distinct tokens appear in it.
+      const headHit = tokens.some((t) => inTitle.has(t) || inDesc.has(t));
+      const bodyCount = tokens.filter((t) => inContent.has(t)).length;
+      const useBody = headHit || bodyCount >= 2;
+      let raw = 0;
+      const matched = [];
+      for (const t of tokens) {
+        const field = inTitle.has(t)
+          ? 3
+          : inDesc.has(t)
+            ? 2
+            : useBody && inContent.has(t)
+              ? 1
+              : 0;
+        if (!field) continue;
+        raw += field * idf.get(t);
+        matched.push(t);
+      }
+      // Covering more of the request beats repeating one word.
+      const coverage = tokens.length ? matched.length / tokens.length : 0;
+      const match = raw * coverage;
+      if (match > best.match) best = { match, matched };
+    }
+    let { match } = best;
     // Cover/thumbnail categories still contain fashion-magazine "covers"; demote them.
     if (
       (e.category === "youtube-thumbnail" || e.category === "poster-flyer") &&
@@ -462,24 +529,30 @@ export function searchEntries(
     ) {
       match -= 8;
     }
-    if (tokens.length && match <= 0) continue;
+    if (allTokens.length && match <= 0) continue;
     const content = String(e.content || "");
+    const hasPlaceholders =
+      /\{argument\b/i.test(content) || /\{[a-z_]+=/i.test(content);
     const rating = ratings.get(String(e.id)) || 0;
     const ratingBoost = rating >= 4 ? 5 * (rating - 3) : 0;
+    const quality = allTokens.length
+      ? readiness(e, content, hasPlaceholders)
+      : 0;
     scored.push({
       id: e.id,
       title: e.title,
       description: e.description,
       image: e.sourceMedia[0],
+      images: e.sourceMedia.slice(0, 4),
       category: e.category,
       needReferenceImages: Boolean(e.needReferenceImages),
-      hasPlaceholders:
-        /\{argument\b/i.test(content) || /\{[a-z_]+=/i.test(content),
+      hasPlaceholders,
+      matched: best.matched,
       contentPreview: content.slice(0, 600),
       source: e.source,
       license: e.license,
       yourBestScore: rating || null,
-      score: match + ratingBoost,
+      score: Math.round((match + quality + ratingBoost) * 100) / 100,
     });
   }
   scored.sort((a, b) => b.score - a.score);
@@ -1037,6 +1110,43 @@ export function coverCheck(
 
 // ---------- brief: provenance record for one generation ----------
 
+// Gallery: an HTML page of candidates (sample images, full prompt, source,
+// license) for terminals that cannot show images.
+export function galleryPage({
+  project,
+  runId,
+  title,
+  request,
+  query,
+  candidates = [],
+  out,
+  entries,
+  env = process.env,
+  now = Date.now(),
+} = {}) {
+  if (!Array.isArray(candidates) || !candidates.length)
+    throw new Error("gallery needs candidates: [{id, fit, ...}]");
+  const id = String(runId || `gallery-${now}`).replace(/[^\w.-]/g, "-");
+  const file = out
+    ? path.resolve(out)
+    : path.join(recordsDir(project, env), "gallery", `${id}.html`);
+  const built = buildCandidates(candidates, entries || loadEntries({}).entries);
+  writeGallery({
+    file,
+    title,
+    request,
+    query,
+    candidates: built.candidates,
+    generatedAt: now,
+  });
+  return {
+    file,
+    url: `file://${file}`,
+    shown: built.candidates.map((c) => c.id),
+    missing: built.missing,
+  };
+}
+
 export function writeBrief({
   project,
   runId,
@@ -1146,12 +1256,16 @@ const USAGE = `Usage: node studio.mjs <command> [options]
                                       social-media-post and product-marketing need --allow-large
   search "<keywords>" [--category a,b] [--limit 30] [--project DIR]
                                       Rank prompts; cached library first, bundled seed offline
-  recommend "<english keywords>" --use cover|illustration|infographic|avatar|thumbnail|comic|product|game|app
+  recommend "<english keywords> [| more keywords]" --use cover|illustration|infographic|avatar|thumbnail|comic|product|game|app
             [--category a,b] [--limit 5] [--allow-large] [--project DIR]
                                       Sync the matching categories and return ranked candidates
   show <id...> [--category a,b]       Print prompts in full (ids space- or comma-separated)
   cover-check <files...> [--title "..."] [--size WxH] [--out DIR]
                                       Size check plus 340px / 120px-crop / title-overlay previews (needs ffmpeg)
+  gallery --json '{"runId","title","request","query","candidates":[{"id","fit","model","ratio","adapted","default"}]}'
+          [--project DIR] [--out FILE]
+                                      Write <records>/gallery/<runId>.html: sample images, full prompt,
+                                      source and license per candidate; open it for the user
   brief --json '<fields>' [--project DIR]
                                       Write briefs/<runId>.md (source, license, channel, model, output, prompt)
   github "<topic>" [--limit 10]       Search GitHub repositories (needs gh or a token)
@@ -1210,6 +1324,19 @@ export async function main(argv = process.argv.slice(2)) {
       });
       out(result);
       process.exitCode = result.ok ? 0 : 1;
+      return;
+    }
+    case "gallery": {
+      if (typeof flags.json !== "string")
+        throw new Error("gallery needs --json '<fields>'");
+      const fields = JSON.parse(flags.json);
+      const result = galleryPage({
+        ...fields,
+        project,
+        out: typeof flags.out === "string" ? flags.out : fields.out,
+      });
+      out(result);
+      if (result.missing.length) process.exitCode = 1;
       return;
     }
     case "brief": {

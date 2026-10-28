@@ -173,8 +173,35 @@
       "files": [],
       "expectations": [
         "Offers 2-3 visually distinct directions",
+        "Each candidate shows its prompt text (or a 300-character excerpt), sample image URL, source and license in the chat",
+        "Builds a candidate page with `studio.mjs gallery` and gives its path",
         "Does not plan or run image generation for the directions before the user picks",
         "Ends by asking the user to choose"
+      ]
+    },
+    {
+      "id": 15,
+      "eval_name": "visual-keywords-and-gallery",
+      "prompt": "Use $prompt-studio. 给我一张讲 Agent 工作流的小红书插画，先看候选。Do not call any generation tool; show the exact helper commands you would run.",
+      "expected_output": "Recommend query uses visual descriptions split by |, then a gallery command with the chosen ids",
+      "files": [],
+      "expectations": [
+        "The recommend query describes the picture (style, subject, composition) rather than only the topic words",
+        "The recommend query offers 2-3 directions separated by |",
+        "Runs `studio.mjs gallery` with the candidate ids, fit lines and one default",
+        "Does not generate images"
+      ]
+    },
+    {
+      "id": 16,
+      "eval_name": "grill-before-brand-asset",
+      "prompt": "Use $prompt-studio. 先问我几个问题，再帮我定我们公众号系列封面的风格。",
+      "expected_output": "Interviews in numbered rounds with recommended answers before searching",
+      "files": [],
+      "expectations": [
+        "Asks numbered questions, each with a recommended answer",
+        "Checks for a Style Pack or existing covers itself instead of asking the user about them",
+        "Does not search or show candidates before the user answers"
       ]
     }
   ]

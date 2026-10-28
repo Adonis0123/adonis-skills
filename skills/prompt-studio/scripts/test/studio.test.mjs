@@ -1,3 +1,4 @@
+import { buildCandidates, renderGallery } from "../gallery.mjs";
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -423,8 +424,62 @@ describe("ranking improvements", () => {
 
   it("counts content-only hits only when two tokens match", () => {
     assert.deepEqual(
-      searchEntries(entries, "cover thumbnail").map((r) => r.id),
+      searchEntries(entries, "cover thumbnail")
+        .map((r) => r.id)
+        .sort(),
       [1, 5],
+    );
+  });
+
+  it("weights rare subject words above generic ones and reports matches", () => {
+    const generic = Array.from({ length: 6 }, (_, i) => ({
+      id: 100 + i,
+      title: `AI portrait ${i}`,
+      description: "AI art",
+      content: "ai",
+      sourceMedia: ["i"],
+    }));
+    const subject = {
+      id: 200,
+      title: "Robot plugging a glowing connector",
+      description: "tools hub",
+      content: "connector port",
+      sourceMedia: ["i"],
+    };
+    const results = searchEntries([...generic, subject], "AI connector tools");
+    assert.equal(results[0].id, 200);
+    assert.deepEqual(results[0].matched.sort(), ["connector", "tools"]);
+  });
+
+  it("searches keyword groups split by | and keeps the best group", () => {
+    const list = [
+      {
+        id: 1,
+        title: "Robot mascot",
+        description: "",
+        content: "",
+        sourceMedia: ["i"],
+      },
+      {
+        id: 2,
+        title: "Neon city",
+        description: "",
+        content: "",
+        sourceMedia: ["i"],
+      },
+      {
+        id: 3,
+        title: "Bowl of fruit",
+        description: "",
+        content: "",
+        sourceMedia: ["i"],
+      },
+    ];
+    assert.deepEqual(
+      searchEntries(list, "robot mascot | neon city")
+        .map((r) => r.id)
+        .sort(),
+      [1, 2],
     );
   });
 
@@ -741,5 +796,43 @@ describe("session, cover check and brief", () => {
         .attributionRequired,
       false,
     );
+  });
+});
+
+describe("gallery", () => {
+  const entries = [
+    {
+      id: 7,
+      title: "Robot <hub>",
+      content: 'A robot {argument name="x"} plugs in',
+      sourceMedia: ["https://img/a.jpg", "javascript:alert(1)"],
+      source: "lib",
+      license: "CC BY 4.0",
+    },
+  ];
+
+  it("fills candidates from the library, marks a default and reports missing ids", () => {
+    const { candidates, missing } = buildCandidates(
+      [{ id: 7, fit: "fits" }, { id: 8 }],
+      entries,
+    );
+    assert.deepEqual(missing, [8]);
+    assert.equal(candidates[0].default, true);
+    assert.equal(candidates[0].hasPlaceholders, true);
+    assert.equal(candidates[0].license, "CC BY 4.0");
+  });
+
+  it("renders the full prompt escaped and drops unsafe image urls", () => {
+    const { candidates } = buildCandidates([{ id: 7 }], entries);
+    const html = renderGallery({ title: "t", candidates });
+    assert.ok(html.includes("Robot &lt;hub&gt;"));
+    assert.ok(html.includes("plugs in"));
+    assert.ok(html.includes("https://img/a.jpg"));
+    assert.ok(!html.includes("javascript:alert"));
+    assert.ok(html.includes("默认推荐"));
+  });
+
+  it("shows an empty state without candidates", () => {
+    assert.ok(renderGallery({ candidates: [] }).includes("没有合适的候选"));
   });
 });
