@@ -331,6 +331,31 @@
       "authoringModel": "Claude Opus 5.5"
     },
     {
+      "id": "opus5-5-videos",
+      "title": "Awesome Opus 5.5 Videos",
+      "repo": "yihui-dev/awesome-opus5-5-videos",
+      "branch": "main",
+      "kinds": ["code-video"],
+      "license": "MIT (list); prompts and clips stay with the original authors",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "data/videos.json",
+      "itemsPath": "",
+      "nativeIdFrom": "slug",
+      "locale": "en",
+      "authoringModel": "Claude Opus 5.5",
+      "videoTemplate": "https://media.skillry.dev/opus-5-5/{slug}/original.mp4",
+      "map": {
+        "title": "title",
+        "content": "prompt",
+        "sourceMedia": "poster_url",
+        "author": "author",
+        "link": "post_url",
+        "category": "category",
+        "tags": "tech_tags"
+      }
+    },
+    {
       "id": "ai-boost",
       "title": "Awesome Image & Video Prompts (ai-boost)",
       "repo": "ai-boost/awesome-image-video-prompts",

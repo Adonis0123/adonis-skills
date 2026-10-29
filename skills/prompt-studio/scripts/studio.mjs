@@ -2464,6 +2464,7 @@ export async function addSource(
     file,
     itemsPath,
     map,
+    videoTemplate,
     cache = cacheDir(),
     detectSource,
     env = process.env,
@@ -2576,6 +2577,7 @@ export async function addSource(
     ...(dataFile ? { file: dataFile } : {}),
     ...(itemsPath !== undefined ? { itemsPath } : {}),
     ...(mapping ? { map: mapping } : {}),
+    ...(videoTemplate ? { videoTemplate } : {}),
   };
   const registryFile = path.join(cache, "user-sources.json");
   const registry = readJson(registryFile, { sources: [] });
@@ -2630,7 +2632,7 @@ const USAGE = `Usage: node studio.mjs <command> [options]
   access                              Show the GitHub access tier (gh / token / anonymous)
   session [--project DIR]             One-shot probe: access tier, style pack, channels (codex/grok/ffmpeg/node, key var names)
   sources [--kind image|video|code-video]  List registered sources and cached entries
-  sources add <owner/repo> --kind <kind> [--adapter <adapter>] [--file <repo-path>] [--items-path <path>] [--map '{"title":"title","content":"prompt"}']
+  sources add <owner/repo> --kind <kind> [--adapter <adapter>] [--file <repo-path>] [--items-path <path>] [--map '{"title":"title","content":"prompt"}'] [--video-template 'https://host/{slug}/clip.mp4']
   sync [--source a,b | --kind video | --category a,b | --all] [--force] [--allow-large]
                                       Refresh matching sources (ETag, at most every 10 min);
                                       social-media-post and product-marketing need --allow-large
@@ -2727,6 +2729,7 @@ export async function main(argv = process.argv.slice(2)) {
             file: flags.file || flags.path,
             itemsPath: flags["items-path"],
             map: flags.map,
+            videoTemplate: flags["video-template"],
           }),
         );
       return out(getSourceStats({ kind: flags.kind }));

@@ -294,6 +294,11 @@ export function load(src, ctx) {
           /\{([^}]+)\}/g,
           (_, key) => encodeURIComponent(at(item, key) || ""),
         );
+      // Some catalogs store only a slug for the clip, e.g. "{slug}/original.mp4".
+      if (opts.videoTemplate && !values(entry.videos).length)
+        entry.videos = opts.videoTemplate.replace(/\{([^}]+)\}/g, (_, key) =>
+          encodeURIComponent(at(item, key) || ""),
+        );
       entry.sourceMedia = media(entry.sourceMedia, base);
       entry.videos = media(entry.videos, base);
       // Rules relocate only the matching source URL, preserving unrelated media.

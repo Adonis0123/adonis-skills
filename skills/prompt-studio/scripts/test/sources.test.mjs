@@ -176,6 +176,34 @@ test("mapping handles equality filters, scalar fallbacks, templates and NSFW", a
   ]);
   assert.equal(load({ ...src, locale: "de" }, { dir })[0].title, "café");
 });
+test("videoTemplate builds a clip URL only when the row has none", async () => {
+  const dir = tmp();
+  const src = {
+    ...source,
+    videoTemplate: "https://cdn.example.com/{slug}/original.mp4",
+    map: { title: "title", content: "prompt", videos: "clip" },
+  };
+  const data = [
+    { slug: "a b", title: "A", prompt: "x" },
+    {
+      slug: "c",
+      title: "C",
+      prompt: "y",
+      clip: "https://cdn.example.com/own.mp4",
+    },
+  ];
+  await sync(src, {
+    dir,
+    fetchCached: async (_url, file) => {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(data));
+      return { status: "updated" };
+    },
+  });
+  const [a, c] = load(src, { dir });
+  assert.deepEqual(a.videos, ["https://cdn.example.com/a%20b/original.mp4"]);
+  assert.deepEqual(c.videos, ["https://cdn.example.com/own.mp4"]);
+});
 test("YouMind skips malformed manifest rows and preserves native ids", async () => {
   const adapter = await import("../adapters/youmind-manifest.mjs");
   const dir = tmp();

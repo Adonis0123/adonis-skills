@@ -51,5 +51,5 @@ When nothing fits and `access.onlineSearch` is true:
 
 1. `studio.mjs github "<topic> prompts"` lists repositories.
 2. Open the repo's README or data file and check that it has prompts with sample media and a license.
-3. `studio.mjs sources add <owner/repo> --kind image|video|code-video` detects the format (JSON data file, one YAML per entry, or a README with prompt blocks), test-syncs it and prints the entry count and two sample titles. Pass `--adapter`, `--file` or `--map` only when detection fails. A source that yields 0 entries is not kept.
+3. `studio.mjs sources add <owner/repo> --kind image|video|code-video` detects the format (JSON data file, one YAML per entry, or a README with prompt blocks), test-syncs it and prints the entry count and two sample titles. Pass `--adapter`, `--file` or `--map` only when detection fails. A source that yields 0 entries is not kept. For a video or code-video library, check that a sample entry has `videos`; when the data file holds only a poster and a slug but the clip sits at a predictable address, pass `--video-template 'https://host/{slug}/clip.mp4'` (any `{field}` of the row), and open one built URL to confirm it plays. Without it the gallery shows stills only.
 4. User sources live in the cache (`user-sources.json`), not in the skill, and are searched like the built-in ones.
