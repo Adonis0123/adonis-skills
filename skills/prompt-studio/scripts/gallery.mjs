@@ -296,7 +296,7 @@ const SCRIPT_TEXT = {
     toCopy: "复制回复",
     sending: "发送中…",
     copying: "复制中…",
-    done: "已选第 {n} 个{e}，结果会出现在对话里，这个页面可以关掉了。",
+    done: "已选第 {n} 个{e}，AI 会接着做。对话没反应的话，「{r}」已复制，粘贴发送即可。",
     doneEdited: "（用你改过的提示词）",
     reply: "选 {n}",
     replyEdited: "选 {n}，提示词改成：\n",
@@ -322,7 +322,7 @@ const SCRIPT_TEXT = {
     toCopy: "Copying a reply in {s} s",
     sending: "Sending…",
     copying: "Copying…",
-    done: "Picked #{n}{e}. The result will appear in the chat; you can close this page.",
+    done: "Picked #{n}{e}. The AI will continue. If the chat stays idle, “{r}” is copied: paste it and send.",
     doneEdited: " (with your edited prompt)",
     reply: "pick {n}",
     replyEdited: "pick {n}, prompt changed to:\n",
@@ -1407,16 +1407,19 @@ kbd{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:2px
     const box = card.querySelector("textarea");
     const num = card.dataset.num;
     const edited = box.value !== box.defaultValue;
+    const reply = edited ? fmt(T.replyEdited, { n: num }) + box.value : fmt(T.reply, { n: num });
     if (served) {
       try {
         const res = await fetch("/pick", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: card.dataset.id, number: Number(num), edited, prompt: box.value }) });
         if (!res.ok) throw new Error(String(res.status));
-        return close(card, fmt(T.done, { n: num, e: edited ? T.doneEdited : "" }));
+        // Hosts without background notifications (Codex, Grok) never see the pick,
+        // so keep a reply on the clipboard as a fallback.
+        try { await navigator.clipboard.writeText(reply); } catch {}
+        return close(card, fmt(T.done, { n: num, e: edited ? T.doneEdited : "", r: edited ? fmt(T.copiedEdited, { n: num }) : reply }));
       } catch {
         // The agent stopped listening (timeout or already picked): fall back to copying.
       }
     }
-    const reply = edited ? fmt(T.replyEdited, { n: num }) + box.value : fmt(T.reply, { n: num });
     let copied = false;
     try { await navigator.clipboard.writeText(reply); copied = true; } catch {}
     mark(card);

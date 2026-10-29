@@ -2627,7 +2627,7 @@ const USAGE = `Usage: node studio.mjs <command> [options]
           [--project DIR] [--out FILE] [--serve [--timeout-min 30]]
                                       Write <records>/gallery/<runId>.html (sample images, editable prompt,
                                       source, license). --serve hosts it on 127.0.0.1, prints the url, waits
-                                      for the user's 选这个 click and prints {pick}; run it in the background
+                                      for the user's 选这个 click and prints {pick}; background it only where the host reports when it ends
   brief --json '<fields>' [--project DIR]
                                       Write briefs/<runId>.md (source, license, channel, model, output, prompt)
   github "<topic>" [--limit 10]       Search GitHub repositories (needs gh or a token)
@@ -2795,7 +2795,10 @@ export async function main(argv = process.argv.slice(2)) {
         out: typeof flags.out === "string" ? flags.out : fields.out,
       });
       if (result.missing.length) {
-        out(result);
+        // A page missing a candidate must not be opened: drop it and its link.
+        fs.rmSync(result.file, { force: true });
+        const { file, url, ...rest } = result;
+        out(rest);
         process.exitCode = 1;
         return;
       }

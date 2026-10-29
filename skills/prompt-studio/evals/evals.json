@@ -173,7 +173,7 @@
       "files": [],
       "expectations": [
         "Offers 2-3 visually distinct directions",
-        "Builds a candidate page with `studio.mjs gallery` (with --serve when a background shell exists) and gives its link",
+        "Builds a candidate page with `studio.mjs gallery` with --serve; on a host that cannot wake it when a background command ends (Codex, Grok) it sends the link first and waits for the pick in the foreground instead of ending the turn",
         "Chat lists each candidate as one short numbered line with a fit reason, without pasting commands or JSON",
         "Does not plan or run image generation for the directions before the user picks",
         "Ends by asking the user to click 选这个 or reply a number"
