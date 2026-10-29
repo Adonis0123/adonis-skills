@@ -12,6 +12,10 @@ _Avoid_: Griller, asker, Agent A
 The AI role that answers each Interviewer question in place of the user, backed by its own reasoning or evidence rather than echoing the recommendation.
 _Avoid_: Answerer, respondent, user proxy, Agent B
 
+**Judge**:
+The checks that rule on each Proxy answer: the ledger gate that classifies it, and the Red-team that may overturn a hard-to-reverse decision.
+_Avoid_: Reviewer, grader, referee
+
 **Escalation**:
 A question the Proxy may not settle and must hold for the user: side effects (safety, external sends, payment, deletion), facts only the user knows that block later branches, hard-to-reverse choices with weak evidence, or an answer that changed twice.
 _Avoid_: Confirmation, checkpoint, ask
@@ -27,3 +31,7 @@ _Avoid_: Summary, report
 **Pairing**:
 The choice of which AI product and account plays the Interviewer and which plays the Proxy for one session.
 _Avoid_: Combo, setup
+
+**Watch Page**:
+A read-only local page that shows the session as a chat between Interviewer, Proxy and Judge; it reads the run files and never feeds anything back into the session.
+_Avoid_: Dashboard, monitor, live view

@@ -230,6 +230,29 @@ it("cli preserves an existing ledger byte-for-byte on an empty reply", (t) => {
   assert.equal(fs.readFileSync(file, "utf8"), before);
 });
 
+it("cli writes the same result to --out for the watch page", (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "grill-ledger-"));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const answers = path.join(dir, "a.md");
+  const out = path.join(dir, "run", "gate-1.json");
+  fs.writeFileSync(answers, block("Q1") + block("Q2", { Reason: null }));
+  const run = spawnSync(process.execPath, [
+    SCRIPT,
+    "check",
+    `--answers=${answers}`,
+    `--ledger=${path.join(dir, "ledger.json")}`,
+    "--round=1",
+    `--out=${out}`,
+  ]);
+  assert.equal(run.status, 1);
+  const written = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.deepEqual(written, JSON.parse(run.stdout.toString()));
+  assert.deepEqual(
+    written.reask.map((r) => r.id),
+    ["Q2"],
+  );
+});
+
 describe("review regressions", () => {
   it("escalates concrete user-only facts", () => {
     const answers = block("Q1", { Kind: "fact", Evidence: "none" });

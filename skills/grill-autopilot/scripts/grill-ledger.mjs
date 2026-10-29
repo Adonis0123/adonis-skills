@@ -2,12 +2,13 @@
 /**
  * grill-ledger — deterministic gate for grill-autopilot.
  *
- *   node grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2]
+ *   node grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2] [--out=<gate.json>]
  *
  * Parses the Proxy's answer blocks, rejects incomplete ones, classifies each
  * answer as Decided / Assumption / Escalation, merges it into the ledger and
- * reports whether a stop rule fired. Prints one JSON object; exit 0 when every
- * block passed, 1 when some block must be re-asked, 2 on usage errors.
+ * reports whether a stop rule fired. Prints one JSON object (also written to
+ * --out for the watch page); exit 0 when every block passed, 1 when some block
+ * must be re-asked, 2 on usage errors.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -290,7 +291,7 @@ function parseArgs(argv) {
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const usage =
-    "usage: grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2]";
+    "usage: grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2] [--out=<gate.json>]";
   if (args._[0] !== "check" || !args.answers || !args.ledger || !args.round) {
     console.log(JSON.stringify({ ok: false, error: usage }));
     process.exit(2);
@@ -322,7 +323,12 @@ function main() {
       "utf8",
     );
   }
-  console.log(JSON.stringify(result, null, 2));
+  const output = JSON.stringify(result, null, 2);
+  if (typeof args.out === "string") {
+    fs.mkdirSync(path.dirname(path.resolve(args.out)), { recursive: true });
+    fs.writeFileSync(args.out, `${output}\n`, "utf8");
+  }
+  console.log(output);
   process.exit(result.ok ? 0 : 1);
 }
 

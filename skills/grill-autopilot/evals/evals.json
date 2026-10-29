@@ -15,9 +15,11 @@
       "files": [],
       "expectations": [
         "States the pairing in one line before the first round and does not ask the user to confirm it",
+        "Starts the Watch Page with grill-watch.mjs start in the pairing round, shares its URL once and never reads or screenshots the page afterwards",
         "Proxy is a different product from the Interviewer",
         "Every solution answer cites a URL or a repository path",
         "At least one solution answer checks the repository's existing dependencies before an external library",
+        "Writes run files under the names the Watch Page reads (round-<n>.md, answers-<n>.md, gate-<n>.json via --out, proxy-<n>.log) and records a done event with the decision log path",
         "grill-ledger.mjs check runs after every Proxy answer",
         "Writes a decision log under docs/grill/ with a Status column using Decided / Assumption / Escalation",
         "Asks the user no question when the ledger holds no Escalation",
