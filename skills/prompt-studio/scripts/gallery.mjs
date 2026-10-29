@@ -166,7 +166,7 @@ const TEXT = {
       `<b>没有${what}</b>资料库里这一条没有可看的${what}，只能看提示词判断。`,
     sampleWord: { image: "样图", other: "样片" },
     head: (request, anyVideo, n) =>
-      `${request ? `${request}。` : ""}${anyVideo ? "看样片挑一个（视频移上去或点一下就播放）" : "看图挑一个"}，点「选这个」或按数字键 <kbd>1</kbd>–<kbd>${n}</kbd>。想改提示词，先在框里改。`,
+      `${request ? `${request}。` : ""}${anyVideo ? "看样片挑一个（视频移上去或点一下就播放）" : "看图挑一个"}，点「选这个」或按数字键 <kbd>1</kbd>–<kbd>${Math.min(n, 9)}</kbd>。想改提示词，先在框里改。`,
     offline: "样片暂时看不到（可能离线），可以先按提示词选。",
     empty: "这次没找到合适的案例。回到对话里说一句想要的画面，我直接写一版。",
     undo: "撤销",
@@ -279,7 +279,7 @@ const TEXT = {
       `<b>No ${what}</b>This entry has no ${what} to show; judge it by the prompt.`,
     sampleWord: { image: "sample image", other: "sample" },
     head: (request, anyVideo, n) =>
-      `${request ? `${request}. ` : ""}Pick one by its ${anyVideo ? "sample (videos play on hover or tap)" : "image"}, then click “Use this” or press <kbd>1</kbd>–<kbd>${n}</kbd>. To change a prompt, edit it in its box first.`,
+      `${request ? `${request}. ` : ""}Pick one by its ${anyVideo ? "sample (videos play on hover or tap)" : "image"}, then click “Use this” or press <kbd>1</kbd>–<kbd>${Math.min(n, 9)}</kbd>. To change a prompt, edit it in its box first.`,
     offline:
       "Samples can't be shown right now (maybe offline). You can still pick by prompt.",
     empty:
@@ -296,7 +296,10 @@ const SCRIPT_TEXT = {
     toCopy: "复制回复",
     sending: "发送中…",
     copying: "复制中…",
-    done: "已选第 {n} 个{e}，AI 会接着做。对话没反应的话，「{r}」已复制，粘贴发送即可。",
+    done: "已选第 {n} 个{e}，AI 会接着做。",
+    doneCopied: "对话没反应的话，把已复制的「{r}」粘贴发送。",
+    doneNotCopied: "对话没反应的话，回到对话回复「{r}」。",
+    lost: "页面已连不上 AI（可能等待超时）。",
     doneEdited: "（用你改过的提示词）",
     reply: "选 {n}",
     replyEdited: "选 {n}，提示词改成：\n",
@@ -322,7 +325,10 @@ const SCRIPT_TEXT = {
     toCopy: "Copying a reply in {s} s",
     sending: "Sending…",
     copying: "Copying…",
-    done: "Picked #{n}{e}. The AI will continue. If the chat stays idle, “{r}” is copied: paste it and send.",
+    done: "Picked #{n}{e}. The AI will continue.",
+    doneCopied: " If the chat stays idle, paste the copied “{r}” and send.",
+    doneNotCopied: " If the chat stays idle, reply “{r}” in the chat.",
+    lost: "This page lost the AI (it may have stopped waiting). ",
     doneEdited: " (with your edited prompt)",
     reply: "pick {n}",
     replyEdited: "pick {n}, prompt changed to:\n",
@@ -1403,31 +1409,44 @@ kbd{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:2px
     showBar(text, false);
   };
 
-  async function send(card) {
+  const replyFor = (card) => {
+    const box = card.querySelector("textarea");
+    return box.value !== box.defaultValue ? fmt(T.replyEdited, { n: card.dataset.num }) + box.value : fmt(T.reply, { n: card.dataset.num });
+  };
+  // Browsers only allow clipboard writes during a click or key press, not after
+  // the undo countdown, so copy at pick time and report whether it worked.
+  const copyNow = (text) => {
+    try { return navigator.clipboard.writeText(text).then(() => text, () => null); } catch { return Promise.resolve(null); }
+  };
+
+  async function send(card, copying) {
     const box = card.querySelector("textarea");
     const num = card.dataset.num;
     const edited = box.value !== box.defaultValue;
-    const reply = edited ? fmt(T.replyEdited, { n: num }) + box.value : fmt(T.reply, { n: num });
+    const reply = replyFor(card);
+    let copied = (await copying) === reply;
+    if (!copied) copied = (await copyNow(reply)) === reply;
+    const shown = edited ? fmt(T.copiedEdited, { n: num }) : reply;
     if (served) {
       try {
         const res = await fetch("/pick", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id: card.dataset.id, number: Number(num), edited, prompt: box.value }) });
         if (!res.ok) throw new Error(String(res.status));
         // Hosts without background notifications (Codex, Grok) never see the pick,
-        // so keep a reply on the clipboard as a fallback.
-        try { await navigator.clipboard.writeText(reply); } catch {}
-        return close(card, fmt(T.done, { n: num, e: edited ? T.doneEdited : "", r: edited ? fmt(T.copiedEdited, { n: num }) : reply }));
+        // so point to a chat reply as a fallback.
+        return close(card, fmt(T.done, { n: num, e: edited ? T.doneEdited : "" }) + fmt(copied ? T.doneCopied : T.doneNotCopied, { r: copied ? shown : fmt(T.reply, { n: num }) }));
       } catch {
         // The agent stopped listening (timeout or already picked): fall back to copying.
       }
     }
-    let copied = false;
-    try { await navigator.clipboard.writeText(reply); copied = true; } catch {}
-    mark(card);
-    status.textContent = copied
-      ? fmt(T.copied, { r: edited ? fmt(T.copiedEdited, { n: num }) : reply })
+    const text = copied
+      ? fmt(T.copied, { r: shown })
       : fmt(T.replyHint, { n: num, e: edited ? T.replyHintEdited : T.replyHintPlain });
+    // A served page whose server is gone cannot take another pick: lock it.
+    if (served) return close(card, T.lost + text);
+    mark(card);
+    status.textContent = text;
     status.classList.add("show");
-    showBar(status.textContent, false);
+    showBar(text, false);
   }
 
   function pick(card) {
@@ -1437,12 +1456,13 @@ kbd{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:2px
     let left = UNDO_SECONDS;
     const tick = () => showBar(fmt(T.pickedIn, { n: card.dataset.num, s: left }) + fmt(served ? T.toAi : T.toCopy, { s: left }), true);
     tick();
+    const copying = copyNow(replyFor(card));
     pending = { card, timer: setInterval(() => {
       left -= 1;
       if (left > 0) return tick();
       clearInterval(pending.timer); pending = null;
       showBar(served ? T.sending : T.copying, false);
-      send(card);
+      send(card, copying);
     }, 1000) };
   }
 
@@ -1551,7 +1571,7 @@ kbd{font:12px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:2px
   }
 
   document.addEventListener("keydown", (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest("textarea, input, video")) return;
+    if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest("textarea, input, select, video, a, button, summary, [contenteditable]")) return;
     if (e.key === "Escape" && pending) return undo.click();
     const card = cards[Number(e.key) - 1];
     if (card) pick(card);
@@ -1814,7 +1834,8 @@ export function serveGallery({
           const result = {
             status: "picked",
             id: pick.id,
-            number: pick.number,
+            // The page's number is display-only; derive it from the id.
+            number: ids.map(String).indexOf(String(pick.id)) + 1,
             edited: Boolean(pick.edited),
             prompt: String(pick.prompt || ""),
             at: new Date().toISOString(),

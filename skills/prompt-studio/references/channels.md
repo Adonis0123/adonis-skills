@@ -40,6 +40,8 @@ codex exec -s workspace-write -C "$PWD" -i ref1.png -i ref2.png - < prompt.txt
 
 **Grok Build CLI (images, video)**
 
+Inside a Grok session, call its own `image_gen` (only `prompt` and `aspect_ratio`) and copy the returned file to the brief's output path; do not start a second, auto-approved Grok. The CLI form below is for other hosts.
+
 ```bash
 grok -p "$(cat prompt.txt)" --always-approve --output-format json
 ```

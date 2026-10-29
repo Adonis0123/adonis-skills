@@ -1822,3 +1822,50 @@ test("C5 R2 natural counts, ordinals, optional and negated references", async ()
       content,
     );
 });
+test("youmind keeps seed entries of categories not downloaded yet", async () => {
+  const cache = tmp();
+  const dir = path.join(cache, "youmind");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "manifest.json"),
+    JSON.stringify({
+      categories: [
+        { slug: "poster", file: "poster.json" },
+        { slug: "avatar", file: "avatar.json" },
+      ],
+    }),
+  );
+  fs.writeFileSync(
+    path.join(dir, "poster.json"),
+    JSON.stringify([{ id: 1, title: "poster", content: "a poster prompt" }]),
+  );
+  const seedFile = path.join(cache, "seed.json");
+  fs.writeFileSync(
+    seedFile,
+    JSON.stringify({
+      entries: [
+        { id: 1, title: "old poster", content: "old", category: "poster" },
+        {
+          id: 2,
+          title: "avatar",
+          content: "an avatar prompt",
+          category: "avatar",
+        },
+      ],
+    }),
+  );
+  const { entries } = await loadAllEntries({
+    cache,
+    seedFile,
+    sources: [{ ...source, id: "youmind", adapter: "youmind-manifest" }],
+  });
+  const ids = entries.map((e) => String(e.nativeId ?? e.id));
+  assert.ok(
+    ids.some((id) => id.endsWith("2")),
+    "avatar seed entry kept",
+  );
+  assert.equal(
+    entries.filter((e) => String(e.nativeId ?? e.id).endsWith("1")).length,
+    1,
+  );
+});

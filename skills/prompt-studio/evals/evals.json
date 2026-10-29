@@ -5,7 +5,7 @@
       "id": 1,
       "eval_name": "one-line-cover-assumes-defaults-and-recommends-same-turn",
       "prompt": "Use $prompt-studio. 帮我做一张讲 MCP 的公众号封面。Do not call any generation tool; stop at the recommendation list and write outputs/report.md.",
-      "expected_output": "In one message, states at most 3 assumed defaults and shows up to 5 candidates from recommend --use cover with sample, source and license; marks one default and stops before generating",
+      "expected_output": "In one message, states at most 3 assumed defaults, builds a candidate page with the best 3 of recommend --use cover (samples, source and license on the page) and lists them in chat as short numbered lines; marks one default and stops before generating",
       "files": [],
       "expectations": [
         "Same-turn assumptions plus candidates is acceptable: does not wait a full turn for answers before searching",
@@ -173,7 +173,7 @@
       "files": [],
       "expectations": [
         "Offers 2-3 visually distinct directions",
-        "Builds a candidate page with `studio.mjs gallery` with --serve; on a host that cannot wake it when a background command ends (Codex, Grok) it sends the link first and waits for the pick in the foreground instead of ending the turn",
+        "Builds a candidate page with `studio.mjs gallery` with --serve; on Claude Code or Grok it runs in the background and ends the turn with the link; on Codex, which cannot wake it, it sends the link first and waits for the pick in the foreground",
         "Chat lists each candidate as one short numbered line with a fit reason, without pasting commands or JSON",
         "Does not plan or run image generation for the directions before the user picks",
         "Ends by asking the user to click 选这个 or reply a number"

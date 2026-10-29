@@ -325,6 +325,15 @@ describe("images", () => {
     const bad = checkImage(file, { size: "1080x1080" });
     assert.equal(bad.ok, false);
     assert.match(bad.problems[0], /expected 1080x1080/);
+    for (const ratio of ["1:0", "0:1", "garbage"]) {
+      const invalid = checkImage(file, { ratio });
+      assert.equal(invalid.ok, false, ratio);
+      assert.match(invalid.problems[0], /invalid --ratio/);
+    }
+    assert.match(
+      checkImage(file, { size: "1y1" }).problems[0],
+      /invalid --size/,
+    );
   });
 });
 
@@ -877,7 +886,7 @@ describe("gallery", () => {
     let base;
     const done = serveGallery({
       file,
-      ids: [7],
+      ids: [3, 7],
       pickFile: path.join(dir, "g.pick.json"),
       onReady: (u) => (base = u),
     });
@@ -890,11 +899,12 @@ describe("gallery", () => {
     assert.equal(bad.status, 400);
     await fetch(`${base}pick`, {
       method: "POST",
-      body: JSON.stringify({ id: 7, number: 1, edited: true, prompt: "new" }),
+      body: JSON.stringify({ id: 7, number: 9, edited: true, prompt: "new" }),
     });
     const pick = await done;
     assert.equal(pick.status, "picked");
     assert.equal(pick.prompt, "new");
+    assert.equal(pick.number, 2, "number comes from the id, not the page");
     assert.equal(JSON.parse(fs.readFileSync(pick.pickFile, "utf8")).id, 7);
   });
 
@@ -1442,6 +1452,25 @@ it("uses the detector object contract and keeps explicit mapping overrides", asy
   assert.deepEqual(result.titles, ["Coffee"]);
 });
 
+it("check-video exits non-zero when the check fails", async () => {
+  const originalWrite = process.stdout.write;
+  const originalExit = process.exitCode;
+  try {
+    let text = "";
+    process.stdout.write = (chunk) => {
+      text += chunk;
+      return true;
+    };
+    process.exitCode = 0;
+    await main(["check-video"]);
+    assert.equal(JSON.parse(text).status, "fail");
+    assert.equal(process.exitCode, 1);
+  } finally {
+    process.stdout.write = originalWrite;
+    process.exitCode = originalExit;
+  }
+});
+
 it("validates source ids across CLI commands and defaults search to image", async () => {
   const originalWrite = process.stdout.write;
   const originalExit = process.exitCode;
@@ -1857,6 +1886,7 @@ it("C2 missing drawtext writes crops and a safe Chinese HTML title preview", () 
   assert.ok(v.previews.title.endsWith(".html"));
   assert.equal(v.checks.title.status, "unverified");
   assert.match(v.checks.title.error, /drawtext/);
+  assert.ok(out.unverified.includes(`${path.basename(file)}: title`));
   const html = fs.readFileSync(v.previews.title, "utf8");
   assert.ok(html.includes("linear-gradient"));
   assert.ok(html.includes("&lt;script&gt;"));

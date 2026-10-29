@@ -786,10 +786,10 @@ export async function loadAllEntries(opts = {}) {
           });
         }
       }
-      if (loaded.length) cached = true;
-      else
-        loaded = seed
+      const seedFor = (keep) =>
+        seed
           .filter((entry) => (entry.sourceId || "youmind") === src.id)
+          .filter(keep)
           .map((entry) =>
             normalizeEntry(src, {
               ...entry,
@@ -801,6 +801,15 @@ export async function loadAllEntries(opts = {}) {
             }),
           )
           .filter(Boolean);
+      if (loaded.length) {
+        cached = true;
+        // YouMind downloads one category at a time: keep the seed entries of
+        // categories not downloaded yet, or their ids vanish from show/gallery.
+        if (src.adapter === "youmind-manifest") {
+          const have = new Set(loaded.map((e) => e.category));
+          loaded.push(...seedFor((e) => !have.has(e.category)));
+        }
+      } else loaded = seedFor(() => true);
     } catch (error) {
       notes.push(`${src.id}: ${error.message || error}`);
     }

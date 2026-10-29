@@ -1605,7 +1605,12 @@ export function checkImage(file, { size, ratio, tolerance = 0.01 } = {}) {
       problems: ["unrecognized image format (expected PNG, JPEG or WebP)"],
     };
   const problems = [];
-  if (size) {
+  const positive = (n) => Number.isFinite(n) && n > 0;
+  if (size && !/^\d+x\d+$/.test(size))
+    problems.push(`invalid --size ${size}; use WxH, for example 1280x720`);
+  if (ratio && !/^\d+(\.\d+)?:\d+(\.\d+)?$/.test(ratio))
+    problems.push(`invalid --ratio ${ratio}; use A:B, for example 16:9`);
+  if (size && /^\d+x\d+$/.test(size)) {
     const [w, h] = size.split("x").map(Number);
     if (dims.width !== w || dims.height !== h) {
       problems.push(
@@ -1613,9 +1618,15 @@ export function checkImage(file, { size, ratio, tolerance = 0.01 } = {}) {
       );
     }
   }
-  if (ratio) {
-    const [a, b] = ratio.split(":").map(Number);
-    const want = a / b;
+  const [ra, rb] = ratio ? ratio.split(":").map(Number) : [];
+  if (
+    ratio &&
+    /^\d+(\.\d+)?:\d+(\.\d+)?$/.test(ratio) &&
+    !(positive(ra) && positive(rb))
+  )
+    problems.push(`invalid --ratio ${ratio}; both sides must be above 0`);
+  else if (ratio && positive(ra) && positive(rb)) {
+    const want = ra / rb;
     const got = dims.width / dims.height;
     if (Math.abs(got - want) / want > tolerance) {
       problems.push(
@@ -1891,7 +1902,19 @@ export function coverCheck(
     }
     return { file, sizeCheck: sizeChecks[i], previews, checks };
   });
-  return { ok: problems.length === 0, outDir: dir, variants, problems };
+  // ok only means no hard errors; an unverified check still needs a human look.
+  const unverified = variants.flatMap((v) =>
+    Object.entries(v.checks || {})
+      .filter(([, c]) => c?.status === "unverified")
+      .map(([name]) => `${path.basename(v.file)}: ${name}`),
+  );
+  return {
+    ok: problems.length === 0,
+    unverified,
+    outDir: dir,
+    variants,
+    problems,
+  };
 }
 
 // ---------- brief: provenance record for one generation ----------
@@ -2684,14 +2707,17 @@ export async function main(argv = process.argv.slice(2)) {
   }
 
   switch (command) {
-    case "check-video":
-      return out(
-        await checkVideo(positional[0], {
-          ratio: flags.ratio,
-          duration: flags.duration,
-          size: flags.size,
-        }),
-      );
+    case "check-video": {
+      const result = await checkVideo(positional[0], {
+        ratio: flags.ratio,
+        duration: flags.duration,
+        size: flags.size,
+      });
+      out(result);
+      // Match check-image: a failed check exits non-zero; unverified stays 0.
+      if (result.status === "fail") process.exitCode = 1;
+      return;
+    }
     case "sources": {
       if (positional[0] === "add")
         return out(
@@ -2959,7 +2985,7 @@ export async function main(argv = process.argv.slice(2)) {
       });
       const seed = buildSeed(
         (await loadAllEntries({ sources })).entries,
-        Number(flags.per) || 5,
+        Math.min(50, Math.max(1, Math.floor(Number(flags.per) || 5))),
         sources,
       );
       writeJson(SEED_FILE, seed);
