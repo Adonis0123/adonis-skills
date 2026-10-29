@@ -1,0 +1,428 @@
+{
+  "sources": [
+    {
+      "id": "youmind",
+      "title": "youmind",
+      "repo": "YouMind-OpenLab/ai-image-prompts-skill",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "Prompts CC BY 4.0 (curated by YouMind); repository MIT",
+      "seed": "allowed",
+      "adapter": "youmind-manifest",
+      "modelDefault": null,
+      "curatedSource": true
+    },
+    {
+      "id": "youmind-gpt-image-2",
+      "title": "youmind-gpt-image-2",
+      "repo": "YouMind-OpenLab/gpt-image-2-prompts-search",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "GitHub declares no license; README/package.json state MIT",
+      "seed": "never",
+      "adapter": "youmind-manifest",
+      "modelDefault": "GPT Image 2",
+      "curatedSource": true
+    },
+    {
+      "id": "freestylefly-gpt-image-2",
+      "title": "Freestylefly Gpt Image 2",
+      "repo": "freestylefly/awesome-gpt-image-2",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "MIT",
+      "seed": "allowed",
+      "adapter": "json-map",
+      "file": "data/cases.json",
+      "itemsPath": "cases",
+      "nativeIdFrom": "id",
+      "modelDefault": "GPT Image 2",
+      "mediaBase": "https://raw.githubusercontent.com/freestylefly/awesome-gpt-image-2/main/data/",
+      "map": {
+        "title": "title",
+        "content": "prompt",
+        "sourceMedia": "image",
+        "category": "category",
+        "tags": ["styles", "scenes"],
+        "author": "sourceLabel",
+        "link": "sourceUrl"
+      }
+    },
+    {
+      "id": "songguoxs-gpt4o",
+      "title": "Songguoxs Gpt4O",
+      "repo": "songguoxs/gpt4o-image-prompts",
+      "branch": "master",
+      "kinds": ["image"],
+      "license": "No license declared; original authors retain rights",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "data/prompts.json",
+      "itemsPath": "items",
+      "nativeIdFrom": "id",
+      "mediaBase": "https://raw.githubusercontent.com/songguoxs/gpt4o-image-prompts/master/",
+      "map": {
+        "title": "title",
+        "description": "description",
+        "content": "prompts.0",
+        "sourceMedia": "images",
+        "model": "model",
+        "tags": "tags",
+        "author": "source.name",
+        "link": "source.url"
+      }
+    },
+    {
+      "id": "glidea-banana",
+      "title": "Glidea Banana",
+      "repo": "glidea/banana-prompt-quicker",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "MIT",
+      "seed": "allowed",
+      "adapter": "json-map",
+      "file": "prompts.json",
+      "itemsPath": "",
+      "modelDefault": "Nano Banana",
+      "langDefault": "zh",
+      "map": {
+        "title": "title",
+        "content": "prompt",
+        "sourceMedia": "preview",
+        "category": "category",
+        "tags": ["category", "sub_category", "mode"],
+        "needReferenceImages": "reference_image_urls",
+        "author": "author",
+        "mode": "mode"
+      },
+      "referenceField": "reference_image_urls"
+    },
+    {
+      "id": "learnprompt-seedance",
+      "title": "Learnprompt Seedance",
+      "repo": "LearnPrompt/awesome-seedance",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "MIT (code); prompts and media keep the original authors' rights",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "data/cases.json",
+      "itemsPath": "cases",
+      "filter": {
+        "field": "mediaType",
+        "equals": "video"
+      },
+      "nativeIdFrom": "slug",
+      "map": {
+        "title": ["titleEn", "title"],
+        "description": ["summaryEn", "summary"],
+        "content": "promptFull",
+        "videos": "mediaUrl",
+        "sourceMedia": "posterUrl",
+        "model": "models",
+        "tags": "tags",
+        "category": "category",
+        "author": "creator",
+        "link": "sourceUrl",
+        "lang": "contentLocale"
+      }
+    },
+    {
+      "id": "minimax-h3-cases",
+      "title": "Minimax H3 Cases",
+      "repo": "SkyNotSilent/awesome-MiniMax-H3-cases",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "No license declared; original authors retain rights",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "data/cases.json",
+      "itemsPath": "",
+      "filter": {
+        "field": "prompt",
+        "nonEmpty": true
+      },
+      "nativeIdFrom": "id",
+      "mediaBase": {
+        "fromFile": "config/site.json",
+        "path": "primaryOrigin"
+      },
+      "map": {
+        "title": ["titleEn", "title"],
+        "description": ["summaryEn", "summary"],
+        "content": "prompt",
+        "videos": "mediaUrl",
+        "sourceMedia": "posterUrl",
+        "model": "model",
+        "tags": ["tags", "promptProvenance"],
+        "category": "category",
+        "author": "author",
+        "link": "sourceUrl",
+        "durationSec": "duration",
+        "ratio": "aspectRatio",
+        "mode": "mode"
+      }
+    },
+    {
+      "id": "imaginevid-kling",
+      "title": "Imaginevid Kling",
+      "repo": "imagineVid/Awesome-kling-3-0-prompts-and-skills",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "No license declared; original authors retain rights",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "data/prompts.json",
+      "itemsPath": "",
+      "nativeIdFrom": "id",
+      "locale": "en",
+      "map": {
+        "title": "title",
+        "description": "description",
+        "content": "content",
+        "model": "model",
+        "author": "author.name",
+        "link": "sourceLink",
+        "videos": "video.url",
+        "sourceMedia": ["sourceMedia", "video.thumbnail"],
+        "needReferenceImages": "needReferenceImages",
+        "lang": "language"
+      }
+    },
+    {
+      "id": "imaginevid-grok",
+      "title": "Imaginevid Grok",
+      "repo": "imagineVid/awesome-grok-imagine-video-prompts-and-skills",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "No license declared; original authors retain rights",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "data/prompts.json",
+      "itemsPath": "",
+      "nativeIdFrom": "id",
+      "locale": "en",
+      "map": {
+        "title": "title",
+        "description": "description",
+        "content": "content",
+        "model": "model",
+        "author": "author.name",
+        "link": "sourceLink",
+        "videos": "video.url",
+        "sourceMedia": ["sourceMedia", "video.thumbnail"],
+        "needReferenceImages": "needReferenceImages",
+        "lang": "language"
+      }
+    },
+    {
+      "id": "ad-video-prompts",
+      "title": "Ad Video Prompts",
+      "repo": "LichAmnesia/awesome-ad-video-prompts",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "CC-BY-4.0",
+      "seed": "allowed",
+      "adapter": "json-map",
+      "file": "prompts.json",
+      "itemsPath": "sections[].prompts",
+      "nativeIdFrom": "slug",
+      "mediaBase": "https://raw.githubusercontent.com/LichAmnesia/awesome-ad-video-prompts/main/",
+      "mediaTemplate": "images/{slug}.png",
+      "map": {
+        "title": "title",
+        "content": "prompt",
+        "tags": "tags",
+        "category": "$parent.key",
+        "durationSec": "duration",
+        "ratio": "aspect"
+      }
+    },
+    {
+      "id": "hyperframes-catalog",
+      "title": "Hyperframes Catalog",
+      "repo": "heygen-com/hyperframes",
+      "branch": "main",
+      "kinds": ["code-video"],
+      "license": "Apache-2.0 (code template license)",
+      "seed": "allowed",
+      "adapter": "json-map",
+      "file": "docs/public/catalog-index.json",
+      "itemsPath": "",
+      "nativeIdFrom": "name",
+      "modelDefault": "Hyperframes",
+      "modeDefault": "template",
+      "linkBase": "https://hyperframes.heygen.com",
+      "map": {
+        "title": "title",
+        "description": "description",
+        "tags": ["tags", "name"],
+        "sourceMedia": "preview",
+        "link": "href",
+        "durationSec": "duration",
+        "ratio": "dimensions"
+      },
+      "rewrite": [
+        {
+          "field": "preview",
+          "match": "^https://static\\.heygen\\.ai/hyperframes-oss/docs/images/catalog/blocks/[^/?]+\\.png$",
+          "to": "videos",
+          "replace": ["\\.png$", ".mp4"]
+        },
+        {
+          "field": "preview",
+          "match": "^https://static\\.heygen\\.ai/hyperframes-oss/docs/images/catalog/components/",
+          "to": "drop"
+        }
+      ],
+      "probeMedia": true,
+      "renderEngine": "hyperframes",
+      "templateCatalog": true
+    },
+    {
+      "id": "awesome-claude-video",
+      "title": "Awesome Claude Video",
+      "repo": "opusvideo/awesome-claude-video",
+      "branch": "main",
+      "kinds": ["code-video"],
+      "license": "No license declared; original authors retain rights",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "cases.json",
+      "itemsPath": "cases",
+      "nativeIdFrom": "id",
+      "locale": "en",
+      "map": {
+        "title": "title",
+        "description": "description",
+        "videos": "video_url",
+        "sourceMedia": "thumbnail_url",
+        "author": "creator.name",
+        "link": ["prompt_or_brief_url", "original_post_url"],
+        "category": "category",
+        "durationSec": "duration_seconds",
+        "model": "model_attribution",
+        "renderEngine": "tools_reported"
+      }
+    },
+    {
+      "id": "opus-video-prompts",
+      "title": "Opus Video Prompts",
+      "repo": "joeseesun/opus-video-prompts",
+      "branch": "main",
+      "kinds": ["code-video"],
+      "license": "No license file; prompts stay with the original authors",
+      "seed": "never",
+      "adapter": "markdown",
+      "glob": "prompts/*.md",
+      "mode": "prompt-files",
+      "joins": [
+        {
+          "file": "cases.json",
+          "kind": "records",
+          "match": ["title", "slug"],
+          "copy": {
+            "author": "author",
+            "link": "url",
+            "category": "category"
+          }
+        }
+      ],
+      "authoringModel": "Claude Opus 5.5"
+    },
+    {
+      "id": "ai-boost",
+      "title": "Awesome Image & Video Prompts (ai-boost)",
+      "repo": "ai-boost/awesome-image-video-prompts",
+      "branch": "main",
+      "kinds": ["image", "video"],
+      "adapter": "yaml-tree",
+      "include": ["prompts/image/*.yaml", "prompts/video/*.yaml"],
+      "previewBase": "previews/",
+      "locale": "en",
+      "license": "GPL-3.0 (fetched at runtime, never bundled)",
+      "seed": "never"
+    },
+    {
+      "id": "youmind-seedance",
+      "title": "Awesome Seedance 2.0 Prompts (YouMind)",
+      "repo": "YouMind-OpenLab/awesome-seedance-2-prompts",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "CC-BY-4.0",
+      "seed": "allowed",
+      "adapter": "markdown",
+      "files": ["README.md"],
+      "mode": "sections",
+      "modelDefault": "Seedance 2.0",
+      "joins": [
+        {
+          "file": "video-urls.json",
+          "kind": "id-map",
+          "path": "prompts",
+          "match": "nativeId",
+          "into": "videos"
+        }
+      ]
+    },
+    {
+      "id": "evolink-gpt-image-2",
+      "title": "Awesome GPT Image 2 API Prompts (Evolink)",
+      "repo": "Evolink-AI/awesome-gpt-image-2-API-Prompts",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "CC0-1.0",
+      "seed": "allowed",
+      "adapter": "markdown",
+      "glob": "cases/*.md",
+      "exclude": ["cases/*_*.md"],
+      "mode": "sections",
+      "modelDefault": "GPT Image 2"
+    },
+    {
+      "id": "wuyoscar-gpt-image-2",
+      "title": "GPT Image 2 Gallery (wuyoscar)",
+      "repo": "wuyoscar/GPT-Image2-Skill",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "MIT",
+      "seed": "allowed",
+      "adapter": "markdown",
+      "glob": "skills/gpt-image/references/gallery-*.md",
+      "mode": "sections",
+      "modelDefault": "GPT Image 2"
+    },
+    {
+      "id": "zerolu-nanobanana",
+      "title": "Awesome Nano Banana Pro",
+      "repo": "ZeroLu/awesome-nanobanana-pro",
+      "branch": "main",
+      "kinds": ["image"],
+      "license": "MIT",
+      "seed": "allowed",
+      "adapter": "markdown",
+      "files": ["README.md"],
+      "mode": "sections",
+      "modelDefault": "Nano Banana Pro"
+    },
+    {
+      "id": "akirakai-veo3-videos",
+      "title": "Awesome Veo 3 Videos",
+      "repo": "akirakai/awesome-veo3-videos",
+      "branch": "main",
+      "kinds": ["video"],
+      "license": "CC0-1.0 for the list only; prompts and videos belong to the original authors",
+      "seed": "never",
+      "adapter": "markdown",
+      "files": ["README.md"],
+      "mode": "table",
+      "columns": {
+        "title": 2,
+        "link": 2,
+        "description": 3,
+        "content": 4
+      },
+      "modelDefault": "Veo 3"
+    }
+  ]
+}

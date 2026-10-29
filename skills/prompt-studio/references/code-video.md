@@ -15,23 +15,32 @@ When the user says 动效, 动起来, or "motionize this still" without asking f
 | p5.js + p5.brush (for example a local painted-animation skill) | Hand-painted watercolor cartoons, character shorts                       | Node, FFmpeg, Chrome    | Slow without a GPU                                                                                                              |
 | Kinetic typography (for example a local kinetic-reel skill)    | Big-type portfolio reels, product promos                                 | Node, FFmpeg, three.js  | Motion on the beat                                                                                                              |
 
-Use an engine skill the user already has installed. Otherwise read the Hyperframes skill text through `delivery.md` layer 2 and offer to install it afterwards.
+Hyperframes is the default. Use another engine only when its skill is already installed and the request fits its row (a painted short, a kinetic-type reel, an existing Remotion project). When the Hyperframes skill is not installed, read its text through `delivery.md` layer 2 and offer to install it afterwards.
+
+A template is a starting structure, not a spec. When it asks for real screenshots, music, voice-over or a logo the user did not give, use clean placeholder UI (simple shapes, the product name as a wordmark), no audio, and say so in one line with the result. Ask before starting only when the request depends on an asset (their real app screens, their logo).
+
+## Code-built still
+
+For a poster or card whose text must be exact: write one HTML page at the final size (`width`/`height` in px on `body`), with the generated background as a CSS `background-image` and the text as real HTML with a bundled CJK font (`@font-face`). Render it with `npx hyperframes snapshot` on a one-frame composition, or open it in a browser and take a full-page screenshot at the exact size. Check with `studio.mjs check-image <file> --size WxH`.
 
 ## Setup
 
-- `npx hyperframes init <dir> --skip-skills` (or `HYPERFRAMES_SKIP_SKILLS=1`): without it, `init` installs Hyperframes' agent skills, which skips the install confirmation in `delivery.md` layer 3.
+- `npx hyperframes init <absolute dir> --skip-skills` (or `HYPERFRAMES_SKIP_SKILLS=1`): without it, `init` installs Hyperframes' agent skills, which skips the install confirmation in `delivery.md` layer 3. Pass absolute paths to `init` and run every later `hyperframes` command with the project as its working directory (`npm --prefix <dir>` or `cd <dir> && ...` in the same command): a shell `cd` in a separate call may not persist, and a relative `init` then creates the project inside whatever repository the shell is in.
 - No local Chrome: set `HYPERFRAMES_BROWSER_PATH` to an existing Chrome or Chromium; otherwise `check` downloads a headless shell and can time out.
 - Chinese or other non-Latin text: bundle a font that covers it in `assets/fonts/` with `@font-face`; the built-in fonts are Latin only and render CJK punctuation as boxes.
 - Open the preview before rendering and look at it once.
+- `check` and `snapshot` may leave a headless browser running for a few minutes; before you finish, stop any process you started, by pid.
 
 ## Templates
+
+Start with `studio.mjs recommend "<motion description>" --kind code-video`: it searches the Hyperframes catalog (posters and preview clips) together with code videos other people made with an agent. A Hyperframes result's name is what `add` takes. The CLI search below is the fallback and lists blocks the index may not have yet.
 
 ```bash
 npx hyperframes catalog --query "<English description>" --json   # search, offline index
 npx hyperframes add <name> --json                                   # copies editable source into compositions/
 ```
 
-Show the block name, preview if any, and the files `add` will write before running it. If `catalog` returns nothing (it can come back empty behind a proxy), write the composition from the Request Brief directly; do not loop on the search. Remotion has no add command: start from `npx create-video@latest --yes --blank <dir>` (fails inside an existing Git repo; pick a fresh directory).
+Before the first write, ask once: the project directory `init` creates, the CLI version (`npx hyperframes --version`), each block to `add` with the files it writes, and a one-line summary of any changed skill text (`delivery.md`). Do not run `init` before that yes. If `catalog` returns nothing (it can come back empty behind a proxy), write the composition from the Request Brief directly; do not loop on the search. Remotion has no add command: start from `npx create-video@latest --yes --blank <dir>` (fails inside an existing Git repo; pick a fresh directory).
 
 ## Request Brief fields (from the Hyperframes spec)
 
@@ -44,7 +53,7 @@ Show the block name, preview if any, and the files `add` will write before runni
 - SHOTS: one line each — frame range, the single main action, what the viewer must read and for how long, sound, hand-off to the next shot.
 - BANNED and QA: what must not appear; which frames to check and what each must show.
 
-Facts on screen must come from the user or a cited source; mark illustrative numbers as schematic.
+Facts on screen must come from the user or a cited source; mark illustrative numbers as schematic. Labels are facts too: when the user gives numbers without saying what they measure (Q1 120 万 …), label them neutrally (季度数据（万）) and offer the likely meaning (营收?) as a question in the same message, instead of writing 营收 into the film. Check three things separately before calling it done: the input numbers, every derived number (growth %, differences), and that the title and labels say only what the user said.
 
 ## Rules that keep quality high
 

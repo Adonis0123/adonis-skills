@@ -882,7 +882,7 @@
   {
     "slug": "prompt-studio",
     "name": "prompt-studio",
-    "description": "Turn a one-line image or video request into a finished asset: route it to an image, a code-rendered Code Video or a Model Video, recommend proven prompts from GitHub libraries (sample, source, license), write a generation brief, hand it to an available channel (host tool, Codex/Grok CLI, API, Hyperframes), then check and log the result. Use whenever the user wants a cover, illustration, poster, thumbnail, infographic, animation, motion clip, AI video, or a better prompt for one, even if they only say 'make me an image'. Also for Chinese-language requests for WeChat covers, illustrations, still-to-motion clips, and image/video prompt optimization. Not for general chatbot or coding prompts, photo editing without generation, UI implementation, or slide decks.",
+    "description": "Turn a one-line image or video request into a finished asset: route it to an image, a code-rendered Code Video or a Model Video, search many GitHub prompt libraries for proven image prompts, video-model prompts (Seedance, Kling, Veo, Hailuo/MiniMax, Wan, Grok Imagine) and code-video templates, show the best 3 with their samples, model, author and license, write a generation brief, hand it to an available channel (host tool, Codex/Grok CLI, API, Hyperframes), then check and log the result. Use whenever the user wants a cover, illustration, poster, thumbnail, infographic, animation, motion clip, AI video, or a better prompt for one, even if they only say 'make me an image'. Also for Chinese-language requests for WeChat covers, illustrations, still-to-motion clips, and image/video prompt optimization. Not for general chatbot or coding prompts, photo editing without generation, UI implementation, or slide decks.",
     "metadata": {
       "author": "adonis"
     },
@@ -891,7 +891,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-28T00:00:00.000Z",
+    "updatedAt": "2026-10-29T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Prompt Studio",
@@ -902,16 +902,16 @@
         "creative",
         "agent-workflow"
       ],
-      "summary": "Turn one line into an image, a code-rendered video or an AI video: proven prompts with samples, a refined brief, then your own tools.",
-      "summary_zh": "一句话需求变成图片、代码动画或 AI 视频：先挑带样图的好提示词，打磨成生成单，再交给你手上的工具。",
+      "summary": "Turn one line into an image, code video or AI video: pick from 3 proven GitHub prompts with real samples, then brief your own tools.",
+      "summary_zh": "一句话变成图片、代码动画或 AI 视频：从多个 GitHub 提示词库挑 3 条带真实样片的提示词，再交给你的工具生成。",
       "use_cases": [
-        "Ask for an article cover in one line; get 3-5 prompts with sample images, source and license, then a brief sized for your platform.",
-        "Turn a still into a 15-second motion clip with Hyperframes templates, checked frame by frame before it renders.",
+        "Ask for a cover in one line; pick from 3 prompts on a page showing samples, the model that made them, author and license.",
+        "Name a video model such as Seedance, Kling or Veo and get prompts whose sample clips came from that model, playable right on the page.",
         "Make a character from your image walk on screen with Grok or a video API, with the cost stated before anything runs."
       ],
       "use_cases_zh": [
-        "一句话要一张文章封面，先看 3 到 5 条带样图、来源和 License 的提示词，再得到按平台尺寸写好的生成单。",
-        "用 Hyperframes 模板把一张图做成 15 秒动效，渲染前逐帧检查。",
+        "一句话要一张封面，在候选页上从 3 条提示词里挑，每条带样图、出图模型、作者和 License。",
+        "说出想用的视频模型，比如即梦、可灵或 Veo，拿到用这个模型拍出样片的提示词，样片在页面上直接播放。",
         "用 Grok 或视频 API 让图里的角色动起来，开跑前先报费用。"
       ]
     }

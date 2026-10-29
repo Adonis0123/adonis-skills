@@ -21,8 +21,15 @@ A video whose frames are rendered from code an LLM wrote; every word and number 
 **Model Video**:
 A video a generation model produces from a prompt and reference images; realistic, not exactly controllable, billed by the second.
 
+**Source**:
+One GitHub prompt library plugged into search through an adapter, with its license and seed policy (`assets/sources.json`, or `user-sources.json` for ones the user added).
+_Avoid_: repo, provider
+
+**Kind**:
+What a candidate is for: `image`, `video` (a video model) or `code-video` (a template or example rendered from code).
+
 **Recommendation List**:
-The up to 5 candidates shown after `recommend`, each with a sample, source, license and target model, one of them marked as the default.
+The up to 5 candidates shown after `recommend`, each with a sample image or clip, the model that made it, author, source and license, one of them marked as the default.
 
 **Run Record**:
 One line per generation, including the user's score; scores feed back into later rankings.

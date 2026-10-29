@@ -3,12 +3,33 @@
 // third-party source change checks, image size checks and generation records.
 // Zero dependencies; Node 18+ (global fetch).
 import { createHash } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { promisify } from "node:util";
 import { buildCandidates, serveGallery, writeGallery } from "./gallery.mjs";
+import {
+  loadRegistry,
+  loadAllEntries,
+  syncSources,
+  syncForQuery,
+  runBackgroundSync,
+  getSourceStats,
+  modelKeyOf,
+  modelKeysOf,
+  referenceRequirements,
+  codeVideoFields,
+  evidenceOf,
+  licenseStatusOf,
+} from "./sources.mjs";
+import {
+  USE_MAP,
+  LARGE_SLUGS,
+  sync as syncYoumind,
+} from "./adapters/youmind-manifest.mjs";
+export { USE_MAP, LARGE_SLUGS };
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const SEED_FILE = path.join(HERE, "..", "assets", "seed-prompts.json");
@@ -115,14 +136,58 @@ function authToken({ env = process.env, run = defaultRun } = {}) {
 
 // Node's fetch ignores HTTP(S)_PROXY before Node 24, so behind a proxy we use
 // curl, which honours it. Returns the subset of Response that callers use.
-export function curlFetch(url, { headers = {} } = {}, run = execFileSync) {
+const execFileAsync = promisify(execFile);
+const runCurl = async (cmd, args, opts) =>
+  (await execFileAsync(cmd, args, opts)).stdout;
+
+export async function curlFetch(
+  url,
+  {
+    headers = {},
+    signal,
+    method = "GET",
+    onProgress,
+    progressIntervalMs = 1000,
+  } = {},
+  run = runCurl,
+) {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "prompt-studio-"));
   const bodyFile = path.join(tmp, "body");
+  if (onProgress)
+    fs.watchFile(
+      bodyFile,
+      { interval: progressIntervalMs, persistent: false },
+      (current, previous) => {
+        if (current.size > previous.size) onProgress();
+      },
+    );
   try {
-    const args = ["-sS", "-L", "--max-time", "300", "-D", "-", "-o", bodyFile];
+    const args = [
+      "-sS",
+      "-L",
+      "--compressed",
+      "--no-buffer",
+      "--max-time",
+      "600",
+      "--speed-limit",
+      "1",
+      "--speed-time",
+      "60",
+      "-D",
+      "-",
+      "-o",
+      bodyFile,
+    ];
+    if (method === "HEAD") args.unshift("--head");
     for (const [k, v] of Object.entries(headers)) args.push("-H", `${k}: ${v}`);
     args.push(url);
-    const raw = run("curl", args, { encoding: "utf8", maxBuffer: 1 << 20 });
+    const raw = await run("curl", args, {
+      encoding: "utf8",
+      maxBuffer: 1 << 20,
+      signal,
+    });
+    if (signal?.aborted)
+      throw Object.assign(new Error("Request aborted"), { code: "ABORT_ERR" });
     // With -L there may be several header blocks; the last one is the answer.
     const blocks = raw
       .trim()
@@ -152,8 +217,17 @@ export function curlFetch(url, { headers = {} } = {}, run = execFileSync) {
       json: async () => JSON.parse(body.toString("utf8")),
     });
   } catch (error) {
-    return Promise.reject(error);
+    // execFile errors include the command line, which may contain auth headers.
+    const code =
+      typeof error.code === "number" ||
+      /^[A-Z][A-Z0-9_]{0,31}$/.test(String(error.code || ""))
+        ? error.code
+        : "UNKNOWN";
+    const failure = new Error(`curl request failed (${code})`);
+    failure.code = code;
+    throw failure;
   } finally {
+    if (onProgress) fs.unwatchFile(bodyFile);
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 }
@@ -166,7 +240,8 @@ export function defaultFetch(env = process.env) {
   return async (url, init) => {
     try {
       return await globalThis.fetch(url, init);
-    } catch {
+    } catch (error) {
+      if (init?.signal?.aborted || error.name === "AbortError") throw error;
       return curlFetch(url, init);
     }
   };
@@ -175,16 +250,75 @@ export function defaultFetch(env = process.env) {
 // ---------- fetch with ETag, throttle and rate-limit backoff ----------
 
 export async function fetchCached(url, file, opts = {}) {
+  const controller = new AbortController();
+  const abort = () => controller.abort(opts.signal?.reason);
+  opts.signal?.addEventListener("abort", abort, { once: true });
+  if (opts.signal?.aborted) abort();
+  let idleTimer, totalTimer, resolveTimeout;
+  const timeout = new Promise((resolve) => {
+    resolveTimeout = resolve;
+  });
+  const expire = (kind) => {
+    resolveTimeout({
+      url,
+      file,
+      status: fs.existsSync(file) ? "stale-timeout" : "unavailable-timeout",
+      error: `request exceeded its ${kind} timeout`,
+    });
+    controller.abort();
+  };
+  const progress = () => {
+    clearTimeout(idleTimer);
+    if (!controller.signal.aborted)
+      idleTimer = setTimeout(
+        () => expire("idle"),
+        opts.requestTimeoutMs ?? 60000,
+      );
+  };
+  progress();
+  totalTimer = setTimeout(() => expire("total"), opts.totalTimeoutMs ?? 600000);
+  try {
+    return await Promise.race([
+      fetchCachedRequest(url, file, {
+        ...opts,
+        signal: controller.signal,
+        onProgress: progress,
+      }),
+      timeout,
+    ]);
+  } finally {
+    clearTimeout(idleTimer);
+    clearTimeout(totalTimer);
+    opts.signal?.removeEventListener("abort", abort);
+  }
+}
+
+async function fetchCachedRequest(url, file, opts = {}) {
   const {
     cache = cacheDir(),
     now = Date.now(),
     force = false,
     fetchImpl = defaultFetch(),
     token = null,
+    signal,
   } = opts;
   const stateFile = path.join(cache, "state.json");
   const state = readJson(stateFile, { sources: {}, rateLimitResetAt: 0 });
   const entry = state.sources[url] || {};
+  const saveState = () => {
+    const latest = readJson(stateFile, { sources: {}, rateLimitResetAt: 0 });
+    writeJson(stateFile, {
+      ...latest,
+      rateLimitResetAt: Math.max(
+        latest.rateLimitResetAt || 0,
+        state.rateLimitResetAt || 0,
+      ),
+      sources: {
+        ...latest.sources,
+        ...(state.sources[url] ? { [url]: state.sources[url] } : {}),
+      },
+    });
+  };
   const haveFile = fs.existsSync(file);
   const report = (status, extra = {}) => ({
     url,
@@ -214,12 +348,33 @@ export async function fetchCached(url, file, opts = {}) {
 
   const headers = {};
   if (haveFile && entry.etag && !force) headers["If-None-Match"] = entry.etag;
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const trustedHosts = new Set([
+    "api.github.com",
+    "raw.githubusercontent.com",
+    "codeload.github.com",
+    "github.com",
+  ]);
+  const target = new URL(url);
+  if (
+    token &&
+    target.protocol === "https:" &&
+    trustedHosts.has(target.hostname)
+  )
+    headers.Authorization = `Bearer ${token}`;
+  const aborted = () =>
+    report(haveFile ? "stale-aborted" : "unavailable-aborted");
+  if (signal?.aborted) return aborted();
 
   let res;
   try {
-    res = await fetchImpl(url, { headers });
+    res = await fetchImpl(url, {
+      headers,
+      signal,
+      onProgress: opts.onProgress,
+    });
+    opts.onProgress?.();
   } catch (error) {
+    if (signal?.aborted) return aborted();
     return haveFile
       ? report("stale-offline", { error: String(error.message || error) })
       : report("unavailable-offline", {
@@ -227,9 +382,10 @@ export async function fetchCached(url, file, opts = {}) {
         });
   }
 
+  if (signal?.aborted) return aborted();
   if (res.status === 304) {
     state.sources[url] = { ...entry, checkedAt: now };
-    writeJson(stateFile, state);
+    saveState();
     return report("unchanged");
   }
   if (res.status === 403 || res.status === 429) {
@@ -238,7 +394,7 @@ export async function fetchCached(url, file, opts = {}) {
       Number.isFinite(reset) && reset > 0
         ? reset * 1000
         : now + CHECK_INTERVAL_MS;
-    writeJson(stateFile, state);
+    saveState();
     return report(
       haveFile ? "stale-rate-limited" : "unavailable-rate-limited",
       {
@@ -252,7 +408,31 @@ export async function fetchCached(url, file, opts = {}) {
     });
   }
 
-  const body = Buffer.from(await res.arrayBuffer());
+  let body;
+  try {
+    if (res.body?.getReader) {
+      const reader = res.body.getReader();
+      const chunks = [];
+      try {
+        while (!signal?.aborted) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value?.byteLength) {
+            chunks.push(Buffer.from(value));
+            opts.onProgress?.();
+          }
+        }
+      } finally {
+        if (signal?.aborted) await reader.cancel().catch(() => {});
+        reader.releaseLock();
+      }
+      body = Buffer.concat(chunks);
+    } else body = Buffer.from(await res.arrayBuffer());
+  } catch (error) {
+    if (signal?.aborted) return aborted();
+    throw error;
+  }
+  if (signal?.aborted) return aborted();
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, body);
   state.sources[url] = {
@@ -260,7 +440,7 @@ export async function fetchCached(url, file, opts = {}) {
     checkedAt: now,
     fetchedAt: new Date(now).toISOString(),
   };
-  writeJson(stateFile, state);
+  saveState();
   return {
     url,
     file,
@@ -271,76 +451,18 @@ export async function fetchCached(url, file, opts = {}) {
 
 // ---------- library sync ----------
 
-// Intended use -> library categories (see recommend).
-export const USE_MAP = {
-  cover: ["youtube-thumbnail", "poster-flyer"],
-  illustration: ["poster-flyer", "others", "social-media-post"],
-  infographic: ["infographic-edu-visual"],
-  avatar: ["profile-avatar"],
-  thumbnail: ["youtube-thumbnail"],
-  comic: ["comic-storyboard"],
-  product: ["product-marketing", "ecommerce-main-image"],
-  game: ["game-asset"],
-  app: ["app-web-design"],
-};
-
-// Very large category files: downloaded only on explicit request.
-export const LARGE_SLUGS = ["social-media-post", "product-marketing"];
-
-export async function syncLibrary({
-  categories = [],
-  all = false,
-  allowLarge = false,
-  ...opts
-} = {}) {
+// Compatibility wrapper for callers of the original single-library helper.
+export async function syncLibrary(opts = {}) {
   const cache = opts.cache || cacheDir();
   const dir = path.join(cache, LIBRARY.id);
-  const manifestFile = path.join(dir, "manifest.json");
-  const results = [
-    await fetchCached(`${LIBRARY.rawBase}/manifest.json`, manifestFile, {
-      ...opts,
-      cache,
-    }),
-  ];
-  const manifest = readJson(manifestFile, null);
-  if (!manifest) return { library: LIBRARY.id, results, categories: [] };
-
-  const known = manifest.categories || [];
-  const wanted = all ? known.map((c) => c.slug) : categories;
-  for (const slug of wanted) {
-    const cat = known.find((c) => c.slug === slug);
-    if (!cat) {
-      results.push({ url: null, status: "unknown-category", slug });
-      continue;
-    }
-    if (LARGE_SLUGS.includes(slug) && !allowLarge) {
-      results.push({
-        url: null,
-        status: "skipped-large",
-        slug,
-        hint: `${slug} is a very large file; pass allowLarge: true (CLI: --allow-large) to download it`,
-      });
-      continue;
-    }
-    results.push(
-      await fetchCached(
-        `${LIBRARY.rawBase}/${cat.file}`,
-        path.join(dir, cat.file),
-        { ...opts, cache },
-      ),
-    );
-  }
-  return {
-    library: LIBRARY.id,
-    updatedAt: manifest.updatedAt || null,
-    results,
-    categories: known.map((c) => ({
-      slug: c.slug,
-      title: c.title,
-      count: c.count,
-      cached: fs.existsSync(path.join(dir, c.file)),
-    })),
-  };
+  const result = await syncYoumind(LIBRARY, {
+    ...opts,
+    cache,
+    dir,
+    fetchCached: (url, file, extra = {}) =>
+      fetchCached(url, file, { ...opts, ...extra, cache }),
+  });
+  return { library: LIBRARY.id, ...result };
 }
 
 // ---------- search ----------
@@ -456,20 +578,232 @@ function idfWeights(docs, tokens) {
 function readiness(e, content, hasPlaceholders) {
   let q = 0;
   if (content.length >= 200 && content.length <= 2500) q += 0.5;
-  if (e.sourceMedia.length > 1) q += 0.3;
+  if ((e.sourceMedia || []).length > 1) q += 0.3;
   if (hasPlaceholders) q -= 0.3;
+  if (e.kind === "video" && e.videos?.length) q += 0.4;
+  if (e.kind === "code-video" && !content) q -= 0.4;
   return q;
 }
+
+function entryModelKeys(entry) {
+  if (entry?.kind === "code-video")
+    return modelKeysOf(codeVideoFields(entry).renderEngine);
+  if (Array.isArray(entry?.modelKeys) && entry.modelKeys.length)
+    return entry.modelKeys;
+  const keys = modelKeysOf(entry?.model);
+  return keys.length ? keys : entry?.modelKey ? [entry.modelKey] : [];
+}
+
+function invalidLimit(limit) {
+  return !Number.isSafeInteger(limit) || limit <= 0;
+}
+
+const limitError = () => ({
+  error: "invalid-limit",
+  hint: "--limit must be a positive integer.",
+});
+
+export function modelMatchOf(entry, target) {
+  if (!target || (!entry?.model && !entryModelKeys(entry).length))
+    return "unknown";
+  if (/^(?:unknown|none|n\/?a|未标注)$/i.test(String(entry?.model || "")))
+    return "unknown";
+  const wanted = modelKeysOf(target);
+  if (!wanted.length || !entryModelKeys(entry).length) return "unknown";
+  const matched = entryModelKeys(entry).some((key) => wanted.includes(key));
+  return matched ? "matched" : "mismatched";
+}
+
+function versionFields(entry, target) {
+  const sampleName =
+    entry?.kind === "code-video"
+      ? codeVideoFields(entry).renderEngine
+      : entry?.model;
+  const version = (name) =>
+    String(name || "")
+      .replace(/\bp5(?:\.js)?\b/i, "")
+      .match(/(\d+(?:\.\d+)*)(?=$|[^\d.])/i)?.[1] || null;
+  const sampleVersion = version(sampleName),
+    targetVersion = version(target);
+  const normalized = (value) => value?.replace(/(?:\.0)+$/, "");
+  const tier = (name) =>
+    String(name || "")
+      .match(/\b(?:Lite|Pro|Fast|Turbo|Flash|Master)\b/i)?.[0]
+      .toLowerCase() || null;
+  const versionMatch =
+    modelMatchOf(entry, target) !== "matched"
+      ? null
+      : !sampleVersion || !targetVersion
+        ? "unknown"
+        : normalized(sampleVersion) === normalized(targetVersion) &&
+            tier(sampleName) === tier(target)
+          ? "same"
+          : "different";
+  return { sampleVersion, targetVersion, versionMatch };
+}
+
+function versionNoteOf(entry, target) {
+  if (modelMatchOf(entry, target) !== "matched") return null;
+  const { sampleVersion, targetVersion, versionMatch } = versionFields(
+    entry,
+    target,
+  );
+  if (!sampleVersion) return null;
+  if (!targetVersion)
+    return `sample: ${entry.model}; your channel's version is not stated`;
+  return versionMatch === "different"
+    ? `sample: ${entry.model}; target: ${target}`
+    : null;
+}
+
+function modeScore(entry, mode) {
+  if (!mode) return 0;
+  const desired = { image: "text-to-image", edit: "image-edit" }[mode] || mode;
+  let score = entry.mode === desired ? 8 : entry.mode ? -4 : 0;
+  if (mode === "image-to-video") {
+    const clocks = String(entry.content || "").replace(
+      /\b(?:9:16|16:9|4:5|5:4|3:4|4:3|21:9|2:3|3:2|1:1)\b/g,
+      "",
+    );
+    const markers =
+      clocks.match(
+        /\b\d{1,2}:\d{2}\b|\b\d+\s*[-–]\s*\d+\s*(?:s|sec|seconds?)\b/gi,
+      ) || [];
+    const knownDuration = Number(entry.durationSec) > 0;
+    const scripted = knownDuration
+      ? entry.durationSec > 10
+      : markers.length >= 3;
+    if (scripted) score -= 18;
+    else if (
+      (entry.durationSec > 0 && entry.durationSec <= 10) ||
+      String(entry.content || "").length < 1500
+    )
+      score += 8;
+  }
+  return score;
+}
+
+// Camera, motion, lighting, quality and style terms still score, but never
+// establish relevance or a shared subject on their own.
+export const GENERIC_TECHNIQUE_WORDS = Object.freeze([
+  "close",
+  "up",
+  "closeup",
+  "slow",
+  "motion",
+  "push",
+  "pull",
+  "in",
+  "out",
+  "pan",
+  "tilt",
+  "zoom",
+  "dolly",
+  "tracking",
+  "orbit",
+  "shot",
+  "camera",
+  "wide",
+  "medium",
+  "macro",
+  "cinematic",
+  "film",
+  "light",
+  "lighting",
+  "soft",
+  "warm",
+  "cool",
+  "dramatic",
+  "golden",
+  "hour",
+  "bokeh",
+  "4k",
+  "8k",
+  "hd",
+  "ultra",
+  "realistic",
+  "photorealistic",
+  "style",
+  "aesthetic",
+  "vibe",
+  "minimal",
+  "clean",
+  "premium",
+  "luxury",
+  "product",
+  "commercial",
+  "ad",
+  "video",
+  "clip",
+  "scene",
+  "background",
+  "detailed",
+  "high",
+  "quality",
+  "beautiful",
+  "render",
+  "3d",
+]);
 
 export function searchEntries(
   entries,
   query,
-  { limit = 30, ratings = new Map(), dropTokens = [] } = {},
+  {
+    limit = 30,
+    ratings = new Map(),
+    dropTokens = [],
+    perSource = Infinity,
+    model,
+    mode,
+    subject,
+    refs = 0,
+  } = {},
 ) {
   const drop = new Set(dropTokens.map((t) => String(t).toLowerCase()));
   const groups = splitQueries(query).map((q) =>
     tokenize(q).filter((t) => !drop.has(t)),
   );
+  // Normalize the subject family before intersection (kitten and cat are one subject).
+  const subjectToken = (token) =>
+    /^(?:cat|cats|kitten|kittens|kitty)$/.test(token) ? "cat" : token;
+  const relevanceGroups = groups.map((tokens) =>
+    tokens.filter((token) => !GENERIC_TECHNIQUE_WORDS.includes(token)),
+  );
+  const subjectGroups = relevanceGroups.map((tokens) =>
+    tokens.map(subjectToken),
+  );
+  const subjects = subject
+    ? tokenize(subject)
+        .filter((token) => !GENERIC_TECHNIQUE_WORDS.includes(token))
+        .map(subjectToken)
+    : subjectGroups.length > 1
+      ? subjectGroups[0].filter((t) =>
+          subjectGroups.every((g) => g.includes(t)),
+        )
+      : [];
+  const subjectMatches = (entry) => {
+    const text =
+      `${entry.title || ""} ${entry.description || ""} ${(entry.tags || []).join(" ")} ${entry.content || ""}`.toLowerCase();
+    return subjects.some((t) =>
+      t === "cat"
+        ? !(
+            /\b(?:girl|boy|woman|man|person|selfie)\b/i.test(
+              entry.title || "",
+            ) && !/\b(?:cats?|kittens?|kitty)\b/i.test(entry.title || "")
+          ) &&
+          /\b(?:cats?|kittens?|kitty)\b/.test(
+            text.replace(
+              /\bcat[- ]?(?:girls?|boys?|eared|ears?|woman|women|man|men)\b/g,
+              "",
+            ),
+          ) &&
+          !(
+            /\bcat[- ]?(?:girls?|boys?|eared|woman|women)\b/.test(text) &&
+            !/\b(?:kittens?|kitty)\b/.test(text)
+          )
+        : tokenMatcher(t)(text),
+    );
+  };
   const allTokens = [...new Set(groups.flat())];
   // Stopword-only queries match nothing. If dropTokens removed every token
   // (e.g. recommend --use cover with query "cover"), fall through and list by rating.
@@ -482,20 +816,31 @@ export function searchEntries(
     if (seen.has(String(e.id))) continue;
     seen.add(String(e.id));
     // A recommendation without a sample image cannot be judged: skip it.
-    if (!Array.isArray(e.sourceMedia) || e.sourceMedia.length === 0) continue;
+    if (e.kind !== "code-video" && !e.sourceMedia?.length && !e.videos?.length)
+      continue;
     unique.push(e);
   }
   const docs = unique.map((e) =>
-    `${e.title || ""} ${e.description || ""} ${e.content || ""}`.toLowerCase(),
+    `${e.title || ""} ${e.description || ""} ${(e.tags || []).join(" ")} ${e.content || ""}`.toLowerCase(),
   );
   const idf = idfWeights(docs, allTokens);
   const matchers = allTokens.map((t) => [t, tokenMatcher(t)]);
   const scored = [];
+  const directionScores = new Map();
+  const directionCoverage = new Map();
+  const contentHashes = new Map();
   for (const e of unique) {
     const inTitle = new Set(matchedTokens(matchers, e.title));
-    const inDesc = new Set(matchedTokens(matchers, e.description));
+    const inDesc = new Set(
+      matchedTokens(
+        matchers,
+        `${e.description || ""} ${(e.tags || []).join(" ")}`,
+      ),
+    );
     const inContent = new Set(matchedTokens(matchers, e.content));
     let best = { match: 0, matched: [] };
+    const scores = [];
+    const coverages = [];
     for (const tokens of groups.length ? groups : [[]]) {
       // Body text alone is weak evidence: count it only with a title/description
       // hit or when at least two distinct tokens appear in it.
@@ -519,8 +864,28 @@ export function searchEntries(
       // Covering more of the request beats repeating one word.
       const coverage = tokens.length ? matched.length / tokens.length : 0;
       const match = raw * coverage;
+      scores.push(match);
+      coverages.push(coverage);
       if (match > best.match) best = { match, matched };
     }
+    const relevant =
+      subjects.length > 0
+        ? subjectMatches(e)
+        : relevanceGroups.some((tokens) => {
+            const hits = tokens
+              .filter(
+                (token) =>
+                  inTitle.has(token) ||
+                  inDesc.has(token) ||
+                  inContent.has(token),
+              )
+              .reduce((sum, token) => sum + idf.get(token), 0);
+            const weight = tokens.reduce(
+              (sum, token) => sum + idf.get(token),
+              0,
+            );
+            return hits > 0 && hits >= weight / 2;
+          });
     let { match } = best;
     // Cover/thumbnail categories still contain fashion-magazine "covers"; demote them.
     if (
@@ -529,7 +894,7 @@ export function searchEntries(
     ) {
       match -= 8;
     }
-    if (allTokens.length && match <= 0) continue;
+    if (allTokens.length && match <= 0 && !subjectMatches(e)) continue;
     const content = String(e.content || "");
     const hasPlaceholders =
       /\{argument\b/i.test(content) || /\{[a-z_]+=/i.test(content);
@@ -538,25 +903,299 @@ export function searchEntries(
     const quality = allTokens.length
       ? readiness(e, content, hasPlaceholders)
       : 0;
+    directionScores.set(String(e.id), scores);
+    directionCoverage.set(String(e.id), coverages);
+    const normalizedContent = content
+      .normalize("NFKC")
+      .toLowerCase()
+      .replace(/[\s\u200b-\u200d\ufeff]+/g, " ")
+      .trim();
+    if (normalizedContent)
+      contentHashes.set(
+        String(e.id),
+        createHash("sha256").update(normalizedContent).digest("hex"),
+      );
+    const requirements = referenceRequirements(e);
     scored.push({
+      ...requirements,
+      mediaState: e.videos?.length
+        ? "video"
+        : e.sourceMedia?.length
+          ? "image"
+          : "none",
+      sampleRatio: e.sampleRatio ?? e.ratio ?? null,
+      sampleDurationSec: e.sampleDurationSec ?? e.durationSec ?? null,
       id: e.id,
-      title: e.title,
-      description: e.description,
-      image: e.sourceMedia[0],
-      images: e.sourceMedia.slice(0, 4),
-      category: e.category,
-      needReferenceImages: Boolean(e.needReferenceImages),
+      kind: e.kind || "image",
+      title: String(e.title || "").slice(0, 200),
+      description: String(e.description || "").slice(0, 600),
+      images: (e.sourceMedia || []).slice(0, 4),
+      videos: (e.videos || []).slice(0, 2),
+      model: e.model || null,
+      modelKey: entryModelKeys(e)[0] || null,
+      modelKeys: entryModelKeys(e),
+      targetModelKey: modelKeyOf(model),
+      versionNote: versionNoteOf(e, model),
+      ...versionFields(e, model),
+      ...codeVideoFields(e),
+      evidence: evidenceOf(e),
+      licenseStatus: licenseStatusOf(e.license, e),
+      sourceUrl:
+        e.sourceUrl || (e.source ? `https://github.com/${e.source}` : null),
+      curatedSource: Boolean(e.curatedSource),
+      subjectMatch: subjectMatches(e),
+      relevant,
+      modePreference: modeScore(e, mode),
+      category: e.category || null,
+      tags: (e.tags || []).slice(0, 8).map((tag) => String(tag).slice(0, 100)),
+      author: e.author || null,
+      link: e.link || null,
+      lang: e.lang || null,
+      mode: e.mode || null,
+      durationSec: e.durationSec ?? null,
+      ratio: e.ratio || null,
+      sourceId: e.sourceId || "youmind",
       hasPlaceholders,
       matched: best.matched,
       contentPreview: content.slice(0, 600),
       source: e.source,
       license: e.license,
       yourBestScore: rating || null,
-      score: Math.round((match + quality + ratingBoost) * 100) / 100,
+      score:
+        Math.round(
+          (match +
+            quality +
+            ratingBoost -
+            3 * Math.max(0, requirements.referenceInputs - refs)) *
+            100,
+        ) / 100,
     });
   }
-  scored.sort((a, b) => b.score - a.score);
-  return scored.slice(0, limit);
+  // Encode the existing no-media demotion in scores too, so final score sorting
+  // cannot promote an unavailable code example above a visible one.
+  const visibleCode = scored.filter(
+    (e) => e.kind === "code-video" && e.mediaState !== "none",
+  );
+  const missingCode = scored.filter(
+    (e) => e.kind === "code-video" && e.mediaState === "none",
+  );
+  if (visibleCode.length && missingCode.length) {
+    const penalty = Math.max(
+      0,
+      Math.max(...missingCode.map((e) => e.score)) -
+        Math.min(...visibleCode.map((e) => e.score)) +
+        1,
+    );
+    for (const entry of missingCode)
+      entry.score = Math.round((entry.score - penalty) * 100) / 100;
+  }
+  const byId = new Map(unique.map((entry) => [String(entry.id), entry]));
+  scored.forEach((entry) => {
+    entry.modelMatch = modelMatchOf(byId.get(String(entry.id)), model);
+    entry.modelMismatch = entry.modelMatch === "mismatched";
+  });
+  const modelRank = { matched: 0, unknown: 1, mismatched: 2 };
+  const bestRelevantScore = Math.max(
+    ...scored.filter((entry) => entry.relevant).map((entry) => entry.score),
+  );
+  for (const entry of scored) {
+    const original = byId.get(String(entry.id));
+    const header = { ...original, content: "" };
+    const headerMatch = subjects.length
+      ? subjectMatches(header)
+      : relevanceGroups
+          .flat()
+          .some((token) =>
+            tokenMatcher(token)(
+              `${header.title || ""} ${header.description || ""} ${(header.tags || []).join(" ")}`.toLowerCase(),
+            ),
+          );
+    entry.relevance = entry.relevant
+      ? headerMatch || entry.score >= bestRelevantScore * 0.5
+        ? "strong"
+        : "weak"
+      : false;
+    entry.relevant = entry.relevance === "strong";
+  }
+  const hasRelevant = scored.some((entry) => entry.relevant);
+  const band = (entry) =>
+    entry.relevant
+      ? model
+        ? modelRank[entry.modelMatch]
+        : 0
+      : entry.relevance === "weak"
+        ? 3
+        : 4;
+  if (!hasRelevant && relevanceGroups.some((tokens) => tokens.length)) {
+    const label = subject || subjects.join(" ") || String(query);
+    for (const entry of scored)
+      entry.relevanceNote = `no close match for ${label}; showing nearest by ${model ? "model" : "keywords"}`;
+  }
+  const priority = (a, b) =>
+    band(a) - band(b) ||
+    (a.relevance === "weak" && b.relevance === "weak"
+      ? b.score - a.score || modelRank[a.modelMatch] - modelRank[b.modelMatch]
+      : !a.relevance && !b.relevance && model
+        ? modelRank[a.modelMatch] - modelRank[b.modelMatch]
+        : 0) ||
+    (a.relevant && b.relevant && mode === "image-to-video"
+      ? b.modePreference - a.modePreference
+      : 0) ||
+    Number(a.kind === "code-video" && a.mediaState === "none") -
+      Number(b.kind === "code-video" && b.mediaState === "none");
+  const hintOrder = (a, b) => Number(a.referenceHint) - Number(b.referenceHint);
+  scored.sort(
+    (a, b) =>
+      priority(a, b) ||
+      b.score + b.modePreference - a.score - a.modePreference ||
+      hintOrder(a, b),
+  );
+  const counts = new Map();
+  const selected = [];
+  const ids = new Set(),
+    hashes = new Set(),
+    media = new Set();
+  const add = (entry, direction, reserve = false) => {
+    const hash = contentHashes.get(String(entry.id));
+    const firstMedia = entry.videos[0] || entry.images[0];
+    const source = entry.sourceId;
+    if (
+      ids.has(String(entry.id)) ||
+      (hash && hashes.has(hash)) ||
+      (firstMedia && media.has(firstMedia))
+    )
+      return false;
+    if (!reserve && !model && (counts.get(source) || 0) >= perSource)
+      return false;
+    counts.set(source, (counts.get(source) || 0) + 1);
+    ids.add(String(entry.id));
+    if (hash) hashes.add(hash);
+    if (firstMedia) media.add(firstMedia);
+    selected.push({
+      ...entry,
+      direction: splitQueries(query)[direction] || String(query),
+    });
+    return true;
+  };
+  const bands = [...new Set(scored.map(band))].sort((a, b) => a - b);
+  const buckets = bands.flatMap((rank) => {
+    const members = scored.filter((e) => band(e) === rank);
+    if (rank === 3) return [members];
+    // Shot preference cannot cross the relevance/model boundary. Subject preference
+    // remains inside that band, so a cat direction cannot reserve a human example.
+    const modes =
+      members.some((e) => e.relevant) && mode === "image-to-video"
+        ? [...new Set(members.map((e) => e.modePreference))].sort(
+            (a, b) => b - a,
+          )
+        : [null];
+    return modes.flatMap((preference) => {
+      const items = members.filter(
+        (e) => preference === null || e.modePreference === preference,
+      );
+      return subjects.length
+        ? [
+            items.filter((e) => e.subjectMatch),
+            items.filter((e) => !e.subjectMatch),
+          ]
+        : [items];
+    });
+  });
+  for (const bucket of buckets) {
+    if (selected.length >= limit) break;
+    if (
+      bucket[0]?.relevance !== "weak" &&
+      groups.length >= 2 &&
+      groups.length <= 3
+    ) {
+      const queues = groups.map((_, i) =>
+        bucket
+          .filter((e) => directionCoverage.get(String(e.id))[i] >= 0.5)
+          .sort(
+            (a, b) =>
+              priority(a, b) ||
+              directionScores.get(String(b.id))[i] +
+                b.score +
+                b.modePreference -
+                Math.max(...directionScores.get(String(b.id))) -
+                (directionScores.get(String(a.id))[i] +
+                  a.score +
+                  a.modePreference -
+                  Math.max(...directionScores.get(String(a.id)))) ||
+              hintOrder(a, b),
+          ),
+      );
+      // Reassign an overlapping sample when another direction has no alternative.
+      // At most three directions participate; no unbounded assignment search.
+      const reservations = new Map();
+      const duplicate = (a, b) => {
+        const hash = contentHashes.get(String(a.id));
+        const firstMedia = a.videos[0] || a.images[0];
+        return (
+          String(a.id) === String(b.id) ||
+          (hash && hash === contentHashes.get(String(b.id))) ||
+          (firstMedia && firstMedia === (b.videos[0] || b.images[0]))
+        );
+      };
+      const reserve = (direction, visited = new Set()) => {
+        const visiting = new Set([...visited, direction]);
+        for (const entry of queues[direction]) {
+          const conflicts = [...reservations]
+            .filter(([i, other]) => i !== direction && duplicate(entry, other))
+            .map(([i]) => i);
+          if (conflicts.some((i) => visiting.has(i))) continue;
+          const previous = new Map(reservations);
+          reservations.set(direction, entry);
+          if (conflicts.every((i) => reserve(i, visiting))) return true;
+          reservations.clear();
+          for (const [i, other] of previous) reservations.set(i, other);
+        }
+        return false;
+      };
+      for (
+        let i = 0;
+        i < queues.length && reservations.size < limit - selected.length;
+        i++
+      )
+        reserve(i);
+      for (const [i, entry] of [...reservations].sort(([a], [b]) => a - b))
+        add(entry, i, true);
+      let progress = true;
+      while (selected.length < limit && progress) {
+        progress = false;
+        for (let i = 0; i < queues.length && selected.length < limit; i++) {
+          while (queues[i].length) {
+            if (add(queues[i].shift(), i)) {
+              progress = true;
+              break;
+            }
+          }
+        }
+      }
+    } else {
+      for (const entry of bucket) {
+        if (selected.length >= limit) break;
+        const scores = directionScores.get(String(entry.id));
+        add(entry, scores.indexOf(Math.max(...scores)));
+        if (selected.length >= limit) break;
+      }
+    }
+    // Fill weak-coverage matches in this group before considering the next group.
+    for (const entry of bucket) {
+      if (selected.length >= limit) break;
+      const scores = directionScores.get(String(entry.id));
+      add(entry, scores.indexOf(Math.max(...scores)));
+    }
+  }
+  return groups.length >= 2 && groups.length <= 3
+    ? selected.sort(
+        (a, b) =>
+          priority(a, b) ||
+          Number(b.subjectMatch) - Number(a.subjectMatch) ||
+          b.score - a.score ||
+          hintOrder(a, b),
+      )
+    : selected;
 }
 
 export function showEntry(entries, id) {
@@ -591,6 +1230,7 @@ export function showEntries(entries, ids) {
 const USE_KEYWORDS = [
   ["cover", /\bcovers?\b|封面/i],
   ["thumbnail", /\bthumbnails?\b|缩略图/i],
+  ["poster", /\bposters?\b|\bflyers?\b|海报|传单/i],
   ["avatar", /\bavatars?\b|头像/i],
   ["infographic", /\binfographics?\b|信息图/i],
   ["comic", /\bcomics?\b|\bstoryboards?\b|漫画|分镜/i],
@@ -607,80 +1247,118 @@ export function inferUse(query) {
 
 export async function recommend(
   query,
-  { use, limit = 5, project, categories, ...syncOpts } = {},
+  {
+    use,
+    kind = "image",
+    model,
+    mode,
+    subject,
+    refs = 0,
+    sourceIds = [],
+    limit = 5,
+    project,
+    categories,
+    ...syncOpts
+  } = {},
 ) {
+  if (
+    mode &&
+    !["image-to-video", "text-to-video", "image", "edit"].includes(mode)
+  )
+    return {
+      error: "invalid-mode",
+      hint: "--mode must be image-to-video, text-to-video, image or edit",
+    };
+  if (invalidLimit(limit)) return limitError();
+  if (!Number.isSafeInteger(refs) || refs < 0)
+    return {
+      error: "invalid-refs",
+      hint: "--refs must be a non-negative integer.",
+    };
+  if (!["image", "video", "code-video"].includes(kind))
+    return {
+      error: "unknown-kind",
+      hint: "kind must be image, video or code-video",
+    };
   const tokens = tokenize(query);
-  // The library is English: a purely CJK query would match nothing useful.
+  if (!tokens.length)
+    return {
+      error: "need-query",
+      hint: "Pass descriptive keywords to recommend.",
+    };
+  const known = loadRegistry(syncOpts).filter((src) =>
+    src.kinds?.includes(kind),
+  );
+  const unknown = sourceIds.filter((id) => !known.some((src) => src.id === id));
+  if (unknown.length)
+    return {
+      error: "unknown-source",
+      unknown,
+      knownIds: known.map((src) => src.id),
+      hint: "Run sources to list available ids.",
+    };
   if (tokens.length && !tokens.some((t) => /^[a-z0-9]+$/.test(t))) {
     return {
       error: "translate-to-english",
-      hint: "The prompt library is English. Translate the keywords into English (e.g. 封面 -> cover, 科技 -> tech) and call recommend again.",
+      hint: "Include English keywords; mixed English and Chinese queries are supported.",
     };
   }
-  let chosenUse = use || null;
-  let cats = [];
-  if (chosenUse) {
-    if (!USE_MAP[chosenUse])
-      return {
-        error: "unknown-use",
-        hint: `use must be one of: ${Object.keys(USE_MAP).join(", ")}`,
-      };
-    cats = USE_MAP[chosenUse];
-  } else if (categories && categories.length) {
-    cats = categories;
-  } else {
-    chosenUse = inferUse(query);
-    if (!chosenUse) {
-      return {
-        error: "need-category",
-        hint: `Pass use (${Object.keys(USE_MAP).join(", ")}) or categories, or include a keyword such as "cover" in the query.`,
-      };
-    }
-    cats = USE_MAP[chosenUse];
-  }
-
-  const sync = await syncLibrary({ ...syncOpts, categories: cats });
-  const { origin, entries } = loadEntries({
-    cache: syncOpts.cache,
-    categories: cats,
-  });
+  const chosenUse = use || (kind === "image" ? inferUse(query) : null);
+  if (chosenUse && !USE_MAP[chosenUse])
+    return {
+      error: "unknown-use",
+      hint: `use must be one of: ${Object.keys(USE_MAP).join(", ")}`,
+    };
+  const cats = chosenUse ? USE_MAP[chosenUse] : categories || [];
+  const opts = { ...syncOpts, kind, sourceIds, categories: cats };
+  const sync = await syncForQuery(opts);
+  const { origin, entries, notes: loadNotes = [] } = await loadAllEntries(opts);
   const ratings = project
     ? loadRatings(project, syncOpts.env || process.env)
     : new Map();
-  // `--use cover` already selected the categories; keeping the word "cover" in the
-  // query mostly surfaces fashion-magazine covers instead of the user's subject.
   const dropTokens =
     chosenUse === "cover" || chosenUse === "thumbnail"
       ? ["cover", "covers"]
       : [];
-  const results = searchEntries(entries, query, { limit, ratings, dropTokens });
-
-  const notes = [`origin=${origin}`];
-  const skipped = sync.results
-    .filter((r) => r.status === "skipped-large")
-    .map((r) => r.slug);
-  if (skipped.length)
+  const results = searchEntries(entries, query, {
+    limit,
+    ratings,
+    dropTokens,
+    model,
+    mode,
+    subject,
+    refs,
+    perSource: sourceIds.length || model ? Infinity : 2,
+  });
+  const notes = [`origin=${origin}`, ...(sync.notes || []), ...loadNotes];
+  if (results[0]?.relevanceNote) notes.push(results[0].relevanceNote);
+  else if (
+    !results.length &&
+    tokenize(query).some((t) => !GENERIC_TECHNIQUE_WORDS.includes(t))
+  )
     notes.push(
-      `skipped large categories: ${skipped.join(", ")} (allowLarge / --allow-large to include)`,
+      `no close match for ${subject || query}; showing nearest by ${model ? "model" : "keywords"}`,
     );
-  const stale = sync.results
-    .filter((r) => /^(stale|unavailable)/.test(r.status))
-    .map((r) => r.status);
-  if (stale.length)
+  if (model && !results.some((e) => e.modelMatch === "matched"))
+    notes.push(`no ${model} samples in the libraries; showing other models`);
+  if (sync.downloading?.length && results.length < 3)
     notes.push(
-      `library may be out of date (${[...new Set(stale)].join(", ")})`,
+      "Few results available; rerun after the initial downloads finish",
     );
-  const unknown = sync.results
-    .filter((r) => r.status === "unknown-category")
-    .map((r) => r.slug);
-  if (unknown.length) notes.push(`unknown categories: ${unknown.join(", ")}`);
-
   const out = {
+    kind,
     use: chosenUse,
     categories: cats,
     origin,
     results,
-    cacheNote: notes.join("; "),
+    pending: sync.pending || [],
+    downloading: sync.downloading || [],
+    refreshing: sync.refreshing || [],
+    directions: splitQueries(query).map((query) => ({
+      query,
+      hits: results.filter((e) => e.direction === query).length,
+    })),
+    cacheNote: [...new Set(notes)].join("; "),
   };
   if (origin === "seed")
     out.access = detectAccess({
@@ -692,17 +1370,49 @@ export async function recommend(
 
 // ---------- seed (maintainer) ----------
 
-export function buildSeed(entries, perCategory = 5) {
-  const byCat = new Map();
+export function buildSeed(entries, perCategory = 5, sources = loadRegistry()) {
+  const allowed = new Set(
+    sources.filter((s) => s.seed === "allowed").map((s) => s.id),
+  );
+  const groups = new Map();
+  const seen = new Set();
   for (const e of entries) {
-    if (!Array.isArray(e.sourceMedia) || !e.sourceMedia.length) continue;
-    const list = byCat.get(e.category) || [];
-    if (list.length < perCategory) list.push(e);
-    byCat.set(e.category, list);
+    const sourceId = e.sourceId || "youmind";
+    if (!allowed.has(sourceId) || seen.has(String(e.id))) continue;
+    if (e.kind !== "code-video" && !e.sourceMedia?.length && !e.videos?.length)
+      continue;
+    const category = e.category || e.tags?.[0] || "other";
+    const categories = groups.get(sourceId) || new Map();
+    const bucket = categories.get(category) || [];
+    if (bucket.length >= perCategory) continue;
+    bucket.push(e);
+    seen.add(String(e.id));
+    categories.set(category, bucket);
+    groups.set(sourceId, categories);
+  }
+  // Alternate sources, and within each source alternate categories/tags.
+  const queues = [...groups.values()].map((categories) => {
+    const buckets = [...categories.values()];
+    const queue = [];
+    for (let i = 0; i < perCategory; i += 1)
+      for (const bucket of buckets) if (bucket[i]) queue.push(bucket[i]);
+    return queue;
+  });
+  const selected = [];
+  let bytes = 200;
+  for (let i = 0; queues.some((queue) => queue[i]); i += 1) {
+    for (const queue of queues) {
+      const entry = queue[i];
+      if (!entry) continue;
+      const size = Buffer.byteLength(JSON.stringify(entry, null, 2)) + 100;
+      if (bytes + size > 950000) continue;
+      selected.push(entry);
+      bytes += size;
+    }
   }
   return {
-    note: `Offline fallback sample from ${LIBRARY.repo}. ${LIBRARY.license}. Credit the source when reusing a prompt.`,
-    entries: [...byCat.values()].flat(),
+    note: "Offline samples from sources permitting redistribution. Credit each entry's source and license.",
+    entries: selected,
   };
 }
 
@@ -997,13 +1707,15 @@ export function detectSession({
     }
   }
   const major = Number(process.versions.node.split(".")[0]);
+  const capabilities = coverCapabilities(run);
   const session = {
+    ...capabilities,
     access,
     stylePack,
     channels: {
       codex: commandOk("codex", ["--version"], run),
       grok: commandOk("grok", ["--version"], run),
-      ffmpeg: commandOk("ffmpeg", ["-version"], run),
+      ffmpeg: capabilities.ffmpeg.available,
       nodeOk: major >= 18,
       apiKeyVars,
     },
@@ -1014,22 +1726,39 @@ export function detectSession({
 
 // ---------- cover check: contact-sheet previews ----------
 
-function findFont(run) {
+export function findCjkFont(run = defaultRun, exists = fs.existsSync) {
   try {
+    // fc-match may silently return a Latin fallback; verify the actual language set.
     const out = String(
-      run("fc-match", ["-f", "%{file}", ":lang=zh"]) || "",
+      run("fc-match", ["-f", "%{file}\n%{lang}", ":lang=zh"]) || "",
     ).trim();
-    if (out && fs.existsSync(out)) return out;
+    const [file, languages = ""] = out.split("\n");
+    if (file && /(?:^|[|,\s])zh(?:-|$|[|,\s])/.test(languages) && exists(file))
+      return file;
   } catch {
-    // fall through to fixed paths
+    /* fontconfig is optional on macOS */
   }
   return (
     [
-      "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-      "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-      "/usr/share/fonts/TTF/DejaVuSans.ttf",
-    ].find((f) => fs.existsSync(f)) || null
+      "/System/Library/Fonts/PingFang.ttc",
+      "/System/Library/Fonts/Hiragino Sans GB.ttc",
+      "/System/Library/Fonts/STHeiti Medium.ttc",
+      "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+      "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc",
+    ].find(exists) || null
   );
+}
+export function coverCapabilities(run = defaultRun, exists = fs.existsSync) {
+  const available = commandOk("ffmpeg", ["-version"], run);
+  let drawtext = false;
+  if (available) {
+    try {
+      drawtext = /\bdrawtext\s/.test(String(run("ffmpeg", ["-filters"]) || ""));
+    } catch {
+      /* unavailable filter listing */
+    }
+  }
+  return { ffmpeg: { available, drawtext }, cjkFont: findCjkFont(run, exists) };
 }
 
 // Escape a value for use inside an ffmpeg filter option.
@@ -1037,7 +1766,13 @@ const filterEscape = (s) => String(s).replace(/[\\:',;[\]]/g, "\\$&");
 
 export function coverCheck(
   files,
-  { title, size, outDir, run = defaultRun } = {},
+  {
+    title,
+    size,
+    outDir,
+    run = defaultRun,
+    capabilities = coverCapabilities(run),
+  } = {},
 ) {
   const list = Array.isArray(files) ? files : [files];
   const sizeChecks = list.map((file) =>
@@ -1047,18 +1782,21 @@ export function coverCheck(
     c ? c.problems.map((p) => `${path.basename(c.file)}: ${p}`) : [],
   );
 
-  if (!commandOk("ffmpeg", ["-version"], run)) {
+  if (!capabilities.ffmpeg.available) {
     return {
       ok: false,
       problems: ["ffmpeg missing", ...sizeProblems],
-      checks: sizeChecks.filter(Boolean),
+      checks: sizeChecks.filter(Boolean).map((check) => ({
+        ...check,
+        status: check.ok ? "pass" : "unverified",
+      })),
     };
   }
 
   const dir =
     outDir || fs.mkdtempSync(path.join(os.tmpdir(), "prompt-studio-cover-"));
   fs.mkdirSync(dir, { recursive: true });
-  const font = title ? findFont(run) : null;
+  const font = capabilities.cjkFont;
   const problems = [...sizeProblems];
   const used = new Set();
   const variants = list.map((file, i) => {
@@ -1066,6 +1804,17 @@ export function coverCheck(
     if (used.has(base)) base = `${base}-${i}`;
     used.add(base);
     const previews = { w340: null, crop120: null, title: null };
+    const checks = {
+      size: {
+        status: sizeChecks[i]?.ok ? "pass" : "unverified",
+        ...(sizeChecks[i]?.problems.length
+          ? { error: sizeChecks[i].problems.join("; ") }
+          : {}),
+      },
+      w340: { status: "unverified" },
+      crop120: { status: "unverified" },
+      title: { status: "unverified" },
+    };
     const render = (key, suffix, vf) => {
       const target = path.join(dir, `${base}-${suffix}.png`);
       try {
@@ -1082,10 +1831,11 @@ export function coverCheck(
           target,
         ]);
         previews[key] = target;
-      } catch (error) {
-        problems.push(
-          `${path.basename(file)}: ffmpeg ${suffix} failed: ${String(error.message || error).split("\n")[0]}`,
-        );
+        checks[key] = { status: "written" };
+      } catch {
+        const error = `${path.basename(file)}: ffmpeg could not write ${suffix} preview; check image decoding and output permissions`;
+        checks[key] = { status: "unverified", error };
+        problems.push(error);
       }
     };
     render("w340", "340", "scale=340:-1");
@@ -1094,7 +1844,43 @@ export function coverCheck(
       "crop120",
       "crop='min(iw,ih)':'min(iw,ih)',scale=120:120",
     );
-    if (title) {
+    if (title && (!capabilities.ffmpeg.drawtext || !font)) {
+      const missing = [
+        !capabilities.ffmpeg.drawtext && "ffmpeg drawtext filter",
+        !font && "CJK-capable font",
+      ].filter(Boolean);
+      const escape = (value) =>
+        String(value).replace(
+          /[&<>"']/g,
+          (ch) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[ch],
+        );
+      try {
+        const image = fs.readFileSync(previews.w340 || file).toString("base64");
+        const target = path.join(dir, `${base}-title.html`);
+        fs.writeFileSync(
+          target,
+          `<!doctype html><html lang="zh"><meta charset="utf-8"><title>Cover title preview</title><style>body{margin:24px;background:#eee;font-family:"PingFang SC","Noto Sans CJK SC",sans-serif}.cover{position:relative;width:340px;overflow:hidden}.cover img{display:block;width:100%}.title{position:absolute;inset:auto 0 0;padding:32px 14px 12px;color:white;font-size:22px;line-height:1.3;overflow-wrap:anywhere;background:linear-gradient(transparent,rgba(0,0,0,.8));white-space:pre-wrap}</style><div class="cover"><img alt="Cover" src="data:image/png;base64,${image}"><div class="title">${escape(title)}</div></div></html>`,
+        );
+        previews.title = target;
+        checks.title = {
+          status: "unverified",
+          artifactStatus: "written",
+          error: `Missing ${missing.join(" and ")}; HTML preview written; browser visual inspection required`,
+        };
+      } catch {
+        const error =
+          "Could not write HTML title preview; check input image and output permissions";
+        checks.title = { status: "unverified", error };
+        problems.push(error);
+      }
+    } else if (title) {
       const textFile = path.join(dir, `${base}-title.txt`);
       fs.writeFileSync(textFile, title);
       const fontPart = font ? `fontfile=${filterEscape(font)}:` : "";
@@ -1103,7 +1889,7 @@ export function coverCheck(
         `drawtext=${fontPart}textfile=${filterEscape(textFile)}:fontcolor=white:fontsize=22:x=(w-text_w)/2:y=h-33`;
       render("title", "title", vf);
     }
-    return { file, sizeCheck: sizeChecks[i], previews };
+    return { file, sizeCheck: sizeChecks[i], previews, checks };
   });
   return { ok: problems.length === 0, outDir: dir, variants, problems };
 }
@@ -1112,13 +1898,73 @@ export function coverCheck(
 
 // Gallery: an HTML page of candidates (sample images, full prompt, source,
 // license) for terminals that cannot show images.
-export function galleryPage({
+// The page states the length to generate and flags samples from another model;
+// the caller passes both once at the top, each candidate may override them.
+export function withTarget(
+  candidates,
+  entries,
+  { targetModel, targetDurationSec },
+) {
+  const byId = new Map(entries.map((e) => [String(e.id), e]));
+  return candidates.map((c) => {
+    const e = byId.get(String(c.id));
+    const wantedModel = c.targetModel ?? targetModel;
+    const sample = { ...e, ...c };
+    if (c.model !== undefined) {
+      sample.modelKeys = c.modelKeys;
+      sample.modelKey = c.modelKey;
+      if (c.renderEngine === undefined) delete sample.renderEngine;
+    }
+    const inferred = modelMatchOf(sample, wantedModel);
+    const modelMatch = inferred;
+    return {
+      ...(targetModel ? { targetModel } : {}),
+      ...(targetDurationSec ? { targetDurationSec } : {}),
+      ...referenceRequirements(e || c),
+      sampleRatio: e?.sampleRatio ?? e?.ratio ?? null,
+      sampleDurationSec: e?.sampleDurationSec ?? e?.durationSec ?? null,
+      mediaState:
+        e?.mediaState ||
+        (e?.videos?.length
+          ? "video"
+          : e?.sourceMedia?.length
+            ? "image"
+            : "none"),
+      ...c,
+      modelKeys: entryModelKeys(sample),
+      targetModelKey: modelKeyOf(wantedModel),
+      versionNote: versionNoteOf(sample, wantedModel),
+      ...versionFields(sample, wantedModel),
+      ...codeVideoFields(sample),
+      modelKey: entryModelKeys(sample)[0] || null,
+      evidence: evidenceOf({ ...e, ...c }),
+      licenseStatus: licenseStatusOf(c.license ?? e?.license, { ...e, ...c }),
+      sourceUrl:
+        c.sourceUrl ||
+        e?.sourceUrl ||
+        (c.source || e?.source
+          ? `https://github.com/${c.source || e.source}`
+          : null),
+      curatedSource: c.curatedSource ?? e?.curatedSource ?? false,
+      videos: c.videos ?? e?.videos ?? [],
+      modelMatch,
+      modelMismatch: modelMatch === "mismatched" ? String(wantedModel) : false,
+    };
+  });
+}
+
+export async function galleryPage({
   project,
   runId,
   title,
   request,
   query,
+  targetModel,
+  targetDurationSec,
+  targetRatio,
+  locale,
   candidates = [],
+  posterRunner = promisify(execFile),
   out,
   entries,
   env = process.env,
@@ -1130,13 +1976,144 @@ export function galleryPage({
   const file = out
     ? path.resolve(out)
     : path.join(recordsDir(project, env), "gallery", `${id}.html`);
-  const built = buildCandidates(candidates, entries || loadEntries({}).entries);
+  const pool = entries || loadEntries({}).entries;
+  const prepared = withTarget(candidates, pool, {
+    targetModel,
+    targetDurationSec,
+  });
+  const byId = new Map(pool.map((e) => [String(e.id), e]));
+  let next = 0;
+  const posterDir = path.join(recordsDir(project, env), "gallery", "posters");
+  const pending = new Map();
+  const extract = (url, duration) => {
+    const knownDuration =
+      Number.isFinite(Number(duration)) && Number(duration) > 0
+        ? Number(duration)
+        : null;
+    const times = [
+      ...new Set(
+        [1, knownDuration ? knownDuration * 0.4 : 3].map((time) => {
+          const clamped = knownDuration
+            ? Math.min(time, knownDuration * 0.9)
+            : time;
+          return Math.min(
+            knownDuration ? knownDuration * 0.9 : Infinity,
+            Number(clamped.toFixed(2)) || clamped,
+          );
+        }),
+      ),
+    ];
+    const cacheKey = JSON.stringify(["independent-frames-v2", url, times]);
+    try {
+      if (new URL(url).protocol !== "https:") return null;
+    } catch {
+      return null;
+    }
+    if (!pending.has(cacheKey))
+      pending.set(
+        cacheKey,
+        (async () => {
+          const poster = path.join(
+            posterDir,
+            `${createHash("sha256").update(cacheKey).digest("hex")}.jpg`,
+          );
+          const failure = poster.replace(/\.jpg$/, ".fail");
+          try {
+            if (
+              fs.existsSync(failure) &&
+              Date.now() - fs.statSync(failure).mtimeMs < 3600000
+            )
+              return null;
+            if (!fs.existsSync(poster) || !fs.statSync(poster).size) {
+              fs.mkdirSync(posterDir, { recursive: true });
+              const temporary = `${poster}.${process.pid}.${Math.random().toString(16).slice(2)}.jpg`;
+              for (const time of times) {
+                try {
+                  await posterRunner(
+                    "ffmpeg",
+                    [
+                      "-nostdin",
+                      "-y",
+                      "-loglevel",
+                      "error",
+                      "-ss",
+                      String(time),
+                      "-protocol_whitelist",
+                      "https,tls,tcp",
+                      "-i",
+                      url,
+                      "-frames:v",
+                      "1",
+                      "-vf",
+                      "scale=640:-2",
+                      temporary,
+                    ],
+                    { timeout: 15000 },
+                  );
+                  if (!fs.statSync(temporary).size)
+                    throw new Error("empty poster");
+                  if (
+                    !fs.existsSync(poster) ||
+                    fs.statSync(temporary).size > fs.statSync(poster).size
+                  )
+                    fs.renameSync(temporary, poster);
+                } catch {
+                  // One seek or download failure must not discard another frame.
+                } finally {
+                  fs.rmSync(temporary, { force: true });
+                }
+              }
+              if (!fs.existsSync(poster) || !fs.statSync(poster).size)
+                throw new Error("No usable frames");
+            }
+            fs.rmSync(failure, { force: true });
+            return poster;
+          } catch {
+            try {
+              fs.mkdirSync(posterDir, { recursive: true });
+              fs.writeFileSync(failure, "failed");
+            } catch {}
+            return null;
+          }
+        })(),
+      );
+    return pending.get(cacheKey);
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(3, prepared.length) }, async () => {
+      while (next < prepared.length) {
+        const candidate = prepared[next++];
+        const entry = byId.get(String(candidate.id));
+        const images =
+          candidate.images ??
+          (candidate.image ? [candidate.image] : entry?.sourceMedia) ??
+          [];
+        if (!candidate.videos.length) continue;
+        const poster = await extract(
+          candidate.videos[0],
+          candidate.sampleDurationSec,
+        );
+        if (poster)
+          candidate.images = [
+            poster,
+            ...images.filter((image) => image !== poster),
+          ];
+        candidate.evidence = evidenceOf(candidate);
+      }
+    }),
+  );
+  const built = buildCandidates(prepared, pool);
   writeGallery({
     file,
     title,
     request,
     runId: id,
     candidates: built.candidates,
+    targetModel,
+    targetDurationSec,
+    targetRatio,
+    locale:
+      locale || (/[\u3400-\u9fff]/.test(request || query || "") ? "zh" : "en"),
   });
   return {
     file,
@@ -1147,10 +2124,206 @@ export function galleryPage({
   };
 }
 
+export async function checkVideo(
+  file,
+  { ratio, duration, size, probeRunner = promisify(execFile) } = {},
+) {
+  const pair = (value, separator) => {
+    const match = String(value || "").match(separator);
+    return match && Number(match[1]) > 0 && Number(match[2]) > 0
+      ? [Number(match[1]), Number(match[2])]
+      : null;
+  };
+  const targetRatio = pair(ratio, /^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$/);
+  const targetSize = pair(size, /^(\d+)x(\d+)$/);
+  if (ratio != null && !targetRatio)
+    throw new Error("--ratio must be positive W:H");
+  if (size != null && !targetSize)
+    throw new Error("--size must be positive WxH");
+  if (
+    duration != null &&
+    !(Number.isFinite(Number(duration)) && Number(duration) > 0)
+  )
+    throw new Error("--duration must be positive seconds");
+  const result = {
+    status: "unverified",
+    width: null,
+    height: null,
+    durationSec: null,
+    ratio: null,
+    checks: [],
+  };
+  const unreadable = (message) => ({
+    ...result,
+    status: "fail",
+    error: message,
+    checks: [
+      {
+        name: "readable",
+        status: "fail",
+        expected: "readable video file",
+        actual: message,
+        fix: "Provide an existing, readable video file.",
+        alternative: null,
+      },
+    ],
+  });
+  if (typeof file !== "string" || !file)
+    return unreadable("No input video file was provided.");
+  try {
+    if (!fs.statSync(file).isFile())
+      return unreadable("Input path is not a video file.");
+  } catch (error) {
+    return unreadable(`Cannot read input file: ${error.code || error.message}`);
+  }
+  try {
+    const response = await probeRunner(
+      "ffprobe",
+      [
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=width,height,duration:stream_side_data=rotation:format=duration",
+        "-of",
+        "json",
+        path.resolve(file),
+      ],
+      { timeout: 15000 },
+    );
+    const data = JSON.parse(
+      typeof response === "string" ? response : response.stdout,
+    );
+    const stream = data.streams?.[0];
+    result.width = Number(stream?.width) || null;
+    result.height = Number(stream?.height) || null;
+    const rotation = Number(
+      stream?.side_data_list?.find((item) => item.rotation != null)?.rotation ||
+        0,
+    );
+    if (Math.abs(rotation % 180) === 90)
+      [result.width, result.height] = [result.height, result.width];
+    result.durationSec =
+      Number(stream?.duration ?? data.format?.duration) || null;
+    if (!(result.width > 0 && result.height > 0))
+      throw new Error("No video dimensions");
+    const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+    const divisor = gcd(result.width, result.height);
+    result.ratio = `${result.width / divisor}:${result.height / divisor}`;
+    const add = (
+      name,
+      expected,
+      actual,
+      pass,
+      fix = null,
+      alternative = null,
+    ) =>
+      result.checks.push({
+        name,
+        status: actual == null ? "unverified" : pass ? "pass" : "fail",
+        expected,
+        actual,
+        fix: pass ? null : fix,
+        alternative: pass ? null : alternative,
+      });
+    if (targetRatio) {
+      const r = targetRatio[0] / targetRatio[1];
+      const quote = (value) =>
+        "'" + String(value).replaceAll("'", "'\\''") + "'";
+      const input = quote(path.resolve(file));
+      const output = quote(
+        path.resolve(path.dirname(file), path.parse(file).name + "-padded.mp4"),
+      );
+      const cropped = quote(
+        path.resolve(
+          path.dirname(file),
+          path.parse(file).name + "-cropped.mp4",
+        ),
+      );
+      const fix = `ffmpeg -i ${input} -vf "pad=w='ceil(max(iw,ih*${r})/2)*2':h='ceil(max(ih,iw/${r})/2)*2':x=(ow-iw)/2:y=(oh-ih)/2" -c:a copy ${output}`;
+      const alternative = `ffmpeg -i ${input} -vf "crop=w='floor(min(iw,ih*${r})/2)*2':h='floor(min(ih,iw/${r})/2)*2'" -c:a copy ${cropped}`;
+      add(
+        "ratio",
+        ratio,
+        result.ratio,
+        Math.abs(result.width / result.height / r - 1) <= 0.01,
+        fix,
+        alternative,
+      );
+    }
+    if (duration != null)
+      add(
+        "duration",
+        Number(duration),
+        result.durationSec,
+        result.durationSec != null &&
+          Math.abs(result.durationSec - Number(duration)) <=
+            0.3 + Number.EPSILON,
+      );
+    if (targetSize)
+      add(
+        "size",
+        size,
+        `${result.width}x${result.height}`,
+        result.width === targetSize[0] && result.height === targetSize[1],
+      );
+    if (!result.checks.length)
+      add("probe", "readable video", result.ratio, true);
+    result.status = result.checks.some((c) => c.status === "fail")
+      ? "fail"
+      : result.checks.some((c) => c.status === "unverified")
+        ? "unverified"
+        : "pass";
+  } catch (error) {
+    if (error.code !== "ENOENT")
+      return unreadable(
+        `Unable to probe input video: ${error.message || error}`,
+      );
+    result.error = "ffprobe executable is unavailable.";
+    result.checks.push({
+      name: "probe",
+      status: "unverified",
+      expected: "ffprobe video metadata",
+      actual: null,
+      fix: "Install ffprobe and retry.",
+      alternative: null,
+    });
+  }
+  return result;
+}
+
+export function attributionFor(license) {
+  const value = String(license || "");
+  if (
+    /\bcc[ -]*by(?:\b|-)|\bMIT\b|\bApache(?:[ -]2(?:\.0)?)?\b|\b(?:A?GPL|LGPL)(?:[ -]\d)?\b/i.test(
+      value,
+    )
+  )
+    return true;
+  if (/^\s*(?:CC[ -]*0(?:[ -]1\.0)?|public domain)\s*$/i.test(value))
+    return false;
+  return "unknown";
+}
+function briefEntry(promptId, env) {
+  for (const src of loadRegistry({ env })) {
+    const entries = readJson(
+      path.join(cacheDir(env), src.id, ".normalized.json"),
+      [],
+    );
+    const found = Array.isArray(entries) ? showEntry(entries, promptId) : null;
+    if (found) return found;
+  }
+  return showEntry(loadEntries({ cache: cacheDir(env) }).entries, promptId);
+}
+
 export function writeBrief({
   project,
   runId,
   promptId,
+  entries,
+  author,
+  link,
   title,
   source,
   license,
@@ -1164,6 +2337,17 @@ export function writeBrief({
   env = process.env,
   now = Date.now(),
 } = {}) {
+  const entry =
+    promptId == null
+      ? null
+      : entries
+        ? showEntry(entries, promptId)
+        : briefEntry(promptId, env);
+  title = title ?? entry?.title;
+  author = author ?? entry?.author;
+  link = link ?? entry?.link;
+  source = source ?? entry?.source;
+  license = license ?? entry?.license;
   const id = runId || `run-${now}`;
   const dir = path.join(
     recordsDir(path.resolve(project || process.cwd()), env),
@@ -1171,7 +2355,7 @@ export function writeBrief({
   );
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, `${String(id).replace(/[^\w.-]+/g, "-")}.md`);
-  const attributionRequired = /CC BY/i.test(String(license || ""));
+  const attributionRequired = attributionFor(license);
   const val = (v) => (v == null || v === "" ? "-" : String(v));
   const lines = [
     `# ${title || id}`,
@@ -1181,8 +2365,10 @@ export function writeBrief({
     "## Source / License",
     "",
     `- Source: ${val(source)}`,
+    `- Author: ${val(author)}`,
+    `- Link: ${val(link)}`,
     `- License: ${val(license)}`,
-    `- Attribution required: ${attributionRequired ? "yes" : "no"}`,
+    `- Attribution required: ${attributionRequired === "unknown" ? "unknown" : attributionRequired ? "yes" : "no"}`,
     "",
     "## Channel / Model",
     "",
@@ -1247,22 +2433,197 @@ const list = (v) =>
         .filter(Boolean)
     : [];
 
+export async function addSource(
+  repo,
+  {
+    kind,
+    adapter,
+    file,
+    itemsPath,
+    map,
+    cache = cacheDir(),
+    detectSource,
+    env = process.env,
+    run = defaultRun,
+    fetchImpl = defaultFetch(env),
+  } = {},
+) {
+  if (
+    !/^[A-Za-z0-9][A-Za-z0-9_.-]*\/[A-Za-z0-9][A-Za-z0-9_.-]*$/.test(repo || "")
+  )
+    throw new Error("sources add needs owner/repo");
+  if (kind && !["image", "video", "code-video"].includes(kind))
+    throw new Error("Invalid --kind");
+  if (adapter && !/^[a-z][a-z0-9-]*$/.test(adapter))
+    throw new Error("Invalid --adapter");
+  let detector = detectSource;
+  if (!adapter && !detector) {
+    if (!fs.existsSync(path.join(HERE, "adapters", "detect.mjs")))
+      throw new Error("Source detection is unavailable; pass --adapter");
+    detector = (await import("./adapters/detect.mjs")).detectSource;
+    if (typeof detector !== "function")
+      throw new Error("Source detection is unavailable; pass --adapter");
+  }
+  const token = authToken({ env, run });
+  const headers = { Accept: "application/vnd.github+json" };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const useGh = detectAccess({ env, run }).tier === "gh";
+  const githubJson = async (endpoint) => {
+    if (useGh) return JSON.parse(run("gh", ["api", endpoint]));
+    const response = await fetchImpl(`https://api.github.com/${endpoint}`, {
+      headers,
+    });
+    if (!response.ok)
+      throw new Error(`GitHub metadata HTTP ${response.status}`);
+    return JSON.parse(
+      Buffer.from(await response.arrayBuffer()).toString("utf8"),
+    );
+  };
+  const metadata = await githubJson(`repos/${repo}`);
+  const branch = metadata.default_branch || "main";
+  let detected = {};
+  if (!adapter) {
+    const tree = await githubJson(
+      `repos/${repo}/git/trees/${encodeURIComponent(branch)}?recursive=1`,
+    );
+    const fetchText = async (repoPath) => {
+      if (
+        typeof repoPath !== "string" ||
+        !repoPath ||
+        path.isAbsolute(repoPath) ||
+        repoPath.split(/[\\/]/).includes("..")
+      )
+        throw new Error("Unsafe detected repository path");
+      const rawPath = repoPath.split("/").map(encodeURIComponent).join("/");
+      const response = await fetchImpl(
+        `https://raw.githubusercontent.com/${repo}/${encodeURIComponent(branch)}/${rawPath}`,
+        { headers },
+      );
+      if (!response.ok) throw new Error(`GitHub data HTTP ${response.status}`);
+      return Buffer.from(await response.arrayBuffer()).toString("utf8");
+    };
+    detected = (await detector({ repo, branch, tree, fetchText })) || {};
+    adapter = detected.adapter;
+    if (!adapter)
+      throw new Error("Could not detect an adapter; pass --adapter");
+  }
+  if (!/^[a-z][a-z0-9-]*$/.test(adapter)) throw new Error("Invalid --adapter");
+  const options = detected.options || {};
+  const mapping =
+    typeof map === "string" ? JSON.parse(map) : map || options.map;
+  const dataFile = file || options.file;
+  if (adapter === "json-map") {
+    if (
+      !mapping ||
+      typeof mapping !== "object" ||
+      Array.isArray(mapping) ||
+      !Object.keys(mapping).length
+    )
+      throw new Error(
+        "json-map needs --map with a non-empty JSON field mapping",
+      );
+    if (
+      typeof dataFile !== "string" ||
+      !dataFile ||
+      path.isAbsolute(dataFile) ||
+      dataFile.split(/[\\/]/).includes("..")
+    )
+      throw new Error("json-map needs a safe repository --file path");
+  }
+  const chosenKind = kind || detected.kinds?.[0] || "image";
+  if (!["image", "video", "code-video"].includes(chosenKind))
+    throw new Error("Invalid detected kind");
+  const source = {
+    ...options,
+    id: repo
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/-$/, ""),
+    title: metadata.full_name || repo,
+    repo,
+    branch,
+    kinds: [chosenKind],
+    adapter,
+    license:
+      metadata.license?.spdx_id ||
+      metadata.license?.name ||
+      "No license declared",
+    seed: "never",
+    userAdded: true,
+    ...(dataFile ? { file: dataFile } : {}),
+    ...(itemsPath !== undefined ? { itemsPath } : {}),
+    ...(mapping ? { map: mapping } : {}),
+  };
+  const registryFile = path.join(cache, "user-sources.json");
+  const registry = readJson(registryFile, { sources: [] });
+  const existing = loadRegistry({ cache }).find((s) => s.id === source.id);
+  if (
+    existing &&
+    (!existing.userAdded || existing.repo.toLowerCase() !== repo.toLowerCase())
+  )
+    throw new Error("Source id conflicts with an existing source");
+  fs.mkdirSync(cache, { recursive: true });
+  const validationCache = fs.mkdtempSync(path.join(cache, "source-check-"));
+  try {
+    const validation = {
+      sources: [source],
+      all: true,
+      cache: validationCache,
+      seedFile: null,
+      env,
+      run,
+      fetchImpl,
+      token: authToken({ env, run }),
+    };
+    const synced = await syncSources(validation);
+    const loaded = await loadAllEntries(validation);
+    if (!loaded.entries.length)
+      throw new Error(
+        `Source has 0 entries; registration unchanged. ${[...new Set([...(synced.notes || []), ...loaded.notes])].join("; ") || "Check --file, --items-path and --map."}`,
+      );
+    fs.cpSync(
+      path.join(validationCache, source.id),
+      path.join(cache, source.id),
+      { recursive: true },
+    );
+    registry.sources = [
+      ...(registry.sources || []).filter((s) => s.id !== source.id),
+      source,
+    ];
+    writeJson(registryFile, registry);
+    return {
+      source,
+      file: registryFile,
+      entries: loaded.entries.length,
+      titles: loaded.entries.slice(0, 2).map((e) => e.title),
+    };
+  } finally {
+    fs.rmSync(validationCache, { recursive: true, force: true });
+  }
+}
+
 const USAGE = `Usage: node studio.mjs <command> [options]
 
   access                              Show the GitHub access tier (gh / token / anonymous)
   session [--project DIR]             One-shot probe: access tier, style pack, channels (codex/grok/ffmpeg/node, key var names)
-  sync [--category a,b | --all] [--force] [--allow-large]
-                                      Refresh the prompt library (ETag, at most every 10 min);
+  sources [--kind image|video|code-video]  List registered sources and cached entries
+  sources add <owner/repo> --kind <kind> [--adapter <adapter>] [--file <repo-path>] [--items-path <path>] [--map '{"title":"title","content":"prompt"}']
+  sync [--source a,b | --kind video | --category a,b | --all] [--force] [--allow-large]
+                                      Refresh matching sources (ETag, at most every 10 min);
                                       social-media-post and product-marketing need --allow-large
-  search "<keywords>" [--category a,b] [--limit 30] [--project DIR]
-                                      Rank prompts; cached library first, bundled seed offline
-  recommend "<english keywords> [| more keywords]" --use cover|illustration|infographic|avatar|thumbnail|comic|product|game|app
-            [--category a,b] [--limit 5] [--allow-large] [--project DIR]
-                                      Sync the matching categories and return ranked candidates
+  search "<keywords>" [--kind image|video|code-video] [--source a,b] [--category a,b] [--limit 30] [--wait-sec 6] [--project DIR]
+                                      Rank prompts (default image); cached library first, bundled seed offline
+  check-video <file> [--ratio W:H] [--duration S] [--size WxH]
+  recommend "<english keywords> [| more keywords]" [--use cover|poster|illustration|infographic|avatar|thumbnail|comic|product|game|app]
+            [--kind image|video|code-video] [--model key-or-name] [--mode image-to-video|text-to-video|image|edit] [--subject "words"] [--source a,b]
+            [--category a,b] [--wait-sec 6] [--limit 5] [--allow-large] [--project DIR]
+                                      Sync sources and return ranked candidates; --use scopes YouMind categories
+                                      Budget: --wait-sec or PROMPT_STUDIO_SYNC_BUDGET_SEC (default 6 seconds)
+  build-seed [--per 5]                Rebuild licensed offline samples
   show <id...> [--category a,b]       Print prompts in full (ids space- or comma-separated)
   cover-check <files...> [--title "..."] [--size WxH] [--out DIR]
                                       Size check plus 340px / 120px-crop / title-overlay previews (needs ffmpeg)
-  gallery --json '{"runId","title","request","query","candidates":[{"id","fit","model","ratio","adapted","default"}]}'
+  gallery --json '{"runId","title","request","targetModel","targetDurationSec","candidates":[{"id","fit","ratio","adapted","default"}]}'
           [--project DIR] [--out FILE] [--serve [--timeout-min 30]]
                                       Write <records>/gallery/<runId>.html (sample images, editable prompt,
                                       source, license). --serve hosts it on 127.0.0.1, prints the url, waits
@@ -1284,27 +2645,123 @@ export async function main(argv = process.argv.slice(2)) {
   const project = path.resolve(flags.project || process.cwd());
   const out = (v) => process.stdout.write(`${JSON.stringify(v, null, 2)}\n`);
   const token = () => authToken();
+  if (
+    flags.limit !== undefined &&
+    ["recommend", "search", "github"].includes(command) &&
+    (typeof flags.limit !== "string" || invalidLimit(Number(flags.limit)))
+  ) {
+    process.exitCode = 2;
+    return out(limitError());
+  }
+
+  if (["recommend", "search", "sync", "show", "sources"].includes(command)) {
+    if (flags.kind && !["image", "video", "code-video"].includes(flags.kind)) {
+      process.exitCode = 2;
+      return out({
+        error: "unknown-kind",
+        hint: "kind must be image, video or code-video",
+      });
+    }
+    if (flags.source) {
+      const kind =
+        flags.kind ||
+        (["recommend", "search"].includes(command) ? "image" : undefined);
+      const known = loadRegistry().filter(
+        (src) => !kind || src.kinds?.includes(kind),
+      );
+      const unknown = list(flags.source).filter(
+        (id) => !known.some((src) => src.id === id),
+      );
+      if (unknown.length) {
+        process.exitCode = 2;
+        return out({
+          error: "unknown-source",
+          unknown,
+          knownIds: known.map((src) => src.id),
+        });
+      }
+    }
+  }
 
   switch (command) {
+    case "check-video":
+      return out(
+        await checkVideo(positional[0], {
+          ratio: flags.ratio,
+          duration: flags.duration,
+          size: flags.size,
+        }),
+      );
+    case "sources": {
+      if (positional[0] === "add")
+        return out(
+          await addSource(positional[1], {
+            kind: flags.kind,
+            adapter: flags.adapter,
+            file: flags.file || flags.path,
+            itemsPath: flags["items-path"],
+            map: flags.map,
+          }),
+        );
+      return out(getSourceStats({ kind: flags.kind }));
+    }
     case "access":
       return out(detectAccess());
     case "session":
       return out(detectSession({ project }));
-    case "sync":
+    case "sync": {
+      if (flags.use && !USE_MAP[flags.use]) {
+        process.exitCode = 2;
+        return out({
+          error: "unknown-use",
+          hint: `use must be one of: ${Object.keys(USE_MAP).join(", ")}`,
+        });
+      }
+      const opts = {
+        kind: flags.kind,
+        sourceIds: list(flags.source),
+        categories: flags.use
+          ? USE_MAP[flags.use]
+          : list(flags.category || flags.categories),
+        all: Boolean(flags.all),
+        force: Boolean(flags.force),
+        allowLarge: Boolean(flags["allow-large"]),
+        token: token(),
+        cachedOnly:
+          Boolean(flags["cached-only"]) ||
+          !(
+            flags.source ||
+            flags.kind ||
+            flags.all ||
+            flags.category ||
+            flags.categories ||
+            flags.use
+          ),
+      };
       return out(
-        await syncLibrary({
-          categories: list(flags.category),
-          all: Boolean(flags.all),
-          force: Boolean(flags.force),
-          allowLarge: Boolean(flags["allow-large"]),
-          token: token(),
-        }),
+        flags["background-lock"]
+          ? await runBackgroundSync(opts, {
+              lockFile: flags["background-lock"],
+              lockToken: flags["background-token"],
+            })
+          : await syncSources(opts),
       );
+    }
     case "recommend": {
       const result = await recommend(positional.join(" "), {
+        kind: flags.kind || "image",
+        model: flags.model,
+        mode: flags.mode,
+        subject: flags.subject,
+        refs: flags.refs === undefined ? 0 : Number(flags.refs),
+        waitSec:
+          flags["wait-sec"] === undefined
+            ? undefined
+            : Number(flags["wait-sec"]),
+        sourceIds: list(flags.source),
         use: typeof flags.use === "string" ? flags.use : undefined,
         categories: list(flags.category),
-        limit: Number(flags.limit) || 5,
+        limit: flags.limit === undefined ? 5 : Number(flags.limit),
         project,
         allowLarge: Boolean(flags["allow-large"]),
         force: Boolean(flags.force),
@@ -1331,8 +2788,9 @@ export async function main(argv = process.argv.slice(2)) {
       if (typeof flags.json !== "string")
         throw new Error("gallery needs --json '<fields>'");
       const fields = JSON.parse(flags.json);
-      const result = galleryPage({
+      const result = await galleryPage({
         ...fields,
+        entries: (await loadAllEntries({})).entries,
         project,
         out: typeof flags.out === "string" ? flags.out : fields.out,
       });
@@ -1362,22 +2820,82 @@ export async function main(argv = process.argv.slice(2)) {
       return out(
         writeBrief({
           ...fields,
+          entries: (await loadAllEntries({})).entries,
           project: flags.project ? project : fields.project || project,
         }),
       );
     }
     case "search": {
-      const categories = list(flags.category);
-      if (categories.length) await syncLibrary({ categories, token: token() });
-      const { origin, entries } = loadEntries({ categories });
-      const results = searchEntries(entries, positional.join(" "), {
-        limit: Number(flags.limit) || 30,
+      const query = positional.join(" ");
+      const kind = flags.kind || "image";
+      const use = flags.use || (kind === "image" ? inferUse(query) : null);
+      if (use && !USE_MAP[use]) {
+        process.exitCode = 2;
+        return out({ error: "unknown-use" });
+      }
+      const categories = use ? USE_MAP[use] : list(flags.category);
+      const sourceIds = list(flags.source);
+      const known = loadRegistry().filter((src) => src.kinds?.includes(kind));
+      const unknown = sourceIds.filter(
+        (id) => !known.some((src) => src.id === id),
+      );
+      if (unknown.length) {
+        process.exitCode = 2;
+        return out({
+          error: "unknown-source",
+          unknown,
+          knownIds: known.map((src) => src.id),
+        });
+      }
+      const opts = {
+        categories,
+        kind,
+        sourceIds,
+        waitSec:
+          flags["wait-sec"] === undefined
+            ? undefined
+            : Number(flags["wait-sec"]),
+        token: token(),
+        allowLarge: Boolean(flags["allow-large"]),
+        force: Boolean(flags.force),
+      };
+      const synced = await syncForQuery(opts);
+      const { origin, entries, notes } = await loadAllEntries(opts);
+      const results = searchEntries(entries, query, {
+        limit: flags.limit === undefined ? 30 : Number(flags.limit),
         ratings: loadRatings(project),
+        model: flags.model,
+        mode: flags.mode,
+        subject: flags.subject,
       });
-      return out({ origin, total: entries.length, results });
+      const cacheNotes = [...(synced.notes || []), ...notes];
+      if (results[0]?.relevanceNote) cacheNotes.push(results[0].relevanceNote);
+      else if (
+        !results.length &&
+        tokenize(query).some((t) => !GENERIC_TECHNIQUE_WORDS.includes(t))
+      )
+        cacheNotes.push(
+          `no close match for ${flags.subject || query}; showing nearest by ${flags.model ? "model" : "keywords"}`,
+        );
+      if (flags.model && !results.some((entry) => !entry.modelMismatch))
+        cacheNotes.push(
+          `no ${flags.model} samples in the libraries; showing other models`,
+        );
+      return out({
+        kind,
+        origin,
+        total: entries.length,
+        results,
+        pending: synced.pending || [],
+        cacheNote: [...new Set(cacheNotes)].join("; "),
+      });
     }
     case "show": {
-      const { entries } = loadEntries({ categories: list(flags.category) });
+      const { entries } = await loadAllEntries({
+        categories: list(flags.category),
+        kind: flags.kind,
+        sourceIds: list(flags.source),
+      });
       const ids = parseIds(positional);
       if (!ids.length) throw new Error("show needs at least one prompt id");
       if (ids.length === 1) {
@@ -1400,7 +2918,7 @@ export async function main(argv = process.argv.slice(2)) {
     case "github":
       return out(
         await searchGithub(positional.join(" "), {
-          limit: Number(flags.limit) || 10,
+          limit: flags.limit === undefined ? 10 : Number(flags.limit),
         }),
       );
     case "source":
@@ -1429,8 +2947,18 @@ export async function main(argv = process.argv.slice(2)) {
     case "rate":
       return out(rateRun(project, positional[0], Number(positional[1])));
     case "build-seed": {
-      await syncLibrary({ all: true, token: token() });
-      const seed = buildSeed(loadEntries({}).entries, Number(flags.per) || 5);
+      const sources = loadRegistry().filter((s) => s.seed === "allowed");
+      await syncSources({
+        sources,
+        all: true,
+        allowLarge: true,
+        token: token(),
+      });
+      const seed = buildSeed(
+        (await loadAllEntries({ sources })).entries,
+        Number(flags.per) || 5,
+        sources,
+      );
       writeJson(SEED_FILE, seed);
       return out({ file: SEED_FILE, entries: seed.entries.length });
     }

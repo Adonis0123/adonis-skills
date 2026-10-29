@@ -44,7 +44,7 @@ codex exec -s workspace-write -C "$PWD" -i ref1.png -i ref2.png - < prompt.txt
 grok -p "$(cat prompt.txt)" --always-approve --output-format json
 ```
 
-This passes the prompt as one shell argument. Keep the double quotes so the shell does not split it. A very long prompt can still exceed the OS argument limit; if that happens, check `grok --help` for a file or stdin flag instead of inventing one. Only use `--always-approve` inside a working directory you are willing to let it write to. In the prompt, name the tool (`image_gen`, `image_edit` or `reference_to_video`), the output path and every parameter. Grok has no text-only video: `reference_to_video` needs at least one reference image.
+This passes the prompt as one shell argument. Keep the double quotes so the shell does not split it. For long prompts use `grok --prompt-file prompt.txt --always-approve --output-format json` instead. Only use `--always-approve` inside a working directory you are willing to let it write to. In the prompt, name the tool (`image_gen`, `image_edit` or `reference_to_video`), the output path and every parameter. Grok has no text-only video: `reference_to_video` needs at least one reference image.
 
 **HTTP API**
 
