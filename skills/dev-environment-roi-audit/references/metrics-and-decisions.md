@@ -67,6 +67,7 @@ Apply these hard rules first:
 - **Remove**: resident cost above 2,000 tokens and fewer than 5 calls.
 - **Narrow**: the component has value, but the exposed tool set greatly exceeds the called subset. Flag usage rate at or below 25% for explicit review.
 - **On demand**: value is demonstrated, but startup/resident cost need not be paid every session.
+- **Rewrite**: a skill or instruction file is used and worth its cost, but its error rate (M2) or rework (M7) points at its own text. Draft two variants: a procedure variant (planning, tool use, completion, context cost; no subject matter) and a domain variant (facts and constraints a practitioner would know). Each variant emits only what it changes. Replay the same redacted prompts against the current text and both variants, then judge anonymized, shuffled outputs against the source material. Adopt, merge, or reject each change only by a behavior difference observed in those runs; when no run shows a difference, keep the current text.
 - **Keep**: measured ROI is positive and no harder remove rule applies.
 
 User decisions can override the recommendation. Record both the threshold result and the user's decision; never rewrite the metric to match the preference.

@@ -800,7 +800,7 @@
       {
         "heading": "Phase 3: run controlled experiments",
         "level": 2,
-        "raw": "Run only experiments supported by the installed CLI version:\n\n- Baseline tax: same minimal prompt, bare/ignore-user-config floor, one-component variants, then full config.\n- Skill trigger accuracy: replay representative redacted first prompts; calculate precision and recall.\n- Feedback-loop latency: time build, full test, focused test, lint, and typecheck when the user has not excluded business repositories.\n- MCP handshake: initialize and tools/list per server with isolated temp/cache paths under `OUT_DIR`.\n\nKeep prompts, model/account, cwd, and timing boundaries identical. Do not compare asynchronous or configuration-drifted runs as causal A/B. Label blocked experiments and missing API keys `UNVERIFIED`.\n\nWrite `03-experiments.md` with sanitized raw output."
+        "raw": "Run only experiments supported by the installed CLI version:\n\n- Baseline tax: same minimal prompt, bare/ignore-user-config floor, one-component variants, then full config.\n- Skill trigger accuracy: replay representative redacted first prompts; calculate precision and recall.\n- Feedback-loop latency: time build, full test, focused test, lint, and typecheck when the user has not excluded business repositories.\n- MCP handshake: initialize and tools/list per server with isolated temp/cache paths under `OUT_DIR`.\n- Rewrite candidates: for components flagged **Rewrite** in the metrics reference, run the current text and its procedure and domain variants on the same prompts. Store variants under `$OUT_DIR/rewrites/<component>/`, never in the live config.\n\nKeep prompts, model/account, cwd, and timing boundaries identical. Do not compare asynchronous or configuration-drifted runs as causal A/B. Label blocked experiments and missing API keys `UNVERIFIED`.\n\nWrite `03-experiments.md` with sanitized raw output."
       },
       {
         "heading": "Phase 4: independent interpretation",
@@ -810,7 +810,7 @@
       {
         "heading": "Phase 5: decide component by component",
         "level": 2,
-        "raw": "Build one row per MCP server, skill, command, plugin, hook, or memory component:\n\n```text\n| component | resident tokens | window calls | usage rate | error rate | ROI | decision |\n```\n\nApply the hard thresholds from the metrics reference without softening them. If the user wants interactive cleanup, present one component at a time with its numbers and wait for a clear retain/remove/disable decision.\n\nAfter an approved mutation:\n\n1. Resolve the exact target with a read-only check.\n2. Make the smallest structured edit; do not rewrite unrelated config.\n3. Verify syntax, component count before/after, current runtime listing, and credential-field count without printing values.\n4. Update the report immediately. Keep historical metrics labeled historical."
+        "raw": "Build one row per MCP server, skill, command, plugin, hook, or memory component:\n\n```text\n| component | resident tokens | window calls | usage rate | error rate | ROI | decision |\n```\n\nApply the hard thresholds from the metrics reference without softening them. For a **Rewrite** row, record which variant changes were adopted and the observed behavior difference behind each; applying the text to live config is an approved mutation like any other. If the user wants interactive cleanup, present one component at a time with its numbers and wait for a clear retain/remove/disable decision.\n\nAfter an approved mutation:\n\n1. Resolve the exact target with a read-only check.\n2. Make the smallest structured edit; do not rewrite unrelated config.\n3. Verify syntax, component count before/after, current runtime listing, and credential-field count without printing values.\n4. Update the report immediately. Keep historical metrics labeled historical."
       },
       {
         "heading": "Phase 6: safe artifact cleanup",
@@ -1071,31 +1071,6 @@
         "heading": "Report",
         "level": 2,
         "raw": "One short block: pairing, rounds and stop reason, duration, counts of Decided / Assumption / Escalation, red-team result, files written, the Watch Page URL, anything `UNVERIFIED` or skipped."
-      }
-    ]
-  },
-  {
-    "slug": "installed-app-feature-inventory",
-    "sections": [
-      {
-        "heading": "Installed app feature inventory",
-        "level": 1,
-        "raw": "Use when the user asks to check, on this machine, what an installed desktop app can actually do. Public articles are contrast only. Local files win."
-      },
-      {
-        "heading": "Steps",
-        "level": 2,
-        "raw": "1. Resolve three names separately: bundle id, on-disk `.app`, and the System Events process name. The menu title, the process name, and the bundle id often differ. Use the process that owns the `.app`, not the localized menu title.\n2. Decide whether a document window is on screen. A running process, or an accessibility tree that is only the menu bar, is not an open window.\n3. If there is no document window, stop trying to `activate` or switch to the app. A tray-resident process stays at zero windows, and raising it flashes the user's screen. Read the bundle instead.\n4. Inventory in three tiers and label every row with its tier:\n   - **Registry** — a machine-readable manifest that has an explicit status field. Only a ready or enabled status counts as registered.\n   - **Package** — feature directories or `SKILL.md` (or the app's equivalent) on disk. Present on disk is not the same as registered.\n   - **UI copy** — localization files (`.po`, `.strings`). A shipped string proves the copy exists, not that the control was opened or entitled for this account.\n5. Walk the feature directory even when a registry lists a subset. Do not report the registry count as the full set.\n6. In the write-up, lead with the version and the evidence source. If the product has both a command surface and task skills, put them in separate tables. Say what was not opened."
-      },
-      {
-        "heading": "Pitfalls",
-        "level": 2,
-        "raw": "- Do not treat a clicked in-app guide flag as proof an invite, login, or entitlement succeeded. The flag only records the click.\n- Do not copy a web writeup's feature list into the local inventory. If the package has no file for that integration, mark it unverified on this machine."
-      },
-      {
-        "heading": "App notes",
-        "level": 2,
-        "raw": "- 剪映专业版 macOS：[references/jianying-pro-macos.md](references/jianying-pro-macos.md)"
       }
     ]
   },

@@ -350,19 +350,6 @@ skills:
       - "选库、选模式前先查仓库、GitHub 和网上的成熟做法，能复用就不重写。"
       - "在浏览器里像看群聊一样实时看提问、回答和判定，不占用 agent 的上下文。"
 
-  installed-app-feature-inventory:
-    displayName: { en: "App Feature Inventory", zh: "应用功能盘点" }
-    group: docs
-    tags: [docs-and-ops]
-    summary: "List what an installed macOS desktop app actually supports by inspecting its local bundle, registry, and strings."
-    summary_zh: "直接检查本机已安装 macOS 应用的包目录、注册表与文案文件，盘点它真正支持的功能。"
-    use_cases:
-      - "Check which features or skills are shipped and enabled inside a local .app bundle on your Mac."
-      - "Compare public feature claims against the files actually installed on disk without flashing app windows."
-    use_cases_zh:
-      - "不弹窗打扰屏幕，直接拆看本地 .app 包里到底装了哪些命令和技能。"
-      - "对比宣传文章里的功能清单，核实哪些功能在当前机器和版本上真正可用。"
-
   kimi-computer-use:
     displayName: { en: "Kimi Computer Use", zh: "Kimi 电脑操控" }
     group: tools

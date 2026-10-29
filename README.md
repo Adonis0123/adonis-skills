@@ -63,7 +63,6 @@ npx skills add adonis0123/adonis-skills --list
 | **Local environment**                                                           |                                                                                                                                        |
 | [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | Audit MCP servers, skills, and instruction files with real logs; keep, narrow, or remove by ROI.                                       |
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | Tell whether a desktop-hosted coding agent is working, idle, or stopped, from process and file evidence.                               |
-| [`installed-app-feature-inventory`](./skills/installed-app-feature-inventory)   | List what an installed macOS app can really do, from its bundle on disk.                                                               |
 | [`disk-tidy`](./skills/disk-tidy)                                               | Find what filled a developer Mac's disk, rank caches and app data by risk, and clean only what you approve.                            |
 | [`file-tidy`](./skills/file-tidy)                                               | Sort Desktop, Downloads and home files into one numbered `~/Files` Root with verified, reversible moves.                               |
 | [`worktree-tidy`](./skills/worktree-tidy)                                       | Find stale git worktrees across repositories and remove the idle, clean ones you confirm, keeping branches unless merged.              |
@@ -107,7 +106,7 @@ flowchart LR
   repo --> web["Web catalog<br/>adonis-skills.vercel.app"]
 ```
 
-- Some skills (`dev-environment-roi-audit`, `desktop-agent-activity`, `installed-app-feature-inventory`) are exported from a private source. Machine- or company-specific details stay in `references/local-*.md` files that are never exported.
+- Some skills (`dev-environment-roi-audit`, `desktop-agent-activity`) are exported from a private source. Machine- or company-specific details stay in `references/local-*.md` files that are never exported.
 - Third-party skills are only linked, never vendored.
 - Every skill is a directory `skills/<name>/` with a `SKILL.md` whose frontmatter `name` equals the directory name.
 

@@ -95,6 +95,7 @@ Run only experiments supported by the installed CLI version:
 - Skill trigger accuracy: replay representative redacted first prompts; calculate precision and recall.
 - Feedback-loop latency: time build, full test, focused test, lint, and typecheck when the user has not excluded business repositories.
 - MCP handshake: initialize and tools/list per server with isolated temp/cache paths under `OUT_DIR`.
+- Rewrite candidates: for components flagged **Rewrite** in the metrics reference, run the current text and its procedure and domain variants on the same prompts. Store variants under `$OUT_DIR/rewrites/<component>/`, never in the live config.
 
 Keep prompts, model/account, cwd, and timing boundaries identical. Do not compare asynchronous or configuration-drifted runs as causal A/B. Label blocked experiments and missing API keys `UNVERIFIED`.
 
@@ -119,7 +120,7 @@ Build one row per MCP server, skill, command, plugin, hook, or memory component:
 | component | resident tokens | window calls | usage rate | error rate | ROI | decision |
 ```
 
-Apply the hard thresholds from the metrics reference without softening them. If the user wants interactive cleanup, present one component at a time with its numbers and wait for a clear retain/remove/disable decision.
+Apply the hard thresholds from the metrics reference without softening them. For a **Rewrite** row, record which variant changes were adopted and the observed behavior difference behind each; applying the text to live config is an approved mutation like any other. If the user wants interactive cleanup, present one component at a time with its numbers and wait for a clear retain/remove/disable decision.
 
 After an approved mutation:
 

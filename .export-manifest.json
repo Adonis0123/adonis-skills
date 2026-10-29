@@ -4,18 +4,17 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/dotagents@7037b5c0c6b6a9b2cb9eb8a1dacec74753127eea",
+      "source": "Adonis0123/dotagents@89c3530d3c63b94a674b2224862e5586fb1058c5",
       "dirty": false
     },
     {
-      "source": "Adonis0123/dothermes@f7c99771eaae69c19b2203bd06ddc971651c5ad6",
+      "source": "Adonis0123/dothermes@636058555b17de9bc385d55fcbb30e3549790eb4",
       "dirty": false
     }
   ],
   "managed": [
     "skills/desktop-agent-activity",
-    "skills/dev-environment-roi-audit",
-    "skills/installed-app-feature-inventory"
+    "skills/dev-environment-roi-audit"
   ],
   "files": [
     {
@@ -32,7 +31,7 @@
     },
     {
       "path": "skills/dev-environment-roi-audit/SKILL.md",
-      "sha256": "9f47f18a606bb7b37ee7eceed03128617a801e965cbb6f7aaa17633329e64924"
+      "sha256": "32b310a8e2b23899b6af528e92123deb2f626d26441f6860361cb47df9a232c4"
     },
     {
       "path": "skills/dev-environment-roi-audit/evals/evals.json",
@@ -52,7 +51,7 @@
     },
     {
       "path": "skills/dev-environment-roi-audit/references/metrics-and-decisions.md",
-      "sha256": "7a9ffbedfbe1ffa026e37071c311a9d3704e1651ce1869d859e488adf752b82b"
+      "sha256": "95b4056a27605e7cc4240980b23829e3c8eb6d4c8deb0e4e3688de772e97f635"
     },
     {
       "path": "skills/dev-environment-roi-audit/scripts/finalize_audit.py",
@@ -65,14 +64,6 @@
     {
       "path": "skills/dev-environment-roi-audit/scripts/probe_jsonl_schema.py",
       "sha256": "818f05ca1d88fb4b41f8709878c7d831d9f59dd91c8e91142d0eee44d03ff6f9"
-    },
-    {
-      "path": "skills/installed-app-feature-inventory/SKILL.md",
-      "sha256": "9de19bb33cc3ee2c4fb342ddca135f03a9ee0f04a9dd67d1b732b800e44dc1d8"
-    },
-    {
-      "path": "skills/installed-app-feature-inventory/references/jianying-pro-macos.md",
-      "sha256": "cb4a4cddec4ba810321ce8e7d4581408dd4ecbd311049bb773fa1244483e6958"
     }
   ]
 }
