@@ -1417,6 +1417,7 @@ def build_parser() -> argparse.ArgumentParser:
     config = sub.add_parser("run")
     config.add_argument("action", choices=("set",))
     config.add_argument("--coordinator-session")
+    config.add_argument("--account", help="the Coordinator's account after a handoff, e.g. claude:main")
     config.add_argument("--budget-usd", type=float, help="raise or set the Run budget after the user agreed")
     init.add_argument("--account", help="the Coordinator's account, e.g. claude:008")
 
@@ -1695,10 +1696,12 @@ def _main(argv: list[str] | None = None) -> int:
             print(close_run(run_dir, run))
             return 0
         if args.cmd == "run":
-            if args.coordinator_session is None and args.budget_usd is None:
-                raise BoardError("run set needs --coordinator-session or --budget-usd")
+            if args.coordinator_session is None and args.account is None and args.budget_usd is None:
+                raise BoardError("run set needs --coordinator-session, --account or --budget-usd")
             if args.coordinator_session is not None:
                 run["coordinator_session"] = args.coordinator_session
+            if args.account is not None:
+                run["coordinator"] = args.account
             if args.budget_usd is not None:
                 run["budget_usd"] = args.budget_usd
         elif args.cmd == "lane":

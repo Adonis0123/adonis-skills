@@ -165,7 +165,7 @@ Notes from the pilot:
 
 ## Handoff
 
-A sideby handoff brief includes the Coordinator Session Reference from `sideby sessions copy <coordinator-session-id> --as reference --json` when available. Append `Run directory: <run dir>` to that reference so the receiving Coordinator can find the ledger. If unavailable, name the Coordinator account and session id explicitly. The brief names the Run directory and, in Orca mode, the Orca run id. The next Coordinator sets `AGENT_DISPATCH_RUN` (and `orca orchestration run-use <id>`) and continues the same Run; it does not start a new one.
+A sideby handoff brief includes the Coordinator Session Reference from `sideby sessions copy <coordinator-session-id> --as reference --json` when available. Append `Run directory: <run dir>` to that reference so the receiving Coordinator can find the ledger. If unavailable, name the Coordinator account and session id explicitly. The brief names the Run directory and, in Orca mode, the Orca run id. The next Coordinator sets `AGENT_DISPATCH_RUN` (and `orca orchestration run-use <id>`) and continues the same Run; it does not start a new one. Its first ledger command is `run set --account <its account> --coordinator-session <its session id>`, so the ledger, the Board and the session index name who coordinates now.
 
 ## sideby sessions, messages and the session index
 
@@ -173,7 +173,7 @@ A sideby handoff brief includes the Coordinator Session Reference from `sideby s
 
 Register `lane add/set --session <id>`; a Claude `result.session_id` is also persisted by `show`. Session ids are the join key; never match a Worker by account alone. Orca terminal titles are `<Lane> · <role>`; sideby's accountTitle adds the account and id. Do not repeatedly reset the resulting Session Label.
 
-Messages to a running Worker go through sideby from the Coordinator (`sideby send <session> "<text>" --json` after `sideby send --help` succeeds) or Orca `orchestration reply`; the user sends their own from the Panel's 会话 page. The ledger records no delivery receipts.
+Messages to a running Worker go through sideby from the Coordinator (`sideby send <session> "<text>" --json` after `sideby send --help` succeeds) or Orca `orchestration reply`; the user sends their own from the Panel's 会话 page. The ledger records no delivery receipts. To reach a Run's Coordinator from another session, use `sideby send <coordinator_session from run.json>`: Claude Code's own `ListAgents` / `SendMessage` see only sessions of the same account, and sideby follows an Auto Handoff from the recorded session to the one that carries the Run now. Never pick a recipient by its folder or repository name; when no session matches, list `sideby sessions --json` and ask the user.
 
 Record your own session at `init --coordinator-session <id>` (or later `run set --coordinator-session <id>`); without one, `init` tries once to find a non-guessed Live Session whose pid is a process ancestor, never a guess by account.
 

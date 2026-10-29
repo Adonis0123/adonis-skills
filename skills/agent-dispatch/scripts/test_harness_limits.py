@@ -59,6 +59,14 @@ class TestHarnessLimits(BoardTestCase):
         self.assertEqual(code, 2)
         self.assertIn("--budget-usd", err)
 
+    def test_run_set_moves_the_coordinator_after_a_handoff(self):
+        run_dir = self.init("--account", "claude:002", "--coordinator-session", "old-session")
+        code, _, err = self.run_cli("--run", run_dir, "run", "set", "--account", "claude:main",
+                                    "--coordinator-session", "new-session")
+        self.assertEqual(code, 0, err)
+        run = board.load_run(run_dir)
+        self.assertEqual((run["coordinator"], run["coordinator_session"]), ("claude:main", "new-session"))
+
     def test_overlapping_writers_are_refused_disjoint_ones_pass(self):
         run_dir = self.init()
         add = lambda i, owns, *x: self.run_cli("--run", run_dir, "lane", "add", "--id", i, "--role", "write",
