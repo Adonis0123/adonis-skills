@@ -126,6 +126,47 @@ export function licenseStatusOf(license, source = {}) {
   return "unstated";
 }
 
+const POST_ID =
+  /^https?:\/\/(?:www\.|mobile\.)?(?:x|twitter)\.com\/[^/]+\/status(?:es)?\/(\d+)/i;
+export const postIdOf = (url) => POST_ID.exec(String(url || ""))?.[1] || null;
+
+// Several libraries collect the same X post. A video entry without a clip
+// borrows the clip another library keeps for that post, from a library of its
+// own kind when one has it; videoFrom names the lender.
+export function borrowClips(entries, opts = {}) {
+  const needy = entries.filter(
+    (e) => e.kind !== "image" && !e.videos?.length && postIdOf(e.link),
+  );
+  if (!needy.length) return;
+  const clips = new Map();
+  const add = (e) => {
+    const id = postIdOf(e?.link);
+    if (!id || !e.videos?.[0]) return;
+    if (!clips.has(id)) clips.set(id, []);
+    clips.get(id).push(e);
+  };
+  entries.forEach(add);
+  const complete = new Set(
+    opts.kind || opts.categories?.length ? [] : entries.map((e) => e.sourceId),
+  );
+  const cache = opts.cache || cacheDir();
+  for (const src of loadRegistry(opts)) {
+    if (complete.has(src.id) || !src.kinds?.some((k) => k !== "image"))
+      continue;
+    const cached = read(path.join(cache, src.id, ".normalized.json"), null);
+    if (Array.isArray(cached)) cached.forEach(add);
+  }
+  for (const e of needy) {
+    const lenders = clips.get(postIdOf(e.link)) || [];
+    const from = lenders.find((x) => x.kind === e.kind) || lenders[0];
+    if (!from) continue;
+    e.videos = [from.videos[0]];
+    e.videoFrom = { sourceId: from.sourceId, source: from.source, id: from.id };
+    e.mediaState = "video";
+    e.evidence = "clip";
+  }
+}
+
 function read(file, fallback = null) {
   try {
     return JSON.parse(fs.readFileSync(file, "utf8"));
@@ -818,6 +859,7 @@ export async function loadAllEntries(opts = {}) {
     if (opts.kind) loaded = loaded.filter((e) => e.kind === opts.kind);
     entries.push(...loaded);
   }
+  borrowClips(entries, opts);
   return { entries, origin: cached ? "cache" : "seed", notes };
 }
 

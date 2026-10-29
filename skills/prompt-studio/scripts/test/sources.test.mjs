@@ -1897,3 +1897,92 @@ test("youmind keeps seed entries of categories not downloaded yet", async () => 
     1,
   );
 });
+
+test("a video entry without a clip borrows the clip another library keeps for the same X post", async () => {
+  const cache = tmp();
+  const lender = {
+    ...source,
+    id: "lender",
+    repo: "o/lender",
+    map: { title: "title", content: "prompt", link: "url", videos: "clip" },
+  };
+  const borrower = { ...lender, id: "borrower", repo: "o/borrower" };
+  // Same post, another kind: used only when no library of the same kind has it.
+  const other = {
+    ...lender,
+    id: "other",
+    repo: "o/other",
+    kinds: ["code-video"],
+  };
+  const rows = {
+    lender: [
+      {
+        title: "a",
+        prompt: "a",
+        url: "https://twitter.com/someone/status/42",
+        clip: "https://cdn.example/42.mp4",
+      },
+      { title: "b", prompt: "b", url: "https://x.com/someone/status/7" },
+    ],
+    other: [
+      {
+        title: "a",
+        prompt: "a",
+        url: "https://x.com/someone/status/42",
+        clip: "https://cdn.example/other-42.mp4",
+      },
+      {
+        title: "b",
+        prompt: "b",
+        url: "https://x.com/someone/status/7",
+        clip: "https://cdn.example/other-7.mp4",
+      },
+    ],
+    borrower: [
+      { title: "a", prompt: "a", url: "https://x.com/other/status/42?s=20" },
+      { title: "b", prompt: "b", url: "https://x.com/someone/status/7" },
+      { title: "c", prompt: "c", url: "https://example.com/status/42" },
+    ],
+  };
+  for (const src of [other, lender, borrower]) {
+    const file = path.join(cache, src.id, "raw", src.file);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(rows[src.id]));
+  }
+  const sources = [other, lender, borrower];
+  const check = (entries) => {
+    const [a, b, c] = entries.filter((e) => e.sourceId === "borrower");
+    assert.deepEqual(a.videos, ["https://cdn.example/42.mp4"]);
+    assert.equal(a.videoFrom.sourceId, "lender");
+    assert.equal(a.videoFrom.source, "o/lender");
+    assert.match(a.videoFrom.id, /^lender:/);
+    assert.equal(a.mediaState, "video");
+    assert.equal(a.evidence, "clip");
+    // Only the other kind keeps a clip for post 7.
+    assert.deepEqual(b.videos, ["https://cdn.example/other-7.mp4"]);
+    assert.equal(b.videoFrom.sourceId, "other");
+    // A non-X link never matches.
+    for (const e of [c]) {
+      assert.deepEqual(e.videos, []);
+      assert.equal(e.videoFrom, undefined);
+    }
+  };
+  check((await loadAllEntries({ cache, sources, seedFile: null })).entries);
+  // Searching the borrower alone still finds the lender's cached clip.
+  const alone = await loadAllEntries({
+    cache,
+    sources,
+    sourceIds: "borrower",
+    seedFile: null,
+  });
+  assert.deepEqual(
+    [...new Set(alone.entries.map((e) => e.sourceId))],
+    ["borrower"],
+  );
+  check(alone.entries);
+  // The cached index keeps the library's own data, not the borrowed clip.
+  const cached = JSON.parse(
+    fs.readFileSync(path.join(cache, "borrower", ".normalized.json"), "utf8"),
+  );
+  assert.deepEqual(cached[0].videos, []);
+});

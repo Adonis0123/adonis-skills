@@ -931,6 +931,7 @@ export function searchEntries(
       description: String(e.description || "").slice(0, 600),
       images: (e.sourceMedia || []).slice(0, 4),
       videos: (e.videos || []).slice(0, 2),
+      ...(e.videoFrom ? { videoFrom: e.videoFrom } : {}),
       model: e.model || null,
       modelKey: entryModelKeys(e)[0] || null,
       modelKeys: entryModelKeys(e),
@@ -1970,6 +1971,7 @@ export function withTarget(
           : null),
       curatedSource: c.curatedSource ?? e?.curatedSource ?? false,
       videos: c.videos ?? e?.videos ?? [],
+      videoFrom: c.videoFrom ?? e?.videoFrom ?? null,
       modelMatch,
       modelMismatch: modelMatch === "mismatched" ? String(wantedModel) : false,
     };

@@ -1059,7 +1059,12 @@ describe("gallery candidates", () => {
       [video, still, bare],
     );
     assert.ok(html.includes('<span class="chip ev is-clip">可播放样片</span>'));
-    assert.ok(html.includes('<span class="chip ev is-still">只有静图</span>'));
+    // The still card's post is on X, so the chip points there.
+    assert.ok(
+      html.includes(
+        '<span class="chip ev is-still">只有静图<span class="ev-more">，视频在原帖</span></span>',
+      ),
+    );
     // A code template has no prompt: it is judged by its description.
     assert.ok(
       html.includes(
@@ -1120,6 +1125,100 @@ describe("gallery candidates", () => {
         'No sample<span class="ev-more">; judge it by the template description</span>',
       ),
     );
+  });
+
+  it("sends a video card without a playable clip to its post on a video site", () => {
+    const still = { ...video, id: "st", videos: [] };
+    const bare = {
+      ...video,
+      id: "bare",
+      videos: [],
+      sourceMedia: [],
+      link: "https://www.youtube.com/watch?v=abc",
+    };
+    const news = {
+      ...video,
+      id: "news",
+      videos: [],
+      sourceMedia: [],
+      link: "https://www.theverge.com/veo-3",
+    };
+    const html = page(
+      [{ id: video.id }, { id: "st" }, { id: "bare" }, { id: "news" }],
+      [video, still, bare, news],
+    );
+    const card = (id) => {
+      const rest = html.slice(html.indexOf(`data-id="${id}"`));
+      return rest.slice(0, rest.indexOf("</article>"));
+    };
+    assert.ok(!card(video.id).includes('class="watch"'));
+    // Over the still image, inside its frame.
+    assert.match(
+      card("st"),
+      /<div class="frame is-loading"[\s\S]*<a class="watch" href="https:\/\/x\.com\/techhalla\/status\/1" target="_blank" rel="noopener"><svg[\s\S]*<span>去 X 看原视频<\/span><\/a>\s*<\/div>/,
+    );
+    // A card with nothing to show gets the button in its body.
+    assert.ok(
+      card("bare").includes(
+        '<p class="watch-line"><a class="watch" href="https://www.youtube.com/watch?v=abc"',
+      ) && card("bare").includes("去 YouTube 看原视频"),
+    );
+    assert.ok(
+      card("bare").includes('<span class="ev-more">，视频在原帖</span>'),
+    );
+    // A news article is not a video post: no button, the usual chip.
+    assert.ok(!card("news").includes('class="watch"'));
+    assert.ok(card("news").includes("只能看提示词判断"));
+    const en = renderGallery({
+      title: "t",
+      locale: "en",
+      candidates: buildCandidates([{ id: "st" }], [still]).candidates,
+    });
+    assert.ok(en.includes("Watch the original on X"));
+  });
+
+  it("points a clip that fails to play at its post when the post is on a video site", () => {
+    const html = page([{ id: video.id }], [video]);
+    assert.ok(
+      html.includes(
+        '<a class="fallback" href="https://x.com/techhalla/status/1" target="_blank" rel="noopener" hidden><span>视频放不出来，<u>去 X 看原视频</u></span></a>',
+      ),
+    );
+    assert.ok(
+      html.includes(
+        '<p class="note broken-note">样片加载不出来。<a href="https://x.com/techhalla/status/1" target="_blank" rel="noopener">去 X 看原视频</a></p>',
+      ),
+    );
+    // No video-site post: the links open the clip itself, as before.
+    const own = { ...video, link: "https://example.com/case" };
+    const plain = page([{ id: video.id }], [own]);
+    assert.ok(
+      plain.includes(
+        '<a class="fallback" href="https://cdn.example/clip.mp4" target="_blank" rel="noopener" hidden><span>视频放不出来，<u>点这里在新窗口打开</u></span></a>',
+      ),
+    );
+    assert.ok(!plain.includes('class="watch"'));
+  });
+
+  it("names the library a borrowed clip comes from", () => {
+    const lent = {
+      ...video,
+      id: "lent",
+      videoFrom: {
+        sourceId: "minimax-h3-cases",
+        source: "SkyNotSilent/awesome-MiniMax-H3-cases",
+        id: "minimax-h3-cases:x",
+      },
+    };
+    const html = page([{ id: "lent" }], [lent]);
+    assert.ok(
+      html.includes(
+        '<figcaption class="lent">样片取自 <a href="https://github.com/SkyNotSilent/awesome-MiniMax-H3-cases" target="_blank" rel="noopener">SkyNotSilent/awesome-MiniMax-H3-cases</a> 收录的同一条帖子</figcaption>',
+      ),
+    );
+    assert.ok(!page([{ id: video.id }], [video]).includes('class="lent"'));
+    const odd = { ...lent, videoFrom: { source: "<b>x</b>" } };
+    assert.ok(!page([{ id: "lent" }], [odd]).includes('class="lent"'));
   });
 
   it("separates a short candidate name from its one-line fit and clamps long titles", () => {

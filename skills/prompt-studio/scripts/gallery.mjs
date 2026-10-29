@@ -66,6 +66,25 @@ const safeImage = (u) => safeMedia(u, IMAGE_EXT);
 const safeVideo = (u) => safeMedia(u, VIDEO_EXT);
 const safeLink = (u) =>
   /^https?:\/\//i.test(String(u || "")) ? String(u) : null;
+// The video site a post link points to, named on the links that send people
+// to the original video; null for any other page.
+const VIDEO_SITES = [
+  [/(?:^|\.)(?:x|twitter)\.com$/, "X"],
+  [/(?:^|\.)(?:youtube\.com|youtu\.be)$/, "YouTube"],
+  [/(?:^|\.)vimeo\.com$/, "Vimeo"],
+  [/(?:^|\.)tiktok\.com$/, "TikTok"],
+  [/(?:^|\.)bilibili\.com$/, "Bilibili"],
+  [/(?:^|\.)instagram\.com$/, "Instagram"],
+];
+function videoSite(link) {
+  let host = "";
+  try {
+    host = new URL(link).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+  return VIDEO_SITES.find(([re]) => re.test(host))?.[1] || null;
+}
 
 // Every visible string, in the page's locale. Library data is never translated.
 const TEXT = {
@@ -165,6 +184,9 @@ const TEXT = {
     noMedia: (what) =>
       `<b>没有${what}</b>资料库里这一条没有可看的${what}，只能看提示词判断。`,
     sampleWord: { image: "样图", other: "样片" },
+    watch: (site) => `去 ${site} 看原视频`,
+    watchMore: "视频在原帖",
+    lent: (repo) => `样片取自 ${repo} 收录的同一条帖子`,
     head: (request, anyVideo, n) =>
       `${request ? `${request}。` : ""}${anyVideo ? "看样片挑一个（视频移上去或点一下就播放）" : "看图挑一个"}，点「选这个」或按数字键 <kbd>1</kbd>–<kbd>${Math.min(n, 9)}</kbd>。想改提示词，先在框里改。`,
     offline: "样片暂时看不到（可能离线），可以先按提示词选。",
@@ -278,6 +300,9 @@ const TEXT = {
     noMedia: (what) =>
       `<b>No ${what}</b>This entry has no ${what} to show; judge it by the prompt.`,
     sampleWord: { image: "sample image", other: "sample" },
+    watch: (site) => `Watch the original on ${site}`,
+    watchMore: "the video is in the original post",
+    lent: (repo) => `Clip from the same post in ${repo}`,
     head: (request, anyVideo, n) =>
       `${request ? `${request}. ` : ""}Pick one by its ${anyVideo ? "sample (videos play on hover or tap)" : "image"}, then click “Use this” or press <kbd>1</kbd>–<kbd>${Math.min(n, 9)}</kbd>. To change a prompt, edit it in its box first.`,
     offline:
@@ -726,9 +751,20 @@ function markPlaceholders(text) {
   return out + esc(s.slice(last));
 }
 
+const watchHtml = (post, t) =>
+  `<a class="watch" href="${esc(post.link)}" target="_blank" rel="noopener">${PLAY_ICON}<span>${esc(t.watch(post.site))}</span></a>`;
+
+// A clip borrowed from another library that saved the same post says so.
+function lentHtml(c, t) {
+  const repo = String(c.videoFrom?.source || "");
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return "";
+  return `<figcaption class="lent">${t.lent(`<a href="https://github.com/${esc(repo)}" target="_blank" rel="noopener">${esc(repo)}</a>`)}</figcaption>`;
+}
+
 const PLAY_ICON = `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5Z" fill="currentColor"/></svg>`;
 
-function mediaHtml(c, images, videos, t) {
+// post: the original post on a video site ({ link, site }), or null.
+function mediaHtml(c, images, videos, t, post = null) {
   const ar = aspect(c.sampleRatio, c.kind);
   const dur = clock(c.sampleDurationSec);
   const [hero, ...rest] = images;
@@ -746,22 +782,25 @@ function mediaHtml(c, images, videos, t) {
           .join("")}</div>`
       : "";
   if (video) {
+    // A clip that will not play sends people to the post when it has one.
+    const rescue = post ? post.link : video;
+    const rescueText = esc(post ? t.watch(post.site) : t.videoFallbackLink);
     return `<figure class="media">
     <div class="frame is-video is-loading" style="--ar:${ar}" data-poster="${esc(hero || "")}"${posterAlt ? ` data-poster-alt="${esc(posterAlt)}"` : ""}>
       <video src="${esc(video)}${hero || video.includes("#") ? "" : "#t=0.5"}"${hero ? ` poster="${esc(hero)}" preload="none"` : ` preload="metadata"`} muted loop playsinline aria-label="${esc(t.sampleOf(c.title))}"></video>
       <button type="button" class="play" aria-label="${t.play(c.num)}">${PLAY_ICON}</button>
       ${dur ? `<span class="dur" aria-label="${t.sampleLength} ${dur}">${dur}</span>` : ""}
-      <a class="fallback" href="${esc(video)}" target="_blank" rel="noopener" hidden><span>${t.videoFallback}<u>${t.videoFallbackLink}</u></span></a>
+      <a class="fallback" href="${esc(rescue)}" target="_blank" rel="noopener" hidden><span>${t.videoFallback}<u>${rescueText}</u></span></a>
       ${hero ? `<p class="note poster-note">${t.posterBroken}</p>` : ""}
-      <p class="note broken-note">${t.videoBroken}<a href="${esc(video)}" target="_blank" rel="noopener">${t.tryTab}</a></p>
-    </div>${thumbs}
+      <p class="note broken-note">${t.videoBroken}<a href="${esc(rescue)}" target="_blank" rel="noopener">${post ? rescueText : t.tryTab}</a></p>
+    </div>${thumbs}${lentHtml(c, t)}
   </figure>`;
   }
   if (hero) {
     return `<figure class="media">
     <div class="frame is-loading" style="--ar:${ar}">
       <a class="hero" href="${esc(hero)}" target="_blank" rel="noopener" title="${t.viewLarge}"><img src="${esc(hero)}" alt="${esc(t.imageOf(c.title))}" loading="lazy" decoding="async" onload="this.closest('.frame').classList.remove('is-loading')" onerror="this.closest('.frame').classList.add('broken')"></a>
-      <p class="note broken-note">${t.imageBroken}<a href="${esc(hero)}" target="_blank" rel="noopener">${t.tryTab}</a></p>
+      <p class="note broken-note">${t.imageBroken}<a href="${esc(hero)}" target="_blank" rel="noopener">${t.tryTab}</a></p>${post ? watchHtml(post, t) : ""}
     </div>${thumbs}
   </figure>`;
   }
@@ -816,7 +855,20 @@ function candidateHtml(c, i, page) {
       ? `<span class="chip model">${t.sampleModel}${sep}<b>${esc(model)}</b></span>`
       : "";
   const what = kind === "image" ? "image" : "other";
-  const evidenceChip = `<span class="chip ev is-${evidence}">${evidence === "clip" ? t.evidence.clip : t.evidence[evidence][what]}${bare ? `<span class="ev-more">${zh ? "，" : "; "}${isTemplate ? t.noMediaTemplate : t.noMediaInline}</span>` : ""}</span>`;
+  const link = safeLink(c.link);
+  // The original post on a video site: the way to the video when the card
+  // has no playable clip, and the fallback when its clip fails to play.
+  const site = kind !== "image" && link ? videoSite(link) : null;
+  const post = site ? { link, site } : null;
+  const watch = post && evidence !== "clip";
+  const evMore = watch
+    ? t.watchMore
+    : bare
+      ? isTemplate
+        ? t.noMediaTemplate
+        : t.noMediaInline
+      : "";
+  const evidenceChip = `<span class="chip ev is-${evidence}">${evidence === "clip" ? t.evidence.clip : t.evidence[evidence][what]}${evMore ? `<span class="ev-more">${zh ? "，" : "; "}${evMore}</span>` : ""}</span>`;
   const sampleDur = clock(c.sampleDurationSec);
   const sampleRatio = c.sampleRatio ? String(c.sampleRatio) : "";
   // What the sample is: kind, model, shape, length, prompt language.
@@ -903,7 +955,6 @@ function candidateHtml(c, i, page) {
   const marked = isTemplate ? "" : markPlaceholders(previewText(prompt));
   const hasPlaceholders =
     !isTemplate && placeholderSpans(String(prompt)).length > 0;
-  const link = safeLink(c.link);
   const repo = safeLink(c.sourceUrl);
   const head = headline(c);
   const boxId = `prompt-${num}`;
@@ -915,7 +966,7 @@ function candidateHtml(c, i, page) {
     summary === lic.text || summary === t.license.other ? "" : summary;
   return `
 <article class="cand${recommended ? " is-default" : ""}${isTemplate ? " is-template" : ""}${bare ? " is-bare" : ""}" data-id="${esc(c.id)}" data-num="${num}" data-kind="${kind}" data-evidence="${evidence}">
-  ${bare ? "" : mediaHtml(card, images, videos, t)}
+  ${bare ? "" : mediaHtml(card, images, videos, t, post)}
   <div class="body">
     <header>
       <span class="num">${num}</span>
@@ -925,6 +976,7 @@ function candidateHtml(c, i, page) {
     ${head.fit ? `<p class="fit">${esc(head.fit)}</p>` : ""}
     ${head.name && title && !isTemplate ? `<p class="ref" title="${esc(title)}">${bare ? t.refCase : t.refSample}${sep}${esc(title)}</p>` : ""}
     ${chips.length ? `<p class="facts">${chips.join("")}</p>` : ""}
+    ${bare && watch ? `<p class="watch-line">${watchHtml(post, t)}</p>` : ""}
     ${
       hint
         ? `<div class="template"><p>${t.templateNote(esc(title))}</p>${hint.shows ? `<p class="template-shows" title="${esc(hint.shows)}">${esc(shortText(hint.shows))}</p>` : ""}${hint.foreign ? `<p class="template-foreign" lang="${zh ? "en" : "zh"}" title="${esc(hint.foreign)}">${esc(shortText(hint.foreign))}</p>` : ""}</div>`
@@ -1148,6 +1200,14 @@ main{max-width:1120px;margin:0 auto;padding:40px 16px 96px}
 .fallback img{max-height:calc(100% - 32px);height:auto;flex:1;min-height:0}
 .video-broken video,.video-broken .play,.video-broken .dur{display:none}
 .fallback span{padding:0 12px 10px}
+.watch{display:inline-flex;align-items:center;gap:6px;padding:6px 12px 6px 10px;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-size:13px;font-weight:600;text-decoration:none;transition:background .2s ease}
+.watch:hover{background:var(--accent-hover)}
+.watch svg{width:14px;height:14px;flex:none}
+.frame .watch{position:absolute;left:10px;bottom:10px}
+.frame.broken .watch{position:static}
+.watch-line{margin:0}
+.lent{font-size:12px;color:var(--ink-2);overflow-wrap:anywhere}
+.lent a{color:inherit}
 .body{padding:20px 24px 20px 12px;display:flex;flex-direction:column;gap:10px;min-width:0}
 .body header{display:flex;align-items:center;gap:12px}
 .num{flex:none;display:grid;place-items:center;width:32px;height:32px;border-radius:999px;background:var(--sunk);font-weight:700}
@@ -1611,6 +1671,7 @@ export function buildCandidates(picks, entries) {
       title: p.title || e?.title || `#${p.id}`,
       images: p.images || e?.sourceMedia || (p.image ? [p.image] : []),
       videos,
+      videoFrom: field("videoFrom"),
       category: p.category || e?.category,
       content,
       ...(p.adapted ? { adapted: shown } : {}),
