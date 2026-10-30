@@ -29,7 +29,7 @@ _Avoid_: repo, provider
 What a candidate is for: `image`, `video` (a video model) or `code-video` (a template or example rendered from code).
 
 **Recommendation List**:
-The up to 5 candidates shown after `recommend`, each with a sample image or clip, the model that made it, author, source and license, one of them marked as the default.
+The 5 candidates (up to 9 on request) shown after `recommend`, each with a sample image or clip, the model that made it, author, source and license, one of them marked as the default.
 
 **Run Record**:
 One line per generation, including the user's score; scores feed back into later rankings.

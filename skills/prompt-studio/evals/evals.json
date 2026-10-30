@@ -5,7 +5,7 @@
       "id": 1,
       "eval_name": "one-line-cover-assumes-defaults-and-recommends-same-turn",
       "prompt": "Use $prompt-studio. 帮我做一张讲 MCP 的公众号封面。Do not call any generation tool; stop at the recommendation list and write outputs/report.md.",
-      "expected_output": "In one message, states at most 3 assumed defaults, builds a candidate page with the best 3 of recommend --use cover (samples, source and license on the page) and lists them in chat as short numbered lines; marks one default and stops before generating",
+      "expected_output": "In one message, states at most 3 assumed defaults, builds a candidate page with the best 5 of recommend --use cover (samples, source and license on the page) and lists them in chat as short numbered lines; marks one default and stops before generating",
       "files": [],
       "expectations": [
         "Same-turn assumptions plus candidates is acceptable: does not wait a full turn for answers before searching",
@@ -113,7 +113,7 @@
       "expectations": [
         "Translates the idea into English keywords before searching",
         "Does not pass CJK-only text to recommend",
-        "Runs studio.mjs recommend with --use cover and --limit 5 or fewer"
+        "Runs studio.mjs recommend with --use cover and --limit 8 or fewer"
       ]
     },
     {

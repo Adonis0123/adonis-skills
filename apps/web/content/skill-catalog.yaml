@@ -408,14 +408,14 @@ skills:
     displayName: { en: "Prompt Studio", zh: "提示词工坊" }
     group: create
     tags: [creative, agent-workflow]
-    summary: "Turn one line into an image, code video or AI video: pick from 3 proven GitHub prompts with real samples, then brief your own tools."
-    summary_zh: "一句话变成图片、代码动画或 AI 视频：从多个 GitHub 提示词库挑 3 条带真实样片的提示词，再交给你的工具生成。"
+    summary: "Turn one line into an image, code video or AI video: pick from 5 proven GitHub prompts with real samples, then brief your own tools."
+    summary_zh: "一句话变成图片、代码动画或 AI 视频：从多个 GitHub 提示词库挑 5 条带真实样片的提示词，再交给你的工具生成。"
     use_cases:
-      - "Ask for a cover in one line; pick from 3 prompts on a page showing samples, the model that made them, author and license."
+      - "Ask for a cover in one line; pick from 5 prompts on a page showing samples, the model that made them, author and license."
       - "Name a video model such as Seedance, Kling or Veo and get prompts whose sample clips came from that model, playable right on the page."
       - "Make a character from your image walk on screen with Grok or a video API, with the cost stated before anything runs."
     use_cases_zh:
-      - "一句话要一张封面，在候选页上从 3 条提示词里挑，每条带样图、出图模型、作者和 License。"
+      - "一句话要一张封面，在候选页上从 5 条提示词里挑，每条带样图、出图模型、作者和 License。"
       - "说出想用的视频模型，比如即梦、可灵或 Veo，拿到用这个模型拍出样片的提示词，样片在页面上直接播放。"
       - "用 Grok 或视频 API 让图里的角色动起来，开跑前先报费用。"
 

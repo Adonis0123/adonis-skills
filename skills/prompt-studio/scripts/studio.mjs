@@ -1256,7 +1256,7 @@ export async function recommend(
     subject,
     refs = 0,
     sourceIds = [],
-    limit = 5,
+    limit = 8,
     project,
     categories,
     ...syncOpts
@@ -2643,7 +2643,7 @@ const USAGE = `Usage: node studio.mjs <command> [options]
   check-video <file> [--ratio W:H] [--duration S] [--size WxH]
   recommend "<english keywords> [| more keywords]" [--use cover|poster|illustration|infographic|avatar|thumbnail|comic|product|game|app]
             [--kind image|video|code-video] [--model key-or-name] [--mode image-to-video|text-to-video|image|edit] [--subject "words"] [--source a,b]
-            [--category a,b] [--wait-sec 6] [--limit 5] [--allow-large] [--project DIR]
+            [--category a,b] [--wait-sec 6] [--limit 8] [--allow-large] [--project DIR]
                                       Sync sources and return ranked candidates; --use scopes YouMind categories
                                       Budget: --wait-sec or PROMPT_STUDIO_SYNC_BUDGET_SEC (default 6 seconds)
   build-seed [--per 5]                Rebuild licensed offline samples
@@ -2792,7 +2792,7 @@ export async function main(argv = process.argv.slice(2)) {
         sourceIds: list(flags.source),
         use: typeof flags.use === "string" ? flags.use : undefined,
         categories: list(flags.category),
-        limit: flags.limit === undefined ? 5 : Number(flags.limit),
+        limit: flags.limit === undefined ? 8 : Number(flags.limit),
         project,
         allowLarge: Boolean(flags["allow-large"]),
         force: Boolean(flags.force),
