@@ -98,6 +98,34 @@
       "referenceField": "reference_image_urls"
     },
     {
+      "id": "yang0-handraw-style",
+      "title": "yang0/handraw-style",
+      "repo": "yang0/handraw-style",
+      "branch": "master",
+      "kinds": ["image"],
+      "license": "MIT with attribution requirement (credit yang0 and https://github.com/yang0/handraw-style)",
+      "seed": "never",
+      "adapter": "json-map",
+      "file": "skills/handdraw-style-prompter/references/styles.json",
+      "itemsPath": "",
+      "nativeIdFrom": "number",
+      "mediaBase": "https://raw.githubusercontent.com/yang0/handraw-style/master/images/individual",
+      "map": {
+        "title": "generation_name",
+        "content": "traits",
+        "category": "group",
+        "tags": ["reference", "number"]
+      },
+      "rewrite": [
+        {
+          "field": "number",
+          "match": "/(F[A-Z])-(\\d+)$",
+          "to": "sourceMedia",
+          "replace": ["/(F[A-Z])-(\\d+)$", "/$1/$1-$2.webp"]
+        }
+      ]
+    },
+    {
       "id": "learnprompt-seedance",
       "title": "Learnprompt Seedance",
       "repo": "LearnPrompt/awesome-seedance",
