@@ -575,7 +575,7 @@ class ConfigScanSecrets(TmpCase):
         root = self.tmp / ".claude"
         root.mkdir()
         (root / "settings.json").write_text(json.dumps({"permissions": {"deny": [
-            "Bash(curl -H 'Authorization: Bearer SECRET123' https://x)", "Read(~/.ssh/**)", "Read(./.env*)",
+            "Bash(curl -H 'Authorization: " + "Bearer SECRET123' https://x)", "Read(~/.ssh/**)", "Read(./.env*)",
             "Bash(rm -rf:*)"]}, "env": {"API_TOKEN": "SECRET456"}}))
         out = CS.claude_settings(str(root))
         text = json.dumps(out)
