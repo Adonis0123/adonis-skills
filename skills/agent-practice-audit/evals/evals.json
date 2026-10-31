@@ -1,0 +1,17 @@
+{
+  "skill_name": "agent-practice-audit",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "帮我对照官方最佳实践，给我最近两周的 coding agent 用法打个分，看看哪里最该改",
+      "expected_output": "Runs audit mode over the last 14 days, writes report.html + judgments under the report dir, replies with grade, score, ladder, top 3 suggestions and the report path; edits no user config.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "最佳实践清单里引用的官方链接是不是有失效的？帮我检查一遍，先别调用其他模型做共识",
+      "expected_output": "Runs refresh step 1 (link re-check) and the gate only, reports linkStatus per source and gate summary line, calls no verifier models, adds no practices.",
+      "files": []
+    }
+  ]
+}

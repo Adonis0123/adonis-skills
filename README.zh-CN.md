@@ -61,6 +61,7 @@ npx skills add adonis0123/adonis-skills --list
 | [`decision-first-technical-writing`](./skills/decision-first-technical-writing) | 编写或评审以决策开头的技术设计文档。                                                                   |
 | [`weekly-report`](./skills/weekly-report)                                       | 基于一个或多个仓库的 Git 历史生成周报。                                                                |
 | **本机环境**                                                                    |                                                                                                        |
+| [`agent-practice-audit`](./skills/agent-practice-audit)                         | 用本机会话日志对照官方最佳实践给 Agent 用法打分，生成带趋势的本地报告。                                |
 | [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | 用真实日志审计 MCP server、技能和指令文件，按投入产出决定保留、收窄或移除。                            |
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | 根据进程和文件证据，判断桌面端 coding agent 是在干活、闲置还是已停。                                   |
 | [`disk-tidy`](./skills/disk-tidy)                                               | 找出开发机硬盘被什么占满，把缓存和应用数据按风险分级，只清理你确认的部分。                             |

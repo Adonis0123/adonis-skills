@@ -38,6 +38,44 @@
     }
   },
   {
+    "slug": "agent-practice-audit",
+    "name": "agent-practice-audit",
+    "description": "Compare how someone actually uses coding agents (Claude Code, Codex, Grok, WorkBuddy session logs and their instruction files, hooks, permissions and Codex config) against verified official best practices from Anthropic, OpenAI, Google, Cursor, xAI and Tencent CodeBuddy; score six dimensions, track the trend against the previous run, and write a local HTML report with suggestions. Also refreshes the practice list from official docs only: a practice enters only after its quote is found on the page and at least two other models agree, with an offline digest kept per source. Use when the user asks how far their agent usage is from official practice, wants an agent usage check-up, score or grade, wants to refresh or verify the best-practice list, or asks to schedule either. Chinese triggers: Agent 用法体检、对照官方最佳实践、我用得对不对、打个分、更新最佳实践清单. Not for deciding whether a tool, MCP or skill is worth keeping (dev-environment-roi-audit). Never edits the user's AGENTS.md, CLAUDE.md, settings or config.",
+    "metadata": {
+      "author": "Adonis0123",
+      "version": "0.1.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false,
+      "hasScripts": true
+    },
+    "updatedAt": "2026-10-31T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Agent Practice Check-up",
+        "zh": "Agent 用法体检"
+      },
+      "group": "docs",
+      "tags": [
+        "agent-workflow",
+        "docs-and-ops"
+      ],
+      "summary": "Score your coding-agent habits from local session logs against verified official best practices, with a local report of what to fix first.",
+      "summary_zh": "拿本机会话日志对照各家官方最佳实践，给你的 Agent 用法打分，生成本地报告，告诉你先改哪几条。",
+      "use_cases": [
+        "See a grade across six areas such as context, permissions and verification, with each practice linked to the exact official sentence.",
+        "Rerun it weekly to see which practices got better or worse since last time; it only suggests and never edits your config.",
+        "Refresh the practice list from Anthropic, OpenAI, Google, Cursor, xAI and CodeBuddy docs, keeping only quotes found on the live page."
+      ],
+      "use_cases_zh": [
+        "按上下文、权限、验证等六个方面看等级，每条做法都链接到官方原文里的那句话。",
+        "每周跑一次，看哪几条比上次变好或变差；只给建议，不改你的配置。",
+        "从 Anthropic、OpenAI、Google、Cursor、xAI 和 CodeBuddy 官方文档更新做法清单，只保留在原文里找得到的引用。"
+      ]
+    }
+  },
+  {
     "slug": "agent-symlink-init",
     "name": "agent-symlink-init",
     "description": "Initialize or migrate agent-skill symlinks in any repository. Use when a project needs `.claude/skills` linked to `.agents/skills`, `AGENTS.md` linked to `CLAUDE.md`, migration away from `.ruler`-based AI rules, or removal of legacy `sync-llm-skills` copy/sync setups. Trigger on requests about Claude/Codex skill symlinks, AGENTS/CLAUDE symlinks, `.claude/skills` setup, replacing copied skill folders with symlinks, or cleaning old ruler/sync automation.",

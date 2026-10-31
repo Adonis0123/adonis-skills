@@ -1,0 +1,683 @@
+{
+  "version": 2,
+  "updatedAt": "2026-10-31",
+  "dimensions": {
+    "ctx": {
+      "en": "Context management",
+      "zh": "上下文管理",
+      "hint": {
+        "en": "session length, /clear, subagent offload",
+        "zh": "会话长度、/clear、subagent 分流"
+      }
+    },
+    "safe": {
+      "en": "Permissions & safety",
+      "zh": "权限与安全",
+      "hint": {
+        "en": "sandbox, deny rules, size of the enforced set",
+        "zh": "沙箱、deny、强制规则数量"
+      }
+    },
+    "doc": {
+      "en": "Instruction files",
+      "zh": "指令文件",
+      "hint": {
+        "en": "AGENTS.md / CLAUDE.md length and content",
+        "zh": "AGENTS.md 长度和内容"
+      }
+    },
+    "plan": {
+      "en": "Think before doing",
+      "zh": "先想后做",
+      "hint": {
+        "en": "plan mode, interviews, done criteria",
+        "zh": "plan 模式、访谈、完成标准"
+      }
+    },
+    "verify": {
+      "en": "Verification",
+      "zh": "验证",
+      "hint": {
+        "en": "tests, screenshots, evidence",
+        "zh": "测试、截图、证据"
+      }
+    },
+    "auto": {
+      "en": "Parallelism & automation",
+      "zh": "并行与自动化",
+      "hint": {
+        "en": "worktrees, headless runs, limits",
+        "zh": "worktree、headless、上限"
+      }
+    }
+  },
+  "practices": [
+    {
+      "id": "ctx-clear-between-tasks",
+      "dimension": "ctx",
+      "title": "Clear context between unrelated tasks; do not let one session run on",
+      "title_zh": "任务之间 /clear，会话不拖太长",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "/clear between unrelated tasks. It costs nothing…",
+          "fragment": "between unrelated tasks"
+        },
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "after two failed corrections run /clear and write a better prompt instead of a third",
+          "fragment": "after two failed corrections run"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Keep one chat per coherent unit of work.",
+          "fragment": "Keep one chat per coherent unit of work"
+        }
+      ],
+      "detect": "Summary: sessions_over_200_tools, pct_compaction/correction over 200 tools vs overall, slash_cmds_sessions for clear/compact/new. ok = few long sessions and /clear or new sessions used; part = some long sessions; no = many long sessions with higher correction rate.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "ctx-subagent-offload",
+      "dimension": "ctx",
+      "title": "Send verbose exploration to subagents so only a summary returns",
+      "title_zh": "输出多的工作交给 subagent",
+      "sources": [
+        {
+          "source": "cc-costs",
+          "page": "Claude Code costs",
+          "url": "https://code.claude.com/docs/en/costs",
+          "quote": "the verbose output stays in the subagent's context while only a summary returns to your main conversation.",
+          "fragment": "the verbose output stays in the subagent"
+        },
+        {
+          "source": "cc-common-workflows",
+          "page": "Claude Code common workflows",
+          "url": "https://code.claude.com/docs/en/common-workflows",
+          "quote": "Delegate the exploration so only the findings come back.",
+          "fragment": "Delegate the exploration so only the findings come back"
+        }
+      ],
+      "detect": "Summary: concepts_pct.subagent and agent_types_calls per host. ok = used in a meaningful share of sessions (roughly 20%+); part = rare; no = never.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "ctx-custom-subagents",
+      "dimension": "ctx",
+      "title": "Define custom subagents and give simple ones a cheaper model",
+      "title_zh": "自定义 subagent，简单任务用便宜模型",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "Set model: haiku in a subagent's definition if its work is simple",
+          "fragment": "if its work is simple"
+        },
+        {
+          "source": "cc-costs",
+          "page": "Claude Code costs",
+          "url": "https://code.claude.com/docs/en/costs",
+          "quote": "For simple subagent tasks, specify model: haiku in your subagent configuration.",
+          "fragment": "For simple subagent tasks"
+        }
+      ],
+      "detect": "Config: claude[].custom_subagents and whether agent definitions set a model; summary: agent_types_calls (all general-purpose suggests none). na when the host has no subagent definitions.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "ctx-compact-focus",
+      "dimension": "ctx",
+      "title": "Tell /compact what to keep",
+      "title_zh": "/compact 时说明要保留的重点",
+      "sources": [
+        {
+          "source": "cc-costs",
+          "page": "Claude Code costs",
+          "url": "https://code.claude.com/docs/en/costs",
+          "quote": "/compact Focus on code samples and API usage tells Claude what to preserve during summarization.",
+          "fragment": "tells Claude what to preserve during summarization"
+        }
+      ],
+      "detect": "Usually na: extract.py records the command name, not its arguments. ok if instruction files contain a 'Compact instructions' section.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "safe-low-risk-preset",
+      "dimension": "safe",
+      "title": "Use a lower-risk permission preset; pick reasoning effort per task",
+      "title_zh": "用低风险权限预设，effort 按任务选",
+      "sources": [
+        {
+          "source": "codex-sandboxing",
+          "page": "Codex sandboxing",
+          "url": "https://learn.chatgpt.com/docs/sandboxing.md",
+          "quote": "the lower-risk local automation preset is sandbox_mode = \"workspace-write\" together with approval_policy = \"on-request\"",
+          "fragment": "the lower-risk local automation preset is"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Giving Codex full permission to your computer before you understand the workflow",
+          "fragment": "Giving Codex full permission to your computer"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Low for faster, well-scoped tasks",
+          "fragment": "Low for faster, well-scoped tasks"
+        },
+        {
+          "source": "codex-non-interactive",
+          "page": "Codex non-interactive mode",
+          "url": "https://learn.chatgpt.com/docs/non-interactive-mode",
+          "quote": "Use danger-full-access only in a controlled environment",
+          "fragment": "only in a controlled environment"
+        }
+      ],
+      "detect": "Config: codex[].approval_policy / sandbox_mode / model_reasoning_effort; summary: modes_sessions (approval=, sandbox=, yolo, bypassPermissions) and efforts for human sessions. no = full access with no approval in most human sessions; part = full access only in some.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "safe-hooks-for-musts",
+      "dimension": "safe",
+      "title": "Enforce must-happen-every-time rules with hooks or deny rules",
+      "title_zh": "必须每次执行的规则用 hook 强制",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "If something has to happen every time, make it a hook, a deny rule, or a managed setting.",
+          "fragment": "If something has to happen every time"
+        }
+      ],
+      "detect": "Config: claude[].settings.json hook_entries and deny count. ok = at least one hook or deny rule enforcing a stated must-rule; no = none while instruction files contain 'always/never' rules.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "safe-small-enforced-set",
+      "dimension": "safe",
+      "title": "Keep the enforced set (hooks + deny rules) small",
+      "title_zh": "强制规则（hook + deny）保持少量",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "Whatever the scope, keep the enforced set small. … If you ever find yourself at forty of them, most are probably preferences",
+          "fragment": "Whatever the scope, keep the enforced set small"
+        }
+      ],
+      "detect": "Config: hook_entries + deny_count across settings files. ok < 20; part 20-39; no >= 40.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "safe-deny-secrets",
+      "dimension": "safe",
+      "title": "Protect secret files with deny rules",
+      "title_zh": "用 deny 规则保护密钥文件",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "deny rules hold in every permission mode, including auto and bypassPermissions, which is exactly why the .env rule belongs there",
+          "fragment": "rules hold in every permission mode"
+        }
+      ],
+      "detect": "Config: settings deny_coverage flags env_files and ssh/aws/cloud_credentials/key_files. ok = env files and credential directories both covered; part = one; no = neither. Weigh by how often bypass/auto modes appear in modes_sessions.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "doc-short-instructions",
+      "dimension": "doc",
+      "title": "Keep AGENTS.md / CLAUDE.md short",
+      "title_zh": "AGENTS.md / CLAUDE.md 保持短小",
+      "sources": [
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "A short, accurate AGENTS.md is more useful than a long file full of vague rules.",
+          "fragment": "is more useful than a long file full of vague rules"
+        },
+        {
+          "source": "cc-memory",
+          "page": "Claude Code memory",
+          "url": "https://code.claude.com/docs/en/memory",
+          "quote": "target under 200 lines per CLAUDE.md file. Longer files consume more context and reduce adherence.",
+          "fragment": "target under 200 lines per"
+        },
+        {
+          "source": "codex-agents-md",
+          "page": "Codex AGENTS.md",
+          "url": "https://learn.chatgpt.com/docs/agent-configuration/agents-md",
+          "quote": "stops adding files once the combined size reaches the limit defined by project_doc_max_bytes (32 KiB by default)",
+          "fragment": "stops adding files once the combined size reaches the limit"
+        }
+      ],
+      "detect": "Config: global_instructions / repo_instructions lines, bytes, over_200_lines, over_32KiB, and codex project_doc_max_bytes. no = any file read by Codex over 32 KiB; part = files over 200 lines; ok = all under.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "doc-test-commands",
+      "dimension": "doc",
+      "title": "Put build, test and lint commands in the instruction file",
+      "title_zh": "测试 / lint 命令写进 AGENTS.md",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "the single most useful line in your CLAUDE.md is the command that runs it.",
+          "fragment": "the single most useful line in your"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Build, test, and lint commands",
+          "fragment": "Build, test, and lint commands"
+        }
+      ],
+      "detect": "Config: repo_instructions[].mentions_test / mentions_lint for the most-used repositories. Global files are exempt (they belong to no repository).",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "doc-update-on-repeat",
+      "dimension": "doc",
+      "title": "Update the rules when the same mistake happens twice",
+      "title_zh": "同一错误出现两次就更新规则",
+      "sources": [
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "When Codex makes the same mistake twice, ask it for a retrospective and update AGENTS.md.",
+          "fragment": "When Codex makes the same mistake twice"
+        },
+        {
+          "source": "cursor-agent-best-practices",
+          "page": "Cursor agent best practices",
+          "url": "https://cursor.com/blog/agent-best-practices",
+          "quote": "Start simple. Add rules only when you notice the agent making the same mistake repeatedly.",
+          "fragment": "Add rules only when you notice the agent making the same mistake repeatedly"
+        }
+      ],
+      "detect": "Instruction files show rule maintenance (recent edits, rules tied to observed failures, an eval or review loop); compare corr_examples themes with existing rules. Judge from evidence; mark na if nothing can be seen.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "doc-skills-on-demand",
+      "dimension": "doc",
+      "title": "Move workflow-specific instructions into on-demand skills",
+      "title_zh": "流程类内容放 skill，按需加载",
+      "sources": [
+        {
+          "source": "cc-costs",
+          "page": "Claude Code costs",
+          "url": "https://code.claude.com/docs/en/costs",
+          "quote": "Skills load on-demand only when invoked, so moving specialized instructions into skills keeps your base context smaller.",
+          "fragment": "load on-demand only when invoked"
+        }
+      ],
+      "detect": "Config: claude[].skills count and over_500_lines; summary: concepts_pct.skill, top_skills. ok = skills exist and are used; part = long instruction files that hold workflows a skill could carry.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "plan-mode-first",
+      "dimension": "plan",
+      "title": "Use plan mode before complex changes",
+      "title_zh": "复杂改动先用 plan 模式",
+      "sources": [
+        {
+          "source": "cc-common-workflows",
+          "page": "Claude Code common workflows",
+          "url": "https://code.claude.com/docs/en/common-workflows",
+          "quote": "Claude reads files and proposes a plan but makes no edits until you approve.",
+          "fragment": "Claude reads files and proposes a plan but makes no edits until you approve"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Plan mode lets Codex gather context, ask clarifying questions, and build a stronger plan before implementation.",
+          "fragment": "Plan mode lets Codex gather context"
+        },
+        {
+          "source": "cursor-agent-best-practices",
+          "page": "Cursor agent best practices",
+          "url": "https://cursor.com/blog/agent-best-practices",
+          "quote": "The most impactful change you can make is planning before coding.",
+          "fragment": "The most impactful change you can make is planning before coding"
+        }
+      ],
+      "detect": "Summary: concepts_pct.plan_mode and modes_sessions containing 'plan'. part when plan mode is unused but planning substitutes (ask_user, planning skills) are common.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "plan-interview",
+      "dimension": "plan",
+      "title": "Let the agent interview you when the request is vague",
+      "title_zh": "需求模糊时让 agent 先访谈你",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "Ask Claude to interview you instead",
+          "fragment": "Ask Claude to interview you instead"
+        }
+      ],
+      "detect": "Summary: concepts_pct.ask_user and interview-style skills in top_skills.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "plan-done-when",
+      "dimension": "plan",
+      "title": "State the done criteria in the prompt",
+      "title_zh": "提示里写明完成标准（Done when）",
+      "sources": [
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Done when: What should be true before the task is complete, such as tests passing, behavior changing, or a bug no longer reproducing?",
+          "fragment": "What should be true before the task is complete"
+        }
+      ],
+      "detect": "Usually na: needs semantic reading of prompts. Optional: sample ~20 first prompts (summary 'first' fields in the sessions file) and count those with an explicit completion condition; report the sample size.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "verify-runnable-checks",
+      "dimension": "verify",
+      "title": "Give the agent runnable checks and ask for evidence",
+      "title_zh": "给 agent 能跑的验证，并要证据",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "Give Claude something it can run that comes back pass or fail.",
+          "fragment": "Give Claude something it can run that comes back pass or fail"
+        },
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "ask Claude for evidence: the command it ran and its output, or the screenshot.",
+          "fragment": "the command it ran and its output, or the screenshot"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Ask it to create tests when needed, run the relevant checks, confirm the result, and review the work before you accept it.",
+          "fragment": "Ask it to create tests when needed, run the relevant checks"
+        },
+        {
+          "source": "cursor-agent-best-practices",
+          "page": "Cursor agent best practices",
+          "url": "https://cursor.com/blog/agent-best-practices",
+          "quote": "Tests allow the agent to make changes, evaluate results, and incrementally improve until it succeeds.",
+          "fragment": "Tests allow the agent to make changes"
+        }
+      ],
+      "detect": "Summary: pct_session_bash_tags test/lint/typecheck/screenshot/git_diff per host; corr_examples about unverified work. ok = checks in most coding sessions and few 'not verified' corrections.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "verify-revert-retry",
+      "dimension": "verify",
+      "title": "When output is wrong, revert and rerun with a sharper plan instead of patching",
+      "title_zh": "输出不对就回滚重来，不继续打补丁",
+      "sources": [
+        {
+          "source": "cursor-agent-best-practices",
+          "page": "Cursor agent best practices",
+          "url": "https://cursor.com/blog/agent-best-practices",
+          "quote": "Revert the changes, refine the plan to be more specific about what you need, and run it again.",
+          "fragment": "Revert the changes, refine the plan"
+        }
+      ],
+      "detect": "Usually na: reverts happen through git, /rewind or manual edits with no single signal. Grok signals.json hasReverted is a partial hint.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "auto-worktrees",
+      "dimension": "auto",
+      "title": "Isolate parallel work in separate git worktrees",
+      "title_zh": "并行工作用 git worktree 隔离",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "When you have separate pieces of work going at once, give each its own checkout so the edits can't collide.",
+          "fragment": "give each its own checkout so the edits"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Running live tasks on the same files without using Git worktrees",
+          "fragment": "Running live tasks on the same files without using Git worktrees"
+        }
+      ],
+      "detect": "Summary: pct_session_bash_tags.worktree; cwd_top paths containing worktree directories or several clones of one repository.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "auto-headless",
+      "dimension": "auto",
+      "title": "Run repeatable automation headless",
+      "title_zh": "自动化任务用 headless 模式",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "runs once and exits, which is how Claude Code ends up in CI jobs, git hooks, and shell loops.",
+          "fragment": "runs once and exits"
+        },
+        {
+          "source": "cc-common-workflows",
+          "page": "Claude Code common workflows",
+          "url": "https://code.claude.com/docs/en/common-workflows",
+          "quote": "Run Claude non-interactively for CI, pre-commit hooks, or batch processing.",
+          "fragment": "Run Claude non-interactively for CI"
+        }
+      ],
+      "detect": "Summary: headless.sessions and by_host; pct_session_bash_tags.headless.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    },
+    {
+      "id": "auto-headless-limits",
+      "dimension": "auto",
+      "title": "Cap headless runs with a turn or budget limit",
+      "title_zh": "无头运行设轮数或花费上限",
+      "sources": [
+        {
+          "source": "cc-best-practices",
+          "page": "Claude Code best practices",
+          "url": "https://code.claude.com/docs/en/best-practices",
+          "quote": "What stops it? --max-turns, --max-budget-usd, a spend limit.",
+          "fragment": "What stops it?"
+        }
+      ],
+      "detect": "Wrapper scripts and scheduled jobs that start headless agents pass --max-turns / --max-budget-usd (or the host's equivalent). na when there are no headless sessions.",
+      "verifiedAt": "2026-10-31",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["claude (manual quote check)"],
+        "agree": 1,
+        "total": 1,
+        "checkedAt": "2026-10-31"
+      },
+      "needs-consensus": true
+    }
+  ],
+  "pending": []
+}

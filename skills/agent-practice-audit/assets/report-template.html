@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent Practice Audit</title>
+<style>
+/* Neutral slate + one accent. config.json "theme" sets --accent-light / --accent-dark; links, tints, rings and solids derive from it. */
+:root{
+  --bg:#F8F9FA;--card:#FFFFFF;--muted:#F1F3F5;--track:#E6E8EB;--border:#DFE3E6;--input:#D7DBDF;
+  --fg:#11181C;--fg2:#5B6670;--fg3:#889096;
+  --accent:var(--accent-light,#3E63DD);--accent-solid:color-mix(in oklab,var(--accent) 82%,#000);--link:color-mix(in oklab,var(--accent) 68%,#000);
+  --tint:color-mix(in oklab,var(--accent) 8%,var(--card));--tint-border:color-mix(in oklab,var(--accent) 35%,var(--card));--ring:var(--accent);
+  --plate:#FBFAF7;--plate-border:#E9E5DC;
+  --s-bg:#11181C;--s-fg:#FFFFFF;
+  --ok:#30A46C;--ok-text:#18794E;--ok-soft:#E9F9EE;
+  --part:#F5D90A;--part-text:#946800;--part-soft:#FFFAD1;
+  --no:#E5484D;--no-text:#CD2B31;--no-soft:#FFEFEF;
+  --na:#889096;--na-text:#5B6670;--na-soft:#F1F3F5;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#111315;--card:#1A1D1F;--muted:#212427;--track:#2B2F33;--border:#2B2F33;--input:#363A3F;
+  --fg:#ECEDEE;--fg2:#AAB2B9;--fg3:#8A9299;
+  --accent:var(--accent-dark,#5B7EEB);--link:color-mix(in oklab,var(--accent) 62%,#fff);--tint:color-mix(in oklab,var(--accent) 16%,var(--card));--tint-border:color-mix(in oklab,var(--accent) 45%,var(--card));--ring:var(--accent);
+  --plate:#E4DFD5;--plate-border:#3A3631;
+  --s-bg:#ECEDEE;--s-fg:#111315;
+  --ok-text:#4CC38A;--ok-soft:#113123;--part-text:#F0C000;--part-soft:#2C2205;--no-text:#FF6369;--no-soft:#3C181A;--na-text:#AAB2B9;--na-soft:#212427;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#111315;--card:#1A1D1F;--muted:#212427;--track:#2B2F33;--border:#2B2F33;--input:#363A3F;
+  --fg:#ECEDEE;--fg2:#AAB2B9;--fg3:#8A9299;
+  --accent:var(--accent-dark,#5B7EEB);--link:color-mix(in oklab,var(--accent) 62%,#fff);--tint:color-mix(in oklab,var(--accent) 16%,var(--card));--tint-border:color-mix(in oklab,var(--accent) 45%,var(--card));--ring:var(--accent);
+  --plate:#E4DFD5;--plate-border:#3A3631;
+  --s-bg:#ECEDEE;--s-fg:#111315;
+  --ok-text:#4CC38A;--ok-soft:#113123;--part-text:#F0C000;--part-soft:#2C2205;--no-text:#FF6369;--no-soft:#3C181A;--na-text:#AAB2B9;--na-soft:#212427;
+  color-scheme:dark;}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html{scrollbar-color:var(--input) transparent}
+body{margin:0;caret-color:var(--accent);color:var(--fg);background:var(--bg);font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+::selection{background:color-mix(in srgb,var(--accent) 28%,transparent)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px;border-radius:4px}
+main{max-width:1060px;margin:0 auto;padding:24px 16px 96px}
+a{color:var(--link);text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--link) 40%,transparent)}
+a:hover{text-decoration-color:var(--link)}
+.num{font-variant-numeric:tabular-nums}
+code{font:12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--muted);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+h2{font-size:21px;line-height:1.35;letter-spacing:-0.015em;margin:72px 0 4px}
+.hint{font-size:13px;color:var(--fg2);margin:0 0 18px;max-width:96ch;text-wrap:pretty}
+.ico{width:14px;height:14px;flex:none;vertical-align:-2px}
+
+.bar{display:flex;align-items:center;gap:12px;padding:4px 0 20px;border-bottom:1px solid var(--border);color:var(--fg2);font-size:13px;flex-wrap:wrap}
+.bar .title{font-weight:700;color:var(--fg)}
+.bar .brand{display:inline-flex;align-items:center;gap:8px;color:var(--fg);font-weight:600}
+.bar .brand img{height:24px;width:auto;display:block}
+.bar .brand+.sep{width:1px;height:16px;background:var(--border)}
+.bar .brand img.brand-dark{display:none}
+:root[data-theme="dark"] .bar .brand.has-dark img.brand-light{display:none}:root[data-theme="dark"] .bar .brand.has-dark img.brand-dark{display:block}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .bar .brand.has-dark img.brand-light{display:none}:root:not([data-theme="light"]) .bar .brand.has-dark img.brand-dark{display:block}}
+.bar .meta{margin-left:auto}
+.bar button{font:inherit;font-size:12.5px;line-height:22px;border:1px solid var(--border);background:var(--card);color:var(--fg2);border-radius:99px;padding:2px 11px;cursor:pointer;display:inline-flex;gap:5px;align-items:center;transition:background .15s,color .15s}
+.bar button:hover{background:var(--muted);color:var(--fg)}
+
+.report{display:grid;grid-template-columns:auto minmax(0,1fr);gap:20px 48px;align-items:center;margin:40px 0 8px}
+.report .copy h1{margin-top:0}
+.report.with-plate{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:center}
+.report.with-plate{row-gap:0}
+.report.with-plate .head{grid-column:1;grid-row:1;align-self:end}
+.report.with-plate .copy{grid-column:1;grid-row:2;align-self:start;padding-top:24px}
+.report.with-plate .plate{grid-column:2;grid-row:1/span 2}
+.grade-row{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+.stamp{width:120px;height:120px;flex:none;border-radius:26px;display:grid;place-items:center;font-size:84px;font-weight:800;line-height:1;letter-spacing:-0.02em;box-shadow:inset 0 0 0 1px color-mix(in srgb,currentColor 18%,transparent)}
+.score b{font-size:60px;line-height:1;font-weight:800;letter-spacing:-0.03em}
+.score span{font-size:22px;font-weight:700;color:var(--fg3)}
+.score .lv{display:block;font-size:14px;color:var(--fg2);margin-top:8px;font-weight:500}
+.delta{display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;padding:1px 8px;border-radius:99px;margin-left:8px}
+.delta.up{color:var(--ok-text);background:var(--ok-soft)}.delta.down{color:var(--no-text);background:var(--no-soft)}.delta.same{color:var(--na-text);background:var(--na-soft)}
+.report h1{font-size:28px;line-height:1.3;letter-spacing:-0.02em;margin:0 0 10px;max-width:24em;text-wrap:balance}
+.report p.lead{color:var(--fg2);margin:0;max-width:62ch;text-wrap:pretty}
+.plate{background:var(--plate);border:1px solid var(--plate-border);border-radius:16px;overflow:hidden;aspect-ratio:1/1;justify-self:end;width:min(100%,380px);padding:4%}
+/* multiply lets an illustration drawn on white melt into the plate; the plate stays light in dark mode so it still works */
+.plate img{width:100%;height:100%;object-fit:contain;display:block;mix-blend-mode:multiply}
+
+.ladder{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 24px 22px;margin-top:32px}
+.ladder-track{position:relative;height:66px;margin:4px 14px 0}
+.ladder-line,.ladder-fill{position:absolute;left:0;top:28px;height:6px;border-radius:3px}
+.ladder-line{right:0;background:var(--track)}
+.ladder-fill{background:var(--accent);width:0;transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.tick{position:absolute;top:38px;transform:translateX(-50%);text-align:center;font-size:11.5px;line-height:1.3;font-weight:700;color:var(--fg3);white-space:nowrap}
+.tick i{display:block;width:1px;height:7px;background:var(--input);margin:0 auto 3px}
+.tick small{display:block;font-size:10.5px;font-weight:500}
+.tick.lo{transform:none;text-align:left}.tick.lo i{margin:0 0 3px}
+.dot,.legs .step-n{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--card);border:2px solid var(--accent-solid);color:var(--accent-solid);font-size:11.5px;font-weight:800;line-height:1}
+.dot{position:absolute;top:20px;transform:translateX(-50%);z-index:1}
+.dot span{position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);font-size:11.5px;font-weight:700;color:var(--fg2);white-space:nowrap}
+.pin{position:absolute;top:15px;transform:translateX(-50%);width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;border:3px solid var(--card);box-shadow:0 3px 8px -3px rgba(0,0,0,.35);z-index:2}
+.pin.now{background:var(--fg);color:var(--card)}
+.legs{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px 24px;margin-top:14px;padding-top:16px;border-top:1px solid var(--border);font-size:13.5px}
+.legs>div{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-content:start}
+.legs>div>:not(.step-n):not(.now-n){grid-column:2}
+.legs .step-n{grid-row:span 2;margin-top:1px}
+.legs .now-n{width:22px;height:22px;border-radius:50%;grid-row:span 2;margin-top:1px;background:var(--fg);color:var(--card);display:grid;place-items:center;font-size:11.5px;font-weight:800}
+.legs b{display:block;font-size:14px;line-height:1.55}
+.legs .pts{color:var(--fg2);line-height:1.6}
+
+.panel{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:6px 18px}
+.dims{width:100%;border-collapse:collapse;font-size:14px}
+.dims td{padding:11px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.dims tr:last-child td{border-bottom:0}
+.dims .name{width:150px;font-weight:600}
+.dims .mt{width:34%;min-width:90px}
+.meter{height:8px;border-radius:4px;background:var(--track);overflow:hidden}
+.meter div{height:100%;border-radius:4px;width:0;transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.dims .val{width:64px;text-align:right;font-weight:700}
+.dims .g{width:44px;text-align:center}
+.dims .why{color:var(--fg2);font-size:13px;line-height:1.6}
+.dims .why .ids{white-space:nowrap}
+.gchip{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-size:14px;font-weight:800}
+
+.tag{font-size:12px;line-height:20px;padding:0 9px;border-radius:99px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.t-ok{color:var(--ok-text);background:var(--ok-soft)}.t-ok::before{background:var(--ok)}
+.t-part{color:var(--part-text);background:var(--part-soft)}.t-part::before{background:var(--part)}
+.t-no{color:var(--no-text);background:var(--no-soft)}.t-no::before{background:var(--no)}
+.t-na{color:var(--na-text);background:var(--na-soft)}.t-na::before{background:var(--na)}
+.trend{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;white-space:nowrap}
+.trend.up{color:var(--ok-text)}.trend.down{color:var(--no-text)}.trend.same,.trend.new,.trend.changed{color:var(--fg3)}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
+.filters button{font:inherit;font-size:13px;border:1px solid var(--border);background:var(--card);color:var(--fg2);border-radius:99px;padding:3px 13px;cursor:pointer}
+.filters button:hover{background:var(--muted);color:var(--fg)}
+.filters button.on{background:var(--tint);border-color:var(--tint-border);color:var(--link);font-weight:600}
+.wrap{overflow-x:auto}
+table.sum{border-collapse:collapse;width:100%;font-size:13.5px;min-width:780px}
+.sum th,.sum td{border-bottom:1px solid var(--border);padding:9px 8px;text-align:left;vertical-align:top}
+.sum tr:last-child td{border-bottom:0}
+.sum th{color:var(--fg3);font-weight:600;font-size:12.5px;white-space:nowrap}
+.sum tbody tr{transition:background .15s}.sum tbody tr:hover td{background:color-mix(in srgb,var(--muted) 55%,transparent)}
+.sum td.title{font-weight:500}
+.sum td.id a{font:600 12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;text-decoration:none}
+.sum td.pt{font-weight:700;white-space:nowrap;color:var(--fg2)}
+.pt.got{color:var(--ok-text)}
+.sum td.id{white-space:nowrap}.sum td.title{width:26%}.sum td.seen{width:22%}.sum td.srcs{width:26%}
+.sum tr.none td{color:var(--fg2);text-align:center;padding:16px}
+.warn{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:99px;color:var(--part-text);background:var(--part-soft);white-space:nowrap}
+.basis{font-size:11.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:99px;color:var(--link);background:var(--tint);white-space:nowrap}
+.digest{margin:6px 0 8px 14px;padding-left:12px;border-left:2px solid var(--border);font-size:13px;color:var(--fg2)}
+.digest ul{margin:4px 0;padding-left:18px}.digest summary{cursor:pointer}
+.srcs a{display:inline-block;margin:0 10px 2px 0;font-size:12.5px;line-height:1.55}
+.srcs a .ext{margin-left:3px;vertical-align:-1px}
+
+.item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin:12px 0;scroll-margin-top:16px}
+.item:target{border-color:var(--tint-border);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring) 25%,transparent)}
+.item h3{margin:0 0 4px;font-size:16px;line-height:1.5;display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap}
+.item h3 .id{font:600 12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--fg3);margin-right:10px;vertical-align:1px}
+.item h3 .badges{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.item h3 .pts{margin-left:auto;font-size:13px;font-weight:700;color:var(--fg2)}
+.item h3 .pts.got{color:var(--ok-text)}
+.item p{margin:7px 0;max-width:80ch;overflow-wrap:anywhere}
+.k{color:var(--fg2);font-size:13px;font-weight:600;margin-right:6px}
+.fields{display:grid;grid-template-columns:max-content minmax(0,78ch);gap:8px 14px;margin:14px 0 4px}
+.fields .k{margin:0;line-height:1.7;padding-top:1px}
+.fields p{margin:0}
+.fields .how{padding-top:0}
+.quotes{margin:10px 0;padding:10px 14px;background:var(--muted);border-radius:10px}
+.q{font-size:13.5px;color:var(--fg2);margin:4px 0}
+.q a.quote{color:var(--fg);text-decoration:none}.q a.quote:hover{text-decoration:underline;text-decoration-color:var(--fg3)}
+.q .from{font-size:12px;margin-left:6px;display:inline-flex;align-items:center;gap:3px}
+.how{font-size:12.5px;color:var(--fg3)}
+.swipe{display:none;font-size:12.5px;color:var(--fg2);margin:-4px 0 8px}
+ul.method{padding-left:20px;max-width:80ch;font-size:14px;color:var(--fg2)}ul.method li{margin:6px 0}ul.method li::marker{color:var(--fg3)}
+.empty{color:var(--fg2);font-size:13.5px;padding:12px 0}
+
+@media (max-width:760px){
+  .report.with-plate{grid-template-columns:1fr}
+  .report.with-plate .head,.report.with-plate .copy,.report.with-plate .plate{grid-column:1;grid-row:auto}
+  .report.with-plate .copy{padding-top:4px}
+  .plate{order:-1;width:min(100%,280px);justify-self:center;margin-bottom:24px}
+  .stamp{width:96px;height:96px;font-size:64px;border-radius:22px}
+  .score b{font-size:48px}
+  .report h1{font-size:22px}
+  .report{grid-template-columns:1fr;margin-top:28px}
+  .report .copy h1{margin-top:20px}
+  .report.with-plate .copy{padding-top:0}
+  .bar .title{margin-right:auto}
+  .bar .meta{margin-left:0;width:100%;order:9}
+  .dims tr{display:grid;grid-template-columns:minmax(0,1fr) auto auto;column-gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+  .dims tr:last-child{border-bottom:0}
+  .dims td{padding:0;border:0;width:auto!important}
+  .dims .mt{grid-column:1/-1;grid-row:2;margin:8px 0 6px}
+  .dims .why{grid-column:1/-1;grid-row:3;font-size:12.5px}
+  .ladder{padding:16px 16px 18px}
+  .fields{grid-template-columns:1fr;gap:2px}
+  .filters{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px 10px;padding:0 16px 2px;scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .filters button{flex:none}
+  .item{padding:14px 16px}
+  .item h3{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 10px}
+  .item h3 .ttl{grid-column:1/-1}
+  .item h3 .pts{margin-left:0}
+  .fields p+.k{margin-top:8px}
+}
+@media (min-width:641px) and (max-width:800px){.swipe{display:block}}
+@media (max-width:640px){
+  table.sum{min-width:0}
+  .sum thead{display:none}
+  .sum tbody,.sum tr,.sum td{display:block}
+  .sum tbody tr{display:grid;grid-template-columns:auto auto 1fr;gap:4px 10px;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
+  .sum tbody tr:last-child{border-bottom:0}
+  .sum td{border:0;padding:0;width:auto!important}
+  .sum td.title,.sum td.seen,.sum td.srcs,.sum td.tr{grid-column:1/-1}
+  .sum td.pt{justify-self:end}
+  .sum td.title{margin-top:4px}
+  .sum td.seen{color:var(--fg2)}
+  .sum tbody tr:hover td{background:none}
+  .sum tr.none{display:block}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main>
+<div class="bar">
+  <span class="brand" id="brand" hidden></span>
+  <svg class="ico" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 2.5h7l3 3v8H3z"/><path d="m5.5 9 1.8 1.8L10.5 7.5"/></svg>
+  <span class="title" id="t-title"></span><span id="t-meta" class="meta"></span>
+  <button type="button" id="theme"></button>
+</div>
+
+<section class="report" id="report">
+  <div class="head">
+    <div class="grade-row">
+      <div class="stamp" id="stamp" aria-label="grade"></div>
+      <div class="score"><b class="num" id="score"></b><span> / 100</span><span id="delta"></span><span class="lv" id="lvname"></span></div>
+    </div>
+  </div>
+  <div class="copy">
+    <h1 id="headline"></h1>
+    <p class="lead" id="lead"></p>
+  </div>
+</section>
+
+<div class="ladder">
+  <div class="ladder-track" id="ladder"><div class="ladder-line"></div><div class="ladder-fill" id="fill"></div></div>
+  <div class="legs" id="legs"></div>
+</div>
+
+<h2 id="h-dims"></h2>
+<p class="hint" id="hint-dims"></p>
+<div class="panel"><table class="dims" id="dims"></table></div>
+
+<h2 id="h-table"></h2>
+<p class="hint" id="hint-table"></p>
+<div class="filters" id="f-status" role="group"></div>
+<div class="filters" id="f-dim" role="group"></div>
+<p class="swipe" id="swipe"></p>
+<div class="panel wrap"><table class="sum" id="summary"><thead><tr id="sum-head"></tr></thead><tbody></tbody></table></div>
+
+<h2 id="h-details"></h2>
+<p class="hint" id="hint-details"></p>
+<p class="empty" id="empty" hidden></p>
+<div id="details"></div>
+
+<h2 id="h-method"></h2>
+<ul class="method" id="method"></ul>
+</main>
+
+<script type="application/json" id="report-data">__REPORT_DATA__</script>
+<script>
+(() => {
+const D = JSON.parse(document.getElementById("report-data").textContent);
+const zh = D.lang === "zh";
+const T = zh ? {
+  title:"Agent 用法体检", meta:(d,w)=>`近 ${w} 天会话 · 截至 ${d}`, theme:{auto:"跟随系统",light:"浅色",dark:"深色"},
+  st:{ok:"达标",part:"部分达标",no:"未达标",na:"无法检测"}, notScored:"不计", grade:"等级",
+  names:{S:"放心交办",A:"默契搭档",B:"稳健副驾",C:"能跑，常返工",D:"边跑边救火"},
+  now:"当前", fix:"修完", pts:"分", allOk:"全部达标", items:n=>`${n} 项`, top:"已达最高等级", noData:"无可评分数据",
+  hDims:"六个维度", hintDims:"维度分 = 得分 ÷ 满分 × 100。单条达标得 10 分，部分达标 5 分，未达标 0 分；无法检测的不计入满分。",
+  hTable:"逐项对照", hintTable:"点编号看详情；点来源打开官方文档并高亮原句（支持 Chrome、Edge、Safari）。",
+  swipe:"表格较宽，可左右滑动。", all:"全部", allDims:"全部维度",
+  head:["编号","状态","得分","官方做法","你的情况","趋势","来源"],
+  empty:"没有符合筛选条件的项目。", hDetails:"逐项详情",
+  down:"原页暂不可达", basis:"基于存档摘要", digestNote:(d,p)=>`原页暂不可达，展开查看本地存档摘要（${esc(d)} 核对，<code>${esc(p)}</code>）。`, hintDetails:"本报告只读不改配置；你可按建议自行修改。",
+  evidence:"数据证据", suggestion:"怎么改", caveat:"留意", how:"检测方式",
+  trend:{up:"上升",down:"下降",same:"持平",new:"新增",changed:"变化"}, vsPrev:"较上次",
+  hMethod:"数据来源与局限",
+  fixed:[
+    "只读扫描本机 JSONL（逐行 JSON 会话日志）。重点统计人工会话，单独列出 headless（无界面后台运行）和 subagent（子代理）会话。",
+    "脚本按关键词识别纠错话术与 test / lint（代码检查） / 截图命令，存在误报和漏报。",
+    "各条做法均附官方文档核对日期。六维度等权打分是本报告的约定，方便前后对比，不是官方标准。",
+    "总分只统计能从日志和配置检测出的项目，无法检测的不计分。"]
+} : {
+  title:"Agent practice audit", meta:(d,w)=>`last ${w} days of sessions · as of ${d}`, theme:{auto:"Auto",light:"Light",dark:"Dark"},
+  st:{ok:"Met",part:"Partial",no:"Unmet",na:"Unmeasurable"}, notScored:"n/a", grade:"Grade",
+  names:{S:"Hands-off",A:"Trusted partner",B:"Steady co-pilot",C:"Works, needs rework",D:"Firefighting"},
+  now:"Now", fix:"Fix", pts:"pts", allOk:"All met", items:n=>`${n} items`, top:"Top grade reached", noData:"No scorable data",
+  hDims:"Six dimensions", hintDims:"Dimension score = earned / max x 100. Met = 10 pts, Partial = 5, Unmet = 0; unmeasurable items are excluded.",
+  hTable:"Practice checklist", hintTable:"Click an ID for details. Source links open the official doc and highlight the exact quote (Chrome, Edge, Safari).",
+  swipe:"Scroll sideways to see all columns.", all:"All", allDims:"All dimensions",
+  head:["ID","Status","Pts","Official practice","Your usage","Trend","Sources"],
+  empty:"No items match these filters.", hDetails:"Item details",
+  down:"Page unreachable", basis:"From digest", digestNote:(d,p)=>`Live page unreachable; expand stored digest (verified ${esc(d)}, <code>${esc(p)}</code>).`, hintDetails:"Read-only report: your config was not modified. Apply suggestions as you see fit.",
+  evidence:"Evidence", suggestion:"Action", caveat:"Caveat", how:"Detection",
+  trend:{up:"Up",down:"Down",same:"Same",new:"New",changed:"Changed"}, vsPrev:"vs prev",
+  hMethod:"Data and limitations",
+  fixed:[
+    "Read-only scan of local JSONL session logs. Scores weigh human sessions; headless and subagent runs are counted separately.",
+    "Keyword matching detects user corrections and test, lint, or screenshot commands; expect some false positives and misses.",
+    "Each quote was checked against its official page on the date shown. Equal-weight scoring is this report's convention, not a vendor standard.",
+    "Total score reflects only measurable items; unmeasurable practices are excluded."]
+};
+document.documentElement.lang = zh ? "zh-CN" : "en";
+document.title = T.title;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+// Short labels (ctx-1, safe-2 …) keep tables narrow; the full id stays as anchor and tooltip.
+const SHORT = {}; { const n = {}; D.items.forEach(it => { n[it.dimension] = (n[it.dimension] || 0) + 1; SHORT[it.id] = `${it.dimension}-${n[it.dimension]}`; }); }
+const idLink = id => `<a href="#${esc(id)}" title="${esc(id)}">${esc(SHORT[id] || id)}</a>`;
+const rich = s => esc(s).replace(/`([^`]+)`/g, "<code>$1</code>");
+const EXT = `<svg class="ico" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 2.5h-2v7h7v-2"/><path d="M7 2.5h2.5V5"/><path d="M9.5 2.5 5.5 6.5"/></svg>`;
+const ARROW = {
+  up:`<svg class="ico" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10V2.5M2.8 5.5 6 2.3l3.2 3.2"/></svg>`,
+  down:`<svg class="ico" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2v7.5M2.8 6.5 6 9.7l3.2-3.2"/></svg>`,
+  same:`<svg class="ico" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 6h7"/></svg>`
+};
+const frag = (url, t) => url + "#:~:text=" + encodeURIComponent(t).replace(/-/g,"%2D").replace(/,/g,"%2C");
+const gColor = l => ({S:["var(--s-bg)","var(--s-fg)"],A:["var(--ok-soft)","var(--ok-text)"],B:["var(--tint)","var(--link)"],C:["var(--part-soft)","var(--part-text)"],D:["var(--no-soft)","var(--no-text)"]})[l] || ["var(--na-soft)","var(--na-text)"];
+const chip = l => { const [b,c] = gColor(l); return `<span class="gchip" style="background:${b};color:${c}">${l || "–"}</span>`; };
+const tag = st => `<span class="tag t-${st}">${T.st[st]}</span>`;
+const pts = it => it.points === null ? T.notScored : `${it.points}/10`;
+const trend = t => t ? `<span class="trend ${t}">${ARROW[t] || ""}${T.trend[t]}</span>` : "";
+const delta = d => d === null || d === undefined ? "" : `<span class="delta ${d > 0 ? "up" : d < 0 ? "down" : "same"}">${ARROW[d > 0 ? "up" : d < 0 ? "down" : "same"]}${d > 0 ? "+" : ""}${d} ${T.vsPrev}</span>`;
+const byId = Object.fromEntries(D.items.map(i => [i.id, i]));
+
+// theme toggle (per-viewer convenience only)
+const modes = ["auto","light","dark"];
+let mode = "auto";
+try { mode = localStorage.getItem("apa-theme") || "auto"; } catch (e) {}
+const applyTheme = () => {
+  if (mode === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = mode;
+  $("theme").textContent = T.theme[mode];
+};
+$("theme").addEventListener("click", () => { mode = modes[(modes.indexOf(mode) + 1) % 3]; try { localStorage.setItem("apa-theme", mode); } catch (e) {} applyTheme(); });
+applyTheme();
+if (D.theme) {
+  const r = document.documentElement.style;
+  if (D.theme.accent) r.setProperty("--accent-light", D.theme.accent);
+  if (D.theme.accentDark) r.setProperty("--accent-dark", D.theme.accentDark);
+}
+
+// optional brand (config.json "brand": name, logo, logoDark)
+if (D.brand && (D.brand.name || D.brand.logo)) {
+  const b = $("brand"); b.hidden = false;
+  const add = (src, cls) => { const i = new Image(); i.src = src; i.alt = D.brand.name || ""; i.className = cls; i.onerror = () => i.remove(); b.appendChild(i); };
+  if (D.brand.logo) add(D.brand.logo, "brand-light");
+  if (D.brand.logoDark) { add(D.brand.logoDark, "brand-dark"); b.classList.add("has-dark"); }
+  if (D.brand.name && !D.brand.logo) b.appendChild(document.createTextNode(D.brand.name));
+  const sep = document.createElement("span"); sep.className = "sep"; b.after(sep);
+}
+
+// header + report card
+$("t-title").textContent = T.title;
+$("t-meta").textContent = T.meta(D.date, D.windowDays);
+const L = D.grade;
+const scored = D.score !== null && D.score !== undefined;
+$("stamp").textContent = L || "–";
+const [sb, sc] = gColor(L); $("stamp").style.background = sb; $("stamp").style.color = sc;
+$("score").textContent = scored ? D.score : "–";
+$("delta").innerHTML = delta(D.scoreDelta);
+$("lvname").textContent = scored ? `${T.grade} ${L} · ${T.names[L]}` : T.noData;
+$("headline").textContent = D.headline || "";
+$("lead").textContent = D.lead || "";
+if (D.illustration) {
+  $("report").classList.add("with-plate");
+  const plate = document.createElement("div"); plate.className = "plate";
+  const img = new Image(); img.alt = D.illustrationAlt || ""; img.src = D.illustration;
+  img.onerror = () => { plate.remove(); $("report").classList.remove("with-plate"); };
+  plate.appendChild(img); $("report").appendChild(plate);
+}
+
+// ladder (hidden when nothing is scorable)
+const counts = D.counts;
+if (!scored) {
+  document.querySelector(".ladder").hidden = true;
+} else {
+const lad = $("ladder");
+// Zoom the scale to the band that matters: from just below the current score up to 100.
+const lo = Math.max(0, Math.min(50, Math.floor((D.score - 10) / 10) * 10));
+const at = v => ((v - lo) / (100 - lo) * 100).toFixed(2);
+lad.dataset.fill = at(D.score);
+lad.insertAdjacentHTML("beforeend", (lo > 0 ? `<div class="tick lo" style="left:0"><i></i><small class="num">${lo}</small></div>` : "")
+  + [[60,"C"],[70,"B"],[80,"A"],[90,"S"]].filter(([v]) => v > lo).map(([v,l]) => `<div class="tick" style="left:${at(v)}%"><i></i>${l}<small class="num">${v}</small></div>`).join("")
+  + `<div class="pin now" style="left:${at(D.score)}%" title="${T.now} ${D.score}">${L}</div>`
+  + D.ladder.map((s, i) => `<div class="dot" style="left:${at(s.score)}%" title="${s.grade} ${s.score}">${i + 1}<span class="num">${s.score}</span></div>`).join(""));
+const legs = [`<div><span class="now-n">${L}</span><b>${T.now} <span class="num">${D.score}</span> ${T.pts} · ${L}</b><span class="pts">${T.st.ok} ${counts.ok} · ${T.st.part} ${counts.part} · ${T.st.no} ${counts.no} · ${T.st.na} ${counts.na}</span></div>`];
+D.ladder.forEach((s, i) => legs.push(`<div class="step"><span class="step-n">${i + 1}</span><b>${T.fix} ${T.items(s.add.length)} → <span class="num">${s.score}</span> ${T.pts} · ${s.grade}</b><span class="pts">${s.add.map(idLink).join(", ")}</span></div>`));
+if (!D.ladder.length) legs.push(`<div><b>${T.top}</b></div>`);
+$("legs").innerHTML = legs.join("");
+}
+
+// dimensions
+$("h-dims").textContent = T.hDims; $("hint-dims").textContent = T.hintDims;
+$("dims").innerHTML = D.dimensions.map(d => {
+  const [, c] = gColor(d.grade);
+  const ids = `<span class="ids">${d.ids.map(idLink).join(" ")}</span>`;
+  return `<tr><td class="name">${esc(d.name)}</td><td class="mt"><div class="meter"><div data-w="${d.score ?? 0}" style="background:${c}"></div></div></td><td class="val num">${d.score ?? `<span class="trend same">${T.noData}</span>`}${d.delta ? ` <span class="trend ${d.delta > 0 ? "up" : "down"}">${d.delta > 0 ? "+" : ""}${d.delta}</span>` : ""}</td><td class="g">${chip(d.grade)}</td><td class="why">${esc(d.hint)} · ${ids}</td></tr>`;
+}).join("");
+
+// practice table + details
+$("h-table").textContent = T.hTable; $("hint-table").textContent = T.hintTable; $("swipe").textContent = T.swipe;
+const hasPrev = !!D.previous;
+$("sum-head").innerHTML = T.head.filter((h, i) => hasPrev || i !== 5).map(h => `<th>${h}</th>`).join("");
+const href = s => esc(frag(s.href || s.url, s.fragment));
+const down = s => s.linkStatus === "unreachable" ? ` <span class="warn" title="${esc(s.digestPath || "")}">${T.down}</span>` : "";
+const basis = it => it.basis === "digest" ? ` <span class="basis">${T.basis}</span>` : "";
+const links = it => it.sources.filter((s, i, a) => a.findIndex(x => x.url === s.url) === i)
+  .map(s => `<a href="${href(s)}" target="_blank" rel="noopener">${esc(s.page)}${EXT}</a>${down(s)}`).join(" ");
+const digestBox = s => s.linkStatus !== "unreachable" ? "" : `<details class="digest"><summary>${T.digestNote(s.lastVerifiedAt || "", s.digestPath || "")}</summary>${(s.digestSummary || []).length ? `<ul>${s.digestSummary.map(b => `<li>${rich(b)}</li>`).join("")}</ul>` : ""}</details>`;
+document.querySelector("#summary tbody").innerHTML = D.items.map(it => `<tr data-st="${it.status}" data-dim="${it.dimension}">
+<td class="id">${idLink(it.id)}</td><td class="st">${tag(it.status)}</td><td class="pt ${it.status === "ok" ? "got" : ""}">${pts(it)}</td>
+<td class="title">${esc(it.title)}${basis(it)}</td><td class="seen">${rich(it.summary || it.evidence)}</td>${hasPrev ? `<td class="tr">${trend(it.trend)}</td>` : ""}<td class="srcs">${links(it)}</td></tr>`).join("");
+$("empty").textContent = T.empty;
+$("h-details").textContent = T.hDetails; $("hint-details").textContent = T.hintDetails;
+$("details").innerHTML = D.items.map(it => `<article class="item" id="${esc(it.id)}" data-st="${it.status}" data-dim="${it.dimension}">
+<h3><span class="ttl"><span class="id" title="${esc(it.id)}">${esc(SHORT[it.id])}</span>${esc(it.title)}</span><span class="badges">${tag(it.status)}${basis(it)}${trend(it.trend)}</span><span class="pts ${it.status === "ok" ? "got" : ""}">${pts(it)}</span></h3>
+<div class="quotes">${it.sources.map(s => `<div class="q">“<a class="quote" href="${href(s)}" target="_blank" rel="noopener">${esc(s.quote)}</a>”<a class="from" href="${href(s)}" target="_blank" rel="noopener">${esc(s.page)}${EXT}</a>${down(s)}</div>${digestBox(s)}`).join("")}</div>
+<div class="fields">${it.evidence ? `<span class="k">${T.evidence}</span><p>${rich(it.evidence)}</p>` : ""}
+${it.suggestion ? `<span class="k">${T.suggestion}</span><p>${rich(it.suggestion)}</p>` : ""}
+${it.caveat ? `<span class="k">${T.caveat}</span><p>${rich(it.caveat)}</p>` : ""}
+<span class="k">${T.how}</span><p class="how">${rich(it.detect)} · ${esc(it.verifiedAt)}</p></div></article>`).join("");
+
+// filters: status x dimension
+const filt = {st:"all", dim:"all"};
+const fs = $("f-status"), fd = $("f-dim");
+fs.innerHTML = [["all", `${T.all} ${D.items.length}`], ...["no","part","ok","na"].map(k => [k, `${T.st[k]} ${counts[k]}`])]
+  .map(([k, l]) => `<button type="button" data-k="${k}" class="${k === "all" ? "on" : ""}" aria-pressed="${k === "all"}">${l}</button>`).join("");
+fd.innerHTML = [["all", T.allDims], ...D.dimensions.map(d => [d.id, d.name])]
+  .map(([k, l]) => `<button type="button" data-k="${k}" class="${k === "all" ? "on" : ""}" aria-pressed="${k === "all"}">${esc(l)}</button>`).join("");
+const applyFilter = () => {
+  let shown = 0;
+  document.querySelectorAll("#details [data-st], #summary [data-st]").forEach(el => {
+    const on = (filt.st === "all" || el.dataset.st === filt.st) && (filt.dim === "all" || el.dataset.dim === filt.dim);
+    el.style.display = on ? "" : "none";
+    if (on && el.tagName === "ARTICLE") shown++;
+  });
+  $("empty").hidden = shown > 0;
+  const tb = document.querySelector("#summary tbody");
+  tb.querySelector("tr.none")?.remove();
+  if (!shown) tb.insertAdjacentHTML("beforeend", `<tr class="none"><td colspan="${hasPrev ? 7 : 6}">${T.empty}</td></tr>`);
+  const pool = D.items.filter(i => filt.dim === "all" || i.dimension === filt.dim);
+  fs.querySelectorAll("button").forEach(b => {
+    const k = b.dataset.k;
+    b.textContent = k === "all" ? `${T.all} ${pool.length}` : `${T.st[k]} ${pool.filter(i => i.status === k).length}`;
+  });
+};
+[[fs, "st"], [fd, "dim"]].forEach(([box, key]) => box.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  box.querySelectorAll("button").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); });
+  filt[key] = b.dataset.k; applyFilter();
+}));
+
+// methodology
+$("h-method").textContent = T.hMethod;
+$("method").innerHTML = [...(D.dataNotes || []), ...(D.notes || []), ...T.fixed].map(s => `<li>${rich(s)}</li>`).join("");
+
+requestAnimationFrame(() => {
+  if (scored) $("fill").style.width = $("ladder").dataset.fill + "%";
+  document.querySelectorAll(".meter div").forEach(d => d.style.width = d.dataset.w + "%");
+});
+})();
+</script>
+</body>
+</html>
