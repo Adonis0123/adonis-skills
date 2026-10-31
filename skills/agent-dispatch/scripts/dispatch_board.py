@@ -1319,14 +1319,19 @@ def lane_summary(run: dict, lane: dict) -> str:
 def first_sentence(text: str, limit: int = 120) -> str:
     """One plain sentence for a card: Markdown marks dropped, cut at the first sentence end.
 
-    A report opens with the machine line `OUTCOME: succeeded|failed` (task-spec.md); the reader needs the
-    sentence after it, or a plain word when that line is all there is."""
+    A report opens with the machine line `OUTCOME: succeeded|failed|blocked|handback` (task-spec.md); the
+    reader needs the sentence after it, or a plain word when that line is all there is."""
     match = OUTCOME_LINE.match(str(text or ""))
     if match:
         rest = str(text)[match.end():]
         if rest.strip():
             return first_sentence(rest, limit)
-        return {"succeeded": "已完成。", "failed": "没做完，详见完整报告。"}.get(match.group(1).lower(), match.group(1))
+        return {
+            "succeeded": "已完成。",
+            "failed": "没做完，详见完整报告。",
+            "blocked": "卡住了，等你决定。",
+            "handback": "超出范围，交回给主控。",
+        }.get(match.group(1).lower(), match.group(1))
     line = short(text, 10_000)
     line = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", line).replace("__", "")
     match = re.search(r"[。！？!?](?=\s|$)|[。！？]|\.(?=\s|$)", line)

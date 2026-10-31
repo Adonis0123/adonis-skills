@@ -226,7 +226,7 @@ Times are shown, never counted: the header says "MM-DD HH:MM 更新", the time i
 
 The page has two copy buttons at most: 复制推荐答复 on each open Ask (copies "A1：按推荐办") and 复制本次进度给 AI in the footer (objective, milestones, Lane result summaries, open Asks, decisions and the ledger's data time; no credentials, URLs or raw commands). Clipboard failure reveals selectable text. Its scripts are the inlined Markdown renderer, the copy handler, and one browser reload of this same file every 5 s. That reload does not fetch, open a socket, or send the page into the coordinator's conversation. There is no meta refresh. Before each reload, and when the viewer leaves for a report, the page saves which disclosures are open, edited form values, focus and scroll in `sessionStorage` per Board file, and restores them after loading; it skips a reload while a field has focus or text is selected. Only elements with an `id` are kept, so every `<details>` or input added to the page needs a stable `id`. Links, including report links, artifacts and Markdown links, open in the same tab: Orca's browser refuses popups, and each report page links back to the Board.
 
-A card's one sentence skips the report's `OUTCOME:` line; when that line is all there is, it reads 已完成 or 没做完. Commits show the repository's folder name and hash; the full path is the tooltip.
+A card's one sentence skips the report's `OUTCOME:` line; when that line is all there is, it reads 已完成, 没做完, 卡住了，等你决定 or 超出范围，交回给主控. Commits show the repository's folder name and hash; the full path is the tooltip.
 
 ## Verification
 

@@ -1025,6 +1025,9 @@ class QuietBoardFiles(BoardTestCase):
         self.assertEqual(board.first_sentence("OUTCOME: succeeded\n\n主题 102 个色号全部存在。只新增文件"), "主题 102 个色号全部存在。")
         self.assertEqual(board.first_sentence("**OUTCOME:** failed"), "没做完，详见完整报告。")
         self.assertEqual(board.first_sentence("OUTCOME: succeeded"), "已完成。")
+        self.assertEqual(board.first_sentence("OUTCOME: blocked"), "卡住了，等你决定。")
+        self.assertEqual(board.first_sentence("OUTCOME: handback"), "超出范围，交回给主控。")
+        self.assertEqual(board.first_sentence("OUTCOME: handback\n需要改 shared/ 下的文件。"), "需要改 shared/ 下的文件。")
         self.assertTrue(board.has_full_report(run, run["lanes"][0]))
 
     def test_report_page_is_written_once_per_change(self):
