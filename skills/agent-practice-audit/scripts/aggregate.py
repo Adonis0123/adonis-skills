@@ -159,19 +159,27 @@ def link_subagents(rows: list[dict]) -> None:
                 parent["explore_all"] += num(r.get("explore"))
 
 
+def fresh_start(r: dict) -> bool:
+    """A session that opens a clean context: one started by /clear or /new, or any new human session
+    (another account, another host, a sideby handoff, or a plain new window; Grok logs no /new)."""
+    return r.get("started_by") in CLEAR_CMDS or (r.get("kind") == "human" and num(r.get("prompts")) > 0)
+
+
 def mark_cleared(rows: list[dict], gap_minutes: float) -> None:
-    """/clear and /new open a new transcript: a long session counts as cleared when a session in the same
-    working directory that starts with /clear or /new begins within gap_minutes of its end (or, in older
-    logs, when /clear appears inside it)."""
+    """A long session counts as cleared when a different fresh session (see fresh_start) in the same working
+    directory, on any host or account, begins within gap_minutes after its end (or, in older logs, when
+    /clear appears inside it). A handoff session (its first prompt points at a handoffs/ brief) may start up
+    to gap_minutes before the end, since the old session can log its last reply after the handoff began."""
     starts = collections.defaultdict(list)
     for r in rows:
-        if r.get("started_by") in CLEAR_CMDS and epoch(r.get("start")) is not None:
-            starts[(r["host"], cwd_key(r))].append((epoch(r["start"]), id(r)))
+        if fresh_start(r) and epoch(r.get("start")) is not None:
+            starts[cwd_key(r)].append((epoch(r["start"]), id(r), bool(r.get("handoff"))))
+    gap = gap_minutes * 60
     for r in rows:
         end = epoch(r.get("end"))
         # A different session that starts at or after this one ends, within the gap; never the session itself.
-        succ = end is not None and any(0 <= s - end <= gap_minutes * 60 and rid != id(r)
-                                       for s, rid in starts.get((r["host"], cwd_key(r)), ()))
+        succ = end is not None and any(rid != id(r) and (0 <= s - end <= gap or (ho and abs(s - end) <= gap))
+                                       for s, rid, ho in starts.get(cwd_key(r), ()))
         r["_cleared"] = bool(succ or (r.get("cmds") or {}).get("clear"))
 
 
@@ -282,35 +290,75 @@ def host_summary(hs: list[dict], rules: dict) -> dict:
     }
 
 
-def parallel(hs: list[dict], max_span_hours: float) -> dict:
-    """Human sessions that overlap in time with another human session (any host) in the same repository.
+def edits_files(r: dict) -> bool:
+    return bool(num(r.get("edited_files"))) or any(r["tools"].get(n) for n in EDIT_TOOLS)
 
-    Sessions longer than max_span_hours (often resumed across days) and sessions in ~ are left out.
+
+def project_key(r: dict) -> str:
+    """Which project a session works on: the git remote shared by every clone (hashed by extract.py), else
+    the full repository identity. Clones of one remote in different directories group together."""
+    return r.get("remote_id") or repo_key(r)
+
+
+def checkout_key(r: dict) -> str:
+    """The working tree itself: a worktree checkout or another clone is a different one."""
+    return r.get("checkout_id") or cwd_key(r)
+
+
+def checkouts(r: dict) -> set:
+    """Checkouts a session edited in (extract.py `edit_checkouts`: a session that switched into a worktree
+    counts there), else the checkout it started in."""
+    return set(r.get("edit_checkouts") or ()) or {checkout_key(r)}
+
+
+def parallel(hs: list[dict], max_span_hours: float, min_overlap_minutes: float) -> dict:
+    """Human sessions that edited files while another human session (any host) edited the same project for
+    at least min_overlap_minutes. A session is isolated only when none of its
+    overlapping partners shares its checkout: a worktree checkout or another clone of the same remote has
+    its own checkout_id, so a worktree tag alone does not exempt two sessions in one worktree.
+
+    Sessions longer than max_span_hours (often resumed across days), sessions in ~ and sessions that edited
+    nothing are left out.
     """
-    by_repo = collections.defaultdict(list)
+    by_project = collections.defaultdict(list)
     for r in hs:
-        # Grouped by full repository identity (worktrees folded, linked worktrees resolved through their
-        # .git file), so /one/app and /two/app stay apart. Only counts leave this function.
+        # Grouped by project (remote, else full repository identity with worktrees folded), so /one/app and
+        # /two/app stay apart unless they are clones of one remote. Only counts leave this function.
         repo, a, b = repo_key(r), epoch(r.get("start")), epoch(r.get("end"))
         if not repo or repo_label(r) == "~" or a is None or b is None or b - a > max_span_hours * 3600:
             continue
-        by_repo[repo].append((a, b, r))
-    par = {}
-    for items in by_repo.values():
+        if not edits_files(r):
+            continue
+        by_project[project_key(r)].append((a, b, r))
+    partners: dict[int, list[dict]] = collections.defaultdict(list)
+    par: dict[int, dict] = {}
+    for items in by_project.values():
         items.sort(key=lambda x: x[0])
-        end, holder = float("-inf"), None
-        for a, b, r in items:
-            if a < end:
-                par[id(r)], par[id(holder)] = r, holder
-            if b > end:
-                end, holder = b, r
+        for i, (a, b, r) in enumerate(items):
+            for a2, b2, r2 in items[i + 1:]:
+                if a2 >= b:
+                    break  # sorted by start: no later session overlaps r
+                if min(b, b2) - a2 >= min_overlap_minutes * 60:
+                    partners[id(r)].append(r2)
+                    partners[id(r2)].append(r)
+                    par[id(r)], par[id(r2)] = r, r2
     rs = list(par.values())
+
+    def isolated(r: dict) -> bool:
+        # The checkouts decide, worktree tag or not: a worktree has its own checkout_id, while two sessions
+        # editing in the same worktree (or one that ran `git worktree add` but kept editing the main
+        # checkout) still share one. Isolated = no edited checkout in common with any overlapping partner.
+        mine = checkouts(r)
+        return all(not (mine & checkouts(p)) for p in partners[id(r)])
+    iso = [r for r in rs if isolated(r)]
     wt = [r for r in rs if r["tools"].get("bash:worktree")]
     by_host = collections.Counter(r["host"] for r in rs)
-    wt_host = collections.Counter(r["host"] for r in wt)
-    return {"sessions": len(rs), "with_worktree": len(wt),
-            "repos": len({repo_key(r) for r in rs}),
-            "by_host": {h: [by_host[h], wt_host[h]] for h in sorted(by_host)}}
+    iso_host = collections.Counter(r["host"] for r in iso)
+    return {"sessions": len(rs), "isolated": len(iso), "with_worktree": len(wt),
+            "separate_clone": sum(1 for r in iso if not r["tools"].get("bash:worktree")),
+            "isolated_worktree": sum(1 for r in iso if r["tools"].get("bash:worktree")),
+            "repos": len({project_key(r) for r in rs}),
+            "by_host": {h: [by_host[h], iso_host[h]] for h in sorted(by_host)}}
 
 
 def repeated(rows: list[dict], repeat_min: int) -> dict:
@@ -343,7 +391,7 @@ def aggregate(rows: list[dict], errors: int = 0, rules: dict | None = None) -> d
     own = [r for r in head if r.get("self_audit")]
     user_head = [r for r in head if not r.get("self_audit")]
     hp = need(rules, "auto-headless", "repeat_min")
-    wp = need(rules, "auto-worktrees", "max_span_hours")
+    wp = need(rules, "auto-worktrees", "max_span_hours", "min_overlap_minutes")
     out["headless"] = {
         "sessions": len(head),
         "self_audit": len(own),
@@ -355,7 +403,7 @@ def aggregate(rows: list[dict], errors: int = 0, rules: dict | None = None) -> d
                             for h in sorted({r["host"] for r in head})},
     }
     out["human_repeated"] = repeated(human, hp["repeat_min"]) if hp else None
-    out["parallel"] = parallel(human, wp["max_span_hours"]) if wp else None
+    out["parallel"] = parallel(human, wp["max_span_hours"], wp["min_overlap_minutes"]) if wp else None
     out["subagent"] = {"sessions": sum(1 for r in rows if r["kind"] == "subagent")}
     out["unknown"] = {"sessions": sum(1 for r in rows if r["kind"] == "unknown"),
                       "by_host": dict(collections.Counter(r["host"] for r in rows if r["kind"] == "unknown"))}

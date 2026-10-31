@@ -201,11 +201,12 @@ def claude_setups(config: dict, key: str = "claude", active: set | None = None) 
 
 
 def instruction_files(config: dict) -> list[dict]:
-    """Instruction files deduplicated by realpath; `codex` marks files Codex reads."""
+    """Instruction files deduplicated by realpath; `codex` marks files Codex reads. Subdirectory files
+    (`subdir`) are left out: only doc-test-commands reads them, straight from repo_instructions."""
     by_real: dict[str, dict] = {}
     for scope in ("global_instructions", "repo_instructions"):
         for f in config.get(scope) or []:
-            if not isinstance(f, dict):
+            if not isinstance(f, dict) or f.get("subdir"):
                 continue
             path = str(f.get("path") or "")
             name, parent = os.path.basename(path), os.path.basename(os.path.dirname(path))
@@ -216,7 +217,8 @@ def instruction_files(config: dict) -> list[dict]:
                                           "lines": int(f.get("lines") or 0), "must": num(f.get("must_rules")),
                                           "topics": f.get("must_topics") if isinstance(f.get("must_topics"), dict)
                                           else {},
-                                          "compact": bool(f.get("compact_instructions")), "codex": False,
+                                          "compact": bool(f.get("compact_instructions")),
+                                          "compact_notes": bool(f.get("compact_notes")), "codex": False,
                                           "global": True})
             e["codex"] = e["codex"] or codex
             e["global"] = e["global"] and is_global
@@ -318,13 +320,19 @@ def p_ctx_compact_focus(ctx: Ctx):
     if files:
         m["files"] = [f["path"] for f in files][:2]
         return m, draft("ok", f"{len(files)} instruction file(s) with Compact instructions", ctx), None
+    notes = [f for f in instruction_files(ctx.config) if f.get("compact_notes")]
+    if notes:
+        m["notes_files"] = [f["path"] for f in notes][:2]
     long_n = sum(num(ctx.hosts[h].get("long_sessions")) for h in ctx.main)
     compacted = sum(num(ctx.hosts[h].get("long_sessions")) * float(num(ctx.hosts[h].get("pct_compaction_long"))) / 100
                     for h in ctx.main)
     share = pct(compacted, long_n)
-    reason = f"no Compact instructions heading; compaction in {share}% of {long_n} long sessions"
+    reason = (f"no Compact instructions heading{f'; compaction notes in {len(notes)} file(s)' if notes else ''}; "
+              f"compaction in {share}% of {long_n} long sessions")
     if long_n < r["min_long"]:
         return m, draft("na", reason, ctx), None
+    if notes:  # what to keep or re-read is written down, only not under the heading /compact looks for
+        return m, draft("part", reason, ctx), None
     status = "no" if share >= r["no_pct"] else ("part" if share >= r["part_pct"] else "na")
     return m, draft(status, reason, ctx), None
 
@@ -448,10 +456,14 @@ def p_doc_short(ctx: Ctx):
         if isinstance(c, dict) and isinstance(c.get("instruction_chain_bytes_max"), int):
             limit = c.get("project_doc_max_bytes")
             limit = limit if isinstance(limit, int) and limit > 0 else r["codex_doc_bytes"]
-            chains.append((c["instruction_chain_bytes_max"], limit, c.get("instruction_chain_repo")))
+            chains.append((c["instruction_chain_bytes_max"], limit, c.get("instruction_chain_repo"),
+                           c.get("global_instructions_bytes")))
     if chains:
         worst = max(chains, key=lambda x: x[0] - x[1])
         m["codex_chain"] = {"bytes": worst[0], "limit": worst[1], "repo": tilde_only(worst[2]) if worst[2] else None}
+        if isinstance(worst[3], int):
+            m["codex_chain"]["global_bytes_not_counted"] = worst[3]
+        chains = [c[:3] for c in chains]
         over = [c for c in chains if c[0] > c[1]]
     else:  # older config scan: per-file sizes of files Codex reads
         limit = codex_doc_limit(ctx.config, r["codex_doc_bytes"])
@@ -472,16 +484,21 @@ def p_doc_test_commands(ctx: Ctx):
     for f in ctx.config.get("repo_instructions") or []:
         if not isinstance(f, dict):
             continue
-        d = os.path.dirname(str(f.get("path") or ""))
-        if os.path.basename(d).startswith(GLOBAL_DIR_PREFIXES):
+        # The scan tags each file (root or subdirectory) with its repository; older scans hold root files only.
+        d = str(f.get("repo") or os.path.dirname(str(f.get("path") or "")))
+        if os.path.basename(d.rstrip("/")).startswith(GLOBAL_DIR_PREFIXES):
             continue  # a global config dir, exempt
-        r = repos.setdefault(d, {"test": False, "lint": False})
+        r = repos.setdefault(d, {"test": False, "lint": False, "files": 0})
         r["test"] = r["test"] or bool(f.get("mentions_test"))
         r["lint"] = r["lint"] or bool(f.get("mentions_lint"))
+        r["files"] += 1
     both = [d for d, r in repos.items() if r["test"] and r["lint"]]
     with_test = [d for d, r in repos.items() if r["test"]]
+    # Each repository that misses one names what it lacks, straight from the scan's mentions_* fields.
     m = {"repos": len(repos), "with_test": len(with_test), "with_lint": sum(r["lint"] for r in repos.values()),
-         "with_both": len(both), "missing": [tilde_only(d) for d in repos if d not in both][:3]}
+         "with_both": len(both),
+         "missing": [{"repo": tilde_only(d), "lacks": [k for k in ("test", "lint") if not r[k]], "files": r["files"]}
+                     for d, r in repos.items() if d not in both][:4]}
     if not repos:
         return m, draft("na", "no repository instruction files among the most-used directories", ctx), None
     reason = f"{len(both)}/{len(repos)} repositories name test and lint commands"
@@ -605,12 +622,18 @@ def p_auto_worktrees(ctx: Ctx):
     par = ctx.summary.get("parallel")
     if not isinstance(par, dict):
         return {}, None, "summary has no parallel-session count; rerun aggregate.py"
-    n, k = num(par.get("sessions")), num(par.get("with_worktree"))
-    m = {"parallel": n, "with_worktree": k, "repos": num(par.get("repos")), "by_host": par.get("by_host") or {}}
+    # `isolated` (worktree or a separate clone of the same remote); older summaries only have with_worktree.
+    n, k = num(par.get("sessions")), num(par.get("isolated", par.get("with_worktree")))
+    m = {"parallel": n, "isolated": k, "with_worktree": num(par.get("with_worktree")),
+         "separate_clone": num(par.get("separate_clone")), "isolated_worktree": num(par.get("isolated_worktree")),
+         "repos": num(par.get("repos")),
+         "by_host": par.get("by_host") or {}}
     if n < r["min_cohort"]:
-        return m, draft("na", f"{n} parallel sessions in one repository (< {r['min_cohort']}): no parallel work seen",
-                        ctx), None
-    reason = f"worktrees in {k}/{n} ({pct(k, n)}%) parallel sessions across {m['repos']} repos"
+        return m, draft("na", f"{n} parallel editing sessions in one repository (< {r['min_cohort']}): "
+                              "no parallel work seen", ctx), None
+    reason = (f"worktree or separate clone in {k}/{n} ({pct(k, n)}%) parallel editing sessions across "
+              f"{m['repos']} repos ({m['isolated_worktree']} in a worktree, {m['separate_clone']} in another checkout; "
+              f"{m['with_worktree']} carry a worktree tag)")
     status = "ok" if pct(k, n) >= r["ok_pct"] else ("part" if k else "no")
     return m, draft(status, reason, ctx), None
 

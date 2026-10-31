@@ -80,9 +80,9 @@
           "fragment": "Keep one chat per coherent unit of work"
         }
       ],
-      "detect": "Summary: long_sessions, corrections_per100_prompts vs cohorts.long.corr_per100, cohorts.long.cleared, pct_started_by_clear.",
+      "detect": "Summary: long_sessions, corrections_per100_prompts vs cohorts.long.corr_per100, cohorts.long.cleared (any new human session in the same directory, any account or host; sideby handoffs included), pct_started_by_clear. Claude session ends ignore late system lines.",
       "rule": {
-        "text": "Long = over 200 tool calls. Cleared = a /clear- or /new-started session in the same directory within 10 min of its end. ok: <10% long, or >=20% of long sessions cleared. no: >=30% long and more corrections per prompt when long (hosts with >=10 long). Else part (heuristic)",
+        "text": "Long = over 200 tool calls. Cleared = a new human session (/clear, /new, another account or host, a handoff) in the same directory within 10 min of its end. ok: <10% long, or >=20% of long sessions cleared. no: >=30% long and more corrections per prompt when long (hosts with >=10 long). Else part (heuristic)",
         "params": {
           "long_tools": 200,
           "long_ok_pct": 10,
@@ -191,9 +191,9 @@
           "fragment": "tells Claude what to preserve during summarization"
         }
       ],
-      "detect": "Config: instruction files' compact_instructions flag; summary: long_sessions, pct_compaction_long. /compact arguments are not logged.",
+      "detect": "Config: instruction files' compact_instructions flag (heading) and compact_notes (lines on what to keep or re-read around compaction, e.g. 压缩后先读账本); summary: long_sessions, pct_compaction_long. /compact arguments are not logged.",
       "rule": {
-        "text": "ok: an instruction file has a 'Compact instructions' heading. Without one, among >=10 long sessions: no: compaction in >=50%; part: >=20%; else na (heuristic)",
+        "text": "ok: an instruction file has a 'Compact instructions' heading. Without one, among >=10 long sessions: part: compaction notes without the heading, or compaction in >=20%; no: compaction in >=50% and no notes; else na (heuristic)",
         "params": { "min_long": 10, "part_pct": 20, "no_pct": 50 }
       },
       "fix_kind": "config",
@@ -272,7 +272,7 @@
           "fragment": "If something has to happen every time"
         }
       ],
-      "detect": "Config: instruction files' must_rules and must_topics; claude[] / claude_projects[] enforcing_hook_topics, deny_topics.",
+      "detect": "Config: instruction files' must_rules and must_topics; claude[] / claude_projects[] enforcing_hook_topics (hooks whose script can return deny/block or exit 2; env variable names such as *_TOKEN are not topics), deny_topics.",
       "rule": {
         "text": "Topics: secrets, destructive, git_push, language. na without must-rule lines. ok: every must-rule topic has an enforcing hook (PreToolUse, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, PostToolUse) or deny rule; part: some topics or other hooks only; no: none.",
         "params": {}
@@ -302,7 +302,7 @@
           "fragment": "Whatever the scope, keep the enforced set small"
         }
       ],
-      "detect": "Config: hook_entries + deny_count - secret_deny_count across settings files.",
+      "detect": "Config: enforcing_hook_entries (hooks on a blocking event whose script can return permissionDecision deny, decision block or exit 2; unreadable scripts count as non-blocking) + deny_count - secret_deny_count across settings files.",
       "rule": {
         "text": "Blocking hooks + non-secret deny rules in the largest active setup (secret denies are required by safe-deny-secrets). ok: <20; part: 20-39; no: >=40 (heuristic)",
         "params": { "ok_below": 20, "no_from": 40 }
@@ -376,9 +376,9 @@
           "fragment": "stops adding files once the combined size reaches the limit"
         }
       ],
-      "detect": "Config: instruction file lines and bytes; codex[].instruction_chain_bytes_max vs project_doc_max_bytes.",
+      "detect": "Config: instruction file lines and bytes; codex[].instruction_chain_bytes_max (repository AGENTS files only; the global file does not count toward the limit) vs project_doc_max_bytes from config.toml.",
       "rule": {
-        "text": "no: Codex's combined chain (global + repo AGENTS files) over project_doc_max_bytes (default 32768); part: any file over 200 lines; ok: neither.",
+        "text": "no: Codex's combined chain of repository AGENTS files (the global file is not counted) over project_doc_max_bytes (default 32768); part: any file over 200 lines; ok: neither.",
         "params": { "line_target": 200, "codex_doc_bytes": 32768 }
       },
       "fix_kind": "config",
@@ -413,7 +413,7 @@
           "fragment": "Build, test, and lint commands"
         }
       ],
-      "detect": "Config: repo_instructions[].mentions_test / mentions_lint (real commands: pnpm test, pytest, eslint, ruff...); global files exempt.",
+      "detect": "Config: repo_instructions[].mentions_test / mentions_lint (real commands: pnpm test, pytest, eslint, ruff, pnpm check...), grouped by repo_instructions[].repo: AGENTS.md / CLAUDE.md at the root or in subdirectories (node_modules, .git and build dirs skipped), any file counts; global files exempt.",
       "rule": {
         "text": "Per repository: ok: all name a test and a lint/typecheck command; no: none names a test command; else part.",
         "params": {}
@@ -712,10 +712,15 @@
           "fragment": "Running live tasks on the same files without using Git worktrees"
         }
       ],
-      "detect": "Summary: parallel (overlapping sessions per repository, with_worktree); cwd_top folds worktree dirs into their repo.",
+      "detect": "Summary: parallel (sessions, isolated, with_worktree, separate_clone): overlapping sessions that both edited files, grouped by git remote so clones of one repository meet; a worktree or another clone counts as isolated; cwd_top folds worktree dirs into their repo.",
       "rule": {
-        "text": "Cohort: human sessions overlapping another in the same repo (sessions over 12 h ignored). ok: worktree in >=50%; part: some; no: none; na: <10 in cohort (heuristic)",
-        "params": { "max_span_hours": 12, "min_cohort": 10, "ok_pct": 50 }
+        "text": "Cohort: human sessions that edited files while another did in the same repo or another clone of it, overlapping >=5 min (sessions over 12 h ignored). ok: worktree or separate clone in >=50%; part: some; no: none; na: <10 in cohort (heuristic)",
+        "params": {
+          "max_span_hours": 12,
+          "min_cohort": 10,
+          "ok_pct": 50,
+          "min_overlap_minutes": 5
+        }
       },
       "fix_kind": "habit",
       "verifiedAt": "2026-10-31",

@@ -27,7 +27,8 @@ from multiprocessing import Pool
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from safe_output import UnsafeOutput, safe_file_target  # noqa: E402
-from audit_common import EDIT_TOOLS, OWN_RUN, repo_identity, tilde, worktree_root  # noqa: E402
+from audit_common import (EDIT_TOOLS, OWN_RUN, checkout_root, file_checkout, main_checkout,  # noqa: E402
+                          project_identity, remote_identity, repo_identity, tilde, worktree_root)
 
 HOME = os.path.expanduser("~")
 
@@ -69,8 +70,16 @@ CORR_CATS = {
     "broke_or_forgot": re.compile(r"你(又|没)|忘了|漏了|搞错|错了|\byou (forgot|broke|didn'?t)\b", re.I),
 }
 # A first prompt that states when the task is done (weak keyword hint for plan-done-when).
-DONE_WHEN = re.compile(r"done when|until (it|all|the|every)|acceptance|验收|直到|完成(标准|条件)|确保.{0,30}(通过|成功)"
-                       r"|make sure .{0,40}pass|(should|must) pass", re.I)
+# 验证 counts as a request to verify, not as a noun or status: 验证码/验证器/验证项/验证命令/验证结果, 身份验证,
+# 未/没/不/待/已验证 and the question 验证了吗 are left out. 改完/做完... needs 验/测/跑 in the same clause.
+DONE_WHEN = re.compile(
+    r"done when|until (it|all|the|every)|acceptance|验收|直到|完成(标准|条件)|确保.{0,30}(通过|成功)"
+    r"|make sure .{0,40}pass|(should|must) pass|\b(?:and|then) (?:verify|validate)\b|\bverify (?:it|that|the fix|before)\b"
+    r"|(?<!未)(?<!没)(?<!不)(?<!待)(?<!已)(?<!身份)(?<!双重)验证(?!码|器|项|命令|结果|了吗|过了吗)"
+    r"|截图(?:核对|验证|确认|对比)|跑通|测试(?:全部|都)?通过|(?:要|必须|需要)(?:真实|自己|自我)?去?(?:测试|校验|核验|自测)"
+    r"|(?:改完|做完|修完|修好|写完|完成后)[^，。,;；!！?？\n]{0,12}[验测跑]", re.I)
+# A first prompt that points at a handoff brief written by the previous session (sideby: .../handoffs/<id>/...).
+HANDOFF = re.compile(r"(?:^|[\s/`'\"(])handoffs/[\w.-]+")
 SHAPE_CHARS, SHAPE_MIN = 48, 20  # first-prompt "shape": normalised first 48 chars; shorter prompts get none
 VERIFY_PROMPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "verify-prompt.md")
 
@@ -315,6 +324,8 @@ def add_prompt(r: dict, s: str) -> None:
     if r["prompts"] == 1:
         r["shape"] = prompt_shape(s)
         r["first_done_when"] = bool(DONE_WHEN.search(s[:1000]))
+        if HANDOFF.search(s[:2000]):
+            r["handoff"] = True  # continues another session from a written brief (sideby handoff)
         head = s.lstrip()
         if (SELF_MARKER and head.startswith(SELF_MARKER)) or OWN_RUN.search(head[:400]):
             r["self_audit"] = True
@@ -336,7 +347,8 @@ def finish(r: dict) -> dict:
 
     `repo` is the reduced repository label; `cwd_id` and `repo_id` are short hashes of the full working
     directory and repository identity, so equal names in different places stay apart."""
-    r["edited_files"] = len(r.pop("_edited", ()) or ())
+    edited = r.pop("_edited", ()) or ()
+    r["edited_files"] = len(edited)
     r.pop("_images", None)
     cwd = r.get("cwd")
     if cwd:
@@ -345,9 +357,31 @@ def finish(r: dict) -> dict:
             r["tools"]["bash:worktree"] += 1  # the session ran inside a worktree checkout
         repo = os.path.expanduser(repo_identity(cwd))
         r["cwd_id"], r["repo_id"] = short_hash(cwd), short_hash(repo)
+        checkout = checkout_root(cwd)
+        r["checkout_id"] = short_hash(checkout)  # worktrees and clones stay apart
+        remote = remote_identity(repo) or remote_identity(main_checkout(checkout))
+        if remote:
+            r["remote_id"] = short_hash(remote)  # clones of one remote share it; the URL is never stored
         r["repo"] = tilde(repo)
+        edit_checkouts = checkouts_edited(edited, cwd, remote or repo)
+        if edit_checkouts:
+            r["edit_checkouts"] = edit_checkouts
     r["path"], r["cwd"] = tilde(r["path"]), tilde(cwd) if cwd else None
     return r
+
+
+def checkouts_edited(edited, cwd: str, project: str, limit: int = 500) -> list[str]:
+    """Hashed checkouts of the files a session edited that belong to its own project: a session that
+    entered a worktree (EnterWorktree, or `git worktree add` then edits there) is placed in that worktree,
+    not the directory it started in. Relative paths resolve against cwd; files outside any checkout or in
+    another project are skipped. Empty when nothing qualifies (the session's own checkout_id then applies)."""
+    out = set()
+    for f in list(edited)[:limit]:
+        p = os.path.expanduser(str(f))
+        c = file_checkout(p if os.path.isabs(p) else os.path.join(cwd, p))
+        if c and project_identity(c) == project:
+            out.add(short_hash(c))
+    return sorted(out)
 
 
 def short_hash(s: str) -> str:
@@ -435,6 +469,7 @@ def claude_human_text(content) -> str | None:
 def claude(path: str) -> dict:
     r = new_row("claude", path)
     sidechain = "/subagents/" in path
+    sys_ts = []
     with open(path, "rb") as f:
         for raw in f:
             if raw.startswith(b'{"type":"') and not raw.startswith((b'{"type":"user"', b'{"type":"assistant"', b'{"type":"system"')):
@@ -457,7 +492,12 @@ def claude(path: str) -> dict:
                 continue
             if t not in ("user", "assistant", "system"):
                 continue
-            stamp(r, d.get("timestamp"))
+            # Only user/assistant entries (prompts, replies, tool calls and results) set the session's span:
+            # system lines such as "Remote Control disconnected" or an away summary can land days later.
+            if t == "system":
+                sys_ts.append(d.get("timestamp"))
+            else:
+                stamp(r, d.get("timestamp"))
             sidechain = sidechain or bool(d.get("isSidechain"))
             r["entry"] = r["entry"] or d.get("entrypoint")
             r["cwd"] = r["cwd"] or d.get("cwd")
@@ -499,6 +539,9 @@ def claude(path: str) -> dict:
                     r["started_by"] = m.group(1)  # /clear and /new open a fresh transcript
                 continue
             add_prompt(r, s)
+    if r["end"] is None:  # a transcript with system lines only: their times are all there is
+        for ts in sys_ts:
+            stamp(r, ts)
     # Session id links a subagent sidechain (<id>/subagents/agent-*.jsonl) to its parent transcript.
     r["sid"] = os.path.splitext(os.path.basename(path))[0]
     if "/subagents/" in path:

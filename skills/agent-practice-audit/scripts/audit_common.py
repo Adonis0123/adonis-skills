@@ -92,6 +92,104 @@ def repo_identity(cwd) -> str:
     return root
 
 
+_CHECKOUT_CACHE: dict[str, str] = {}
+
+
+def checkout_root(cwd) -> str:
+    """The working tree a directory sits in: nearest ancestor with a `.git` entry (a clone's directory or a
+    linked worktree's file), stopping below home and /. Unlike repo_identity, worktrees are NOT folded, so
+    two checkouts of one repository stay apart. Falls back to the directory itself."""
+    p = os.path.expanduser(str(cwd or "")).rstrip("/")
+    if p in _CHECKOUT_CACHE:
+        return _CHECKOUT_CACHE[p]
+    h, cur, found = home().rstrip(os.sep), p, p
+    while cur and cur != h and cur != os.path.dirname(cur):
+        if os.path.exists(os.path.join(cur, ".git")):
+            found = cur
+            break
+        cur = os.path.dirname(cur)
+    _CHECKOUT_CACHE[p] = found
+    return found
+
+
+def file_checkout(path) -> str | None:
+    """The checkout an edited file sits in, or None when no `.git` is found below home. A path inside a
+    known worktree layout (`.claude/worktrees/<n>`, `.worktrees/<n>`, `~/.codex/worktrees/<id>/<repo>`,
+    `worktrees/<n>`) maps to that worktree even after it was removed from disk."""
+    p = os.path.expanduser(str(path or "")).rstrip("/")
+    for rx in WORKTREE_RX:
+        m = rx.match(p)
+        if m:
+            return m.group(0)
+    h, cur = home().rstrip(os.sep), os.path.dirname(p)
+    while cur and cur != h and cur != os.path.dirname(cur):
+        if os.path.exists(os.path.join(cur, ".git")):
+            return cur
+        cur = os.path.dirname(cur)
+    return None
+
+
+def main_checkout(checkout) -> str:
+    """For a linked worktree (its `.git` is a file pointing at `<main>/.git/worktrees/<n>`), the main
+    checkout; else the path itself. Read-only."""
+    p = os.path.expanduser(str(checkout or "")).rstrip("/")
+    try:
+        with open(os.path.join(p, ".git"), encoding="utf-8") as f:
+            m = re.match(r"gitdir:\s*(.+?)/\.git/worktrees/[^/]+/?$", f.read(4096).strip())
+        if m:
+            return m.group(1)
+    except OSError:
+        pass
+    return repo_identity(p)
+
+
+def project_identity(checkout) -> str:
+    """The project a checkout belongs to: its main checkout's remote, else the main checkout path."""
+    main = main_checkout(checkout)
+    return remote_identity(main) or main
+
+
+_REMOTE_CACHE: dict[str, str | None] = {}
+_REMOTE_URL = re.compile(r"^\s*url\s*=\s*(\S+)\s*$", re.M)
+
+
+def normalise_remote(url: str) -> str:
+    """`git@host:o/r.git`, `https://user:pw@host/o/r` and `ssh://git@host/o/r/` all become `host/o/r`."""
+    u = url.strip()
+    u = re.sub(r"^[a-z+]+://", "", u, flags=re.I)
+    u = re.sub(r"^[^@/]*@", "", u)  # credentials or the ssh user
+    u = re.sub(r"^([^/:]+):(?!\d+/)", r"\1/", u)  # scp-like host:path
+    u = re.sub(r"^([^/:]+):\d+/", r"\1/", u)  # explicit port
+    u = re.sub(r"(\.git)?/*$", "", u)
+    host, _, rest = u.partition("/")
+    return f"{host.lower()}/{rest}"
+
+
+def remote_identity(repo) -> str | None:
+    """Normalised URL of the `origin` remote (else the first remote) of a repository path, read from its
+    `.git/config` (read-only, cached); None when there is none. Clones of one remote in different
+    directories share it. The URL itself never leaves this process: callers hash it."""
+    p = os.path.expanduser(str(repo or "")).rstrip("/")
+    if p in _REMOTE_CACHE:
+        return _REMOTE_CACHE[p]
+    out = None
+    try:
+        with open(os.path.join(p, ".git", "config"), encoding="utf-8", errors="replace") as f:
+            text = f.read(1 << 16)
+        sections = re.split(r"(?m)^\s*\[", text)
+        remotes = [s for s in sections if s.startswith("remote ")]
+        remotes.sort(key=lambda s: not s.startswith('remote "origin"'))
+        for s in remotes:
+            m = _REMOTE_URL.search(s)
+            if m:
+                out = normalise_remote(m.group(1))
+                break
+    except OSError:
+        pass
+    _REMOTE_CACHE[p] = out
+    return out
+
+
 def rules_from(practices) -> dict:
     """{practice id: rule.params} for practices that define params; nothing is filled in by code."""
     out = {}
