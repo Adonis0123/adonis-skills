@@ -1,7 +1,7 @@
 """Shared guard for every script that writes output: never write inside a git work tree.
 
-Audit output contains prompt excerpts and local paths, so it must not land in a
-repository where it could be committed. The target is resolved with realpath
+Audit output contains local paths, session counts and configuration facts (no
+prompt text), so it must not land in a repository where it could be committed. The target is resolved with realpath
 (symlinks followed, `..` removed) before checking, and every ancestor is tested
 for a `.git` directory or a `.git` file (linked worktrees and submodules).
 """

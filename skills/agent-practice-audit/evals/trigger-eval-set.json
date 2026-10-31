@@ -1,0 +1,51 @@
+[
+  {
+    "query": "帮我对照官方最佳实践，看看我最近两个月用 Claude Code 和 Codex 的方式哪里最该改",
+    "should_trigger": true
+  },
+  {
+    "query": "give my coding agent usage a grade against the vendor best practices and tell me what to fix first",
+    "should_trigger": true
+  },
+  {
+    "query": "最佳实践清单里引用的官方链接还有效吗？只检查链接，先别跑模型共识",
+    "should_trigger": true
+  },
+  {
+    "query": "每个月自动给我的 agent 用法做一次体检，出报告后提醒我",
+    "should_trigger": true
+  },
+  {
+    "query": "这个 MCP server 每次启动要 3 秒，值不值得留着？帮我做个消融对比",
+    "should_trigger": false
+  },
+  {
+    "query": "帮我重写一下这个仓库的 CLAUDE.md，太长了",
+    "should_trigger": false
+  },
+  {
+    "query": "review this PR diff for bugs before I merge it",
+    "should_trigger": false
+  },
+  {
+    "query": "刚才这个会话里你为什么没先跑测试就说完成了？",
+    "should_trigger": false
+  },
+  {
+    "query": "update the todo list in docs/plan.md with what we finished today",
+    "should_trigger": false
+  },
+  {
+    "query": "给这篇公众号文章打个分，看看可读性怎么样",
+    "should_trigger": false
+  },
+  {
+    "query": "Claude Code 官方推荐的最佳实践有哪些？列给我看看",
+    "should_trigger": false
+  },
+  { "query": "帮我看看我的 Cursor 用法打个分", "should_trigger": false },
+  {
+    "query": "这个规则该写进 CLAUDE.md 还是做成 hook？",
+    "should_trigger": false
+  }
+]

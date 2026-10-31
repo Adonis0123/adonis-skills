@@ -10,7 +10,7 @@
     {
       "id": 2,
       "prompt": "最佳实践清单里引用的官方链接是不是有失效的？帮我检查一遍，先别调用其他模型做共识",
-      "expected_output": "Runs refresh step 1 (link re-check) and the gate only, reports linkStatus per source and gate summary line, calls no verifier models, adds no practices.",
+      "expected_output": "Runs check_practices.py --fetch only, which writes nothing; reports linkStatus per source and the gate summary line; calls no verifier models, adds no practices and edits no files.",
       "files": []
     }
   ]

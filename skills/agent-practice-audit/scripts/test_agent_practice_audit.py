@@ -62,7 +62,7 @@ def claude_rows(entry="cli"):
         {**base, "type": "user", "timestamp": "2026-10-01T10:00:00Z", "message": {"role": "user", "content": "Add a login page"}},
         {**base, "type": "assistant", "timestamp": "2026-10-01T10:01:00Z", "effort": "high",
          "message": {"model": "model-x", "content": [
-             {"type": "tool_use", "name": "Bash", "input": {"command": "pnpm test && git worktree list"}},
+             {"type": "tool_use", "name": "Bash", "input": {"command": "pnpm test && git worktree add ../wt-x"}},
              {"type": "tool_use", "name": "Agent", "input": {"subagent_type": "Explore"}},
              {"type": "tool_use", "name": "Read", "input": {"file_path": "/tmp/shot.png"}}]}},
         {**base, "type": "user", "timestamp": "2026-10-01T10:02:00Z",
@@ -90,7 +90,7 @@ class ClaudeAdapter(TmpCase):
         self.assertEqual(r["interrupts"], 1)
         self.assertEqual(r["compactions"], 1)
         self.assertIn("plan", r["modes"])
-        for tag in ("bash:test", "bash:worktree", "bash:screenshot", "Agent:Explore"):
+        for tag in ("bash:test", "bash:worktree", "Agent:Explore"):
             self.assertEqual(r["tools"][tag], 1, tag)
         self.assertEqual(r["start"], "2026-10-01T10:00:00Z")
         self.assertEqual(r["end"], "2026-10-01T10:30:00Z")
@@ -124,7 +124,7 @@ class CodexAdapter(TmpCase):
         r = EX.codex(write_jsonl(self.tmp / ".codex" / "sessions" / "a.jsonl", self.rows("Codex Desktop", False)))
         self.assertEqual(r["kind"], "human")
         self.assertEqual(r["prompts"], 1)  # the "# AGENTS.md" injection is skipped
-        self.assertEqual(r["first"], "fix the flaky test")
+        self.assertEqual(r["shape"], EX.prompt_shape("fix the flaky test"))
         self.assertEqual(r["tools"]["bash:test"], 1)
         self.assertEqual(r["interrupts"], 1)
         self.assertIn("approval=never", r["modes"])
@@ -169,14 +169,14 @@ class GrokAdapter(TmpCase):
         self.assertEqual(r["kind"], "human")
         self.assertEqual(r["account"], ".grok-1")
         self.assertEqual(r["prompts"], 1)
-        self.assertEqual(r["first"], "add tests")
+        self.assertEqual(r["shape"], EX.prompt_shape("add tests"))
         self.assertEqual(r["tools"]["bash:test"], 1)
         self.assertEqual(r["tools"]["ask_user_question"], 1)
         self.assertEqual(r["denials"], 1)
         self.assertEqual(r["interrupts"], 1)
         self.assertEqual(r["compactions"], 2)
         self.assertIn("yolo", r["modes"])
-        self.assertEqual(r["cwd"], "/work/app")
+        self.assertEqual(r["cwd"], "(outside ~)/app")
         self.assertEqual(r["end"], "2026-10-03T08:20:00Z")
 
     def test_headless_and_subagent(self):
@@ -270,7 +270,9 @@ class Scoring(unittest.TestCase):
                   {"id": "n2", "status": "no", "dimension": "doc"}, {"id": "x", "status": "na", "dimension": "doc"}]
         self.assertEqual(BR.score([i["status"] for i in items]), 72)  # 65 / 90
         steps = BR.ladder(items, {"safe": 0, "doc": 50, "ctx": 93})
-        self.assertEqual(steps[0], {"grade": "A", "score": 83, "add": ["n1"], "total": 1})
+        self.assertEqual({k: steps[0][k] for k in ("grade", "score", "add", "total")},
+                         {"grade": "A", "score": 83, "add": ["n1"], "total": 1})
+        self.assertEqual(steps[0]["fixes"], [{"id": "n1", "fixKind": None, "heuristic": False}])
         self.assertEqual(steps[1]["grade"], "S")
         self.assertEqual(steps[1]["add"], ["n2"])
         self.assertEqual(steps[-1]["total"], 2)
@@ -414,6 +416,12 @@ def demo_practices(basis="live"):
                                         "quote": "Keep it short.", "fragment": "Keep it short"}]}]}
 
 
+def git_branch(root: Path, branch: str) -> None:
+    """Make root a git work tree on `branch` (no commits needed for the branch check)."""
+    import subprocess
+    subprocess.run(["git", "init", "-q", "-b", branch, str(root)], check=True, capture_output=True)
+
+
 class Digests(TmpCase):
     def write(self, status="ok"):
         d = self.tmp / "sources"
@@ -436,6 +444,7 @@ class Digests(TmpCase):
         self.assertIn("missing", DG.problems("nope", None)[0])
 
     def test_update_frontmatter_keeps_body(self):
+        git_branch(self.tmp, "practices-refresh/test")
         src = self.write()
         DG.update_frontmatter(DG.digest_path("demo", src), {"linkStatus": "redirected", "finalUrl": "https://code.claude.com/x"})
         d = DG.load_digest("demo", src)
@@ -840,6 +849,575 @@ class SessionWindow(TmpCase):
     def test_session_without_timestamps_falls_back_to_mtime(self):
         self.assertTrue(EX.in_window({"start": None, "end": None}, self.CUTOFF))
         self.assertTrue(EX.in_window({"start": None, "end": "not a date"}, self.CUTOFF))
+
+
+# ---------------------------------------------------------------- scoring integrity (coverage, trends, evidence)
+
+def mk_practices(dims: dict[str, int], extra: dict | None = None) -> dict:
+    """Synthetic practices: dims maps dimension -> count; ids are <dim>-<n>. No sources dir needed."""
+    out = []
+    for d, n in dims.items():
+        for k in range(1, n + 1):
+            out.append({"id": f"{d}-{k}", "dimension": d, "title": f"{d} {k}", "detect": "d", "verifiedAt": "2026-10-31",
+                        "sources": [{"source": "demo", "page": "Demo", "url": "https://code.claude.com/docs/en/demo",
+                                     "quote": "Keep it short.", "fragment": "Keep it short"}], **(extra or {})})
+    return {"dimensions": {d: {"en": d, "zh": d} for d in dims}, "practices": out}
+
+
+def jd(statuses: dict[str, str], lang: str = "en") -> dict:
+    return {"lang": lang, "items": {i: {"status": s, "evidence": f"e {i}", "suggestion": "s"} for i, s in statuses.items()}}
+
+
+def build(practices, statuses, **kw):
+    return BR.build_data(practices, jd(statuses), sources_dir=None, **kw)
+
+
+class CoverageGrade(unittest.TestCase):
+    P = mk_practices({"ctx": 10, "safe": 10})
+
+    def statuses(self, ok=0, no=0):
+        ids = [p["id"] for p in self.P["practices"]]
+        return {i: "ok" if n < ok else "no" if n < ok + no else "na" for n, i in enumerate(ids)}
+
+    def test_one_ok_and_nineteen_na_gets_no_grade(self):
+        data = build(self.P, self.statuses(ok=1))
+        self.assertEqual(data["score"], 100)
+        self.assertIsNone(data["grade"])
+        self.assertEqual(data["gradeWithheld"], "low-coverage")
+        self.assertEqual(data["coverage"], {"measured": 1, "total": 20, "pct": 5})
+        self.assertEqual(data["ladder"], [])
+        self.assertEqual(data["neededForGrade"], 12)
+        lines = "\n".join(BR.summary_lines(data))
+        self.assertIn("coverage too low", lines)
+        self.assertIn("coverage 1/20 measured (5%)", lines)
+        self.assertNotIn("Hands-off", lines)
+
+    def test_grade_needs_sixty_percent_measured(self):
+        self.assertIsNone(build(self.P, self.statuses(ok=11))["grade"])  # 55%
+        at = build(self.P, self.statuses(ok=12))  # 60%: exactly enough
+        self.assertEqual((at["grade"], at["gradeWithheld"]), ("S", None))
+        self.assertIn("grade: S  coverage 12/20 measured (60%)", BR.summary_lines(at)[0])
+        self.assertIsNone(build(mk_practices({"ctx": 200}), {f"ctx-{k}": "ok" if k <= 119 else "na"
+                                                             for k in range(1, 201)})["grade"])  # 59.5% never rounds up
+
+    def test_dimension_under_half_measured_shows_dash(self):
+        st = self.statuses(ok=10, no=4)  # ctx 10/10 measured, safe 4/10
+        data = build(self.P, st)
+        dims = {d["id"]: d for d in data["dimensions"]}
+        self.assertEqual((dims["ctx"]["score"], dims["ctx"]["lowCoverage"]), (100, False))
+        self.assertEqual((dims["safe"]["score"], dims["safe"]["grade"], dims["safe"]["lowCoverage"]), (None, None, True))
+        self.assertEqual(dims["safe"]["measuredScore"], 0)
+        self.assertEqual(dims["safe"]["coverage"]["measured"], 4)
+        st[next(i for i, s in st.items() if s == "na")] = "no"  # safe 5/10 = 50%: shown
+        self.assertEqual({d["id"]: d["score"] for d in build(self.P, st)["dimensions"]}["safe"], 0)
+        self.assertIn("safe — (4/10)", "\n".join(BR.summary_lines(data)))
+
+    def test_html_carries_coverage_and_withheld_grade(self):
+        data = build(self.P, self.statuses(ok=1))
+        emb = embedded_json(BR.render(data))
+        self.assertEqual((emb["grade"], emb["coverage"]["measured"], emb["minCoverage"]), (None, 1, 60))
+        tpl = Path(BR.TEMPLATE).read_text(encoding="utf-8")
+        for needle in ("测量覆盖不足", "Coverage too low", "lowCovNote", "withheld"):
+            self.assertIn(needle, tpl)
+
+
+class TrendIntegrity(unittest.TestCase):
+    P = mk_practices({"ctx": 10, "safe": 10})
+
+    def test_na_shift_cannot_look_like_a_jump(self):
+        ids = [p["id"] for p in self.P["practices"]]
+        prev = build(self.P, {i: "ok" if n == 0 else "no" for n, i in enumerate(ids)}, date="2026-09-01")  # 1/19 = 5
+        cur = build(self.P, {i: "ok" if n == 0 else "na" for n, i in enumerate(ids)}, previous=prev)  # 1/1 = 100
+        self.assertEqual((prev["score"], cur["score"]), (5, 100))
+        c = cur["comparison"]
+        self.assertEqual((cur["scoreDelta"], c["compared"]), (0, 1))  # only ctx-1 was measured both times
+        self.assertEqual((c["coverageBefore"]["pct"], c["coverageAfter"]["pct"], c["coverageDelta"]), (100, 5, -95))
+        self.assertEqual(len(c["noLongerMeasured"]), 19)
+        lines = "\n".join(BR.summary_lines(cur))
+        self.assertIn("delta +0 on 1 practice(s) measured both times", lines)
+        self.assertIn("coverage 100% -> 5% (-95)", lines)
+
+    def test_added_and_removed_practices_are_listed_not_scored(self):
+        prev = build(mk_practices({"ctx": 3}), {"ctx-1": "no", "ctx-2": "no", "ctx-3": "no"}, date="2026-09-01")
+        cur = build(mk_practices({"ctx": 2, "safe": 1}), {"ctx-1": "ok", "ctx-2": "no", "safe-1": "ok"}, previous=prev)
+        c = cur["comparison"]
+        self.assertEqual((c["added"], c["removed"], c["compared"]), (["safe-1"], ["ctx-3"], 2))
+        self.assertEqual(cur["scoreDelta"], 50)  # ctx-1 no->ok over the 2 shared practices, not 67 - 0
+        dims = {d["id"]: d for d in cur["dimensions"]}
+        self.assertEqual(dims["ctx"]["delta"], 50)
+        self.assertIsNone(dims["safe"]["delta"])  # nothing to compare against
+
+
+class EvidenceEnforcement(TmpCase):
+    P = mk_practices({"ctx": 4})
+
+    def test_missing_text_fails_with_actionable_message(self):
+        j = jd({"ctx-1": "ok", "ctx-2": "part", "ctx-3": "na", "ctx-4": "no"})
+        j["items"]["ctx-1"]["evidence"] = " "
+        j["items"]["ctx-2"]["suggestion"] = ""
+        j["items"]["ctx-3"] = {"status": "na"}
+        j["items"]["ctx-4"].pop("suggestion")
+        with self.assertRaises(BR.InputError) as cm:
+            BR.build_data(self.P, j, sources_dir=None)
+        msg = str(cm.exception)
+        self.assertIn("ctx-1 (status ok): field `evidence` is empty", msg)
+        self.assertIn("ctx-2 (status part): field `suggestion` is empty", msg)
+        self.assertIn("ctx-3 (status na): fields `evidence` and `caveat` are both empty", msg)
+        self.assertIn("ctx-4 (status no): field `suggestion`", msg)
+        self.assertIn("naming the file, flag or command", msg)
+
+    def test_na_with_caveat_and_ok_without_suggestion_pass(self):
+        j = jd({"ctx-1": "ok", "ctx-2": "na", "ctx-3": "na", "ctx-4": "no"})
+        j["items"]["ctx-1"]["suggestion"] = ""
+        j["items"]["ctx-2"] = {"status": "na", "caveat": "Codex does not log plan mode."}
+        j["items"]["ctx-3"] = {"status": "na", "evidence": "No Grok sessions in the window."}
+        self.assertEqual(BR.build_data(self.P, j, sources_dir=None)["counts"]["na"], 2)
+
+    def test_allow_missing_still_fills_unjudged_as_na(self):
+        j = jd({"ctx-1": "ok"})
+        data = BR.build_data(self.P, j, allow_missing=True, sources_dir=None)
+        self.assertEqual([i["status"] for i in data["items"]], ["ok", "na", "na", "na"])
+
+    def test_main_reports_gap_and_exits_2(self):
+        pfile, jfile = self.tmp / "p.json", self.tmp / "j.json"
+        pfile.write_text(json.dumps(self.P))
+        j = jd({f"ctx-{k}": "no" for k in range(1, 5)})
+        j["items"]["ctx-2"]["suggestion"] = ""
+        jfile.write_text(json.dumps(j))
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = BR.main(["--judgments", str(jfile), "--practices", str(pfile), "--out-dir", str(self.tmp / "r"),
+                          "--previous", "none"])
+        self.assertEqual(rc, 2)
+        self.assertIn("ctx-2 (status no): field `suggestion` is empty", err.getvalue())
+        self.assertFalse((self.tmp / "r" / "report.html").exists())
+
+
+class ConsensusVisibility(unittest.TestCase):
+    def test_badge_data_and_rule(self):
+        p = mk_practices({"ctx": 3})
+        p["practices"][0].update({"needs-consensus": True,
+                                  "consensus": {"verifiers": ["claude"], "agree": 1, "total": 1, "checkedAt": "2026-10-31"},
+                                  "rule": {"text": "ok when under 200 tool calls (heuristic)", "params": {"max_tools": 200}}})
+        p["practices"][1].update({"consensus": {"verifiers": ["codex", "gemini", "grok"], "agree": 2, "total": 3,
+                                                "checkedAt": "2026-10-31"},
+                                  "rule": {"text": "ok when every session uses plan mode", "params": {}}})
+        data = build(p, {"ctx-1": "ok", "ctx-2": "ok", "ctx-3": "ok"})
+        a, b, c = data["items"]
+        self.assertEqual((a["verifiedBy"], a["needsConsensus"]), ("single", True))
+        self.assertEqual(a["rule"], {"text": "ok when under 200 tool calls", "params": {"max_tools": 200}, "heuristic": True})
+        self.assertEqual((b["verifiedBy"], b["consensus"]["agree"], b["consensus"]["total"]), ("multi", 2, 3))
+        self.assertFalse(b["rule"]["heuristic"])
+        self.assertEqual((c["verifiedBy"], c["rule"], c["consensus"]), ("single", None, None))  # no record yet
+        self.assertEqual(data["consensusCounts"], {"multi": 1, "single": 2})
+        self.assertIn("1 multi-model verified, 2 single reviewer awaiting consensus", "\n".join(BR.summary_lines(data)))
+        emb = embedded_json(BR.render(data))
+        self.assertEqual(emb["items"][1]["verifiedBy"], "multi")
+        tpl = Path(BR.TEMPLATE).read_text(encoding="utf-8")
+        for needle in ("多模型核验", "单人核对，待共识", "Multi-model verified", "Single reviewer, awaiting consensus",
+                       "启发式阈值", "Heuristic threshold"):
+            self.assertIn(needle, tpl)
+
+
+# ---------------------------------------------------------------- check_practices: consensus, rule, pages
+
+class PracticeSchemaIntegrity(TmpCase):
+    def one(self, **kw):
+        p = demo_practices()
+        p["practices"][0].update(kw)
+        return "\n".join(CP.validate(p))
+
+    def test_active_practice_must_meet_accept_rule(self):
+        self.assertEqual(self.one(), "")  # 2/2
+        single = {"verifiers": ["claude"], "agree": 1, "total": 1, "checkedAt": "2026-10-31"}
+        self.assertIn("does not meet the accept rule", self.one(consensus=single))
+        self.assertEqual(self.one(consensus=single, **{"needs-consensus": True}), "")  # seeds may wait
+        self.assertIn("repeats a name", self.one(consensus={"verifiers": ["a", "a"], "agree": 2, "total": 2, "checkedAt": "x"}))
+        self.assertIn("does not meet", self.one(consensus={"verifiers": ["a", "b", "c", "d"], "agree": 2, "total": 4, "checkedAt": "x"}))
+        self.assertIn("total is 3 but 2", self.one(consensus={"verifiers": ["a", "b"], "agree": 2, "total": 3, "checkedAt": "x"}))
+        self.assertIn("veto", self.one(consensus={"verifiers": ["a", "b", "c"], "agree": 2, "total": 3, "checkedAt": "x",
+                                                  "vetoed_by": ["c"]}))
+        self.assertIn("needs-consensus must be true or false", self.one(**{"needs-consensus": "yes"}))
+
+    def test_rule_is_optional_but_validated(self):
+        self.assertEqual(self.one(rule={"text": "ok when < 200 (heuristic)", "params": {"max": 200, "ratio": 0.2}}), "")
+        self.assertEqual(self.one(rule={"text": "ok when plan mode is used"}), "")  # params may be absent
+        self.assertIn("rule.text must be a non-empty string", self.one(rule={"text": " ", "params": {}}))
+        self.assertIn("values must be numbers (not for: max)", self.one(rule={"text": "t", "params": {"max": "200"}}))
+        self.assertIn("not for: flag", self.one(rule={"text": "t", "params": {"flag": True}}))
+        self.assertIn("rule.params must be an object", self.one(rule={"text": "t", "params": [1]}))
+        self.assertIn("rule must be an object", self.one(rule="text"))
+
+    def test_schema_line_counts_awaiting_consensus(self):
+        p = demo_practices()
+        p["practices"][0]["needs-consensus"] = True
+        src = self.tmp / "sources"
+        src.mkdir()
+        (src / "demo.md").write_text(DIGEST.format(status="ok"), encoding="utf-8")
+        (self.tmp / "p.json").write_text(json.dumps(p))
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            self.assertEqual(CP.main([str(self.tmp / "p.json"), "--sources-dir", str(src)]), 0)
+        self.assertIn("awaiting consensus: 1", out.getvalue())
+
+
+def tree_state(root: Path) -> dict:
+    return {str(p): (p.stat().st_mtime_ns, p.read_bytes()) for p in sorted(root.rglob("*")) if p.is_file()}
+
+
+class SavePages(TmpCase):
+    PAGE = ("<html><head><script>var x = 1;</script><style>p{}</style></head><body><h1>Best practices</h1>"
+            + "<p>" + ("Filler sentence here. " * 30) + "</p><p>Keep it <code>short</code>. More &amp; more.</p></body></html>")
+
+    def setup_files(self, practices=None):
+        src = self.tmp / "sources"
+        src.mkdir(exist_ok=True)
+        (src / "demo.md").write_text(DIGEST.format(status="ok"), encoding="utf-8")
+        pfile = self.tmp / "p.json"
+        pfile.write_text(json.dumps(practices or demo_practices()))
+        return pfile, src
+
+    def run_cp(self, argv, fetch_result):
+        out = io.StringIO()
+        fake = fetch_result if callable(fetch_result) else (lambda url, timeout=20: fetch_result)
+        with mock.patch.object(CP, "fetch", side_effect=fake), contextlib.redirect_stdout(out), \
+                contextlib.redirect_stderr(io.StringIO()):
+            rc = CP.main(argv)
+        return rc, out.getvalue()
+
+    def test_saves_verbatim_rendered_text(self):
+        pfile, src = self.setup_files()
+        pages = self.tmp / "pages"
+        rc, out = self.run_cp([str(pfile), "--sources-dir", str(src), "--save-pages", str(pages), "--fetch"],
+                              (self.PAGE, None, "https://code.claude.com/docs/en/demo"))
+        self.assertEqual(rc, 0, out)
+        text = (pages / "demo.txt").read_text(encoding="utf-8")
+        self.assertIn("Keep it short. More & more.", text)  # case, punctuation and entities kept, tags dropped
+        self.assertIn("Best practices\n", text)
+        self.assertNotIn("var x", text)
+        self.assertTrue(text.startswith("https://code.claude.com/docs/en/demo\n"))
+        self.assertIn("page demo: saved", out)
+        self.assertIn("live: 1/1 ok", out)  # the gate reused the saved fetch
+
+    def test_unreachable_and_script_rendered_pages_are_not_saved(self):
+        p = demo_practices()
+        p["pending"] = [{"id": "new-one", "sources": [{"source": "spa", "url": "https://cursor.com/docs/spa"},
+                                                       {"source": "evil", "url": "https://example.com/x"}]}]
+        pfile, src = self.setup_files(p)
+        pages = self.tmp / "pages"
+
+        def fake(url, timeout=20):
+            if "spa" in url:
+                return "<html><body><div id=root></div></body></html>", None, url
+            return None, "unreachable (timeout)", url
+
+        rc, out = self.run_cp([str(pfile), "--sources-dir", str(src), "--save-pages", str(pages)], fake)
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(sorted(x.name for x in pages.iterdir()), ["manifest.json"])
+        self.assertIn("page demo: not saved, unreachable", out)
+        self.assertIn("page spa: not saved, looks script-rendered", out)
+        self.assertIn("evil: https://example.com/x is not on the official allowlist; not fetched", out)
+
+    def test_candidates_file_adds_pages_and_repo_target_is_refused(self):
+        pfile, src = self.setup_files()
+        cands = self.tmp / "cands.json"
+        cands.write_text(json.dumps([{"id": "c1", "sources": [{"source": "codex-x", "url": "https://developers.openai.com/codex/x"}]}]))
+        rc, out = self.run_cp([str(pfile), "--sources-dir", str(src), "--save-pages", str(self.tmp / "pages"),
+                               "--candidates", str(cands)], lambda url, timeout=20: (self.PAGE, None, url))
+        self.assertEqual(rc, 0, out)
+        self.assertEqual(sorted(x.name for x in (self.tmp / "pages").iterdir()), ["codex-x.txt", "demo.txt", "manifest.json"])
+        repo = make_repo(self.tmp)
+        rc, _ = self.run_cp([str(pfile), "--sources-dir", str(src), "--save-pages", str(repo / "sub" / "pages")],
+                            (self.PAGE, None, "u"))
+        self.assertEqual(rc, 2)
+        self.assertFalse((repo / "sub" / "pages").exists())
+
+    def test_plain_fetch_writes_nothing(self):
+        git_branch(self.tmp, "practices-refresh/test")
+        pfile, src = self.setup_files()
+        before = tree_state(self.tmp)
+        for result in ((self.PAGE, None, "https://code.claude.com/docs/en/demo"),
+                       (None, "unreachable (timeout)", "https://code.claude.com/docs/en/demo"),
+                       (self.PAGE, None, "https://code.claude.com/docs/en/moved")):
+            self.run_cp([str(pfile), "--sources-dir", str(src), "--fetch", "--json"], result)
+        self.assertEqual(tree_state(self.tmp), before)
+        self.run_cp([str(pfile), "--sources-dir", str(src), "--fetch", "--update-digests"],
+                    (self.PAGE, None, "https://code.claude.com/docs/en/moved"))
+        self.assertNotEqual(tree_state(self.tmp), before)  # only --update-digests writes
+
+    def test_rendered_text_is_searchable_like_page_text(self):
+        self.assertEqual(CP.loose(CP.rendered_text(self.PAGE)), CP.page_text(self.PAGE))
+        self.assertEqual(CP.rendered_text("<td>a</td><td>b</td>"), "a\nb")  # cells do not run together
+
+
+class BatchVerdicts(unittest.TestCase):
+    def test_rule_faithful_required_only_with_rule(self):
+        self.assertFalse(CO.parse_verdict(raw())["invalid"])
+        self.assertTrue(CO.parse_verdict(raw(), rule_required=True)["invalid"])
+        self.assertTrue(CO.parse_verdict(raw(rule_faithful="true"), rule_required=True)["invalid"])
+        v = CO.parse_verdict(raw(rule_faithful=False), rule_required=True)
+        self.assertTrue(v["invalid"])  # accept with an unfaithful rule
+        self.assertIn("rule_faithful", " ".join(v["problems"]))
+        self.assertFalse(CO.parse_verdict(raw(verdict="reject", rule_faithful=False), rule_required=True)["invalid"])
+        self.assertFalse(CO.parse_verdict(raw(rule_faithful=True), rule_required=True)["invalid"])
+
+    def test_split_batch(self):
+        a, b = json.loads(raw(id="a")), json.loads(raw(id="b"))
+        found, problem = CO.split_batch("ok:\n```json\n" + json.dumps([a, b]) + "\n```", ["a", "b"])
+        self.assertEqual((sorted(found), problem), (["a", "b"], None))
+        found, problem = CO.split_batch(json.dumps([a]), ["a", "b"])
+        self.assertEqual((list(found), problem), (["a"], "no verdict for b"))
+        _, problem = CO.split_batch(json.dumps([a, b, dict(a, id="zzz")]), ["a", "b"])
+        self.assertIn("unknown id 'zzz'", problem)
+        veto = dict(a, verdict="reject", quote_found=False)
+        found, problem = CO.split_batch(json.dumps([a, b, veto]), ["a", "b"])
+        self.assertIn("duplicate id a", problem)
+        self.assertIs(found["a"]["quote_found"], False)  # a duplicate never hides a veto
+        self.assertEqual(CO.split_batch(raw(), ["a"]), ({"a": json.loads(raw())}, None))  # single: bare object
+        self.assertIsNotNone(CO.split_batch(raw(id="b"), ["a"])[1])
+        self.assertEqual(CO.split_batch("nothing here", ["a", "b"]), ({}, "no JSON array of per-candidate verdicts found"))
+
+    def test_prompt_lists_all_candidates_once_with_page_once(self):
+        c1 = {"id": "c1", "title": "t", "detect": "d", "rule": {"text": "r (heuristic)", "params": {}},
+              "sources": [{"source": "p1", "quote": "Q1"}, {"source": "p2", "quote": "Q2"}]}
+        c2 = {"id": "c2", "title": "t", "detect": "d", "consensus": {"agree": 1}, "sources": [{"source": "p1", "quote": "Q3"}]}
+        out = CO.render_prompt([c1, c2], "PAGE ONE", "live", slug="p1")
+        self.assertEqual(out.count("PAGE ONE"), 1)
+        block = json.loads(out.split("<<<CANDIDATES", 1)[1].split("CANDIDATES>>>", 1)[0])
+        self.assertEqual([e["id"] for e in block], ["c1", "c2"])
+        self.assertEqual(block[0]["check_sources"], [{"source": "p1", "quote": "Q1"}])
+        self.assertEqual(block[0]["quotes_on_other_pages"], [{"source": "p2", "quote": "Q2"}])
+        self.assertEqual(block[0]["rule"]["text"], "r (heuristic)")
+        self.assertNotIn("consensus", block[1])
+        self.assertIn("rule_faithful", out)
+
+
+
+# ---------------------------------------------------------------- round 3 regressions
+
+class RefreshWriteBoundary(TmpCase):
+    def digest(self, root: Path) -> Path:
+        d = root / "sources"
+        d.mkdir(parents=True, exist_ok=True)
+        f = d / "demo.md"
+        f.write_text(DIGEST.format(status="ok"), encoding="utf-8")
+        return f
+
+    def test_guard_rules(self):
+        outside = self.digest(self.tmp / "installed")
+        self.assertIn("installed copy", DG.refresh_write_problem(str(outside)))
+        with self.assertRaises(DG.RefreshWriteRefused):
+            DG.update_frontmatter(str(outside), {"linkStatus": "ok"})
+        repo = self.tmp / "clone"
+        repo.mkdir()
+        git_branch(repo, "main")
+        f = self.digest(repo)
+        self.assertIn("default branch main", DG.refresh_write_problem(str(f)))
+        self.assertIsNone(DG.refresh_write_problem(str(f), allow_default_branch=True))
+        import subprocess
+        subprocess.run(["git", "-C", str(repo), "checkout", "-q", "-b", "practices-refresh/x"], check=True)
+        self.assertIsNone(DG.refresh_write_problem(str(f)))
+        link = repo / "sources" / "link.md"
+        link.symlink_to(f)
+        self.assertIn("is a symlink", DG.refresh_write_problem(str(link)))
+        skills = self.tmp / "home" / "skills"
+        skills.mkdir(parents=True)
+        (skills / "apa").symlink_to(repo)  # an install that links into the clone
+        self.assertIn("symlink", DG.refresh_write_problem(str(skills / "apa" / "sources" / "demo.md")))
+
+    def test_update_digests_refused_on_default_branch_before_fetch(self):
+        repo = self.tmp / "clone"
+        repo.mkdir()
+        git_branch(repo, "main")
+        f = self.digest(repo)
+        before = f.read_text()
+        pfile = self.tmp / "p.json"
+        pfile.write_text(json.dumps(demo_practices()))
+        err = io.StringIO()
+        with mock.patch.object(CP, "fetch") as fetch, contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+            rc = CP.main([str(pfile), "--fetch", "--update-digests", "--sources-dir", str(repo / "sources")])
+        self.assertEqual(rc, 2)
+        fetch.assert_not_called()
+        self.assertIn("--allow-default-branch", err.getvalue())
+        self.assertEqual(f.read_text(), before)
+        page = "<html><body>" + ("filler text " * 60) + "Keep it short.</body></html>"
+        with mock.patch.object(CP, "fetch", return_value=(page, None, "https://code.claude.com/docs/en/demo")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            rc = CP.main([str(pfile), "--fetch", "--update-digests", "--allow-default-branch", "--sources-dir", str(repo / "sources")])
+        self.assertEqual(rc, 0)
+        self.assertIn(f"lastVerifiedAt: {__import__('datetime').date.today().isoformat()}", f.read_text())
+
+
+class PageManifest(TmpCase):
+    def test_failed_fetch_marks_old_file_stale(self):
+        pages = self.tmp / "pages"
+        page = "<html><body>" + ("filler text " * 60) + "Keep it short.</body></html>"
+        url = "https://code.claude.com/docs/en/demo"
+        CP.save_pages({"demo": url}, {url: (page, None, url)}, str(pages))
+        m = json.loads((pages / DG.MANIFEST).read_text())["pages"]["demo"]
+        self.assertEqual(m["status"], "fresh")
+        self.assertEqual(m["sha256"], DG.sha256_file(str(pages / "demo.txt")))
+        self.assertEqual(list(DG.fresh_pages(str(pages))[0]), ["demo"])
+        CP.save_pages({"demo": url}, {url: (None, "unreachable (timeout)", url)}, str(pages))
+        self.assertTrue((pages / "demo.txt").exists())  # the old file is still there ...
+        self.assertEqual(DG.fresh_pages(str(pages))[0], {})  # ... but no longer counts as live
+        self.assertEqual(json.loads((pages / DG.MANIFEST).read_text())["pages"]["demo"]["status"], "unreachable")
+
+
+class RuleChangeTrend(unittest.TestCase):
+    def test_changed_rule_is_marked_and_left_out_of_delta(self):
+        p = mk_practices({"ctx": 3})
+        for x in p["practices"]:
+            x["rule"] = {"text": "ok when under 200 (heuristic)", "params": {"max": 200}}
+        prev = build(p, {"ctx-1": "no", "ctx-2": "no", "ctx-3": "ok"}, date="2026-09-01")
+        self.assertTrue(all(len(i["criteriaHash"]) == 16 for i in prev["items"]))
+        q = json.loads(json.dumps(p))
+        q["practices"][0]["rule"]["params"]["max"] = 100  # stricter threshold: old status means something else
+        q["practices"][1]["detect"] = "new detect text"
+        cur = build(q, {"ctx-1": "ok", "ctx-2": "ok", "ctx-3": "ok"}, previous=prev)
+        trends = {i["id"]: i["trend"] for i in cur["items"]}
+        self.assertEqual(trends, {"ctx-1": "changed-rule", "ctx-2": "changed-rule", "ctx-3": "same"})
+        c = cur["comparison"]
+        self.assertEqual((c["changedRule"], c["compared"], cur["scoreDelta"]), (["ctx-1", "ctx-2"], 1, 0))
+        self.assertIn("rule changed, not in delta: ctx-1, ctx-2", "\n".join(BR.summary_lines(cur)))
+        # An older report without hashes cannot show a change, so nothing is excluded.
+        old = json.loads(json.dumps(prev))
+        for i in old["items"]:
+            i.pop("criteriaHash")
+        self.assertEqual(build(q, {"ctx-1": "ok", "ctx-2": "ok", "ctx-3": "ok"}, previous=old)["comparison"]["compared"], 3)
+
+
+class ConfigErrors(TmpCase):
+    def test_broken_config_is_a_clear_error(self):
+        base = self.tmp / "apa"
+        base.mkdir()
+        jpath = self.tmp / "j.json"
+        jpath.write_text(json.dumps(judgments(lambda p: "ok")))
+        for content, needle in (("{not json", "not valid JSON (line 1"), ("[1, 2]", "must hold a JSON object"),
+                                ('{"theme": "blue"}', "theme must be an object")):
+            (base / "config.json").write_text(content)
+            err = io.StringIO()
+            with mock.patch.dict(os.environ, {"AGENT_PRACTICE_AUDIT_DIR": str(base)}), \
+                    contextlib.redirect_stderr(err), contextlib.redirect_stdout(io.StringIO()):
+                rc = BR.main(["--judgments", str(jpath), "--date", "2026-10-01", "--previous", "none"])
+            self.assertEqual(rc, 2, content)
+            self.assertIn(needle, err.getvalue())
+
+
+class LadderFixKinds(unittest.TestCase):
+    def test_config_and_vendor_backed_fixes_first_on_ties(self):
+        p = mk_practices({"ctx": 6})
+        kinds = {"ctx-1": ("habit", False), "ctx-2": ("config", True), "ctx-3": ("config", False), "ctx-4": (None, False)}
+        for x in p["practices"]:
+            kind, heur = kinds.get(x["id"], (None, False))
+            if kind:
+                x["fix_kind"] = kind
+            x["rule"] = {"text": "rule (heuristic)" if heur else "rule", "params": {}}
+        st = {"ctx-1": "no", "ctx-2": "no", "ctx-3": "no", "ctx-4": "no", "ctx-5": "ok", "ctx-6": "ok"}
+        data = build(p, st)
+        order = [f["id"] for s in data["ladder"] for f in s["fixes"]]
+        self.assertEqual(order[:2], ["ctx-3", "ctx-2"])  # config before habit; vendor-backed before heuristic
+        fixes = {f["id"]: f for s in data["ladder"] for f in s["fixes"]}
+        self.assertEqual(fixes["ctx-2"], {"id": "ctx-2", "fixKind": "config", "heuristic": True})
+        self.assertIsNone(fixes["ctx-4"]["fixKind"])  # practices without fix_kind are accepted
+        self.assertIn("ctx-2 [config, heuristic]", "\n".join(BR.summary_lines(data)))
+        # Bigger gains still win over kind: a no beats a config part.
+        p["practices"][4]["fix_kind"] = "config"
+        st2 = dict(st, **{"ctx-5": "part", "ctx-3": "ok", "ctx-2": "ok"})
+        first = build(p, st2)["ladder"][0]["fixes"][0]["id"]
+        self.assertIn(first, ("ctx-1", "ctx-4"))
+        tpl = Path(BR.TEMPLATE).read_text(encoding="utf-8")
+        for needle in ("配置改动", "习惯改动", "config change", "habit change", "f.heuristic"):
+            self.assertIn(needle, tpl)
+
+
+class TemplateLegibility(unittest.TestCase):
+    def test_meter_never_uses_stamp_foreground_and_labels_are_neutral(self):
+        tpl = Path(BR.TEMPLATE).read_text(encoding="utf-8")
+        self.assertIn("const c = barColor(d.grade);", tpl)
+        bar = tpl.split("const barColor", 1)[1].split("\n", 1)[0]
+        self.assertNotIn("--s-fg", bar)
+        self.assertIn("white-space:nowrap", tpl.split(".dims .val{", 1)[1].split("}", 1)[0])
+        self.assertIn('<span class="nw">${esc(it.verifiedAt)}</span>', tpl)
+        for word in ("Hands-off", "Trusted partner", "放心交办", "默契搭档"):
+            self.assertNotIn(word, tpl)
+
+
+
+# ---------------------------------------------------------------- round 4 regressions
+
+class MixedBasis(unittest.TestCase):
+    def test_schema_and_report_label(self):
+        p = demo_practices()
+        src2 = dict(p["practices"][0]["sources"][0], basis="digest")
+        p["practices"][0]["sources"].append(src2)
+        p["practices"][0]["basis"] = "mixed"
+        self.assertEqual(CP.validate(p), [])
+        q = json.loads(json.dumps(p))
+        q["practices"][0]["sources"][1]["basis"] = "live"
+        self.assertIn("basis mixed needs at least one source", "\n".join(CP.validate(q)))
+        q["practices"][0]["sources"][1]["basis"] = "cached"
+        self.assertIn("a source basis must be live or digest", "\n".join(CP.validate(q)))
+        self.assertEqual(BR.effective_basis(p["practices"][0]), "digest")
+        r = json.loads(json.dumps(p))
+        r["practices"][0]["basis"] = "live"  # a digest source alone is enough for the label
+        self.assertEqual(BR.effective_basis(r["practices"][0]), "digest")
+        r["practices"][0]["sources"][1].pop("basis")
+        self.assertEqual(BR.effective_basis(r["practices"][0]), "live")
+
+
+class LastVerifiedOnlyLive(TmpCase):
+    def test_only_live_verified_pages_get_a_new_date(self):
+        git_branch(self.tmp, "practices-refresh/test")
+        src = self.tmp / "sources"
+        src.mkdir()
+        for slug in ("demo", "dead", "partial"):
+            (src / f"{slug}.md").write_text(DIGEST.format(status="ok").replace("slug: demo", f"slug: {slug}"), encoding="utf-8")
+        res = [{"source": "demo", "status": "live-verified", "linkStatus": "ok", "finalUrl": "u"},
+               {"source": "dead", "status": "digest-verified", "linkStatus": "ok", "finalUrl": "u"},  # script-rendered page
+               {"source": "partial", "status": "live-verified", "linkStatus": "ok", "finalUrl": "u"},
+               {"source": "partial", "status": "quote-missing", "linkStatus": "ok", "finalUrl": "u"}]
+        CP.update_digests(res, str(src))
+        today = __import__("datetime").date.today().isoformat()
+        got = {s: DG.load_digest(s, str(src))["lastVerifiedAt"] for s in ("demo", "dead", "partial")}
+        self.assertEqual(got, {"demo": today, "dead": "2026-10-01", "partial": "2026-10-01"})
+
+
+class HomePathRedaction(unittest.TestCase):
+    def test_home_paths_become_tilde_with_a_warning_per_field(self):
+        home = os.path.expanduser("~")
+        j = jd({"ctx-1": "no", "ctx-2": "ok"})
+        j["items"]["ctx-1"]["suggestion"] = f"Edit {home}/.claude/settings.json and " "/Use" "rs/someone/.codex/config.toml."
+        j["items"]["ctx-2"]["evidence"] = "Found /home/dev/.claude/CLAUDE.md (40 lines)."
+        j["headline"] = f"Config at {home}/.claude"
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            data = BR.build_data(mk_practices({"ctx": 2}), j, sources_dir=None)
+        it = {i["id"]: i for i in data["items"]}
+        self.assertEqual(it["ctx-1"]["suggestion"], "Edit ~/.claude/settings.json and ~/.codex/config.toml.")
+        self.assertEqual(it["ctx-2"]["evidence"], "Found ~/.claude/CLAUDE.md (40 lines).")
+        self.assertEqual(data["headline"], "Config at ~/.claude")
+        lines = err.getvalue().splitlines()
+        self.assertEqual(sorted(lines), sorted(["warning: headline: replaced a home directory path with ~",
+                                                "warning: ctx-1 suggestion: replaced a home directory path with ~",
+                                                "warning: ctx-2 evidence: replaced a home directory path with ~"]))
+        self.assertIn(home, j["items"]["ctx-1"]["suggestion"])  # the caller's judgments are not modified
+        self.assertNotIn(home + "/", json.dumps(data))
+
+
+class DimensionMinimum(unittest.TestCase):
+    def test_one_measured_practice_is_not_a_dimension_score(self):
+        p = mk_practices({"ctx": 4, "verify": 2})
+        st = {"ctx-1": "ok", "ctx-2": "no", "ctx-3": "no", "ctx-4": "ok", "verify-1": "no", "verify-2": "na"}
+        data = build(p, st)
+        dims = {d["id"]: d for d in data["dimensions"]}
+        self.assertEqual((dims["verify"]["score"], dims["verify"]["lowCoverage"]), (None, True))  # 1/2 = 50% but 1 practice
+        self.assertEqual(dims["ctx"]["score"], 50)
+        self.assertIn("verify — (1/2)", "\n".join(BR.summary_lines(data)))
+        self.assertIn("under 2 measured", "\n".join(BR.summary_lines(data)))
+        # Tie-break: verify (no shown score) does not count as weakest; ctx (50) is fixed first.
+        first = data["ladder"][0]["fixes"][0]["id"]
+        self.assertTrue(first.startswith("ctx-"), data["ladder"])
 
 
 if __name__ == "__main__":

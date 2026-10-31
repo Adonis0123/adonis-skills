@@ -80,7 +80,19 @@
           "fragment": "Keep one chat per coherent unit of work"
         }
       ],
-      "detect": "Summary: sessions_over_200_tools, pct_compaction/correction over 200 tools vs overall, slash_cmds_sessions for clear/compact/new. ok = few long sessions and /clear or new sessions used; part = some long sessions; no = many long sessions with higher correction rate.",
+      "detect": "Summary: long_sessions, corrections_per100_prompts vs cohorts.long.corr_per100, cohorts.long.cleared, pct_started_by_clear.",
+      "rule": {
+        "text": "Long = over 200 tool calls. Cleared = a /clear- or /new-started session in the same directory within 10 min of its end. ok: <10% long, or >=20% of long sessions cleared. no: >=30% long and more corrections per prompt when long (hosts with >=10 long). Else part (heuristic)",
+        "params": {
+          "long_tools": 200,
+          "long_ok_pct": 10,
+          "long_no_pct": 30,
+          "clear_ok_pct": 20,
+          "min_long": 10,
+          "clear_gap_minutes": 10
+        }
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -112,7 +124,12 @@
           "fragment": "Delegate the exploration so only the findings come back"
         }
       ],
-      "detect": "Summary: concepts_pct.subagent and agent_types_calls per host. ok = used in a meaningful share of sessions (roughly 20%+); part = rare; no = never.",
+      "detect": "Summary: cohorts.wide (reads include linked subagent transcripts so offloading sessions stay in), agent_types_calls.",
+      "rule": {
+        "text": "Cohort: human sessions with >=30 read/search calls, counting reads in their linked subagent transcripts. ok: subagent in >=20%; part: some; no: none; na: <10 in cohort (heuristic)",
+        "params": { "wide_explore": 30, "min_cohort": 10, "ok_pct": 20 }
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -144,7 +161,12 @@
           "fragment": "For simple subagent tasks"
         }
       ],
-      "detect": "Config: claude[].custom_subagents and whether agent definitions set a model; summary: agent_types_calls (all general-purpose suggests none). na when the host has no subagent definitions.",
+      "detect": "Config: claude[].custom_subagents, agents/*.md model fields; summary: agent_types_calls (all general-purpose suggests none).",
+      "rule": {
+        "text": "na without subagent definitions or calls; else judge agents/*.md and whether each sets a model.",
+        "params": {}
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -169,7 +191,12 @@
           "fragment": "tells Claude what to preserve during summarization"
         }
       ],
-      "detect": "Usually na: extract.py records the command name, not its arguments. ok if instruction files contain a 'Compact instructions' section.",
+      "detect": "Config: instruction files' compact_instructions flag; summary: long_sessions, pct_compaction_long. /compact arguments are not logged.",
+      "rule": {
+        "text": "ok: an instruction file has a 'Compact instructions' heading. Without one, among >=10 long sessions: no: compaction in >=50%; part: >=20%; else na (heuristic)",
+        "params": { "min_long": 10, "part_pct": 20, "no_pct": 50 }
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -215,7 +242,12 @@
           "fragment": "only in a controlled environment"
         }
       ],
-      "detect": "Config: codex[].approval_policy / sandbox_mode / model_reasoning_effort; summary: modes_sessions (approval=, sandbox=, yolo, bypassPermissions) and efforts for human sessions. no = full access with no approval in most human sessions; part = full access only in some.",
+      "detect": "Summary: full_access_sessions, modes_sessions, efforts; config: codex[].approval_policy / sandbox_mode / model_reasoning_effort.",
+      "rule": {
+        "text": "Full access = no approval and no sandbox in the same turn (Claude bypass, Grok yolo, Codex never + danger-full-access); today's sandbox setting is not applied to past sessions. no: >=50% of human sessions; part: some; ok: none. Reasoning effort is not judged (heuristic)",
+        "params": { "no_pct": 50 }
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -240,7 +272,12 @@
           "fragment": "If something has to happen every time"
         }
       ],
-      "detect": "Config: claude[].settings.json hook_entries and deny count. ok = at least one hook or deny rule enforcing a stated must-rule; no = none while instruction files contain 'always/never' rules.",
+      "detect": "Config: instruction files' must_rules and must_topics; claude[] / claude_projects[] enforcing_hook_topics, deny_topics.",
+      "rule": {
+        "text": "Topics: secrets, destructive, git_push, language. na without must-rule lines. ok: every must-rule topic has an enforcing hook (PreToolUse, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, PostToolUse) or deny rule; part: some topics or other hooks only; no: none.",
+        "params": {}
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -265,7 +302,12 @@
           "fragment": "Whatever the scope, keep the enforced set small"
         }
       ],
-      "detect": "Config: hook_entries + deny_count across settings files. ok < 20; part 20-39; no >= 40.",
+      "detect": "Config: hook_entries + deny_count - secret_deny_count across settings files.",
+      "rule": {
+        "text": "Blocking hooks + non-secret deny rules in the largest active setup (secret denies are required by safe-deny-secrets). ok: <20; part: 20-39; no: >=40 (heuristic)",
+        "params": { "ok_below": 20, "no_from": 40 }
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -290,7 +332,12 @@
           "fragment": "rules hold in every permission mode"
         }
       ],
-      "detect": "Config: settings deny_coverage flags env_files and ssh/aws/cloud_credentials/key_files. ok = env files and credential directories both covered; part = one; no = neither. Weigh by how often bypass/auto modes appear in modes_sessions.",
+      "detect": "Config: settings deny_coverage (path-like rules only); weigh by bypass/auto modes in modes_sessions.",
+      "rule": {
+        "text": "Path-like deny rules only. ok: env files and credential dirs (~/.ssh, ~/.aws, cloud) both; part: one; no: neither. Worst active setup decides, among those that ran bypass/auto when any did.",
+        "params": {}
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -329,7 +376,12 @@
           "fragment": "stops adding files once the combined size reaches the limit"
         }
       ],
-      "detect": "Config: global_instructions / repo_instructions lines, bytes, over_200_lines, over_32KiB, and codex project_doc_max_bytes. no = any file read by Codex over 32 KiB; part = files over 200 lines; ok = all under.",
+      "detect": "Config: instruction file lines and bytes; codex[].instruction_chain_bytes_max vs project_doc_max_bytes.",
+      "rule": {
+        "text": "no: Codex's combined chain (global + repo AGENTS files) over project_doc_max_bytes (default 32768); part: any file over 200 lines; ok: neither.",
+        "params": { "line_target": 200, "codex_doc_bytes": 32768 }
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -361,7 +413,12 @@
           "fragment": "Build, test, and lint commands"
         }
       ],
-      "detect": "Config: repo_instructions[].mentions_test / mentions_lint for the most-used repositories. Global files are exempt (they belong to no repository).",
+      "detect": "Config: repo_instructions[].mentions_test / mentions_lint (real commands: pnpm test, pytest, eslint, ruff...); global files exempt.",
+      "rule": {
+        "text": "Per repository: ok: all name a test and a lint/typecheck command; no: none names a test command; else part.",
+        "params": {}
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -393,7 +450,12 @@
           "fragment": "Add rules only when you notice the agent making the same mistake repeatedly"
         }
       ],
-      "detect": "Instruction files show rule maintenance (recent edits, rules tied to observed failures, an eval or review loop); compare corr_examples themes with existing rules. Judge from evidence; mark na if nothing can be seen.",
+      "detect": "Instruction files show rule maintenance (recent edits, rules tied to observed failures, an eval or review loop); compare correction_categories counts. Judge from evidence; na if nothing can be seen.",
+      "rule": {
+        "text": "Semantic; na when nothing can be seen.",
+        "params": {}
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -418,7 +480,16 @@
           "fragment": "load on-demand only when invoked"
         }
       ],
-      "detect": "Config: claude[].skills count and over_500_lines; summary: concepts_pct.skill, top_skills. ok = skills exist and are used; part = long instruction files that hold workflows a skill could carry.",
+      "detect": "Config: claude[].skills count and over_500_lines; summary: concepts_pct.skill, top_skills.",
+      "rule": {
+        "text": "Skills = Claude skills of active roots + ~/.codex/skills + ~/.agents/skills. ok: skills used in >=10% of human sessions; part: installed but used less, or none while a file exceeds 200 lines; na otherwise. Skills over 500 lines are noted (heuristic)",
+        "params": {
+          "line_target": 200,
+          "skill_long_lines": 500,
+          "use_ok_pct": 10
+        }
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -457,7 +528,18 @@
           "fragment": "The most impactful change you can make is planning before coding"
         }
       ],
-      "detect": "Summary: concepts_pct.plan_mode and modes_sessions containing 'plan'. part when plan mode is unused but planning substitutes (ask_user, planning skills) are common.",
+      "detect": "Summary: cohorts.complex (plan = plan mode; plan_or_sub adds ask-user and planning skills).",
+      "rule": {
+        "text": "Cohort: complex = >=5 files edited or >=100 tool calls (>=10 per group). Plan-logging hosts (Claude): ok: plan mode >=25%; part: plan or substitute >=10%; else no. Other hosts: substitutes >=25% ok, >=10% part, else na. Session-weighted (heuristic)",
+        "params": {
+          "complex_edited_files": 5,
+          "complex_tool_calls": 100,
+          "min_cohort": 10,
+          "ok_pct": 25,
+          "part_pct": 10
+        }
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -482,7 +564,12 @@
           "fragment": "Ask Claude to interview you instead"
         }
       ],
-      "detect": "Summary: concepts_pct.ask_user and interview-style skills in top_skills.",
+      "detect": "Summary: cohorts.complex.interview (ask-user or an interview-style skill).",
+      "rule": {
+        "text": "Option for vague requests. Cohort: complex sessions (>=5 files or >=100 tool calls). ok: interview in >=10%; below that na (no evidence either way); na: <10 in cohort (heuristic)",
+        "params": { "min_cohort": 10, "ok_pct": 10 }
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -507,7 +594,12 @@
           "fragment": "What should be true before the task is complete"
         }
       ],
-      "detect": "Usually na: needs semantic reading of prompts. Optional: sample ~20 first prompts (summary 'first' fields in the sessions file) and count those with an explicit completion condition; report the sample size.",
+      "detect": "Usually na: needs semantic reading of prompts; pct_first_prompt_done_when is a keyword hint only.",
+      "rule": {
+        "text": "Semantic; usually na.",
+        "params": {}
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -553,7 +645,12 @@
           "fragment": "Tests allow the agent to make changes"
         }
       ],
-      "detect": "Summary: pct_session_bash_tags test/lint/typecheck/screenshot/git_diff per host; corr_examples about unverified work. ok = checks in most coding sessions and few 'not verified' corrections.",
+      "detect": "Summary: pct_coding_with_check, pct_session_bash_tags, correction_categories.not_verified.",
+      "rule": {
+        "text": "Coding = edits or commits; check = test/lint/typecheck at command position, or a screenshot. ok: >=50% of coding sessions; part: 20-49%; no: <20% (heuristic)",
+        "params": { "ok_pct": 50, "part_pct": 20 }
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -578,7 +675,12 @@
           "fragment": "Revert the changes, refine the plan"
         }
       ],
-      "detect": "Usually na: reverts happen through git, /rewind or manual edits with no single signal. Grok signals.json hasReverted is a partial hint.",
+      "detect": "Usually na: reverts go through git, /rewind or manual edits; Grok signals.json hasReverted is a partial hint.",
+      "rule": {
+        "text": "na: no single log signal.",
+        "params": {}
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -610,7 +712,12 @@
           "fragment": "Running live tasks on the same files without using Git worktrees"
         }
       ],
-      "detect": "Summary: pct_session_bash_tags.worktree; cwd_top paths containing worktree directories or several clones of one repository.",
+      "detect": "Summary: parallel (overlapping sessions per repository, with_worktree); cwd_top folds worktree dirs into their repo.",
+      "rule": {
+        "text": "Cohort: human sessions overlapping another in the same repo (sessions over 12 h ignored). ok: worktree in >=50%; part: some; no: none; na: <10 in cohort (heuristic)",
+        "params": { "max_span_hours": 12, "min_cohort": 10, "ok_pct": 50 }
+      },
+      "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -642,7 +749,12 @@
           "fragment": "Run Claude non-interactively for CI"
         }
       ],
-      "detect": "Summary: headless.sessions and by_host; pct_session_bash_tags.headless.",
+      "detect": "Summary: headless (sessions, self_audit, repeated), human_repeated; config: schedulers.",
+      "rule": {
+        "text": "Repeated = a first-prompt shape seen >=3 times. ok: >=10 repeated headless sessions (own verifier excluded) or a scheduled headless job; part: less than hand-typed repeats; no: >=10 hand-typed repeats, no headless; na: no repeats (heuristic)",
+        "params": { "repeat_min": 3, "min_repeat_sessions": 10 }
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {
@@ -667,7 +779,12 @@
           "fragment": "What stops it?"
         }
       ],
-      "detect": "Wrapper scripts and scheduled jobs that start headless agents pass --max-turns / --max-budget-usd (or the host's equivalent). na when there are no headless sessions.",
+      "detect": "Config: schedulers.with_limits; else wrapper scripts and scheduled jobs pass --max-turns / --max-budget-usd. na without headless sessions.",
+      "rule": {
+        "text": "na without headless sessions. Scheduled jobs: ok: all pass --max-turns / --max-budget-usd; part: some; no: none.",
+        "params": {}
+      },
+      "fix_kind": "config",
       "verifiedAt": "2026-10-31",
       "basis": "live",
       "consensus": {

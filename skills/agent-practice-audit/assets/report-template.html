@@ -74,6 +74,11 @@ h2{font-size:21px;line-height:1.35;letter-spacing:-0.015em;margin:72px 0 4px}
 .score b{font-size:60px;line-height:1;font-weight:800;letter-spacing:-0.03em}
 .score span{font-size:22px;font-weight:700;color:var(--fg3)}
 .score .lv{display:block;font-size:14px;color:var(--fg2);margin-top:8px;font-weight:500}
+.score .cov{display:block;font-size:13px;color:var(--fg3);margin-top:2px;font-weight:500}
+.score .lv.low{color:var(--part-text)}
+.report p.cmp{color:var(--fg2);font-size:13px;margin:10px 0 0;max-width:62ch;text-wrap:pretty}
+.ladder .lowcov{font-size:13.5px;color:var(--fg2);margin:0;max-width:80ch}
+.ladder .lowcov b{display:inline;font-size:inherit;color:var(--fg)}
 .delta{display:inline-flex;align-items:center;gap:3px;font-size:13px;font-weight:600;padding:1px 8px;border-radius:99px;margin-left:8px}
 .delta.up{color:var(--ok-text);background:var(--ok-soft)}.delta.down{color:var(--no-text);background:var(--no-soft)}.delta.same{color:var(--na-text);background:var(--na-soft)}
 .report h1{font-size:28px;line-height:1.3;letter-spacing:-0.02em;margin:0 0 10px;max-width:24em;text-wrap:balance}
@@ -112,10 +117,12 @@ h2{font-size:21px;line-height:1.35;letter-spacing:-0.015em;margin:72px 0 4px}
 .dims .mt{width:34%;min-width:90px}
 .meter{height:8px;border-radius:4px;background:var(--track);overflow:hidden}
 .meter div{height:100%;border-radius:4px;width:0;transition:width 1.2s cubic-bezier(.16,1,.3,1)}
-.dims .val{width:64px;text-align:right;font-weight:700}
+.dims .val{width:96px;text-align:right;font-weight:700;white-space:nowrap}
 .dims .g{width:44px;text-align:center}
 .dims .why{color:var(--fg2);font-size:13px;line-height:1.6}
 .dims .why .ids{white-space:nowrap}
+.dims .why .mc{white-space:nowrap;color:var(--fg3)}
+.dims .dash{color:var(--fg3)}
 .gchip{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-size:14px;font-weight:800}
 
 .tag{font-size:12px;line-height:20px;padding:0 9px;border-radius:99px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
@@ -125,7 +132,11 @@ h2{font-size:21px;line-height:1.35;letter-spacing:-0.015em;margin:72px 0 4px}
 .t-no{color:var(--no-text);background:var(--no-soft)}.t-no::before{background:var(--no)}
 .t-na{color:var(--na-text);background:var(--na-soft)}.t-na::before{background:var(--na)}
 .trend{display:inline-flex;align-items:center;gap:2px;font-size:12px;font-weight:600;white-space:nowrap}
-.trend.up{color:var(--ok-text)}.trend.down{color:var(--no-text)}.trend.same,.trend.new,.trend.changed{color:var(--fg3)}
+.trend.up{color:var(--ok-text)}.trend.down{color:var(--no-text)}.trend.same,.trend.new,.trend.changed{color:var(--fg3)}.trend.changed-rule{color:var(--part-text)}
+.nw{white-space:nowrap}
+.fk{font-size:11px;font-weight:600;line-height:17px;padding:0 6px;border-radius:99px;margin-left:4px;white-space:nowrap;color:var(--fg2);background:var(--muted)}
+.fk.config{color:var(--link);background:var(--tint)}.fk.heur{color:var(--na-text);background:var(--na-soft)}
+.legs .pts .fx{display:inline-block;margin-right:8px}
 
 .filters{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 10px}
 .filters button{font:inherit;font-size:13px;border:1px solid var(--border);background:var(--card);color:var(--fg2);border-radius:99px;padding:3px 13px;cursor:pointer}
@@ -145,6 +156,9 @@ table.sum{border-collapse:collapse;width:100%;font-size:13.5px;min-width:780px}
 .sum tr.none td{color:var(--fg2);text-align:center;padding:16px}
 .warn{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:99px;color:var(--part-text);background:var(--part-soft);white-space:nowrap}
 .basis{font-size:11.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:99px;color:var(--link);background:var(--tint);white-space:nowrap}
+.vb{font-size:11.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:99px;white-space:nowrap}
+.vb.multi{color:var(--ok-text);background:var(--ok-soft)}.vb.single{color:var(--part-text);background:var(--part-soft)}
+.heur{font-size:11.5px;font-weight:600;line-height:18px;padding:0 7px;border-radius:99px;color:var(--na-text);background:var(--na-soft);white-space:nowrap;margin-left:6px}
 .digest{margin:6px 0 8px 14px;padding-left:12px;border-left:2px solid var(--border);font-size:13px;color:var(--fg2)}
 .digest ul{margin:4px 0;padding-left:18px}.digest summary{cursor:pointer}
 .srcs a{display:inline-block;margin:0 10px 2px 0;font-size:12.5px;line-height:1.55}
@@ -232,12 +246,13 @@ ul.method{padding-left:20px;max-width:80ch;font-size:14px;color:var(--fg2)}ul.me
   <div class="head">
     <div class="grade-row">
       <div class="stamp" id="stamp" aria-label="grade"></div>
-      <div class="score"><b class="num" id="score"></b><span> / 100</span><span id="delta"></span><span class="lv" id="lvname"></span></div>
+      <div class="score"><b class="num" id="score"></b><span> / 100</span><span id="delta"></span><span class="lv" id="lvname"></span><span class="cov num" id="cov"></span></div>
     </div>
   </div>
   <div class="copy">
     <h1 id="headline"></h1>
     <p class="lead" id="lead"></p>
+    <p class="cmp" id="cmp" hidden></p>
   </div>
 </section>
 
@@ -272,43 +287,63 @@ ul.method{padding-left:20px;max-width:80ch;font-size:14px;color:var(--fg2)}ul.me
 const D = JSON.parse(document.getElementById("report-data").textContent);
 const zh = D.lang === "zh";
 const T = zh ? {
-  title:"Agent 用法体检", meta:(d,w)=>`近 ${w} 天会话 · 截至 ${d}`, theme:{auto:"跟随系统",light:"浅色",dark:"深色"},
+  title:"Agent 用法体检", meta:(d,w)=>`近 ${w} 天会话 · 截至 <span class="nw">${esc(d)}</span>`, theme:{auto:"跟随系统",light:"浅色",dark:"深色"},
   st:{ok:"达标",part:"部分达标",no:"未达标",na:"无法检测"}, notScored:"不计", grade:"等级",
-  names:{S:"放心交办",A:"默契搭档",B:"稳健副驾",C:"能跑，常返工",D:"边跑边救火"},
+  names:{S:"测到的做法几乎都符合",A:"测到的做法大多符合",B:"多数符合，有明显缺口",C:"约一半以上符合",D:"多数不符合"},
   now:"当前", fix:"修完", pts:"分", allOk:"全部达标", items:n=>`${n} 项`, top:"已达最高等级", noData:"无可评分数据",
-  hDims:"六个维度", hintDims:"维度分 = 得分 ÷ 满分 × 100。单条达标得 10 分，部分达标 5 分，未达标 0 分；无法检测的不计入满分。",
+  cov:c=>`测量覆盖 ${c.measured}/${c.total}（${c.pct}%）`, lowCov:"测量覆盖不足，暂不评级",
+  lowCovNote:(c,min,need)=>`只测到 <b>${c.measured}/${c.total}</b> 项（${c.pct}%）。评级至少要测到 ${min}%（${need} 项）。分数只反映测到的项目，先补齐检测再看等级。`,
+  dimCov:c=>`测到 ${c.measured}/${c.total}`, dimLow:(c,min)=>`测到 ${c.measured}/${c.total}，少于 ${D.minDimMeasured ?? 2} 项或 ${min}%，不计分`,
+  cmp:(d,c)=>`较上次（<span class="nw">${esc(d)}</span>）：两次都测到的 ${c.compared} 项${c.delta === null ? "无法对比" : `上 ${c.delta > 0 ? "+" : ""}${c.delta} 分`}；覆盖率 ${c.coverageBefore.pct}% → ${c.coverageAfter.pct}%`,
+  cmpList:{added:"新增",removed:"移除",newlyMeasured:"新测到",noLongerMeasured:"不再测到",changedRule:"规则已改、不计入变化"}, fixKind:{config:"配置改动",habit:"习惯改动"}, cmpN:n=>`${n} 项`,
+  multi:(a,t)=>`多模型核验 ${a}/${t}`, single:"单人核对，待共识", rule:"判定规则", heur:"启发式阈值",
+  heurTip:"阈值是本清单自定的，不是官方给的数字。",
+  hDims:"六个维度", hintDims:"维度分 = 得分 ÷ 满分 × 100。单条达标得 10 分，部分达标 5 分，未达标 0 分；无法检测的不计入满分。一个维度测到的少于 2 项或不足一半时显示「—」。",
   hTable:"逐项对照", hintTable:"点编号看详情；点来源打开官方文档并高亮原句（支持 Chrome、Edge、Safari）。",
   swipe:"表格较宽，可左右滑动。", all:"全部", allDims:"全部维度",
   head:["编号","状态","得分","官方做法","你的情况","趋势","来源"],
   empty:"没有符合筛选条件的项目。", hDetails:"逐项详情",
-  down:"原页暂不可达", basis:"基于存档摘要", digestNote:(d,p)=>`原页暂不可达，展开查看本地存档摘要（${esc(d)} 核对，<code>${esc(p)}</code>）。`, hintDetails:"本报告只读不改配置；你可按建议自行修改。",
+  down:"原页暂不可达", basis:"基于存档摘要", digestNote:(d,p)=>`原页暂不可达，展开查看本地存档摘要（<span class="nw">${esc(d)}</span> 核对，<code>${esc(p)}</code>）。`, hintDetails:"本报告只读不改配置；你可按建议自行修改。",
   evidence:"数据证据", suggestion:"怎么改", caveat:"留意", how:"检测方式",
-  trend:{up:"上升",down:"下降",same:"持平",new:"新增",changed:"变化"}, vsPrev:"较上次",
+  trend:{up:"上升",down:"下降",same:"持平",new:"新增",changed:"变化","changed-rule":"规则已改"}, vsPrev:"较上次",
   hMethod:"数据来源与局限",
   fixed:[
     "只读扫描本机 JSONL（逐行 JSON 会话日志）。重点统计人工会话，单独列出 headless（无界面后台运行）和 subagent（子代理）会话。",
     "脚本按关键词识别纠错话术与 test / lint（代码检查） / 截图命令，存在误报和漏报。",
     "各条做法均附官方文档核对日期。六维度等权打分是本报告的约定，方便前后对比，不是官方标准。",
-    "总分只统计能从日志和配置检测出的项目，无法检测的不计分。"]
+    "总分只统计能从日志和配置检测出的项目，无法检测的不计分。测到的不足六成时不给等级，也不给升级路线。",
+    "与上次对比只算两次都测到的项目；覆盖率变化和清单增减单独列出。",
+    "「多模型核验」表示至少两个其他模型确认原文引用和归纳；「单人核对，待共识」的做法只经一人核对，仍在等多模型复核。"],
+  consensusLine:(m,s)=>`本次清单 ${m} 条经多模型核验，${s} 条只经单人核对、待共识。`
 } : {
-  title:"Agent practice audit", meta:(d,w)=>`last ${w} days of sessions · as of ${d}`, theme:{auto:"Auto",light:"Light",dark:"Dark"},
+  title:"Agent practice audit", meta:(d,w)=>`last ${w} days of sessions · as of <span class="nw">${esc(d)}</span>`, theme:{auto:"Auto",light:"Light",dark:"Dark"},
   st:{ok:"Met",part:"Partial",no:"Unmet",na:"Unmeasurable"}, notScored:"n/a", grade:"Grade",
-  names:{S:"Hands-off",A:"Trusted partner",B:"Steady co-pilot",C:"Works, needs rework",D:"Firefighting"},
+  names:{S:"Nearly all measured practices met",A:"Most measured practices met",B:"Many met, clear gaps",C:"Over half met",D:"Most not met"},
   now:"Now", fix:"Fix", pts:"pts", allOk:"All met", items:n=>`${n} items`, top:"Top grade reached", noData:"No scorable data",
-  hDims:"Six dimensions", hintDims:"Dimension score = earned / max x 100. Met = 10 pts, Partial = 5, Unmet = 0; unmeasurable items are excluded.",
+  cov:c=>`Coverage ${c.measured}/${c.total} measured (${c.pct}%)`, lowCov:"Coverage too low for a grade",
+  lowCovNote:(c,min,need)=>`Only <b>${c.measured} of ${c.total}</b> practices were measured (${c.pct}%). A grade needs at least ${min}% (${need} practices). The score covers only what was measured; measure more before reading a grade.`,
+  dimCov:c=>`${c.measured}/${c.total} measured`, dimLow:(c,min)=>`${c.measured}/${c.total} measured, under ${D.minDimMeasured ?? 2} or ${min}%: not scored`,
+  cmp:(d,c)=>`Since <span class="nw">${esc(d)}</span>: ${c.delta === null ? "no change computable" : `${c.delta > 0 ? "+" : ""}${c.delta} pts`} on ${c.compared} practices measured both times; coverage ${c.coverageBefore.pct}% → ${c.coverageAfter.pct}%`,
+  cmpList:{added:"added",removed:"removed",newlyMeasured:"newly measured",noLongerMeasured:"no longer measured",changedRule:"rule changed, left out of the change"}, fixKind:{config:"config change",habit:"habit change"}, cmpN:n=>`${n}`,
+  multi:(a,t)=>`Multi-model verified ${a}/${t}`, single:"Single reviewer, awaiting consensus", rule:"Rule", heur:"Heuristic threshold",
+  heurTip:"The threshold is this list's own choice, not a vendor number.",
+  hDims:"Six dimensions", hintDims:"Dimension score = earned / max x 100. Met = 10 pts, Partial = 5, Unmet = 0; unmeasurable items are excluded. A dimension with fewer than 2 or under half its practices measured shows —.",
   hTable:"Practice checklist", hintTable:"Click an ID for details. Source links open the official doc and highlight the exact quote (Chrome, Edge, Safari).",
   swipe:"Scroll sideways to see all columns.", all:"All", allDims:"All dimensions",
   head:["ID","Status","Pts","Official practice","Your usage","Trend","Sources"],
   empty:"No items match these filters.", hDetails:"Item details",
-  down:"Page unreachable", basis:"From digest", digestNote:(d,p)=>`Live page unreachable; expand stored digest (verified ${esc(d)}, <code>${esc(p)}</code>).`, hintDetails:"Read-only report: your config was not modified. Apply suggestions as you see fit.",
+  down:"Page unreachable", basis:"From digest", digestNote:(d,p)=>`Live page unreachable; expand stored digest (verified <span class="nw">${esc(d)}</span>, <code>${esc(p)}</code>).`, hintDetails:"Read-only report: your config was not modified. Apply suggestions as you see fit.",
   evidence:"Evidence", suggestion:"Action", caveat:"Caveat", how:"Detection",
-  trend:{up:"Up",down:"Down",same:"Same",new:"New",changed:"Changed"}, vsPrev:"vs prev",
+  trend:{up:"Up",down:"Down",same:"Same",new:"New",changed:"Changed","changed-rule":"Rule changed"}, vsPrev:"vs prev",
   hMethod:"Data and limitations",
   fixed:[
     "Read-only scan of local JSONL session logs. Scores weigh human sessions; headless and subagent runs are counted separately.",
     "Keyword matching detects user corrections and test, lint, or screenshot commands; expect some false positives and misses.",
     "Each quote was checked against its official page on the date shown. Equal-weight scoring is this report's convention, not a vendor standard.",
-    "Total score reflects only measurable items; unmeasurable practices are excluded."]
+    "Total score reflects only measurable items; unmeasurable practices are excluded. Under 60% measured there is no grade and no upgrade ladder.",
+    "The change since last time counts only practices measured in both runs; coverage and list changes are listed separately.",
+    "Multi-model verified means at least two other models confirmed the quote and the wording; single reviewer, awaiting consensus means one reviewer checked it and multi-model review is pending."],
+  consensusLine:(m,s)=>`${m} practices in this list are multi-model verified; ${s} rest on a single reviewer and await consensus.`
 };
 document.documentElement.lang = zh ? "zh-CN" : "en";
 document.title = T.title;
@@ -326,6 +361,8 @@ const ARROW = {
 };
 const frag = (url, t) => url + "#:~:text=" + encodeURIComponent(t).replace(/-/g,"%2D").replace(/,/g,"%2C");
 const gColor = l => ({S:["var(--s-bg)","var(--s-fg)"],A:["var(--ok-soft)","var(--ok-text)"],B:["var(--tint)","var(--link)"],C:["var(--part-soft)","var(--part-text)"],D:["var(--no-soft)","var(--no-text)"]})[l] || ["var(--na-soft)","var(--na-text)"];
+// Meter fill: a success or accent colour, never the stamp's foreground (white or near-black) that vanishes on the track.
+const barColor = l => ({S:"var(--ok)",A:"var(--ok)",B:"var(--accent)",C:"var(--part)",D:"var(--no)"})[l] || "var(--na)";
 const chip = l => { const [b,c] = gColor(l); return `<span class="gchip" style="background:${b};color:${c}">${l || "–"}</span>`; };
 const tag = st => `<span class="tag t-${st}">${T.st[st]}</span>`;
 const pts = it => it.points === null ? T.notScored : `${it.points}/10`;
@@ -361,16 +398,26 @@ if (D.brand && (D.brand.name || D.brand.logo)) {
 
 // header + report card
 $("t-title").textContent = T.title;
-$("t-meta").textContent = T.meta(D.date, D.windowDays);
+$("t-meta").innerHTML = T.meta(D.date, D.windowDays);
 const L = D.grade;
 const scored = D.score !== null && D.score !== undefined;
 $("stamp").textContent = L || "–";
 const [sb, sc] = gColor(L); $("stamp").style.background = sb; $("stamp").style.color = sc;
 $("score").textContent = scored ? D.score : "–";
 $("delta").innerHTML = delta(D.scoreDelta);
-$("lvname").textContent = scored ? `${T.grade} ${L} · ${T.names[L]}` : T.noData;
+const withheld = scored && !L;  // score exists but too few practices were measured for a grade
+$("lvname").textContent = withheld ? T.lowCov : scored ? `${T.grade} ${L} · ${T.names[L]}` : T.noData;
+$("lvname").classList.toggle("low", withheld);
+if (D.coverage) $("cov").textContent = T.cov(D.coverage);
 $("headline").textContent = D.headline || "";
 $("lead").textContent = D.lead || "";
+if (D.comparison) {
+  const c = D.comparison;
+  const extra = Object.keys(T.cmpList).filter(k => (c[k] || []).length).map(k => `${T.cmpList[k]} ${T.cmpN(c[k].length)}`);
+  $("cmp").innerHTML = T.cmp(D.previous, c) + (extra.length ? `${zh ? "；" : "; "}${extra.join(zh ? "、" : ", ")}` : "") + (zh ? "。" : ".");
+  $("cmp").title = Object.keys(T.cmpList).filter(k => (c[k] || []).length).map(k => `${T.cmpList[k]}: ${c[k].join(", ")}`).join("\n");
+  $("cmp").hidden = false;
+}
 if (D.illustration) {
   $("report").classList.add("with-plate");
   const plate = document.createElement("div"); plate.className = "plate";
@@ -383,6 +430,11 @@ if (D.illustration) {
 const counts = D.counts;
 if (!scored) {
   document.querySelector(".ladder").hidden = true;
+} else if (withheld) {
+  // No ladder promise: grade steps are meaningless when most practices were not measured.
+  $("ladder").hidden = true;
+  $("legs").style.cssText = "border-top:0;margin-top:0;padding-top:0;display:block";
+  $("legs").innerHTML = `<p class="lowcov">${T.lowCovNote(D.coverage, D.minCoverage, D.neededForGrade)}</p>`;
 } else {
 const lad = $("ladder");
 // Zoom the scale to the band that matters: from just below the current score up to 100.
@@ -394,7 +446,9 @@ lad.insertAdjacentHTML("beforeend", (lo > 0 ? `<div class="tick lo" style="left:
   + `<div class="pin now" style="left:${at(D.score)}%" title="${T.now} ${D.score}">${L}</div>`
   + D.ladder.map((s, i) => `<div class="dot" style="left:${at(s.score)}%" title="${s.grade} ${s.score}">${i + 1}<span class="num">${s.score}</span></div>`).join(""));
 const legs = [`<div><span class="now-n">${L}</span><b>${T.now} <span class="num">${D.score}</span> ${T.pts} · ${L}</b><span class="pts">${T.st.ok} ${counts.ok} · ${T.st.part} ${counts.part} · ${T.st.no} ${counts.no} · ${T.st.na} ${counts.na}</span></div>`];
-D.ladder.forEach((s, i) => legs.push(`<div class="step"><span class="step-n">${i + 1}</span><b>${T.fix} ${T.items(s.add.length)} → <span class="num">${s.score}</span> ${T.pts} · ${s.grade}</b><span class="pts">${s.add.map(idLink).join(", ")}</span></div>`));
+// Each fix shows whether it is a config change or a habit change, and whether its rule is a heuristic threshold.
+const fixTag = f => `<span class="fx">${idLink(f.id)}${f.fixKind ? `<span class="fk ${f.fixKind}">${T.fixKind[f.fixKind]}</span>` : ""}${f.heuristic ? `<span class="fk heur" title="${esc(T.heurTip)}">${T.heur}</span>` : ""}</span>`;
+D.ladder.forEach((s, i) => legs.push(`<div class="step"><span class="step-n">${i + 1}</span><b>${T.fix} ${T.items(s.add.length)} → <span class="num">${s.score}</span> ${T.pts} · ${s.grade}</b><span class="pts">${(s.fixes || s.add.map(id => ({id}))).map(fixTag).join("")}</span></div>`));
 if (!D.ladder.length) legs.push(`<div><b>${T.top}</b></div>`);
 $("legs").innerHTML = legs.join("");
 }
@@ -402,9 +456,11 @@ $("legs").innerHTML = legs.join("");
 // dimensions
 $("h-dims").textContent = T.hDims; $("hint-dims").textContent = T.hintDims;
 $("dims").innerHTML = D.dimensions.map(d => {
-  const [, c] = gColor(d.grade);
+  const c = barColor(d.grade);
   const ids = `<span class="ids">${d.ids.map(idLink).join(" ")}</span>`;
-  return `<tr><td class="name">${esc(d.name)}</td><td class="mt"><div class="meter"><div data-w="${d.score ?? 0}" style="background:${c}"></div></div></td><td class="val num">${d.score ?? `<span class="trend same">${T.noData}</span>`}${d.delta ? ` <span class="trend ${d.delta > 0 ? "up" : "down"}">${d.delta > 0 ? "+" : ""}${d.delta}</span>` : ""}</td><td class="g">${chip(d.grade)}</td><td class="why">${esc(d.hint)} · ${ids}</td></tr>`;
+  const cov = d.coverage ? ` · <span class="mc">${d.lowCoverage ? T.dimLow(d.coverage, D.minDimCoverage) : T.dimCov(d.coverage)}</span>` : "";
+  const val = d.score ?? (d.lowCoverage ? `<span class="dash" title="${esc(T.dimLow(d.coverage, D.minDimCoverage))}">—</span>` : `<span class="trend same">${T.noData}</span>`);
+  return `<tr><td class="name">${esc(d.name)}</td><td class="mt"><div class="meter"><div data-w="${d.score ?? 0}" style="background:${c}"></div></div></td><td class="val num">${val}${d.delta ? ` <span class="trend ${d.delta > 0 ? "up" : "down"}">${d.delta > 0 ? "+" : ""}${d.delta}</span>` : ""}</td><td class="g">${chip(d.grade)}</td><td class="why">${esc(d.hint)}${cov} · ${ids}</td></tr>`;
 }).join("");
 
 // practice table + details
@@ -414,21 +470,27 @@ $("sum-head").innerHTML = T.head.filter((h, i) => hasPrev || i !== 5).map(h => `
 const href = s => esc(frag(s.href || s.url, s.fragment));
 const down = s => s.linkStatus === "unreachable" ? ` <span class="warn" title="${esc(s.digestPath || "")}">${T.down}</span>` : "";
 const basis = it => it.basis === "digest" ? ` <span class="basis">${T.basis}</span>` : "";
+// Who checked this practice: at least two other models, or one reviewer still waiting for consensus.
+const vbadge = it => it.verifiedBy === "multi" && it.consensus
+  ? `<span class="vb multi" title="${esc((it.consensus.verifiers || []).join(", "))} · ${esc(it.consensus.checkedAt || "")}">${T.multi(it.consensus.agree, it.consensus.total)}</span>`
+  : `<span class="vb single" title="${esc(((it.consensus || {}).verifiers || []).join(", "))}">${T.single}</span>`;
+const ruleRow = it => !it.rule ? "" : `<span class="k">${T.rule}</span><p>${rich(it.rule.text)}${it.rule.heuristic ? `<span class="heur" title="${esc(T.heurTip)}">${T.heur}</span>` : ""}</p>`;
 const links = it => it.sources.filter((s, i, a) => a.findIndex(x => x.url === s.url) === i)
   .map(s => `<a href="${href(s)}" target="_blank" rel="noopener">${esc(s.page)}${EXT}</a>${down(s)}`).join(" ");
 const digestBox = s => s.linkStatus !== "unreachable" ? "" : `<details class="digest"><summary>${T.digestNote(s.lastVerifiedAt || "", s.digestPath || "")}</summary>${(s.digestSummary || []).length ? `<ul>${s.digestSummary.map(b => `<li>${rich(b)}</li>`).join("")}</ul>` : ""}</details>`;
 document.querySelector("#summary tbody").innerHTML = D.items.map(it => `<tr data-st="${it.status}" data-dim="${it.dimension}">
 <td class="id">${idLink(it.id)}</td><td class="st">${tag(it.status)}</td><td class="pt ${it.status === "ok" ? "got" : ""}">${pts(it)}</td>
-<td class="title">${esc(it.title)}${basis(it)}</td><td class="seen">${rich(it.summary || it.evidence)}</td>${hasPrev ? `<td class="tr">${trend(it.trend)}</td>` : ""}<td class="srcs">${links(it)}</td></tr>`).join("");
+<td class="title">${esc(it.title)}${basis(it)} ${vbadge(it)}</td><td class="seen">${rich(it.summary || it.evidence)}</td>${hasPrev ? `<td class="tr">${trend(it.trend)}</td>` : ""}<td class="srcs">${links(it)}</td></tr>`).join("");
 $("empty").textContent = T.empty;
 $("h-details").textContent = T.hDetails; $("hint-details").textContent = T.hintDetails;
 $("details").innerHTML = D.items.map(it => `<article class="item" id="${esc(it.id)}" data-st="${it.status}" data-dim="${it.dimension}">
-<h3><span class="ttl"><span class="id" title="${esc(it.id)}">${esc(SHORT[it.id])}</span>${esc(it.title)}</span><span class="badges">${tag(it.status)}${basis(it)}${trend(it.trend)}</span><span class="pts ${it.status === "ok" ? "got" : ""}">${pts(it)}</span></h3>
+<h3><span class="ttl"><span class="id" title="${esc(it.id)}">${esc(SHORT[it.id])}</span>${esc(it.title)}</span><span class="badges">${tag(it.status)}${vbadge(it)}${basis(it)}${trend(it.trend)}</span><span class="pts ${it.status === "ok" ? "got" : ""}">${pts(it)}</span></h3>
 <div class="quotes">${it.sources.map(s => `<div class="q">“<a class="quote" href="${href(s)}" target="_blank" rel="noopener">${esc(s.quote)}</a>”<a class="from" href="${href(s)}" target="_blank" rel="noopener">${esc(s.page)}${EXT}</a>${down(s)}</div>${digestBox(s)}`).join("")}</div>
 <div class="fields">${it.evidence ? `<span class="k">${T.evidence}</span><p>${rich(it.evidence)}</p>` : ""}
 ${it.suggestion ? `<span class="k">${T.suggestion}</span><p>${rich(it.suggestion)}</p>` : ""}
 ${it.caveat ? `<span class="k">${T.caveat}</span><p>${rich(it.caveat)}</p>` : ""}
-<span class="k">${T.how}</span><p class="how">${rich(it.detect)} · ${esc(it.verifiedAt)}</p></div></article>`).join("");
+${ruleRow(it)}
+<span class="k">${T.how}</span><p class="how">${rich(it.detect)} · <span class="nw">${esc(it.verifiedAt)}</span></p></div></article>`).join("");
 
 // filters: status x dimension
 const filt = {st:"all", dim:"all"};
@@ -462,7 +524,8 @@ const applyFilter = () => {
 
 // methodology
 $("h-method").textContent = T.hMethod;
-$("method").innerHTML = [...(D.dataNotes || []), ...(D.notes || []), ...T.fixed].map(s => `<li>${rich(s)}</li>`).join("");
+const cc = D.consensusCounts;
+$("method").innerHTML = [...(D.dataNotes || []), ...(D.notes || []), ...(cc ? [T.consensusLine(cc.multi, cc.single)] : []), ...T.fixed].map(s => `<li>${rich(s)}</li>`).join("");
 
 requestAnimationFrame(() => {
   if (scored) $("fill").style.width = $("ladder").dataset.fill + "%";
