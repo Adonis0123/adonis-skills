@@ -11,7 +11,7 @@ Use the most recent 90 days by default. Report:
 
 If timestamps are absent, do not silently substitute mtime. Mark mtime-based windowing as a proxy.
 
-## M1-M8
+## M1-M11
 
 ### M1 — Calls by tool
 
@@ -59,6 +59,35 @@ Measure repeated edits to the same file within a session and retry-loop lengths 
 
 Calculate p50/p95 only when start/end timestamps define the same boundary. Otherwise write `UNVERIFIED`.
 
+### M9 — Attention load
+
+Per notification sender and per decision queue:
+
+```text
+interruptions_per_week = messages_or_new_items / window_weeks
+action_rate = interruptions_followed_by_user_action / interruptions
+```
+
+A user action is a human message, approval, or command in the same session or queue within 30 minutes; state the window you used. For decision queues also report item age p50/p95, the duplicate share (same question recorded twice), and the share closed without user input (done by an agent, superseded, or expired). Without a sender log, write `UNVERIFIED`; do not estimate from memory.
+
+### M10 — Automation reliability
+
+Per scheduled automation:
+
+```text
+failure_rate = runs_with_nonzero_exit / runs_in_window
+```
+
+Also count runs that changed user state the user had not approved, such as overwriting local edits or reinstalling a removed component. Take run counts from logs, not from the schedule; a missed run is a failure of its own kind and is listed separately.
+
+### M11 — Toggle drift
+
+```text
+static_toggles = toggles_unchanged_in_window / toggles
+```
+
+List each unchanged toggle with whether it still equals the product default. A toggle that differs from the default is a decision the user made; it is not static waste.
+
 ## Decisions
 
 Apply these hard rules first:
@@ -68,6 +97,10 @@ Apply these hard rules first:
 - **Narrow**: the component has value, but the exposed tool set greatly exceeds the called subset. Flag usage rate at or below 25% for explicit review.
 - **On demand**: value is demonstrated, but startup/resident cost need not be paid every session.
 - **Rewrite**: a skill or instruction file is used and worth its cost, but its error rate (M2) or rework (M7) points at its own text. Draft two variants: a procedure variant (planning, tool use, completion, context cost; no subject matter) and a domain variant (facts and constraints a practitioner would know). Each variant emits only what it changes. Replay the same redacted prompts against the current text and both variants, then judge anonymized, shuffled outputs against the source material. Adopt, merge, or reject each change only by a behavior difference observed in those runs; when no run shows a difference, keep the current text.
+- **Digest**: a notification sender has an action rate below 20% over at least 10 interruptions. Fold its messages into a periodic summary, or drop the event type, instead of interrupting.
+- **Close duplicates**: a decision queue whose duplicate or agent-closable share exceeds 30%. Propose closing those items and fixing the recorder so one question is stored once.
+- **Observe first**: a scheduled automation in `acts` mode that failed in the window or changed user state without approval. Switch it to `reports` (dry run, or skip the affected items and list them) until it has 4 consecutive clean runs, then offer `acts` again.
+- **Use the default**: a toggle unchanged in the window that equals the product default. Propose removing the explicit setting. Keep it when a comment or record gives a reason.
 - **Keep**: measured ROI is positive and no harder remove rule applies.
 
 User decisions can override the recommendation. Record both the threshold result and the user's decision; never rewrite the metric to match the preference.

@@ -8,7 +8,7 @@ All artifacts live under the agreed absolute `OUT_DIR`.
 |---|---|
 | `00-capabilities.json` | CLI versions, utility availability, wrappers, blocked flags |
 | `01-inventory.json` | Pure component and cost-side data |
-| `02-metrics.json` | Machine-readable M1-M8 metrics |
+| `02-metrics.json` | Machine-readable M1-M11 metrics |
 | `02-metrics.md` | Human-readable metrics and tables |
 | `03-experiments.md` | Experiments plus sanitized raw output |
 | `dispatch-prompt.md` | Blind-review prompt, when used |

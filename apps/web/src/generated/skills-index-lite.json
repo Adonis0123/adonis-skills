@@ -531,7 +531,7 @@
   {
     "slug": "dev-environment-roi-audit",
     "name": "dev-environment-roi-audit",
-    "description": "Audit a local coding-agent environment with real logs and controlled ablations, then make evidence-backed keep, narrow, on-demand, or remove decisions for MCP servers, skills, instruction files, plugins, commands, hooks, and memory. Use whenever the user asks to audit or slim a Claude, Codex, Grok, Cursor, or similar development setup; find unused tools; quantify context or startup tax; or clean agent configuration by ROI. Enforces discovered paths, per-file JSONL schema probes, OUT_DIR-only artifacts, secret-safe output, and item-by-item approval before mutations.",
+    "description": "Audit a local coding-agent environment with real logs and controlled ablations, then make evidence-backed keep, narrow, on-demand, or remove decisions for MCP servers, skills, instruction files, plugins, commands, hooks, and memory, plus the attention they cost the user (notifications, pending decisions, scheduled automations, and settings toggles). Use whenever the user asks to audit or slim a Claude, Codex, Grok, Cursor, or similar development setup; find unused tools; quantify context, startup, or attention tax; review noisy notifications or scheduled jobs; or clean agent configuration by ROI. Enforces discovered paths, per-file JSONL schema probes, OUT_DIR-only artifacts, secret-safe output, and item-by-item approval before mutations.",
     "metadata": {
       "author": "Adonis0123"
     },
@@ -540,7 +540,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-29T00:00:00.000Z",
+    "updatedAt": "2026-10-31T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Agent Setup Audit",

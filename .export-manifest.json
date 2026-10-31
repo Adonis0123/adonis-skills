@@ -4,11 +4,11 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/dotagents@89c3530d3c63b94a674b2224862e5586fb1058c5",
+      "source": "Adonis0123/dotagents@c8bd1818b6846324cd87068e37221ea8aae8747f",
       "dirty": false
     },
     {
-      "source": "Adonis0123/dothermes@93c338442e539593c68d06daf12048eff68146c5",
+      "source": "Adonis0123/dothermes@c9ad4cc8b85503d42106619ce8862160635266ed",
       "dirty": false
     }
   ],
@@ -148,11 +148,11 @@
     },
     {
       "path": "skills/agent-dispatch/references/run-board.md",
-      "sha256": "e1d67ecbab63786d6123f31ab5ccfb1be3f3f743518b7eaa3764a8afaa09a443"
+      "sha256": "80cab6c5401d412dc373dba56e3f3f28068fad644caf3316ad9c22c2e76005cc"
     },
     {
       "path": "skills/agent-dispatch/references/task-spec.md",
-      "sha256": "a72aface1f37603e63967634f00319f35a24221e98872cca59c9476720cdb119"
+      "sha256": "d79bb128d6be349455fa1b3a3fec6138295b4961b5d820c172d0fe9d894c2d40"
     },
     {
       "path": "skills/agent-dispatch/scripts/board.css",
@@ -168,11 +168,11 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/board_render.py",
-      "sha256": "5560ff019c401b6afa058695d5ed9f33dde5738ff7528181e6104573a8634329"
+      "sha256": "66ac31546b417f45dde246377c316fbfde12840fb9361dcc74899decad949e33"
     },
     {
       "path": "skills/agent-dispatch/scripts/dispatch_board.py",
-      "sha256": "c0dffbf6b7dca3c9e1e5bcdc04e2229f830bc9362f831e80c8ea7e7f4710ec9a"
+      "sha256": "f0885111f786c80a0ba4e4a3b97368e7f68a4e177b7050f42882a7cf08f60455"
     },
     {
       "path": "skills/agent-dispatch/scripts/isolated_case.py",
@@ -208,11 +208,15 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/test_dispatch_board.py",
-      "sha256": "a335ffced9d9b66e5e422ed7467855a05667e1a168781535344d1cc7069005fa"
+      "sha256": "cdd0dfb56f9c6b562085d3b4f6ee51a30d2e94be7391ff9ac12e3ace9851220f"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_harness_limits.py",
       "sha256": "e6ffca5b0b9f9db9aef41878b8dee2f17f9caba88be4752722365c38ac82db53"
+    },
+    {
+      "path": "skills/agent-dispatch/scripts/test_lane_states.py",
+      "sha256": "c2d98a0ca64af71849bd27ac819c546b7513ab07b6d179734f58c01b3ed11c26"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_probe_agents.py",
@@ -252,11 +256,11 @@
     },
     {
       "path": "skills/dev-environment-roi-audit/SKILL.md",
-      "sha256": "32b310a8e2b23899b6af528e92123deb2f626d26441f6860361cb47df9a232c4"
+      "sha256": "3b4c8f31a7986b2305c1b889ca73183886dcea99ede50fb2fc5ef887479382e1"
     },
     {
       "path": "skills/dev-environment-roi-audit/evals/evals.json",
-      "sha256": "a46e52f0d6da5c46d228510e6fe768f5aa46fd41d4a1bf6b7ede9d7712a951a2"
+      "sha256": "671c8153bf9ee21c57fc2c258ea034991a3265847b159fc80133d61d29a87525"
     },
     {
       "path": "skills/dev-environment-roi-audit/evals/fixtures/schema-a.jsonl",
@@ -268,11 +272,11 @@
     },
     {
       "path": "skills/dev-environment-roi-audit/references/artifact-contract.md",
-      "sha256": "018358b9ac20d05ac44fcafc81e6df3f75110b521122cd946c136f5603aeddce"
+      "sha256": "0ece62749d5d526ed719aa3b5f237a94d252ba515044d1c061935bdec4485bd4"
     },
     {
       "path": "skills/dev-environment-roi-audit/references/metrics-and-decisions.md",
-      "sha256": "95b4056a27605e7cc4240980b23829e3c8eb6d4c8deb0e4e3688de772e97f635"
+      "sha256": "02061ddcf21c48dc1e414ae6eff3a6805b4561a96108907f6f221484fa69858a"
     },
     {
       "path": "skills/dev-environment-roi-audit/scripts/finalize_audit.py",

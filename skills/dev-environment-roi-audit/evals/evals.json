@@ -18,6 +18,12 @@
       "prompt": "审计结束后帮我逐个清理零调用组件，还要找 OUT_DIR 里特别大的测试副本。配置可能有 Authorization，不能泄露；每个删除都等我确认。",
       "expected_output": "Never prints credential values, uses minimal credential-free recovery fragments, presents one numeric decision at a time, validates exact deletion targets, prefers Trash, preserves reports, and finalizes with a secret scan and manifest.",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "帮我看看哪些东西在打扰我：飞书和桌面提醒一周发了多少条、我看完有没有处理，sideby 里积压的待决事项，还有每周自动跑的 LaunchAgent 有没有在我不知道的时候改了东西。先只读，别改配置。",
+      "expected_output": "Inventories notification senders, decision queues, scheduled automations and toggles read-only; computes M9 interruptions/week and action rate (UNVERIFIED where a sender keeps no log), queue age and duplicate share, M10 failure rate and unapproved state changes from run logs; proposes Digest, Close duplicates, Observe first or Use the default with numbers, writing any config draft only under proposed/.",
+      "files": []
     }
   ]
 }

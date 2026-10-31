@@ -1,6 +1,6 @@
 ---
 name: dev-environment-roi-audit
-description: Audit a local coding-agent environment with real logs and controlled ablations, then make evidence-backed keep, narrow, on-demand, or remove decisions for MCP servers, skills, instruction files, plugins, commands, hooks, and memory. Use whenever the user asks to audit or slim a Claude, Codex, Grok, Cursor, or similar development setup; find unused tools; quantify context or startup tax; or clean agent configuration by ROI. Enforces discovered paths, per-file JSONL schema probes, OUT_DIR-only artifacts, secret-safe output, and item-by-item approval before mutations.
+description: Audit a local coding-agent environment with real logs and controlled ablations, then make evidence-backed keep, narrow, on-demand, or remove decisions for MCP servers, skills, instruction files, plugins, commands, hooks, and memory, plus the attention they cost the user (notifications, pending decisions, scheduled automations, and settings toggles). Use whenever the user asks to audit or slim a Claude, Codex, Grok, Cursor, or similar development setup; find unused tools; quantify context, startup, or attention tax; review noisy notifications or scheduled jobs; or clean agent configuration by ROI. Enforces discovered paths, per-file JSONL schema probes, OUT_DIR-only artifacts, secret-safe output, and item-by-item approval before mutations.
 license: MIT
 metadata:
   author: Adonis0123
@@ -8,7 +8,7 @@ metadata:
 
 # Development Environment ROI Audit
 
-Measure whether each coding-agent component saves more loop time than it taxes. Use local evidence instead of generic best practices.
+Measure whether each coding-agent component saves more loop time than it taxes. Count two taxes: context the agent pays every session, and attention the user pays when a component interrupts them, waits on them, or acts on their files without asking. Use local evidence instead of generic best practices.
 
 ## Operating contract
 
@@ -68,6 +68,15 @@ Inventory each host independently and retain its actual status vocabulary.
 - Benchmark hooks with repeated samples. Report p50/p95 and event count; a no-op hook still pays process startup tax.
 - Keep generated architecture prose, copied README material, directory trees, and project summaries only when measured evidence shows they reduce loop time.
 
+### Attention tax: notifications, pending decisions, scheduled automations, toggles
+
+These components cost the user's attention rather than the agent's context. Inventory them with the same evidence rules.
+
+- **Notifications**: discover every hook, script, or bot that messages the user (desktop, chat, phone). Record the sender, trigger event, channel, and where it logs. When a sender keeps no log, record that and mark its M9 numbers `UNVERIFIED`; propose a log under `proposed/`, do not add one.
+- **Pending decisions**: discover queues where agents park questions for the user (deferred-decision lists, run-board asks, TODO ledgers). Record queue size, age of each item, and how each item was closed.
+- **Scheduled automations**: list LaunchAgents and LaunchDaemons the user owns (`launchctl print gui/<uid>/<label>`), `crontab -l`, systemd user timers, and agent-host schedulers. For each, record the schedule, the command, the last exit status and log path, and its mode: `acts` (changes files, installs, sends, merges) or `reports` (writes a log or asks). Record whether it can overwrite user state, such as reinstalling a component that has local edits, and whether it offers a dry-run or report-only switch.
+- **Settings toggles**: count feature flags, env switches, and boolean settings in the discovered configs. From config history (git log, dated backups) record whether each toggle changed in the window. Print names and value types only.
+
 Write `01-inventory.json` as data only, without recommendations.
 
 ## Phase 2: mine the benefit side
@@ -83,7 +92,7 @@ python3 "$OUT_DIR/scripts/probe_jsonl_schema.py" <discovered-roots...> \
 
 Do not reuse an expected schema after one representative file. A parser must validate each file's probed keys and skip or separately handle mismatches. Record every schema deviation.
 
-Calculate M1-M8 exactly as defined in the metrics reference. Pay special attention to exposed tools with zero calls, wrapper calls whose actual MCP name is nested in serialized arguments, and failures hidden behind successful wrapper invocations.
+Calculate M1-M11 exactly as defined in the metrics reference. Pay special attention to exposed tools with zero calls, wrapper calls whose actual MCP name is nested in serialized arguments, and failures hidden behind successful wrapper invocations.
 
 Write `02-metrics.json` and `02-metrics.md`. Put parsing scripts in `$OUT_DIR/scripts/`.
 
@@ -120,6 +129,12 @@ Build one row per MCP server, skill, command, plugin, hook, or memory component:
 | component | resident tokens | window calls | usage rate | error rate | ROI | decision |
 ```
 
+Build a second table for attention components (notification senders, decision queues, scheduled automations, toggles):
+
+```text
+| component | interruptions/week | action rate | failures in window | mode (acts/reports) | overwrites user state | decision |
+```
+
 Apply the hard thresholds from the metrics reference without softening them. For a **Rewrite** row, record which variant changes were adopted and the observed behavior difference behind each; applying the text to live config is an approved mutation like any other. If the user wants interactive cleanup, present one component at a time with its numbers and wait for a clear retain/remove/disable decision.
 
 After an approved mutation:
@@ -146,7 +161,7 @@ Use an exact validated target. Prefer moving one target to Trash over a broad pe
 
 Produce `FINAL.md` with:
 
-1. Component decisions and numeric evidence.
+1. Component decisions and numeric evidence, including the attention table.
 2. Baseline tax before/after, window percentage, and formula.
 3. Instruction contradictions with evidence paths.
 4. Independent-review disagreements and required follow-up measurements.
