@@ -55,9 +55,12 @@ PANEL_HINT = '看谁在做什么、给某个 AI 发消息：打开 sideby 面板
 def render_sections(view, board_file=None, reports=None):
     run = view['run']
     board_file = board_file or b.board_path(run.get('_dir') or os.getcwd())
-    active = [l for l in view['lanes'] if l['state'] in b.ACTIVE_LANE_STATES]
-    finished = [l for l in view['lanes'] if l['state'] not in b.ACTIVE_LANE_STATES]
-    needs = len(view['open_asks']) + sum(l['state'] == 'needs-you' for l in active)
+    # silence is live state: the Panel shows it, a report would freeze it, so a quiet Lane reads as working here
+    lanes = [dict(l, state='working') if l['state'] == 'stale' else l for l in view['lanes']]
+    active = [l for l in lanes if l['state'] not in b.ENDED_LANE_STATES]
+    finished = [l for l in lanes if l['state'] in b.ENDED_LANE_STATES]
+    # a Lane whose question is already an open Ask (`ask add --lane`) is the same question, counted once
+    needs = len(view['open_asks']) + sum(l['state'] == 'needs-you' and not l.get('open_asks') for l in active)
     known = [l for l in view['lanes'] if isinstance(l.get('cost'), (float, int))]
     unknown = [l for l in view['lanes'] if l not in known]
     excluded = '，不含 Codex 花费' if any(str(l.get('account', '')).startswith('codex') for l in unknown) else ''
@@ -102,9 +105,9 @@ def render_sections(view, board_file=None, reports=None):
         steps += f'<div class="step"><span class="badge {"b-ok" if step.get("state") == "done" else "b-run"}">{"✓" if step.get("state") == "done" else index}</span><div><div class="t">{e(step_title(index, step.get("title", "")))}</div><div class="d">{e(step.get("note", ""))}</div></div><span class="when">{state}</span></div>'
 
     def lane_row(lane):
-        state = lane['state']
+        state = lane['state']  # `attention` wears the `finished` pill colour below: both wait on the Coordinator
         name = b.lane_name(dict(lane, account='', role=''))
-        ended = state not in b.ACTIVE_LANE_STATES
+        ended = state in b.ENDED_LANE_STATES
         summary = b.lane_summary(run, lane)
         if ended:
             label, doing = '做出了什么', b.first_sentence(summary) if summary else (lane.get('note') or b.STATE_LABELS.get(state, state))
@@ -131,7 +134,7 @@ def render_sections(view, board_file=None, reports=None):
             meta.append(e(f'${lane["cost"]:.2f}'))
         link = f'<a class="report-link" href="{e(href)}">查看完整报告<span aria-hidden="true"> ↗</span></a>' if href else ''
         row = (f'<div class="lane" id="lane-{e(lane["id"])}"><div class="lane-head"><div class="what">{e(name)}</div>'
-               f'<span class="pill {e(state)}">{e(b.STATE_LABELS.get(state, state))}</span></div>'
+               f'<span class="pill {e("finished" if state == "attention" else state)}">{e(b.STATE_LABELS.get(state, state))}</span></div>'
                f'<div class="now"><span class="now-label">{label}</span>{e(doing)}</div>'
                f'<div class="meta num"><span>{" · ".join(meta)}</span>{link}</div>')
         for flag in lane['flags']:
@@ -188,7 +191,7 @@ def render_sections(view, board_file=None, reports=None):
     # No credentials, private server URL, or raw commands in the progress copy.
     progress = [run['objective'], '进度：']
     progress += [f'{s.get("title", "")}：{s.get("state", "")} {s.get("note", "")}' for s in run.get('steps', [])]
-    progress += [f'{l.get("title") or l["id"]}：{b.STATE_LABELS.get(l["state"], l["state"])}；{b.first_sentence(b.lane_summary(run, l)) or l.get("note") or "尚无成果"}' for l in view['lanes']]
+    progress += [f'{l.get("title") or l["id"]}：{b.STATE_LABELS.get(l["state"], l["state"])}；{b.first_sentence(b.lane_summary(run, l)) or l.get("note") or "尚无成果"}' for l in lanes]
     progress += [f'{a["id"]} {a["question"]}；AI 建议：{a["recommend"]}' for a in view['open_asks']]
     progress += [f'替你定了：{d.get("choice", "")}；因为：{d.get("why", "")}' for d in run.get('decisions', [])]
     progress += ['数据时间：' + str(run.get('updated_at') or run.get('created_at') or '')]  # the ledger's change, not the render

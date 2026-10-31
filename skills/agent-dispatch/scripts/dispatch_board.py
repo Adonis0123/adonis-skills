@@ -60,6 +60,9 @@ STALE_SECONDS = 300
 LANE_STATES = ("queued", "working", "needs-you", "done", "failed", "stopped")
 WAIT_STATES = ("running", "done", "failed", "stopped")
 ACTIVE_LANE_STATES = ("queued", "working", "needs-you")
+ENDED_LANE_STATES = ("done", "failed", "stopped")
+# derive() shows one of these per Lane: the ended ledger states or a derived one (references/run-board.md § Lane states)
+VIEW_LANE_STATES = ENDED_LANE_STATES + ("needs-you", "attention", "finished", "queued", "stale", "working")
 LEDGER = "run.json"
 STOP = "STOP"
 MAX_ROUNDS = 3  # the first run plus 2 fix rounds (SKILL.md "Dispatching workers")
@@ -71,7 +74,9 @@ STATE_LABELS = {
     "queued": "排队",
     "working": "进行中",
     "needs-you": "等你回答",
+    "attention": "待主控 AI 处理",
     "finished": "待主控 AI 汇总",
+    "stale": "久无动静",
     "done": "完成",
     "failed": "失败",
     "stopped": "已停止",
@@ -1062,6 +1067,53 @@ def resolve(run: dict, path: str | None) -> str | None:
     return os.path.join(run["_dir"], path)
 
 
+def lane_outcome(run: dict, lane: dict) -> str | None:
+    """The word on the report's machine line `OUTCOME: <word>` (task-spec.md): the full report first, else the summary."""
+    for text in (report_text(run, lane), lane.get("summary")):
+        match = OUTCOME_LINE.match(str(text or ""))
+        if match:
+            return match.group(1).lower()
+    return None
+
+
+def answered_this_round(run: dict, lane: dict) -> bool:
+    """An Ask registered for this Lane (`ask add --lane`) was answered since the Lane's current round began."""
+    rounds = [t for t in (parse_iso(h.get("at")) for h in lane.get("history", []) if h.get("archived")) if t]
+    began = max(rounds) if rounds else parse_iso(lane.get("started_at")) or 0
+    return any(a.get("lane") == lane["id"] and a.get("state") == "answered" and (parse_iso(a.get("answered_at")) or 0) >= began
+               for a in run["asks"])
+
+
+def lane_state(facts: dict) -> tuple[str, str | None]:
+    """The one state a Lane shows, and why it needs the Coordinator (a flag) or None.
+
+    Follows the table in references/run-board.md § Lane states: read top-down, the first matching row wins.
+    A `busy` session means the Worker runs now, so a report, a stream end or an exited Orca window is from an older turn.
+    """
+    busy = facts["session"] == "busy"
+    outcome = None if busy else facts["outcome"]
+    ended = not busy and facts["stream_ended"]
+    exited = not busy and facts["orca_exited"]
+    if facts["state"] in ENDED_LANE_STATES:
+        return facts["state"], None
+    if facts["open_asks"] or "needs-you" in (facts["state"], facts["session"]) or (outcome == "blocked" and not facts["answered"]):
+        return "needs-you", None
+    if ended and facts["stream_failed"]:
+        return "attention", "这个任务跑报错了，等主控 AI 处理"
+    if exited:
+        return "attention", "这个 AI 窗口已关闭（Orca 进程退出），主控 AI 会接手检查"
+    if outcome in ("failed", "handback", "blocked"):
+        return "attention", {"failed": "没做完，等主控 AI 处理", "handback": "超出这个任务的范围，交回给主控 AI 重新安排",
+                             "blocked": "你的回答已收到，等主控 AI 转给它继续"}[outcome]
+    if outcome == "succeeded" or ended:
+        return "finished", "这部分做完了，等主控 AI 汇总验收"
+    if facts["state"] == "queued" or facts["waiting_on"]:
+        return "queued", None
+    if facts["session"] in (None, "unknown") and facts["silent_for"] is not None and facts["silent_for"] >= STALE_SECONDS:
+        return "stale", None
+    return "working", None
+
+
 def derive(run: dict, now: float | None = None, orca: dict | None = None, sessions: dict | None = None) -> dict:
     now = now if now is not None else time.time()
     orca = orca or {}
@@ -1069,6 +1121,7 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
     pools = {lane["id"]: lane.get("pool") for lane in run["lanes"]}
     titles = {row["id"]: str(row.get("title") or row["id"]) for row in run["lanes"] + run["waits"]}
     lane_ids = {l["id"] for l in run["lanes"] if l.get("kind") != "subagent"}
+    open_asks = [a for a in run["asks"] if a.get("state") == "open"]
     lanes = []
     for lane in order_lanes(run["lanes"]):
         view = dict(lane)
@@ -1083,13 +1136,6 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
             view["session_label"] = session_label(session, lane.get("title") or lane["id"])
             view["session_status"] = session["status"]
             view["resume_command"] = session.get("resumeCommand")
-            if lane["state"] in ("working", "needs-you"):
-                if session["status"] == "needs-you":
-                    view["state"] = "needs-you"
-                elif session["status"] == "busy":
-                    view["state"] = "working"
-                elif session["status"] == "idle" and info["ended"] and not info["failed"]:
-                    view["state"] = "finished"
         live = orca.get(lane.get("dispatch")) if lane.get("dispatch") else None
         last_seen = os.path.getmtime(out) if out and os.path.exists(out) else None
         if last_seen is None and live and live.get("observed_at"):
@@ -1115,21 +1161,29 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
         view["ended"] = info["ended"]
         view["stream_failed"] = info["failed"]
         view["silent_for"] = (now - last_seen) if last_seen else None
-        end = (parse_iso(lane.get("ended_at")) or parse_iso(lane.get("updated_at"))) if finished else (last_seen if view["state"] == "finished" else now)
+        view["waiting_on"] = [titles.get(a, a) for a in lane.get("after") or [] if a not in done_ids]
+        view["open_asks"] = [a["id"] for a in open_asks if a.get("lane") == lane["id"]]
+        view["ledger_state"] = lane["state"]
+        facts = {
+            "state": lane["state"], "open_asks": view["open_asks"], "session": session["status"] if session else None,
+            "outcome": lane_outcome(run, lane), "answered": answered_this_round(run, lane),
+            "stream_ended": info["ended"], "stream_failed": info["failed"],
+            "orca_exited": bool(live) and live.get("liveness") == "exited",
+            "waiting_on": view["waiting_on"], "silent_for": view["silent_for"],
+        }
+        view["state"], view["reason"] = lane_state(facts)
+        end = (parse_iso(lane.get("ended_at")) or parse_iso(lane.get("updated_at"))) if finished else (last_seen if view["state"] in ("finished", "attention") else now)
         view["elapsed"] = max(0, end - (parse_iso(lane.get("started_at")) or end)) if end else None
         view["round"] = int(lane.get("round") or 1) if str(lane.get("round") or 1).isdigit() else 1
-        view["waiting_on"] = [titles.get(a, a) for a in lane.get("after") or [] if a not in done_ids]
-        view["stale"] = (not session or session["status"] == "unknown") and lane["state"] == "working" and not info["ended"] and view["silent_for"] is not None and view["silent_for"] >= STALE_SECONDS
+        view["stale"] = view["state"] == "stale"
         flags = []
         target = lane.get("reviews")
         if lane.get("role") == "review" and target and lane.get("pool") and pools.get(target) == lane.get("pool"):
             flags.append("写代码和审代码用了同一个账号，自己审自己可能漏看问题")
-        if info["ended"] and lane["state"] == "working" and (not session or session["status"] not in ("busy", "needs-you")):
-            flags.append("这部分做完了，等主控 AI 汇总验收" if not info["failed"] else "这个任务跑报错了，等主控 AI 处理")
+        if view["reason"]:
+            flags.append(view["reason"])
         if live:
             view["orca"] = live
-            if live.get("liveness") == "exited" and lane["state"] == "working":
-                flags.append("这个 AI 窗口已关闭（Orca 进程退出），主控 AI 会接手检查")
         if view["stale"]:
             view["stale_flag"] = f"{plain_age(view['silent_for'])}没新进展，主控 AI 会去催问"
             view["silent_since"] = last_seen
@@ -1146,8 +1200,7 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
         view["last_line"] = last_line(log)
         view["waiting_on"] = [titles.get(a, a) for a in wait.get("after") or [] if a not in done_ids]
         waits.append(view)
-    open_asks = [a for a in run["asks"] if a.get("state") == "open"]
-    running = [l for l in lanes if l["state"] in ACTIVE_LANE_STATES]
+    running = [l for l in lanes if l["state"] not in ENDED_LANE_STATES]
     unregistered = []
     if run.get("_dir") and os.path.isdir(run["_dir"]):
         known = {os.path.abspath(resolve(run, p)) for l in run["lanes"] for p in [l.get("output")] + [h.get("output") for h in l.get("history", [])] if p}
@@ -1198,7 +1251,7 @@ def render_text(view: dict, board_path: str | None = None) -> str:
         out.append("⚠ 看板还没有里程碑：用 step add 登记接下来几步（如 集成、审查、修复、验收），主人才看得出整体进度")
     out.append("")
     out.append("运行中")
-    active = [l for l in view["lanes"] if l["state"] in ACTIVE_LANE_STATES]
+    active = [l for l in view["lanes"] if l["state"] not in ENDED_LANE_STATES]
     if not active:
         out.append("  目前没有；有新动态时会显示在这里")
     shown: set = set()
@@ -1248,7 +1301,7 @@ def render_text(view: dict, board_path: str | None = None) -> str:
         out.append("长期授权")
         for grant in run["grants"]:
             out.append(f"  {grant['id']}  {grant['scope']}（{'本 Run' if grant['outward'] else '直到撤回'}）原话：{grant['words']}")
-    finished = [l for l in view["lanes"] if l["state"] not in ACTIVE_LANE_STATES]
+    finished = [l for l in view["lanes"] if l["state"] in ENDED_LANE_STATES]
     if finished:
         out.append("")
         out.append("已结束")
@@ -1349,7 +1402,7 @@ def lane_produced(run: dict, lane: dict, board_file: str, report_url: str | None
     e = lambda value: html.escape(str(value), quote=True)
     summary = lane_summary(run, lane)
     # A one-sentence summary is already the card's line; the disclosure adds only what the card lacks.
-    content = f'<div class="md" data-md>{e(summary)}</div>' if summary.strip() and (lane.get("state") in ACTIVE_LANE_STATES or summary.strip() != first_sentence(summary)) else ""
+    content = f'<div class="md" data-md>{e(summary)}</div>' if summary.strip() and (lane.get("state") not in ENDED_LANE_STATES or summary.strip() != first_sentence(summary)) else ""
     if report_url:
         content += f'<a class="report-link" href="{e(report_url)}">查看完整报告<span aria-hidden="true"> ↗</span></a>'
     files = lane.get("files")
@@ -1570,17 +1623,15 @@ def watch_events(view: dict) -> dict[str, tuple[str, str]]:
     watch compares kinds only: the silence text carries an age that changes every minute."""
     events = {}
     for lane in view["lanes"]:
-        if lane["state"] not in ("working", "needs-you"):
-            continue
         name = str(lane.get("title") or lane["id"])
         if lane["state"] == "needs-you":
             events[lane["id"]] = ("needs-you", f"{name}：在等回答")
-        elif lane.get("ended"):
-            events[lane["id"]] = ("ended", f"{name}：{'跑报错了' if lane.get('stream_failed') else '做完了'}，去汇总验收")
-        elif lane.get("stale"):
+        elif lane["state"] == "attention":
+            events[lane["id"]] = ("attention", f"{name}：{lane.get('reason') or '等主控 AI 处理'}")
+        elif lane["state"] == "finished":
+            events[lane["id"]] = ("ended", f"{name}：做完了，去汇总验收")
+        elif lane["state"] == "stale":
             events[lane["id"]] = ("stale", f"{name}：{plain_age(lane['silent_for'])}没有动静，去看日志")
-        elif lane.get("orca", {}).get("liveness") == "exited":
-            events[lane["id"]] = ("exited", f"{name}：窗口已关闭")
     return events
 
 
@@ -1592,7 +1643,7 @@ def watch(run_dir: str, timeout: int, interval: int) -> int:
         return view, watch_events(view)
 
     view, before = current()
-    watched = [l for l in view["lanes"] if l["state"] in ("working", "needs-you") and (l.get("output") or l.get("session") or l.get("dispatch"))]
+    watched = [l for l in view["lanes"] if l["ledger_state"] in ("working", "needs-you") and (l.get("output") or l.get("session") or l.get("dispatch"))]
     if not watched:
         print("没有可以盯的任务：在做的任务都没有 --output、--session 或 --dispatch")
         return 0
@@ -1620,7 +1671,7 @@ def watch(run_dir: str, timeout: int, interval: int) -> int:
 
 def next_step_hint(run_dir: str, view: dict) -> str | None:
     """After dispatching or asking, the Coordinator must keep watching Lanes, not wait for the user."""
-    if any(l["state"] == "working" and (l.get("output") or l.get("session") or l.get("dispatch")) for l in view["lanes"]):
+    if any(l.get("ledger_state", l["state"]) == "working" and (l.get("output") or l.get("session") or l.get("dispatch")) for l in view["lanes"]):
         script = os.path.abspath(__file__)
         return (f"下一步：后台运行 python3 {script} --run {run_dir} watch（Claude Code 用 run_in_background），"
                 "任务结束、报错、要你回答或久无动静时它会退出提醒；别干等用户回复")

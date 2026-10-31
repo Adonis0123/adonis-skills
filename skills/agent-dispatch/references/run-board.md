@@ -11,6 +11,7 @@ Live status and messaging belong to sideby's Panel: its 会话 page lists every 
 - Who does what
 - Ledger location
 - Commands
+- Lane states
 - What the Coordinator reads
 - Rules the Board enforces or exposes
 - Worker event streams
@@ -84,7 +85,7 @@ B commit add --repo <repository> --hash <commit hash> --subject "feat: add sessi
 B wait add --id deploy-test --title "部署 test" --log <log path> --stage "server 已好，web 构建中"
 B wait set --id deploy-test --state done
 B lane add --id J1 --title "联调" --role write --state queued --after deploy-test,R-B9   # a step and what it waits on
-B ask add --id A1 --question "..." --recommend "..." --evidence "<file + diff, or quote>" --blocks "<what waits on it>"
+B ask add --id A1 [--lane B9] --question "..." --recommend "..." --evidence "<file + diff, or quote>" --blocks "<what waits on it>"
 B ask add --id A2 --outward --question "发群消息吗？" --recommend "发" --evidence "..." --blocks "..." \
   --recipient "<person or group>" --channel "飞书" --draft "<full text>"
 B ask answer --id A1 --answer "<user's reply>"
@@ -95,11 +96,30 @@ B show --all                     # every active Run on this machine
 B close [--force]                # archive; leaves the final report at the Board path; refuses while a Wait runs or an Ask is open
 ```
 
-Roles: `write`, `review`, `research`, `draft`. Lane states: `queued`, `working`, `needs-you`, `done`, `failed`, `stopped`. Wait states: `running`, `done`, `failed`, `stopped`. Relative `--output` / `--log` paths, given on the command line or in a hand-made ledger, resolve against the Run directory, not the shell's current directory. `show` names the page once it exists; `show --line` never prints a path, so it leads a reply as is (`show --json` carries the path as `board`).
+Roles: `write`, `review`, `research`, `draft`. Lane states in the ledger: `queued`, `working`, `needs-you`, `done`, `failed`, `stopped`; `show` and the Board show one derived state per Lane (§ Lane states). An Ask that relays a Worker's `Question:` names that Lane with `--lane`. Wait states: `running`, `done`, `failed`, `stopped`. Relative `--output` / `--log` paths, given on the command line or in a hand-made ledger, resolve against the Run directory, not the shell's current directory. `show` names the page once it exists; `show --line` never prints a path, so it leads a reply as is (`show --json` carries the path as `board`).
 
 `init` and `lane add` publish the static Board before the session index. Milestone commands also refresh it: `step add/set`, `lane set` with `--state`, `--round`, `--result(-file)` or `--summary(-file)`, `wait set --state`, `decision add`, `artifact add`, `commit add`, `ask add/answer`, and `close`. Explicit `open` refreshes before opening. `show` never writes, including the deprecated compatibility flag `--html`. Other ledger commands save the ledger and rebuild the index; they recreate a missing Board before publishing. Nothing writes on a timer. Unchanged content leaves the file untouched, using its fingerprint. `--after` lists Lane or Wait ids; the Board shows the ones not yet `done` as "等：…".
 
 When the user says "停", the Coordinator runs `touch <run dir>/STOP`: `lane add` then refuses new Lanes and the next Board write shows "已叫停" with everything still running. The file does not stop running work by itself, so the Coordinator then stops each running Lane and Wait it can (`orca orchestration worker-stop`, or the processes it started), sets them `stopped`, and reports in the chat which ones could not be stopped. To resume, delete the file.
+
+## Lane states
+
+`show`, `watch` and the Board show each Lane in exactly one state, from what `dispatch_board.py` reads: the ledger, open Asks, the sideby session status, the stream's end, Orca liveness and the report's `OUTCOME:` line (`task-spec.md` Return). Read the table top-down; the first matching row wins.
+
+| #   | State (label)                                        | Condition                                                                                                                                                                                             | Coordinator's next move                                            |
+| --- | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1   | `done` / `failed` / `stopped` (完成 / 失败 / 已停止) | The ledger says so (`lane set --state`)                                                                                                                                                               | none                                                               |
+| 2   | `needs-you` (等你回答)                               | An open Ask for this Lane (`ask add --lane`); or the ledger or the sideby session says `needs-you`; or the report says `OUTCOME: blocked` and no Ask for this Lane was answered since its round began | relay the `Question:` as an Ask; wait for the answer               |
+| 3   | `attention` (待主控 AI 处理)                         | The stream ended in an error; or the Orca window exited; or the report says `OUTCOME: failed`, `handback`, or `blocked` after its Ask was answered                                                    | read the summary; fix, rewrite the spec, or resume with the answer |
+| 4   | `finished` (待主控 AI 汇总)                          | The stream ended; or the report says `OUTCOME: succeeded`                                                                                                                                             | read the summary, integrate, `lane set --state done`               |
+| 5   | `queued` (排队)                                      | The ledger says `queued`; or a Lane or Wait in its `--after` is not `done`                                                                                                                            | start it once what it waits on is done                             |
+| 6   | `stale` (久无动静)                                   | No usable sideby status (none or `unknown`) and nothing new for 5 minutes (`STALE_SECONDS`; stream, else Orca, else ledger time)                                                                      | read its log before waiting longer                                 |
+| 7   | `working` (进行中)                                   | Everything else                                                                                                                                                                                       | keep a `watch` running                                             |
+
+- A `busy` session means the Worker runs now, so the readings from an ended turn (the report's `OUTCOME:`, a stream end, an exited Orca window) do not count; an open Ask or a ledger `needs-you` still does.
+- `handback` sits in row 3, not row 2: the spec sends it to the Coordinator, which rewrites the spec or starts a new Lane, and asks the user only when that needs a decision.
+- `watch` wakes on rows 2, 3, 4 and 6. The Board shows row 6 as 进行中: silence is live state, which belongs to `show` and the Panel.
+- The Board's 需要你吗 tile counts open Asks plus `needs-you` Lanes with no open Ask of their own, so a Worker's question recorded with `ask add --lane` counts once.
 
 ## What the Coordinator reads
 
@@ -167,6 +187,12 @@ Notes from the pilot:
 
 A sideby handoff brief includes the Coordinator Session Reference from `sideby sessions copy <coordinator-session-id> --as reference --json` when available. Append `Run directory: <run dir>` to that reference so the receiving Coordinator can find the ledger. If unavailable, name the Coordinator account and session id explicitly. The brief names the Run directory and, in Orca mode, the Orca run id. The next Coordinator sets `AGENT_DISPATCH_RUN` (and `orca orchestration run-use <id>`) and continues the same Run; it does not start a new one. Its first ledger command is `run set --account <its account> --coordinator-session <its session id>`, so the ledger, the Board and the session index name who coordinates now.
 
+Then it recovers the Lanes before dispatching anything new:
+
+1. Run `show` and `sideby sessions --json`. For each Lane in row 6 or 7 of § Lane states (`stale`, `working`), check whether its session is still `busy` and whether its output stream has ended.
+2. A Lane whose Worker is gone (no live session, stream not ended) is resumed as a new round (`lane set --round N --output <new stream>`, resume shapes in `launch.md`), and the message starts with this recovery note: "The Coordinator changed while you worked. Check the worktree, `git log` and the state of each Wait before you continue; do not repeat a deploy, publish or external send that already happened. Finish the original spec and report as it says." When that would be round 4, take the Lane back instead.
+3. Lanes in rows 1 and 2 (ended, or waiting on a person) stay as they are; rows 3 and 4 are handled as usual.
+
 ## sideby sessions, messages and the session index
 
 `sideby sessions --json` must exit 0 with `schemaVersion: 1`, a valid `sessions` array and `problems` array; each command looks it up at most once, with a 10-second timeout. Missing commands, timeouts and malformed responses fall back to stream/Orca behavior. A matched session supplies its Label and status for `show`; `needs-you` means "等你回答". `idle` plus a successful ended stream reads "待主控 AI 汇总"; it does not mark integration done or unblock dependencies. `busy` overrides an old ended stream. Silence warnings (`STALE_SECONDS`) apply only without a usable session status.
@@ -230,4 +256,4 @@ A card's one sentence skips the report's `OUTCOME:` line; when that line is all 
 
 ## Verification
 
-With `S=<this skill>/scripts`, run `python3 -m unittest discover -s $S -p 'test_*.py'` and `for t in $S/test_*.js; do node $t; done`. All subprocess runners are fake, and every test class extends `scripts/isolated_case.py`, which points `AGENT_DISPATCH_STATE_DIR`, `HOME` and `XDG_STATE_HOME` at a temp dir and fails a test that resolves the state dir inside the real home. They cover initial publication and milestone updates, that unchanged content writes nothing, that no server or socket code is left, that the page never fetches and opens no popup, that open sections, typed text and scroll survive the reload, the session index rebuild, copies, timing and escaped old ledgers. These checks do not replace a browser look at the page. UNVERIFIED by them: real sideby discovery and send, and model behavior on the eval cases.
+With `S=<this skill>/scripts`, run `python3 -m unittest discover -s $S -p 'test_*.py'` and `for t in $S/test_*.js; do node $t; done`. All subprocess runners are fake, and every test class extends `scripts/isolated_case.py`, which points `AGENT_DISPATCH_STATE_DIR`, `HOME` and `XDG_STATE_HOME` at a temp dir and fails a test that resolves the state dir inside the real home. They cover the Lane state table row by row with its precedence, initial publication and milestone updates, that unchanged content writes nothing, that no server or socket code is left, that the page never fetches and opens no popup, that open sections, typed text and scroll survive the reload, the session index rebuild, copies, timing and escaped old ledgers. These checks do not replace a browser look at the page. UNVERIFIED by them: real sideby discovery and send, and model behavior on the eval cases.
