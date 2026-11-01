@@ -852,7 +852,7 @@ class Round5(TmpCase):
             "PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": '"$HOME/.claude/scripts/guard.py"'}]},
                            {"matcher": "*", "hooks": [{"type": "command", "command": orca}]}],
             "Stop": [{"hooks": [{"type": "command", "command": "$HOME/.claude/scripts/claim.sh --agent claude"},
-                                {"type": "command", "command": "~/.claude/scripts/gate.sh"},
+                                {"type": "command", "command": "~/.claude" "/scripts/gate.sh"},
                                 {"type": "command", "command": '"$HOME/.claude/scripts/notify.sh" --agent claude'},
                                 {"type": "command", "command": '"$HOME/.claude/scripts/gone.sh"'}]}],
             "SessionStart": [{"hooks": [{"type": "command", "command": '"$HOME/.claude/scripts/guard.py"'}]}],
