@@ -29,6 +29,10 @@ Invariants, compatibility rules, repository instructions to read first (nearest 
 
 The tests, commands, or page evidence that prove completion. Run only affected tests; no full suite unless listed here. Examples in the request are a floor, not the spec: also test boundaries the examples skip (empty, zero, negative, NaN, rounding of halves, binary floating point).
 
+## Progress
+
+After each finished step, overwrite <run dir>/<lane>-progress.md with: steps done (with the evidence each produced), the step in progress, steps left, and decisions so far. Keep it under 30 lines. When you hit a quota or rate limit, or the Coordinator asks you to hand off, finish or abandon the current step, update this file and return `OUTCOME: handback`. A fresh session continues from this file and the spec, not from the start.
+
 ## Return
 
 Write the full report to <run dir>/<lane>-report.md and a summary of at most 10 lines to <run dir>/<lane>-summary.md, in the user's language (Chinese for a Chinese-speaking user). The summary has two parts:

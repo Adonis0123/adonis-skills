@@ -4,7 +4,7 @@ description: "Choose the lightest agent setup for a coding, review, drafting or 
 license: MIT
 metadata:
   author: adonis
-  version: "1.10.2"
+  version: "1.11.0"
 ---
 
 # Agent Dispatch
@@ -68,7 +68,7 @@ Run `python3 scripts/probe_agents.py` (relative to this skill) once per session 
 
 A contract several parts depend on (a shared type, schema, API shape or config key) is decided and landed by one agent first; only then may the parts that consume it fan out. Two parts that would both edit or invent it are one part. A small UX or copy tweak where the answer is a matter of taste is L0/L1 with your recommendation, not Research.
 
-Before acting, output one line: `Dispatch: L<n> — <decisive reason>; workers <n>; reviewer <who>; target <time>`. Name any fallback from `references/fallbacks.md` in the same line.
+Before acting, output one line: `Dispatch: L<n> — <decisive reason>; workers <n>; reviewer <who>; target <time>; billing <subscription | api: $N from the user | api: no budget (user gave none)>`. Name any fallback from `references/fallbacks.md` in the same line.
 
 ## Run Board
 
@@ -125,7 +125,9 @@ Parallel writers making uncoordinated implicit decisions create merge conflicts 
 - Each lane gets its own worktree on its own short branch (one branch cannot be checked out in two worktrees). A lane that needs another lane's commits branches from that lane's branch, not from the shared base. Workers either leave changes uncommitted, or, when the spec says so, make local commits on their own short branch with hooks passing.
 - Launch, permissions, messaging and resume shapes per product are in `references/launch.md`; read it before the first headless start. The two rules that bite most: a headless run must never wait on a TTY, and blanket permission modes need the user's explicit authorization for this Run. When the plan uses one, say in the plan that a worktree is not a permission boundary: it separates Git working files, not what a command can reach.
 - Round budget, the one rule for every Lane: at most 3 dispatch rounds, the first run plus up to 2 fix rounds. Each fix round's review checks only the previous round's findings. A fourth round means the spec was wrong; rewrite it or take the task back. The ledger refuses `lane set --round 4`.
-- Hard limits live in the ledger, not in this text: register each write Lane with `--owns <files or globs>` from its spec's May edit list, so `lane add` refuses a writer whose files overlap another active writer's; give each reviewer Lane its `--session`, so a review in the writer's own session is refused; and start every L2, L3 or Research Run with `init --budget-usd <dollars>` (the user's figure, else your estimate, stated in the dispatch line), after which no new Lane starts once known spend reaches it until the user agrees to `run set --budget-usd`.
+- Hard limits live in the ledger, not in this text: register each write Lane with `--owns <files or globs>` from its spec's May edit list, so `lane add` refuses a writer whose files overlap another active writer's; give each reviewer Lane its `--session`, so a review in the writer's own session is refused; and give every Lane `--billing` and `--account`.
+- Spend, by billing (`sideby quota <account> --json` reports each account's `kind`). Subscription accounts cost no extra money; what runs out is the quota window (5h, 7d), and a Worker that hits it stops half way. So a subscription Lane starts only on an account below 80% of every window (`init --quota-stop-percent`); the ledger checks this and refuses, and you start it instead on the account with the most quota left (`sideby next <family> --dry-run --json`) without asking. API accounts cost real money: set `init --budget-usd` only from a figure the user gave; without one, ask once (a numbered Ask with your estimate as the recommendation) or, unattended, run with no budget and say so in the dispatch line. At the budget no new API Lane or API fix round starts until the user raises it or the next round moves to a subscription account. Neither check ever stops work already running: finish, integrate and keep what is done. A subscription Lane's dollar figure is token cost at list price; report it as 折算, never against the budget. A Claude resume reports cumulative cost, so read totals from `show --line`, never add rounds yourself.
+- Context, per Lane: `show` flags a running Lane whose context passed 150k tokens (`init --context-handoff-tokens`). Let it finish the current step, have it write its progress file (`task-spec.md` § Progress) and continue in a fresh session from that file, instead of letting the context keep growing or starting over.
 
 ## Machine load
 

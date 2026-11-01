@@ -66,6 +66,8 @@ VIEW_LANE_STATES = ENDED_LANE_STATES + ("needs-you", "attention", "finished", "q
 LEDGER = "run.json"
 STOP = "STOP"
 MAX_ROUNDS = 3  # the first run plus 2 fix rounds (SKILL.md "Dispatching workers")
+QUOTA_STOP_PERCENT = 80  # a subscription account past this share of a quota window takes no new Lane
+CONTEXT_HANDOFF_TOKENS = 150_000  # a Lane whose context passes this finishes its step and hands off to a fresh session
 TAIL_BYTES = 4_000_000
 RUN_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$")
 DIR_NAME = ".agent-dispatch"
@@ -381,12 +383,11 @@ def add_lane(run: dict, fields: dict, now: float | None = None, run_dir: str | N
         raise BoardError(f"unknown Lane state {state}; use one of {', '.join(LANE_STATES)}")
     if fields.get("kind") == "subagent" and not fields.get("parent"):
         raise BoardError("a Subagent needs --parent <lane id or 'coordinator'>")
-    budget = run.get("budget_usd")
-    if isinstance(budget, (int, float)) and fields.get("kind") != "subagent":
-        spent = run_spend(run)
-        if spent >= budget:
-            raise BoardError(f"the Run has spent ${spent:.2f} of its ${budget:.2f} budget, so no new Lane may start; "
-                             "ask the user (an Ask with the spend so far) before raising it with `run set --budget-usd <dollars>`")
+    if fields.get("kind") != "subagent":
+        if isinstance(run.get("budget_usd"), (int, float)) and fields.get("billing") not in BILLINGS:
+            raise BoardError("this Run has a dollar budget, and it counts only API accounts: pass --billing api or "
+                             "--billing subscription (the `kind` that `sideby quota <account> --json` reports)")
+        check_start(run, fields, f"Lane {fields['id']}")
     lane = {"kind": "lane", "round": 1, "started_at": now_iso(now)}
     apply_fields(lane, fields)
     lane["state"] = state
@@ -443,17 +444,80 @@ def check_lane_rules(run: dict, lane: dict) -> None:
                              "the writer never reviews its own diff; start a fresh session (another account or product) for the review")
 
 
-def run_spend(run: dict) -> float:
-    """Known dollars across every Lane and archived round; unknown costs count as nothing, never as zero spend proof."""
+BILLINGS = ("api", "subscription")
+
+
+def is_api(lane: dict) -> bool:
+    """A Lane with no --billing counts as API: a budget then errs toward stopping, never toward overspending."""
+    return lane.get("billing") != "subscription"
+
+
+def account_quota(account: str | None) -> dict | None:
+    """The fullest unnamed quota window of a subscription account, from `sideby quota --json`; None when unknown.
+
+    Windows with a `name` (one model's own weekly limit) apply to that model only and are skipped.
+    """
+    if not account or not shutil.which("sideby"):
+        return None
+    try:
+        out = subprocess.run(["sideby", "quota", account, "--json"], capture_output=True, text=True, timeout=20)
+        data = json.loads(out.stdout)
+    except (OSError, ValueError, subprocess.TimeoutExpired):
+        return None
+    for acc in as_dict(data).get("accounts") or []:
+        acc = as_dict(acc)
+        if acc.get("kind") not in (None, "subscription"):
+            continue
+        windows = [w for w in as_dict(acc.get("quota")).get("windows") or []
+                   if isinstance(w, dict) and not w.get("name") and isinstance(w.get("usedPercent"), (int, float))]
+        if windows:
+            w = max(windows, key=lambda w: w["usedPercent"])
+            return {"account": acc.get("ref") or account, "used": w["usedPercent"], "window": w.get("label") or "?",
+                    "resets_at": w.get("resetsAt")}
+    return None
+
+
+def check_start(run: dict, fields: dict, what: str, lane: dict | None = None) -> None:
+    """Gate a new Lane or fix round before it starts; work already running is never stopped here.
+
+    API Lanes stop at the dollar budget (real money, so the user decides). Subscription Lanes ignore dollars
+    (their figure is token cost at list price, not money charged) and stop at the account's quota window,
+    so a Lane never starts on an account that would hit its limit half way.
+    """
+    merged = {**(lane or {}), **fields}
+    if not is_api(merged):
+        if lane is not None and fields.get("account") in (None, lane.get("account")):
+            return  # a fix round on the same account: finishing beats switching half way
+        quota = account_quota(merged.get("account"))
+        limit = run.get("quota_stop_percent", QUOTA_STOP_PERCENT)
+        if quota and quota["used"] >= limit:
+            resets = parse_iso(re.sub(r"\.\d+Z$", "Z", str(quota.get("resets_at") or "")))  # sideby sends milliseconds
+            when = f", which resets at {local_time(resets)[:5]}" if resets else ""
+            raise BoardError(f"{quota['account']} has used {quota['used']:g}% of its {quota['window']} quota window{when}, "
+                             f"past the {limit:g}% line, so {what} may not start there: start it on the subscription account "
+                             "with the most quota left (`sideby next <family> --dry-run --json` names it), or wait for the "
+                             "reset; running Lanes are not stopped")
+        return
+    budget = run.get("budget_usd")
+    if isinstance(budget, (int, float)):
+        spent = run_spend(run, api_only=True)
+        if spent >= budget:
+            raise BoardError(f"the Run has spent ${spent:.2f} of real API money against its ${budget:.2f} budget, so {what} "
+                             "may not start on an API account; finished and running work is kept. Start it on a subscription "
+                             "account instead (`--billing subscription --account <account>`), or ask the user (an Ask with "
+                             "the spend so far) before raising it with `run set --budget-usd <dollars>`")
+
+
+def run_spend(run: dict, api_only: bool = False) -> float:
+    """Known dollars across every Lane and archived round; unknown costs count as nothing, never as zero spend proof.
+
+    api_only: only Lanes billed per call. A subscription Lane's figure is token cost at list price, not money charged.
+    """
     total = 0.0
     for lane in run["lanes"]:
-        current = lane.get("cost")
-        session = lane.get("session")
-        if current is None and lane.get("output"):
-            info = summarize_events(read_tail(resolve(run, lane.get("output"))))
-            current, session = info.get("cost"), session or info.get("session")
-        prior, _ = prior_rounds(lane, session)
-        total += (current if isinstance(current, (int, float)) else 0.0) + prior
+        info = summarize_events(read_tail(resolve(run, lane.get("output")))) if lane.get("output") else {}
+        session = info.get("session") or lane.get("session")
+        total += lane_cost(lane, lane.get("cost"), info.get("cost"), session, "api" if api_only else None) or 0.0
     return total
 
 
@@ -467,6 +531,7 @@ def set_lane(run: dict, key: str, fields: dict, now: float | None = None) -> dic
                          f"{MAX_ROUNDS - 1} fix rounds), which means the spec was wrong: rewrite the spec and start a new Lane "
                          f"(`lane add --id {lane['id']}-v2`), or take the task back into the Coordinator")
     if fields.get("round") is not None and fields["round"] > current:
+        check_start(run, fields, f"round {fields['round']} of {lane['id']}", lane)
         archive_round(run, lane, current, fields, now)
     if fields.get("round") is not None and fields.get("note") is not None:
         lane.setdefault("history", []).append({"round": fields["round"], "note": fields["note"], "at": now_iso(now)})
@@ -495,8 +560,12 @@ def archive_round(run: dict, lane: dict, current: int, fields: dict, now: float 
                              f"the round-{current} stream has ended, so reusing it keeps showing the old result")
     info = summarize_events(read_tail(resolve(run, lane.get("output")))) if lane.get("output") else {}
     entry = {"round": current, "archived": True, "at": now_iso(now), "output": lane.get("output"),
-             "session": lane.get("session") or info.get("session"),
-             "cost": lane.get("cost", info.get("cost")), "tokens": info.get("tokens")}
+             "session": info.get("session") or lane.get("session"), "tokens": info.get("tokens"),
+             "billing": lane.get("billing")}  # each round keeps its own billing: a later switch must not reclassify it
+    if isinstance(info.get("cost"), (int, float)):
+        entry["cost"], entry["cost_source"] = info["cost"], "stream"
+    else:
+        entry["cost"], entry["cost_source"] = lane.get("cost"), "manual"
     for key in ("summary", "result"):
         if lane.get(key) is not None:
             entry[key] = lane[key]
@@ -511,7 +580,7 @@ def archive_round(run: dict, lane: dict, current: int, fields: dict, now: float 
 
 def prior_rounds(lane: dict, session: str | None) -> tuple[float, dict]:
     """Cost and tokens of archived rounds. A Claude resume reports a cumulative cost, so a round on the
-    current session is already counted in the current stream."""
+    current session is already counted in the current stream; use `lane_cost` to combine the two."""
     cost, tokens = 0.0, {"input": 0, "output": 0}
     for row in lane.get("history", []):
         if not row.get("archived"):
@@ -521,6 +590,47 @@ def prior_rounds(lane: dict, session: str | None) -> tuple[float, dict]:
         for key in tokens:
             tokens[key] += int(as_dict(row.get("tokens")).get(key) or 0)
     return cost, tokens
+
+
+def lane_cost(lane: dict, manual, stream_cost, session: str | None, billing: str | None = None) -> float | None:
+    """Known dollars of one Lane across all rounds, or None when nothing is known.
+
+    billing ("api" or "subscription"): count only rounds billed that way, each by the billing it ran under.
+
+    A Claude stream reports `total_cost_usd` cumulatively per session (a resume keeps counting), so stream
+    figures count once per session, as the largest one seen. Figures entered with `--cost` (Codex, Grok,
+    or any round without a stream cost) are per round and add up. A round's own stream figure wins over a
+    `--cost` entered for the same round, so a hand-entered copy of the stream total is not counted twice.
+    """
+    seen: dict[str, float] = {}  # the largest cumulative figure seen so far per session
+    total, known = 0.0, False
+
+    def counted(kind: str | None) -> bool:
+        return billing is None or ("subscription" if kind == "subscription" else "api") == billing
+
+    def add(cost, sess, source, kind):
+        """Rounds are walked in order; a stream round adds only what its session spent beyond the figure
+        seen before, so a session resumed under another billing is not counted twice in either bucket."""
+        nonlocal total, known
+        if not isinstance(cost, (int, float)):
+            return
+        if source == "stream" and sess:
+            before = seen.get(sess, 0.0)
+            seen[sess] = max(before, cost)
+            cost = seen[sess] - before
+        if counted(kind):
+            known = True
+            total += cost
+
+    for row in lane.get("history", []):
+        if row.get("archived"):
+            add(row.get("cost"), row.get("session"),
+                row.get("cost_source") or ("stream" if row.get("session") else "manual"), row.get("billing"))
+    if isinstance(stream_cost, (int, float)):
+        add(stream_cost, session, "stream", lane.get("billing"))
+    else:
+        add(manual, None, "manual", lane.get("billing"))
+    return total if known else None
 
 
 def add_wait(run: dict, fields: dict, now: float | None = None) -> dict:
@@ -907,7 +1017,7 @@ def summarize_events(events: list[dict]) -> dict:
     A later event that shows new work (a resumed session appending to the same file)
     clears an earlier end, so a resumed Lane is not reported as finished.
     """
-    info = {"activity": None, "ended": False, "failed": False, "subagents": [], "cost": None, "tokens": None}
+    info = {"activity": None, "ended": False, "failed": False, "subagents": [], "cost": None, "tokens": None, "context": None}
     grok_text: list[str] = []
 
     def working(activity: str) -> None:
@@ -919,6 +1029,10 @@ def summarize_events(events: list[dict]) -> dict:
         etype = ev.get("type")
         # Claude stream-json
         if etype == "assistant":
+            usage = as_dict(as_dict(ev.get("message")).get("usage"))
+            context = sum(int(usage.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens"))
+            if context:  # what the model re-reads on this turn: the session's current context size
+                info["context"] = context
             content = as_dict(ev.get("message")).get("content")
             for part in content if isinstance(content, list) else []:
                 part = as_dict(part)
@@ -1153,9 +1267,10 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
         view["activity"] = (lane.get("note") if finished else None) or activity or lane.get("note") or "-"
         view["activity_label"] = "结果" if finished else "正在"
         view["subagents"] = info["subagents"]
-        prior_cost, prior_tokens = prior_rounds(lane, view.get("session"))
-        current_cost = lane.get("cost", info["cost"])
-        view["cost"] = (current_cost or 0) + prior_cost if isinstance(current_cost, (int, float)) or prior_cost else None
+        _, prior_tokens = prior_rounds(lane, view.get("session"))
+        cost_args = (lane, lane.get("cost"), info["cost"], info.get("session") or view.get("session"))
+        view["cost"] = lane_cost(*cost_args)
+        view["cost_api"], view["cost_folded"] = lane_cost(*cost_args, "api"), lane_cost(*cost_args, "subscription")
         tokens = {k: prior_tokens[k] + int(as_dict(info["tokens"]).get(k) or 0) for k in prior_tokens}
         view["tokens"] = tokens if any(tokens.values()) else None
         view["ended"] = info["ended"]
@@ -1182,6 +1297,10 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
             flags.append("写代码和审代码用了同一个账号，自己审自己可能漏看问题")
         if view["reason"]:
             flags.append(view["reason"])
+        view["context"] = info.get("context")
+        handoff_at = run.get("context_handoff_tokens", CONTEXT_HANDOFF_TOKENS)
+        if not finished and isinstance(view["context"], int) and view["context"] >= handoff_at:
+            flags.append(f"上下文已到 {view['context'] / 10000:.0f} 万 token：做完手上这一步就让它写交接说明，换新会话接着做")
         if live:
             view["orca"] = live
         if view["stale"]:
@@ -1219,11 +1338,25 @@ def state_line(view: dict, board_path: str | None = None) -> str:
         return f"正在叫停：不再派新活，正等 {n} 个任务、{m} 个外部流程收尾；还有 {k} 个问题等你答复{where}"
     budget = view["run"].get("budget_usd")
     if isinstance(budget, (int, float)):
-        spent = sum(l["cost"] for l in view["lanes"] if isinstance(l.get("cost"), (int, float)))
-        where = (f" · 已知花费 ${spent:.2f} / 预算 ${budget:.2f}" + ("，已到上限，不再派新活" if spent >= budget else "")) + where
+        api = sum(l.get("cost_api") or 0.0 for l in view["lanes"])
+        folded = sum(l.get("cost_folded") or 0.0 for l in view["lanes"])
+        where = (f" · API 实付 ${api:.2f} / 预算 ${budget:.2f}" + ("，已到上限，不再派新的 API 任务" if api >= budget else "")
+                 + (f" · 订阅按 token 折算 ${folded:.2f}（不扣钱）" if folded else "")) + where
     if n or m or k:
         return f"正在忙：{n} 个任务在做 · {m} 项等外部结果 · {k} 个问题等你答复{where}"
     return f"目前没有正在跑的任务，也没有问题等你回答{where}"
+
+
+def cost_label(lane: dict) -> str:
+    """A finished Lane's dollars, split when its rounds ran under different billing."""
+    if not isinstance(lane.get("cost"), (int, float)):
+        return ""
+    api, folded = lane.get("cost_api") or 0.0, lane.get("cost_folded") or 0.0
+    if api and folded:
+        return f"  ${api:.2f}（API 实付）+ ${folded:.2f}（订阅按 token 折算）"
+    if lane.get("billing") is None and not lane.get("history"):
+        return f"  ${lane['cost']:.2f}"
+    return f"  ${lane['cost']:.2f}" + ("（订阅按 token 折算）" if folded else "（API 实付）")
 
 
 def lane_name(lane: dict, shown: set | None = None) -> str:
@@ -1307,7 +1440,7 @@ def render_text(view: dict, board_path: str | None = None) -> str:
         out.append("已结束")
         shown = set()
         for lane in finished:
-            cost = f"  ${lane['cost']:.2f}" if isinstance(lane.get("cost"), (int, float)) else ""
+            cost = cost_label(lane)
             name = lane_name(lane, shown)
             shown.add(lane["id"])
             out.append(f"  {name}  [{STATE_LABELS.get(lane['state'], lane['state'])}]{cost}")
@@ -1471,12 +1604,15 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--run-id")
     init.add_argument("--orca-run", help="Orca orchestration Run id, to read worker liveness")
     init.add_argument("--coordinator-session")
-    init.add_argument("--budget-usd", type=float, help="stop starting new Lanes once known spend reaches this many dollars")
+    init.add_argument("--budget-usd", type=float, help="only a figure the user gave: no new API Lane or round once real API spend reaches it")
+    init.add_argument("--quota-stop-percent", type=float, help=f"a subscription account past this share of a quota window takes no new Lane (default {QUOTA_STOP_PERCENT})")
+    init.add_argument("--context-handoff-tokens", type=int, help=f"flag a running Lane for handoff once its context passes this (default {CONTEXT_HANDOFF_TOKENS})")
     config = sub.add_parser("run")
     config.add_argument("action", choices=("set",))
     config.add_argument("--coordinator-session")
     config.add_argument("--account", help="the Coordinator's account after a handoff, e.g. claude:main")
     config.add_argument("--budget-usd", type=float, help="raise or set the Run budget after the user agreed")
+    config.add_argument("--quota-stop-percent", type=float)
     init.add_argument("--account", help="the Coordinator's account, e.g. claude:008")
 
     lane = sub.add_parser("lane", help="add or update a Lane or Subagent")
@@ -1497,6 +1633,7 @@ def build_parser() -> argparse.ArgumentParser:
     lane.add_argument("--files", help="comma-separated touched paths")
     lane.add_argument("--owns", help="comma-separated paths or globs a write Lane may edit; overlapping active write Lanes are refused")
     lane.add_argument("--cost", type=float)
+    lane.add_argument("--billing", choices=BILLINGS, help="api: billed per call, counts against --budget-usd; subscription: gated by quota instead")
 
     step = sub.add_parser("step", help="record overall milestones")
     step.add_argument("action", choices=("add", "set"))
@@ -1559,7 +1696,7 @@ def in_run_dir(run_dir: str, path: str) -> str:
 
 
 def lane_fields(args: argparse.Namespace) -> dict:
-    keys = ("id", "title", "role", "account", "pool", "branch", "worktree", "output", "dispatch", "session", "note", "reviews", "parent", "kind", "state", "round", "after", "result", "summary", "files", "owns", "evidence", "commits", "cost")
+    keys = ("id", "title", "role", "account", "pool", "branch", "worktree", "output", "dispatch", "session", "note", "reviews", "parent", "kind", "state", "round", "after", "result", "summary", "files", "owns", "evidence", "commits", "cost", "billing")
     return {k: getattr(args, k) for k in keys if getattr(args, k, None) is not None}
 
 
@@ -1712,8 +1849,9 @@ def _main(argv: list[str] | None = None) -> int:
             with ledger_lock(run_dir):
                 run = load_run(run_dir)
                 run["coordinator_session"] = args.coordinator_session or detect_coordinator()
-                if args.budget_usd is not None:
-                    run["budget_usd"] = args.budget_usd
+                for key in ("budget_usd", "quota_stop_percent", "context_handoff_tokens"):
+                    if getattr(args, key) is not None:
+                        run[key] = getattr(args, key)
                 save_run(run_dir, run, report=True)
             print(run_dir)
             return 0
@@ -1752,8 +1890,10 @@ def _main(argv: list[str] | None = None) -> int:
             print(close_run(run_dir, run))
             return 0
         if args.cmd == "run":
-            if args.coordinator_session is None and args.account is None and args.budget_usd is None:
-                raise BoardError("run set needs --coordinator-session, --account or --budget-usd")
+            if args.coordinator_session is None and args.account is None and args.budget_usd is None and args.quota_stop_percent is None:
+                raise BoardError("run set needs --coordinator-session, --account, --budget-usd or --quota-stop-percent")
+            if args.quota_stop_percent is not None:
+                run["quota_stop_percent"] = args.quota_stop_percent
             if args.coordinator_session is not None:
                 run["coordinator_session"] = args.coordinator_session
             if args.account is not None:

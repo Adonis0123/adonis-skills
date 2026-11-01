@@ -35,6 +35,8 @@ A fix round sends only the findings and Coordinator decisions, never the whole c
 2. A finished Worker: `sideby resume <id> -- -p "<delta>"` (Claude example); verify Host argument pass-through once, else the per-product "Next round" column above.
 3. Do not assume any other resume behavior.
 
+A Worker that stopped at a quota or rate limit, or that `show` flags for a long context, is not resumed in the same session: start a fresh session on an account with quota left (`sideby next <family> --dry-run --json`), give it the original spec plus `<lane>-progress.md` (`task-spec.md` § Progress), and register it as the next round with `lane set --round <n> --account <account> --output <new stream>`. Done steps stay done; nothing restarts from scratch.
+
 Before either, register the round: `B lane set --id <lane> --round <N> --output <run dir>/<lane>-<N>.jsonl`, and redirect the resumed run's stdout to that file.
 
 A fix round soon after the first resumes the same Worker session, so its cached context is reused. After a long gap the cache has expired and a resume rewrites the whole context (one Run, n=1, paid about $4-5 per resume to fix 2-5 findings); for a small delta after a long gap, start a fresh session with the original spec path plus the delta instead.

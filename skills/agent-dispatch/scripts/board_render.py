@@ -75,8 +75,10 @@ def render_sections(view, board_file=None, reports=None):
     asking = sum(l['state'] == 'needs-you' for l in active)
     busy_sub = ' · '.join(p for p in (f'{asking} 个等你回答' if asking else '', f'{queued} 个排队' if queued else '', f'{waiting} 项外部等待' if waiting else '') if p) or '没有排队或外部等待'
     cost_title = f'已统计 {len(known)}/{len(view["lanes"])} 个任务的花费{excluded}' if known else '还没有任务报告花费'
-    total = f'${sum(l["cost"] for l in known):.2f}'
-    cost_sub = (f'已知花费 {total}' + (f'（另有 {len(unknown)} 个任务没有报价）' if unknown else '')) if known else '花费未知'
+    api = sum(l.get('cost_api') or 0.0 for l in known)
+    folded = sum(l.get('cost_folded') or 0.0 for l in known)
+    parts = ([f'API 实付 ${api:.2f}'] if api or not folded else []) + ([f'订阅按 token 折算 ${folded:.2f}（不扣钱）'] if folded else [])
+    cost_sub = ('，'.join(parts) + (f'（另有 {len(unknown)} 个任务没有报价）' if unknown else '')) if known else '花费未知'
     if closed:
         ended = b.parse_iso(run.get('updated_at')) or created
         when = ('用时 ' + b.plain_age(max(0, ended - created))) if created and ended else '已结束'
@@ -131,7 +133,7 @@ def render_sections(view, board_file=None, reports=None):
         else:
             meta = [('排队自 ' if state == 'queued' else '开始于 ') + e(clock(b.parse_iso(lane.get('started_at'))))]
         if lane.get('cost') is not None:
-            meta.append(e(f'${lane["cost"]:.2f}'))
+            meta.append(e(b.cost_label(lane).strip()))
         link = f'<a class="report-link" href="{e(href)}">查看完整报告<span aria-hidden="true"> ↗</span></a>' if href else ''
         row = (f'<div class="lane" id="lane-{e(lane["id"])}"><div class="lane-head"><div class="what">{e(name)}</div>'
                f'<span class="pill {e("finished" if state == "attention" else state)}">{e(b.STATE_LABELS.get(state, state))}</span></div>'

@@ -1061,7 +1061,7 @@ class QuietBoardFiles(BoardTestCase):
         self.assertEqual(page.count('class="fresh"'), 1)
         self.assertNotIn("秒前", page)
         self.assertIn(f'{board.local_time(1_000_100.0)[:5]} 更新</div>', page)
-        self.assertIn('已知花费 $2.65（另有 1 个任务没有报价）', page)
+        self.assertIn('API 实付 $2.65（另有 1 个任务没有报价）', page)
         self.assertIn('title="已统计 1/2 个任务的花费，不含 Codex 花费"', page)
         self.assertNotIn('data-since', page, "a report shows times, it does not count them")
         self.assertIn("开始于 ", page)
