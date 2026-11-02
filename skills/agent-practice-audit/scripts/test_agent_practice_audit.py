@@ -31,6 +31,7 @@ CP = load("check_practices")
 DG = load("digests")
 CO = load("consensus")
 CS = load("config_scan")
+EM = load("export_metrics")
 try:
     SO = load("safe_output")
 except FileNotFoundError:  # created by the review fix; keeps the suite importable before it exists
@@ -393,6 +394,59 @@ class BuildReport(TmpCase):
         self.assertEqual(data["brand"], {"name": "Demo", "logo": None, "logoDark": None})  # no default logo under a user brand
         self.assertIsNone(data["illustration"])
         self.assertEqual(data["illustrationAlt"], "")
+
+    def test_main_writes_metrics_json_in_the_checkup_format(self):
+        out, data = self.run_main(lang="en")
+        doc = json.loads((out / "metrics.json").read_text())
+        self.assertEqual((doc["schemaVersion"], doc["source"], doc["runId"], doc["reportDate"]),
+                         (1, "agent-practice-audit", "2026-10-01", "2026-10-01"))
+        self.assertTrue(doc["runAt"].endswith("Z"))
+        self.assertFalse(doc["backfilled"])
+        by_id = {m["id"]: m for m in doc["metrics"] if m["scope"] == "all"}
+        self.assertEqual(by_id["score"]["value"], data["score"])
+        self.assertEqual(by_id["score"]["better"], "higher")
+        self.assertEqual(by_id["items.no"]["better"], "lower")
+        self.assertEqual(by_id["coverage"]["denominator"], data["coverage"]["total"])
+        self.assertTrue(all(m["source"]["field"] for m in doc["metrics"]))
+        self.assertEqual(len(doc["items"]), len(data["items"]))
+
+
+class ExportMetrics(unittest.TestCase):
+    SUMMARY = {"hosts": {"claude": {"sessions": 200, "long_sessions": 50, "corrections_per100_prompts": 3.1,
+                                    "full_access_sessions": 100, "coding_sessions": 80, "pct_coding_with_check": 75.0},
+                         "codex": {"sessions": 0}},
+               "kinds": {"claude/headless": 7, "codex/headless": 3, "claude/subagent": 5}}
+
+    def test_session_metrics_per_host_with_numerator_and_denominator(self):
+        ms = {(m["id"], m["scope"]): m for m in EM.session_metrics(self.SUMMARY)}
+        self.assertEqual(ms[("sessions.long_pct", "claude")]["value"], 25.0)
+        self.assertEqual((ms[("sessions.long_pct", "claude")]["numerator"], ms[("sessions.long_pct", "claude")]["denominator"]), (50, 200))
+        self.assertEqual(ms[("sessions.coding_with_check_pct", "claude")]["numerator"], 60)
+        self.assertEqual(ms[("sessions.headless", "all")]["value"], 10)
+        self.assertNotIn(("sessions.human", "codex"), ms)  # a host without sessions gets no metrics
+        self.assertEqual(EM.session_metrics(None), [])
+
+    def test_withheld_dimension_is_null_and_missing_hash_breaks_comparison(self):
+        data = {"score": 50, "coverage": {"pct": 40, "measured": 2, "total": 5}, "counts": {},
+                "dimensions": [{"id": "ctx", "score": 80, "lowCoverage": True, "coverage": {"measured": 1, "total": 4}}],
+                "items": [{"id": "a", "dimension": "ctx", "status": "ok"}]}
+        ms = {m["id"]: m for m in EM.score_metrics(data)}
+        self.assertIsNone(ms["dim.ctx"]["value"])
+        self.assertEqual(ms["dim.ctx"]["status"], "withheld")
+        self.assertIsNone(ms["score"]["criteriaHash"])  # old report without criteriaHash: not comparable
+
+    def test_backfill_cli_writes_day_precision_run(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__('shutil').rmtree, tmp)
+        d = tmp / "2026-11-01-r2"
+        (d / "work").mkdir(parents=True)
+        (d / "report-data.json").write_text(json.dumps({"date": "2026-11-01", "windowDays": 60, "score": 70, "items": []}))
+        (d / "work" / "summary.json").write_text(json.dumps(self.SUMMARY))
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(EM.main([str(d), "--backfill"]), 0)
+        doc = json.loads((d / "metrics.json").read_text())
+        self.assertEqual((doc["runId"], doc["runAt"], doc["timePrecision"], doc["backfilled"]), ("2026-11-01-r2", None, "day", True))
+        self.assertEqual(doc["window"], {"days": 60, "start": "2026-09-02", "end": "2026-11-01"})
 
 
 class PracticesFile(unittest.TestCase):

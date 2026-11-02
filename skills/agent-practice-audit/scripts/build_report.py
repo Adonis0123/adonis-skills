@@ -31,6 +31,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SKILL = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import digests  # noqa: E402
+import export_metrics  # noqa: E402
 from safe_output import UnsafeOutput, check_date, safe_file_target, safe_output_path  # noqa: E402
 DEFAULT_PRACTICES = os.path.join(SKILL, "references", "practices.json")
 TEMPLATE = os.path.join(SKILL, "assets", "report-template.html")
@@ -550,6 +551,7 @@ def main(argv=None) -> int:
     try:
         data_path = safe_file_target(os.path.join(out_dir, "report-data.json"))
         html_path = safe_file_target(os.path.join(out_dir, "report.html"))
+        metrics_path = safe_file_target(os.path.join(out_dir, "metrics.json"))
         brand = config.get("brand") or {}
         # (config value, setter) pairs; each existing file is copied into the run's img/ directory.
         images = [(config.get("illustration"), lambda rel: data.__setitem__("illustration", rel)),
@@ -571,7 +573,13 @@ def main(argv=None) -> int:
         json.dump(data, f, ensure_ascii=False, indent=1)
     with open(html_path, "w", encoding="utf-8") as f:
         f.write(render(data))
+    run_at = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    doc = export_metrics.metrics_doc(data, load_json(a.summary) if a.summary else None,
+                                     os.path.basename(os.path.normpath(out_dir)), run_at)
+    with open(metrics_path, "w", encoding="utf-8") as f:
+        json.dump(doc, f, ensure_ascii=False, indent=1)
     print(f"report: {html_path}")
+    print(f"metrics: {metrics_path}")
     for line in summary_lines(data):
         print(line)
     return 0
