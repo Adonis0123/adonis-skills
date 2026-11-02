@@ -19,7 +19,7 @@
       "id": 2,
       "name": "single-product-machine-degrades",
       "prompt": "我同事的电脑只装了 Claude Code，一个订阅账号，没有 codex、grok、agy，也没有多账号管理器。他要做的需求：packages/api 端新增一个接口 project.archive（packages/api/src/routes/project.ts），packages/web 端项目列表加「归档」按钮调用它（packages/web/src/components/ProjectList.tsx），两边都要测试。他想学我的方式：多 agent 并行写、另一个 AI 来 review。帮他排一个派活计划。",
-      "expected_output": "Does not assume codex/grok/agy exist; with one product and one pool it runs the two parts sequentially (or coordinator writes) instead of parallel; reviewer is a fresh Claude session given only spec + diff, not the writer; says which fallback applied. Also points out that on a Claude-only single-account machine Claude Code's native subagents, agent view or Agent Teams are the lighter path, and only starts a Run if the user wants the Board/Asks.",
+      "expected_output": "Does not assume codex/grok/agy exist; since the web part depends on the new api contract it runs the two parts sequentially (or coordinator writes) instead of parallel; reviewer is a fresh Claude session given only spec + diff, not the writer; says which fallback applied. Also points out that on a Claude-only single-account machine Claude Code's native subagents, agent view or Agent Teams are the lighter path, and only starts a Run if the user wants the Board/Asks.",
       "files": ["fixtures/probe-single.json"],
       "assertions": [
         "不安排 codex/grok/agy 等不存在的工具",
@@ -63,10 +63,10 @@
       "id": 5,
       "name": "allow-list-multi-session-headless-permissions",
       "prompt": "你是总指挥（claude:002）。只用 cc001 cc002 cc003 cc008 这几个 Claude 账号，可以多开。需求拆成三条互不重叠的 lane：A 改 packages/core，B 改 packages/web 并依赖 A 新增的 API，C 改 docs。每条 lane 要跑 pnpm install 和受影响测试。给出派活计划：账号与会话怎么分、worktree 和分支怎么建、worker 用什么启动命令和权限、修复轮怎么发、谁来 review。",
-      "expected_output": "Runs the probe with AGENT_DISPATCH_ALLOW set to the four Claude ids and a raised AGENT_DISPATCH_SESSIONS_PER_POOL, reads pools from the probe output; gives each lane its own worktree and short branch with B branched from A's branch; launches headless Claude with closed stdin in the background and an explicit --allowedTools list (or an explicit --allowedTools list (the prompt does not authorize blanket permission modes such as bypassPermissions; a worktree is not a permission boundary)) rather than acceptEdits; fix rounds resume the writer's session with only the findings; reviewer is a fresh Claude session on a different account than the writer, with the coordinator re-running tests. Claude headless workers are started with --settings '{\"crossSessionInbound\":\"accept\"}' so fix-round messages reach them without changing the account's global settings.",
+      "expected_output": "Runs the probe with AGENT_DISPATCH_ALLOW set to the four Claude ids and keeps the default 3 sessions per pool (or raises AGENT_DISPATCH_SESSIONS_PER_POOL), reads pools from the probe output; gives each lane its own worktree and short branch with B branched from A's branch; launches headless Claude with closed stdin in the background and an explicit --allowedTools list (or an explicit --allowedTools list (the prompt does not authorize blanket permission modes such as bypassPermissions; a worktree is not a permission boundary)) rather than acceptEdits; fix rounds resume the writer's session with only the findings; reviewer is a fresh Claude session on a different account than the writer, with the coordinator re-running tests. Claude headless workers are started with --settings '{\"crossSessionInbound\":\"accept\"}' so fix-round messages reach them without changing the account's global settings.",
       "files": ["fixtures/probe-full.json"],
       "assertions": [
-        "用 AGENT_DISPATCH_ALLOW（或 accounts 文件 allow）限定四个账号，并按用户授权调高 sessions_per_pool",
+        "用 AGENT_DISPATCH_ALLOW（或 accounts 文件 allow）限定四个账号，同一账号在忙时仍可再开 headless 会话（默认每池 3 个，或按授权调高 sessions_per_pool），不等账号空出来",
         "配额池以 probe 输出为准，不按账号名假设一号一池；提醒同池会话共享限流",
         "每条 lane 独立 worktree 和短分支，B 从 A 的分支切出",
         "Claude worker 不用 acceptEdits，改用最小的 --allowedTools 列表；bypassPermissions 只在用户明确授权时使用，并说明 worktree 不是权限隔离；stdin 关闭并后台运行",

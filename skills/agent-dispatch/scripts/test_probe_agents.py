@@ -60,7 +60,8 @@ class TestProbeAgents(IsolatedTestCase):
                         "CLAUDE_CONFIG_DIR=~/.claude-work claude",
                     )
                     self.assertEqual(result["products"]["claude"]["accounts"][1]["pool"], "work")
-                    self.assertEqual(result["max_parallel_workers"], 1)
+                    # 2 pools x 3 sessions, minus the coordinator, capped at 3
+                    self.assertEqual(result["max_parallel_workers"], 3)
 
     def test_same_pool_counted_once(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -88,7 +89,8 @@ class TestProbeAgents(IsolatedTestCase):
                     self.assertIn("claude", result["products"])
                     self.assertEqual(result["products"]["claude"]["quota_pools"], 1)
                     self.assertEqual(len(result["products"]["claude"]["accounts"]), 2)
-                    self.assertEqual(result["max_parallel_workers"], 0)
+                    # one pool still hosts 2 workers beside the coordinator
+                    self.assertEqual(result["max_parallel_workers"], 2)
 
     def test_path_only_fallback(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -111,7 +113,7 @@ class TestProbeAgents(IsolatedTestCase):
                 result = probe_agents.probe()
                 self.assertEqual(result["source"], "path")
                 self.assertEqual(result["code_products"], ["claude"])
-                self.assertEqual(result["max_parallel_workers"], 0)
+                self.assertEqual(result["max_parallel_workers"], 2)
                 self.assertEqual(result["products"]["claude"]["quota_pools"], 1)
                 self.assertEqual(result["products"]["claude"]["accounts"][0]["command"], "claude")
                 self.assertIn("single-product: reviewer is a fresh session of the same product", result["fallback"][0])
@@ -208,9 +210,9 @@ class TestProbeAgents(IsolatedTestCase):
         ]
     }
 
-    def test_default_one_session_per_pool(self):
+    def test_default_three_sessions_per_pool_capped_batch(self):
         result = self._probe_with_file(self.FOUR_CLAUDE)
-        self.assertEqual(result["sessions_per_pool"], 1)
+        self.assertEqual(result["sessions_per_pool"], 3)
         self.assertEqual(result["allow"], [])
         # 3 claude pools + 1 codex pool, coordinator keeps one, capped at 3
         self.assertEqual(result["max_parallel_workers"], 3)
@@ -230,7 +232,11 @@ class TestProbeAgents(IsolatedTestCase):
         result = self._probe_with_file(payload, {"AGENT_DISPATCH_SESSIONS_PER_POOL": "zero"})
         self.assertEqual(result["sessions_per_pool"], 3)
         result = self._probe_with_file({**self.FOUR_CLAUDE, "sessions_per_pool": 0})
+        self.assertEqual(result["sessions_per_pool"], 3)
+        # an explicit 1 keeps the old one-session-per-pool behavior
+        result = self._probe_with_file(self.FOUR_CLAUDE, {"AGENT_DISPATCH_SESSIONS_PER_POOL": "1"})
         self.assertEqual(result["sessions_per_pool"], 1)
+        self.assertEqual(result["max_parallel_workers"], 3)
 
     def test_one_pool_with_several_sessions_runs_in_parallel(self):
         payload = {
@@ -249,7 +255,7 @@ class TestProbeAgents(IsolatedTestCase):
         ids = [a["id"] for a in result["products"]["claude"]["accounts"]]
         self.assertEqual(ids, ["claude:001", "claude:003"])
         self.assertEqual(result["products"]["claude"]["quota_pools"], 2)
-        self.assertEqual(result["max_parallel_workers"], 1)
+        self.assertEqual(result["max_parallel_workers"], 3)
         self.assertEqual(result["allow_unmatched"], [])
 
     def test_allow_env_overrides_file_and_reports_unmatched(self):
@@ -294,10 +300,20 @@ class TestProbeAgents(IsolatedTestCase):
 
 
 class BusySessionTests(IsolatedTestCase):
+    def test_busy_account_still_has_slots_by_default(self):
+        # A busy account is not a full account: it takes another headless session.
+        sessions = {'schemaVersion':1, 'problems':[], 'sessions':[{'account':'claude:001','sessionId':'loop-a','status':'busy'}]}
+        accounts = [{'id':'claude:001', 'product':'claude', 'command':'cc001', 'pool':'p1'}]
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(probe_agents, 'read_accounts_file', return_value={'accounts':accounts}), mock.patch.object(probe_agents, 'ADAPTERS', []), mock.patch.object(probe_agents.shutil, 'which', return_value=None):
+            result = probe_agents.probe(sessions=sessions)
+        self.assertEqual(result['busy_sessions']['p1'], ['loop-a'])
+        self.assertEqual(result['available_slots']['p1'], 2)
+        self.assertEqual(result['max_parallel_workers'], 1)
+
     def test_busy_pool_capacity(self):
         sessions = {'schemaVersion':1, 'problems':[], 'sessions':[{'account':'claude:002','sessionId':'user-chat','status':'busy'}]}
         accounts = [{'id':f'claude:00{i}', 'product':'claude', 'command':f'cc00{i}', 'pool':f'p{i}'} for i in range(1,4)]
-        with mock.patch.object(probe_agents, 'read_accounts_file', return_value={'accounts':accounts}), mock.patch.object(probe_agents, 'ADAPTERS', []), mock.patch.object(probe_agents.shutil, 'which', return_value=None):
+        with mock.patch.dict(os.environ, {'AGENT_DISPATCH_SESSIONS_PER_POOL':'1'}, clear=True), mock.patch.object(probe_agents, 'read_accounts_file', return_value={'accounts':accounts}), mock.patch.object(probe_agents, 'ADAPTERS', []), mock.patch.object(probe_agents.shutil, 'which', return_value=None):
             result = probe_agents.probe(sessions=sessions)
         self.assertEqual(result['busy_sessions']['p2'], ['user-chat'])
         self.assertEqual(result['available_slots']['p2'], 0)
@@ -310,7 +326,7 @@ class CoordinatorSessionTests(IsolatedTestCase):
         accounts = [{"id":f"claude:00{i}","product":"claude","command":f"cc00{i}","pool":f"p{i}"} for i in range(1,4)]
         sessions = {"sessions":[{"account":"claude:001","sessionId":"coordinator","status":"busy"}, {"account":"claude:002","sessionId":"user-chat","status":"busy"}]}
         for key in ("AGENT_DISPATCH_COORDINATOR_SESSION", "CLAUDE_CODE_SESSION_ID", "CODEX_THREAD_ID"):
-            with self.subTest(key=key), mock.patch.dict(os.environ,{key:"coordinator"},clear=True), mock.patch.object(probe_agents,'read_accounts_file',return_value={"accounts":accounts}), mock.patch.object(probe_agents,'ADAPTERS',[]), mock.patch.object(probe_agents.shutil,'which',return_value=None):
+            with self.subTest(key=key), mock.patch.dict(os.environ,{key:"coordinator","AGENT_DISPATCH_SESSIONS_PER_POOL":"1"},clear=True), mock.patch.object(probe_agents,'read_accounts_file',return_value={"accounts":accounts}), mock.patch.object(probe_agents,'ADAPTERS',[]), mock.patch.object(probe_agents.shutil,'which',return_value=None):
                 result = probe_agents.probe(sessions=sessions)
             self.assertEqual(result["busy_sessions"]["p1"], [])
             self.assertEqual(result["busy_sessions"]["p2"], ["user-chat"])

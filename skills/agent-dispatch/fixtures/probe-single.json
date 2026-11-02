@@ -16,11 +16,11 @@
   "drafting_agents": [],
   "allow": [],
   "allow_unmatched": [],
-  "sessions_per_pool": 1,
-  "max_parallel_workers": 0,
+  "sessions_per_pool": 3,
+  "max_parallel_workers": 2,
   "fallback": [
     "single-product: reviewer is a fresh session of the same product that sees only the diff and spec, never the writer's conversation",
-    "one quota pool: L2 runs workers one after another, not in parallel",
+    "one quota pool: parallel sessions all share one rate limit",
     "no drafting agent: coordinator writes articles itself with the writing skills"
   ]
 }

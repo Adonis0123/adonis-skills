@@ -4,7 +4,7 @@ description: "Choose the lightest agent setup for a coding, review, drafting or 
 license: MIT
 metadata:
   author: adonis
-  version: "1.11.0"
+  version: "1.12.0"
 ---
 
 # Agent Dispatch
@@ -53,7 +53,7 @@ Pick a Run when the task needs a second product or quota pool, when the user wan
 
 ## Step 0 — know what you can dispatch to
 
-Run `python3 scripts/probe_agents.py` (relative to this skill) once per session before choosing a tier above L0, and read `references/accounts.md` for what its fields mean. Two rules that decide tiers: `max_parallel_workers` is the ceiling for L2 (0 means run the parts one after another), and pools come from the probe, never from account names. Do not assume Codex, Grok, Antigravity or extra accounts exist because a plan or a prior session mentioned them; if the probe cannot run, treat the machine as single-product with one pool. When the user names the accounts to use or authorizes 多开, apply both before the probe: the allow-list (`AGENT_DISPATCH_ALLOW`) and, for 多开, a raised `AGENT_DISPATCH_SESSIONS_PER_POOL` (`references/accounts.md`). When the probe disagrees with what the user said (three accounts named, four found; a product they mentioned is missing), say so in one line and plan from the probe: the user may have forgotten a login, or the machine may not be the one they meant.
+Run `python3 scripts/probe_agents.py` (relative to this skill) once per session before choosing a tier above L0, and read `references/accounts.md` for what its fields mean. Three rules that decide tiers: `max_parallel_workers` is the ceiling for L2 (0 means run the parts one after another); pools come from the probe, never from account names; and a busy account is not a full one. A ready Lane never waits for an account to go idle: start it as another headless session on that account while its quota is below the stop line, else on the account with the most quota left, without asking (`references/accounts.md` § Pools bound quota). Do not assume Codex, Grok, Antigravity or extra accounts exist because a plan or a prior session mentioned them; if the probe cannot run, treat the machine as single-product with one pool. When the user names the accounts to use or authorizes 多开, apply both before the probe: the allow-list (`AGENT_DISPATCH_ALLOW`) and, for 多开, a raised `AGENT_DISPATCH_SESSIONS_PER_POOL` (`references/accounts.md`). When the probe disagrees with what the user said (three accounts named, four found; a product they mentioned is missing), say so in one line and plan from the probe: the user may have forgotten a login, or the machine may not be the one they meant.
 
 ## Tier card — decide in one pass
 

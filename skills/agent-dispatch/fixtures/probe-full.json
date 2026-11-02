@@ -71,7 +71,7 @@
   "drafting_agents": ["antigravity"],
   "allow": [],
   "allow_unmatched": [],
-  "sessions_per_pool": 1,
+  "sessions_per_pool": 3,
   "max_parallel_workers": 3,
   "fallback": []
 }

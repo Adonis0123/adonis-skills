@@ -121,7 +121,14 @@ def get_allow(file_data: dict | None) -> list[str]:
     return parse_allow((file_data or {}).get("allow"))
 
 
-def get_sessions_per_pool(file_data: dict | None) -> int:
+# Pools bound quota, not concurrency: a busy account still takes another
+# headless session while its quota allows. The batch cap keeps L2 at 3 workers.
+DEFAULT_SESSIONS_PER_POOL = 3
+DEFAULT_BATCH_CAP = 3
+
+
+def get_sessions_per_pool(file_data: dict | None) -> tuple[int, bool]:
+    """Return (sessions per pool, whether the user set it explicitly)."""
     for raw in (os.environ.get("AGENT_DISPATCH_SESSIONS_PER_POOL"), (file_data or {}).get("sessions_per_pool")):
         if raw is None or raw == "":
             continue
@@ -130,8 +137,8 @@ def get_sessions_per_pool(file_data: dict | None) -> int:
         except (TypeError, ValueError):
             continue
         if value >= 1:
-            return value
-    return 1
+            return value, True
+    return DEFAULT_SESSIONS_PER_POOL, False
 
 
 def parse_aliases(raw: object) -> dict[str, str]:
@@ -257,7 +264,7 @@ def probe(sessions=None) -> dict:
             else:
                 del found[product]
         allow_unmatched = [e for e in allow if e not in matched]
-    sessions_per_pool = get_sessions_per_pool(file_data)
+    sessions_per_pool, sessions_per_pool_explicit = get_sessions_per_pool(file_data)
 
     if "accounts_file" in sources:
         source = "accounts_file"
@@ -325,10 +332,12 @@ def probe(sessions=None) -> dict:
         "available_slots": available_slots,
         # pools bound quota, sessions_per_pool bounds concurrency; the
         # coordinator holds one session slot, its own pool may host workers.
-        # Above 1 session per pool the user raised the limit, so no cap of 3.
+        # Only a user-set limit above 1 lifts the batch cap of 3.
         "max_parallel_workers": max(
             0,
-            capacity if sessions_per_pool > 1 else min(3, capacity),
+            capacity
+            if sessions_per_pool_explicit and sessions_per_pool > 1
+            else min(DEFAULT_BATCH_CAP, capacity),
         ),
         "fallback": fallback,
     }
