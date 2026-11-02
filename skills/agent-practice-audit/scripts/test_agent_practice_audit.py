@@ -363,6 +363,37 @@ class BuildReport(TmpCase):
         self.assertEqual(data["illustration"], "img/hero.webp")
         self.assertTrue((out / "img" / "logo.svg").is_file())
 
+    def run_main(self, config=None, lang="zh"):
+        base = self.tmp / "apa"
+        base.mkdir(exist_ok=True)
+        if config is not None:
+            (base / "config.json").write_text(json.dumps(config))
+        j = judgments(lambda p: "ok")
+        j["lang"] = lang
+        jpath = self.tmp / "j.json"
+        jpath.write_text(json.dumps(j))
+        with mock.patch.dict(os.environ, {"AGENT_PRACTICE_AUDIT_DIR": str(base)}), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(BR.main(["--judgments", str(jpath), "--date", "2026-10-01"]), 0)
+        out = base / "reports" / "2026-10-01"
+        return out, json.loads((out / "report-data.json").read_text())
+
+    def test_without_config_the_bundled_look_is_used(self):
+        out, data = self.run_main(lang="en")
+        self.assertEqual(data["illustration"], "img/hero.webp")
+        self.assertEqual(data["illustrationAlt"], "Nika checking a list with a magnifying glass")
+        self.assertEqual(data["brand"], {"name": "Nika", "logo": "img/nika-wordmark.svg", "logoDark": "img/nika-wordmark-white.svg"})
+        self.assertEqual(data["theme"]["accent"], "#2BA5A0")
+        for name in ("hero.webp", "nika-wordmark.svg", "nika-wordmark-white.svg"):
+            self.assertTrue((out / "img" / name).is_file(), name)
+
+    def test_user_config_overrides_the_bundled_look_key_by_key(self):
+        _, data = self.run_main({"theme": {"accent": "#123456"}, "brand": {"name": "Demo"}, "illustration": None})
+        self.assertEqual(data["theme"]["accent"], "#123456")
+        self.assertEqual(data["theme"]["accentDark"], "#34ABA6")  # unset colour keeps the default
+        self.assertEqual(data["brand"], {"name": "Demo", "logo": None, "logoDark": None})  # no default logo under a user brand
+        self.assertIsNone(data["illustration"])
+        self.assertEqual(data["illustrationAlt"], "")
+
 
 class PracticesFile(unittest.TestCase):
     def test_shipped_practices_are_valid(self):

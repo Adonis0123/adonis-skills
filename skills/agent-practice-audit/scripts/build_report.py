@@ -34,6 +34,8 @@ import digests  # noqa: E402
 from safe_output import UnsafeOutput, check_date, safe_file_target, safe_output_path  # noqa: E402
 DEFAULT_PRACTICES = os.path.join(SKILL, "references", "practices.json")
 TEMPLATE = os.path.join(SKILL, "assets", "report-template.html")
+# Bundled look (illustration, logo, theme) so every install renders the same report; a user config.json overrides it key by key.
+DEFAULT_CONFIG = os.path.join(SKILL, "assets", "default-config.json")
 PLACEHOLDER = "__REPORT_DATA__"
 
 POINTS = {"ok": 10, "part": 5, "no": 0, "na": None}
@@ -432,10 +434,46 @@ def build_data(practices: dict, judgments: dict, summary: dict | None = None, pr
         "dataNotes": data_notes(summary, lang),
         "theme": theme or None,
         "illustration": None,
-        "illustrationAlt": config.get("illustrationAlt", ""),
+        "illustrationAlt": alt_text(config.get("illustrationAlt"), lang),
         "brand": {"name": str((config.get("brand") or {}).get("name", ""))[:60], "logo": None, "logoDark": None},
         "previous": previous.get("date") if previous else None,
     }
+
+
+def alt_text(value, lang: str) -> str:
+    """illustrationAlt is a string or a {"zh": ..., "en": ...} map."""
+    if isinstance(value, dict):
+        value = value.get(lang) or value.get("en") or next(iter(value.values()), "")
+    return str(value or "")[:200]
+
+
+def load_defaults(path: str = DEFAULT_CONFIG) -> dict:
+    """The bundled look, with its image paths resolved against the assets directory."""
+    if not os.path.isfile(path):
+        return {}
+    data = load_json(path)
+    base = os.path.dirname(path)
+    absolute = lambda v: os.path.join(base, v) if isinstance(v, str) and v and not os.path.isabs(os.path.expanduser(v)) else v
+    data["illustration"] = absolute(data.get("illustration"))
+    brand = dict(data.get("brand") or {})
+    for key in ("logo", "logoDark"):
+        brand[key] = absolute(brand.get(key))
+    data["brand"] = brand
+    return data
+
+
+def merge_config(defaults: dict, user: dict) -> dict:
+    """User keys win. theme merges per colour; brand and illustration replace the default whole,
+    so a user brand never inherits the default logo. null or "" for illustration hides it."""
+    out = dict(defaults)
+    for key, value in user.items():
+        if key == "theme" and isinstance(value, dict):
+            out["theme"] = {**(defaults.get("theme") or {}), **value}
+        else:
+            out[key] = value
+    if "illustration" in user and "illustrationAlt" not in user:
+        out.pop("illustrationAlt", None)
+    return out
 
 
 def load_config(path: str) -> dict:
@@ -489,7 +527,7 @@ def main(argv=None) -> int:
         print(f"error: {e}", file=sys.stderr)
         return 2
     try:
-        config = load_config(os.path.join(base, "config.json"))
+        config = merge_config(load_defaults(), load_config(os.path.join(base, "config.json")))
     except InputError as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
