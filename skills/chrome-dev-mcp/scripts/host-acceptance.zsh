@@ -3,7 +3,9 @@
 # Run the read-only multi-host acceptance from references/host-verification.md.
 # By default each host gets a fresh headless session that may run only this
 # skill's readiness helper and shared CLI. --bypass (explicit user approval only)
-# gives every host its approve-everything flag instead.
+# gives every host its approve-everything flag instead. --cursor-auto-review
+# (explicit user approval only) lets Cursor CLI's server-side classifier approve
+# shell calls; without it Cursor's headless default mode refuses them.
 
 set -euo pipefail
 
@@ -12,6 +14,7 @@ timeout_s=300
 out_dir=""
 keep_raw=false
 bypass=false
+cursor_auto_review=false
 typeset -a hosts all_hosts
 all_hosts=(claude codex grok cursor)
 
@@ -44,6 +47,10 @@ while (( $# > 0 )); do
       ;;
     --bypass)
       bypass=true
+      shift
+      ;;
+    --cursor-auto-review)
+      cursor_auto_review=true
       shift
       ;;
     *) fail_closed "unexpected_arguments" ;;
@@ -93,8 +100,13 @@ run_host() {
       grok -p "/chrome-dev-mcp $prompt" --output-format streaming-json --always-approve
       ;;
     cursor:false)
-      # Shell permissions come from the user's cursor-agent cli-config.json allow list.
-      cursor-agent -p --trust --output-format stream-json "$prompt"
+      # Headless default mode rejects shell calls, so the task never reaches the CLI.
+      # --auto-review cannot be narrowed to the two allowed commands: opt-in only.
+      if [[ "$cursor_auto_review" == true ]]; then
+        cursor-agent -p --trust --auto-review --output-format stream-json "$prompt"
+      else
+        cursor-agent -p --trust --output-format stream-json "$prompt"
+      fi
       ;;
     cursor:true)
       cursor-agent -p --trust --force --output-format stream-json "$prompt"

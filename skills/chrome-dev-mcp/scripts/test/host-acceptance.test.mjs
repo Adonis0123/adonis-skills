@@ -94,6 +94,35 @@ ${saved}`;
   }
 });
 
+test("cursor adds --auto-review only on opt-in and --force only with --bypass", () => {
+  const saved = fakes["cursor-agent"];
+  const ready = `print -r -- '{"type":"tool_call","command":"zsh scripts/uxc-readiness.zsh"}'
+print -r -- '{"type":"result","result":"CHROME_DEV_MCP_READY"}'`;
+  const noWide = `[[ " $* " != *" --force "* && " $* " != *" --yolo "* ]] || exit 4`;
+  try {
+    fakes["cursor-agent"] = `[[ " $* " != *" --auto-review "* ]] || exit 3
+${noWide}
+${ready}`;
+    const normal = run(["--host", "cursor"]);
+    assert.equal(normal.hosts.cursor.EXIT, "0");
+
+    fakes["cursor-agent"] = `[[ " $* " == *" --auto-review "* ]] || exit 3
+${noWide}
+${ready}`;
+    const optIn = run(["--host", "cursor", "--cursor-auto-review"]);
+    assert.equal(optIn.hosts.cursor.EXIT, "0");
+    assert.equal(optIn.hosts.cursor.RESULT, "VERIFIED");
+
+    fakes["cursor-agent"] = `[[ " $* " == *" --force "* ]] || exit 3
+${ready}`;
+    const bypass = run(["--host", "cursor", "--bypass"]);
+    assert.equal(bypass.hosts.cursor.EXIT, "0");
+    assert.equal(bypass.hosts.cursor.RESULT, "VERIFIED");
+  } finally {
+    fakes["cursor-agent"] = saved;
+  }
+});
+
 test("grok answer ignores sentinels quoted in thoughts", () => {
   const saved = fakes.grok;
   fakes.grok = `print -r -- '{"type":"thought","data":"reply CHROME_DEV_MCP_FAIL on failure"}'

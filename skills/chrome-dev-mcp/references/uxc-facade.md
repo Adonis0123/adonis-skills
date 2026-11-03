@@ -66,8 +66,8 @@ Use a finite idle TTL so an unused MCP child is reaped. Treat the configured dae
 
 ## Concurrency details
 
-- Chrome DevTools MCP 1.9.0+ (pinned 1.10.1) enables `--pageIdRouting` by default and restricts file writes to the OS temp directory unless `--workspace` is passed; older wrappers name the experimental flag. After an upgrade, confirm the live schema still requires `pageId` for page-scoped operations.
-- Different page IDs route safely, but tool calls are serialized; do not expect parallel execution. Use separate isolated browsers for parallel writes that cannot share a tab.
+- Chrome DevTools MCP 1.9.0+ (pinned 1.12.0) enables `--pageIdRouting` by default and restricts file writes to the OS temp directory unless `--workspace` is passed; older wrappers name the experimental flag. After an upgrade, confirm the live schema still requires `pageId` for page-scoped operations.
+- Different page IDs route safely. Since 1.12.0 the runtime queues `page`-scoped tools (for example `wait_for`, `take_snapshot`, `take_screenshot`) per page; `exclusive` tools such as `evaluate_script`, performance traces, Lighthouse and heap snapshots still block the whole browser context. The pinned UXC 0.17.0 session still delivers calls one at a time: two concurrent 2.5-second `wait_for` calls took 5.1 seconds on different pages and on one page, the same as serial. Do not expect parallel execution through `chrome-dev-mcp-cli`; remeasure after a UXC upgrade. Use separate isolated browsers for parallel writes that cannot share a tab.
 - Repair a known legacy launcher with `zsh scripts/setup-uxc-link.zsh`; it preserves the exact old owned link and refuses foreign contracts.
 - The runtime's only file root is the MCP child's `os.tmpdir()` (on macOS `getconf DARWIN_USER_TEMP_DIR`), because UXC does not negotiate MCP workspace roots. If the host must render native content blocks, use explicit native compatibility mode.
 

@@ -71,7 +71,7 @@ Readiness bounds its `list_pages` at 45 seconds. Allow one recovery and one retr
 
 ## Share the browser safely
 
-Calls are serialized by the runtime and no cross-agent lock exists for multi-step writes to one tab. When another agent may own the tab, report `UNVERIFIED` instead of racing it. Real pointer, keyboard, focus, and screen-recording sequences share one desktop cursor, so serialize them across agents. The daemon exclusive key is a browser ownership guard: do not remove it, invent per-agent keys, or kill its holder.
+Calls through `chrome-dev-mcp-cli` still run one at a time: the runtime can run tools for different pages in parallel, but the shared UXC session delivers them in order, so concurrent calls save no time. No cross-agent lock exists for multi-step writes to one tab. When another agent may own the tab, report `UNVERIFIED` instead of racing it. Real pointer, keyboard, focus, and screen-recording sequences share one desktop cursor, so serialize them across agents. The daemon exclusive key is a browser ownership guard: do not remove it, invent per-agent keys, or kill its holder.
 
 ## Report honestly
 
