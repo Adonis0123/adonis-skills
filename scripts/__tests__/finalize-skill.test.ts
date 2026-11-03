@@ -144,3 +144,73 @@ test("continues rejecting paths outside skills", (t) => {
   writeSkill(external);
   assertRejected(dryRun(repo, external), /Path must be inside/);
 });
+
+// run-yaml-python picks an interpreter that can import PyYAML for quick-validate.
+function yamlPython(
+  t: { after: (callback: () => void) => void },
+  bins: { python3HasYaml?: boolean; uv?: boolean },
+  args: string[] = ["validate.py", "skills/example"],
+) {
+  const root = mkdtempSync(path.join(os.tmpdir(), "run-yaml-python-"));
+  t.after(() => rmSync(root, { force: true, recursive: true }));
+  const bin = path.join(root, "bin");
+  mkdirSync(bin);
+  const yamlExit = bins.python3HasYaml ? 0 : 1;
+  writeFileSync(
+    path.join(bin, "python3"),
+    `#!/bin/sh\nif [ "$1" = "-c" ]; then exit ${yamlExit}; fi\necho "python3 $*"\n`,
+    { mode: 0o755 },
+  );
+  if (bins.uv) {
+    writeFileSync(path.join(bin, "uv"), '#!/bin/sh\necho "uv $*"\n', {
+      mode: 0o755,
+    });
+  }
+  return spawnSync(
+    process.execPath,
+    [
+      "--experimental-strip-types",
+      path.join(repoRoot, "scripts/run-yaml-python.ts"),
+      ...args,
+    ],
+    { encoding: "utf8", env: { PATH: bin } },
+  );
+}
+
+test("run-yaml-python uses system python3 when PyYAML is importable", (t) => {
+  const result = yamlPython(t, { python3HasYaml: true, uv: true });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(result.stdout.trim(), "python3 validate.py skills/example");
+});
+
+test("run-yaml-python falls back to uv when python3 lacks PyYAML", (t) => {
+  const result = yamlPython(t, { python3HasYaml: false, uv: true });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(
+    result.stdout.trim(),
+    "uv run --with pyyaml python3 validate.py skills/example",
+  );
+});
+
+test("run-yaml-python explains the fix when neither PyYAML nor uv exists", (t) => {
+  const result = yamlPython(t, { python3HasYaml: false, uv: false });
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.match(result.stderr, /Install uv/);
+  assert.match(result.stderr, /python3 -m pip install --user pyyaml/);
+});
+
+test("run-yaml-python drops only pnpm's separator and keeps later ones", (t) => {
+  const result = yamlPython(t, { python3HasYaml: true }, [
+    "validate.py",
+    "--",
+    "skills/example",
+    "--",
+    "-draft",
+  ]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(
+    result.stdout.trim(),
+    "python3 validate.py skills/example -- -draft",
+  );
+});
