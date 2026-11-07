@@ -9,6 +9,7 @@
 当前 skill (`skills/agentic-review-handoff/`) 通过三份 reference 模板（`handoff-packet.md`、`review-loop-packets.md`、`review-contract.md`）规定 review→fix→re-review 各阶段的 markdown 输出契约。两个 agent（Claude Code 当 reviewer、Codex 当 implementer/fixer）都遵守同一份 SKILL.md。
 
 实际工作流（飞书文档 `https://bcn0tgplxp2e.feishu.cn/docx/NF4edoQGXoaahVxhQhzcS6Srnvb` 描述的"双 AI 一写一审"）：
+
 1. Codex 写完代码 → 用户切到 CC 终端粘贴 review 指令
 2. CC review → 输出 Findings + Fix Handoff Packet → **用户手动 copy** → 切到 Codex 终端 **paste**
 3. Codex 修完 → 输出 Fix Completion Packet → **用户手动 copy** → 切回 CC 终端 **paste**
@@ -19,9 +20,9 @@
 
 ### 已被否决的方案
 
-| 方案 | 否决原因 |
-|---|---|
-| AI 输出时自动写剪切板 | 只省 ⌘C，没省 ⌘V；剪切板单槽，并行 review 互相覆盖；零审计 |
+| 方案                                              | 否决原因                                                                                                                |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| AI 输出时自动写剪切板                             | 只省 ⌘C，没省 ⌘V；剪切板单槽，并行 review 互相覆盖；零审计                                                              |
 | AI 自动读对方 session 历史 (`.claude` / `.codex`) | 强耦合两个 CLI 的私有存储格式（升级一次就崩）；session 历史是全量上下文，吞进来 token 翻倍；session id 本身又要复制粘贴 |
 
 ### 第一性原理诊断
@@ -55,7 +56,7 @@ Packet 本质是一个 **Review Aggregate（DDD 聚合根）**：有身份（pac
 - 自动剪切板写入（已否决）
 - 自动读 .claude / .codex session 历史（已否决）
 - 修改 review-contract.md 里的 severity ladder 或 Source tag（这是 skill 的 IP，不动）
-- 接入 GitHub PR / Linear / TAPD 等外部系统作为 packet 载体
+- 接入 GitHub PR / Linear / Jira 等外部系统作为 packet 载体
 
 ## 方案
 
@@ -146,18 +147,23 @@ round: 1
 ---
 
 # Review Handoff
+
 （implementer 写：Goal / Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions）
 
 # Review Findings
+
 （reviewer 写：Scope reviewed / Verification / Findings P0/P1/P2 + Source tag / Verdict）
 
 # Fix Handoff
+
 （reviewer 紧接着写：Validated Findings To Fix 表格 / Feedback Not To Fix / Constraints / Verification Required）
 
 # Fix Completion
+
 （fixer 写：Fix Conclusion / Original Findings Snapshot 必须 verbatim / Finding Status / Changes Made / Verification / Deferred Out-of-Scope / Re-review Instructions）
 
 # Re-review
+
 （reviewer 复审写：Prior Findings Reassessment / New Findings / Regression Surface / Verdict）
 ```
 
@@ -167,27 +173,27 @@ round: 1
 
 **frontmatter 字段表**（每次新 H1 段写入后，由当次写入者原子重写整个 frontmatter）：
 
-| 字段 | 类型 | 谁维护 | 说明 |
-|---|---|---|---|
-| `packet_id` | string | 创建者 | = 文件名（不含 `.md`） |
-| `branch` | string | 创建者 | git branch 原值（含 `/`），用于追溯 |
-| `scope` | string | 创建者 | 用户给的 scope 描述 |
-| `created` | ISO datetime | 创建者 | 创建时间 |
-| `updated` | ISO datetime | 任何写入者 | 每次追加段后更新 |
-| `last_anchor` | enum | 任何写入者 | **结构事实**：最末一个 H1 anchor 规范化（去 `# ` 前缀、去 `(round N)` 后缀、转 snake_case）。取值 `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` / `re_review` |
-| `lifecycle_state` | enum | 任何写入者 | **业务状态**：packet 在 review 闭环领域的生命周期态。取值 `in_progress` / `awaiting_user_decision` / `blocked` / `archived` |
-| `round` | int | 写入 fix_completion / re_review 时 | 默认 1，每开新轮 +1 |
+| 字段              | 类型         | 谁维护                             | 说明                                                                                                                                                                                                      |
+| ----------------- | ------------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `packet_id`       | string       | 创建者                             | = 文件名（不含 `.md`）                                                                                                                                                                                    |
+| `branch`          | string       | 创建者                             | git branch 原值（含 `/`），用于追溯                                                                                                                                                                       |
+| `scope`           | string       | 创建者                             | 用户给的 scope 描述                                                                                                                                                                                       |
+| `created`         | ISO datetime | 创建者                             | 创建时间                                                                                                                                                                                                  |
+| `updated`         | ISO datetime | 任何写入者                         | 每次追加段后更新                                                                                                                                                                                          |
+| `last_anchor`     | enum         | 任何写入者                         | **结构事实**：最末一个 H1 anchor 规范化（去 `# ` 前缀、去 `(round N)` 后缀、转 snake_case）。取值 `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` / `re_review` |
+| `lifecycle_state` | enum         | 任何写入者                         | **业务状态**：packet 在 review 闭环领域的生命周期态。取值 `in_progress` / `awaiting_user_decision` / `blocked` / `archived`                                                                               |
+| `round`           | int          | 写入 fix_completion / re_review 时 | 默认 1，每开新轮 +1                                                                                                                                                                                       |
 
 **字段拆分理由（DDD 正交）**：`last_anchor` 描述 packet body 的物理结构（"最末段是什么"），`lifecycle_state` 描述这条 review 闭环在领域内的状态（"还在跑/等用户/卡住/归档"）。两者属不同维度，硬塞进一个字段会出现"PASS_WITH_CONCERNS 后最末 H1 仍是 `# Re-review` 但状态已迁到 `awaiting_user_decision`"这类合法但被旧"必须等于最末 H1"规则误判的情况。
 
 **`lifecycle_state` 合法推导表**（validator / eval 必须按此判定，而不是简单"等于最末 H1"）：
 
-| `last_anchor` | Re-review Verdict | 文件位置 | 合法 `lifecycle_state` |
-|---|---|---|---|
-| `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` | — | `active/` | `in_progress` |
-| `re_review` | `PASS` / `NO_FINDINGS` | `archive/` | `archived` |
-| `re_review` | `PASS_WITH_CONCERNS` | `active/` | `awaiting_user_decision` |
-| `re_review` | `BLOCKED` | `active/` | `blocked` |
+| `last_anchor`                                                                             | Re-review Verdict      | 文件位置   | 合法 `lifecycle_state`   |
+| ----------------------------------------------------------------------------------------- | ---------------------- | ---------- | ------------------------ |
+| `review_handoff` / `review_intake` / `review_findings` / `fix_handoff` / `fix_completion` | —                      | `active/`  | `in_progress`            |
+| `re_review`                                                                               | `PASS` / `NO_FINDINGS` | `archive/` | `archived`               |
+| `re_review`                                                                               | `PASS_WITH_CONCERNS`   | `active/`  | `awaiting_user_decision` |
+| `re_review`                                                                               | `BLOCKED`              | `active/`  | `blocked`                |
 
 任何其他组合（例如 `last_anchor=re_review` + Verdict=`PASS` 但文件还在 `active/`，或 `last_anchor=fix_completion` + `lifecycle_state=archived`）都是非法 packet。
 
@@ -195,14 +201,14 @@ round: 1
 
 每个 H1 段必须在自己内部完整说清楚证据，不假设读者会回头读上面的段。
 
-| Anchor | 谁写 | 何时写 | 必含子节 |
-|---|---|---|---|
-| `# Review Handoff` | implementer (通常 Codex) | implementer-initiated 路径：写完代码主动请求 review 时 | Goal / Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions |
-| `# Review Intake` | reviewer (通常 CC) | reviewer-initiated 路径：用户直接让 reviewer 看 staged/working-tree diff、还没有 implementer handoff 时 | Scope reviewed / Verification / Inferred Goal（必须明确标注 inferred from diff，不冒充 implementer 交付事实） |
-| `# Review Findings` | reviewer (通常 CC) | review 完成时 | Scope reviewed / Verification / Findings (P0/P1/P2 + Source) / Verdict |
-| `# Fix Handoff` | reviewer | review 完成时紧贴 Findings | Validated Findings To Fix 表格 / Feedback Not To Fix / Constraints / Verification Required |
-| `# Fix Completion` | fixer (通常 Codex) | 改完时 | Fix Conclusion / Original Findings Snapshot (verbatim) / Finding Status / Changes Made / Verification / Deferred / Re-review Instructions |
-| `# Re-review` | reviewer | 复审完成时 | Prior Findings Reassessment / New Findings / Regression Surface / Verdict（PASS / PASS_WITH_CONCERNS / NO_FINDINGS / BLOCKED） |
+| Anchor              | 谁写                     | 何时写                                                                                                  | 必含子节                                                                                                                                  |
+| ------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `# Review Handoff`  | implementer (通常 Codex) | implementer-initiated 路径：写完代码主动请求 review 时                                                  | Goal / Scope / Implementation Summary / Verification / Reviewer Focus / Open Questions                                                    |
+| `# Review Intake`   | reviewer (通常 CC)       | reviewer-initiated 路径：用户直接让 reviewer 看 staged/working-tree diff、还没有 implementer handoff 时 | Scope reviewed / Verification / Inferred Goal（必须明确标注 inferred from diff，不冒充 implementer 交付事实）                             |
+| `# Review Findings` | reviewer (通常 CC)       | review 完成时                                                                                           | Scope reviewed / Verification / Findings (P0/P1/P2 + Source) / Verdict                                                                    |
+| `# Fix Handoff`     | reviewer                 | review 完成时紧贴 Findings                                                                              | Validated Findings To Fix 表格 / Feedback Not To Fix / Constraints / Verification Required                                                |
+| `# Fix Completion`  | fixer (通常 Codex)       | 改完时                                                                                                  | Fix Conclusion / Original Findings Snapshot (verbatim) / Finding Status / Changes Made / Verification / Deferred / Re-review Instructions |
+| `# Re-review`       | reviewer                 | 复审完成时                                                                                              | Prior Findings Reassessment / New Findings / Regression Surface / Verdict（PASS / PASS_WITH_CONCERNS / NO_FINDINGS / BLOCKED）            |
 
 子节的具体字段沿用现有 `references/handoff-packet.md`、`references/review-loop-packets.md` 的内容——本轮不动这些"协议"细节，只把它们串到一个文件里。
 
@@ -210,17 +216,18 @@ round: 1
 
 归档触发：reviewer 写完 `# Re-review`（或 `# Re-review (round N)`）后，看其 Verdict：
 
-| Verdict | 行为 |
-|---|---|
-| `PASS` / `NO_FINDINGS` | AI 立刻 `mv` 到 archive/，frontmatter `lifecycle_state` 置为 `archived`（`last_anchor` 保持 `re_review`） |
-| `PASS_WITH_CONCERNS` | **不归档**，留在 active/。frontmatter `lifecycle_state` 置为 `awaiting_user_decision`（`last_anchor` 保持 `re_review`）。AI 在终端提示用户：「含 P2/P3 issues 未处理，packet 仍在 active/。下一句『按 review 修一下』/『改吧』将自动进入 round N+1 处理这些 concerns；如确认放弃，可手动 `mv` 到 archive/」 |
-| `BLOCKED` | 不归档，frontmatter `lifecycle_state` 置为 `blocked`，等待 fixer 启动下一轮 fix → re-review |
+| Verdict                | 行为                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PASS` / `NO_FINDINGS` | AI 立刻 `mv` 到 archive/，frontmatter `lifecycle_state` 置为 `archived`（`last_anchor` 保持 `re_review`）                                                                                                                                                                                                   |
+| `PASS_WITH_CONCERNS`   | **不归档**，留在 active/。frontmatter `lifecycle_state` 置为 `awaiting_user_decision`（`last_anchor` 保持 `re_review`）。AI 在终端提示用户：「含 P2/P3 issues 未处理，packet 仍在 active/。下一句『按 review 修一下』/『改吧』将自动进入 round N+1 处理这些 concerns；如确认放弃，可手动 `mv` 到 archive/」 |
+| `BLOCKED`              | 不归档，frontmatter `lifecycle_state` 置为 `blocked`，等待 fixer 启动下一轮 fix → re-review                                                                                                                                                                                                                 |
 
 `awaiting_user_decision` 是 PASS_WITH_CONCERNS 后的中间态：等用户表达继续修或放弃。任何"修一下"/"改吧" 类指令都会把它带入 fix 阶段、追加 `# Fix Completion (round N+1)`，`lifecycle_state` 迁回 `in_progress`。
 
 **单点归档原则**：只有 reviewer 在 Re-review 之后（Verdict 为 PASS / NO_FINDINGS 时）才能自动归档；fixer 不归档；PASS_WITH_CONCERNS / BLOCKED 留 active 等待续 round；用户可以手动归档/反归档（mv 即可，AI 应尊重）。
 
 清理策略：
+
 - AI 责任：(a) 只管 PASS / NO_FINDINGS 自动归档；(b) 在创建当前 repo 第一个 packet 前，确保 `$repo_root/.git/info/exclude` 含一行 `.review-handoff/`，未含则 append 一行（**仓库本地、不进 git history、跨仓库自动适配**——避免在不属于本人/团队的目标仓库里污染 `.gitignore`）。
 - 用户责任：定期 `rm -rf $repo_root/.review-handoff/archive/`（不需要专门脚本，unix 一行命令）。
 - 系统责任：adonis-skills 仓库自身的 `.gitignore` 仍加 `.review-handoff/`（dogfood 兜底）；其他目标仓库走 `.git/info/exclude` 路径，不依赖修改对方的 `.gitignore`。
@@ -238,6 +245,7 @@ Codex 端：通过 `skills/agentic-review-handoff/agents/openai.yaml` 的 `defau
 `scripts/validate-packet.mjs` 用法：`node scripts/validate-packet.mjs <packet-file>`
 
 校验：
+
 - frontmatter 必填字段齐全且 enum 合法
 - H1 anchor 在白名单内、按预期顺序出现
 - 同一段没被重复追加（防止 AI 漏读最末段就 append 新的 review 段）
@@ -250,14 +258,14 @@ Codex 端：通过 `skills/agentic-review-handoff/agents/openai.yaml` 的 `defau
 
 ## 风险
 
-| 风险 | 严重度 | 缓解 |
-|---|---|---|
-| AI 不严格遵守 anchor 命名约定，packet 错乱 | 中 | (1) SKILL.md 用 anchor 表 + 例子明确规定；(2) 提供可选 validate-packet 脚本；(3) 用户 markdown 可读，肉眼能 spot；(4) evals 加 anchor 一致性断言 |
-| 多轮闭环文件膨胀（10-20KB），AI 每次 review 都全量读 | 低 | 比读 session 历史小 1-2 个数量级；极端情况可让 AI 只 sample 最末两个 H1 段（在 SKILL 提示里加） |
-| 用户切了 branch 但忘了告诉 AI | 低 | 寻址用 `git rev-parse` 实时拿当前 branch，不会跨 branch 接错；如果当前 branch 没 packet AI 会显式说"当前 branch 没找到 active packet" |
+| 风险                                                                                                                                      | 严重度         | 缓解                                                                                                                                                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AI 不严格遵守 anchor 命名约定，packet 错乱                                                                                                | 中             | (1) SKILL.md 用 anchor 表 + 例子明确规定；(2) 提供可选 validate-packet 脚本；(3) 用户 markdown 可读，肉眼能 spot；(4) evals 加 anchor 一致性断言                              |
+| 多轮闭环文件膨胀（10-20KB），AI 每次 review 都全量读                                                                                      | 低             | 比读 session 历史小 1-2 个数量级；极端情况可让 AI 只 sample 最末两个 H1 段（在 SKILL 提示里加）                                                                               |
+| 用户切了 branch 但忘了告诉 AI                                                                                                             | 低             | 寻址用 `git rev-parse` 实时拿当前 branch，不会跨 branch 接错；如果当前 branch 没 packet AI 会显式说"当前 branch 没找到 active packet"                                         |
 | 隔离机制走 `$repo_root/.git/info/exclude`（仓库本地、不进 history、跨仓库自动适配）而非 `.gitignore`，用户换机器/新克隆仓库时 packet 丢失 | 已知 trade-off | 出 spec 时已与用户确认（本地临时收件箱）；未来要跨机器只需取消 exclude + mv 到 `docs/reviews/`；adonis-skills 仓库自身的 `.gitignore` 仍加 `.review-handoff/` 做 dogfood 兜底 |
-| 旧 skill 的现存模板被用户/团队当文档引用，重组 references 路径会有 broken link | 低 | 保留旧文件名，用 stub 转向新文件；commit 信息标注 |
-| skill-creator evals 写不出来（packet 文件型输出难自动断言） | 中 | (1) 写脚本检查 packet 文件存在性 + anchor 出现 + frontmatter 字段；(2) 主观部分（review 质量）走人工 review viewer |
+| 旧 skill 的现存模板被用户/团队当文档引用，重组 references 路径会有 broken link                                                            | 低             | 保留旧文件名，用 stub 转向新文件；commit 信息标注                                                                                                                             |
+| skill-creator evals 写不出来（packet 文件型输出难自动断言）                                                                               | 中             | (1) 写脚本检查 packet 文件存在性 + anchor 出现 + frontmatter 字段；(2) 主观部分（review 质量）走人工 review viewer                                                            |
 
 ## 验收标准
 
@@ -284,7 +292,7 @@ Codex 端：通过 `skills/agentic-review-handoff/agents/openai.yaml` 的 `defau
 4. **文档与 ruler 同步**
    - 修改的 SKILL.md / references 通过 `pnpm skills:validate`
    - `pnpm skills:index` 重新生成
-   - 不需要改 .ruler/*.md（本轮纯 skill 内容迭代，与仓库 AI 规则无关）
+   - 不需要改 .ruler/\*.md（本轮纯 skill 内容迭代，与仓库 AI 规则无关）
 
 5. **可逆性**
    - 旧 reference 文件保留或留 stub，旧用户/项目引用不破

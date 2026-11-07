@@ -4,3 +4,16 @@
 ^skills/web-performance-audit/scripts/test_public_portability\.py:\s*"private project marker"
 # Vendored third-party minified markdown-it (MIT): its regex tables contain an email-shaped token.
 ^skills/agent-dispatch/scripts/vendor/markdown-it-[0-9.]+\.min\.js:
+# Third-party npm deprecation notice (glob package author contact) inside the lockfile.
+^pnpm-lock\.yaml:\s*deprecated: Old versions of glob
+# Generic placeholder home paths in docs, examples and path-scrubbing regexes.
+^/Users/(you|<name>,?|\[A-Za-z0-9\._-\]\+)$
+# Ardot MCP's documented default OAuth redirect URI.
+^skills/ardot-mcp/scripts/lib/defaults\.zsh:.*127\.0\.0\.1:8788/callback
+# worktree-tidy supports a public Git host (alongside GitHub and GitLab) by name; that is the feature.
+^skills/worktree-tidy/(SKILL\.md|references/glossary\.md|scripts/(test_)?worktree_tidy\.py):
+^apps/web/(content/skill-catalog\.yaml|src/generated/skills-index-lite\.json):\s*-?\s*"Check idle days and GitHub, GitLab, or 
+^apps/web/src/generated/skills-index-lite\.json:\s*"description": "Find and remove stale git worktrees across one or many repositories
+^apps/web/src/generated/skills-detail-index\.json:\s*"raw": "- \*\*Activity\*\* never uses the index file
+# agent-practice-audit detects that host's CI config file next to GitHub/GitLab CI.
+^skills/agent-practice-audit/scripts/config_scan\.py:\s*for pat in \("\.github/workflows/\*\.yml"

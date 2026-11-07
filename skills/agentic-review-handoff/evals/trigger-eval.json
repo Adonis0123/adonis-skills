@@ -11,7 +11,7 @@
   },
   {
     "id": "pos-review-fix-rereview",
-    "query": "能不能自动 review-fix-re-review 三轮？仓库是 ~/duiyun/breeze，reviewer 用 claude，先审当前 working tree，BLOCKED 了我改完再 continue，别让我两边窗口来回点。",
+    "query": "能不能自动 review-fix-re-review 三轮？仓库是 ~/work/breeze，reviewer 用 claude，先审当前 working tree，BLOCKED 了我改完再 continue，别让我两边窗口来回点。",
     "should_trigger": true
   },
   {
@@ -21,7 +21,7 @@
   },
   {
     "id": "pos-sessions-resume",
-    "query": "上次 auto loop 用的 headless codex reviewer 会话在 Desktop 列表里找不到了。给我 codex/grok/claude 恢复对话的命令，或者直接 list review-loop sessions。仓库根是 /Users/example/coding/adonis-skills。",
+    "query": "上次 auto loop 用的 headless codex reviewer 会话在 Desktop 列表里找不到了。给我 codex/grok/claude 恢复对话的命令，或者直接 list review-loop sessions。仓库根是 /Users/you/coding/adonis-skills。",
     "should_trigger": true
   },
   {

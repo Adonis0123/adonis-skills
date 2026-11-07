@@ -98,7 +98,7 @@ Exceptions (soft-adopt opt-outs, `Goal is not Active` recovery, Ask/Plan limits,
 
 A contract is only as good as its Done condition — write it so the user could check it without asking what you meant.
 
-- **Anchor on the user's source**: point Objective/Done at any named plan, spec, PRD, TAPD item, or Figma node and its acceptance items; name an excluded/reinterpreted item on `Stop or ask when`/Constraints — silent narrowing is what later turns "done" into "你没按文档做".
+- **Anchor on the user's source**: point Objective/Done at any named plan, spec, PRD, issue-tracker item, or Figma node and its acceptance items; name an excluded/reinterpreted item on `Stop or ask when`/Constraints — silent narrowing is what later turns "done" into "你没按文档做".
 - **Verify on the acceptance path**: if the user will judge it in a page, device, design, or command, Verification exercises that path per item — tests/typecheck aren't sufficient alone.
 - **No unrequested delivery**: commit/push/MR/deploy/messaging go into Done/Checkpoints only if asked; otherwise changes stay in the working tree.
 - **Execution strategy** follows dependency order, shared state, write overlap, and independent verification — never size alone; the main agent keeps review and final integration.

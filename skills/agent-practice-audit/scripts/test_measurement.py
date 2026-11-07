@@ -721,7 +721,7 @@ class Round5(TmpCase):
     def test_03_done_when_keywords(self):
         yes = ("修复之后要自己验证一下", "做完必须要真实验证", "改完要去验收", "修完再跑一次 doctor", "先把流程跑通",
                "并且需要测试通过", "改好后截图核对", "做完你自己验收", "要真实测试过", "fix it and verify the output",
-               "验证通过后再跑 /pollo-ship")
+               "验证通过后再跑 /ship")
         no = ("验证码收不到", "我要用身份验证器", "列出未验证项", "把状态改成待验证", "你真实验证了吗", "已验证与排障表",
               "先把功能做完吧，先做测试的", "截图呢", "我没写验证命令", "这个验证器有问题", "verify nothing here? no")
         for s in yes:
@@ -730,7 +730,7 @@ class Round5(TmpCase):
             self.assertFalse(EX.DONE_WHEN.search(s), s)
 
     # 4. Parallel sessions: both edit, overlap >= 5 min, clones of one remote are isolated.
-    def clone(self, name, url="git@cnb.cool:org/app.git"):
+    def clone(self, name, url="git@git.example.com:org/app.git"):
         d = self.tmp / name
         (d / ".git").mkdir(parents=True)
         (d / ".git" / "config").write_text(f'[core]\n\tbare = false\n[remote "origin"]\n\turl = {url}\n')
@@ -800,18 +800,18 @@ class Round5(TmpCase):
         self.assertEqual(file_checkout(f"{a}/.worktrees/gone/src/b.py"), f"{a}/.worktrees/gone")
 
     def test_04_clones_of_one_remote_are_isolated(self):
-        a, b = self.clone("app"), self.clone("app2", "https://user:pw@cnb.cool/org/app")
-        c = self.clone("other", "git@cnb.cool:org/other.git")
+        a, b = self.clone("app"), self.clone("app2", "https://user:pw@git.example.com/org/app")
+        c = self.clone("other", "git@git.example.com:org/other.git")
         p = self.par((a, "2026-10-01T10:00:00Z", "2026-10-01T11:00:00Z", True),
                      (b, "2026-10-01T10:20:00Z", "2026-10-01T11:30:00Z", True),
                      (c, "2026-10-01T10:20:00Z", "2026-10-01T11:30:00Z", True))
         self.assertEqual((p["sessions"], p["isolated"], p["separate_clone"], p["repos"]), (2, 2, 2, 1))
         from audit_common import normalise_remote
-        self.assertEqual({normalise_remote(u) for u in ("git@cnb.cool:org/app.git", "https://u:p@cnb.cool/org/app/",
-                                                         "ssh://git@cnb.cool:22/org/app")}, {"cnb.cool/org/app"})
+        self.assertEqual({normalise_remote(u) for u in ("git@git.example.com:org/app.git", "https://u:p@git.example.com/org/app/",
+                                                         "ssh://git@git.example.com:22/org/app")}, {"git.example.com/org/app"})
         r = EX.claude(write_jsonl(self.tmp / "r.jsonl", claude_session(cwd=b)))
         self.assertIn("remote_id", r)
-        self.assertNotIn("cnb.cool", json.dumps(r, default=dict))  # the URL never reaches the row
+        self.assertNotIn("git.example.com", json.dumps(r, default=dict))  # the URL never reaches the row
         doc = PJ.prejudge(summary_with({"claude": {"sessions": 100}},
                                        parallel={"sessions": 20, "isolated": 12, "with_worktree": 2, "repos": 3}),
                           {}, PRACTICES)

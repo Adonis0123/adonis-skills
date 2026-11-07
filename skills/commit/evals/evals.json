@@ -110,7 +110,7 @@
     {
       "id": 9,
       "eval_name": "emoji-from-table-without-emojify-hook",
-      "source": "real Codex session 2026-07-22 (committed `🔐 chore: tighten Claude permission defaults`, emoji outside the table, in a repo without an emojify hook) and real Codex session 2026-08-24 (wrote emoji-less `feat(director): ...`, relying on a repo hook)",
+      "source": "real Codex session 2026-07-22 (committed `🔐 chore: tighten Claude permission defaults`, emoji outside the table, in a repo without an emojify hook) and real Codex session 2026-08-24 (wrote emoji-less `feat(editor): ...`, relying on a repo hook)",
       "prompt": "commit 一下 settings.json 的改动：删掉了过宽的 Write(**) 权限。不要 push。完成后把最终提交 subject 写进 outputs/report.md。",
       "setup": "In the eval outputs dir: git init fixture && cd fixture && git config user.email eval@example.com && git config user.name eval; write settings.json `{\"permissions\":{\"allow\":[\"Read(**)\",\"Write(**)\"]}}` and commit `🔧 chore: init`; then edit settings.json to remove \"Write(**)\". No hooks, no commitlint config, no CONTRIBUTING.",
       "expected_output": "Auto-stages the single file, commits with an emoji taken from the skill table (🔧 chore or similar allowed pair), e.g. `🔧 chore(settings): remove broad write permission`.",

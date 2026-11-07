@@ -4,7 +4,7 @@
     {
       "id": 1,
       "eval_name": "reuse-one-daemon-for-todo-and-blog",
-      "prompt": "这是一次只读方案验收，不要改文件或启动服务。现有 macOS 工具在 127.0.0.1:17333 上由 com.example.skills-web LaunchAgent 提供 skills.localhost。另一个仓库拥有 todos/todos.yaml、posts/、raw/、notes/ 和 digests/。用户要求新增 todo.localhost（完整 CRUD）和个人使用的 blog.localhost；本地 Blog 要展示 posts 中显式 public:true 与 public:false 的成文，支持目录分类、frontmatter tags、all/public/private 组合筛选，但公共 sync 仍只能发布 public:true，raw/notes/digests 不能混入文章列表。还要登录自启，以及两个可从 Spotlight 打开的 app。请给出最实用的架构、依赖方向、最小实施顺序和验收证据。",
+      "prompt": "这是一次只读方案验收，不要改文件或启动服务。现有 macOS 工具在 127.0.0.1:<port> 上由 com.example.skills-web LaunchAgent 提供 skills.localhost。另一个仓库拥有 todos/todos.yaml、posts/、raw/、notes/ 和 digests/。用户要求新增 todo.localhost（完整 CRUD）和个人使用的 blog.localhost；本地 Blog 要展示 posts 中显式 public:true 与 public:false 的成文，支持目录分类、frontmatter tags、all/public/private 组合筛选，但公共 sync 仍只能发布 public:true，raw/notes/digests 不能混入文章列表。还要登录自启，以及两个可从 Spotlight 打开的 app。请给出最实用的架构、依赖方向、最小实施顺序和验收证据。",
       "expected_output": "复用一个 loopback listener，以 exact Host 路由三种 surface；Todo/Blog domain 留在数据仓库，通过窄 handler value contract 接入 gateway；Todo repository 是唯一写入口并使用 ETag、串行写和 atomic rename，只有不可消除的多进程 writer 才加跨进程 lock；Blog 把 local catalog 与 public projection 分开，本地只扫描 posts 并接纳显式 true/false，公共 sync 只接纳 true，缺失/非法状态 fail closed，raw/notes/digests 排除；明确 local-only/private 是发布状态而非保密，记录 access/threat boundary，必要时增加认证；投影 visibility、目录分类和 tags 并组合筛选；两个 app 是薄 opener；给出 TDD、curl、launchctl、桌面/移动浏览器和临时 public sync 隔离验收。",
       "files": [],
       "expectations": [
@@ -54,7 +54,7 @@
     {
       "id": 4,
       "eval_name": "single-repo-read-only-dashboard",
-      "prompt": "这是一次只读方案验收，不要改文件或启动服务。一个单仓库工具已经有稳定的 127.0.0.1:17333 loopback daemon；用户这次只想给现有只读运行指标加 metrics.localhost 别名。diff 只允许 Host 映射、只读 handler 和 focused tests，不改 UI、LaunchAgent、launcher、写入或公开发布。请给出最小设计、实施顺序和验收证据。",
+      "prompt": "这是一次只读方案验收，不要改文件或启动服务。一个单仓库工具已经有稳定的 127.0.0.1:<port> loopback daemon；用户这次只想给现有只读运行指标加 metrics.localhost 别名。diff 只允许 Host 映射、只读 handler 和 focused tests，不改 UI、LaunchAgent、launcher、写入或公开发布。请给出最小设计、实施顺序和验收证据。",
       "expected_output": "在同一仓库复用现有 listener，增加 exact Host 到只读 metrics handler 的窄映射；把本次工作分类为 Host/handler-only，只要求 focused gateway/handler tests、diff scope 和 curl 200/421/404，不引入 full repo、launchd/lsof、双 viewport、Todo、Reader、CRUD、第二个仓库或公共 sync；若实际 diff 扩大，再补对应变更面的验收。",
       "files": [],
       "expectations": [

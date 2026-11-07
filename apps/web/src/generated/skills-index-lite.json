@@ -50,7 +50,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-11-02T00:00:00.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Agent Practice Check-up",
@@ -122,7 +122,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-21T00:00:00.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Auto Review Loop",
@@ -195,7 +195,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-09-16T15:29:58.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Ardot Connector",
@@ -369,7 +369,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-23T03:58:34.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Commit Writer",
@@ -394,7 +394,7 @@
   {
     "slug": "commit-push",
     "name": "commit-push",
-    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits to non-CNB remotes; cnb.cool remotes and CNB MR delivery go to coco-commit-push-mr. Excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
+    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits; when a host-specific delivery skill is installed for the remote (for example one that opens merge requests), defer to it. Excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
     "metadata": {
       "author": "adonis"
     },
@@ -402,7 +402,7 @@
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-02T08:07:11.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Commit & Push",
@@ -684,7 +684,7 @@
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-21T00:00:00.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Goal Contract",
@@ -825,7 +825,7 @@
       "hasReferences": false,
       "hasSrc": false
     },
-    "updatedAt": "2026-09-01T01:25:43.000Z",
+    "updatedAt": "2026-11-07T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Local Web Portal",

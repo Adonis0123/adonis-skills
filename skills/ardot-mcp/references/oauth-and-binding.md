@@ -2,13 +2,13 @@
 
 ## Defaults
 
-| Item          | Value                            |
-| ------------- | -------------------------------- |
-| Endpoint      | `https://ardot.tencent.com/mcp`  |
-| Credential id | `ardot-mcp`                      |
-| Binding id    | `ardot-mcp`                      |
-| Scope         | `mcp:use`                        |
-| Redirect URI  | `http://127.0.0.1:8788/callback` |
+| Item          | Value                                                            |
+| ------------- | ---------------------------------------------------------------- |
+| Endpoint      | `https://ardot.tencent.com/mcp`                                  |
+| Credential id | `ardot-mcp`                                                      |
+| Binding id    | `ardot-mcp`                                                      |
+| Scope         | `mcp:use`                                                        |
+| Redirect URI  | `$ARDOT_MCP_REDIRECT_URI`: loopback, port 8788, path `/callback` |
 
 Host-native Grok/Claude OAuth tokens are **not** automatically shared with UXC. Complete UXC OAuth even when the native host is already authorized.
 
@@ -22,17 +22,17 @@ zsh scripts/oauth-start.zsh
 zsh scripts/oauth-complete.zsh --session-id <session_id> --authorization-response '<callback-url>'
 ```
 
-Equivalent raw commands using the owned binary:
+Equivalent raw commands using the owned binary (run `source scripts/lib/defaults.zsh` first so `$ARDOT_MCP_REDIRECT_URI` is set):
 
 ```bash
 "$ARDOT_MCP_LINK_DIR/uxc" auth oauth start ardot-mcp \
   --endpoint https://ardot.tencent.com/mcp \
-  --redirect-uri http://127.0.0.1:8788/callback \
+  --redirect-uri "$ARDOT_MCP_REDIRECT_URI" \
   --scope mcp:use
 
 "$ARDOT_MCP_LINK_DIR/uxc" auth oauth complete ardot-mcp \
   --session-id <session_id> \
-  --authorization-response 'http://127.0.0.1:8788/callback?code=...&state=...'
+  --authorization-response '<callback-url>'
 ```
 
 Omit `--client-id` by default so UXC can attempt dynamic client registration. If the provider rejects DCR, rerun with an explicit client id from Ardot.

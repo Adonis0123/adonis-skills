@@ -4,7 +4,7 @@
 
 The full optimization objective is **not complete**. The inventory contains 22
 owned public skills and the internal `repo-skill-creator`, rather than every skill
-installed on the evaluation machine. External `coco-*` skills are excluded.
+installed on the evaluation machine. External company-internal skills are excluded.
 
 A selected 12-file implementation and regression-test batch passed 75 related
 tests. That batch can be reviewed separately. Its result does not establish that
