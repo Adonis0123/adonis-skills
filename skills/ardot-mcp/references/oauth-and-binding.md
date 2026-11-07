@@ -2,13 +2,13 @@
 
 ## Defaults
 
-| Item          | Value                                                    |
-| ------------- | -------------------------------------------------------- |
-| Endpoint      | `https://ardot.tencent.com/mcp`                          |
-| Credential id | `ardot-mcp`                                              |
-| Binding id    | `ardot-mcp`                                              |
-| Scope         | `mcp:use`                                                |
-| Redirect URI  | `http://127.0.0.1:8788/callback` <!-- gitleaks:allow --> |
+| Item          | Value                            |
+| ------------- | -------------------------------- |
+| Endpoint      | `https://ardot.tencent.com/mcp`  |
+| Credential id | `ardot-mcp`                      |
+| Binding id    | `ardot-mcp`                      |
+| Scope         | `mcp:use`                        |
+| Redirect URI  | `http://127.0.0.1:8788/callback` |
 
 Host-native Grok/Claude OAuth tokens are **not** automatically shared with UXC. Complete UXC OAuth even when the native host is already authorized.
 
@@ -27,12 +27,12 @@ Equivalent raw commands using the owned binary:
 ```bash
 "$ARDOT_MCP_LINK_DIR/uxc" auth oauth start ardot-mcp \
   --endpoint https://ardot.tencent.com/mcp \
-  --scope mcp:use \
-  --redirect-uri http://127.0.0.1:8788/callback # gitleaks:allow
+  --redirect-uri http://127.0.0.1:8788/callback \
+  --scope mcp:use
 
 "$ARDOT_MCP_LINK_DIR/uxc" auth oauth complete ardot-mcp \
   --session-id <session_id> \
-  --authorization-response 'http://127.0.0.1:8788/callback?code=...&state=...' # gitleaks:allow
+  --authorization-response 'http://127.0.0.1:8788/callback?code=...&state=...'
 ```
 
 Omit `--client-id` by default so UXC can attempt dynamic client registration. If the provider rejects DCR, rerun with an explicit client id from Ardot.
