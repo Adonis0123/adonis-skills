@@ -551,8 +551,8 @@ class Round3(TmpCase):
 
     def test_17_one_path_reducer(self):
         from audit_common import tilde
-        self.assertEqual(tilde("/Use" "rs/adonisX/app", "/Use" "rs/adonis"), "(outside ~)/app")
-        self.assertEqual(tilde("/Use" "rs/adonis/app", "/Use" "rs/adonis"), "~/app")
+        self.assertEqual(tilde("/Use" "rs/youX/app", "/Use" "rs/you"), "(outside ~)/app")
+        self.assertEqual(tilde("/Use" "rs/you/app", "/Use" "rs/you"), "~/app")
         long_ = EX.finish(dict(EX.new_row("claude", "/opt/logs/s.jsonl"), prompts=1, prompt_chars=1, cwd="/opt/app"))
         long_["tools"]["Read"] = 300
         s = json.dumps(AG.aggregate([long_]))

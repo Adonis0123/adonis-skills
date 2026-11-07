@@ -394,7 +394,7 @@
   {
     "slug": "commit-push",
     "name": "commit-push",
-    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits; when a host-specific delivery skill is installed for the remote (for example one that opens merge requests), defer to it. Excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
+    "description": "Commit or push one focused, inspected Git change set with an emoji Conventional Commit message and verified remote delivery. Use for explicit commit-and-push requests or pushing existing local commits to non-CNB remotes. cnb.cool remotes and CNB MR delivery are out of scope; hand them to a CNB-specific delivery skill, or stop and say so if none is available. Excludes PR/MR, force-push, merge, rebase, tag, release, and deploy workflows.",
     "metadata": {
       "author": "adonis"
     },
