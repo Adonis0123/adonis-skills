@@ -4,7 +4,7 @@ title: Manage costs effectively
 publisher: Anthropic
 url: https://code.claude.com/docs/en/costs
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---
@@ -32,3 +32,5 @@ finalUrl:
 - "For simple subagent tasks, specify model: haiku in your subagent configuration." (ctx-custom-subagents)
 - "/compact Focus on code samples and API usage tells Claude what to preserve during summarization." (ctx-compact-focus)
 - "Skills load on-demand only when invoked, so moving specialized instructions into skills keeps your base context smaller." (doc-skills-on-demand)
+- "You can also customize compaction behavior in your CLAUDE.md file at the root of your project" (ctx-compact-focus)
+- "Aim to keep CLAUDE.md under 200 lines by including only essentials." (doc-skills-on-demand)

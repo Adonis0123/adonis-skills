@@ -26,14 +26,14 @@ from datetime import datetime
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from safe_output import UnsafeOutput, safe_file_target  # noqa: E402
 
-from audit_common import (CHECK_TAGS, EDIT_TOOLS, LOW_SAMPLE, PRACTICES_PATH, load_rules,  # noqa: E402,F401
-                          repo_identity, tilde, worktree_root)
+from audit_common import (ASK_USER_TOOLS, CHECK_TAGS, EDIT_TOOLS, LOW_SAMPLE, PRACTICES_PATH,  # noqa: E402,F401
+                          load_rules, repo_identity, tilde, worktree_root)
 
 # Tool names (any host) that count as evidence for a concept. get_command_or_subagent_output (Grok) reads
 # the output of a shell command or a subagent, so it is not a subagent launch.
 CONCEPTS = {
     "plan_mode": {"ExitPlanMode", "EnterPlanMode", "exit_plan_mode"},
-    "ask_user": {"AskUserQuestion", "ask_user_question", "request_user_input", "request_user_input_async"},
+    "ask_user": ASK_USER_TOOLS,
     "subagent": {"Agent", "Task", "spawn_agent", "spawn_subagent"},
     "todo": {"TodoWrite", "update_plan", "todo_write", "TaskCreate", "TaskUpdate"},
     "skill": {"Skill"},
@@ -109,12 +109,33 @@ def skill_names(r: dict) -> list[str]:
     return [k[6:] for k in r["tools"] if k.startswith("Skill:")] + list(r.get("cmds") or {})
 
 
+def pre_edit_skills(r: dict) -> list[str]:
+    """Skills and slash commands seen before the session's first file edit (extract.py `pre_edit`); rows from an
+    older extract.py without that field fall back to every skill in the session."""
+    if "pre_edit" not in r:
+        return skill_names(r)
+    return [k.split(":", 1)[1] for k in r["pre_edit"] if k.startswith(("Skill:", "cmd:"))]
+
+
+def asked_before_edit(r: dict) -> bool:
+    return "ask" in r["pre_edit"] if "pre_edit" in r else has_concept(r, "ask_user")
+
+
 def planning_skill(r: dict) -> bool:
-    return any(PLANNING_SKILL.search(n) for n in skill_names(r))
+    return any(PLANNING_SKILL.search(n) for n in pre_edit_skills(r))
 
 
 def interviewed(r: dict) -> bool:
-    return has_concept(r, "ask_user") or any(w in n.lower() for n in skill_names(r) for w in INTERVIEW_WORDS)
+    """Asked the user, or ran an interview-style skill, before the first file edit."""
+    return asked_before_edit(r) or any(w in n.lower() for n in pre_edit_skills(r) for w in INTERVIEW_WORDS)
+
+
+def offloaded(r: dict) -> bool:
+    """A linked subagent transcript did read/search calls itself; where the host keeps no linked subagent
+    transcript for this session, any subagent call counts."""
+    if r.get("sub_linked"):
+        return num(r.get("sub_explore")) > 0
+    return has_concept(r, "subagent")
 
 
 def top(counter: collections.Counter, n: int) -> list:
@@ -157,6 +178,8 @@ def link_subagents(rows: list[dict]) -> None:
             parent = by_sid.get((r["host"], r["parent"]))
             if parent is not None:
                 parent["explore_all"] += num(r.get("explore"))
+                parent["sub_explore"] = num(parent.get("sub_explore")) + num(r.get("explore"))
+                parent["sub_linked"] = True
 
 
 def fresh_start(r: dict) -> bool:
@@ -199,14 +222,14 @@ def cohorts(hs: list[dict], rules: dict) -> dict:
         cx = [r for r in hs if num(r.get("edited_files")) >= pm["complex_edited_files"]
               or tool_total(r) >= pm["complex_tool_calls"]]
         out["complex"] = {"n": len(cx), "plan": count(cx, lambda r: has_concept(r, "plan_mode")),
-                          "plan_or_sub": count(cx, lambda r: has_concept(r, "plan_mode") or has_concept(r, "ask_user")
+                          "plan_or_sub": count(cx, lambda r: has_concept(r, "plan_mode") or asked_before_edit(r)
                                                or planning_skill(r)),
                           "interview": count(cx, interviewed),
                           "plan_logged": bool(hs) and hs[0]["host"] in PLAN_MODE_HOSTS}
     sub = need(rules, "ctx-subagent-offload", "wide_explore")
     if sub:
         wide = [r for r in hs if num(r.get("explore_all", r.get("explore"))) >= sub["wide_explore"]]
-        out["wide"] = {"n": len(wide), "subagent": count(wide, lambda r: has_concept(r, "subagent"))}
+        out["wide"] = {"n": len(wide), "subagent": count(wide, offloaded)}
     cl = need(rules, "ctx-clear-between-tasks", "long_tools")
     if cl:
         long_ = [r for r in hs if tool_total(r) > cl["long_tools"]]
@@ -214,6 +237,18 @@ def cohorts(hs: list[dict], rules: dict) -> dict:
                        "compact": count(long_, lambda r: r["compactions"]),
                        "corr_per100": per100(long_)}
     return out
+
+
+def idle_gaps(hs: list[dict]) -> dict:
+    """{"idle_gaps": {n, compacted, auto, sessions}} when extract.py recorded idle gaps for these rows (Claude), else
+    {}. `compacted`: the user's /compact came right before the gap; `auto`: only an auto-compaction did."""
+    rs = [r for r in hs if "idle_gaps" in r]
+    if not rs:
+        return {}
+    return {"idle_gaps": {"n": int(sum(num(r["idle_gaps"]) for r in rs)),
+                          "compacted": int(sum(num(r.get("idle_gaps_compacted")) for r in rs)),
+                          "auto": int(sum(num(r.get("idle_gaps_auto")) for r in rs)),
+                          "sessions": sum(1 for r in rs if num(r["idle_gaps"]))}}
 
 
 def num(v) -> float:
@@ -256,6 +291,9 @@ def host_summary(hs: list[dict], rules: dict) -> dict:
         "median_tool_calls": statistics.median(tt),
         "long_sessions": len(long_),
         "pct_compaction_long": pct(sum(1 for r in long_ if r["compactions"]), len(long_)),
+        # Hand-typed /compact commands and those with a focus argument (Claude <command-args>).
+        "compact_cmds": int(sum(num((r.get("cmds") or {}).get("compact")) for r in hs)),
+        "compact_focus": int(sum(num(r.get("compact_focus")) for r in hs)),
         "corrections_per100_prompts": per100(hs),
         "median_minutes": round(statistics.median(ds), 1) if ds else None,
         "pct_with_compaction": pct(has(lambda r: r["compactions"] > 0), n),
@@ -270,6 +308,7 @@ def host_summary(hs: list[dict], rules: dict) -> dict:
         "coding_sessions": len(coding),
         "pct_coding_with_check": pct(sum(1 for r in coding if any(r["tools"].get(t) for t in CHECK_TAGS)), len(coding)),
         "cohorts": co,
+        **idle_gaps(hs),
         "concepts_pct": {c: pct(has(lambda r, c=c: has_concept(r, c)), n) for c in CONCEPTS},
         "pct_session_tool_use": {k: pct(v, n) for k, v in tools.most_common(40) if not k.startswith("bash:")},
         "pct_session_bash_tags": {k[5:]: pct(v, n) for k, v in tools.most_common() if k.startswith("bash:")},

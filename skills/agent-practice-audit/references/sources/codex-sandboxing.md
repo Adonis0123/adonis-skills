@@ -4,7 +4,7 @@ title: Sandbox
 publisher: OpenAI
 url: https://learn.chatgpt.com/docs/sandboxing.md
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---

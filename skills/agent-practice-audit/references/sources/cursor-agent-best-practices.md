@@ -4,7 +4,7 @@ title: Best practices for coding with agents
 publisher: Cursor
 url: https://cursor.com/blog/agent-best-practices
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "updatedAt": "2026-10-31",
+  "updatedAt": "2026-11-11",
   "dimensions": {
     "ctx": {
       "en": "Context management",
@@ -55,8 +55,8 @@
     {
       "id": "ctx-clear-between-tasks",
       "dimension": "ctx",
-      "title": "Clear context between unrelated tasks; do not let one session run on",
-      "title_zh": "任务之间 /clear，会话不拖太长",
+      "title": "Clear context between unrelated tasks",
+      "title_zh": "无关任务之间用 /clear 清空上下文",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -80,13 +80,13 @@
           "fragment": "Keep one chat per coherent unit of work"
         }
       ],
-      "detect": "Summary: long_sessions, corrections_per100_prompts vs cohorts.long.corr_per100, cohorts.long.cleared (any new human session in the same directory, any account or host; sideby handoffs included), pct_started_by_clear. Claude session ends ignore late system lines.",
+      "detect": "Summary: long_sessions, corrections_per100_prompts vs cohorts.long.corr_per100, cohorts.long.cleared (a new human session in the same directory, any account or host, handoffs included), pct_started_by_clear.",
       "rule": {
-        "text": "Long = over 200 tool calls. Cleared = a new human session (/clear, /new, another account or host, a handoff) in the same directory within 10 min of its end. ok: <10% long, or >=20% of long sessions cleared. no: >=30% long and more corrections per prompt when long (hosts with >=10 long). Else part (heuristic)",
+        "text": "Proxy: relatedness is not logged; one long task is fine. Long = over 200 tool calls. Cleared = a new human session (/clear, /new, other account or host, handoff) in the same directory within 10 min of its end. ok: <10% long, or >=20% of long sessions cleared; part: >=30% long and more corrections per prompt when long (hosts with >=10 long); else na (heuristic)",
         "params": {
           "long_tools": 200,
           "long_ok_pct": 10,
-          "long_no_pct": 30,
+          "long_part_pct": 30,
           "clear_ok_pct": 20,
           "min_long": 10,
           "clear_gap_minutes": 10
@@ -124,10 +124,14 @@
           "fragment": "Delegate the exploration so only the findings come back"
         }
       ],
-      "detect": "Summary: cohorts.wide (reads include linked subagent transcripts so offloading sessions stay in), agent_types_calls.",
+      "detect": "Summary: cohorts.wide (reads include linked subagent transcripts), agent_types_calls.",
       "rule": {
-        "text": "Cohort: human sessions with >=30 read/search calls, counting reads in their linked subagent transcripts. ok: subagent in >=20%; part: some; no: none; na: <10 in cohort (heuristic)",
-        "params": { "wide_explore": 30, "min_cohort": 10, "ok_pct": 20 }
+        "text": "Cohort: human sessions with >=30 read/search calls, linked subagent reads included. Offloaded = a linked subagent did reads itself (any subagent call if the host links none); only its final message returns. ok: offloaded in >=20%; part: some; no: none; na: <10 in cohort (heuristic)",
+        "params": {
+          "wide_explore": 30,
+          "min_cohort": 10,
+          "ok_pct": 20
+        }
       },
       "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
@@ -143,8 +147,8 @@
     {
       "id": "ctx-custom-subagents",
       "dimension": "ctx",
-      "title": "Define custom subagents and give simple ones a cheaper model",
-      "title_zh": "自定义 subagent，简单任务用便宜模型",
+      "title": "Give simple subagents a cheaper model (model: haiku)",
+      "title_zh": "简单的 subagent 用便宜模型（model: haiku）",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -161,27 +165,26 @@
           "fragment": "For simple subagent tasks"
         }
       ],
-      "detect": "Config: claude[].custom_subagents, agents/*.md model fields; summary: agent_types_calls (all general-purpose suggests none).",
+      "detect": "Config: claude[] / claude_projects[] custom_subagents; the judge reads agents/*.md for a model field.",
       "rule": {
-        "text": "na without subagent definitions or calls; else judge agents/*.md and whether each sets a model.",
+        "text": "na without agents/*.md definitions. Else semantic (logs do not show which work is simple): ok: every simple-looking definition sets model: haiku or another smaller model; part: some; no: none; na: none looks simple.",
         "params": {}
       },
       "fix_kind": "config",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "ctx-compact-focus",
       "dimension": "ctx",
-      "title": "Tell /compact what to keep",
-      "title_zh": "/compact 时说明要保留的重点",
+      "title": "Tell /compact what to keep, or put Compact instructions in CLAUDE.md",
+      "title_zh": "/compact 时说明要保留什么，或在 CLAUDE.md 写 Compact instructions",
       "sources": [
         {
           "source": "cc-costs",
@@ -189,29 +192,38 @@
           "url": "https://code.claude.com/docs/en/costs",
           "quote": "/compact Focus on code samples and API usage tells Claude what to preserve during summarization.",
           "fragment": "tells Claude what to preserve during summarization"
+        },
+        {
+          "source": "cc-costs",
+          "page": "Claude Code costs",
+          "url": "https://code.claude.com/docs/en/costs",
+          "quote": "You can also customize compaction behavior in your CLAUDE.md file at the root of your project",
+          "fragment": "customize compaction behavior in your CLAUDE.md file"
         }
       ],
-      "detect": "Config: instruction files' compact_instructions flag (heading) and compact_notes (lines on what to keep or re-read around compaction, e.g. 压缩后先读账本); summary: long_sessions, pct_compaction_long. /compact arguments are not logged.",
+      "detect": "Summary: hosts.<h>.compact_cmds, compact_focus (/compact with arguments); config: instruction files' compact_instructions (heading), compact_notes.",
       "rule": {
-        "text": "ok: an instruction file has a 'Compact instructions' heading. Without one, among >=10 long sessions: part: compaction notes without the heading, or compaction in >=20%; no: compaction in >=50% and no notes; else na (heuristic)",
-        "params": { "min_long": 10, "part_pct": 20, "no_pct": 50 }
+        "text": "ok: a 'Compact instructions' heading, or >=50% of typed /compact commands with a focus; part: some with a focus, or compaction notes without the heading; no: >=3 typed /compact, none with a focus, no heading or notes; else na. Auto-compaction is not judged (heuristic)",
+        "params": {
+          "focus_ok_pct": 50,
+          "min_compacts": 3
+        }
       },
       "fix_kind": "config",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "safe-low-risk-preset",
       "dimension": "safe",
-      "title": "Use a lower-risk permission preset; pick reasoning effort per task",
-      "title_zh": "用低风险权限预设，effort 按任务选",
+      "title": "Keep approvals and sandboxing tight by default; give full access only as an exception",
+      "title_zh": "审批和沙箱默认收紧，全权限只作例外",
       "sources": [
         {
           "source": "codex-sandboxing",
@@ -228,24 +240,27 @@
           "fragment": "Giving Codex full permission to your computer"
         },
         {
-          "source": "codex-best-practices",
-          "page": "Codex best practices",
-          "url": "https://learn.chatgpt.com/guides/best-practices",
-          "quote": "Low for faster, well-scoped tasks",
-          "fragment": "Low for faster, well-scoped tasks"
-        },
-        {
           "source": "codex-non-interactive",
           "page": "Codex non-interactive mode",
           "url": "https://learn.chatgpt.com/docs/non-interactive-mode",
           "quote": "Use danger-full-access only in a controlled environment",
           "fragment": "only in a controlled environment"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "Keep approval and sandboxing tight by default, then loosen permissions only for trusted repos or specific workflows once the need is clear.",
+          "fragment": "Keep approval and sandboxing tight by default"
         }
       ],
-      "detect": "Summary: full_access_sessions, modes_sessions, efforts; config: codex[].approval_policy / sandbox_mode / model_reasoning_effort.",
+      "detect": "Summary: full_access_sessions, modes_sessions; config: codex[].approval_policy / sandbox_mode.",
       "rule": {
-        "text": "Full access = no approval and no sandbox in the same turn (Claude bypass, Grok yolo, Codex never + danger-full-access); today's sandbox setting is not applied to past sessions. no: >=50% of human sessions; part: some; ok: none. Reasoning effort is not judged (heuristic)",
-        "params": { "no_pct": 50 }
+        "text": "Full access = no approval and no sandbox in one turn (Claude bypass, Grok yolo, Codex never + danger-full-access); today's sandbox is not applied to past sessions. Trusted repos and controlled environments, where the pages allow it, are not logged, so: ok: <20% of human sessions; part: 20-49%; no: >=50%, full access as the default (heuristic)",
+        "params": {
+          "ok_below_pct": 20,
+          "no_pct": 50
+        }
       },
       "fix_kind": "config",
       "verifiedAt": "2026-10-31",
@@ -261,8 +276,8 @@
     {
       "id": "safe-hooks-for-musts",
       "dimension": "safe",
-      "title": "Enforce must-happen-every-time rules with hooks or deny rules",
-      "title_zh": "必须每次执行的规则用 hook 强制",
+      "title": "Make rules that must hold every time a hook, a deny rule or a managed setting",
+      "title_zh": "每次都必须执行的规则交给 hook、deny 规则或 managed setting",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -272,9 +287,9 @@
           "fragment": "If something has to happen every time"
         }
       ],
-      "detect": "Config: instruction files' must_rules and must_topics; claude[] / claude_projects[] enforcing_hook_topics (hooks whose script can return deny/block or exit 2; env variable names such as *_TOKEN are not topics), deny_topics.",
+      "detect": "Config: instruction files' must_rules, must_topics; claude[] / claude_projects[] hook_topics (every hook, by matcher and command), deny_topics. Managed settings are not scanned.",
       "rule": {
-        "text": "Topics: secrets, destructive, git_push, language. na without must-rule lines. ok: every must-rule topic has an enforcing hook (PreToolUse, PermissionRequest, UserPromptSubmit, Stop, SubagentStop, PostToolUse) or deny rule; part: some topics or other hooks only; no: none.",
+        "text": "Must-word lines (always, never, must, 必须...) stand in for 'has to happen every time'; topics (the audit's matcher): secrets, destructive, git_push, language. na without must lines. ok: every topic has a hook (any event) or deny rule; part: some, or hooks or denies on other topics; no: neither. A managed setting the user names counts.",
         "params": {}
       },
       "fix_kind": "config",
@@ -302,27 +317,29 @@
           "fragment": "Whatever the scope, keep the enforced set small"
         }
       ],
-      "detect": "Config: enforcing_hook_entries (hooks on a blocking event whose script can return permissionDecision deny, decision block or exit 2; unreadable scripts count as non-blocking) + deny_count - secret_deny_count across settings files.",
+      "detect": "Config: hook_entries + deny_count per active setup.",
       "rule": {
-        "text": "Blocking hooks + non-secret deny rules in the largest active setup (secret denies are required by safe-deny-secrets). ok: <20; part: 20-39; no: >=40 (heuristic)",
-        "params": { "ok_below": 20, "no_from": 40 }
+        "text": "Every hook entry plus every deny rule in the largest active setup. ok: <20; part: 20-39; no: >=40 (heuristic)",
+        "params": {
+          "ok_below": 20,
+          "no_from": 40
+        }
       },
       "fix_kind": "config",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "safe-deny-secrets",
       "dimension": "safe",
-      "title": "Protect secret files with deny rules",
-      "title_zh": "用 deny 规则保护密钥文件",
+      "title": "Protect .env and secret files with deny rules",
+      "title_zh": "用 deny 规则保护 .env 和密钥文件",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -332,21 +349,20 @@
           "fragment": "rules hold in every permission mode"
         }
       ],
-      "detect": "Config: settings deny_coverage (path-like rules only); weigh by bypass/auto modes in modes_sessions.",
+      "detect": "Config: settings deny_coverage (path-like rules only); modes_sessions for context.",
       "rule": {
-        "text": "Path-like deny rules only. ok: env files and credential dirs (~/.ssh, ~/.aws, cloud) both; part: one; no: neither. Worst active setup decides, among those that ran bypass/auto when any did.",
+        "text": "Path-like deny rules only. ok: .env files covered; part: only other secret paths (secrets/, key files, ~/.ssh, ~/.aws, cloud); no: none. The worst active setup decides (deny rules hold in every mode).",
         "params": {}
       },
       "fix_kind": "config",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "doc-short-instructions",
@@ -376,10 +392,13 @@
           "fragment": "stops adding files once the combined size reaches the limit"
         }
       ],
-      "detect": "Config: instruction file lines and bytes; codex[].instruction_chain_bytes_max (repository AGENTS files only; the global file does not count toward the limit) vs project_doc_max_bytes from config.toml.",
+      "detect": "Config: CLAUDE.md line counts (symlinks too); codex[].instruction_chain_bytes_max (repo AGENTS chain, root down) vs project_doc_max_bytes.",
       "rule": {
-        "text": "no: Codex's combined chain of repository AGENTS files (the global file is not counted) over project_doc_max_bytes (default 32768); part: any file over 200 lines; ok: neither.",
-        "params": { "line_target": 200, "codex_doc_bytes": 32768 }
+        "text": "part: a CLAUDE.md over 200 lines, or Codex's repository AGENTS chain over project_doc_max_bytes (default 32768 bytes = 32 KiB), where Codex stops adding files; ok: neither. No 'no': raising the cap is allowed.",
+        "params": {
+          "line_target": 200,
+          "codex_doc_bytes": 32768
+        }
       },
       "fix_kind": "config",
       "verifiedAt": "2026-10-31",
@@ -395,8 +414,8 @@
     {
       "id": "doc-test-commands",
       "dimension": "doc",
-      "title": "Put build, test and lint commands in the instruction file",
-      "title_zh": "测试 / lint 命令写进 AGENTS.md",
+      "title": "Put the commands that run your checks (build, test, lint) in the instruction file",
+      "title_zh": "把跑检查的命令（build、test、lint）写进指令文件",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -413,9 +432,9 @@
           "fragment": "Build, test, and lint commands"
         }
       ],
-      "detect": "Config: repo_instructions[].mentions_test / mentions_lint (real commands: pnpm test, pytest, eslint, ruff, pnpm check...), grouped by repo_instructions[].repo: AGENTS.md / CLAUDE.md at the root or in subdirectories (node_modules, .git and build dirs skipped), any file counts; global files exempt.",
+      "detect": "Config: repo_instructions[].mentions_test / mentions_build / mentions_lint (real commands), grouped by repo (root and subdirectory AGENTS.md / CLAUDE.md; global files exempt).",
       "rule": {
-        "text": "Per repository: ok: all name a test and a lint/typecheck command; no: none names a test command; else part.",
+        "text": "Per repository. Check command = test, build, lint or typecheck (Claude: the command for whatever check exists; Codex lists build, test, lint). ok: every repository names one; part: some; no: none. Missing build/test/lint is listed, not scored.",
         "params": {}
       },
       "fix_kind": "config",
@@ -448,6 +467,13 @@
           "url": "https://cursor.com/blog/agent-best-practices",
           "quote": "Start simple. Add rules only when you notice the agent making the same mistake repeatedly.",
           "fragment": "Add rules only when you notice the agent making the same mistake repeatedly"
+        },
+        {
+          "source": "cc-art-sdlc-playbook",
+          "page": "The AI-native SDLC playbook",
+          "url": "https://claude.com/resources/articles/the-ai-native-sdlc-playbook",
+          "quote": "When Claude makes a mistake twice, the correction goes into CLAUDE.md.",
+          "fragment": "the correction goes into CLAUDE.md"
         }
       ],
       "detect": "Instruction files show rule maintenance (recent edits, rules tied to observed failures, an eval or review loop); compare correction_categories counts. Judge from evidence; na if nothing can be seen.",
@@ -456,15 +482,14 @@
         "params": {}
       },
       "fix_kind": "habit",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "doc-skills-on-demand",
@@ -478,15 +503,20 @@
           "url": "https://code.claude.com/docs/en/costs",
           "quote": "Skills load on-demand only when invoked, so moving specialized instructions into skills keeps your base context smaller.",
           "fragment": "load on-demand only when invoked"
+        },
+        {
+          "source": "cc-costs",
+          "page": "Claude Code costs",
+          "url": "https://code.claude.com/docs/en/costs",
+          "quote": "Aim to keep CLAUDE.md under 200 lines by including only essentials.",
+          "fragment": "Aim to keep CLAUDE.md under 200 lines"
         }
       ],
-      "detect": "Config: claude[].skills count and over_500_lines; summary: concepts_pct.skill, top_skills.",
+      "detect": "Config: skill counts (active Claude roots, other_skills), CLAUDE.md lines; summary: concepts_pct.skill (context).",
       "rule": {
-        "text": "Skills = Claude skills of active roots + ~/.codex/skills + ~/.agents/skills. ok: skills used in >=10% of human sessions; part: installed but used less, or none while a file exceeds 200 lines; na otherwise. Skills over 500 lines are noted (heuristic)",
+        "text": "Proxy: moving is not logged. Skills = Claude skills of active roots + ~/.codex/skills + ~/.agents/skills. part: a CLAUDE.md over 200 lines; ok: skills and every CLAUDE.md within 200 lines; na: neither skills nor a long CLAUDE.md.",
         "params": {
-          "line_target": 200,
-          "skill_long_lines": 500,
-          "use_ok_pct": 10
+          "line_target": 200
         }
       },
       "fix_kind": "config",
@@ -503,8 +533,8 @@
     {
       "id": "plan-mode-first",
       "dimension": "plan",
-      "title": "Use plan mode before complex changes",
-      "title_zh": "复杂改动先用 plan 模式",
+      "title": "Plan before coding on complex tasks",
+      "title_zh": "复杂任务先规划再写代码（plan 模式）",
       "sources": [
         {
           "source": "cc-common-workflows",
@@ -526,11 +556,18 @@
           "url": "https://cursor.com/blog/agent-best-practices",
           "quote": "The most impactful change you can make is planning before coding.",
           "fragment": "The most impactful change you can make is planning before coding"
+        },
+        {
+          "source": "codex-best-practices",
+          "page": "Codex best practices",
+          "url": "https://learn.chatgpt.com/guides/best-practices",
+          "quote": "If the task is complex, ambiguous, or hard to describe well, ask Codex to plan before it starts coding.",
+          "fragment": "ask Codex to plan before it starts coding"
         }
       ],
-      "detect": "Summary: cohorts.complex (plan = plan mode; plan_or_sub adds ask-user and planning skills).",
+      "detect": "Summary: cohorts.complex (plan = plan mode; plan_or_sub adds a planning skill or ask-user before the first edit).",
       "rule": {
-        "text": "Cohort: complex = >=5 files edited or >=100 tool calls (>=10 per group). Plan-logging hosts (Claude): ok: plan mode >=25%; part: plan or substitute >=10%; else no. Other hosts: substitutes >=25% ok, >=10% part, else na. Session-weighted (heuristic)",
+        "text": "Cohort (proxy for complex tasks): >=5 files edited or >=100 tool calls (>=10 per group). Claude (logs plan mode): ok: plan mode >=25%; part: plan or substitute >=10%; else no. Other hosts: substitutes >=25% ok, >=10% part, else na. Session-weighted (heuristic)",
         "params": {
           "complex_edited_files": 5,
           "complex_tool_calls": 100,
@@ -553,8 +590,8 @@
     {
       "id": "plan-interview",
       "dimension": "plan",
-      "title": "Let the agent interview you when the request is vague",
-      "title_zh": "需求模糊时让 agent 先访谈你",
+      "title": "Ask the agent to interview you when you don't know exactly what you want yet",
+      "title_zh": "还没想清楚要什么时，让 agent 先访谈你",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -564,21 +601,23 @@
           "fragment": "Ask Claude to interview you instead"
         }
       ],
-      "detect": "Summary: cohorts.complex.interview (ask-user or an interview-style skill).",
+      "detect": "Summary: cohorts.complex.interview (ask-user or a grill/interview/brainstorm skill before the first edit).",
       "rule": {
-        "text": "Option for vague requests. Cohort: complex sessions (>=5 files or >=100 tool calls). ok: interview in >=10%; below that na (no evidence either way); na: <10 in cohort (heuristic)",
-        "params": { "min_cohort": 10, "ok_pct": 10 }
+        "text": "Option when you don't know what you want, which logs cannot see; complex sessions (>=5 files or >=100 tool calls) are the proxy. ok: interview in >=10%; below that na (no evidence either way); na: <10 in cohort (heuristic)",
+        "params": {
+          "min_cohort": 10,
+          "ok_pct": 10
+        }
       },
       "fix_kind": "habit",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "plan-done-when",
@@ -600,21 +639,20 @@
         "params": {}
       },
       "fix_kind": "habit",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "verify-runnable-checks",
       "dimension": "verify",
-      "title": "Give the agent runnable checks and ask for evidence",
-      "title_zh": "给 agent 能跑的验证，并要证据",
+      "title": "Have the agent run pass/fail checks, with the output as evidence",
+      "title_zh": "让 agent 跑能判定通过与否的检查，并留下输出作证据",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -647,8 +685,11 @@
       ],
       "detect": "Summary: pct_coding_with_check, pct_session_bash_tags, correction_categories.not_verified.",
       "rule": {
-        "text": "Coding = edits or commits; check = test/lint/typecheck at command position, or a screenshot. ok: >=50% of coding sessions; part: 20-49%; no: <20% (heuristic)",
-        "params": { "ok_pct": 50, "part_pct": 20 }
+        "text": "Coding = edits or commits; check = test/lint/typecheck at command position, or a screenshot; its command and output stay in the transcript as evidence (pass or fail is not judged). ok: >=50% of coding sessions; part: 20-49%; no: <20% (heuristic)",
+        "params": {
+          "ok_pct": 50,
+          "part_pct": 20
+        }
       },
       "fix_kind": "habit",
       "verifiedAt": "2026-10-31",
@@ -681,21 +722,20 @@
         "params": {}
       },
       "fix_kind": "habit",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
-      },
-      "needs-consensus": true
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     },
     {
       "id": "auto-worktrees",
       "dimension": "auto",
-      "title": "Isolate parallel work in separate git worktrees",
-      "title_zh": "并行工作用 git worktree 隔离",
+      "title": "Give each parallel piece of work its own checkout (git worktree)",
+      "title_zh": "并行工作各用独立 checkout（git worktree）",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -714,7 +754,7 @@
       ],
       "detect": "Summary: parallel (sessions, isolated, with_worktree, separate_clone): overlapping sessions that both edited files, grouped by git remote so clones of one repository meet; a worktree or another clone counts as isolated; cwd_top folds worktree dirs into their repo.",
       "rule": {
-        "text": "Cohort: human sessions that edited files while another did in the same repo or another clone of it, overlapping >=5 min (sessions over 12 h ignored). ok: worktree or separate clone in >=50%; part: some; no: none; na: <10 in cohort (heuristic)",
+        "text": "Cohort: human sessions that edited files while another did in the same repo or a clone of it, overlapping >=5 min (sessions over 12 h ignored); same files not required. ok: worktree or separate clone in >=50%; part: some; no: none; na: <10 in cohort (heuristic)",
         "params": {
           "max_span_hours": 12,
           "min_cohort": 10,
@@ -736,8 +776,8 @@
     {
       "id": "auto-headless",
       "dimension": "auto",
-      "title": "Run repeatable automation headless",
-      "title_zh": "自动化任务用 headless 模式",
+      "title": "Run Claude non-interactively for CI, hooks and batch jobs",
+      "title_zh": "CI、git hook 和批处理用非交互（headless）模式跑",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -754,10 +794,13 @@
           "fragment": "Run Claude non-interactively for CI"
         }
       ],
-      "detect": "Summary: headless (sessions, self_audit, repeated), human_repeated; config: schedulers.",
+      "detect": "Summary: headless (sessions, self_audit, scheduled), human_repeated; config: schedulers.",
       "rule": {
-        "text": "Repeated = a first-prompt shape seen >=3 times. ok: >=10 repeated headless sessions (own verifier excluded) or a scheduled headless job; part: less than hand-typed repeats; no: >=10 hand-typed repeats, no headless; na: no repeats (heuristic)",
-        "params": { "repeat_min": 3, "min_repeat_sessions": 10 }
+        "text": "Headless = claude -p / codex exec / SDK sessions, own runs excluded. ok: any, or a scheduled headless job; else na (the pages describe use, not a duty). >=10 hand-typed sessions repeating a first-prompt shape >=3 times are listed as script candidates (heuristic)",
+        "params": {
+          "repeat_min": 3,
+          "min_repeat_sessions": 10
+        }
       },
       "fix_kind": "config",
       "verifiedAt": "2026-10-31",
@@ -773,8 +816,8 @@
     {
       "id": "auto-headless-limits",
       "dimension": "auto",
-      "title": "Cap headless runs with a turn or budget limit",
-      "title_zh": "无头运行设轮数或花费上限",
+      "title": "Give unattended runs a stop: --max-turns, --max-budget-usd or a spend limit",
+      "title_zh": "无人值守运行设停止条件：轮数上限、花费上限或 spend limit",
       "sources": [
         {
           "source": "cc-best-practices",
@@ -784,21 +827,68 @@
           "fragment": "What stops it?"
         }
       ],
-      "detect": "Config: schedulers.with_limits; else wrapper scripts and scheduled jobs pass --max-turns / --max-budget-usd. na without headless sessions.",
+      "detect": "Config: schedulers and with_limits (--max-turns / --max-budget-usd in the job or its script). Spend limits are not visible locally.",
       "rule": {
-        "text": "na without headless sessions. Scheduled jobs: ok: all pass --max-turns / --max-budget-usd; part: some; no: none.",
+        "text": "Unattended = scheduled headless jobs. na without them. ok: every job passes --max-turns or --max-budget-usd, or a spend limit the user names covers them; part: some; no: none.",
         "params": {}
       },
       "fix_kind": "config",
-      "verifiedAt": "2026-10-31",
+      "verifiedAt": "2026-11-11",
       "basis": "live",
       "consensus": {
-        "verifiers": ["claude (manual quote check)"],
-        "agree": 1,
-        "total": 1,
-        "checkedAt": "2026-10-31"
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
+    },
+    {
+      "id": "ctx-compact-before-break",
+      "dimension": "ctx",
+      "title": "Compact before stepping away, while the prompt cache is warm",
+      "title_zh": "离开前先 /compact，趁 prompt cache 还没过期",
+      "sources": [
+        {
+          "source": "cc-art-maximizing-sessions",
+          "page": "Maximizing the value of your Claude Code sessions",
+          "url": "https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions",
+          "quote": "/compact before you take a break from your keyboard.",
+          "fragment": "before you take a break from your keyboard"
+        },
+        {
+          "source": "cc-art-maximizing-sessions",
+          "page": "Maximizing the value of your Claude Code sessions",
+          "url": "https://claude.com/resources/articles/maximizing-the-value-of-your-claude-code-sessions",
+          "quote": "the cache expires after an hour on a subscription or five minutes on an API key",
+          "fragment": "the cache expires after an hour"
+        },
+        {
+          "source": "cc-art-opus-5-5-context",
+          "page": "Coding sessions are longer and use more context. Claude Opus 5.5 is built with that in mind.",
+          "url": "https://claude.com/resources/articles/claude-opus-5-5-built-for-coding-sessions-that-use-more-context",
+          "quote": "Compact before you step away rather than after",
+          "fragment": "Compact before you step away"
+        }
+      ],
+      "detect": "Session logs (needs extract support): idle gaps inside one human Claude session (including a later --resume into the same transcript) of >=60 min between the last assistant entry and the next user prompt; whether a /compact or compaction boundary came right before the gap. Billing type is not logged, so the subscription hour is used.",
+      "rule": {
+        "text": "Gap = >=60 min idle inside a human Claude session before more work. ok: >=50% of gaps preceded by /compact; part: 10-49%; no: <10%; na: <10 gaps (heuristic)",
+        "params": {
+          "gap_minutes": 60,
+          "ok_pct": 50,
+          "part_pct": 10,
+          "min_gaps": 10
+        }
       },
-      "needs-consensus": true
+      "fix_kind": "habit",
+      "verifiedAt": "2026-11-11",
+      "basis": "live",
+      "consensus": {
+        "verifiers": ["codex", "grok"],
+        "agree": 2,
+        "total": 2,
+        "checkedAt": "2026-11-11"
+      }
     }
   ],
   "pending": []

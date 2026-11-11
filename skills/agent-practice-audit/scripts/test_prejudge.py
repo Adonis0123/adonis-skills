@@ -98,17 +98,17 @@ class Thresholds(unittest.TestCase):
         doc = run(config_=config(claude=[root, dict(root, root="~/.claude" "-2")]))
         self.assertEqual(status(doc, "safe-small-enforced-set"), "part")
         self.assertEqual(item(doc, "safe-small-enforced-set")["metrics"]["setups"],
-                         [{"roots": 2, "enforcing": 15, "deny": 6, "secret_deny": 0, "enforced": 21}])
+                         [{"roots": 2, "hooks": 15, "deny": 6, "enforced": 21}])
 
-    def test_only_blocking_hooks_count_toward_the_set(self):
-        s = dict(settings(30, 5), enforcing_hook_entries=10)  # 20 SessionStart/Notification-type hooks
+    def test_every_hook_counts_toward_the_set(self):
+        s = dict(settings(30, 5), enforcing_hook_entries=10)  # 20 SessionStart/Notification-type hooks count too
         doc = run(config_=config(claude=[{"root": "~/.claude", "settings.json": s}]))
-        self.assertEqual(status(doc, "safe-small-enforced-set"), "ok")  # 10 + 5 = 15
+        self.assertEqual(status(doc, "safe-small-enforced-set"), "part")  # 30 + 5 = 35
 
-    def test_secret_denies_do_not_count_against_the_set(self):
+    def test_secret_denies_count_toward_the_set(self):
         s = dict(settings(15, 10), secret_deny_count=6)
         doc = run(config_=config(claude=[{"root": "~/.claude", "settings.json": s}]))
-        self.assertEqual(status(doc, "safe-small-enforced-set"), "ok")  # 15 hooks + 4 non-secret denies = 19
+        self.assertEqual(status(doc, "safe-small-enforced-set"), "part")  # 15 hooks + 10 denies = 25
 
     def test_doc_short_instructions(self):
         small = ifile("~/repo/AGENTS.md")
@@ -117,14 +117,21 @@ class Thresholds(unittest.TestCase):
         big_claude_global = ifile("~/.claude/CLAUDE.md", lines=150, size=40000)
         self.assertEqual(status(run(config_=config(repos=[small])), "doc-short-instructions"), "ok")
         self.assertEqual(status(run(config_=config(repos=[small, long_claude])), "doc-short-instructions"), "part")
-        self.assertEqual(status(run(config_=config(repos=[big_agents])), "doc-short-instructions"), "no")
+        # Over Codex's cap: Codex stops adding files there and the cap may be raised, so part, never no.
+        self.assertEqual(status(run(config_=config(repos=[big_agents])), "doc-short-instructions"), "part")
+        # The 200-line target is CLAUDE.md's: a long AGENTS.md alone is not flagged.
+        long_agents = ifile("~/repo/AGENTS.md", lines=400, size=9000)
+        self.assertEqual(status(run(config_=config(repos=[long_agents])), "doc-short-instructions"), "ok")
+        linked = dict(long_agents, path="~/repo/CLAUDE.md", realpath="~/repo/AGENTS.md")  # CLAUDE.md -> AGENTS.md
+        self.assertEqual(status(run(config_=config(repos=[long_agents, linked])), "doc-short-instructions"), "part")
         # Codex does not read ~/.claude/CLAUDE.md, so its size alone is not a "no".
         self.assertEqual(status(run(config_=config(files=[big_claude_global])), "doc-short-instructions"), "ok")
         raised = config(repos=[big_agents], codex=[{"present": True, "project_doc_max_bytes": 65536}])
         self.assertEqual(status(run(config_=raised), "doc-short-instructions"), "ok")
 
     def test_deny_secrets_coverage(self):
-        for cov, want in (((), "no"), (("ssh", "aws"), "part"), (("env_files",), "part"),
+        # .env files are what the page names; other secret paths alone earn part, and ~/.ssh is not required.
+        for cov, want in (((), "no"), (("ssh", "aws"), "part"), (("key_files",), "part"), (("env_files",), "ok"),
                           (("env_files", "cloud_credentials"), "ok")):
             c = config(claude=[{"root": "~/.claude", "settings.json": settings(deny=3, cov=cov)}])
             self.assertEqual(status(run(config_=c), "safe-deny-secrets"), want, cov)
@@ -152,17 +159,26 @@ class Thresholds(unittest.TestCase):
     def test_headless_judges_repeatable_work_not_volume(self):
         st = lambda **kw: status(run(summary({"claude": host()}, **kw)), "auto-headless")  # noqa: E731
         self.assertEqual(st(headless=12, repeated=12), "ok")
-        self.assertEqual(st(headless=40, repeated=12, human_repeated=30), "part")  # more repeats typed by hand
-        self.assertEqual(st(headless=3, repeated=3), "part")
-        self.assertEqual(st(human_repeated=15), "no")
-        self.assertEqual(st(), "na")  # nothing repeatable: not applicable, not "no"
-        self.assertEqual(st(headless=200), "na")  # volume without repetition earns nothing
+        self.assertEqual(st(headless=3), "ok")  # any headless run counts: the pages describe use, not volume
+        self.assertEqual(st(), "na")
+        # Hand-typed repeats are listed as script candidates, never a "no": the pages make headless no duty.
+        self.assertEqual(st(human_repeated=15), "na")
+        self.assertIn("15 hand-typed", item(run(summary({"claude": host()}, human_repeated=15)), "auto-headless")
+                      ["draft"]["reason"])
+        own = summary({"claude": host()}, headless=4)
+        own["headless"]["self_audit"] = 4  # only this skill's own runs
+        self.assertEqual(status(run(own), "auto-headless"), "na")
         sched = config()
         sched["schedulers"] = {"launchd": 1, "cron": 0, "ci": 0, "with_limits": 1}
         self.assertEqual(status(run(summary({"claude": host()}), sched), "auto-headless"), "ok")
         self.assertEqual(status(run(summary({"claude": host()}), sched), "auto-headless-limits"), "ok")
         self.assertEqual(status(run(summary({"claude": host()})), "auto-headless-limits"), "na")
-        self.assertIsNone(item(run(summary({"claude": host()}, headless=3)), "auto-headless-limits")["draft"])
+        # Headless sessions without a scheduled job may be attended: na, not a guess.
+        self.assertEqual(status(run(summary({"claude": host()}, headless=3)), "auto-headless-limits"), "na")
+        sched["schedulers"]["with_limits"] = 0
+        d = item(run(summary({"claude": host()}), sched), "auto-headless-limits")["draft"]
+        self.assertEqual(d["status"], "no")
+        self.assertIn("spend limit is not visible", d["reason"])
 
     def test_semantic_practices_have_no_draft_but_a_note(self):
         doc = run()
@@ -202,13 +218,13 @@ class Robustness(unittest.TestCase):
         self.assertIsNone(item(doc, "plan-mode-first")["draft"])
 
     def test_no_excerpts_or_absolute_paths(self):
-        c = config(repos=[ifile("/opt/work/app/AGENTS.md", lines=300)],
+        c = config(repos=[ifile("/opt/work/app/CLAUDE.md", lines=300)],
                    claude=[{"root": "/abs/.claude", "settings.json": settings(1)}])
         text = PJ.render(run(config_=c))
         self.assertNotIn("SECRET PROMPT", text)
         self.assertNotIn("/opt/work", text)
         self.assertNotIn("/abs/", text)
-        self.assertIn("(outside ~)/AGENTS.md", text)
+        self.assertIn("(outside ~)/CLAUDE.md", text)
         json.loads(text)
 
 
@@ -222,8 +238,17 @@ def row(host_name="codex", modes=(), tools=()) -> dict:
     return EX.finish(r)
 
 
-def complex_row(tools=()) -> dict:
-    r = row("claude", tools=("Edit",) + tuple(tools))
+def complex_row(tools=(), after_edit=()) -> dict:
+    """A complex Claude session: `tools` run before its first edit, `after_edit` after it (as extract.py sees them)."""
+    r = EX.new_row("claude", "/x/s.jsonl")
+    r.update(prompts=1, prompt_chars=10)
+    call = lambda n: EX.tool_call(r, "Skill", {"skill": n[6:]}) if n.startswith("Skill:") else EX.tool_call(r, n, {})  # noqa: E731
+    for n in tools:
+        call(n)
+    EX.tool_call(r, "Edit", {"file_path": "/w/app/a.py"})
+    for n in after_edit:
+        call(n)
+    r = EX.finish(r)
     r["edited_files"] = 6
     return r
 
@@ -285,6 +310,20 @@ class ReviewRegressions(unittest.TestCase):
         self.assertEqual(status(run(AG.aggregate(rows)), "plan-interview"), "na")  # below the bar: no evidence
         rows = [complex_row(("AskUserQuestion",)) for _ in range(3)] + [complex_row() for _ in range(27)]
         self.assertEqual(status(run(AG.aggregate(rows)), "plan-interview"), "ok")
+        # A question asked only after the edits began is not an interview before the work.
+        rows = [complex_row(after_edit=("AskUserQuestion",)) for _ in range(3)] + [complex_row() for _ in range(27)]
+        self.assertEqual(status(run(AG.aggregate(rows)), "plan-interview"), "na")
+
+    def test_plan_substitutes_must_come_before_the_first_edit(self):
+        rows = [complex_row(after_edit=("Skill:writing-plans",)) for _ in range(3)] + [complex_row() for _ in range(17)]
+        self.assertEqual(status(run(AG.aggregate(rows)), "plan-mode-first"), "no")
+        rows = [complex_row(("AskUserQuestion",)) for _ in range(3)] + [complex_row() for _ in range(17)]
+        self.assertEqual(status(run(AG.aggregate(rows)), "plan-mode-first"), "part")
+        # Rows from an older extract.py (no pre_edit field) keep the session-wide reading.
+        old = [complex_row(after_edit=("Skill:writing-plans",)) for _ in range(3)] + [complex_row() for _ in range(17)]
+        for r in old:
+            r.pop("pre_edit")
+        self.assertEqual(status(run(AG.aggregate(old)), "plan-mode-first"), "part")
 
     def test_worktrees_need_parallel_work(self):
         self.assertEqual(status(run(summary({"claude": host()})), "auto-worktrees"), "na")
@@ -297,10 +336,11 @@ class ReviewRegressions(unittest.TestCase):
             return host(100, long_sessions=40, corrections_per100_prompts=corr100,
                         cohorts={"long": {"n": 40, "cleared": cleared, "compact": 0, "corr_per100": corr100_long}})
         self.assertEqual(status(run(summary({"claude": h(10, 50.0)})), "ctx-clear-between-tasks"), "ok")  # 25%
-        self.assertEqual(status(run(summary({"claude": h(1, 50.0)})), "ctx-clear-between-tasks"), "no")
+        # Long sessions are only a proxy for unrelated tasks: the worst draft is part, never no.
+        self.assertEqual(status(run(summary({"claude": h(1, 50.0)})), "ctx-clear-between-tasks"), "part")
         # 10.9 vs 10.5 corrections per 100 prompts: floats, not truncated to equal ints (item 13).
-        self.assertEqual(status(run(summary({"claude": h(1, 10.9)})), "ctx-clear-between-tasks"), "no")
-        self.assertEqual(status(run(summary({"claude": h(1, 10.5)})), "ctx-clear-between-tasks"), "part")
+        self.assertEqual(status(run(summary({"claude": h(1, 10.9)})), "ctx-clear-between-tasks"), "part")
+        self.assertEqual(status(run(summary({"claude": h(1, 10.5)})), "ctx-clear-between-tasks"), "na")
         self.assertEqual(status(run(summary({"claude": host(100, long_sessions=5)})), "ctx-clear-between-tasks"), "ok")
 
     def test_hooks_for_musts_maps_enforcement_to_must_rule_topics(self):
@@ -327,7 +367,7 @@ class ReviewRegressions(unittest.TestCase):
         small = [ifile("~/repo/AGENTS.md")]
         over = config(repos=small, codex=[{"present": True, "instruction_chain_bytes_max": 40000,
                                           "instruction_chain_repo": "~/repo"}])
-        self.assertEqual(status(run(config_=over), "doc-short-instructions"), "no")
+        self.assertEqual(status(run(config_=over), "doc-short-instructions"), "part")
         raised = config(repos=small, codex=[{"present": True, "instruction_chain_bytes_max": 40000,
                                             "project_doc_max_bytes": 65536}])
         self.assertEqual(status(run(config_=raised), "doc-short-instructions"), "ok")

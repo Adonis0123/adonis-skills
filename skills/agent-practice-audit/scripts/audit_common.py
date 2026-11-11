@@ -18,6 +18,8 @@ LOW_SAMPLE = 10  # hosts with fewer human sessions get a caveat, not a verdict
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit", "apply_patch", "write_file", "edit_file",
               "search_replace", "write", "create_file", "str_replace_based_edit_tool", "append_to_file"}
 CHECK_TAGS = ("bash:test", "bash:lint", "bash:typecheck", "bash:screenshot")
+# Tools (any host) that put a question to the user; extract.py also notes which came before the first edit.
+ASK_USER_TOOLS = {"AskUserQuestion", "ask_user_question", "request_user_input", "request_user_input_async"}
 # Runs of this skill itself (scheduled audits, refresh verifiers): never counted as the user's automation.
 OWN_RUN = re.compile(r"agent-practice-audit|\b(?:run_audit|build_report|consensus|prejudge|config_scan)\.py\b")
 

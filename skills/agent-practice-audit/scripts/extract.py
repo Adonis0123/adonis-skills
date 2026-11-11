@@ -27,8 +27,9 @@ from multiprocessing import Pool
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from safe_output import UnsafeOutput, safe_file_target  # noqa: E402
-from audit_common import (EDIT_TOOLS, OWN_RUN, checkout_root, file_checkout, main_checkout,  # noqa: E402
-                          project_identity, remote_identity, repo_identity, tilde, worktree_root)
+from audit_common import (ASK_USER_TOOLS, EDIT_TOOLS, OWN_RUN, checkout_root, file_checkout,  # noqa: E402
+                          load_rules, main_checkout, project_identity, remote_identity, repo_identity, tilde,
+                          worktree_root)
 
 HOME = os.path.expanduser("~")
 
@@ -45,6 +46,7 @@ DEFAULT_GLOBS = {
 HOSTS = tuple(DEFAULT_GLOBS)
 
 CMD = re.compile(r"<command-name>/?([\w:.-]+)</command-name>")
+CMD_ARGS = re.compile(r"<command-args>(.*?)</command-args>", re.S)
 # The innermost <user_query> block: injected reminders may mention the tag itself before the real one.
 USER_QUERY = re.compile(r"<user_query>\s*((?:(?!<user_query>).)*?)\s*</user_query>", re.S)
 COMPACT_MARKERS = ("This session is being continued", "<cb_summary>", "<conversation_history_summary>")
@@ -81,6 +83,8 @@ DONE_WHEN = re.compile(
 # A first prompt that points at a handoff brief written by the previous session (sideby: .../handoffs/<id>/...).
 HANDOFF = re.compile(r"(?:^|[\s/`'\"(])handoffs/[\w.-]+")
 SHAPE_CHARS, SHAPE_MIN = 48, 20  # first-prompt "shape": normalised first 48 chars; shorter prompts get none
+# Idle gap (minutes) for ctx-compact-before-break, read from practices.json; None leaves gaps unrecorded.
+IDLE_GAP_MINUTES = (load_rules().get("ctx-compact-before-break") or {}).get("gap_minutes")
 VERIFY_PROMPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "references", "verify-prompt.md")
 
 
@@ -250,6 +254,13 @@ def tool_call(r: dict, name: str, args) -> None:
     """Count one tool call; tag shell commands, edits, exploration, screenshots and worktrees."""
     r["tools"][name] += 1
     args = parse_args(args)
+    if name in EDIT_TOOLS:
+        r["_edit_seen"] = True
+    elif not r.get("_edit_seen"):  # what came before the first file edit: asking, skills (plan-mode-first)
+        if name in ASK_USER_TOOLS:
+            r["_pre_edit"].add("ask")
+        elif name == "Skill":
+            r["_pre_edit"].add("Skill:" + str(args.get("skill", ""))[:40])
     if name in ("Skill",):
         r["tools"]["Skill:" + str(args.get("skill", ""))[:40]] += 1
     if name in ("Agent", "Task"):
@@ -314,7 +325,7 @@ def new_row(host: str, path: str) -> dict:
                 start=None, end=None, prompts=0, prompt_chars=0, corrections=0, compactions=0, interrupts=0,
                 denials=0, tools=collections.Counter(), cmds=collections.Counter(), efforts=collections.Counter(),
                 models=collections.Counter(), modes=collections.Counter(), corr_cats=collections.Counter(),
-                explore=0, shape=None, first_done_when=False, _edited=set(), _images=set())
+                explore=0, shape=None, first_done_when=False, _edited=set(), _images=set(), _pre_edit=set())
 
 
 def add_prompt(r: dict, s: str) -> None:
@@ -350,6 +361,8 @@ def finish(r: dict) -> dict:
     edited = r.pop("_edited", ()) or ()
     r["edited_files"] = len(edited)
     r.pop("_images", None)
+    r.pop("_edit_seen", None)
+    r["pre_edit"] = sorted(r.pop("_pre_edit", ()) or ())[:20]
     cwd = r.get("cwd")
     if cwd:
         cwd = os.path.expanduser(str(cwd))
@@ -470,6 +483,13 @@ def claude(path: str) -> dict:
     r = new_row("claude", path)
     sidechain = "/subagents/" in path
     sys_ts = []
+    # Idle gaps (ctx-compact-before-break): last assistant entry -> next typed prompt, and whether a /compact
+    # or compaction boundary came after that entry with the idle time still >= the gap after it. A /compact
+    # command or a boundary not marked trigger=auto is the user's /compact; an auto boundary is counted apart.
+    gap = IDLE_GAP_MINUTES * 60 if IDLE_GAP_MINUTES else None
+    last_asst = compact_at = None
+    by_user = False
+    gaps = gaps_compacted = gaps_auto = 0
     with open(path, "rb") as f:
         for raw in f:
             if raw.startswith(b'{"type":"') and not raw.startswith((b'{"type":"user"', b'{"type":"assistant"', b'{"type":"system"')):
@@ -506,9 +526,13 @@ def claude(path: str) -> dict:
             if t == "system":
                 if d.get("subtype") in ("compact_boundary", "microcompact_boundary"):
                     r["compactions"] += 1
+                if d.get("subtype") == "compact_boundary" and last_asst is not None:
+                    compact_at = epoch(iso(d.get("timestamp"))) or compact_at
+                    by_user = by_user or (d.get("compactMetadata") or {}).get("trigger") != "auto"
                 continue
             msg = d.get("message") or {}
             if t == "assistant":
+                last_asst, compact_at, by_user = epoch(iso(d.get("timestamp"))), None, False
                 if d.get("effort"):
                     r["efforts"][d["effort"]] += 1
                 if msg.get("model") and msg["model"] != "<synthetic>":
@@ -535,10 +559,28 @@ def claude(path: str) -> dict:
             m = CMD.search(s)
             if m:
                 r["cmds"][m.group(1)] += 1
+                if not r.get("_edit_seen"):
+                    r["_pre_edit"].add("cmd:" + m.group(1)[:40])
+                if m.group(1) == "compact":
+                    a = CMD_ARGS.search(s)
+                    if a and a.group(1).strip():
+                        r["compact_focus"] = r.get("compact_focus", 0) + 1  # /compact <what to keep>
+                    if last_asst is not None:
+                        compact_at, by_user = epoch(iso(d.get("timestamp"))) or compact_at, True
                 if r["prompts"] == 0 and "started_by" not in r:
                     r["started_by"] = m.group(1)  # /clear and /new open a fresh transcript
                 continue
+            now = epoch(iso(d.get("timestamp")))
+            if gap and last_asst is not None and now is not None and now - last_asst >= gap:
+                gaps += 1
+                if compact_at is not None and now - compact_at >= gap:
+                    gaps_compacted += by_user
+                    gaps_auto += not by_user
+            last_asst = compact_at = None
+            by_user = False
             add_prompt(r, s)
+    if gap:
+        r["idle_gaps"], r["idle_gaps_compacted"], r["idle_gaps_auto"] = gaps, gaps_compacted, gaps_auto
     if r["end"] is None:  # a transcript with system lines only: their times are all there is
         for ts in sys_ts:
             stamp(r, ts)

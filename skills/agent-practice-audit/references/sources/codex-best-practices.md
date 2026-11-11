@@ -4,7 +4,7 @@ title: Best practices
 publisher: OpenAI
 url: https://learn.chatgpt.com/guides/best-practices
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---
@@ -28,11 +28,12 @@ finalUrl:
 
 - "Keep one chat per coherent unit of work." (ctx-clear-between-tasks)
 - "Giving Codex full permission to your computer before you understand the workflow" (safe-low-risk-preset)
-- "Low for faster, well-scoped tasks" (safe-low-risk-preset)
+- "Keep approval and sandboxing tight by default, then loosen permissions only for trusted repos or specific workflows once the need is clear." (safe-low-risk-preset)
 - "A short, accurate AGENTS.md is more useful than a long file full of vague rules." (doc-short-instructions)
 - "Build, test, and lint commands" (doc-test-commands)
 - "When Codex makes the same mistake twice, ask it for a retrospective and update AGENTS.md." (doc-update-on-repeat)
 - "Plan mode lets Codex gather context, ask clarifying questions, and build a stronger plan before implementation." (plan-mode-first)
+- "If the task is complex, ambiguous, or hard to describe well, ask Codex to plan before it starts coding." (plan-mode-first)
 - "Done when: What should be true before the task is complete, such as tests passing, behavior changing, or a bug no longer reproducing?" (plan-done-when)
 - "Ask it to create tests when needed, run the relevant checks, confirm the result, and review the work before you accept it." (verify-runnable-checks)
 - "Running live tasks on the same files without using Git worktrees" (auto-worktrees)

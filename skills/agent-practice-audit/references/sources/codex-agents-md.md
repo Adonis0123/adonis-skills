@@ -4,7 +4,7 @@ title: Custom instructions with AGENTS.md
 publisher: OpenAI
 url: https://learn.chatgpt.com/docs/agent-configuration/agents-md
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---

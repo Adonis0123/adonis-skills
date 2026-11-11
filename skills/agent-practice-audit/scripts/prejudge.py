@@ -30,12 +30,12 @@ from audit_common import LOW_SAMPLE, PRACTICES_PATH, rules_from, tilde  # noqa: 
 
 DEFAULT_PRACTICES = PRACTICES_PATH
 GLOBAL_DIR_PREFIXES = (".claude", ".codex", ".grok", ".gemini")
-CREDENTIAL_KEYS = ("ssh", "aws", "cloud_credentials")
+SECRET_KEYS = ("key_files", "ssh", "aws", "cloud_credentials")  # secret paths besides .env files
 CHECK_TAGS = ("test", "lint", "typecheck", "screenshot")
 # Practices drafted from session logs: with only low-sample hosts they get no verdict.
-LOG_BASED = {"ctx-clear-between-tasks", "ctx-subagent-offload", "ctx-compact-focus", "safe-low-risk-preset",
-             "plan-mode-first", "plan-interview", "verify-runnable-checks", "auto-worktrees", "auto-headless",
-             "doc-skills-on-demand"}
+LOG_BASED = {"ctx-clear-between-tasks", "ctx-subagent-offload", "ctx-compact-focus", "ctx-compact-before-break",
+             "safe-low-risk-preset", "plan-mode-first", "plan-interview", "verify-runnable-checks", "auto-worktrees",
+             "auto-headless"}
 
 
 # ---------------------------------------------------------------- helpers
@@ -186,13 +186,13 @@ def claude_setups(config: dict, key: str = "claude", active: set | None = None) 
             "skills": int(skills.get("count") or 0),
             "skills_over_500_lines": int(skills.get("over_500_lines") or 0),
         }
-        s["secret_deny"] = sum(int(f.get("secret_deny_count") or 0) for f in files)
-        s["hook_topics"] = sorted({t for f in files for t in f.get("enforcing_hook_topics") or []})
+        # Topics of every hook (a formatter after edits enforces too); older scans have blocking-hook topics only.
+        s["hook_topics"] = sorted({t for f in files for t in (f.get("hook_topics") if "hook_topics" in f
+                                                               else f.get("enforcing_hook_topics")) or []})
         s["deny_topics"] = sorted({t for f in files for t in f.get("deny_topics") or []})
         s["sandbox"] = any(f.get("sandbox_enabled") for f in files)
-        # Size of the enforced set: hooks that can block plus non-secret denies (secret denies are what
-        # safe-deny-secrets asks for, so they do not count against it).
-        s["enforced"] = s["enforcing"] + s["deny"] - s["secret_deny"]
+        # Size of the enforced set: every hook entry and every deny rule, as the page counts them.
+        s["enforced"] = s["hooks"] + s["deny"]
         gkey = json.dumps(s, sort_keys=True)
         g = groups.setdefault(gkey, dict(s, roots=0, accounts=[], example=tilde_only(r.get("root"))))
         g["roots"] += 1
@@ -219,8 +219,9 @@ def instruction_files(config: dict) -> list[dict]:
                                           else {},
                                           "compact": bool(f.get("compact_instructions")),
                                           "compact_notes": bool(f.get("compact_notes")), "codex": False,
-                                          "global": True})
+                                          "claude_md": False, "global": True})
             e["codex"] = e["codex"] or codex
+            e["claude_md"] = e["claude_md"] or name == "CLAUDE.md"  # also a CLAUDE.md symlinked to another file
             e["global"] = e["global"] and is_global
     return list(by_real.values())
 
@@ -268,9 +269,10 @@ def p_ctx_clear(ctx: Ctx):
               f"session; more corrections per prompt when long: {worse or 'none'}")
     if long_pct < r["long_ok_pct"] or (long_n and clear_pct >= r["clear_ok_pct"]):
         return m, draft("ok", reason, ctx), None
-    if long_pct >= r["long_no_pct"] and worse:
-        return m, draft("no", reason, ctx), None
-    return m, draft("part", reason, ctx), None
+    # Task relatedness is not logged: long sessions are only a proxy, so the worst draft is part.
+    if long_pct >= r["long_part_pct"] and worse:
+        return m, draft("part", reason, ctx), None
+    return m, draft("na", reason + ": long sessions may each be one task", ctx), None
 
 
 def cohort_draft(ctx: Ctx, co, min_cohort: int, what: str, empty: str):
@@ -301,39 +303,60 @@ def p_ctx_subagent(ctx: Ctx):
 
 
 def p_ctx_custom_subagents(ctx: Ctx):
-    setups, _ = claude_setups(ctx.config, active=ctx.active)
-    m = {"claude_custom_subagents": max((s["custom_subagents"] for s in setups), default=0)}
+    def defs(key: str, active: set | None = None) -> list[int]:  # agents/*.md per root, settings file or not
+        return [int(r.get("custom_subagents") or 0) for r in ctx.config.get(key) or []
+                if isinstance(r, dict) and (active is None or root_account(r) in active)]
+    m = {"claude_custom_subagents": max(defs("claude", ctx.active), default=0),
+         "project_custom_subagents": sum(defs("claude_projects"))}
     for h, v in ctx.hosts.items():
         types = pairs(v.get("agent_types_calls"))
         if types:
             m[h] = {"agent_types": safe_pairs(v.get("agent_types_calls"), 4)}
-    if not setups and not any(isinstance(m.get(h), dict) for h in ctx.hosts):
-        return m, draft("na", "no Claude settings and no subagent calls", ctx), None
-    return m, None, "model per agent is not scanned; judge from agent_types and agents/*.md"
+    if not m["claude_custom_subagents"] and not m["project_custom_subagents"]:
+        return m, draft("na", "no custom subagent definitions (agents/*.md): no definition to set a model in",
+                        ctx), None
+    return m, None, "semantic: read agents/*.md; simple ones should set model: haiku or another smaller model"
 
 
 def p_ctx_compact_focus(ctx: Ctx):
     r = ctx.p("ctx-compact-focus")
     files = [f for f in instruction_files(ctx.config) if f["compact"]]
-    m = {h: [num(v.get("long_sessions")), v.get("pct_compaction_long")] for h, v in ctx.hosts.items()}
-    m = {"long_and_compact_pct": m}
+    m = {"compact_cmds": {h: [num(v.get("compact_cmds")), num(v.get("compact_focus"))] for h, v in ctx.hosts.items()
+                          if num(v.get("compact_cmds"))}}
+    cmds = sum(num(v.get("compact_cmds")) for v in ctx.hosts.values())
+    focus = sum(num(v.get("compact_focus")) for v in ctx.hosts.values())
     if files:
         m["files"] = [f["path"] for f in files][:2]
         return m, draft("ok", f"{len(files)} instruction file(s) with Compact instructions", ctx), None
     notes = [f for f in instruction_files(ctx.config) if f.get("compact_notes")]
     if notes:
         m["notes_files"] = [f["path"] for f in notes][:2]
-    long_n = sum(num(ctx.hosts[h].get("long_sessions")) for h in ctx.main)
-    compacted = sum(num(ctx.hosts[h].get("long_sessions")) * float(num(ctx.hosts[h].get("pct_compaction_long"))) / 100
-                    for h in ctx.main)
-    share = pct(compacted, long_n)
     reason = (f"no Compact instructions heading{f'; compaction notes in {len(notes)} file(s)' if notes else ''}; "
-              f"compaction in {share}% of {long_n} long sessions")
-    if long_n < r["min_long"]:
-        return m, draft("na", reason, ctx), None
-    if notes:  # what to keep or re-read is written down, only not under the heading /compact looks for
+              f"{focus}/{cmds} hand-typed /compact commands carry a focus")
+    if cmds and pct(focus, cmds) >= r["focus_ok_pct"]:
+        return m, draft("ok", reason, ctx), None
+    if focus or notes:  # some focus given, or what to keep is written down without the heading
         return m, draft("part", reason, ctx), None
-    status = "no" if share >= r["no_pct"] else ("part" if share >= r["part_pct"] else "na")
+    if cmds >= r["min_compacts"]:
+        return m, draft("no", reason, ctx), None
+    return m, draft("na", reason + ": auto-compaction alone is not judged", ctx), None
+
+
+def p_ctx_compact_before_break(ctx: Ctx):
+    r = ctx.p("ctx-compact-before-break")
+    # [gaps, after the user's /compact, after an auto-compaction only]; the rule counts /compact.
+    m = {h: [num(g.get("n")), num(g.get("compacted")), num(g.get("auto"))] for h, v in ctx.hosts.items()
+         if isinstance(g := v.get("idle_gaps"), dict)}
+    if not m:
+        return {}, None, "summary has no idle-gap counts (Claude logs only; rerun extract.py and aggregate.py)"
+    n = sum(m[h][0] for h in m if h in ctx.main)
+    k = sum(m[h][1] for h in m if h in ctx.main)
+    auto = sum(m[h][2] for h in m if h in ctx.main)
+    reason = (f"/compact before {k}/{n} ({pct(k, n)}%) idle gaps of >= {r['gap_minutes']} min; "
+              f"auto-compaction alone before {auto}")
+    if n < r["min_gaps"]:
+        return m, draft("na", reason + f" (< {r['min_gaps']} gaps)", ctx), None
+    status = "ok" if pct(k, n) >= r["ok_pct"] else ("part" if pct(k, n) >= r["part_pct"] else "no")
     return m, draft(status, reason, ctx), None
 
 
@@ -366,8 +389,8 @@ def p_safe_low_risk(ctx: Ctx):
     m["full_access_pct"] = share
     reason = (f"{num_}/{den} ({share}%) human sessions ran full access; Claude sandbox is "
               f"{'now enabled (not applied to past sessions)' if sandbox_now else 'not enabled'}; "
-              "reasoning effort is not measured")
-    status = "no" if share >= r["no_pct"] else ("part" if num_ else "ok")
+              "trusted repos and isolated machines are not logged")
+    status = "no" if share >= r["no_pct"] else ("part" if share >= r["ok_below_pct"] else "ok")
     return m, draft(status, reason, ctx), None
 
 
@@ -401,16 +424,15 @@ def p_safe_hooks_for_musts(ctx: Ctx):
 def p_safe_small_set(ctx: Ctx):
     r = ctx.p("safe-small-enforced-set")
     setups, _ = claude_setups(ctx.config, active=ctx.active)
-    m = {"setups": [{"roots": s["roots"], "enforcing": s["enforcing"], "deny": s["deny"], "secret_deny": s["secret_deny"],
-                     "enforced": s["enforced"]} for s in setups]}
+    m = {"setups": [{"roots": s["roots"], "hooks": s["hooks"], "deny": s["deny"], "enforced": s["enforced"]}
+                    for s in setups]}
     if inactive_roots(ctx.config, ctx.active):
         m["inactive_roots"] = inactive_roots(ctx.config, ctx.active)
     if not setups:
         return m, draft("na", "no Claude settings files in active roots", ctx), None
     worst = max(setups, key=lambda s: s["enforced"])
     n = worst["enforced"]
-    reason = (f"{n} enforced rules ({worst['enforcing']} blocking hooks + {worst['deny'] - worst['secret_deny']} "
-              f"non-secret deny) in {worst['example']}")
+    reason = f"{n} enforced rules ({worst['hooks']} hooks + {worst['deny']} deny) in {worst['example']}"
     status = "ok" if n < r["ok_below"] else ("part" if n < r["no_from"] else "no")
     return m, draft(status, reason, ctx), None
 
@@ -420,34 +442,29 @@ def p_safe_deny_secrets(ctx: Ctx):
     m = {"setups": [], "roots_without_settings": no_settings}
     if inactive_roots(ctx.config, ctx.active):
         m["inactive_roots"] = inactive_roots(ctx.config, ctx.active)
-    # Only setups that actually ran without prompts (bypass/auto) are graded when any did; the others are
-    # reported. With no such session, every active setup is graded.
-    ran = [s for s in setups if any(ctx.bypass.get(a) for a in s["accounts"])]
-    graded = ran or setups
+    # Deny rules hold in every permission mode, so every active setup is graded; bypass/auto use is reported only.
     grades = []
     for s in setups:
         cov = s["deny_coverage"]
-        env, cred = bool(cov.get("env_files")), any(cov.get(k) for k in CREDENTIAL_KEYS)
+        env, other = bool(cov.get("env_files")), [k for k in SECRET_KEYS if cov.get(k)]
         m["setups"].append({"roots": s["roots"], "default_mode": s["default_mode"], "env_files": env,
-                            "credentials": [k for k in CREDENTIAL_KEYS + ("key_files",) if cov.get(k)],
-                            "bypass_sessions": sum(num(ctx.bypass.get(a)) for a in s["accounts"]),
-                            "graded": s in graded})
-        if s in graded:
-            grades.append((env + cred, s))
+                            "other_secrets": other,
+                            "bypass_sessions": sum(num(ctx.bypass.get(a)) for a in s["accounts"])})
+        grades.append((2 if env else (1 if other else 0), s))
     if not setups:
         return m, None, "no Claude settings files in active roots; check other hosts or mark na"
     score, worst = min(grades, key=lambda g: g[0])
     status = ("no", "part", "ok")[score]
-    what = {0: "neither env files nor credential dirs", 1: "only one of env files / credential dirs",
-            2: "env files and credential dirs"}[score]
-    scope = "bypass/auto setups" if ran else "active setups"
-    return m, draft(status, f"deny covers {what} in {worst['example']} (worst of {len(graded)} {scope})", ctx), None
+    what = {0: "neither .env files nor other secret paths", 1: "other secret paths but not .env files",
+            2: ".env files"}[score]
+    return m, draft(status, f"deny covers {what} in {worst['example']} (worst of {len(setups)} active setups)",
+                    ctx), None
 
 
 def p_doc_short(ctx: Ctx):
     r = ctx.p("doc-short-instructions")
     files = instruction_files(ctx.config)
-    long_ = [f for f in files if f["lines"] > r["line_target"]]
+    long_ = [f for f in files if f["claude_md"] and f["lines"] > r["line_target"]]  # the 200-line target is CLAUDE.md's
     m = {"files": len(files), "max_bytes": max((f["bytes"] for f in files), default=0),
          "max_lines": max((f["lines"] for f in files), default=0),
          "over_lines": [{"path": f["path"], "lines": f["lines"]} for f in long_][:2]}
@@ -462,7 +479,7 @@ def p_doc_short(ctx: Ctx):
         worst = max(chains, key=lambda x: x[0] - x[1])
         m["codex_chain"] = {"bytes": worst[0], "limit": worst[1], "repo": tilde_only(worst[2]) if worst[2] else None}
         if isinstance(worst[3], int):
-            m["codex_chain"]["global_bytes_not_counted"] = worst[3]
+            m["codex_chain"]["global_bytes"] = worst[3]
         chains = [c[:3] for c in chains]
         over = [c for c in chains if c[0] > c[1]]
     else:  # older config scan: per-file sizes of files Codex reads
@@ -471,12 +488,15 @@ def p_doc_short(ctx: Ctx):
         m["codex_limit_bytes"] = limit
     if not files and not chains:
         return m, draft("na", "no instruction files found", ctx), None
-    if over:
+    parts = []
+    if over:  # Codex stops adding files at the cap; raising it is allowed, so this is part, never no
         b, limit, _ = max(over, key=lambda x: x[0])
-        return m, draft("no", f"Codex instruction chain {b} bytes > {limit}", ctx), None
+        parts.append(f"Codex instruction chain {b} bytes > {limit}")
     if long_:
-        return m, draft("part", f"{len(long_)}/{len(files)} distinct files over {r['line_target']} lines", ctx), None
-    return m, draft("ok", f"all {len(files)} distinct files and the Codex chain within limits", ctx), None
+        parts.append(f"{len(long_)} CLAUDE.md file(s) over {r['line_target']} lines")
+    if parts:
+        return m, draft("part", "; ".join(parts), ctx), None
+    return m, draft("ok", f"every CLAUDE.md and the Codex chain within limits ({len(files)} distinct files)", ctx), None
 
 
 def p_doc_test_commands(ctx: Ctx):
@@ -488,23 +508,23 @@ def p_doc_test_commands(ctx: Ctx):
         d = str(f.get("repo") or os.path.dirname(str(f.get("path") or "")))
         if os.path.basename(d.rstrip("/")).startswith(GLOBAL_DIR_PREFIXES):
             continue  # a global config dir, exempt
-        r = repos.setdefault(d, {"test": False, "lint": False, "files": 0})
-        r["test"] = r["test"] or bool(f.get("mentions_test"))
-        r["lint"] = r["lint"] or bool(f.get("mentions_lint"))
+        r = repos.setdefault(d, {"build": False, "test": False, "lint": False, "files": 0})
+        for k in ("build", "test", "lint"):  # lint includes typecheck commands (config_scan RE_LINT)
+            r[k] = r[k] or bool(f.get("mentions_" + k))
         r["files"] += 1
-    both = [d for d, r in repos.items() if r["test"] and r["lint"]]
-    with_test = [d for d, r in repos.items() if r["test"]]
-    # Each repository that misses one names what it lacks, straight from the scan's mentions_* fields.
-    m = {"repos": len(repos), "with_test": len(with_test), "with_lint": sum(r["lint"] for r in repos.values()),
-         "with_both": len(both),
-         "missing": [{"repo": tilde_only(d), "lacks": [k for k in ("test", "lint") if not r[k]], "files": r["files"]}
-                     for d, r in repos.items() if d not in both][:4]}
+    kinds = ("build", "test", "lint")
+    checked = [d for d, r in repos.items() if any(r[k] for k in kinds)]
+    # Each repository names what it lacks of Codex's build / test / lint list; listed, not scored.
+    m = {"repos": len(repos), "with_check": len(checked),
+         "with": {k: sum(r[k] for r in repos.values()) for k in kinds},
+         "missing": [{"repo": tilde_only(d), "lacks": [k for k in kinds if not r[k]], "files": r["files"]}
+                     for d, r in repos.items() if not all(r[k] for k in kinds)][:4]}
     if not repos:
         return m, draft("na", "no repository instruction files among the most-used directories", ctx), None
-    reason = f"{len(both)}/{len(repos)} repositories name test and lint commands"
-    if len(both) == len(repos):
+    reason = f"{len(checked)}/{len(repos)} repositories name a build, test, lint or typecheck command"
+    if len(checked) == len(repos):
         return m, draft("ok", reason, ctx), None
-    return m, draft("part" if with_test else "no", reason, ctx), None
+    return m, draft("part" if checked else "no", reason, ctx), None
 
 
 def p_doc_update(ctx: Ctx):
@@ -523,17 +543,15 @@ def p_doc_skills(ctx: Ctx):
     long_skills = max((s["skills_over_500_lines"] for s in setups), default=0)
     m = {"skills": {"claude": claude_skills, "codex": num(other.get("codex")), "agents": num(other.get("agents"))},
          "skills_over_500_lines": long_skills}
-    m["used_pct"] = {h: concept(v, "skill") for h, v in ctx.hosts.items() if concept(v, "skill")}
-    use = ctx.weighted(lambda v: concept(v, "skill") or 0)
-    long_docs = [f for f in instruction_files(ctx.config) if f["lines"] > r["line_target"]]
-    if skills and use is not None:
-        reason = f"{skills} skills installed; used in {use}% of human sessions"
-        return m, draft("ok" if use >= r["use_ok_pct"] else "part", reason, ctx), None
-    if skills:
-        return m, None, "only low-sample hosts; skill use rate not judged"
+    m["used_pct"] = {h: concept(v, "skill") for h, v in ctx.hosts.items() if concept(v, "skill")}  # context only
+    long_docs = [f for f in instruction_files(ctx.config) if f["claude_md"] and f["lines"] > r["line_target"]]
     if long_docs:
-        return m, draft("part", f"no skills; {len(long_docs)} long instruction file(s)", ctx), None
-    return m, draft("na", "no skills and short instruction files: nothing to move", ctx), None
+        m["long_claude_md"] = [{"path": f["path"], "lines": f["lines"]} for f in long_docs][:2]
+        return m, draft("part", f"{skills} skills installed; {len(long_docs)} CLAUDE.md file(s) over "
+                                f"{r['line_target']} lines", ctx), None
+    if skills:
+        return m, draft("ok", f"{skills} skills installed; every CLAUDE.md within {r['line_target']} lines", ctx), None
+    return m, draft("na", "no skills and short CLAUDE.md files: nothing to move", ctx), None
 
 
 def p_plan_mode(ctx: Ctx):
@@ -655,17 +673,13 @@ def p_auto_headless(ctx: Ctx):
     if rep is None:
         return m, None, "summary has no repeated-shape counts; rerun aggregate.py"
     x, h = num(rep.get("sessions")), num(hum.get("sessions"))
+    own = num(head.get("sessions")) - num(head.get("self_audit"))
     m.update(headless_repeated=x, human_repeated=h)
-    lo = r["min_repeat_sessions"]
-    reason = (f"{x} headless and {h} human sessions repeat a first-prompt shape; {jobs} scheduled jobs, "
-              f"{sched} scheduled runs")
-    if jobs or sched or x >= lo:
-        return m, draft("part" if h >= lo and h > x else "ok", reason, ctx), None
-    if x:
-        return m, draft("part", reason, ctx), None
-    if h >= lo:
-        return m, draft("no", reason, ctx), None
-    return m, draft("na", reason + ": no repeatable work seen", ctx), None
+    reason = f"{own} headless sessions besides this skill's own; {jobs} scheduled jobs, {sched} scheduled runs"
+    if h >= r["min_repeat_sessions"]:  # listed as script candidates, not scored
+        reason += f"; {h} hand-typed sessions repeat a first-prompt shape"
+    # The pages say where headless runs fit, not that they are a duty: no use is na, never no.
+    return m, draft("ok" if own > 0 or jobs or sched else "na", reason, ctx), None
 
 
 def p_auto_headless_limits(ctx: Ctx):
@@ -673,12 +687,13 @@ def p_auto_headless_limits(ctx: Ctx):
     n = num(head.get("sessions")) - num(head.get("self_audit"))
     jobs, limited = schedulers(ctx)
     m = {"headless": n, "scheduled_jobs": jobs, "jobs_with_limits": limited}
-    if n <= 0 and not jobs:
-        return m, draft("na", "no headless sessions", ctx), None
-    if jobs:
-        status = "ok" if limited >= jobs else ("part" if limited else "no")
-        return m, draft(status, f"{limited}/{jobs} scheduled headless jobs pass a turn or budget limit", ctx), None
-    return m, None, "no scheduled jobs found; check wrapper scripts for --max-turns / --max-budget-usd"
+    if not jobs:  # scheduled jobs are the unattended runs the logs can see; other headless runs may be attended
+        return m, draft("na", f"no scheduled headless jobs ({n} other headless sessions)", ctx), None
+    status = "ok" if limited >= jobs else ("part" if limited else "no")
+    reason = f"{limited}/{jobs} scheduled headless jobs pass --max-turns / --max-budget-usd"
+    if status != "ok":
+        reason += "; an account spend limit is not visible locally"
+    return m, draft(status, reason, ctx), None
 
 
 PRACTICES = {
@@ -686,6 +701,7 @@ PRACTICES = {
     "ctx-subagent-offload": p_ctx_subagent,
     "ctx-custom-subagents": p_ctx_custom_subagents,
     "ctx-compact-focus": p_ctx_compact_focus,
+    "ctx-compact-before-break": p_ctx_compact_before_break,
     "safe-low-risk-preset": p_safe_low_risk,
     "safe-hooks-for-musts": p_safe_hooks_for_musts,
     "safe-small-enforced-set": p_safe_small_set,

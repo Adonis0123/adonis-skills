@@ -426,7 +426,7 @@ class H_JudgeInput(unittest.TestCase):
             self.assertTrue(p.get("detect"), p["id"])
             self.assertTrue(p.get("rule"), p["id"])
         self.assertTrue(any(p["draft"] for p in doc["practices"]))
-        self.assertLess(len(PJ.render(doc).encode("utf-8")), 12 * 1024)
+        self.assertLess(len(PJ.render(doc).encode("utf-8")), 13 * 1024)
 
 
 # ---------------------------------------------------------------- round 3 re-review items
@@ -495,10 +495,13 @@ class Round3(TmpCase):
         self.assertEqual(info["must_rules"], 1)
         self.assertEqual(set(info["must_topics"]), {"secrets", "git_push"})
 
-        def compact(pct_long):
-            h = {"sessions": 100, "long_sessions": 20, "pct_compaction_long": pct_long}
+        def compact(cmds, focus, pct_long=60.0):
+            h = {"sessions": 100, "long_sessions": 20, "pct_compaction_long": pct_long, "compact_cmds": cmds,
+                 "compact_focus": focus}
             return status_of(PJ.prejudge(summary_with({"claude": h}), {}, PRACTICES), "ctx-compact-focus")
-        self.assertEqual((compact(60.0), compact(30.0), compact(5.0)), ("no", "part", "na"))
+        # Judged on hand-typed /compact focus; auto-compaction share alone is never a verdict.
+        self.assertEqual((compact(4, 2), compact(4, 1), compact(3, 0), compact(2, 0), compact(0, 0)),
+                         ("ok", "part", "no", "na", "na"))
 
     def test_09_sandbox_setting_is_reported_not_applied_to_past_sessions(self):
         h = {"sessions": 20, "modes_sessions": [["bypassPermissions", 20]], "full_access_sessions": 20}
@@ -507,7 +510,7 @@ class Round3(TmpCase):
         doc = PJ.prejudge(summary_with({"claude": h}), plain, PRACTICES)
         self.assertEqual(status_of(doc, "safe-low-risk-preset"), "no")
         reason = next(p for p in doc["practices"] if p["id"] == "safe-low-risk-preset")["draft"]["reason"]
-        self.assertIn("reasoning effort is not measured", reason)
+        self.assertIn("trusted repos and isolated machines are not logged", reason)
         doc = PJ.prejudge(summary_with({"claude": h}), boxed, PRACTICES)
         self.assertEqual(status_of(doc, "safe-low-risk-preset"), "no")
         reason = next(p for p in doc["practices"] if p["id"] == "safe-low-risk-preset")["draft"]["reason"]
@@ -633,7 +636,12 @@ class Round4(TmpCase):
     def test_13_skill_use_needs_the_rate_bar(self):
         cfg = {"claude": [{"root": "~/.claude", "settings.json": {}, "skills": {"count": 20}}]}
         low = {"sessions": 100, "concepts_pct": {"skill": 2.0}}
+        # Usage rate is context only: skills plus short CLAUDE.md files is ok, a long CLAUDE.md is part.
+        self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": low}), cfg, PRACTICES), "doc-skills-on-demand"), "ok")
+        cfg["repo_instructions"] = [{"path": "~/repo/CLAUDE.md", "lines": 260}]
         self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": low}), cfg, PRACTICES), "doc-skills-on-demand"), "part")
+        cfg = {"repo_instructions": [{"path": "~/repo/AGENTS.md", "lines": 260}]}
+        self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": low}), cfg, PRACTICES), "doc-skills-on-demand"), "na")
         wide = {"sessions": 100, "cohorts": {"wide": {"n": 40, "subagent": 1}}}
         self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": wide}), {}, PRACTICES), "ctx-subagent-offload"), "part")
 
@@ -646,15 +654,19 @@ class Round4(TmpCase):
         few = {"sessions": 50, "coding_sessions": 4, "pct_coding_with_check": 0.0}
         self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": few}), {}, PRACTICES), "verify-runnable-checks"), "na")
 
-    def test_15_deny_secrets_grades_setups_that_ran_bypass(self):
+    def test_15_deny_secrets_grades_every_active_setup(self):
         cov_none = {"deny_count": 0, "deny_coverage": {}}
         cov_full = {"deny_count": 2, "deny_coverage": {"env_files": True, "ssh": True}}
         cfg = {"claude": [{"root": "~/.claude", "settings.json": cov_full},
                           {"root": "~/.claude" "-2", "settings.json": cov_none}]}
         h = {"sessions": 100, "accounts": [[".claude", 60], [".claude-2", 40]], "bypass_by_account": {".claude": 30}}
+        # Deny rules hold in every mode: the worst active setup decides, whichever ran bypass/auto.
+        doc = PJ.prejudge(summary_with({"claude": h}), cfg, PRACTICES)
+        self.assertEqual(status_of(doc, "safe-deny-secrets"), "no")
+        setups = next(p for p in doc["practices"] if p["id"] == "safe-deny-secrets")["metrics"]["setups"]
+        self.assertEqual(sorted(s["bypass_sessions"] for s in setups), [0, 30])  # reported, not used to pick
+        h["accounts"] = [[".claude", 100]]
         self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": h}), cfg, PRACTICES), "safe-deny-secrets"), "ok")
-        h["bypass_by_account"] = {".claude-2": 5}
-        self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": h}), cfg, PRACTICES), "safe-deny-secrets"), "no")
 
     def test_16_session_rows_reduce_outside_paths(self):
         r = EX.claude(write_jsonl(self.tmp / "s.jsonl", claude_session(cwd="/opt/secret-project/app")))
@@ -834,7 +846,7 @@ class Round5(TmpCase):
         item = next(p for p in PJ.prejudge(summary_with({"claude": {"sessions": 100}}), cfg, PRACTICES)["practices"]
                     if p["id"] == "doc-short-instructions")
         self.assertEqual(item["metrics"]["codex_chain"], {"bytes": 30000, "limit": 40000, "repo": "~/repo",
-                                                          "global_bytes_not_counted": 20000})
+                                                          "global_bytes": 20000})
         self.assertNotEqual(item["draft"]["status"], "no")
 
     # 6. Blocking hooks are judged by what their scripts can return.
@@ -867,7 +879,7 @@ class Round5(TmpCase):
         self.assertNotIn("guard.py", json.dumps(cfg))  # command text is never reported
         doc = PJ.prejudge(summary_with({"claude": {"sessions": 100, "accounts": [[".claude", 100]]}}), cfg, PRACTICES)
         item = next(p for p in doc["practices"] if p["id"] == "safe-small-enforced-set")
-        self.assertEqual(item["metrics"]["setups"][0]["enforcing"], 3)
+        self.assertEqual(item["metrics"]["setups"][0]["hooks"], 7)  # the enforced set counts every hook
         # A token variable in a blocking hook does not make it a secrets hook; a real secrets matcher does.
         self.assertEqual(CS.hook_counts({"PreToolUse": [{"matcher": "Read", "hooks": [
             {"type": "command", "command": 'GITHUB_TOKEN=x sh -c "exit 2"'}]}]})[3], [])
@@ -894,8 +906,9 @@ class Round5(TmpCase):
         self.assertEqual({f["repo"] for f in cfg["repo_instructions"]}, {"~/sideby", "~/tools"})
         item = next(p for p in PJ.prejudge(summary_with({"claude": {"sessions": 100}}), cfg, PRACTICES)["practices"]
                     if p["id"] == "doc-test-commands")
-        self.assertEqual((item["metrics"]["repos"], item["metrics"]["with_both"]), (2, 1))
-        self.assertEqual(item["metrics"]["missing"], [{"repo": "~/tools", "lacks": ["lint"], "files": 1}])
+        self.assertEqual((item["metrics"]["repos"], item["metrics"]["with_check"]), (2, 2))
+        self.assertEqual(item["metrics"]["missing"], [{"repo": "~/sideby", "lacks": ["build"], "files": 3},
+                                                      {"repo": "~/tools", "lacks": ["build", "lint"], "files": 1}])
         # Subdirectory files feed only this practice: line counts and must-rules still read root files.
         self.assertEqual([f["path"] for f in PJ.instruction_files(cfg)],
                          ["~/sideby/AGENTS.md", "~/sideby/CLAUDE.md", "~/tools/AGENTS.md"])
@@ -924,11 +937,160 @@ class Round5(TmpCase):
             f.write_text(text + "\n")
             info = CS.instruction_file(str(f))
             self.assertEqual(info["compact_notes"] or info["compact_instructions"], want, text)
-        h = {"sessions": 100, "long_sessions": 20, "pct_compaction_long": 60.0}
+        h = {"sessions": 100, "long_sessions": 20, "pct_compaction_long": 60.0, "compact_cmds": 5, "compact_focus": 0}
         cfg = {"global_instructions": [{"path": "~/.claude/AGENTS.md", "compact_notes": True}]}
         doc = PJ.prejudge(summary_with({"claude": h}), cfg, PRACTICES)
         self.assertEqual(status_of(doc, "ctx-compact-focus"), "part")
         self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": h}), {}, PRACTICES), "ctx-compact-focus"), "no")
+
+
+
+# ---------------------------------------------------------------- round 6: 2026-11-11 refresh (rule fidelity)
+
+def prompt_at(ts, text="go on"):
+    return claude_entry("user", ts, message={"role": "user", "content": text})
+
+
+def reply_at(ts):
+    return claude_entry("assistant", ts, message={"model": "m", "content": [{"type": "text", "text": "done"}]})
+
+
+def compact_cmd_at(ts, args=""):
+    return claude_entry("user", ts, message={"content": "<command-name>/compact</command-name>\n"
+                                                        f"<command-message>compact</command-message>\n<command-args>{args}</command-args>"})
+
+
+class Round6(TmpCase):
+    def gaps(self, rows, auto=False) -> tuple:
+        r = EX.claude(write_jsonl(self.tmp / "g.jsonl", rows))
+        return (r["idle_gaps"], r["idle_gaps_compacted"]) + ((r["idle_gaps_auto"],) if auto else ())
+
+    def test_01_idle_gaps_and_compact_before_the_break(self):
+        self.assertEqual(EX.IDLE_GAP_MINUTES, 60)  # read from practices.json, not set in code
+        base = [prompt_at("2026-10-01T10:00:00Z", "fix it"), reply_at("2026-10-01T10:05:00Z")]
+        # 59 minutes idle is not a gap; 61 is.
+        self.assertEqual(self.gaps(base + [prompt_at("2026-10-01T11:04:00Z")]), (0, 0))
+        self.assertEqual(self.gaps(base + [prompt_at("2026-10-01T11:06:00Z")]), (1, 0))
+        # /compact right before stepping away counts; the idle time after it must still reach the gap.
+        before = base + [compact_cmd_at("2026-10-01T10:06:00Z"),
+                         claude_entry("system", "2026-10-01T10:06:30Z", subtype="compact_boundary"),
+                         prompt_at("2026-10-01T12:00:00Z")]
+        self.assertEqual(self.gaps(before), (1, 1))
+        # An auto-compaction at the end of the turn is counted apart: it is not the user's /compact.
+        auto = base + [claude_entry("system", "2026-10-01T10:06:30Z", subtype="compact_boundary",
+                                    compactMetadata={"trigger": "auto"}), prompt_at("2026-10-01T12:00:00Z")]
+        self.assertEqual(self.gaps(auto, auto=True), (1, 0, 1))
+        manual = base + [claude_entry("system", "2026-10-01T10:06:30Z", subtype="compact_boundary",
+                                      compactMetadata={"trigger": "manual"}), prompt_at("2026-10-01T12:00:00Z")]
+        self.assertEqual(self.gaps(manual, auto=True), (1, 1, 0))
+        # /compact typed after coming back does not count as compacting before the break.
+        after = base + [compact_cmd_at("2026-10-01T11:58:00Z"), prompt_at("2026-10-01T12:00:00Z")]
+        self.assertEqual(self.gaps(after), (1, 0))
+        # A compaction boundary inside the turn, followed by more replies, is not "before the gap".
+        mid = [prompt_at("2026-10-01T10:00:00Z"), reply_at("2026-10-01T10:01:00Z"),
+               claude_entry("system", "2026-10-01T10:02:00Z", subtype="compact_boundary"),
+               reply_at("2026-10-01T10:05:00Z"), prompt_at("2026-10-01T12:00:00Z")]
+        self.assertEqual(self.gaps(mid), (1, 0))
+        # A later --resume appends to the same transcript: its first prompt closes a gap too.
+        resumed = base + [prompt_at("2026-10-01T10:10:00Z"), reply_at("2026-10-01T10:12:00Z"),
+                          prompt_at("2026-10-03T09:00:00Z"), reply_at("2026-10-03T09:01:00Z")]
+        self.assertEqual(self.gaps(resumed), (1, 0))
+        # The end of a session with no later prompt is not a gap.
+        self.assertEqual(self.gaps(base), (0, 0))
+
+    def test_02_idle_gaps_reach_summary_and_draft(self):
+        rows = []
+        for i in range(12):
+            rs = [prompt_at("2026-10-01T10:00:00Z"), reply_at("2026-10-01T10:05:00Z")]
+            if i < 7:
+                rs.append(compact_cmd_at("2026-10-01T10:06:00Z", "keep the plan" if i < 2 else ""))
+            rs.append(prompt_at("2026-10-01T12:00:00Z"))
+            rows.append(plain(EX.claude(write_jsonl(self.tmp / f"s{i}.jsonl", rs))))
+        s = AG.aggregate(rows)
+        h = s["hosts"]["claude"]
+        self.assertEqual(h["idle_gaps"], {"n": 12, "compacted": 7, "auto": 0, "sessions": 12})
+        self.assertEqual((h["compact_cmds"], h["compact_focus"]), (7, 2))
+        doc = PJ.prejudge(s, {}, PRACTICES)
+        item = next(p for p in doc["practices"] if p["id"] == "ctx-compact-before-break")
+        self.assertEqual((item["draft"]["status"], item["metrics"]["claude"]), ("ok", [12, 7, 0]))  # 58%
+        self.assertEqual(status_of(doc, "ctx-compact-focus"), "part")  # 2/7 /compact with a focus
+
+    def test_03_compact_before_break_thresholds(self):
+        def st(n, k):
+            h = {"sessions": 100, "idle_gaps": {"n": n, "compacted": k, "auto": n - k, "sessions": n}}
+            return status_of(PJ.prejudge(summary_with({"claude": h}), {}, PRACTICES), "ctx-compact-before-break")
+        self.assertEqual((st(20, 10), st(20, 2), st(20, 1), st(9, 9)), ("ok", "part", "no", "na"))
+        doc = PJ.prejudge(summary_with({"codex": {"sessions": 100}}), {}, PRACTICES)
+        item = next(p for p in doc["practices"] if p["id"] == "ctx-compact-before-break")
+        self.assertIsNone(item["draft"])  # no host logged idle gaps: no verdict
+        self.assertIn("idle-gap", item["note"])
+
+    def test_04_pre_edit_tracking(self):
+        r = EX.new_row("claude", "/x/s.jsonl")
+        EX.tool_call(r, "AskUserQuestion", {})
+        EX.tool_call(r, "Skill", {"skill": "writing-plans"})
+        EX.tool_call(r, "Edit", {"file_path": "/w/a.py"})
+        EX.tool_call(r, "Skill", {"skill": "grilling"})
+        self.assertEqual(EX.finish(r)["pre_edit"], ["Skill:writing-plans", "ask"])
+        rows = [prompt_at("2026-10-01T10:00:00Z", "<command-name>/grill-me</command-name>"),
+                prompt_at("2026-10-01T10:01:00Z", "plan it")]
+        self.assertEqual(EX.claude(write_jsonl(self.tmp / "c.jsonl", rows))["pre_edit"], ["cmd:grill-me"])
+
+    def test_05_offloading_needs_the_subagent_to_explore(self):
+        parent = EX.claude(write_jsonl(self.tmp / "p" / "sess1.jsonl", claude_session(
+            tools=(("Agent", {}),) + tuple(("Read", {"file_path": f"/w/f{i}"}) for i in range(30)))))
+        child = EX.claude(write_jsonl(self.tmp / "p" / "sess1" / "subagents" / "agent-1.jsonl",
+                                      claude_session(tools=(("Bash", {"command": "pytest -q"}),))))
+        co = AG.aggregate([plain(parent), plain(child)])["hosts"]["claude"]["cohorts"]
+        self.assertEqual(co["wide"], {"n": 1, "subagent": 0})  # the subagent ran tests, the main session read
+        alone = AG.aggregate([plain(parent)])["hosts"]["claude"]["cohorts"]
+        self.assertEqual(alone["wide"], {"n": 1, "subagent": 1})  # no linked transcript: the call counts
+
+    def test_06_scan_build_commands_and_every_hook_topic(self):
+        f = self.tmp / "AGENTS.md"
+        f.write_text("Run `pnpm build` then `pnpm test`.\n")
+        info = CS.instruction_file(str(f))
+        self.assertEqual((info["mentions_build"], info["mentions_test"], info["mentions_lint"]), (True, True, False))
+        f.write_text("Build the docs before release.\n")
+        self.assertFalse(CS.instruction_file(str(f))["mentions_build"])
+        hooks = {"PostToolUse": [{"matcher": "Bash", "hooks": [{"type": "command", "command": "echo git push seen"}]}]}
+        out = CS.hook_counts(hooks)
+        self.assertEqual((out[2], out[3], out[5]), (0, [], ["git_push"]))  # not blocking, still a hook on the topic
+
+    def test_07_non_blocking_hooks_enforce_must_topics(self):
+        musts = [{"path": "~/repo/AGENTS.md", "must_rules": 2, "must_topics": {"git_push": 2}}]
+        s = {"hook_entries": 1, "enforcing_hook_entries": 0, "enforcing_hook_topics": [], "hook_topics": ["git_push"],
+             "deny_count": 0}
+        cfg = {"claude": [{"root": "~/.claude", "settings.json": s}], "repo_instructions": musts}
+        doc = PJ.prejudge(summary_with({"claude": {"sessions": 100}}), cfg, PRACTICES)
+        self.assertEqual(status_of(doc, "safe-hooks-for-musts"), "ok")
+
+    def test_08_custom_subagents_need_definitions(self):
+        h = {"sessions": 100, "agent_types_calls": [["Explore", 5]]}
+        cfg = {"claude": [{"root": "~/.claude", "settings.json": {}, "custom_subagents": 0}]}
+        self.assertEqual(status_of(PJ.prejudge(summary_with({"claude": h}), cfg, PRACTICES), "ctx-custom-subagents"), "na")
+        cfg["claude_projects"] = [{"root": "~/repo/.claude", "custom_subagents": 2}]  # no settings file needed
+        doc = PJ.prejudge(summary_with({"claude": h}), cfg, PRACTICES)
+        item = next(p for p in doc["practices"] if p["id"] == "ctx-custom-subagents")
+        self.assertIsNone(item["draft"])
+        self.assertEqual(item["metrics"]["project_custom_subagents"], 2)
+
+    def test_09_low_risk_share_bands(self):
+        def st(fa):
+            h = {"sessions": 100, "modes_sessions": [["bypassPermissions", fa]], "full_access_sessions": fa}
+            return status_of(PJ.prejudge(summary_with({"claude": h}), {}, PRACTICES), "safe-low-risk-preset")
+        self.assertEqual((st(0), st(19), st(20), st(49), st(50)), ("ok", "ok", "part", "part", "no"))
+
+    def test_10_doc_test_commands_accept_any_check(self):
+        repos = [{"path": "~/a/AGENTS.md", "repo": "~/a", "mentions_build": True},
+                 {"path": "~/b/AGENTS.md", "repo": "~/b", "mentions_lint": True},
+                 {"path": "~/c/AGENTS.md", "repo": "~/c"}]
+        doc = PJ.prejudge(summary_with({"claude": {"sessions": 100}}), {"repo_instructions": repos}, PRACTICES)
+        self.assertEqual(status_of(doc, "doc-test-commands"), "part")
+        doc = PJ.prejudge(summary_with({"claude": {"sessions": 100}}), {"repo_instructions": repos[:2]}, PRACTICES)
+        self.assertEqual(status_of(doc, "doc-test-commands"), "ok")
+        doc = PJ.prejudge(summary_with({"claude": {"sessions": 100}}), {"repo_instructions": repos[2:]}, PRACTICES)
+        self.assertEqual(status_of(doc, "doc-test-commands"), "no")
 
 
 if __name__ == "__main__":

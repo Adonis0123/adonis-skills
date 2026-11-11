@@ -4,7 +4,7 @@ title: Non-interactive mode
 publisher: OpenAI
 url: https://learn.chatgpt.com/docs/non-interactive-mode
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---

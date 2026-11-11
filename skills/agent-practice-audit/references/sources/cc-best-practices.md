@@ -4,7 +4,7 @@ title: Best practices for Claude Code
 publisher: Anthropic
 url: https://code.claude.com/docs/en/best-practices
 fetchedAt: 2026-10-31
-lastVerifiedAt: 2026-10-31
+lastVerifiedAt: 2026-11-11
 linkStatus: ok
 finalUrl:
 ---

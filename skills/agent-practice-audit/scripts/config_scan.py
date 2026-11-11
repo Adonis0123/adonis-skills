@@ -88,6 +88,9 @@ RE_TEST = re.compile(r"\b(?:(?:pnpm|npm|yarn|bun)(?: run)? test\b|npm t\b|pytest
 RE_LINT = re.compile(r"\b(?:(?:pnpm|npm|yarn|bun)(?: run)? (?:lint|typecheck|type-check|check)\b|eslint|ruff\b|biome (?:check|lint|ci)"
                      r"|golangci-lint|cargo clippy|tsc --noEmit|vue-tsc|mypy|pyright|make lint\b|flake8|pylint"
                      r"|shellcheck|stylelint|rubocop|swiftlint|prettier --check)", re.I)
+RE_BUILD = re.compile(r"\b(?:(?:pnpm|npm|yarn|bun)(?: run)? build\b|cargo build|go build|make build\b|mvn (?:package|install)"
+                      r"|gradlew? (?:build|assemble)|tsc -b\b|tsc --build|swift build|dotnet build|xcodebuild\b"
+                      r"|vite build|next build|python3? -m build)", re.I)
 # Lines that state a must-rule (what hooks or deny rules could enforce).
 # "do not / don't / 不要" are left out: they mark advice far more often than a rule a hook could enforce.
 RE_MUST = re.compile(r"\b(always|never|must)\b|必须|禁止|一律|不得|务必|严禁|不准", re.I)
@@ -140,6 +143,7 @@ def instruction_file(path: str) -> dict:
         "longest_line": max((len(x) for x in lines), default=0),
         "mentions_test": bool(RE_TEST.search(text)),
         "mentions_lint": bool(RE_LINT.search(text)),
+        "mentions_build": bool(RE_BUILD.search(text)),
         "must_rules": sum(1 for x in lines if RE_MUST.search(x)),
         "must_topics": {k: n for k, rx in TOPICS.items()
                         if (n := sum(1 for x in lines if RE_MUST.search(x) and rx.search(x)))},
@@ -254,21 +258,26 @@ def hook_scripts(command: str, project_dir: str | None) -> tuple[list[str], int]
     return texts, missing
 
 
-def hook_counts(hooks, project_dir: str | None = None) -> tuple[int, int, int, list[str], int]:
+def hook_counts(hooks, project_dir: str | None = None) -> tuple[int, int, int, list[str], int, list[str]]:
     """(events, hook entries, blocking entries, topics those blocking hooks cover judging by their matcher
-    and command, commands whose scripts could not be read). A blocking entry is a hook on an event that can
+    and command, commands whose scripts could not be read, topics of every hook on any event). A blocking entry
+    is a hook on an event that can
     block or gate whose inline command or named script can return deny / block / exit 2. A command that
     names script files none of which can be read counts as non-blocking and as unreadable. The command and
     script text itself is never reported."""
     if not isinstance(hooks, dict):
-        return 0, 0, 0, [], 0
+        return 0, 0, 0, [], 0, []
     entries = enforcing = unreadable = 0
-    topics = set()
+    topics, all_topics = set(), set()
     for event, groups in hooks.items():
         for g in groups if isinstance(groups, list) else []:
             hs = g.get("hooks") if isinstance(g, dict) else None
             k = len(hs) if isinstance(hs, list) else 0
             entries += k
+            for h in hs if isinstance(hs, list) else []:
+                if isinstance(h, dict):  # any hook enforces something every time, blocking or not
+                    text = ENV_NAME.sub(" ", f"{g.get('matcher') or ''} {h.get('command') or ''}")
+                    all_topics.update(tp for tp, rx in TOPICS.items() if rx.search(text))
             if event not in ENFORCING_EVENTS or not k:
                 continue
             for h in hs:
@@ -288,7 +297,7 @@ def hook_counts(hooks, project_dir: str | None = None) -> tuple[int, int, int, l
                     enforcing += 1
                     text = ENV_NAME.sub(" ", f"{g.get('matcher') or ''} {cmd}")
                     topics.update(t for t, rx in TOPICS.items() if rx.search(text))
-    return len(hooks), entries, enforcing, sorted(topics), unreadable
+    return len(hooks), entries, enforcing, sorted(topics), unreadable, sorted(all_topics)
 
 
 def secret_rule(r) -> bool:
@@ -340,13 +349,14 @@ def claude_settings(root: str, project_dir: str | None = None) -> dict:
             continue
         perms = as_dict(s.get("permissions"))
         deny = as_list(perms.get("deny"))
-        events, entries, enforcing, hook_topics, unreadable = hook_counts(s.get("hooks"), project_dir)
+        events, entries, enforcing, hook_topics, unreadable, all_topics = hook_counts(s.get("hooks"), project_dir)
         sandbox = as_dict(s.get("sandbox"))
         out[name] = {
             "hook_events": events,
             "hook_entries": entries,
             "enforcing_hook_entries": enforcing,
             "enforcing_hook_topics": hook_topics,
+            "hook_topics": all_topics,
             "unreadable_hook_commands": unreadable,
             "deny_count": len(deny),
             "secret_deny_count": sum(1 for r in deny if secret_rule(r)),
