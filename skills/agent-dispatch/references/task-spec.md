@@ -13,6 +13,14 @@ Repository, worktree path, the lane's short branch and base (shared base, or the
 
 The concrete result to produce, in observable terms.
 
+## Original request
+
+The user's own words for this work, quoted, or the path of the requirement file. The Coordinator's wording above is a retelling; when it disagrees with the quote, the quote wins and the Worker reports the gap under `Deviations:`.
+
+## Ruled out
+
+Approaches already tried or rejected, with the reason, and facts already checked, so the Worker does not redo them. `none` when there are none.
+
 ## Constraints
 
 Invariants, compatibility rules, repository instructions to read first (nearest AGENTS.md / CLAUDE.md), and environment entry points such as dev URLs.
