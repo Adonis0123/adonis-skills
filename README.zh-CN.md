@@ -63,6 +63,7 @@ npx skills add adonis0123/adonis-skills --list
 | **本机环境**                                                                    |                                                                                                        |
 | [`agent-practice-audit`](./skills/agent-practice-audit)                         | 用本机会话日志对照官方最佳实践给 Agent 用法打分，生成带趋势的本地报告。                                |
 | [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | 用真实日志审计 MCP server、技能和指令文件，按投入产出决定保留、收窄或移除。                            |
+| [`agent-skill-evaluation`](./skills/agent-skill-evaluation)                     | 装技能前先试用：同一个真实任务交给各候选技能，在临时目录跑完打分，再决定不装、单个试用或整包安装。     |
 | [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | 根据进程和文件证据，判断桌面端 coding agent 是在干活、闲置还是已停。                                   |
 | [`disk-tidy`](./skills/disk-tidy)                                               | 找出开发机硬盘被什么占满，把缓存和应用数据按风险分级，只清理你确认的部分。                             |
 | [`file-tidy`](./skills/file-tidy)                                               | 把桌面、下载和家目录的文件整理进带编号的 `~/Files`，移动可校验、可回滚。                               |
@@ -107,7 +108,7 @@ flowchart LR
   repo --> web["Web 目录<br/>adonis-skills.vercel.app"]
 ```
 
-- 部分技能（`dev-environment-roi-audit`、`desktop-agent-activity`）从私有源仓库导出。与本机或公司相关的细节放在 `references/local-*.md`，这些文件永不导出。
+- 部分技能（`dev-environment-roi-audit`、`desktop-agent-activity`、`agent-skill-evaluation`）从私有源仓库导出。与本机或公司相关的细节放在 `references/local-*.md`，这些文件永不导出。
 - 第三方技能只给链接，不复制进本仓库。
 - 每个技能都是 `skills/<name>/` 目录，其中 `SKILL.md` frontmatter 的 `name` 与目录名一致。
 

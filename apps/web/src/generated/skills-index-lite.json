@@ -76,6 +76,43 @@
     }
   },
   {
+    "slug": "agent-skill-evaluation",
+    "name": "agent-skill-evaluation",
+    "description": "Use when comparing or trial-testing agent skills before installing — including GitHub/skills.sh URLs, 测试一下/值不值得装, package screening, and A/B artifact runs.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": true,
+      "hasSrc": false
+    },
+    "updatedAt": "2026-11-13T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Skill Trial Before Install",
+        "zh": "装技能前先试用"
+      },
+      "group": "docs",
+      "tags": [
+        "agent-workflow",
+        "docs-and-ops"
+      ],
+      "summary": "Trial agent skills before installing: run candidates on the same real task in a temp directory, score them, then decide.",
+      "summary_zh": "装技能之前先试：同一个真实任务分别交给每个候选技能，在临时目录里跑完打分，再决定不装、单个试用还是整包安装。",
+      "use_cases": [
+        "Paste a GitHub or skills.sh link and get a verdict from a temporary trial, with nothing installed into your agent.",
+        "A/B two skills on one locked brief and compare the artifacts on effectiveness, fit and how much fixing they needed.",
+        "Screen a whole skill package against what you already have, and install only the one skill that fills a real gap."
+      ],
+      "use_cases_zh": [
+        "贴一个 GitHub 或 skills.sh 链接，在临时目录试跑后给出结论，不往你的 agent 里装任何东西。",
+        "同一份需求交给两个技能做 A/B，按完成效果、贴合度和需要返工多少来比产出。",
+        "整包技能先和你已有的逐个对照，只装真正补上空缺的那一个。"
+      ]
+    }
+  },
+  {
     "slug": "agent-symlink-init",
     "name": "agent-symlink-init",
     "description": "Initialize or migrate agent-skill symlinks in any repository. Use when a project needs `.claude/skills` linked to `.agents/skills`, `AGENTS.md` linked to `CLAUDE.md`, migration away from `.ruler`-based AI rules, or removal of legacy `sync-llm-skills` copy/sync setups. Trigger on requests about Claude/Codex skill symlinks, AGENTS/CLAUDE symlinks, `.claude/skills` setup, replacing copied skill folders with symlinks, or cleaning old ruler/sync automation.",

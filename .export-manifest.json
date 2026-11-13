@@ -4,16 +4,17 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/dotagents@c8bd1818b6846324cd87068e37221ea8aae8747f",
+      "source": "Adonis0123/dotagents@06ea7b0a3701e8a59ab6da36d9dca769888647c7",
       "dirty": false
     },
     {
-      "source": "Adonis0123/dothermes@c9ad4cc8b85503d42106619ce8862160635266ed",
+      "source": "Adonis0123/dothermes@c12bbaa0ce0c19c8dbaa9f8af847bb9bdb24a70b",
       "dirty": false
     }
   ],
   "managed": [
     "skills/agent-dispatch",
+    "skills/agent-skill-evaluation",
     "skills/desktop-agent-activity",
     "skills/dev-environment-roi-audit"
   ],
@@ -24,7 +25,7 @@
     },
     {
       "path": "skills/agent-dispatch/SKILL.md",
-      "sha256": "43da67d14405ccecbed50bcebf288e8d11728fca894c2fe3276c43cb0b0eaf7c"
+      "sha256": "b631704f372436b01e6cb58ce6710c190c6c7a4eea16172ddba449fea6182858"
     },
     {
       "path": "skills/agent-dispatch/evals/README.md",
@@ -56,7 +57,7 @@
     },
     {
       "path": "skills/agent-dispatch/evals/evals.json",
-      "sha256": "9445c2ca82c7eff015be8944788918207d0cc05dab6913916d2e133f1d41900a"
+      "sha256": "734c386d511a78b0079ae8f98f68c763c3c7e2eba9d9b6ae30b41f466cb0c7ef"
     },
     {
       "path": "skills/agent-dispatch/evals/results.md",
@@ -72,11 +73,11 @@
     },
     {
       "path": "skills/agent-dispatch/fixtures/probe-full.json",
-      "sha256": "628ba933efaf06c51ad4f72442e377d77b910508d5322589ced6f00aed6365d4"
+      "sha256": "b97176f8114a32ad3777a87f9bc03c8a5b6e464328f982f659bec1ab9bd6f3f6"
     },
     {
       "path": "skills/agent-dispatch/fixtures/probe-single.json",
-      "sha256": "eb1432f1013794efb6f502bc71e8f11a18f6b4ce06b7131a41f1f33b2ac690f4"
+      "sha256": "dc0bdb0fba00828b79392a65d54fa152142aad245de3cc768a5cd21374d45c56"
     },
     {
       "path": "skills/agent-dispatch/fixtures/run-midrun/B9.jsonl",
@@ -124,23 +125,23 @@
     },
     {
       "path": "skills/agent-dispatch/references/accounts.md",
-      "sha256": "f6bc74ad566f11a6828088f482b456c29be761a59a55dfbddd5456ae11ae9c74"
+      "sha256": "508b8020740b96a29efaf30a2cea587ccad4eb3c38831b596104e28d0a6d7034"
     },
     {
       "path": "skills/agent-dispatch/references/context-budget.md",
-      "sha256": "63d2971e0b617efd5cee9363b96a289b9d02c630c7d5afc8a9156a63b87c42be"
+      "sha256": "58e01f5867d3eab0d4f0309eee1bb303cfb684febe1d8ad4b22dd8cb4f4a4c53"
     },
     {
       "path": "skills/agent-dispatch/references/fallbacks.md",
-      "sha256": "bf432a5abbb54af0fcd12c0ea1d986195555535ea25c590a97c3802a56862f0d"
+      "sha256": "ff008c8f7b03a0dffda743f9a138d0ec2facec2e5c50bf51c5c2ed559176dff1"
     },
     {
       "path": "skills/agent-dispatch/references/launch.md",
-      "sha256": "25707e0f6b6ed2a9cc6c8bdf62727f40b6c612cd19f985d6ddfab50dd65dad7a"
+      "sha256": "84994ab5cb721a98da66bf8a102867a04db3c399ce71c64fcae1cc80006a3d09"
     },
     {
       "path": "skills/agent-dispatch/references/measure.md",
-      "sha256": "919efc08b2aece959eefb94916ddb3965a9607d3a24fd52e2b37fd16eeb23215"
+      "sha256": "d91d350523d17bcfe8880543446ab890080b7082e144e3cbb7db197baf91b6b9"
     },
     {
       "path": "skills/agent-dispatch/references/research-brief.md",
@@ -148,11 +149,11 @@
     },
     {
       "path": "skills/agent-dispatch/references/run-board.md",
-      "sha256": "80cab6c5401d412dc373dba56e3f3f28068fad644caf3316ad9c22c2e76005cc"
+      "sha256": "f3afd0bb0cdaf84bd0d870082821a8ed6ac6505d660bc6511b7159b9d174884b"
     },
     {
       "path": "skills/agent-dispatch/references/task-spec.md",
-      "sha256": "d79bb128d6be349455fa1b3a3fec6138295b4961b5d820c172d0fe9d894c2d40"
+      "sha256": "7f3f50d5efe33e7d869e317e08cdb89b72efc391862a34d2da2d99ddbaa6d384"
     },
     {
       "path": "skills/agent-dispatch/scripts/board.css",
@@ -168,11 +169,11 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/board_render.py",
-      "sha256": "66ac31546b417f45dde246377c316fbfde12840fb9361dcc74899decad949e33"
+      "sha256": "38354a66d29e4f10df25ca98bd9793208a2c7ea36718627a492eb1d9e88bcf1b"
     },
     {
       "path": "skills/agent-dispatch/scripts/dispatch_board.py",
-      "sha256": "f0885111f786c80a0ba4e4a3b97368e7f68a4e177b7050f42882a7cf08f60455"
+      "sha256": "1aa024de88d4a75df149d3564f212f5074179a696273d0967787bd11b8bd691e"
     },
     {
       "path": "skills/agent-dispatch/scripts/isolated_case.py",
@@ -180,7 +181,7 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/probe_agents.py",
-      "sha256": "30e68b78560c1fe736067221f7475d05807b265a2351d1a1babcdae2405939d4"
+      "sha256": "a66bd1b6c23dcfd41ad0ccec3b386b7b8802c5293dcbaf64007dcb7b80c877c2"
     },
     {
       "path": "skills/agent-dispatch/scripts/sideby_cli.py",
@@ -189,6 +190,10 @@
     {
       "path": "skills/agent-dispatch/scripts/sideby_sessions.py",
       "sha256": "2f423e4ee02db712a23392701b5cb6c2a1f58ff68e24ec177b4a49853b8e4708"
+    },
+    {
+      "path": "skills/agent-dispatch/scripts/test_billing_and_quota.py",
+      "sha256": "2bda8f348e64d9d03db03cb1b6ceff36c472cdb7c7c66dc7819224db85f16edc"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_board_interaction.js",
@@ -208,11 +213,11 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/test_dispatch_board.py",
-      "sha256": "cdd0dfb56f9c6b562085d3b4f6ee51a30d2e94be7391ff9ac12e3ace9851220f"
+      "sha256": "876bf333217405f4ab4e5d5d88a8f02145bf2f9e0866c8181a4c5a99833bbd05"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_harness_limits.py",
-      "sha256": "e6ffca5b0b9f9db9aef41878b8dee2f17f9caba88be4752722365c38ac82db53"
+      "sha256": "b4b6540d472c1140b6151cf58a855fbdad4a603043c4a04249f72026edd9721c"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_lane_states.py",
@@ -220,7 +225,7 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/test_probe_agents.py",
-      "sha256": "a1e6f5331eb144072ba05da55d690454d76cf35f6a7e0bb9fbbdfc765a2cf234"
+      "sha256": "77a3b01aa60cd33d193109570457e5d45d5a88613364567b67e467e52d561c99"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_review_fixes.py",
@@ -241,6 +246,70 @@
     {
       "path": "skills/agent-dispatch/scripts/vendor/markdown-it.LICENSE",
       "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/SKILL.md",
+      "sha256": "21407fb97b109a09c8ad7b790857cd1d2b8d41ca8165eacbe3a7584b4e4bb1d0"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/conceptual-multi-agent-skill-trial.md",
+      "sha256": "224d836f1fb6ba7848016988ffd1922d499ca6e8a7f5be74cd009ebba8e94c99"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/image-producing-skill-trial.md",
+      "sha256": "d2ca15eb1845a3a01a9e5835530d08a7b0f6064fc986d33e6df8eb42f046403b"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-catalog-renames.md",
+      "sha256": "0c828340a6751a4cbdf4d67fad3b765e5e0d52bf8e6b65ff64d9e55a55e80f34"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-shortlist-20260807.md",
+      "sha256": "31a9014fad142972bb36da9d9bd949c008d2325ae3bc794c6298a3281c287492"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-skills-screening.md",
+      "sha256": "00fafa4f3b72b958d155864933ea0a8f3b9e909d95bbff061d438b7eb0ca2f03"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-tdd-trial-20260807.md",
+      "sha256": "a0759a65491f15c415659779d3b71e42695a95e92bce29bfebc77e23b64e7d56"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-tdd-trial-20260908.md",
+      "sha256": "36225e5456eb17bc5f70f5bafce795ccab808f8990808432b9dc853143e29c18"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-to-prd-trial-20260807.md",
+      "sha256": "febff7260b1d4f208512bb20faa98f57c4f222fb6734e4513c0f185605590408"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/mattpocock-wayfinder-trial-20260909.md",
+      "sha256": "0bf4d0e7065e8d2dc78814bdaba77492cd9625111a41598eb929f9d9ca204154"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/output-style-skill-screening.md",
+      "sha256": "6b076f30cba0da4b6a42f685c275db7961316a0882d6bcac67534828b4824042"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/peer-review-cli.md",
+      "sha256": "a01c8d39216245ebdf1e368faed252d09d7034f093994a0696700a0c342d4410"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/single-skill-temp-trial.md",
+      "sha256": "1bc8ba5616eff6268140d13912bedd9e34274bdddedde3e3294b77803fe33e2a"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/skill-eval-harness-trial.md",
+      "sha256": "cf8bda46b0f7c5c330306813a9edc1d7552a51506057668f65d30664ec00e27a"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/tdd-process-skill-trial.md",
+      "sha256": "953db2fdaf58f1eb56f5cf1b5bf1ed166a33a1d5ed244eb8a71edcdabf8e4fb0"
+    },
+    {
+      "path": "skills/agent-skill-evaluation/references/ui-design-ab-testing.md",
+      "sha256": "eff6221ba66ed2778331a814e436c6d8f6aed02c2a7639f44dc881ade274fcf4"
     },
     {
       "path": "skills/desktop-agent-activity/SKILL.md",
