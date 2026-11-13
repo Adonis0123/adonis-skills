@@ -54,9 +54,9 @@ export function SiteFooter() {
           <div className="min-w-0">
             <SiteBrand variant="footer" brand={brand} />
             <p className="mt-3 max-w-[300px] text-sm text-muted-foreground">
-              <Trans id="siteFooter.brand.lantern">
-                Field-tested coding skills I use every day. Carried around like
-                a lantern.
+              <Trans id="siteFooter.brand.blurb">
+                Handy coding practices grown from real work, kept right within
+                reach.
               </Trans>
             </p>
           </div>

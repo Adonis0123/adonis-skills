@@ -149,7 +149,7 @@ export default async function HomePage({ params }: HomePageProps) {
                 alt={i18n._({
                   id: "home.hero.art.alt",
                   message:
-                    "Nika in a green hooded coat holding a lantern, walking with Kiki in a wizard hat",
+                    "Nika in a teal hoodie waving while walking, alongside blue little Kiki in a purple wizard hat jumping with a star wand",
                 })}
                 width={1536}
                 height={1024}

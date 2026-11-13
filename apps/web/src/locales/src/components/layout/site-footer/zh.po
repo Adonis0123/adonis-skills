@@ -49,14 +49,14 @@ msgid "siteFooter.link.allSkills"
 msgstr "全部技能"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:57
-msgid "siteFooter.brand.lantern"
-msgstr "实战打磨、每天在用的编码 agent 技能，像提灯一样随身带着。"
-
-#. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:36
 msgid "siteFooter.link.githubRepository"
 msgstr "GitHub 仓库"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:57
+msgid "siteFooter.brand.blurb"
+msgstr "从日常写代码里攒出来的顺手做法，用熟了就留在手边。"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:33

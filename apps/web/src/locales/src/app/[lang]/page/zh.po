@@ -19,11 +19,6 @@ msgstr ""
 #~ msgstr "复制 {host} 安装命令"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:34
-#~ msgid "home.hero.description"
-#~ msgstr "我是尼卡，平时用 AI 给自己做小工具，像提着一盏灯随身带着。这里是我写代码时会用到的 {skillsCount} 个技能。"
-
-#. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:118
 #~ msgid "home.install.scope.one"
 #~ msgstr "装单个技能，把 <slug> 换成技能名。"
@@ -81,7 +76,7 @@ msgstr "安装"
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:149
 msgid "home.hero.art.alt"
-msgstr "穿绿色兜帽外套、提着灯的尼卡，和戴巫师帽的琪琪走在一起"
+msgstr "穿青绿连帽衫的尼卡边走边挥手，身旁戴紫色巫师帽的蓝色小家伙琪琪跳着举起星星魔杖"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:189

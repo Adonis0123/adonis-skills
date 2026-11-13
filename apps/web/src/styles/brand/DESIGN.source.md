@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Nika Skills
-description: Catalog site for Nika's agent skills. Near-white cool gray pages, one saturated leaf-green accent used on small areas, and the clay characters Nika and Kiki carrying the brand through every section.
+description: Catalog site for Nika's agent skills. Near-white cool gray pages, one saturated leaf-green accent used on small areas, and the ink & watercolor characters Nika and Kiki carrying the brand through every section.
 # colors: injected by adonis-skills `pnpm brand:sync` from design-system/tokens.json (theme picked by
 #   projects/skills/theme.json designSystem.accent). Light roles keep their name; dark roles get a
 #   `-dark` suffix. Never write hex here.
@@ -153,7 +153,7 @@ components:
 
 ## Overview
 
-一本摊开的、干净的技能手册：页面几乎无彩，是近白的冷灰；唯一的强调色是叶绿，只出现在小面积；暖色和高饱和交给黏土角色尼卡（Nika）和琪琪（Kiki），他们从首屏一直陪到页脚。
+一本摊开的、干净的技能手册：页面几乎无彩，是近白的冷灰；唯一的强调色是叶绿，只出现在小面积；暖色和高饱和交给钢笔淡彩角色尼卡（Nika）和琪琪（Kiki），他们从首屏一直陪到页脚。
 
 - 界面安静，角色热闹。插画是页面里唯一大面积的暖色区域。
 - 叶绿只做“点亮”：主按钮、标签、选中态、链接、悬停边框、焦点环。
@@ -246,10 +246,11 @@ components:
 
 ## Illustration
 
-- 黏土质感，光源是尼卡手里的灯（暖黄，从左上照）。
+- 钢笔淡彩（2026-10-31 起）：深棕墨线、水彩晕染、一点彩铅，青绿 `#2BA5A0` 是画面里最饱和的颜色。尼卡约 1:6 头身，穿青绿连帽衫、兜帽放下；不画灯笼、帽子、皮包和帽尖挂件，没有发光光源。琪琪保持蓝色身体、紫色巫师帽和星星魔杖，画法换成水彩。
+- 一张图最多一件情境道具，要说明这张图在讲什么；琪琪的魔杖是身份道具，不算。点缀（小星星、叶芽）合计不超过 4 个。
 - 所有插画用透明背景，同一张图在浅深两种模式都能用；衬底由界面提供，不画进图里。
 - 用到插画的位置：hero、3 张精选卡、场景分组头、空状态、页脚。普通卡不配插画。
-- 出图必须附参考图（`projects/skills/hero/` 与主角设定图），角色颜色、比例不能漂移；图里不出现文字。
+- 出图必须附参考图（`personal/character/anime/hero-ink.png`、`sheet-ink.png`，有琪琪时加 `personal/character/crew/crew-sheet-ink.png`），提示词照 `personal/BRAND.md` 第 6 节母版（PRESERVE / CHANGE ONLY / AVOID）；角色颜色、比例不能漂移；图里不出现文字。2026-10-31 前的黏土提灯版只作历史参考。
 
 ## Dark Mode
 

@@ -19,11 +19,6 @@ msgstr ""
 #~ msgstr "Copy the {host} install command"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:34
-#~ msgid "home.hero.description"
-#~ msgstr "I'm Nika. I build small tools with AI and carry them around like a lantern. These are the {skillsCount} skills I reach for in my own coding work."
-
-#. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:118
 #~ msgid "home.install.scope.one"
 #~ msgstr "Installs one skill; replace <slug> with its name."
@@ -81,7 +76,7 @@ msgstr "Install"
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:149
 msgid "home.hero.art.alt"
-msgstr "Nika in a green hooded coat holding a lantern, walking with Kiki in a wizard hat"
+msgstr "Nika in a teal hoodie waving while walking, alongside blue little Kiki in a purple wizard hat jumping with a star wand"
 
 #. js-lingui-explicit-id
 #: ../../src/app/%5Blang%5D/page.tsx:189

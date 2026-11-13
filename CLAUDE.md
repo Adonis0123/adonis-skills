@@ -40,6 +40,7 @@ pnpm skills:test:local [-- --all | --skill <name>]
 pnpm dev
 pnpm lint
 pnpm typecheck
+pnpm test:scripts
 pnpm build
 ```
 
@@ -78,7 +79,7 @@ When you add a public skill or change what one does, write its `apps/web/content
 - `group`: the one existing Scenario Group a Visitor would look in. Add a new group only when none fits; a new group needs `title`, `summary` (en/zh) and an illustration.
 - `summary` and `use_cases` in English and Chinese, written for a Visitor, not for the agent; `tags` from `SKILL_TAGS`.
 - `featured` is curated by the maintainer: change it only when asked. A newly featured skill needs its own illustration.
-- Illustrations follow `DESIGN.md` → Illustration: transparent clay art generated with Codex image generation from the hero reference, no text. Add the PNG and WebP to `adonis-brand/projects/skills/illustrations/`, register the copy in `adonis-brand/data/consumers.json`, then copy the WebP to `apps/web/public/brand/illustrations/`.
+- Illustrations follow `DESIGN.md` → Illustration: transparent ink & watercolor art generated with Codex image generation from the character references named there (Nika with the teal hoodie, hood down; no lantern, hat or satchel; at most one situational prop), no text. Add the PNG and WebP to `adonis-brand/projects/skills/illustrations/`, register the copy in `adonis-brand/data/consumers.json`, then copy the WebP to `apps/web/public/brand/illustrations/`.
 - Then run `pnpm skills:validate` and `pnpm skills:index` and stage the regenerated `apps/web/src/generated/`. The pre-commit hook runs `scripts/precommit-skills.mjs`, which blocks a commit touching `skills/` or the catalog when validation fails or the generated index is stale.
 
 ```yaml

@@ -49,14 +49,14 @@ msgid "siteFooter.link.allSkills"
 msgstr "All skills"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-footer.tsx:57
-msgid "siteFooter.brand.lantern"
-msgstr "Field-tested coding skills I use every day. Carried around like a lantern."
-
-#. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:36
 msgid "siteFooter.link.githubRepository"
 msgstr "GitHub repository"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-footer.tsx:57
+msgid "siteFooter.brand.blurb"
+msgstr "Handy coding practices grown from real work, kept right within reach."
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-footer.tsx:33
