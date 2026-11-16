@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import contextlib
 import importlib.util
 from copy import deepcopy
 import hashlib
+import io
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 import subprocess
@@ -14,6 +17,8 @@ from unittest.mock import call, patch
 
 
 MODULE_PATH = Path(__file__).with_name("validate_round.py")
+if str(MODULE_PATH.parent) not in sys.path:
+    sys.path.insert(0, str(MODULE_PATH.parent))
 SPEC = importlib.util.spec_from_file_location("validate_round", MODULE_PATH)
 assert SPEC and SPEC.loader
 validate_round = importlib.util.module_from_spec(SPEC)
@@ -83,8 +88,57 @@ EVIDENCE_ID = "sha256:" + hashlib.sha256(
 def bundle() -> dict:
     return {
         **deepcopy(EVIDENCE_MATERIAL),
+        "repository": "/srv/example-repo",
         "evidence_id": EVIDENCE_ID,
     }
+
+
+REAL_STATE_ROOT = validate_round.STATE_ROOT
+
+
+def setUpModule() -> None:
+    """Keep every test away from the real per-user state directory.
+
+    The validator has no flag or environment variable for the ledger
+    location, so tests run its main() in-process and replace the module
+    constant. A test that forgets its own directory still lands here.
+    """
+    directory = tempfile.TemporaryDirectory()
+    unittest.addModuleCleanup(directory.cleanup)
+    patcher = patch.object(
+        validate_round, "STATE_ROOT", Path(directory.name) / "module-state"
+    )
+    patcher.start()
+    unittest.addModuleCleanup(patcher.stop)
+
+
+def run_validator(*args: str) -> tuple[int, dict]:
+    stdout = io.StringIO()
+    with patch.object(sys, "argv", [str(MODULE_PATH), *args]), \
+            contextlib.redirect_stdout(stdout):
+        code = validate_round.main()
+    return code, json.loads(stdout.getvalue())
+
+
+def run_git(repo: Path, *args: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(repo), "-c", "user.name=test",
+         "-c", "user.email=test@example.invalid", "-c", "commit.gpgsign=false",
+         "-c", "core.hooksPath=/dev/null", *args],
+        check=True, capture_output=True, text=True,
+    ).stdout.strip()
+
+
+def make_repository(path: Path) -> tuple[str, str]:
+    """Create a real checkout: the validator asks Git who the repository is."""
+    path.mkdir(parents=True)
+    subprocess.run(["git", "init", "-q", str(path)], check=True)
+    return str(path.resolve()), new_commit(path, f"base {path.name}")
+
+
+def new_commit(repo: Path | str, message: str) -> str:
+    run_git(Path(repo), "commit", "-q", "--allow-empty", "-m", message)
+    return run_git(Path(repo), "rev-parse", "HEAD")
 
 
 def clean_review() -> dict:
@@ -173,28 +227,55 @@ def bundle_with_supplemental_markdown() -> tuple[dict, dict]:
 
 
 class RoundBudgetCliTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        directory = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(directory.cleanup)
+        cls.shared_repository = make_repository(Path(directory.name) / "repo")
+
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
         self.root = Path(self.directory.name)
         self.bundle_path = self.root / "bundle.json"
         self.review_path = self.root / "raw.json"
-        self.history_path = self.root / "history.json"
+        self.state_home = self.root / "state"
+        patcher = patch.object(validate_round, "STATE_ROOT", self.state_home)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        self.use_repository(*self.shared_repository)
+
+    def use_repository(self, repository: str, head: str) -> None:
+        self.repository, self.head = repository, head
         self.set_evidence(1)
+        self.history_path = validate_round.ledger_path(
+            validate_round.repository_identity(self.bundle)
+        )
 
     def set_evidence(self, number: int) -> None:
         self.bundle = bundle()
+        self.bundle["repository"] = self.repository
+        self.bundle["base_sha"] = self.head
         self.bundle["background"] = str(number)
+        self.write_bundle()
+
+    def write_bundle(self) -> None:
         self.bundle["evidence_id"] = validate_round.canonical_evidence_id(self.bundle)
         self.bundle_path.write_text(json.dumps(self.bundle), encoding="utf-8")
 
     def run_cli(self, *args: str) -> tuple[int, dict]:
-        process = subprocess.run(
-            [sys.executable, str(MODULE_PATH), "--bundle", str(self.bundle_path),
-             "--history", str(self.history_path), *args],
-            capture_output=True, text=True, check=False,
-        )
-        return process.returncode, json.loads(process.stdout)
+        return run_validator("--bundle", str(self.bundle_path), *args)
+
+    def use_rounds(self, count: int, start: int = 1) -> None:
+        for number in range(start, start + count):
+            self.set_evidence(number)
+            self.assertEqual(self.run_cli("--check-call")[0], 0)
+            review = finding_review()
+            review["evidence_id"] = self.bundle["evidence_id"]
+            self.assertEqual(self.submit(review)[0], 0)
+
+    def read_ledger_file(self) -> dict:
+        return json.loads(self.history_path.read_text(encoding="utf-8"))
 
     def submit(self, payload: object, product: str = "codex") -> tuple[int, dict]:
         self.review_path.write_text(json.dumps(payload), encoding="utf-8")
@@ -276,11 +357,620 @@ class RoundBudgetCliTest(unittest.TestCase):
         self.assertEqual(self.history_path.read_bytes(), before)
 
     def test_corrupt_history_fails_closed(self) -> None:
-        self.history_path.write_text('{}', encoding="utf-8")
+        self.history_path.parent.mkdir(parents=True)
+        evidence_id = self.bundle["evidence_id"]
+        corrupt_ledgers = (
+            "{}",
+            "not JSON",
+            '{"entries": [], "grants": [{"rounds": 2}]}',
+            json.dumps({"entries": [{"evidence_id": evidence_id, "status": "done"}]}),
+            json.dumps({"entries": [{"evidence_id": evidence_id}]}),
+            # A hand-added `clean` flag must not close the loop.
+            json.dumps({"entries": [
+                {"evidence_id": evidence_id, "status": "valid", "clean": True}
+            ]}),
+            json.dumps({"entries": [], "base_shas": ["abc1234"]}),
+        )
+        for corrupt in corrupt_ledgers:
+            with self.subTest(corrupt=corrupt):
+                self.history_path.write_text(corrupt, encoding="utf-8")
+                code, result = self.run_cli("--check-call")
+                self.assertEqual(code, 2)
+                self.assertFalse(result["call_allowed"])
+                self.assertEqual(result["stop"], "UNVERIFIED")
+                self.assertIn("Do not delete", result["errors"][0])
+                self.assertEqual(
+                    self.history_path.read_text(encoding="utf-8"), corrupt
+                )
+
+    def test_other_history_path_is_refused_and_does_not_reset_the_count(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        fresh = self.root / "fresh-history.json"
+        for mode in (("--check-call",), ("--review", str(self.review_path))):
+            with self.subTest(mode=mode[0]):
+                code, result = self.run_cli(*mode, "--history", str(fresh))
+                self.assertEqual(code, 2)
+                self.assertFalse(result["call_allowed"])
+                self.assertIn("Drop --history", result["errors"][0])
+                self.assertIn(str(self.history_path), result["errors"][0])
+                self.assertFalse(fresh.exists())
+        code, gate = self.run_cli("--check-call", "--history", str(self.history_path))
+        self.assertEqual(code, 2)
+        self.assertEqual(gate["rounds_used"], 3)
+        self.assertIn("round budget exhausted", gate["stop"])
+
+    def test_environment_cannot_move_the_ledger(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        elsewhere = self.root / "elsewhere"
+        moved = {"XDG_STATE_HOME": str(elsewhere), "HOME": str(elsewhere)}
+        with patch.dict(os.environ, moved):
+            code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertEqual(gate["ledger"], str(self.history_path))
+        self.assertFalse(elsewhere.exists())
+
+    def test_passed_gate_records_the_round_before_any_review(self) -> None:
+        # Three Reviewer calls start and are interrupted: no review comes back.
+        for number in range(1, 4):
+            self.set_evidence(number)
+            code, gate = self.run_cli("--check-call")
+            self.assertEqual((code, gate["rounds_used"]), (0, number))
+        entries = self.read_ledger_file()["entries"]
+        self.assertEqual([item["status"] for item in entries], ["started"] * 3)
+        self.assertEqual({item["base_sha"] for item in entries}, {self.head})
+        before = self.history_path.read_bytes()
+        # A relay session with a new round directory still sees three rounds.
+        with tempfile.TemporaryDirectory() as other_round_dir:
+            self.bundle_path = Path(other_round_dir) / "bundle.json"
+            self.set_evidence(4)
+            code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertIn("round budget exhausted", gate["stop"])
+        self.assertEqual(self.history_path.read_bytes(), before)
+
+    def test_repeated_gate_for_one_evidence_is_one_round(self) -> None:
+        for _ in range(3):
+            code, gate = self.run_cli("--check-call")
+            self.assertEqual((code, gate["rounds_used"]), (0, 1))
+        entries = self.read_ledger_file()["entries"]
+        self.assertEqual(len(entries), 1)
+        self.assertEqual((entries[0]["status"], entries[0]["check_calls"]), ("started", 3))
+
+    def test_review_updates_the_round_the_gate_started(self) -> None:
+        self.assertEqual(self.run_cli("--check-call")[0], 0)
+        started = self.read_ledger_file()["entries"][0]
+        review = finding_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        code, result = self.submit(review)
+        self.assertEqual((code, result["rounds_used"]), (0, 1))
+        entries = self.read_ledger_file()["entries"]
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["status"], "valid")
+        self.assertEqual(entries[0]["started_at"], started["started_at"])
+        self.assertIn("reviewed_at", entries[0])
+        self.assertNotIn("clean", entries[0])
+
+    def test_review_without_history_is_counted(self) -> None:
+        for number in range(1, 4):
+            self.set_evidence(number)
+            review = finding_review()
+            review["evidence_id"] = self.bundle["evidence_id"]
+            code, result = self.submit(review)
+            self.assertEqual(code, 0)
+            self.assertEqual(result["rounds_used"], number)
+            self.assertEqual(result["ledger"], str(self.history_path))
+        self.assertEqual(len(self.read_ledger_file()["entries"]), 3)
+        self.set_evidence(4)
+        review = finding_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        code, result = self.submit(review)
+        self.assertEqual(code, 2)
+        self.assertFalse(result["valid"])
+        self.assertIn("round budget exhausted", result["stop"])
+        self.assertEqual(len(self.read_ledger_file()["entries"]), 3)
+
+    def test_round_four_without_a_grant_is_refused(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertFalse(gate["call_allowed"])
+        self.assertEqual(gate["stop"], "HUMAN_GATE: round budget exhausted")
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertIn("--grant-rounds", gate["fix"])
+        self.assertIn("unattended prompt is not a grant", gate["fix"])
+
+    def test_recorded_grant_extends_the_budget_by_exactly_its_rounds(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        code, result = self.run_cli(
+            "--grant-rounds", "2", "--granted-by", " 剩下 2 条也修掉，再审两轮 "
+        )
+        self.assertEqual(code, 0)
+        self.assertTrue(result["call_allowed"])
+        self.assertEqual((result["round_budget"], result["granted_rounds"]), (5, 2))
+        grant = self.read_ledger_file()["grants"][0]
+        self.assertEqual(grant, result["granted"])
+        self.assertEqual(grant["rounds"], 2)
+        self.assertEqual(grant["granted_by"], "剩下 2 条也修掉，再审两轮")
+        self.assertRegex(grant["at"], r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$")
+        self.use_rounds(2, start=4)
+        self.set_evidence(6)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (5, 5))
+        self.assertIn("round budget exhausted", gate["stop"])
+
+    def test_grant_needs_the_users_words_and_a_positive_count(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        rejected = (
+            (("--grant-rounds", "1", "--granted-by", "  "), "--granted-by must quote"),
+            (("--grant-rounds", "1", "--granted-by", ""), "--granted-by must quote"),
+            (("--grant-rounds", "1"), "--granted-by must quote"),
+            (("--grant-rounds", "0", "--granted-by", "ok"), "positive whole number"),
+            (("--grant-rounds", "+2", "--granted-by", "ok"), "positive whole number"),
+            (("--check-call", "--granted-by", "ok"), "--granted-by only records"),
+        )
+        for args, message in rejected:
+            with self.subTest(args=args):
+                code, result = self.run_cli(*args)
+                self.assertEqual(code, 2)
+                self.assertFalse(result["call_allowed"])
+                self.assertIn(message, result["errors"][0])
+        self.assertEqual(self.read_ledger_file()["grants"], [])
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+
+    def test_placeholder_invisible_and_blanket_text_is_not_a_grant(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        unattended_prompt = (
+            "Nobody is here to answer. Where the choice can be undone, go on "
+            "with the recommended option and carry on to the end."
+        )
+        rejected = (
+            ("...", "--granted-by must quote"),
+            ("…", "--granted-by must quote"),
+            ("​", "--granted-by must quote"),
+            (" ​⁠﻿ ", "--granted-by must quote"),
+            ("<用户原话>", "is a placeholder"),
+            ("<the user's own words>", "is a placeholder"),
+            ("＜the user's own words about extra rounds＞", "is a placeholder"),
+            ("​<anything at all>", "is a placeholder"),
+            ("TODO", "is a placeholder"),
+            (" tbd. ", "is a placeholder"),
+            ("用户原话", "is a placeholder"),
+            ("按推荐继续", "says nothing about extra review rounds"),
+            ("按推荐继续。", "says nothing about extra review rounds"),
+            ("按​推荐继续", "says nothing about extra review rounds"),
+            ("都按推荐来", "says nothing about extra review rounds"),
+            ("Go on with the recommended option.", "says nothing about extra review rounds"),
+            (unattended_prompt, "says nothing about extra review rounds"),
+        )
+        for text, message in rejected:
+            with self.subTest(text=text):
+                code, result = self.run_cli("--grant-rounds", "1", "--granted-by", text)
+                self.assertEqual(code, 2)
+                self.assertFalse(result["call_allowed"])
+                self.assertIn(message, result["errors"][0])
+                # Every refusal says what to do instead.
+                self.assertRegex(result["errors"][0], r"[Aa]sk the user|ask them")
+        self.assertEqual(self.read_ledger_file()["grants"], [])
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+
+    def test_the_printed_grant_usage_template_is_not_a_grant(self) -> None:
+        template = validate_round.GRANT_USAGE.split('"')[1]
+        with self.assertRaisesRegex(ValueError, "is a placeholder"):
+            validate_round.validate_grant("1", template)
+
+    def test_user_sentences_about_rounds_are_still_grants(self) -> None:
+        accepted = (
+            "one more", "try again", "ok", "再审 2 轮",
+            "按推荐继续，再审两轮", "TODO 里那两条修完再审一轮",
+        )
+        for text in accepted:
+            with self.subTest(text=text):
+                self.assertEqual(validate_round.validate_grant("2", text), (2, text))
+
+    def test_resubmitting_one_evidence_id_stays_one_round(self) -> None:
+        self.assertEqual(self.submit({})[0], 2)
+        review = finding_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        code, result = self.submit(review)
+        self.assertEqual(code, 0)
+        self.assertEqual(result["rounds_used"], 1)
+        code, result = self.submit(review)
+        self.assertEqual(code, 2)
+        self.assertEqual(result["rounds_used"], 1)
+        self.assertEqual(len(self.read_ledger_file()["entries"]), 2)
+        self.use_rounds(2, start=2)
+        self.set_evidence(4)
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+
+    def test_legacy_list_ledger_is_read_and_upgraded_on_grant(self) -> None:
+        legacy = []
+        for number in range(1, 4):
+            self.set_evidence(number)
+            legacy.append({"evidence_id": self.bundle["evidence_id"], "valid": True})
+        self.history_path.parent.mkdir(parents=True)
+        self.history_path.write_text(json.dumps(legacy), encoding="utf-8")
+        self.set_evidence(4)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.history_path.write_text(json.dumps({"entries": legacy}), encoding="utf-8")
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+        code, result = self.run_cli("--grant-rounds", "1", "--granted-by", "one more")
+        self.assertEqual(code, 0)
+        self.assertTrue(result["call_allowed"])
+        ledger = self.read_ledger_file()
+        # A legacy `valid: true` is a used round and never closes the loop.
+        self.assertEqual(ledger["entries"], [
+            {"evidence_id": item["evidence_id"], "status": "valid"} for item in legacy
+        ])
+        self.assertEqual(ledger["schema_version"], "3")
+        self.assertEqual(ledger["repository"], os.path.realpath(self.repository))
+
+    def test_schema_two_ledger_keeps_its_rounds_and_base_commit(self) -> None:
+        entries = []
+        for number in range(1, 4):
+            self.set_evidence(number)
+            entries.append(
+                {"evidence_id": self.bundle["evidence_id"], "valid": number != 2}
+            )
+        self.history_path.parent.mkdir(parents=True)
+        self.history_path.write_text(json.dumps({
+            "schema_version": "2", "repository": self.repository,
+            "base_sha": "b" * 40, "entries": entries, "grants": [],
+        }), encoding="utf-8")
+        self.set_evidence(4)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertEqual(gate["base_shas"], ["b" * 40])
+        self.assertEqual(self.run_cli(
+            "--grant-rounds", "1", "--granted-by", "one more")[0], 0)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual((code, gate["rounds_used"]), (0, 4))
+        ledger = self.read_ledger_file()
+        self.assertEqual(ledger["base_shas"], ["b" * 40, self.head])
+        self.assertEqual(
+            [item["status"] for item in ledger["entries"]],
+            ["valid", "invalid", "valid", "started"],
+        )
+
+    def test_new_round_directory_and_session_reuse_the_ledger(self) -> None:
+        self.use_rounds(3)
+        self.set_evidence(4)
+        with tempfile.TemporaryDirectory() as other_round_dir:
+            self.bundle_path = Path(other_round_dir) / "bundle.json"
+            self.set_evidence(4)
+            code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual(gate["rounds_used"], 3)
+        self.assertEqual(gate["ledger"], str(self.history_path))
+
+    def test_new_commit_keeps_the_ledger_and_the_count(self) -> None:
+        self.use_repository(*make_repository(self.root / "repo"))
+        self.use_rounds(3)
+        first = self.head
+        self.head = new_commit(self.repository, "fix the round three findings")
+        self.set_evidence(4)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertIn("round budget exhausted", gate["stop"])
+        self.assertEqual(gate["ledger"], str(self.history_path))
+        self.assertEqual(self.run_cli(
+            "--grant-rounds", "1", "--granted-by", "再审一轮")[0], 0)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual((code, gate["rounds_used"], gate["round_budget"]), (0, 4, 4))
+        self.assertEqual(gate["base_shas"], [first, self.head])
+        self.assertEqual(self.read_ledger_file()["base_shas"], [first, self.head])
+        self.assertEqual(
+            [path.name for path in self.history_path.parent.glob("*.json")],
+            [self.history_path.name],
+        )
+        # A bundle built before the commit is stale, not a way back.
+        self.head = first
+        self.set_evidence(5)
         code, result = self.run_cli("--check-call")
         self.assertEqual(code, 2)
+        self.assertIn("is not HEAD", result["errors"][0])
+
+    def test_only_a_validated_clean_review_closes_the_loop(self) -> None:
+        self.use_rounds(2)
+        self.assertEqual(self.run_cli(
+            "--grant-rounds", "1", "--granted-by", "one more round")[0], 0)
+        self.set_evidence(3)
+        self.assertEqual(self.run_cli("--check-call")[0], 0)
+        review = clean_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        code, result = self.submit(review)
+        self.assertEqual(code, 0)
+        self.assertTrue(result["clean"])
+        self.assertTrue(result["loop_closed"])
+        # The closing result reports the loop it closed.
+        self.assertEqual((result["rounds_used"], result["round_budget"]), (3, 4))
+        # Evidence reviewed in the closed loop is still known.
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertIn("evidence already reviewed", gate["stop"])
+        # The next loop starts at zero and does not inherit the old grant.
+        self.set_evidence(4)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 0)
+        self.assertEqual(
+            (gate["rounds_used"], gate["round_budget"], gate["granted_rounds"]),
+            (1, 3, 0),
+        )
+        self.use_rounds(2, start=5)
+        self.set_evidence(7)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+
+    def test_grant_reopens_a_ledger_locked_by_repeated_malformed_output(self) -> None:
+        self.assertEqual(self.submit({})[0], 2)
+        code, result = self.submit({})
+        self.assertEqual(code, 2)
+        self.assertIn("repeated malformed output", result["stop"])
+        self.assertIn("--grant-rounds", result["fix"])
+        self.set_evidence(2)
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+        code, result = self.run_cli("--grant-rounds", "1", "--granted-by", "try again")
+        self.assertEqual(code, 0)
+        self.assertEqual((result["rounds_used"], result["round_budget"]), (1, 4))
+        self.assertEqual(self.run_cli("--check-call")[0], 0)
+        self.assertEqual(self.submit({})[0], 2)
+        self.assertEqual(self.run_cli("--check-call")[0], 0)
+        self.assertEqual(self.submit({})[0], 2)
+        self.assertEqual(self.run_cli("--check-call")[0], 2)
+
+    def test_bundle_without_builder_identity_is_refused(self) -> None:
+        for field, value in (("repository", None), ("repository", "relative/repo")):
+            with self.subTest(field=field, value=value):
+                self.bundle[field] = value
+                self.bundle_path.write_text(json.dumps(self.bundle), encoding="utf-8")
+                code, result = self.run_cli("--check-call")
+                self.assertEqual(code, 2)
+                self.assertFalse(result["call_allowed"])
+                self.assertIn("rebuild the bundle", result["errors"][0])
+        self.assertFalse(self.state_home.exists())
+
+    def test_edited_repository_cannot_select_another_ledger(self) -> None:
+        self.use_repository(*make_repository(self.root / "repo"))
+        self.use_rounds(3)
+        other, _ = make_repository(self.root / "other")
+        nested = Path(self.repository) / "nested"
+        nested.mkdir()
+        plain = self.root / "plain"
+        plain.mkdir()
+        edited = (
+            (other, "is not HEAD"),
+            (str(nested), "is not the root of its Git checkout"),
+            (str(plain), "is not a Git checkout"),
+            (str(self.root / "missing"), "is not a Git checkout"),
+        )
+        for repository, message in edited:
+            with self.subTest(repository=repository):
+                self.set_evidence(4)
+                self.bundle["repository"] = repository
+                self.write_bundle()
+                code, result = self.run_cli("--check-call")
+                self.assertEqual(code, 2)
+                self.assertFalse(result["call_allowed"])
+                self.assertIn(message, result["errors"][0])
+        # Another spelling of the same checkout is still the same ledger.
+        alias = self.root / "alias"
+        alias.symlink_to(self.repository)
+        self.set_evidence(4)
+        self.bundle["repository"] = str(alias)
+        self.write_bundle()
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertEqual(gate["ledger"], str(self.history_path))
+        self.assertEqual(
+            [path.name for path in self.history_path.parent.glob("*.json")],
+            [self.history_path.name],
+        )
+
+    def test_git_environment_cannot_redirect_the_repository(self) -> None:
+        other, _ = make_repository(self.root / "other")
+        redirect = {"GIT_DIR": str(Path(other) / ".git"), "GIT_WORK_TREE": other}
+        with patch.dict(os.environ, redirect):
+            identity = validate_round.repository_identity(self.bundle)
+        self.assertEqual(identity, os.path.realpath(self.repository))
+
+    def test_unwritable_state_directory_fails_closed_with_a_fix(self) -> None:
+        self.state_home.write_text("a file, not a directory", encoding="utf-8")
+        for mode in (("--check-call",), ("--review", str(self.review_path))):
+            with self.subTest(mode=mode[0]):
+                code, result = self.run_cli(*mode)
+                self.assertEqual(code, 2)
+                self.assertFalse(result["valid"])
+                self.assertFalse(result["call_allowed"])
+                self.assertEqual(result["stop"], "UNVERIFIED")
+                self.assertIn("extra writable directory", result["errors"][0])
+                self.assertNotIn("XDG_STATE_HOME", result["errors"][0])
+
+    def assert_output_refused(self, output: Path | str, *mode: str) -> dict:
+        code, result = self.run_cli(*(mode or ("--check-call",)), "--output", str(output))
+        self.assertEqual(code, 2)
+        self.assertFalse(result["valid"])
         self.assertFalse(result["call_allowed"])
-        self.assertEqual(result["stop"], "UNVERIFIED")
+        self.assertIn("--output", result["errors"][0])
+        self.assertIn("Pass another path", result["errors"][0])
+        return result
+
+    def test_output_on_the_ledger_is_refused_and_leaves_it_unchanged(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        self.set_evidence(2)
+        review = finding_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        self.review_path.write_text(json.dumps(review), encoding="utf-8")
+        modes = (
+            ("--check-call",),
+            ("--review", str(self.review_path), "--product", "codex"),
+            ("--grant-rounds", "2", "--granted-by", "two more rounds are fine"),
+        )
+        for mode in modes:
+            with self.subTest(mode=mode[0]):
+                self.assert_output_refused(self.history_path, *mode)
+                self.assertEqual(self.history_path.read_bytes(), before)
+        self.assertEqual(len(self.read_ledger_file()["entries"]), 1)
+
+    def test_output_aliases_of_the_ledger_are_refused(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        file_link = self.root / "result.json"
+        file_link.symlink_to(self.history_path)
+        directory_link = self.root / "ledgers-alias"
+        directory_link.symlink_to(self.history_path.parent)
+        hard_link = self.root / "hard-link.json"
+        os.link(self.history_path, hard_link)
+        relative = os.path.join(
+            os.path.relpath(self.history_path.parent, Path.cwd()),
+            "..", "ledgers", self.history_path.name,
+        )
+        aliases = {
+            "file symlink": file_link,
+            "directory symlink": directory_link / self.history_path.name,
+            "hard link": hard_link,
+            "relative": relative,
+        }
+        self.set_evidence(2)
+        for name, alias in aliases.items():
+            with self.subTest(alias=name):
+                self.assert_output_refused(alias)
+                self.assertEqual(self.history_path.read_bytes(), before)
+        self.assertTrue(file_link.is_symlink())
+
+    def test_output_on_ledger_companions_or_state_directory_is_refused(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        ledgers = self.history_path.parent
+        name = self.history_path.name
+        listing = sorted(path.name for path in ledgers.iterdir())
+        targets = (
+            ledgers / f"{name}.tmp",
+            ledgers / f"{name}.lock",
+            ledgers / "result.json",
+            self.state_home / "new" / "result.json",
+            self.state_home,
+        )
+        self.set_evidence(2)
+        for target in targets:
+            with self.subTest(target=str(target.relative_to(self.root))):
+                self.assert_output_refused(target)
+                self.assertEqual(self.history_path.read_bytes(), before)
+        self.assertEqual(sorted(path.name for path in ledgers.iterdir()), listing)
+        self.assertFalse((self.state_home / "new").exists())
+
+    def test_output_into_the_state_directory_is_refused_before_it_exists(self) -> None:
+        target = self.state_home / "ledgers" / self.history_path.name
+        self.assert_output_refused(target)
+        self.assertFalse(self.state_home.exists())
+
+    def test_output_on_the_ledger_is_refused_when_the_bundle_is_unreadable(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        code, result = run_validator(
+            "--bundle", str(self.root / "missing.json"), "--check-call",
+            "--output", str(self.history_path),
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("Pass another path", result["errors"][0])
+        self.assertEqual(self.history_path.read_bytes(), before)
+
+    def test_output_outside_the_state_directory_still_works(self) -> None:
+        output = self.root / "round-1" / "gate.json"
+        code, gate = self.run_cli("--check-call", "--output", str(output))
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(output.read_text(encoding="utf-8")), gate)
+        self.assertEqual(gate["ledger"], str(self.history_path))
+        self.assertEqual(len(self.read_ledger_file()["entries"]), 1)
+        review = finding_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        self.review_path.write_text(json.dumps(review), encoding="utf-8")
+        report = self.root / "state-sibling.json"
+        code, result = self.run_cli(
+            "--review", str(self.review_path), "--product", "codex",
+            "--output", str(report),
+        )
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(report.read_text(encoding="utf-8")), result)
+        self.assertEqual(self.read_ledger_file()["entries"][0]["status"], "valid")
+
+
+class LedgerPathTest(unittest.TestCase):
+    def test_keyed_by_the_checkout_git_reports_not_by_commit_or_text(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            repository, head = make_repository(Path(directory) / "repo")
+            other, other_head = make_repository(Path(directory) / "other")
+            first = {**bundle(), "repository": repository, "base_sha": head}
+            drifted = {**first, "background": "different evidence",
+                       "repository": repository + "/"}
+            identity = validate_round.repository_identity(first)
+            self.assertEqual(identity, os.path.realpath(repository))
+            self.assertEqual(validate_round.repository_identity(drifted), identity)
+            path = validate_round.ledger_path(identity)
+            self.assertEqual(path.parent, validate_round.STATE_ROOT / "ledgers")
+            later = {**first, "base_sha": new_commit(repository, "later")}
+            self.assertEqual(
+                validate_round.ledger_path(validate_round.repository_identity(later)),
+                path,
+            )
+            elsewhere = {**bundle(), "repository": other, "base_sha": other_head}
+            self.assertNotEqual(
+                validate_round.ledger_path(
+                    validate_round.repository_identity(elsewhere)
+                ),
+                path,
+            )
+
+    def test_default_root_ignores_environment(self) -> None:
+        import pwd
+
+        home = Path(pwd.getpwuid(os.getuid()).pw_dir)
+        with tempfile.TemporaryDirectory() as directory:
+            moved = {"XDG_STATE_HOME": directory, "HOME": directory}
+            with patch.dict(os.environ, moved):
+                root = validate_round.default_state_root()
+        self.assertEqual(root, home / ".local" / "state" / "open-code-review-loop")
+        self.assertEqual(root, REAL_STATE_ROOT)
+
+    def test_cli_offers_no_way_to_choose_the_ledger_location(self) -> None:
+        options = {
+            option
+            for action in validate_round.build_parser()._actions
+            for option in action.option_strings
+        }
+        self.assertEqual(options, {
+            "-h", "--help", "--bundle", "--review", "--check-call",
+            "--grant-rounds", "--granted-by", "--history", "--product",
+            "--session-id", "--output",
+        })
+
+    def test_refuses_a_ledger_inside_the_repository(self) -> None:
+        inside = Path("/srv/example-repo/.state")
+        with patch.object(validate_round, "STATE_ROOT", inside):
+            with self.assertRaisesRegex(ValueError, "inside the repository"):
+                validate_round.ledger_path("/srv/example-repo")
+
+    def test_refuses_a_short_or_missing_base_commit(self) -> None:
+        for value in (None, "abc1234", "A" * 40):
+            with self.subTest(value=value):
+                current = bundle()
+                current["base_sha"] = value
+                with self.assertRaisesRegex(ValueError, "rebuild the bundle"):
+                    validate_round.repository_identity(current)
 
 
 class ValidateRoundTest(unittest.TestCase):
@@ -611,22 +1301,25 @@ class ValidateRoundTest(unittest.TestCase):
                 bundle_path = root / "bundle.json"
                 review_path = root / "review.json"
                 output_path = root / "validation.json"
-                bundle_path.write_text(json.dumps(bundle()), encoding="utf-8")
+                repository, head = make_repository(root / "repo")
+                current = {**bundle(), "repository": repository, "base_sha": head}
+                current["evidence_id"] = validate_round.canonical_evidence_id(current)
+                review["evidence_id"] = current["evidence_id"]
+                bundle_path.write_text(json.dumps(current), encoding="utf-8")
                 review_path.write_text(json.dumps(review), encoding="utf-8")
-                result = subprocess.run(
-                    [sys.executable, str(MODULE_PATH), "--bundle", str(bundle_path),
-                     "--review", str(review_path), "--output", str(output_path)],
-                    capture_output=True, text=True, check=False,
-                )
-                self.assertEqual(result.returncode, 2, result.stderr)
+                with patch.object(validate_round, "STATE_ROOT", root / "state"):
+                    code, printed = run_validator(
+                        "--bundle", str(bundle_path), "--review", str(review_path),
+                        "--output", str(output_path),
+                    )
+                self.assertEqual(code, 2)
                 report = json.loads(output_path.read_text(encoding="utf-8"))
-                self.assertEqual(json.loads(result.stdout), report)
+                self.assertEqual(printed, report)
                 self.assertFalse(report["valid"])
                 self.assertFalse(report["clean"])
                 self.assertIn(
                     "findings[0].path must be a non-empty string", report["errors"]
                 )
-                self.assertNotIn("Traceback", result.stderr)
 
     def test_rejects_duplicate_identity_with_omitted_file(self) -> None:
         current_bundle = bundle()

@@ -72,7 +72,7 @@ class RoundsAndWatch(BoardTestCase):
     def test_dispatch_prints_the_watch_hint_and_done_without_result_warns(self):
         rd, _ = self.start("B")
         _, out, _ = self.run_cli("--run", rd, "ask", "add", "--id", "A1", "--question", "q", "--recommend", "r", "--evidence", "e", "--blocks", "b")
-        self.assertIn("watch", out)
+        self.assertIn("watch --timeout 600", out)
         _, _, err = self.run_cli("--run", rd, "lane", "add", "--id", "R2", "--kind", "subagent", "--parent", "coordinator", "--state", "done")
         self.assertIn("R2 已完成但没有成果", err)
 
@@ -90,6 +90,7 @@ class RoundsAndWatch(BoardTestCase):
         with mock.patch.object(board.time, "sleep"), mock.patch.object(board.time, "time", side_effect=lambda: next(clock)):
             _, out, _ = self.run_cli("--run", rd, "watch", "--timeout", "60", "--interval", "1")
         self.assertIn("内没有任务结束", out)
+        self.assertIn("再挂一次 watch --timeout 600", out)
 
     def test_watch_does_not_wake_again_for_a_lane_that_was_already_silent(self):
         rd, stream = self.start()

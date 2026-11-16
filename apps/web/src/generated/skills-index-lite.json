@@ -5,14 +5,14 @@
     "description": "Choose the lightest agent setup for a coding, review, drafting or design-research task: do it yourself, fan out to 2-3 workers with independent parts across the Claude Code, Codex, Grok Build, Cursor or other CLIs and accounts on this machine, run a scoped architecture loop, or send one brief to independent researchers; pick a cross-model reviewer, test budget and cleanup; track dispatched work, external waits and user decisions on a Run Board. Use when work may need delegation, or the user asks to dispatch, fan out, parallelize, run several agents or accounts, get another AI's review or independent design opinions, or asks how dispatched work is going. Chinese triggers: 派活、并行、要不要多开几个 agent、分给多个 Claude 账号 / codex / grok、找另一个 AI 审、对比优秀设计、多方意见、进度看板、派出的任务进行到哪了。Not for unrelated read-only questions, trivial edits, research with no delegation, a single review of an existing diff (agentic-review-handoff), or the machine-wide session list (sideby sessions). Inside another named workflow, only size its workers.",
     "metadata": {
       "author": "adonis",
-      "version": "1.12.1"
+      "version": "1.13.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-11-11T00:00:00.000Z",
+    "updatedAt": "2026-11-16T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Agent Dispatcher",
@@ -26,12 +26,12 @@
       "summary": "Size a task from solo edit to parallel AI CLI worktrees, pick an independent reviewer, and step in the moment a worker finishes.",
       "summary_zh": "评估任务该单干还是分给多个 AI CLI 并行，安排独立复审，哪个 AI 一做完就接手验收。",
       "use_cases": [
-        "Split cross-package work across 2-3 worker worktrees only when the parts need little of each other's context; a shared contract lands first.",
+        "Split cross-package work across 2-3 worktrees only when the parts share little context, shared contract first; an unrelated request gets its own session.",
         "Ask 2-3 AI products the same research brief and act on findings they share or one backs with checked evidence.",
         "Open one board in Orca or any browser to see what each agent produced and what waits on you; it refreshes itself and keeps what you expanded."
       ],
       "use_cases_zh": [
-        "只在各部分几乎不依赖彼此上下文时，把跨包改动拆给 2 到 3 个 worktree 并行；共享的接口先落地。",
+        "只在各部分几乎不依赖彼此上下文时，把跨包改动拆给 2 到 3 个 worktree 并行，共享的接口先落地；不相关的新需求另开会话。",
         "把同一份调研题目发给 2 到 3 个 AI 产品，采纳多方一致或有核实证据的结论。",
         "在 Orca 或浏览器里打开看板，看每个 agent 做出了什么、替你定了哪些事、哪些问题等你回答；页面自己刷新，展开的内容不会收起。"
       ]
@@ -152,14 +152,14 @@
     "description": "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git and review/consult intent; ordinary implementation or commit-only requests do not start a review loop.",
     "metadata": {
       "author": "adonis",
-      "version": "3.9.0"
+      "version": "3.10.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-11-07T00:00:00.000Z",
+    "updatedAt": "2026-11-16T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Auto Review Loop",
@@ -892,14 +892,14 @@
     "description": "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds.",
     "metadata": {
       "author": "adonis",
-      "version": "1.7.0"
+      "version": "1.8.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-10-21T00:00:00.000Z",
+    "updatedAt": "2026-11-16T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Open Code Review Loop",

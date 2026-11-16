@@ -3,7 +3,7 @@ name: open-code-review-loop
 description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
-  version: "1.7.0"
+  version: "1.8.0"
 ---
 
 # Open Code Review Loop
@@ -63,8 +63,10 @@ Resolve before the first model call:
   a supplied selector, so neither needs a second confirmation. OCR-excluded
   `.md`/`.mdx` files become mandatory supplemental Reviewer scope. Other
   reasons remain unaccepted unless the user already accepted that exact reason
-- Round budget / deadline: 3 rounds (a ceiling, not success permission);
-  10 minutes per Reviewer/Fixer call
+- Round budget / deadline: 3 rounds (a ceiling, not success permission)
+  plus only the user grants recorded in the round ledger; 10 minutes per
+  Reviewer/Fixer call. Run the loop through this Skill: calling a review CLI
+  repeatedly outside it loses the round ceiling
 - Background: user requirement or none; pass through preview/rule/prompt
 
 Once the user has requested the full fix-and-re-review loop, explicit skill
@@ -185,28 +187,56 @@ exactly once as `reviewed` or `skipped`. Emit only evidence-backed, actionable
 findings. Tests that need temporary writes belong to host verification and are
 not a reason to weaken the Reviewer sandbox.
 
-Keep one `LOOP_HISTORY` outside the repo across corrections and drift.
-Before every Reviewer call, run this gate; only exit 0 permits the call:
+The round ledger is not a file you choose. `validate_round.py` keeps one per
+repository checkout at
+`~/.local/state/open-code-review-loop/ledgers/<repository-hash>.json` and
+prints the path as `ledger`. That directory is fixed under the account's home:
+no argument or environment variable (`XDG_STATE_HOME`, `HOME`) moves it, and a
+sandboxed host needs it as an extra writable directory. The script asks Git
+which checkout `bundle.repository` is and whether `bundle.base_sha` is its
+`HEAD`, so an edited or stale bundle is refused instead of getting another
+ledger. A handoff, a resumed session, a new `ROUND_DIR`, or a new commit lands
+on the same ledger and the rounds already used; never move, delete, edit, or
+recreate it. Omit `--history`: any other path is refused.
+
+Rounds add up across commits; the ledger lists every `base_sha` it saw. Only
+a validated `NO_FINDINGS` closes the loop, and the next evidence then starts a
+new budget. A loop that ended any other way stays open: the next loop in that
+checkout continues its count until the user grants rounds.
+
+Before every Reviewer call, run the gate and chain the call with `&&`, never
+`;` or a new line, so a refused gate (exit 2) cannot be followed by a review:
 
 ```bash
 python3 <skill-dir>/scripts/validate_round.py --check-call \
-  --bundle "$ROUND_DIR/bundle.json" --history "$LOOP_HISTORY"
+  --bundle "$ROUND_DIR/bundle.json" \
+  && <Reviewer command from the product's adapter section>
 ```
 
-A fresh evidence ID consumes one of 3 rounds; one same-session format
-correction uses the same round. A timeout is `UNVERIFIED`. Validate each raw envelope so extraction failures enter the history:
+A passed gate records the round as `started` before the Reviewer runs. Run it
+only immediately before a real Reviewer call, never to look at the count (earlier
+output and the `ledger` file show it): a call that starts and is then interrupted has
+used its round, and a relay session sees it. Passing the gate again for the
+same evidence ID stays one round; a refused gate writes nothing.
+
+A fresh evidence ID consumes one round of the budget; one same-session format
+correction uses the same round. A timeout is `UNVERIFIED` and its round stays
+used. Validate each raw envelope so the same ledger entry gets the result and
+extraction failures are counted:
 
 ```bash
 python3 <skill-dir>/scripts/validate_round.py \
   --bundle "$ROUND_DIR/bundle.json" \
   --review "$ROUND_DIR/raw-review.json" --product "$REVIEWER_PRODUCT" \
-  --history "$LOOP_HISTORY" --output "$ROUND_DIR/validation.json" \
+  --output "$ROUND_DIR/validation.json" \
   [--session-id "$RECORDED_SESSION_ID"]
 ```
 
 The validator reuses `extract_product_output.py`. Its gate stops a second
-malformed result as `UNVERIFIED` and refuses round 4: format correction
-supplies no new evidence.
+malformed result as `UNVERIFIED` and refuses a round beyond the budget: format
+correction supplies no new evidence. A review obtained after a refused gate
+is rejected the same way and never recorded. Every refusal carries a `fix`
+or `errors` text; follow it instead of working around the ledger.
 
 ### Phase 3: Detect evidence drift
 
@@ -267,8 +297,41 @@ bundle. The Fixer never supplies the terminal verdict.
 - `UNVERIFIED`: ambiguous delivery, malformed output after one correction,
   failed checks, repeated drift, or stale required evidence.
 
-Round-budget exhaustion is never `CLEAN`. Report the remaining ledger and
-ask whether to authorize another bounded set of rounds.
+Round-budget exhaustion is never `CLEAN`, and only the user extends the
+budget. The extension exists once it is recorded, with the user's words
+verbatim:
+
+```bash
+python3 <skill-dir>/scripts/validate_round.py --bundle "$ROUND_DIR/bundle.json" \
+  --grant-rounds <N> --granted-by "<the user's own words about extra rounds>"
+```
+
+The budget is 3 plus the grants recorded in the open loop. A host's unattended
+prompt (for example "go on with the recommended option" / 「按推荐继续」), a
+handoff note, or your own judgment is not a grant; only what the user said
+about adding rounds is. The script refuses the obvious non-quotes: a
+placeholder (`<...>`, `TODO`, `TBD`), blank or invisible text, and a bare
+go-ahead such as 「按推荐继续」 or 「都按推荐来」. Text that passes that check
+is still a grant only when the user said it. A run is unattended when `sideby` is on `PATH` and
+`sideby unattended status --json` reports `"on": true`, or the host has stated
+that nobody is present and questions are refused. A missing or failing
+`sideby` settles nothing; without that host statement the user is present.
+Probe when the last budgeted round returns `FINDINGS`, before Phase 4, and
+again when the gate refuses a call.
+
+- **User present**: report the remaining ledger and ask whether to authorize
+  another bounded set of rounds; record a yes with the command above before
+  the next gate.
+- **Unattended**: do not ask. Skip Phase 4 for the last budgeted round's
+  findings, since no round is left to re-review an edit; a fix already applied
+  when the gate refuses is reported as unreviewed. Record one item for the
+  user with
+  `sideby unattended defer "<N> OCR findings open on <branch> after <rounds_used> rounds"`
+  (only the finding count, the branch or the short SHA on a detached HEAD,
+  and `rounds_used` from the gate output); without `sideby` the final report
+  carries it alone. Code with open findings is not
+  committed or merged by the surrounding task, which continues only with work
+  that does not depend on it and lists the item in its final report.
 
 ## Output contract
 
@@ -278,10 +341,12 @@ OCR Review Loop Result
 - Repository / target:
 - Scope / exclusions:
 - Reviewer / Fixer:
-- Rounds used / budget:
+- Rounds used / budget: <rounds_used>/<round_budget>; grants: none | <N> by "<granted-by words>"
+- Round ledger:
 - Final evidence id:
 - Coverage: <reviewed>/<OCR + supplemental>; skipped: <count>; unaccepted excluded: <count>
 - Fixed / Rejected / Open findings:
+- Deferred user decision: none | <item and where it was recorded>
 - Verification:
 - Sessions / recovery:
 - Git and external actions: none

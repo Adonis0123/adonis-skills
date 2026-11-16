@@ -1755,6 +1755,11 @@ def existing_board(run_dir: str) -> str | None:
 
 
 
+# What the hints tell the Coordinator to run: a 10-minute cap, so it can send the progress line (run-board.md rule 9).
+# The parser default stays 3600 for callers that pass no --timeout.
+WATCH_AGAIN = "watch --timeout 600"
+
+
 def watch_events(view: dict) -> dict[str, tuple[str, str]]:
     """What the Coordinator must act on, per Lane, as (kind, text): a stream end, a failure, a question, silence.
     watch compares kinds only: the silence text carries an age that changes every minute."""
@@ -1802,7 +1807,7 @@ def watch(run_dir: str, timeout: int, interval: int) -> int:
         view, now_events = current()
         if any(before.get(k, ("",))[0] != v[0] for k, v in now_events.items()):
             return report(now_events)
-    print(f"{plain_age(timeout)}内没有任务结束；{state_line(view)}。需要的话再挂一次 watch")
+    print(f"{plain_age(timeout)}内没有任务结束；{state_line(view)}。需要的话再挂一次 {WATCH_AGAIN}")
     return 0
 
 
@@ -1810,8 +1815,8 @@ def next_step_hint(run_dir: str, view: dict) -> str | None:
     """After dispatching or asking, the Coordinator must keep watching Lanes, not wait for the user."""
     if any(l.get("ledger_state", l["state"]) == "working" and (l.get("output") or l.get("session") or l.get("dispatch")) for l in view["lanes"]):
         script = os.path.abspath(__file__)
-        return (f"下一步：后台运行 python3 {script} --run {run_dir} watch（Claude Code 用 run_in_background），"
-                "任务结束、报错、要你回答或久无动静时它会退出提醒；别干等用户回复")
+        return (f"下一步：后台运行 python3 {script} --run {run_dir} {WATCH_AGAIN}（Claude Code 用 run_in_background），"
+                "任务结束、报错、要你回答或久无动静时它会退出提醒，满 10 分钟没有事件也会返回；别干等用户回复")
     return None
 
 

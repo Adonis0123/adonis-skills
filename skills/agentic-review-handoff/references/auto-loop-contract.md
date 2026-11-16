@@ -145,7 +145,7 @@ Opt-in review-only terminal path when lifecycle is `awaiting_user_decision` afte
 6. Deadlock → stop with structured disagreement (not a freeze Gate).
 7. Verdict vocabulary above is exclusive.
 8. Diff >500 lines: warn and suggest split (do not hard-fail).
-9. Budget exhaust / deadlock exits as user report; continue = new budget authorization.
+9. Budget exhaust / deadlock exits as user report; continue = new budget authorization from the user, never self-granted. An unattended run defers an exhausted budget instead of asking (SKILL.md § Budget exhausted).
 
 ## Delivery / stop semantics
 

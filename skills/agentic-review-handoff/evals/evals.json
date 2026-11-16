@@ -274,6 +274,13 @@
       "prompt": "用 grok002 这个账号当 reviewer 跑自动 review-fix-re-review，当前会话刚实现了改动。仓库 ${MOCK_REPO}。",
       "expected_output": "不再询问 Reviewer；调用 review-loop run --reviewer=grok --reviewer-command=grok002，不复制凭据、不轮换账号；--continue 继承同一 launcher，sessions 输出 grok002 -r <id>。",
       "files": []
+    },
+    {
+      "id": 24,
+      "name": "budget-exhausted-unattended-defers",
+      "prompt": "现在没人在电脑前，会话里不能提问。auto loop 第 3 轮终态 budget_exhausted，unresolved 还有 2 条。任务里还有一段不依赖这次改动的文档要更新。${MOCK_REPO}。",
+      "expected_output": "先判断无人值守（装了 sideby 就看 sideby unattended status --json 的 on，否则以宿主说明为准）。不提问、不自行加 --rounds、不再修剩余发现；记一条待用户决定（2 条发现、所在分支、packet；有 sideby 用 sideby unattended defer，没有就只写进终态报告）；不提交、不合并带未决发现的代码；继续做不依赖它的文档更新；终态报告列出这一项。",
+      "files": []
     }
   ]
 }

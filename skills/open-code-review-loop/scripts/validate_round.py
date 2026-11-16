@@ -5,11 +5,26 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from collections.abc import Iterator
+from contextlib import contextmanager
+from datetime import datetime, timezone
 import hashlib
 import json
+import os
 import re
+import subprocess
+import unicodedata
 from pathlib import Path
 from typing import Any
+
+try:
+    import fcntl
+except ImportError:  # no advisory file locks on this platform
+    fcntl = None
+try:
+    import pwd
+except ImportError:  # no account database on this platform
+    pwd = None
 
 
 PRODUCTS = {"codex", "claude-code", "grok-build", "cursor-cli"}
@@ -26,6 +41,15 @@ CATEGORIES = {
 SEVERITIES = {"critical", "high", "medium", "low"}
 VERDICTS = {"FINDINGS", "NO_FINDINGS", "BLOCKED"}
 EVIDENCE_ID_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
+BASE_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}(?:[0-9a-f]{24})?$")
+STATE_DIR_NAME = "open-code-review-loop"
+ENTRY_STATUSES = {"started", "valid", "invalid"}
+BASE_ROUND_BUDGET = 3
+GRANT_USAGE = '--grant-rounds <N> --granted-by "<the user\'s own words>"'
+REBUILD_HINT = (
+    "rebuild the bundle with build_review_bundle.py instead of writing or "
+    "editing it by hand"
+)
 BUNDLE_MATERIAL_FIELDS = (
     "schema_version",
     "mode",
@@ -109,17 +133,34 @@ def reject_unknown_fields(
         errors.append(f"{label} has unknown fields: {', '.join(unknown)}")
 
 
-def parse_args() -> argparse.Namespace:
+def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--bundle", required=True)
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--review")
     mode.add_argument("--check-call", action="store_true")
-    parser.add_argument("--history", help="One persistent JSON history per loop")
+    mode.add_argument(
+        "--grant-rounds",
+        metavar="N",
+        help="Record N extra rounds that the user authorized; needs --granted-by",
+    )
+    parser.add_argument(
+        "--granted-by",
+        help="The user's own words authorizing the extra rounds, verbatim",
+    )
+    parser.add_argument(
+        "--history",
+        help="Deprecated: the ledger path is derived from the repository; "
+        "any other path is refused",
+    )
     parser.add_argument("--product", choices=sorted(PRODUCTS))
     parser.add_argument("--session-id")
     parser.add_argument("--output")
-    return parser.parse_args()
+    return parser
+
+
+def parse_args() -> argparse.Namespace:
+    return build_parser().parse_args()
 
 
 def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
@@ -317,73 +358,586 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def call_gate(history: list[dict[str, Any]], evidence_id: str) -> dict[str, Any]:
-    """Count evidence rounds separately from the single format correction."""
-    failures = Counter(item["evidence_id"] for item in history if not item["valid"])
-    evidence = {item["evidence_id"] for item in history}
+def default_state_root() -> Path:
+    """Return the fixed per-user state directory for the round ledgers.
+
+    The home directory comes from the account database, not from HOME,
+    XDG_STATE_HOME, or any argument: a caller that could move the ledgers
+    could start every count again from zero. HOME is the fallback only for an
+    account that has no database entry.
+    """
+    try:
+        home = pwd.getpwuid(os.getuid()).pw_dir
+    except (AttributeError, KeyError):
+        home = str(Path.home())
+    return Path(home) / ".local" / "state" / STATE_DIR_NAME
+
+
+# Tests replace this constant in-process. The CLI has no flag or environment
+# variable for it, so a loop that runs the script cannot relocate the ledgers.
+STATE_ROOT = default_state_root()
+
+
+def timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+
+def git_output(repository: str, *args: str) -> str:
+    # GIT_DIR / GIT_WORK_TREE would let the caller answer for another checkout.
+    environment = {
+        key: value for key, value in os.environ.items() if not key.startswith("GIT_")
+    }
+    try:
+        completed = subprocess.run(
+            ["git", "-C", repository, *args],
+            capture_output=True, text=True, check=False, env=environment, timeout=30,
+        )
+    except (OSError, subprocess.SubprocessError) as error:
+        raise ValueError(
+            f"cannot run git for bundle.repository {repository}: {error}. Make "
+            "git available on PATH and rerun the same command"
+        ) from error
+    if completed.returncode != 0:
+        detail = (completed.stderr.strip().splitlines() or ["no output"])[-1]
+        raise ValueError(
+            f"bundle.repository {repository} is not a Git checkout on this "
+            f"machine (git {' '.join(args)} failed: {detail}); {REBUILD_HINT}"
+        )
+    return completed.stdout.strip()
+
+
+def repository_identity(bundle: dict[str, Any]) -> str:
+    """Return the checkout root that Git itself reports for the bundle.
+
+    The ledger is keyed by this answer, never by the bundle's own text, so
+    editing bundle.repository cannot select another ledger.
+    """
+    repository = bundle.get("repository")
+    base_sha = bundle.get("base_sha")
+    if not non_empty(repository) or not os.path.isabs(repository):
+        raise ValueError(
+            "bundle.repository must be the absolute repository path that "
+            f"build_review_bundle.py records; {REBUILD_HINT}"
+        )
+    if not isinstance(base_sha, str) or not BASE_SHA_PATTERN.fullmatch(base_sha):
+        raise ValueError(
+            f"bundle.base_sha must be the full commit hash of HEAD; {REBUILD_HINT}"
+        )
+    toplevel = git_output(repository, "rev-parse", "--show-toplevel")
+    head = git_output(repository, "rev-parse", "HEAD")
+    try:
+        same_directory = os.path.samefile(toplevel, repository)
+    except OSError:
+        same_directory = False
+    if not same_directory:
+        raise ValueError(
+            f"bundle.repository {repository} is not the root of its Git "
+            f"checkout (Git reports {toplevel}); {REBUILD_HINT}"
+        )
+    if head != base_sha:
+        raise ValueError(
+            f"bundle.base_sha {base_sha} is not HEAD of {toplevel} (HEAD is "
+            f"{head}): the bundle is stale or was edited. Rebuild it with "
+            "build_review_bundle.py; rounds already in the ledger still count"
+        )
+    return os.path.realpath(toplevel)
+
+
+def ledger_path(repository: str) -> Path:
+    """Derive the one round ledger of a repository checkout.
+
+    `repository` is the answer of repository_identity(). The caller never
+    chooses this path: a handoff, a resumed session, a new round directory, or
+    a new commit must land on the rounds that were already used.
+    """
+    repository_key = hashlib.sha256(repository.encode("utf-8")).hexdigest()[:16]
+    path = STATE_ROOT / "ledgers" / f"{repository_key}.json"
+    if path.resolve().is_relative_to(Path(repository).resolve()):
+        raise ValueError(
+            f"the round ledger {path} would sit inside the repository and drift "
+            "the evidence. The ledger location is fixed, so this loop cannot "
+            f"run on a repository that contains {STATE_ROOT}; run it on a "
+            "checkout outside that directory"
+        )
+    return path
+
+
+def loop_start(entries: list[dict[str, Any]]) -> int:
+    """Index of the first entry after the last validated NO_FINDINGS."""
+    return max(
+        (index + 1 for index, item in enumerate(entries) if item.get("clean")),
+        default=0,
+    )
+
+
+def loop_grants(ledger: dict[str, Any]) -> list[dict[str, Any]]:
+    """Grants recorded after the last validated NO_FINDINGS."""
+    closed = [
+        item["grants_closed"] for item in ledger["entries"] if item.get("clean")
+    ]
+    return ledger["grants"][closed[-1] if closed else 0:]
+
+
+def call_gate(ledger: dict[str, Any], evidence_id: str) -> dict[str, Any]:
+    """Count evidence rounds separately from the single format correction.
+
+    Rounds belong to the open loop: every evidence since the last validated
+    NO_FINDINGS, whatever HEAD it was built on. Only that clean result closes
+    a loop; a new commit, session, or round directory does not.
+    """
+    entries = ledger["entries"]
+    start = loop_start(entries)
+    grants = loop_grants(ledger)
+    # A grant is the user's decision to continue, so failures before it no
+    # longer lock the ledger; rounds are never forgotten.
+    window = max(start, grants[-1]["entries_before"]) if grants else start
+    failures = Counter(
+        item["evidence_id"]
+        for item in entries[window:]
+        if item["status"] == "invalid"
+    )
+    current = entries[start:]
+    evidence = {item["evidence_id"] for item in current}
+    granted = sum(grant["rounds"] for grant in grants)
+    budget = BASE_ROUND_BUDGET + granted
     rounds = len(evidence | {evidence_id})
-    reason = None
+    reason = fix = None
     if any(count >= 2 for count in failures.values()):
         reason = "UNVERIFIED: repeated malformed output"
-    elif rounds > 3:
+        fix = (
+            "Do not call the Reviewer again; report UNVERIFIED with the ledger "
+            "path. Only the user can reopen this ledger: ask, then record their "
+            f"words with {GRANT_USAGE}."
+        )
+    elif rounds > budget:
         reason = "HUMAN_GATE: round budget exhausted"
-    elif any(item["evidence_id"] == evidence_id and item["valid"] for item in history):
-        reason = "UNVERIFIED: evidence already reviewed"
-    return {"call_allowed": reason is None, "stop": reason,
-            "rounds_used": len(evidence), "round_budget": 3}
-
-
-def read_history(path: Path) -> list[dict[str, Any]]:
-    history = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
-    if not isinstance(history, list) or any(
-        not isinstance(item, dict)
-        or not isinstance(item.get("evidence_id"), str)
-        or not EVIDENCE_ID_PATTERN.fullmatch(item["evidence_id"])
-        or type(item.get("valid")) is not bool
-        for item in history
+        fix = (
+            "Do not call the Reviewer. Ask the user whether to add rounds and "
+            f"record their own words with {GRANT_USAGE}. A host's unattended "
+            "prompt is not a grant: when nobody is present, defer the open "
+            "findings and stop. A new commit, bundle, or session does not "
+            "start a new count."
+        )
+    elif any(
+        item["evidence_id"] == evidence_id and item["status"] == "valid"
+        for item in entries
     ):
-        raise ValueError("Invalid loop history; preserve it and stop")
-    return history
+        reason = "UNVERIFIED: evidence already reviewed"
+        fix = (
+            "This evidence already has a validated review in the ledger; use "
+            "that result. Only changed code produces new evidence, and new "
+            "evidence consumes a round."
+        )
+    base_shas = list(dict.fromkeys(
+        item["base_sha"] for item in current if item.get("base_sha")
+    ))
+    gate = {"call_allowed": reason is None, "stop": reason,
+            "rounds_used": len(evidence), "round_budget": budget,
+            "granted_rounds": granted, "base_shas": base_shas}
+    if fix:
+        gate["fix"] = fix
+    return gate
+
+
+def open_attempt(ledger: dict[str, Any], evidence_id: str) -> dict[str, Any] | None:
+    """The started, not yet validated call for this evidence in the open loop."""
+    entries = ledger["entries"]
+    for item in reversed(entries[loop_start(entries):]):
+        if item["evidence_id"] == evidence_id:
+            return item if item["status"] == "started" else None
+    return None
+
+
+def record_attempt(
+    ledger: dict[str, Any], evidence_id: str, base_sha: str, gate_passed: bool
+) -> dict[str, Any]:
+    """Count the round when the gate lets a call through, not when it returns.
+
+    A Reviewer that starts and is then interrupted has still used the round;
+    passing the gate again for the same evidence reuses the same entry.
+    """
+    entry = open_attempt(ledger, evidence_id)
+    if entry is None:
+        entry = {"evidence_id": evidence_id, "base_sha": base_sha,
+                 "status": "started", "check_calls": 0, "started_at": timestamp()}
+        ledger["entries"].append(entry)
+    if gate_passed:
+        entry["check_calls"] = entry.get("check_calls", 0) + 1
+    if base_sha not in ledger["base_shas"]:
+        ledger["base_shas"].append(base_sha)
+    return entry
+
+
+def invalid_ledger(path: Path) -> ValueError:
+    return ValueError(
+        f"Invalid round ledger at {path}. Do not delete, edit, or recreate "
+        "it: stop, report UNVERIFIED with this path, and let the user "
+        "repair or remove the file"
+    )
+
+
+def read_entry(item: Any, legacy_base_sha: Any, grant_count: int) -> dict[str, Any]:
+    """Normalize one round; a legacy entry carries only `valid`."""
+    if not isinstance(item, dict):
+        raise ValueError("entry must be an object")
+    evidence_id = item.get("evidence_id")
+    if not isinstance(evidence_id, str) or not EVIDENCE_ID_PATTERN.fullmatch(evidence_id):
+        raise ValueError("entry.evidence_id is invalid")
+    status = item.get("status")
+    if status is None and type(item.get("valid")) is bool:
+        status = "valid" if item["valid"] else "invalid"
+    if status not in ENTRY_STATUSES:
+        raise ValueError("entry.status is invalid")
+    entry: dict[str, Any] = {"evidence_id": evidence_id}
+    base_sha = item.get("base_sha", legacy_base_sha)
+    if base_sha is not None:
+        if not isinstance(base_sha, str) or not BASE_SHA_PATTERN.fullmatch(base_sha):
+            raise ValueError("entry.base_sha is invalid")
+        entry["base_sha"] = base_sha
+    entry["status"] = status
+    if "clean" in item:
+        # Only a validated NO_FINDINGS written by this script closes a loop; a
+        # legacy `valid: true` never does.
+        grants_closed = item.get("grants_closed")
+        if (
+            item["clean"] is not True
+            or status != "valid"
+            or type(grants_closed) is not int
+            or not 0 <= grants_closed <= grant_count
+        ):
+            raise ValueError("entry.clean is invalid")
+        entry["clean"] = True
+        entry["grants_closed"] = grants_closed
+    if "check_calls" in item:
+        if type(item["check_calls"]) is not int or item["check_calls"] < 0:
+            raise ValueError("entry.check_calls is invalid")
+        entry["check_calls"] = item["check_calls"]
+    for field in ("started_at", "reviewed_at"):
+        if field in item:
+            if not non_empty(item[field]):
+                raise ValueError(f"entry.{field} is invalid")
+            entry[field] = item[field]
+    return entry
+
+
+def read_ledger(path: Path) -> dict[str, Any]:
+    """Load the ledger; a legacy bare list of rounds carries no grants."""
+    if not path.exists():
+        return {"entries": [], "grants": [], "base_shas": []}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except OSError as error:
+        raise ValueError(
+            f"cannot read the round ledger at {path}: {error}. Make the file "
+            "readable for this host and rerun; do not replace it"
+        ) from error
+    except ValueError:
+        raw = None
+    if isinstance(raw, list):
+        raw = {"entries": raw}
+    if not isinstance(raw, dict):
+        raise invalid_ledger(path)
+    raw_entries = raw.get("entries")
+    grants = raw.get("grants", [])
+    legacy_base_sha = raw.get("base_sha")
+    base_shas = raw.get(
+        "base_shas", [] if legacy_base_sha is None else [legacy_base_sha]
+    )
+    if (
+        not isinstance(raw_entries, list)
+        or not isinstance(grants, list)
+        or not isinstance(base_shas, list)
+        or any(
+            not isinstance(value, str) or not BASE_SHA_PATTERN.fullmatch(value)
+            for value in base_shas
+        )
+    ):
+        raise invalid_ledger(path)
+    try:
+        entries = [
+            read_entry(item, legacy_base_sha, len(grants)) for item in raw_entries
+        ]
+    except ValueError as error:
+        raise invalid_ledger(path) from error
+    if any(
+        not isinstance(grant, dict)
+        or type(grant.get("rounds")) is not int
+        or grant["rounds"] < 1
+        or not non_empty(grant.get("granted_by"))
+        or not non_empty(grant.get("at"))
+        or type(grant.get("entries_before")) is not int
+        or not 0 <= grant["entries_before"] <= len(entries)
+        for grant in grants
+    ):
+        raise invalid_ledger(path)
+    return {"entries": entries, "grants": grants, "base_shas": base_shas}
+
+
+def unwritable_ledger(path: Path, error: OSError) -> ValueError:
+    return ValueError(
+        f"cannot write the round ledger at {path}: {error}. Make "
+        f"{STATE_ROOT} writable for this host (a sandboxed host needs it as an "
+        "extra writable directory), then rerun the same command. The ledger "
+        "location is fixed: no argument or environment variable moves it, and "
+        "a call that cannot be recorded must not be made"
+    )
+
+
+@contextmanager
+def ledger_lock(path: Path) -> Iterator[None]:
+    """Serialize read-check-write so two sessions cannot both take a round."""
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        handle = open(path.with_name(f"{path.name}.lock"), "a", encoding="utf-8")
+    except OSError as error:
+        raise unwritable_ledger(path, error) from error
+    with handle:
+        if fcntl is not None:
+            fcntl.flock(handle, fcntl.LOCK_EX)
+        yield
+
+
+def write_ledger(path: Path, repository: str, ledger: dict[str, Any]) -> None:
+    document = {
+        "schema_version": "3",
+        "repository": repository,
+        "base_shas": ledger["base_shas"],
+        "entries": ledger["entries"],
+        "grants": ledger["grants"],
+    }
+    temporary = path.with_name(f"{path.name}.tmp")
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary.write_text(
+            json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+        os.replace(temporary, path)
+    except OSError as error:
+        raise unwritable_ledger(path, error) from error
+
+
+def same_path(first: Path, second: Path) -> bool:
+    """Compare two paths by name and, when both exist, by the file they are."""
+    if first == second:
+        return True
+    try:
+        return os.path.samefile(first, second)
+    except OSError:
+        return False
+
+
+def refuse_output_over_ledger(output: str | None, ledger: Path | None = None) -> None:
+    """Refuse an --output that would write over the round ledger.
+
+    The result JSON is written after the lock is released, so a path that is
+    the ledger, its .tmp or .lock companion, or anything else in the state
+    directory would replace the recorded rounds. Symlinks and relative
+    spellings are resolved first, and existing files are compared by identity,
+    so a hard link or a differently-cased name is caught as well.
+    """
+    if not output:
+        return
+    target = Path(output).expanduser().resolve()
+    root = STATE_ROOT.resolve()
+    protected = [] if ledger is None else [
+        ledger.with_name(ledger.name + suffix).resolve()
+        for suffix in ("", ".tmp", ".lock")
+    ]
+    if (
+        any(same_path(target, item) for item in protected)
+        or any(same_path(parent, root) for parent in (target, *target.parents))
+    ):
+        raise OutputRefused(
+            f"--output {output} is refused: it resolves to {target}, which is "
+            f"the round ledger, one of its .tmp/.lock files, or a path inside "
+            f"the ledger state directory {root}; writing the result there "
+            "would destroy the recorded rounds. Nothing was written. Pass "
+            "another path for --output, for example a file in this round's "
+            "own directory, and rerun the same command"
+        )
+
+
+class OutputRefused(ValueError):
+    """--output must not be written: it points at the ledger state."""
+
+
+def grant_text_key(text: str) -> str:
+    """Letters and digits only, so punctuation or hidden characters cannot
+    disguise a placeholder."""
+    normalized = unicodedata.normalize("NFKC", text).casefold()
+    return "".join(
+        char for char in normalized if unicodedata.category(char)[0] in "LN"
+    )
+
+
+def visible_grant_text(text: str) -> str:
+    normalized = unicodedata.normalize("NFKC", text)
+    return "".join(
+        char for char in normalized if unicodedata.category(char)[0] not in "CZ"
+    )
+
+
+PLACEHOLDER_GRANT_KEYS = frozenset(
+    grant_text_key(text)
+    for text in (
+        "TODO", "TBD", "FIXME", "XXX", "placeholder", "用户原话",
+        "the user's own words", "the user's own words about extra rounds",
+    )
+)
+# Blanket "take the recommendation" replies and host unattended prompts say
+# nothing about adding review rounds. This list is deliberately short and
+# exact: a sentence that also names the rounds is accepted.
+UNATTENDED_GRANT_KEYS = frozenset(
+    grant_text_key(text)
+    for text in (
+        "按推荐", "按推荐来", "按推荐继续", "都按推荐来", "都按推荐",
+        "go on with the recommended option",
+        "continue with the recommended option",
+        "proceed with the recommended option",
+    )
+)
+UNATTENDED_GRANT_MARKERS = (grant_text_key("nobody is here to answer"),)
+
+
+def validate_grant(rounds: str, granted_by: str | None) -> tuple[int, str]:
+    if not re.fullmatch(r"[1-9][0-9]*", rounds.strip()):
+        raise ValueError(
+            "--grant-rounds must be a positive whole number of extra rounds, "
+            f"for example --grant-rounds 2; got {rounds!r}"
+        )
+    key = grant_text_key(granted_by) if isinstance(granted_by, str) else ""
+    if not key:
+        raise ValueError(
+            "--granted-by must quote the user's own words that authorize extra "
+            'rounds, for example --granted-by "two more rounds are fine"; '
+            "blank, punctuation-only, or invisible text is not a quote. Ask "
+            "the user when they have not said so; a host's unattended prompt "
+            "or the agent's own judgment is not a grant"
+        )
+    visible = visible_grant_text(granted_by)
+    if (visible.startswith("<") and visible.endswith(">")) or key in PLACEHOLDER_GRANT_KEYS:
+        raise ValueError(
+            f"--granted-by {granted_by!r} is a placeholder, not something the "
+            "user said. Replace it with the sentence the user actually wrote "
+            'about adding rounds, for example --granted-by "two more rounds '
+            'are fine"; when they have not written one, ask them, or when '
+            "nobody is present defer the open findings and stop"
+        )
+    if key in UNATTENDED_GRANT_KEYS or any(
+        marker in key for marker in UNATTENDED_GRANT_MARKERS
+    ):
+        raise ValueError(
+            f"--granted-by {granted_by!r} is a blanket go-ahead or a host's "
+            "unattended prompt and says nothing about extra review rounds. "
+            "Ask the user whether to add rounds and quote their answer; when "
+            "their answer does name the rounds (for example 「按推荐继续，再审"
+            "两轮」), quote that whole sentence. When nobody is present, defer "
+            "the open findings and stop"
+        )
+    return int(rounds), granted_by.strip()
 
 
 def main() -> int:
     args = parse_args()
+    write_output = True
     try:
-        bundle = load_object(args.bundle)
+        # Before anything is read or written: no ledger, lock, or result file
+        # may be touched for an --output aimed at the ledger state.
+        refuse_output_over_ledger(args.output)
+        try:
+            bundle = load_object(args.bundle)
+        except (OSError, ValueError) as error:
+            raise ValueError(
+                f"cannot read --bundle {args.bundle}: {error}; pass the "
+                "bundle.json that build_review_bundle.py wrote for this round"
+            ) from error
         evidence_id = canonical_evidence_id(bundle)
         if evidence_id is None or bundle.get("evidence_id") != evidence_id:
-            raise ValueError("bundle.evidence_id does not match canonical bundle material")
-        if args.check_call and not args.history:
-            raise ValueError("--check-call requires --history")
-        history_path = Path(args.history).expanduser() if args.history else None
-        history = read_history(history_path) if history_path else []
-        gate = call_gate(history, evidence_id)
-        if args.check_call or (history_path and not gate["call_allowed"]):
-            result = {"valid": gate["call_allowed"], "clean": False, **gate}
-        else:
-            try:
-                review = load_object(args.review)
-                if args.product:
-                    from extract_product_output import extract, normalize_reviewer_identity
-                    review = normalize_reviewer_identity(
-                        args.product, review, extract(args.product, review), args.session_id
-                    )
-                result = validate(bundle, review)
-            except (OSError, ValueError) as error:
-                result = {"valid": False, "clean": False, "errors": [str(error)]}
-            if history_path:
-                history.append({"evidence_id": evidence_id, "valid": result["valid"]})
-                history_path.parent.mkdir(parents=True, exist_ok=True)
-                history_path.write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
-                result.update(call_gate(history, evidence_id))
+            raise ValueError(
+                "bundle.evidence_id does not match canonical bundle material; "
+                + REBUILD_HINT
+            )
+        repository = repository_identity(bundle)
+        path = ledger_path(repository)
+        refuse_output_over_ledger(args.output, path)
+        if args.history and Path(args.history).expanduser().resolve() != path.resolve():
+            raise ValueError(
+                f"--history {args.history} is refused: the script derives the "
+                "round ledger from the repository Git reports for the bundle, "
+                "so a new path cannot reset the count. Drop --history (or pass "
+                f"exactly {path}) and rerun. Rounds recorded there still "
+                f"count; extra rounds need {GRANT_USAGE}"
+            )
+        if args.granted_by is not None and args.grant_rounds is None:
+            raise ValueError(
+                f"--granted-by only records a grant; use it as {GRANT_USAGE}"
+            )
+        grant_request = (
+            None if args.grant_rounds is None
+            else validate_grant(args.grant_rounds, args.granted_by)
+        )
+        with ledger_lock(path):
+            ledger = read_ledger(path)
+            gate = call_gate(ledger, evidence_id)
+            if grant_request is not None:
+                grant = {
+                    "at": timestamp(),
+                    "rounds": grant_request[0],
+                    "granted_by": grant_request[1],
+                    "entries_before": len(ledger["entries"]),
+                }
+                ledger["grants"].append(grant)
+                write_ledger(path, repository, ledger)
+                result = {"valid": True, "clean": False, "granted": grant,
+                          **call_gate(ledger, evidence_id)}
+            elif not gate["call_allowed"]:
+                # A refused gate writes nothing: the ledger stays byte-identical.
+                result = {"valid": False, "clean": False, **gate}
+            elif args.check_call:
+                # Passing the gate is what uses the round, so it is on disk
+                # before the Reviewer starts.
+                record_attempt(ledger, evidence_id, bundle["base_sha"], True)
+                write_ledger(path, repository, ledger)
+                result = {"valid": True, "clean": False,
+                          **call_gate(ledger, evidence_id)}
+            else:
+                try:
+                    review = load_object(args.review)
+                    if args.product:
+                        from extract_product_output import extract, normalize_reviewer_identity
+                        review = normalize_reviewer_identity(
+                            args.product, review, extract(args.product, review), args.session_id
+                        )
+                    result = validate(bundle, review)
+                except (OSError, ValueError) as error:
+                    result = {"valid": False, "clean": False, "errors": [str(error)]}
+                entry = record_attempt(ledger, evidence_id, bundle["base_sha"], False)
+                entry["status"] = "valid" if result["valid"] else "invalid"
+                entry["reviewed_at"] = timestamp()
+                # Report the loop this review belongs to before closing it.
+                result.update(call_gate(ledger, evidence_id))
                 if result["valid"]:
-                    result["stop"] = None  # A completed review is not a retry failure.
+                    # A completed review is not a retry failure.
+                    result["stop"] = None
+                    result.pop("fix", None)
+                if result["clean"]:
+                    # Only a validated NO_FINDINGS ends a loop; the next
+                    # evidence then starts a new budget without old grants.
+                    entry["clean"] = True
+                    entry["grants_closed"] = len(ledger["grants"])
+                    result["loop_closed"] = True
+                write_ledger(path, repository, ledger)
+        result["ledger"] = str(path)
+    except OutputRefused as error:
+        write_output = False
+        result = {"valid": False, "clean": False, "call_allowed": False,
+                  "stop": "UNVERIFIED", "errors": [str(error)]}
     except (OSError, ValueError) as error:
         result = {"valid": False, "clean": False, "call_allowed": False,
                   "stop": "UNVERIFIED", "errors": [str(error)]}
 
     rendered = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
-    if args.output:
+    if args.output and write_output:
         output = Path(args.output).expanduser().resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(rendered, encoding="utf-8")

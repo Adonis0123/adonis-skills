@@ -3,7 +3,7 @@ name: agentic-review-handoff
 description: "Validate pasted review findings before fixes; run same-session automatic Git review-fix-re-review with a headless Reviewer and no redundant confirmation; start fresh-eyes Git diff Review Intake; resume review-loop sessions or packets; get a DecisionConsult from another AI; or run first-principles/DDD/high-cohesion review. Requires Git and review/consult intent; ordinary implementation or commit-only requests do not start a review loop."
 metadata:
   author: adonis
-  version: "3.9.0"
+  version: "3.10.0"
 ---
 
 # Agentic Review Handoff
@@ -64,7 +64,7 @@ On failure follow the short startup-failure rule below; do not repair Docker.
 
 ## Auto loop (`review-loop run`) — explicit automation
 
-Explicit invocation starts immediately once the Reviewer is known. Human intervenes only at: **initiate** (including the one Reviewer question below), **terminal report**, or an unresolved exception (ambiguous delivery / hash mismatch / budget / deadlock / scope or external-action decision). Ordinary findings and safely recoverable local startup faults are not confirmation gates.
+Explicit invocation starts immediately once the Reviewer is known. Human intervenes only at: **initiate** (including the one Reviewer question below), **terminal report**, or an unresolved exception (ambiguous delivery / hash mismatch / budget / deadlock / scope or external-action decision). Ordinary findings and safely recoverable local startup faults are not confirmation gates. An unattended run defers an exhausted budget instead of asking (see Budget exhausted).
 
 ### Reviewer selection (before the first `run`)
 
@@ -128,6 +128,13 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude|pi]
 | Progress | Immediate liveness line, then every 30 seconds while the Reviewer process is alive                           |
 | STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                              |
 | Sandbox  | Codex OS sandbox; Grok read-only tool allowlist + MCP deny; Claude tool restrictions; no permission prompt   |
+
+**Budget exhausted (`budget_exhausted`).** Only the user adds rounds: the report's `recommendation` is addressed to them, so never pass `--rounds` on `--continue` yourself. Probe for an unattended run at that point: `sideby` is on `PATH` and `sideby unattended status --json` reports `"on": true`, or the host has stated that nobody is present and questions are refused. A missing or failing `sideby` settles nothing; without that host statement the user is present.
+
+- **User present**: give the terminal report and ask whether to authorize more rounds.
+- **Unattended**: do not ask and do not fix the remaining findings (no budgeted round is left to re-review an edit). Record one item for the user with `sideby unattended defer "<N> review findings open on <branch> after <rounds> rounds, packet <packet_id>"` (N = the report's `unresolved` count; the short SHA on a detached HEAD; no finding text); without `sideby` the terminal report carries it alone. Do not commit or merge code with open findings, continue only with task parts that do not depend on it, and list the item in the terminal report.
+
+Run review-fix-re-review through `review-loop run`: calling a review CLI repeatedly outside this skill loses the round budget.
 
 Default `completion=pass` treats `PASS_WITH_CONCERNS` as more work: the visible Fixer repairs each actionable in-scope concern, appends Fix Completion, and re-reviews within budget. It never asks the user whether to continue. Only explicit `--completion=review` parks concerns in `awaiting_user_decision`; this is the opt-in escape hatch for review-only judgment, not the loop default.
 

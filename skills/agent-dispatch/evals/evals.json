@@ -333,6 +333,40 @@
         "“自己做会怎样”标成估计，不说成实测",
         "收尾：没有挡住的事项时 close；台账里还有进行中的外部等待或未答的问题时，说明什么挡着、不提前归档"
       ]
+    },
+    {
+      "id": 23,
+      "name": "unrelated-request-opens-a-side-session",
+      "prompt": "这是演练，不要真的创建 worktree、终端或会话，只写出你会执行的命令和要交出去的任务说明。你是总指挥，正在给 packages/web 的章节编辑器做 B9 卡片改造，Run 台账在 fixtures/run-midrun（先复制到临时目录，再用 --run 指向副本），B9 的 Worker 还在写。这台机器上 Orca 在运行，我就在 Orca 里看着；sideby 也装了；目前没有你另开的会话。我突然想起来另一件事：scripts/release-notes.mjs 生成的更新日志把日期排反了（应该新的在前），帮我修一下。",
+      "expected_output": "Treats the release-notes fix as unrelated to the B9 task (no shared files, no dependence on B9's unlanded result, its own acceptance check), so it neither adds a Lane to the current Run nor fixes it in this session, and does not ask the user whether to open a session. Writes a self-contained brief (the user's words, the change, an acceptance check, its own worktree, no push or deploy) to a file, then lists the commands it would run without running them: `orca worktree create --name side-<slug> --no-parent` and, in that worktree's own first terminal, `orca terminal send --terminal <handle> --enter --text \"<start> ...\"`, with no --focus or --activate. The account comes from the probe: this probe has no allow-list, so `<start>` may be `sideby next <family> --`, or `sideby run <ref> --` for an account the probe lists; an account outside the probe is wrong. The trace shows no `lane add` for this request and no orca or session-start command actually run. Tells the user in one sentence where the new session is and goes back to B9.",
+      "files": [
+        "fixtures/probe-full.json",
+        "fixtures/run-midrun/run.json",
+        "fixtures/run-midrun/B9.jsonl",
+        "fixtures/run-midrun/deploy-log.txt"
+      ],
+      "assertions": [
+        "判断这件事与当前任务不相关，并说出依据（不共享文件、不依赖 B9 未落地的结果、验收各自独立，说到其中至少两点）",
+        "不往当前 Run 里加任务（Lane）：执行过的命令里没有为这件事跑 lane add；也不在当前会话里直接修",
+        "不先问用户要不要另开会话，直接安排",
+        "写出一份自包含的任务说明：有用户原话或需求、验收方式、它自己的 worktree，不依赖当前会话的上下文",
+        "在 Orca 里新开工作区，并在它自带的终端里启动会话（orca worktree create 加 orca terminal send），不带 --focus 或 --activate；账号取自探测结果：这份探测结果没有白名单，所以由 sideby next 选，或从探测列出的账号里选一个用 sideby run 启动",
+        "用一句话告诉用户新会话开在哪，然后回到 B9",
+        "执行过的命令里没有真的跑 orca worktree create、orca terminal send、orca agent launch 或启动会话的 sideby 命令；这些命令只出现在回复文字里"
+      ]
+    },
+    {
+      "id": 24,
+      "name": "long-background-wait-gets-one-progress-line",
+      "prompt": "这是演练，不要启动任何进程。你是总指挥，有一个 Run 开着：B9（写代码）25 分钟前派出，还在跑；部署 test 12 分钟前开始，还在构建；没有等我回答的问题。你 10 分钟前挂在后台的 watch 刚刚超时返回，没有任何任务结束；这 10 分钟里你没有给我发过任何文字，我也没有发消息。写出你现在发给我的原话，再说明之后你怎么继续等。",
+      "expected_output": "Sends the user one unprompted line: what it is waiting on (B9 and the test deploy), how long so far, and what happens next. The line is not a milestone report: no per-Lane details, no log excerpts, no new question. Then the reply says how it keeps waiting: it will start the background watch again with a cap of about 10 minutes (`watch --timeout 600`); the reply proposes no foreground sleep and gives the user nothing to run. Graded on the final reply only: this case has no ledger fixture, so what the agent actually ran is not judged.",
+      "files": [],
+      "assertions": [
+        "回复里给出现在就发给用户的进度原话，而不是说继续沉默等待或等用户来问",
+        "发给用户的进度只有一行，包含三项：在等什么（B9、部署 test）、已等多久、下一步是什么",
+        "这一行不展开任务细节，不写成里程碑报告（不逐项列明细、不贴日志、不新增问题）",
+        "回复里说明之后会重新在后台挂 watch，并带约 10 分钟的超时（如 --timeout 600）；回复里没有提出用前台 sleep 等待，也没有让用户执行命令"
+      ]
     }
   ]
 }

@@ -26,6 +26,10 @@ _Avoid_: worker, teammate
 The single session that starts Lanes, integrates their results, decides and reports to the user.
 _Avoid_: orchestrator, lead, host
 
+**Side Session**:
+A separate session the Coordinator opens for a request unrelated to the current task. It belongs to no Run and has no Lane; its result goes to the user, not into the Coordinator's task.
+_Avoid_: Lane, Worker, background task
+
 **Board**:
 The milestone report of one Run, written only at milestones and served by no process: what each Lane produced, decisions, outputs and open Asks. Live status belongs to sideby's Panel, not the Board.
 _Avoid_: dashboard, monitor, status page

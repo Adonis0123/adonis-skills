@@ -4,7 +4,7 @@ description: "Choose the lightest agent setup for a coding, review, drafting or 
 license: MIT
 metadata:
   author: adonis
-  version: "1.12.1"
+  version: "1.13.0"
 ---
 
 # Agent Dispatch
@@ -23,7 +23,7 @@ Background: Anthropic, "Building agents: When to fold subagents into your main a
 | Need                                                                               | Read                                                      |
 | ---------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | Which accounts, pools and products exist; allow-lists; 多开                        | `references/accounts.md`                                  |
-| Starting, messaging, resuming or stopping a headless Worker                        | `references/launch.md`                                    |
+| Starting, messaging, resuming or stopping a headless Worker; a Side Session        | `references/launch.md`                                    |
 | Writing a Worker's task spec / a research brief                                    | `references/task-spec.md`, `references/research-brief.md` |
 | Ledger commands, Board, the rules for every reply during a Run, Orca mode, handoff | `references/run-board.md`                                 |
 | A second product, account, reviewer tool or drafting agent is missing              | `references/fallbacks.md`                                 |
@@ -111,7 +111,8 @@ Reviewer prompts, merge-commit review and sandbox limits: `references/launch.md`
 
 - Exactly one session dispatches, integrates, decides and reports. A second session relaying the same events doubles the user's reading and invites conflicting decisions.
 - When the user has delegated decisions, decide reversible ones yourself and log each (what, options, choice, reason); show the list at milestones and at the end, e.g. `lane B base — shared base / lane A's branch — lane A's branch — B calls A's new API`. Destructive, production, billing, auth and external-message actions still need the user.
-- Report at milestones only: tier chosen, batch integrated, blocked on the user, done. Between milestones the Board answers "what is happening"; a report separates what is running, what is waited on, and the numbered Asks.
+- Report at milestones only: tier chosen, batch integrated, blocked on the user, done. Between milestones the Board answers "what is happening"; a report separates what is running, what is waited on, and the numbered Asks. One exception that is not a milestone report: after 10 minutes of waiting on background work with no readable text for the user, send one line (waiting on what, how long, what next; `references/run-board.md` rule 9).
+- A request that arrives mid-task and is unrelated to it (no shared files, no need for a result of this task that has not landed, its own acceptance check) gets no Lane and no work in this session: write a self-contained brief, open a Side Session without asking (at most 3 open; in Orca a new worktree and tab, else headless; on the allowed account with the most quota left), and tell the user in one sentence where it is. A wider scope for the current task stays here. Steps: `references/launch.md` § Side Sessions.
 - Every question to the user, with or without a Run, is numbered and carries your recommendation, the evidence behind it and what it blocks; an outward one (a message to people or a channel) also names recipient, channel and the full draft, and asks for whichever of them the user did not give.
 - One integration line per batch: a shared package and its consumer change in the same batch and merge once.
 - Integration is not delivery. Merging Lanes into the batch branch or the Coordinator's checkout and running the batch's tests is the Coordinator's job; a commit on, or merge into, the repository's main branch, a push, a tag or a deploy is delivery and happens only through the repository's ship flow or on the user's explicit request (see Composes with → Delivery). Plans that end with "merge to main" without that request overstep.
