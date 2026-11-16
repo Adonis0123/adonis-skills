@@ -27,6 +27,23 @@ npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp -g
 npx skills add adonis0123/adonis-skills --list
 ```
 
+## Hook 插件
+
+同一个 marketplace 里还有两个 Claude Code hook 插件。每个都能单独安装，按需挑选：
+
+| 插件                                                               | 做什么                                                                                                                        |
+| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| [`reply-language`](./plugins/reply-language/README.zh-CN.md)       | Stop 和 PostToolUse hook，让给用户看的回复保持 `REPLY_LANGUAGE` 设定的语言（首版只支持中文 `zh`）。不设这个变量就什么都不做。 |
+| [`bash-prompt-guard`](./plugins/bash-prompt-guard/README.zh-CN.md) | PreToolUse hook，拒绝 Claude Code 权限检查解析不了的 Bash 命令，避免无人值守任务卡在确认框上。                                |
+
+```text
+/plugin marketplace add Adonis0123/adonis-skills
+/plugin install reply-language@adonis-skills
+/plugin install bash-prompt-guard@adonis-skills
+```
+
+配置、限制，以及 `reply-language` 在 Codex 里的手动接线，见各插件的 README。
+
 ## 技能列表
 
 | 技能                                                                            | 用途                                                                                                   |
@@ -137,6 +154,7 @@ flowchart LR
 ├── .claude-plugin/marketplace.json   # Claude Code marketplace 清单
 ├── apps/web/                          # Next.js 16 Web 目录站点
 ├── skills/<name>/SKILL.md             # 公开技能（由 Web 应用索引）
+├── plugins/<name>/                    # hook 插件，每个可单独安装
 ├── .agents/skills/                    # 内部工具技能（不索引）
 ├── scripts/
 │   ├── generate-skills-index.mjs      # 技能索引生成
@@ -293,6 +311,7 @@ GitHub Actions 会执行：
 - `pnpm --filter @adonis-skills/web run i18n -- --compile --strict`
 - `pnpm test:web-offline-font-build`
 - `pnpm turbo run lint typecheck build --filter=@adonis-skills/web`
+- `plugins` job：对 marketplace 和每个 `plugins/*` 跑 `claude plugin validate --strict`（允许缺 `version` 的告警：插件故意不写 `version`，安装才会跟随每次提交更新），再跑所有 `plugins/*/tests/*.test.zsh`
 
 每一步的校验目标：
 

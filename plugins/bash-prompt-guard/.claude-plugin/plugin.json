@@ -1,0 +1,9 @@
+{
+  "name": "bash-prompt-guard",
+  "description": "PreToolUse hook that denies Bash commands Claude Code's permission check cannot parse (zsh-only syntax, rm next to multi-line inline scripts, unguarded rm targets, unclosed $( and stray ${), so unattended runs do not stall on a confirmation prompt.",
+  "author": {
+    "name": "Adonis0123"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Adonis0123/adonis-skills/tree/main/plugins/bash-prompt-guard"
+}

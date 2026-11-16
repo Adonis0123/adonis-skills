@@ -13,6 +13,16 @@
       "description": "Agent-agnostic skills by Adonis0123: review loops, workflow gates, MCP setup, commit and delivery helpers.",
       "skills": ["./skills/"],
       "strict": false
+    },
+    {
+      "name": "reply-language",
+      "source": "./plugins/reply-language",
+      "description": "Hook plugin: keeps user-facing replies in the language set by REPLY_LANGUAGE (first release: Chinese, zh)."
+    },
+    {
+      "name": "bash-prompt-guard",
+      "source": "./plugins/bash-prompt-guard",
+      "description": "Hook plugin: denies Bash commands Claude Code's permission check cannot parse, so unattended runs do not stall on a prompt."
     }
   ]
 }

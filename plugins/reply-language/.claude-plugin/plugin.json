@@ -1,0 +1,9 @@
+{
+  "name": "reply-language",
+  "description": "Stop and PostToolUse hooks that keep the agent's user-facing replies in the language set by REPLY_LANGUAGE (first release: zh). Does nothing until REPLY_LANGUAGE is set.",
+  "author": {
+    "name": "Adonis0123"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Adonis0123/adonis-skills/tree/main/plugins/reply-language"
+}
