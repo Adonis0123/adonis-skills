@@ -13,11 +13,11 @@
 
 ## 快速开始
 
-| 宿主                                                                            | 安装方式                                                                                                |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| Codex、Cursor 等 agent（[`skills` CLI](https://github.com/vercel-labs/skills)） | `npx skills add adonis0123/adonis-skills --skill <name>`（加 `-g` 全局安装，`--list` 列出技能）         |
-| Claude Code                                                                     | 先 `/plugin marketplace add Adonis0123/adonis-skills`，再 `/plugin install adonis-skills@adonis-skills` |
-| Hermes Agent                                                                    | `hermes skills tap add adonis0123/adonis-skills`                                                        |
+| 宿主                                                                            | 安装方式                                                                                                                                            |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex、Cursor 等 agent（[`skills` CLI](https://github.com/vercel-labs/skills)） | `npx skills add adonis0123/adonis-skills --skill <name>`（加 `-g` 全局安装，`--list` 列出技能）                                                     |
+| Claude Code                                                                     | 先 `/plugin marketplace add Adonis0123/adonis-skills`，再 `/plugin install adonis-skills@adonis-skills`                                             |
+| Hermes Agent                                                                    | `hermes skills install adonis0123/adonis-skills/skills/<name>`（装一个技能；`hermes skills tap add adonis0123/adonis-skills` 把整个仓库加为技能源） |
 
 示例：
 
@@ -108,7 +108,7 @@ flowchart LR
   repo --> web["Web 目录<br/>adonis-skills.vercel.app"]
 ```
 
-- 部分技能（`dev-environment-roi-audit`、`desktop-agent-activity`、`agent-skill-evaluation`）从私有源仓库导出。与本机或公司相关的细节放在 `references/local-*.md`，这些文件永不导出。
+- 部分技能（`agent-dispatch`、`agent-skill-evaluation`、`desktop-agent-activity`、`dev-environment-roi-audit`，清单见 `.export-manifest.json`）从私有源仓库导出。与本机或公司相关的细节放在 `references/local-*.md`，这些文件永不导出。
 - 第三方技能只给链接，不复制进本仓库。
 - 每个技能都是 `skills/<name>/` 目录，其中 `SKILL.md` frontmatter 的 `name` 与目录名一致。
 
@@ -284,16 +284,28 @@ GitHub Actions 会执行：
 
 - `pnpm install --frozen-lockfile`
 - `pnpm skills:validate`
-- `pnpm skills:index`
+- `pnpm skills:index`，随后 `git diff --exit-code -- apps/web/src/generated`
+- `pnpm brand:check`
+- `pnpm design:check`
+- `pnpm design:lint`
+- `pnpm --filter @adonis-skills/web test`
+- `pnpm test:scripts`
 - `pnpm --filter @adonis-skills/web run i18n -- --compile --strict`
+- `pnpm test:web-offline-font-build`
 - `pnpm turbo run lint typecheck build --filter=@adonis-skills/web`
 
 每一步的校验目标：
 
 - `install`：按 lockfile 一致性安装依赖
 - `skills:validate`：校验 `skills/*` 的 frontmatter/schema 合法性
-- `skills:index`：重新生成 `apps/web/src/generated/skills-index-lite.json`、`skills-detail-index.json` 与 `skills-catalog-layout.json`
+- `skills:index`：重新生成 `apps/web/src/generated/skills-index-lite.json`、`skills-detail-index.json` 与 `skills-catalog-layout.json`；下一步在已提交的索引过期时失败
+- `brand:check`：生成的品牌 CSS 仍与 `adonis-brand` 快照一致（不写文件）
+- `design:check`：`apps/web/src` 只用语义颜色角色
+- `design:lint`：检查根目录 `DESIGN.md` 的格式
+- `@adonis-skills/web test`：站点单元测试
+- `test:scripts`：`package.json` 里列出的仓库脚本测试（`scripts/__tests__/`）；各技能自带的测试不在其中
 - `Prepare i18n Catalogs`：将 `src/locales/**/*.po` 编译为 `*.mjs`，并重建 `src/i18n/catalog-manifest.ts`
+- `test:web-offline-font-build`：生产构建不依赖 Google Fonts
 - `lint/typecheck/build`：校验代码规范、TypeScript 类型正确性与生产构建可用性
 
 为什么必须增加 i18n 步骤：

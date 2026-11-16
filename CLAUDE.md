@@ -14,17 +14,17 @@
 
 - `skills/<slug>/` contains public skills indexed by the web app; `.agents/skills/` contains internal tooling and is not published.
 - `.claude/skills` is a symlink to `.agents/skills` for local runtime testing.
-- `skills/desktop-agent-activity`, `skills/installed-app-feature-inventory`, and `skills/dev-environment-roi-audit` are exported from a private source (listed in `.export-manifest.json`). Treat them as generated: edit the private source, not these copies; the next export overwrites local edits.
+- `skills/agent-dispatch`, `skills/agent-skill-evaluation`, `skills/desktop-agent-activity`, and `skills/dev-environment-roi-audit` are exported from a private source (listed in `.export-manifest.json`). Treat them as generated: edit the private source, not these copies; the next export overwrites local edits.
 - `apps/web/src/generated/skills-index-lite.json`, `skills-detail-index.json`, and `skills-catalog-layout.json` are generated web build inputs. After changing public skills, run `pnpm skills:validate` and `pnpm skills:index`; never edit the index manually.
 - Every public skill needs an entry under `skills:` in `apps/web/content/skill-catalog.yaml` (Display Name, Scenario Group, Visitor-facing tags, summary, and use cases in English and Chinese); the same file holds the ordered `groups` and `featured` lists. `pnpm skills:validate` fails without them. Keep this copy out of SKILL.md frontmatter: the Agent Skills spec allows only string `metadata` values.
 
 ## Install Targets
 
-| Host                                    | Command                                                                                                                                              |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Codex, Cursor, other `skills` CLI hosts | `npx skills add adonis0123/adonis-skills --skill <name>` (`-g` global, `--list` to list)                                                             |
-| Claude Code                             | `/plugin marketplace add Adonis0123/adonis-skills`, then `/plugin install adonis-skills@adonis-skills` (manifest: `.claude-plugin/marketplace.json`) |
-| Hermes Agent                            | `hermes skills tap add adonis0123/adonis-skills`                                                                                                     |
+| Host                                    | Command                                                                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Codex, Cursor, other `skills` CLI hosts | `npx skills add adonis0123/adonis-skills --skill <name>` (`-g` global, `--list` to list)                                                                           |
+| Claude Code                             | `/plugin marketplace add Adonis0123/adonis-skills`, then `/plugin install adonis-skills@adonis-skills` (manifest: `.claude-plugin/marketplace.json`)               |
+| Hermes Agent                            | `hermes skills install adonis0123/adonis-skills/skills/<name>` (one skill; `hermes skills tap add adonis0123/adonis-skills` adds the whole repo as a skill source) |
 
 ## Commands
 

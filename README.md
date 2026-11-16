@@ -13,11 +13,11 @@ Agent-agnostic skills for coding agents: review loops, workflow gates, MCP setup
 
 ## Quick Start
 
-| Host                                                                                    | Install                                                                                                           |
-| --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| Codex, Cursor, and other agents ([`skills` CLI](https://github.com/vercel-labs/skills)) | `npx skills add adonis0123/adonis-skills --skill <name>` (add `-g` for a global install, `--list` to list skills) |
-| Claude Code                                                                             | `/plugin marketplace add Adonis0123/adonis-skills` then `/plugin install adonis-skills@adonis-skills`             |
-| Hermes Agent                                                                            | `hermes skills tap add adonis0123/adonis-skills`                                                                  |
+| Host                                                                                    | Install                                                                                                                                                            |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Codex, Cursor, and other agents ([`skills` CLI](https://github.com/vercel-labs/skills)) | `npx skills add adonis0123/adonis-skills --skill <name>` (add `-g` for a global install, `--list` to list skills)                                                  |
+| Claude Code                                                                             | `/plugin marketplace add Adonis0123/adonis-skills` then `/plugin install adonis-skills@adonis-skills`                                                              |
+| Hermes Agent                                                                            | `hermes skills install adonis0123/adonis-skills/skills/<name>` (one skill; `hermes skills tap add adonis0123/adonis-skills` adds the whole repo as a skill source) |
 
 Examples:
 
@@ -108,7 +108,7 @@ flowchart LR
   repo --> web["Web catalog<br/>adonis-skills.vercel.app"]
 ```
 
-- Some skills (`dev-environment-roi-audit`, `desktop-agent-activity`, `agent-skill-evaluation`) are exported from a private source. Machine- or company-specific details stay in `references/local-*.md` files that are never exported.
+- Some skills (`agent-dispatch`, `agent-skill-evaluation`, `desktop-agent-activity`, `dev-environment-roi-audit`; listed in `.export-manifest.json`) are exported from a private source. Machine- or company-specific details stay in `references/local-*.md` files that are never exported.
 - Third-party skills are only linked, never vendored.
 - Every skill is a directory `skills/<name>/` with a `SKILL.md` whose frontmatter `name` equals the directory name.
 
@@ -284,16 +284,28 @@ GitHub Actions runs:
 
 - `pnpm install --frozen-lockfile`
 - `pnpm skills:validate`
-- `pnpm skills:index`
+- `pnpm skills:index`, then `git diff --exit-code -- apps/web/src/generated`
+- `pnpm brand:check`
+- `pnpm design:check`
+- `pnpm design:lint`
+- `pnpm --filter @adonis-skills/web test`
+- `pnpm test:scripts`
 - `pnpm --filter @adonis-skills/web run i18n -- --compile --strict`
+- `pnpm test:web-offline-font-build`
 - `pnpm turbo run lint typecheck build --filter=@adonis-skills/web`
 
 What each step validates:
 
 - `install`: lockfile-consistent dependency install
 - `skills:validate`: frontmatter/schema validity for `skills/*`
-- `skills:index`: regenerates `apps/web/src/generated/skills-index-lite.json`, `skills-detail-index.json`, and `skills-catalog-layout.json`
+- `skills:index`: regenerates `apps/web/src/generated/skills-index-lite.json`, `skills-detail-index.json`, and `skills-catalog-layout.json`; the step after it fails when the committed index is stale
+- `brand:check`: the generated brand CSS still matches the `adonis-brand` snapshot (writes nothing)
+- `design:check`: `apps/web/src` uses semantic color roles only
+- `design:lint`: lints the root `DESIGN.md`
+- `@adonis-skills/web test`: the site's unit tests
+- `test:scripts`: the repository script tests listed in `package.json` (`scripts/__tests__/`); tests shipped inside individual skills are not run
 - `Prepare i18n Catalogs`: compiles `src/locales/**/*.po` into `*.mjs` and regenerates `src/i18n/catalog-manifest.ts`
+- `test:web-offline-font-build`: the production build does not need Google Fonts
 - `lint/typecheck/build`: code quality, TS correctness, and production buildability
 
 Why the i18n step is required:

@@ -1,6 +1,7 @@
 # Cross-AI Review Loop Orchestrator Design
 
 **Status:** Approved design; not implemented
+**Status note (2026-11-16):** Superseded. `docs/review-loop-orchestrator/plan-2026-07-22-review-loop-v2-auto-loop.md` (v2, 2026-07-22) keeps this v1 design as historical reference only. The newer copy of this plan with the dogfood notes (§21) is `docs/review-loop-orchestrator/plan-2026-07-21-review-loop-orchestrator.md`.
 **Date:** 2026-07-21
 **Spec location:** `docs/plan-2026-07-21-review-loop-orchestrator.md`
 **Primary skill:** `skills/agentic-review-handoff`
@@ -51,11 +52,11 @@ The sessions do not share full chat transcripts. The packet is the cross-role so
 
 The system contains two different kinds of work:
 
-| Work | Nature | Owner |
-|---|---|---|
-| Addressing, state derivation, binding, waiting, heartbeat, claims, timeouts | Deterministic | Coordination Kernel |
-| Freezing evidence references, withholding peer submissions, simultaneous reveal, exact materialization | Deterministic | Coordination Kernel |
-| Reading code, researching external claims, evaluating findings, choosing a minimal fix, verifying behavior, assigning verdicts | Semantic | Reviewer/Fixer AI |
+| Work                                                                                                                           | Nature        | Owner               |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------- | ------------------- |
+| Addressing, state derivation, binding, waiting, heartbeat, claims, timeouts                                                    | Deterministic | Coordination Kernel |
+| Freezing evidence references, withholding peer submissions, simultaneous reveal, exact materialization                         | Deterministic | Coordination Kernel |
+| Reading code, researching external claims, evaluating findings, choosing a minimal fix, verifying behavior, assigning verdicts | Semantic      | Reviewer/Fixer AI   |
 
 The scarce resources are human attention, independent judgment, and correctness of transitions. Once one AI sees the other AI's conclusion, the original independent signal cannot be recovered. Therefore the first judgment is captured before peer exposure. The Kernel controls only the timing and integrity of that reveal; it never decides which position is correct.
 
@@ -160,24 +161,24 @@ The earlier draft chose a detached central supervisor with headless workers. Tha
 
 ## 6. DDD boundaries and dependency direction
 
-| Bounded context | Responsibility | Must not do |
-|---|---|---|
-| Review Packet | Evidence, blind discussion record, findings, verdicts, rounds, append-only stage narrative | Store PIDs, heartbeats, claims, or scheduling state |
-| Coordination Kernel | Bind, wait, route, claim, withhold/reveal blind payloads, complete, gate, resolve, disarm | Interpret positions, choose fixes, or modify subject files |
-| Role Execution | Reviewer/Fixer independent positions, cross-checks, code inspection, changes, verification | Read a withheld peer position, guess the next role, or bypass a claim |
-| Human Gate | Persist and resolve decisions that need human judgment | Interrupt ordinary deterministic handoffs |
+| Bounded context     | Responsibility                                                                             | Must not do                                                           |
+| ------------------- | ------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| Review Packet       | Evidence, blind discussion record, findings, verdicts, rounds, append-only stage narrative | Store PIDs, heartbeats, claims, or scheduling state                   |
+| Coordination Kernel | Bind, wait, route, claim, withhold/reveal blind payloads, complete, gate, resolve, disarm  | Interpret positions, choose fixes, or modify subject files            |
+| Role Execution      | Reviewer/Fixer independent positions, cross-checks, code inspection, changes, verification | Read a withheld peer position, guess the next role, or bypass a claim |
+| Human Gate          | Persist and resolve decisions that need human judgment                                     | Interrupt ordinary deterministic handoffs                             |
 
 `Blind Deliberation` is an aggregate inside the Review Packet bounded context, not a new service. Its invariant is: a peer position is unavailable until both roles have submitted against the same evidence snapshot. Its durable identity is `blind_id`; its lifecycle is `collecting_positions -> revealed -> collecting_critiques -> materialized -> aligned|disputed`.
 
 The boundaries keep responsibilities cohesive and dependencies narrow:
 
-| Unit | Cohesive responsibility | Coupling rule |
-|---|---|---|
-| Worker Prompt | Produce one role's structured semantic judgment | Depends only on packet evidence and command results, never on a product-specific peer API |
-| Coordination Kernel | Enforce ordering, integrity, withholding, reveal, and claims | Treats blind payloads as opaque validated data; it does not synthesize their meaning |
-| Review Packet | Preserve durable cross-role facts and exact revealed artifacts | Stores no live process or heartbeat state |
-| Runtime state | Coordinate current sessions and pre-reveal payloads | May be reconstructed or removed after exact materialization into the packet |
-| Human Gate | Own decisions that evidence cannot or must not automate | Receives structured disagreement; it does not inspect private session transcripts |
+| Unit                | Cohesive responsibility                                        | Coupling rule                                                                             |
+| ------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Worker Prompt       | Produce one role's structured semantic judgment                | Depends only on packet evidence and command results, never on a product-specific peer API |
+| Coordination Kernel | Enforce ordering, integrity, withholding, reveal, and claims   | Treats blind payloads as opaque validated data; it does not synthesize their meaning      |
+| Review Packet       | Preserve durable cross-role facts and exact revealed artifacts | Stores no live process or heartbeat state                                                 |
+| Runtime state       | Coordinate current sessions and pre-reveal payloads            | May be reconstructed or removed after exact materialization into the packet               |
+| Human Gate          | Own decisions that evidence cannot or must not automate        | Receives structured disagreement; it does not inspect private session transcripts         |
 
 Dependency direction:
 
@@ -250,17 +251,17 @@ $repo_root/.review-handoff/
 
 ### 8.1 Runtime files
 
-| File | Purpose |
-|---|---|
-| `bindings.json` | Reviewer/Fixer role, product label, binding ID, bind time, heartbeat |
-| `claim.json` | Current single writer, starting packet fingerprint, starting worktree manifest, expected transition, deadline |
-| `gate.json` | Gate type, evidence, triggering role, allowed resolutions |
-| `events.jsonl` | Append-only bind, wait, wake, claim, complete, gate, resolve, stop diagnostics |
+| File                             | Purpose                                                                                                               |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `bindings.json`                  | Reviewer/Fixer role, product label, binding ID, bind time, heartbeat                                                  |
+| `claim.json`                     | Current single writer, starting packet fingerprint, starting worktree manifest, expected transition, deadline         |
+| `gate.json`                      | Gate type, evidence, triggering role, allowed resolutions                                                             |
+| `events.jsonl`                   | Append-only bind, wait, wake, claim, complete, gate, resolve, stop diagnostics                                        |
 | `blind/<blind_id>/snapshot.json` | Packet fingerprint, Git `HEAD`, worktree manifest, scope, and relevant local dependency versions shared by both roles |
-| `*.position.json` | One role's withheld structured position and source list |
-| `reveal.json` | Reveal time and immutable hashes for both positions |
-| `*.critique.json` | One role's cross-check of the revealed peer position and its `aligned|disputed` result |
-| `outcome.json` | Materialization hash and whether either role reported material disagreement |
+| `*.position.json`                | One role's withheld structured position and source list                                                               |
+| `reveal.json`                    | Reveal time and immutable hashes for both positions                                                                   |
+| `*.critique.json`                | One role's cross-check of the revealed peer position and its `aligned                                                 | disputed` result |
+| `outcome.json`                   | Materialization hash and whether either role reported material disagreement                                           |
 
 Runtime files are infrastructure state. AI workers must not edit them directly; only the Kernel may write them.
 
@@ -283,20 +284,20 @@ The user invokes `agentic-review-handoff` once in each already-visible session.
 
 The Kernel derives the next action only from a validated stable packet state:
 
-| Stable packet state | Next action |
-|---|---|
-| Both roles bound, no initial `Blind Discussion` | Wake both roles for independent blind positions |
-| Both blind positions submitted | Reveal both together and wake both roles for cross-critique |
-| Initial blind critiques submitted, neither reports material disagreement | Materialize exact blind artifacts, then wake Reviewer |
-| Initial blind critique reports material disagreement | Materialize exact blind artifacts, then Blind Disagreement Gate |
-| Reopened blind critiques submitted | Materialize exact blind artifacts, then the pre-existing material-trigger Gate |
-| `review_handoff` / `review_intake` with completed initial blind phase | Wake Reviewer |
-| `fix_handoff` | Wake Fixer |
-| `fix_completion` | Wake Reviewer for re-review |
-| `re_review + BLOCKED` | Wake Fixer and enter the next round |
-| `re_review + PASS_WITH_CONCERNS` | Human Gate |
-| `PASS` / `NO_FINDINGS + archived` | Stop both waits |
-| Invalid frontmatter, H1, verdict, or location combination | Protocol Gate |
+| Stable packet state                                                      | Next action                                                                    |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------ |
+| Both roles bound, no initial `Blind Discussion`                          | Wake both roles for independent blind positions                                |
+| Both blind positions submitted                                           | Reveal both together and wake both roles for cross-critique                    |
+| Initial blind critiques submitted, neither reports material disagreement | Materialize exact blind artifacts, then wake Reviewer                          |
+| Initial blind critique reports material disagreement                     | Materialize exact blind artifacts, then Blind Disagreement Gate                |
+| Reopened blind critiques submitted                                       | Materialize exact blind artifacts, then the pre-existing material-trigger Gate |
+| `review_handoff` / `review_intake` with completed initial blind phase    | Wake Reviewer                                                                  |
+| `fix_handoff`                                                            | Wake Fixer                                                                     |
+| `fix_completion`                                                         | Wake Reviewer for re-review                                                    |
+| `re_review + BLOCKED`                                                    | Wake Fixer and enter the next round                                            |
+| `re_review + PASS_WITH_CONCERNS`                                         | Human Gate                                                                     |
+| `PASS` / `NO_FINDINGS + archived`                                        | Stop both waits                                                                |
+| Invalid frontmatter, H1, verdict, or location combination                | Protocol Gate                                                                  |
 
 `review_findings + BLOCKED/PASS_WITH_CONCERNS` is not a stable waiting state. The Reviewer must write the corresponding `Fix Handoff` within the same claimed stage. `complete` rejects an incomplete section group.
 
@@ -321,6 +322,7 @@ Reopened blind discussions use `# Blind Discussion (round N)` and do not increme
 # Blind Discussion
 
 ## Evidence Snapshot
+
 - Blind ID:
 - Packet fingerprint:
 - Git HEAD:
@@ -329,18 +331,23 @@ Reopened blind discussions use `# Blind Discussion (round N)` and do not increme
 - Relevant dependency versions:
 
 ## Position A
+
 (Exact submitted artifact, including source URLs and fact/inference labels.)
 
 ## Position B
+
 (Exact submitted artifact, including source URLs and fact/inference labels.)
 
 ## Cross-Critique A
+
 (Exact submitted critique and `resolution`.)
 
 ## Cross-Critique B
+
 (Exact submitted critique and `resolution`.)
 
 ## Outcome
+
 - Trigger: initial|finding_dispute|scope|new_finding|safety
 - Position hashes:
 - Critique hashes:
@@ -475,7 +482,7 @@ During the position phase:
    - recommendation and rejected alternatives;
    - risks and evidence that would falsify the recommendation.
 6. Submit that exact artifact through `review-loop blind-submit
-   --phase=position`, then invoke `review-loop wait`. Do not modify the packet
+--phase=position`, then invoke `review-loop wait`. Do not modify the packet
    or subject files during this phase.
 
 During the critique phase:
@@ -490,7 +497,7 @@ During the critique phase:
 5. Set `resolution: aligned` only when no material disagreement remains.
    Otherwise set `resolution: disputed`; never use majority vote.
 6. Submit the exact critique through `review-loop blind-submit
-   --phase=critique`, then invoke `review-loop wait`.
+--phase=critique`, then invoke `review-loop wait`.
 
 If web research cannot run, record the tool or network failure and mark affected
 claims `UNVERIFIED`.
@@ -548,34 +555,34 @@ After modifying files:
 
 ### 13.4 Fixer pre-fix revalidation
 
-| Fixer judgment | Meaning | Action |
-|---|---|---|
-| `valid` | Current evidence reproduces the finding | Apply the smallest fix |
+| Fixer judgment    | Meaning                                                     | Action                                                  |
+| ----------------- | ----------------------------------------------------------- | ------------------------------------------------------- |
+| `valid`           | Current evidence reproduces the finding                     | Apply the smallest fix                                  |
 | `partially_valid` | Core problem exists but scope or proposed fix is inaccurate | Narrow the fix if the packet permits it; otherwise Gate |
-| `stale` | Current code has changed and the finding no longer applies | Do not edit; Finding Dispute Gate |
-| `invalid` | Current evidence contradicts the finding | Do not edit; Finding Dispute Gate |
-| `scope_expansion` | Fix requires additional files or public contract changes | Human Gate |
+| `stale`           | Current code has changed and the finding no longer applies  | Do not edit; Finding Dispute Gate                       |
+| `invalid`         | Current evidence contradicts the finding                    | Do not edit; Finding Dispute Gate                       |
+| `scope_expansion` | Fix requires additional files or public contract changes    | Human Gate                                              |
 
 Fix Completion adds file-level traceability:
 
 | File changed | Authorized by | Evidence before change | Change | Verification |
-|---|---|---|---|---|
+| ------------ | ------------- | ---------------------- | ------ | ------------ |
 
 `complete` checks that every subject file changed during the claim appears in this table, every authorization points to an existing finding, and verification is non-empty. The packet update is authorized separately by the claimed stage; runtime files remain Kernel-only. Behavioral changes with no executed check must remain explicitly `UNVERIFIED` with a reason.
 
 ## 14. Human Gates
 
-| Gate | Trigger |
-|---|---|
-| Concerns Gate | `PASS_WITH_CONCERNS` |
+| Gate                    | Trigger                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------- |
+| Concerns Gate           | `PASS_WITH_CONCERNS`                                                                              |
 | Blind Disagreement Gate | Either cross-critique in the initial blind discussion reports an unresolved material disagreement |
-| Finding Dispute Gate | Fixer independently concludes a finding is invalid, stale, or materially partial |
-| New Finding Gate | Re-review discovers a new issue outside the original fix snapshot |
-| Scope Gate | Fix requires additional files, architecture, or public behavior changes |
-| Safety Gate | Secrets, permissions, authentication, destructive data, or equivalent risk |
-| Verification Gate | Required verification fails or cannot run |
-| Max Rounds Gate | Default three rounds complete without PASS |
-| Protocol Gate | Corrupt packet, stale claim, duplicate binding, lost session, illegal transition |
+| Finding Dispute Gate    | Fixer independently concludes a finding is invalid, stale, or materially partial                  |
+| New Finding Gate        | Re-review discovers a new issue outside the original fix snapshot                                 |
+| Scope Gate              | Fix requires additional files, architecture, or public behavior changes                           |
+| Safety Gate             | Secrets, permissions, authentication, destructive data, or equivalent risk                        |
+| Verification Gate       | Required verification fails or cannot run                                                         |
+| Max Rounds Gate         | Default three rounds complete without PASS                                                        |
+| Protocol Gate           | Corrupt packet, stale claim, duplicate binding, lost session, illegal transition                  |
 
 ### 14.1 Gate lifecycle
 
@@ -702,18 +709,18 @@ pnpm skills:index
 
 ## 17. Alternatives considered
 
-| Option | Decision | Reason |
-|---|---|---|
-| Dual visible sessions + deterministic wait | Chosen | Directly satisfies visible progress, stable role sessions, and no manual continue |
-| Initial blind discussion plus material-event reopen | Chosen | Preserves one independent baseline without charging every ordinary fix round |
-| Blind discussion only after a dispute | Rejected | The first position would already have anchored the peer before independence was captured |
-| Blind discussion in every round | Rejected | Repeats stable analysis, increases cost, and encourages performative debate |
-| Unstructured live AI debate | Rejected | Couples sessions through prose, weakens reproducibility, and can converge without better evidence |
-| Detached supervisor + headless workers | Rejected for v1 | Hides role execution and adds product-specific process/permission adapters |
-| Central coordinator + persistent session-control APIs | Deferred | Could support detached execution later, but has the highest vendor coupling |
-| LLM repeatedly polls packet | Rejected | Burns tokens and mixes deterministic waiting with semantic reasoning |
-| Stdout narrative as completion | Rejected | Packet transition and `complete` validation are the only stage success signal |
-| Human confirms every round | Rejected | Reintroduces the original pain |
+| Option                                                | Decision        | Reason                                                                                            |
+| ----------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------- |
+| Dual visible sessions + deterministic wait            | Chosen          | Directly satisfies visible progress, stable role sessions, and no manual continue                 |
+| Initial blind discussion plus material-event reopen   | Chosen          | Preserves one independent baseline without charging every ordinary fix round                      |
+| Blind discussion only after a dispute                 | Rejected        | The first position would already have anchored the peer before independence was captured          |
+| Blind discussion in every round                       | Rejected        | Repeats stable analysis, increases cost, and encourages performative debate                       |
+| Unstructured live AI debate                           | Rejected        | Couples sessions through prose, weakens reproducibility, and can converge without better evidence |
+| Detached supervisor + headless workers                | Rejected for v1 | Hides role execution and adds product-specific process/permission adapters                        |
+| Central coordinator + persistent session-control APIs | Deferred        | Could support detached execution later, but has the highest vendor coupling                       |
+| LLM repeatedly polls packet                           | Rejected        | Burns tokens and mixes deterministic waiting with semantic reasoning                              |
+| Stdout narrative as completion                        | Rejected        | Packet transition and `complete` validation are the only stage success signal                     |
+| Human confirms every round                            | Rejected        | Reintroduces the original pain                                                                    |
 
 ## 18. Acceptance criteria
 
