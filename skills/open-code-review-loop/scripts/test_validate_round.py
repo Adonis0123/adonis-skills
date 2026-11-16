@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import contextlib
+import errno
 import importlib.util
 from copy import deepcopy
 import hashlib
@@ -35,6 +36,7 @@ BUILD_SPEC.loader.exec_module(build_review_bundle)
 EVIDENCE_MATERIAL = {
     "schema_version": "1",
     "mode": "workspace",
+    "repository": "/srv/example-repo",
     "base_sha": "a" * 40,
     "ocr_version": "ocr 1.9.4",
     "refs": {},
@@ -86,11 +88,7 @@ EVIDENCE_ID = "sha256:" + hashlib.sha256(
 
 
 def bundle() -> dict:
-    return {
-        **deepcopy(EVIDENCE_MATERIAL),
-        "repository": "/srv/example-repo",
-        "evidence_id": EVIDENCE_ID,
-    }
+    return {**deepcopy(EVIDENCE_MATERIAL), "evidence_id": EVIDENCE_ID}
 
 
 REAL_STATE_ROOT = validate_round.STATE_ROOT
@@ -112,11 +110,11 @@ def setUpModule() -> None:
     unittest.addModuleCleanup(patcher.stop)
 
 
-def run_validator(*args: str) -> tuple[int, dict]:
+def run_validator(*args: str, module=None) -> tuple[int, dict]:
     stdout = io.StringIO()
     with patch.object(sys, "argv", [str(MODULE_PATH), *args]), \
             contextlib.redirect_stdout(stdout):
-        code = validate_round.main()
+        code = (module or validate_round).main()
     return code, json.loads(stdout.getvalue())
 
 
@@ -780,6 +778,124 @@ class RoundBudgetCliTest(unittest.TestCase):
             [self.history_path.name],
         )
 
+    def test_same_head_checkout_cannot_take_over_a_bundle(self) -> None:
+        self.use_repository(*make_repository(self.root / "repo"))
+        self.use_rounds(3)
+        worktree = self.root / "worktree"
+        run_git(Path(self.repository), "worktree", "add", "-q", "--detach",
+                str(worktree))
+        clone = self.root / "clone"
+        subprocess.run(["git", "clone", "-q", self.repository, str(clone)],
+                       check=True, capture_output=True)
+        before = self.history_path.read_bytes()
+        review = finding_review()
+        modes = (
+            ("--check-call",),
+            ("--review", str(self.review_path), "--product", "codex"),
+            ("--grant-rounds", "1", "--granted-by", "one more round is fine"),
+        )
+        for name, checkout in (("worktree", worktree), ("clone", clone)):
+            self.assertEqual(run_git(checkout, "rev-parse", "HEAD"), self.head)
+            self.assertEqual(
+                run_git(checkout, "rev-parse", "--show-toplevel"),
+                str(checkout.resolve()),
+            )
+            self.set_evidence(4)
+            review["evidence_id"] = self.bundle["evidence_id"]
+            self.review_path.write_text(json.dumps(review), encoding="utf-8")
+            # Only bundle.repository changes: evidence_id is still the one
+            # computed for the first checkout, so write_bundle() is not used.
+            self.bundle["repository"] = str(checkout.resolve())
+            self.bundle_path.write_text(json.dumps(self.bundle), encoding="utf-8")
+            for mode in modes:
+                with self.subTest(checkout=name, mode=mode[0]):
+                    code, result = self.run_cli(*mode)
+                    self.assertEqual(code, 2)
+                    self.assertFalse(result["valid"])
+                    self.assertFalse(result["call_allowed"])
+                    self.assertEqual(result["stop"], "UNVERIFIED")
+                    self.assertIn(
+                        "does not match canonical bundle material",
+                        result["errors"][0],
+                    )
+                    self.assertIn("rebuild the bundle", result["errors"][0])
+                    self.assertNotIn("ledger", result)
+                    self.assertEqual(
+                        sorted(path.name for path in self.history_path.parent.iterdir()),
+                        sorted([self.history_path.name,
+                                f"{self.history_path.name}.lock"]),
+                    )
+                    self.assertEqual(self.history_path.read_bytes(), before)
+        # The untouched bundle still lands on the exhausted ledger.
+        self.set_evidence(4)
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual(code, 2)
+        self.assertEqual((gate["rounds_used"], gate["round_budget"]), (3, 3))
+        self.assertIn("round budget exhausted", gate["stop"])
+        self.assertEqual(gate["ledger"], str(self.history_path))
+        self.assertEqual(self.history_path.read_bytes(), before)
+
+    def lock_modes(self) -> tuple[tuple[str, ...], ...]:
+        review = finding_review()
+        review["evidence_id"] = self.bundle["evidence_id"]
+        self.review_path.write_text(json.dumps(review), encoding="utf-8")
+        return (
+            ("--check-call",),
+            ("--review", str(self.review_path), "--product", "codex"),
+            ("--grant-rounds", "1", "--granted-by", "one more round is fine"),
+        )
+
+    def assert_lock_refused(self, result: dict, message: str) -> None:
+        self.assertFalse(result["valid"])
+        self.assertFalse(result["call_allowed"])
+        self.assertEqual(result["stop"], "UNVERIFIED")
+        self.assertIn(message, result["errors"][0])
+        self.assertIn("rerun the same command", result["errors"][0])
+
+    def test_missing_file_lock_module_fails_closed_before_any_write(self) -> None:
+        with patch.object(validate_round, "fcntl", None):
+            for mode in self.lock_modes():
+                with self.subTest(mode=mode[0]):
+                    code, result = self.run_cli(*mode)
+                    self.assertEqual(code, 2)
+                    self.assert_lock_refused(result, "no fcntl module")
+                    self.assertFalse(self.state_home.exists())
+        # An existing ledger is left byte-identical and gains no entry.
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        listing = sorted(path.name for path in self.history_path.parent.iterdir())
+        self.set_evidence(2)
+        with patch.object(validate_round, "fcntl", None):
+            for mode in self.lock_modes():
+                with self.subTest(existing_ledger=mode[0]):
+                    code, result = self.run_cli(*mode)
+                    self.assertEqual(code, 2)
+                    self.assert_lock_refused(result, "no fcntl module")
+                    self.assertEqual(self.history_path.read_bytes(), before)
+        self.assertEqual(
+            sorted(path.name for path in self.history_path.parent.iterdir()), listing
+        )
+        # With the lock back, the refused calls took no round.
+        code, gate = self.run_cli("--check-call")
+        self.assertEqual((code, gate["rounds_used"]), (0, 2))
+
+    def test_file_system_without_locks_fails_closed_with_a_fix(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        self.set_evidence(2)
+        no_locks = OSError(errno.ENOLCK, "No locks available")
+        with patch.object(validate_round.fcntl, "flock", side_effect=no_locks):
+            for mode in self.lock_modes():
+                with self.subTest(mode=mode[0]):
+                    code, result = self.run_cli(*mode)
+                    self.assertEqual(code, 2)
+                    self.assert_lock_refused(result, "must support flock")
+                    self.assertIn("No locks available", result["errors"][0])
+                    self.assertEqual(self.history_path.read_bytes(), before)
+        self.assertFalse(
+            self.history_path.with_name(f"{self.history_path.name}.tmp").exists()
+        )
+
     def test_git_environment_cannot_redirect_the_repository(self) -> None:
         other, _ = make_repository(self.root / "other")
         redirect = {"GIT_DIR": str(Path(other) / ".git"), "GIT_WORK_TREE": other}
@@ -889,6 +1005,75 @@ class RoundBudgetCliTest(unittest.TestCase):
         self.assertIn("Pass another path", result["errors"][0])
         self.assertEqual(self.history_path.read_bytes(), before)
 
+    def test_output_on_the_ledger_is_not_written_when_the_account_is_unknown(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        accounts = SimpleNamespace(
+            getpwuid=lambda uid: (_ for _ in ()).throw(KeyError("uid not found"))
+        )
+        modes = (
+            ("--check-call",),
+            ("--review", str(self.review_path), "--product", "codex"),
+            ("--grant-rounds", "2", "--granted-by", "two more rounds are fine"),
+        )
+        # A new CLI process for an account without a database entry has no
+        # state directory at all, so the --output checks cannot run.
+        with patch.object(validate_round, "STATE_ROOT", None), \
+                patch.object(validate_round, "pwd", accounts):
+            for mode in modes:
+                with self.subTest(mode=mode[0]):
+                    code, result = self.run_cli(
+                        *mode, "--output", str(self.history_path)
+                    )
+                    self.assertEqual(code, 2)
+                    self.assertEqual(result["stop"], "UNVERIFIED")
+                    self.assertIn("has no entry", result["errors"][0])
+                    self.assertEqual(self.history_path.read_bytes(), before)
+        self.assertEqual(len(self.read_ledger_file()["entries"]), 1)
+
+    def test_output_on_a_hard_link_is_not_written_when_the_bundle_is_unreadable(self) -> None:
+        self.use_rounds(1)
+        before = self.history_path.read_bytes()
+        # Outside the state directory, so only the second check, which needs
+        # the bundle, can tell that it is the ledger.
+        hard_link = self.root / "hard-link.json"
+        os.link(self.history_path, hard_link)
+        broken = self.root / "broken.json"
+        broken.write_text("{not json", encoding="utf-8")
+        for name, bundle_path in (("missing", self.root / "missing.json"),
+                                  ("malformed", broken)):
+            with self.subTest(bundle=name):
+                code, result = run_validator(
+                    "--bundle", str(bundle_path), "--check-call",
+                    "--output", str(hard_link),
+                )
+                self.assertEqual(code, 2)
+                self.assertEqual(result["stop"], "UNVERIFIED")
+                self.assertIn("cannot read --bundle", result["errors"][0])
+                self.assertEqual(self.history_path.read_bytes(), before)
+                self.assertEqual(hard_link.read_bytes(), before)
+        self.assertTrue(os.path.samefile(hard_link, self.history_path))
+
+    def test_early_error_goes_to_stdout_only_for_an_ordinary_output(self) -> None:
+        output = self.root / "round-1" / "gate.json"
+        code, result = run_validator(
+            "--bundle", str(self.root / "missing.json"), "--check-call",
+            "--output", str(output),
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("cannot read --bundle", result["errors"][0])
+        self.assertFalse(output.parent.exists())
+
+    def test_error_after_the_output_checks_is_still_written(self) -> None:
+        output = self.root / "round-1" / "gate.json"
+        code, result = self.run_cli(
+            "--check-call", "--history", str(self.root / "other.json"),
+            "--output", str(output),
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("--history", result["errors"][0])
+        self.assertEqual(json.loads(output.read_text(encoding="utf-8")), result)
+
     def test_output_outside_the_state_directory_still_works(self) -> None:
         output = self.root / "round-1" / "gate.json"
         code, gate = self.run_cli("--check-call", "--output", str(output))
@@ -945,6 +1130,85 @@ class LedgerPathTest(unittest.TestCase):
                 root = validate_round.default_state_root()
         self.assertEqual(root, home / ".local" / "state" / "open-code-review-loop")
         self.assertEqual(root, REAL_STATE_ROOT)
+
+    def test_default_root_refuses_an_account_the_database_cannot_place(self) -> None:
+        def accounts(answer):
+            def getpwuid(uid):
+                if isinstance(answer, Exception):
+                    raise answer
+                return SimpleNamespace(pw_dir=answer)
+            return SimpleNamespace(getpwuid=getpwuid)
+
+        cases = (
+            ("no entry", accounts(KeyError("uid not found")), "has no entry"),
+            ("empty home", accounts(""), "not an absolute path"),
+            ("relative home", accounts("relative/home"), "not an absolute path"),
+            ("no account database", None, "no account database"),
+        )
+        with tempfile.TemporaryDirectory() as directory:
+            moved = {"XDG_STATE_HOME": directory, "HOME": directory}
+            for name, database, message in cases:
+                with self.subTest(case=name), patch.dict(os.environ, moved), \
+                        patch.object(validate_round, "pwd", database), \
+                        patch.object(validate_round, "STATE_ROOT", None):
+                    for locate in (validate_round.default_state_root,
+                                   validate_round.state_root):
+                        with self.assertRaises(ValueError) as raised:
+                            locate()
+                        self.assertIn(message, str(raised.exception))
+                        self.assertIn("HOME is not used", str(raised.exception))
+                        self.assertIn("rerun the same command", str(raised.exception))
+            self.assertEqual(os.listdir(directory), [])
+
+    def test_cli_is_unverified_when_the_account_has_no_database_entry(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            home = root / "home"
+            home.mkdir()
+            repository, head = make_repository(root / "repo")
+            current = {**bundle(), "repository": repository, "base_sha": head}
+            current["evidence_id"] = validate_round.canonical_evidence_id(current)
+            bundle_path = root / "bundle.json"
+            bundle_path.write_text(json.dumps(current), encoding="utf-8")
+            review = finding_review()
+            review["evidence_id"] = current["evidence_id"]
+            review_path = root / "review.json"
+            review_path.write_text(json.dumps(review), encoding="utf-8")
+            modes = (
+                ("--check-call",),
+                ("--review", str(review_path), "--product", "codex"),
+                ("--grant-rounds", "1", "--granted-by", "one more round is fine"),
+            )
+            moved = {"XDG_STATE_HOME": str(home), "HOME": str(home)}
+            with patch.dict(os.environ, moved), \
+                    patch("pwd.getpwuid", side_effect=KeyError("uid not found")):
+                # Import the script the way a new CLI process does.
+                spec = importlib.util.spec_from_file_location(
+                    "validate_round_without_account", MODULE_PATH
+                )
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                # Checked before main() runs: this copy is outside setUpModule.
+                self.assertIsNone(module.STATE_ROOT)
+                for mode in modes:
+                    with self.subTest(mode=mode[0]):
+                        output = root / f"result{mode[0]}.json"
+                        code, result = run_validator(
+                            "--bundle", str(bundle_path), *mode,
+                            "--output", str(output), module=module,
+                        )
+                        self.assertEqual(code, 2)
+                        self.assertFalse(result["valid"])
+                        self.assertFalse(result["call_allowed"])
+                        self.assertEqual(result["stop"], "UNVERIFIED")
+                        self.assertNotIn("ledger", result)
+                        self.assertIn("has no entry", result["errors"][0])
+                        self.assertIn("HOME is not used", result["errors"][0])
+                        self.assertIn("rerun the same command", result["errors"][0])
+                        # The --output checks never ran, so stdout is the
+                        # only place the error goes.
+                        self.assertFalse(output.exists())
+            self.assertEqual(list(home.iterdir()), [])
 
     def test_cli_offers_no_way_to_choose_the_ledger_location(self) -> None:
         options = {
@@ -1048,6 +1312,36 @@ class ValidateRoundTest(unittest.TestCase):
                     "bundle.evidence_id does not match canonical bundle material",
                     result["errors"],
                 )
+
+    def test_builder_and_validator_seal_the_same_evidence_material(self) -> None:
+        self.assertEqual(
+            build_review_bundle.EVIDENCE_MATERIAL_FIELDS,
+            validate_round.BUNDLE_MATERIAL_FIELDS,
+        )
+        self.assertIn("repository", validate_round.BUNDLE_MATERIAL_FIELDS)
+        sealed = build_review_bundle.seal_bundle(deepcopy(EVIDENCE_MATERIAL))
+        self.assertEqual(sealed, bundle())
+        self.assertEqual(
+            validate_round.canonical_evidence_id(sealed), sealed["evidence_id"]
+        )
+        self.assertTrue(validate_round.validate(sealed, clean_review())["valid"])
+        # The same bundle pointed at another checkout no longer matches.
+        moved = {**sealed, "repository": "/srv/other-checkout"}
+        result = validate_round.validate(moved, clean_review())
+        self.assertFalse(result["valid"])
+        self.assertIn(
+            "bundle.evidence_id does not match canonical bundle material",
+            result["errors"],
+        )
+        for name, change in (
+            ("missing", lambda material: material.pop("repository")),
+            ("extra", lambda material: material.update(note="unsealed")),
+        ):
+            with self.subTest(material=name):
+                material = deepcopy(EVIDENCE_MATERIAL)
+                change(material)
+                with self.assertRaisesRegex(RuntimeError, "EVIDENCE_MATERIAL_FIELDS"):
+                    build_review_bundle.seal_bundle(material)
 
     def test_rejects_missing_or_malformed_evidence_ids(self) -> None:
         cases = [

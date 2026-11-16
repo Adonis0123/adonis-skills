@@ -17,6 +17,7 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
+# Neither module has a fallback: without them main() answers UNVERIFIED.
 try:
     import fcntl
 except ImportError:  # no advisory file locks on this platform
@@ -50,9 +51,13 @@ REBUILD_HINT = (
     "rebuild the bundle with build_review_bundle.py instead of writing or "
     "editing it by hand"
 )
+# build_review_bundle.py seals the same fields (EVIDENCE_MATERIAL_FIELDS).
+# `repository` is one of them: pointing an existing bundle at another checkout
+# breaks the digest instead of selecting that checkout's ledger.
 BUNDLE_MATERIAL_FIELDS = (
     "schema_version",
     "mode",
+    "repository",
     "base_sha",
     "ocr_version",
     "refs",
@@ -358,24 +363,61 @@ def validate(bundle: dict[str, Any], review: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+HOME_NOT_USED = (
+    "HOME is not used instead, because a caller could point it at an empty "
+    "directory and start the round count again from zero"
+)
+
+
 def default_state_root() -> Path:
     """Return the fixed per-user state directory for the round ledgers.
 
     The home directory comes from the account database, not from HOME,
     XDG_STATE_HOME, or any argument: a caller that could move the ledgers
-    could start every count again from zero. HOME is the fallback only for an
-    account that has no database entry.
+    could start every count again from zero. There is no fallback: an account
+    the database cannot place gets no ledger directory, and the script
+    answers UNVERIFIED.
     """
+    if pwd is None:
+        raise ValueError(
+            "cannot locate the round ledgers: this platform has no account "
+            f"database (Python has no pwd module). {HOME_NOT_USED}. Run the "
+            "loop with a Python on macOS, Linux, or WSL, then rerun the same "
+            "command"
+        )
+    uid = os.getuid()
     try:
-        home = pwd.getpwuid(os.getuid()).pw_dir
-    except (AttributeError, KeyError):
-        home = str(Path.home())
+        home = pwd.getpwuid(uid).pw_dir
+    except KeyError:
+        raise ValueError(
+            "cannot locate the round ledgers: the account database has no "
+            f"entry for the current user (uid {uid}). {HOME_NOT_USED}. Give "
+            f"uid {uid} an account entry with an absolute home directory (in "
+            "a container, run as a user listed in /etc/passwd instead of a "
+            "bare numeric uid), then rerun the same command"
+        ) from None
+    if not non_empty(home) or not os.path.isabs(home):
+        raise ValueError(
+            f"cannot locate the round ledgers: the account database lists "
+            f"{home!r} as the home directory of uid {uid}, which is not an "
+            f"absolute path. {HOME_NOT_USED}. Set an absolute home directory "
+            "in that account entry, then rerun the same command"
+        )
     return Path(home) / ".local" / "state" / STATE_DIR_NAME
 
 
 # Tests replace this constant in-process. The CLI has no flag or environment
 # variable for it, so a loop that runs the script cannot relocate the ledgers.
-STATE_ROOT = default_state_root()
+# None means the account database could not place it; state_root() says why.
+try:
+    STATE_ROOT: Path | None = default_state_root()
+except ValueError:
+    STATE_ROOT = None
+
+
+def state_root() -> Path:
+    """The ledger state directory, or the reason there is none."""
+    return default_state_root() if STATE_ROOT is None else STATE_ROOT
 
 
 def timestamp() -> str:
@@ -409,8 +451,10 @@ def git_output(repository: str, *args: str) -> str:
 def repository_identity(bundle: dict[str, Any]) -> str:
     """Return the checkout root that Git itself reports for the bundle.
 
-    The ledger is keyed by this answer, never by the bundle's own text, so
-    editing bundle.repository cannot select another ledger.
+    The ledger is keyed by this answer, never by the bundle's own text.
+    bundle.repository is also part of the evidence digest, which main() checks
+    first: a bundle built in one checkout cannot be pointed at another one,
+    not even a worktree or clone on the same HEAD.
     """
     repository = bundle.get("repository")
     base_sha = bundle.get("base_sha")
@@ -451,12 +495,13 @@ def ledger_path(repository: str) -> Path:
     a new commit must land on the rounds that were already used.
     """
     repository_key = hashlib.sha256(repository.encode("utf-8")).hexdigest()[:16]
-    path = STATE_ROOT / "ledgers" / f"{repository_key}.json"
+    root = state_root()
+    path = root / "ledgers" / f"{repository_key}.json"
     if path.resolve().is_relative_to(Path(repository).resolve()):
         raise ValueError(
             f"the round ledger {path} would sit inside the repository and drift "
             "the evidence. The ledger location is fixed, so this loop cannot "
-            f"run on a repository that contains {STATE_ROOT}; run it on a "
+            f"run on a repository that contains {root}; run it on a "
             "checkout outside that directory"
         )
     return path
@@ -676,7 +721,7 @@ def read_ledger(path: Path) -> dict[str, Any]:
 def unwritable_ledger(path: Path, error: OSError) -> ValueError:
     return ValueError(
         f"cannot write the round ledger at {path}: {error}. Make "
-        f"{STATE_ROOT} writable for this host (a sandboxed host needs it as an "
+        f"{state_root()} writable for this host (a sandboxed host needs it as an "
         "extra writable directory), then rerun the same command. The ledger "
         "location is fixed: no argument or environment variable moves it, and "
         "a call that cannot be recorded must not be made"
@@ -685,15 +730,35 @@ def unwritable_ledger(path: Path, error: OSError) -> ValueError:
 
 @contextmanager
 def ledger_lock(path: Path) -> Iterator[None]:
-    """Serialize read-check-write so two sessions cannot both take a round."""
+    """Serialize read-check-write so two sessions cannot both take a round.
+
+    There is no unlocked mode: without a lock two calls can each read the
+    same count and one round is lost, so the caller gets UNVERIFIED instead.
+    """
+    if fcntl is None:
+        raise ValueError(
+            f"cannot lock the round ledger at {path}: this Python has no fcntl "
+            "module, so the platform offers no file lock, and without one two "
+            "sessions could both take the same round. Nothing was read or "
+            "written. Run the loop with a Python on macOS, Linux, or WSL, "
+            "then rerun the same command"
+        )
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
         handle = open(path.with_name(f"{path.name}.lock"), "a", encoding="utf-8")
     except OSError as error:
         raise unwritable_ledger(path, error) from error
     with handle:
-        if fcntl is not None:
+        try:
             fcntl.flock(handle, fcntl.LOCK_EX)
+        except OSError as error:
+            raise ValueError(
+                f"cannot lock the round ledger at {path}: {error}. The ledger "
+                "was not read or changed. The file system that holds "
+                f"{state_root()} must support flock: keep that directory on a "
+                "local disk instead of a network or sandbox mount without "
+                "file locks, then rerun the same command"
+            ) from error
         yield
 
 
@@ -738,7 +803,7 @@ def refuse_output_over_ledger(output: str | None, ledger: Path | None = None) ->
     if not output:
         return
     target = Path(output).expanduser().resolve()
-    root = STATE_ROOT.resolve()
+    root = state_root().resolve()
     protected = [] if ledger is None else [
         ledger.with_name(ledger.name + suffix).resolve()
         for suffix in ("", ".tmp", ".lock")
@@ -839,8 +904,14 @@ def validate_grant(rounds: str, granted_by: str | None) -> tuple[int, str]:
 
 def main() -> int:
     args = parse_args()
-    write_output = True
+    # --output is written only after both checks below have passed. An error
+    # before that point (no account entry, unreadable bundle, stale evidence)
+    # goes to stdout alone: the path could still be the ledger or a hard link
+    # to it outside the state directory.
+    output_checked = False
     try:
+        # Without a ledger directory no call can be recorded, so none is made.
+        state_root()
         # Before anything is read or written: no ledger, lock, or result file
         # may be touched for an --output aimed at the ledger state.
         refuse_output_over_ledger(args.output)
@@ -854,12 +925,14 @@ def main() -> int:
         evidence_id = canonical_evidence_id(bundle)
         if evidence_id is None or bundle.get("evidence_id") != evidence_id:
             raise ValueError(
-                "bundle.evidence_id does not match canonical bundle material; "
-                + REBUILD_HINT
+                "bundle.evidence_id does not match canonical bundle material "
+                "(bundle.repository is part of it, so a bundle cannot be "
+                "pointed at another checkout); " + REBUILD_HINT
             )
         repository = repository_identity(bundle)
         path = ledger_path(repository)
         refuse_output_over_ledger(args.output, path)
+        output_checked = True
         if args.history and Path(args.history).expanduser().resolve() != path.resolve():
             raise ValueError(
                 f"--history {args.history} is refused: the script derives the "
@@ -928,16 +1001,12 @@ def main() -> int:
                     result["loop_closed"] = True
                 write_ledger(path, repository, ledger)
         result["ledger"] = str(path)
-    except OutputRefused as error:
-        write_output = False
-        result = {"valid": False, "clean": False, "call_allowed": False,
-                  "stop": "UNVERIFIED", "errors": [str(error)]}
-    except (OSError, ValueError) as error:
+    except (OSError, ValueError) as error:  # OutputRefused is a ValueError
         result = {"valid": False, "clean": False, "call_allowed": False,
                   "stop": "UNVERIFIED", "errors": [str(error)]}
 
     rendered = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
-    if args.output and write_output:
+    if args.output and output_checked:
         output = Path(args.output).expanduser().resolve()
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(rendered, encoding="utf-8")

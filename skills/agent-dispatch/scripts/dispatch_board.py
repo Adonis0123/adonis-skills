@@ -495,7 +495,9 @@ def check_start(run: dict, fields: dict, what: str, lane: dict | None = None) ->
             when = f", which resets at {local_time(resets)[:5]}" if resets else ""
             raise BoardError(f"{quota['account']} has used {quota['used']:g}% of its {quota['window']} quota window{when}, "
                              f"past the {limit:g}% line, so {what} may not start there: start it on the subscription account "
-                             "with the most quota left (`sideby next <family> --dry-run --json` names it), or wait for the "
+                             "with the most quota left among those the probe lists (with a non-empty `allow`, compare the "
+                             "allowed accounts with `sideby quota <ref> --json` and start with `sideby run <ref> --`; only "
+                             "when `allow` is empty, `sideby next <family> --dry-run --json` names it), or wait for the "
                              "reset; running Lanes are not stopped")
         return
     budget = run.get("budget_usd")

@@ -129,7 +129,8 @@ class TestQuotaGate(BoardTestCase):
             code, _, err = self.run_cli("--run", run_dir, "lane", "add", "--billing", "subscription", "--account", "cc001", "--id", "A")
         self.assertEqual(code, 2)
         self.assertIn("85% of its 5h quota window, which resets at ", err)
-        self.assertIn("sideby next", err)
+        self.assertIn("with a non-empty `allow`, compare the allowed accounts", err)
+        self.assertIn("only when `allow` is empty, `sideby next", err)
         self.assertIn("running Lanes are not stopped", err)
         with self.sideby(quota_json(used_5h=50)):
             code, _, err = self.run_cli("--run", run_dir, "lane", "add", "--billing", "subscription", "--account", "cc001", "--id", "A")

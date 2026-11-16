@@ -3,7 +3,7 @@ name: open-code-review-loop
 description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
-  version: "1.8.0"
+  version: "1.8.1"
 ---
 
 # Open Code Review Loop
@@ -174,7 +174,8 @@ Builder already fail-closes on (do not re-implement; read
 
 Prefer `--background-file` for non-trivial or sensitive background. Do not
 commit the bundle. `validate_round.py` recomputes the canonical digest, so
-editing bundle content while keeping an old `evidence_id` also fails closed.
+editing bundle content (`repository` included) while keeping an old
+`evidence_id` also fails closed.
 
 ### Phase 2: Invoke the Reviewer
 
@@ -190,14 +191,22 @@ not a reason to weaken the Reviewer sandbox.
 The round ledger is not a file you choose. `validate_round.py` keeps one per
 repository checkout at
 `~/.local/state/open-code-review-loop/ledgers/<repository-hash>.json` and
-prints the path as `ledger`. That directory is fixed under the account's home:
-no argument or environment variable (`XDG_STATE_HOME`, `HOME`) moves it, and a
-sandboxed host needs it as an extra writable directory. The script asks Git
-which checkout `bundle.repository` is and whether `bundle.base_sha` is its
-`HEAD`, so an edited or stale bundle is refused instead of getting another
-ledger. A handoff, a resumed session, a new `ROUND_DIR`, or a new commit lands
-on the same ledger and the rounds already used; never move, delete, edit, or
-recreate it. Omit `--history`: any other path is refused.
+prints the path as `ledger`. That directory is fixed under the home directory
+that the system account database lists for the current user: no argument or
+environment variable (`XDG_STATE_HOME`, `HOME`) moves it, and a sandboxed host
+needs it as an extra writable directory. When the account database has no
+entry for the user, or Python has no `fcntl` file lock (native Windows), the
+script returns `UNVERIFIED` (exit 2) and records nothing; there is no fallback
+to `HOME` and no unlocked mode. `bundle.repository` is part of `evidence_id`,
+and the script asks Git which checkout it is and whether `bundle.base_sha` is
+its `HEAD`, so a stale bundle, or one edited to point at another checkout (a
+worktree or clone on the same `HEAD` included), is refused instead of getting
+another ledger. Each checkout has its own ledger and the script does not link
+them, so build every bundle in the frozen `$REPO`; never build in another
+worktree or clone to continue a loop. A handoff, a resumed session, a new
+`ROUND_DIR`, or a new commit lands on the same ledger and the rounds already
+used; never move, delete, edit, or recreate it. Omit `--history`: any other
+path is refused.
 
 Rounds add up across commits; the ledger lists every `base_sha` it saw. Only
 a validated `NO_FINDINGS` closes the loop, and the next evidence then starts a
@@ -231,6 +240,13 @@ python3 <skill-dir>/scripts/validate_round.py \
   --output "$ROUND_DIR/validation.json" \
   [--session-id "$RECORDED_SESSION_ID"]
 ```
+
+`--output` must not be the ledger, its `.tmp` or `.lock` file, or any path
+inside the ledger state directory: that is refused (exit 2) and nothing is
+written. Keep it in `ROUND_DIR`. An error raised before that check finishes (an
+unreadable bundle, no account home) is printed to stdout only, so a
+`validation.json` left by an earlier run may be stale: trust the exit code and
+this run's stdout, not the file, when the validator exits non-zero.
 
 The validator reuses `extract_product_output.py`. Its gate stops a second
 malformed result as `UNVERIFIED` and refuses a round beyond the budget: format

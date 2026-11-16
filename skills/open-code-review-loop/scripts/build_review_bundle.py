@@ -92,6 +92,39 @@ def canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+# validate_round.py recomputes the digest over the same fields
+# (BUNDLE_MATERIAL_FIELDS). `repository` is one of them, so a bundle cannot be
+# pointed at another checkout of the same commit.
+EVIDENCE_MATERIAL_FIELDS = (
+    "schema_version",
+    "mode",
+    "repository",
+    "base_sha",
+    "ocr_version",
+    "refs",
+    "reviewable_files",
+    "supplemental_reviewable_files",
+    "excluded_files",
+    "accepted_exclusion_reasons",
+    "unaccepted_excluded_files",
+    "background",
+    "rules",
+    "supplemental_rules",
+    "files",
+)
+
+
+def seal_bundle(material: dict[str, Any]) -> dict[str, Any]:
+    """Return the bundle: the evidence material plus its digest."""
+    if set(material) != set(EVIDENCE_MATERIAL_FIELDS):
+        raise RuntimeError(
+            "bundle material fields differ from EVIDENCE_MATERIAL_FIELDS: "
+            + ", ".join(sorted(set(material) ^ set(EVIDENCE_MATERIAL_FIELDS)))
+        )
+    digest = hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
+    return {**material, "evidence_id": f"sha256:{digest}"}
+
+
 def parse_json_object(raw: str, label: str) -> dict[str, Any]:
     value = json.loads(raw)
     if not isinstance(value, dict):
@@ -686,6 +719,7 @@ def main() -> int:
         material = {
             "schema_version": "1",
             "mode": preview.get("mode"),
+            "repository": str(repo),
             "base_sha": base_sha,
             "ocr_version": ocr_version,
             "refs": refs,
@@ -699,12 +733,7 @@ def main() -> int:
             "supplemental_rules": supplemental_rules(supplemental_reviewable_files),
             "files": files,
         }
-        digest = hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
-        bundle = {
-            **material,
-            "repository": str(repo),
-            "evidence_id": f"sha256:{digest}",
-        }
+        bundle = seal_bundle(material)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(bundle, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(
