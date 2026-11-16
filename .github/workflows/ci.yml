@@ -71,3 +71,59 @@ jobs:
 
       - name: Lint, Typecheck, Build
         run: pnpm turbo run lint typecheck build --filter=@adonis-skills/web
+
+  plugins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install zsh and jq
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq zsh jq
+
+      - name: Validate Marketplace and Plugins (strict)
+        # Plugins leave out `version` on purpose, so an install follows each commit. `--strict` warns about a
+        # missing version; that one warning is allowed, every other error or warning fails the step.
+        run: |
+          failed=0
+          for target in . plugins/*/; do
+            # Without --strict, any error still fails here.
+            if ! claude plugin validate "$target"; then
+              echo "::error::claude plugin validate $target"
+              failed=1
+              continue
+            fi
+            report=$(claude plugin validate --strict --json "$target" || true)
+            if ! problems=$(jq -er '[.. | objects | (.errors? // empty), (.warnings? // empty)] | add // []
+                | map(select((.path // "") | test("(^|→ )version$") | not))
+                | map("\(.path // "-"): \(.message)") | join("\n")' <<<"$report"); then
+              problems="unreadable validation report"
+            fi
+            if [ -n "$problems" ]; then
+              echo "::error::claude plugin validate --strict $target"
+              echo "$problems"
+              failed=1
+            else
+              echo "ok: $target"
+            fi
+          done
+          exit $failed
+
+      - name: Plugin Tests
+        run: |
+          for t in plugins/*/tests/*.test.zsh; do
+            echo "== $t"
+            zsh "$t"
+          done

@@ -27,6 +27,23 @@ npx skills add adonis0123/adonis-skills --skill chrome-dev-mcp -g
 npx skills add adonis0123/adonis-skills --list
 ```
 
+## Hook Plugins
+
+Two Claude Code hook plugins ship in the same marketplace. Each installs on its own, so pick only what you want:
+
+| Plugin                                                       | What it does                                                                                                                                                             |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [`reply-language`](./plugins/reply-language/README.md)       | Stop and PostToolUse hooks that keep user-facing replies in the language set by `REPLY_LANGUAGE` (first release: Chinese, `zh`). Does nothing until the variable is set. |
+| [`bash-prompt-guard`](./plugins/bash-prompt-guard/README.md) | PreToolUse hook that denies Bash commands Claude Code's permission check cannot parse, so unattended runs do not stall on a confirmation prompt.                         |
+
+```text
+/plugin marketplace add Adonis0123/adonis-skills
+/plugin install reply-language@adonis-skills
+/plugin install bash-prompt-guard@adonis-skills
+```
+
+Each plugin's README covers configuration, limits and, for `reply-language`, manual wiring for Codex.
+
 ## Skills
 
 | Skill                                                                           | What it is for                                                                                                                         |
@@ -137,6 +154,7 @@ Layout:
 ├── .claude-plugin/marketplace.json   # Claude Code marketplace manifest
 ├── apps/web/                          # Next.js 16 web catalog
 ├── skills/<name>/SKILL.md             # public skills (indexed by the web app)
+├── plugins/<name>/                    # hook plugins, each installable on its own
 ├── .agents/skills/                    # internal tooling skills (not indexed)
 ├── scripts/
 │   ├── generate-skills-index.mjs      # skills index generation
@@ -293,6 +311,7 @@ GitHub Actions runs:
 - `pnpm --filter @adonis-skills/web run i18n -- --compile --strict`
 - `pnpm test:web-offline-font-build`
 - `pnpm turbo run lint typecheck build --filter=@adonis-skills/web`
+- `plugins` job: `claude plugin validate --strict` on the marketplace and each `plugins/*` (the missing-`version` warning is allowed, because plugins leave `version` out so installs follow each commit), then every `plugins/*/tests/*.test.zsh`
 
 What each step validates:
 

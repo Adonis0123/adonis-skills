@@ -12,6 +12,7 @@
 
 - [skills/](https://github.com/Adonis0123/adonis-skills/tree/main/skills): one directory per public skill; frontmatter `name` equals the directory name
 - [Claude Code marketplace manifest](https://github.com/Adonis0123/adonis-skills/blob/main/.claude-plugin/marketplace.json)
+- [plugins/](https://github.com/Adonis0123/adonis-skills/tree/main/plugins): Claude Code hook plugins, each installable on its own (`/plugin install reply-language@adonis-skills`, `/plugin install bash-prompt-guard@adonis-skills`)
 
 ## Related
 

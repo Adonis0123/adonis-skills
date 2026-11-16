@@ -1,0 +1,27 @@
+{
+  "description": "Block a final reply that is mostly not in REPLY_LANGUAGE once per turn, and remind after an off-language progress note.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/reply-language-check.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/reply-language-check.py\" --event post-tool-use",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

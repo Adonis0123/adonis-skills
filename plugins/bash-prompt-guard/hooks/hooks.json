@@ -1,0 +1,17 @@
+{
+  "description": "Deny Bash commands that would make Claude Code ask for confirmation even under bypass permissions, with a reason that says how to rewrite them.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/bash-prompt-guard.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
