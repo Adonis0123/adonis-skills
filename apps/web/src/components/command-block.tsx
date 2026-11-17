@@ -189,6 +189,26 @@ interface CopyTextBlockProps {
  * Shows text as-is (no `$` prompt, wrapped, never scrolled) and copies it when
  * any part of the block is clicked; a visible label turns into "Copied".
  */
+// Longest token kept on one row; longer ones (a URL on a phone) may still break.
+const MAX_UNBROKEN = 40;
+
+/**
+ * Lets a command wrap only between words, so `--marketplace` or
+ * `delete-guard@nika` never splits at a hyphen. Only spans are added: the DOM
+ * text, and so a manual selection, stays exactly `text`.
+ */
+function UnbrokenWords({ text }: { text: string }) {
+  return text.split(/( +|\n)/).map((part, index) =>
+    part.trim() && part.length <= MAX_UNBROKEN ? (
+      <span key={index} className="whitespace-nowrap">
+        {part}
+      </span>
+    ) : (
+      part
+    ),
+  );
+}
+
 export function CopyTextBlock({
   text,
   kind = "command",
@@ -234,7 +254,7 @@ export function CopyTextBlock({
         )}
       >
         <code ref={textRef} className="font-[inherit]">
-          {text}
+          {kind === "command" ? <UnbrokenWords text={text} /> : text}
         </code>
       </pre>
       {/* One button covers the block, so a click anywhere copies; the pill is its visible label. */}

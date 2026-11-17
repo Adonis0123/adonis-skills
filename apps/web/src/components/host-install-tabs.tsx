@@ -155,15 +155,16 @@ export function InstallTabs<Id extends string>({
   };
 
   return (
-    <div className={className}>
+    <div className={cx("@container", className)}>
       <div
         ref={tablistRef}
         role="tablist"
         aria-label={ariaLabel}
-        // Four or more tabs wrap to two rows on phones so product names are not truncated.
+        // Four or more tabs wrap to two rows when the container (not the viewport) is narrow,
+        // so a sidebar install card never truncates product names.
         className={cx(
           "relative grid gap-1 rounded-[12px] border border-border bg-muted p-1",
-          tabs.length > 3 ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3",
+          tabs.length > 3 ? "grid-cols-2 @lg:grid-cols-4" : "grid-cols-3",
         )}
         onKeyDown={onKeyDown}
       >

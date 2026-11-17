@@ -14,12 +14,12 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:245
+#: ../src/components/host-install-tabs.tsx:246
 msgid "install.tabs.aria"
 msgstr "选择要安装到的 agent"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:264
+#: ../src/components/host-install-tabs.tsx:265
 msgid "install.copy.aria"
 msgstr "复制 {hostLabel} 的安装命令"
 

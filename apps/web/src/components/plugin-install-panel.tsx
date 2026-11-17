@@ -1,6 +1,7 @@
 "use client";
 
 import { Trans, useLingui } from "@lingui/react/macro";
+import type { ReactNode } from "react";
 import { CommandBlock, CopyTextBlock } from "@/components/command-block";
 import { InstallTabs, type InstallTab } from "@/components/host-install-tabs";
 import { resolveLocaleValue } from "@/i18n/config";
@@ -25,6 +26,8 @@ interface PluginInstallPanelProps {
   marketplace: PluginMarketplace;
   /** Show disable / uninstall / update rows under each command (off when the page has its own block). */
   showManage?: boolean;
+  /** Extra README notes shown inside the folded disable / uninstall area. */
+  manageNote?: ReactNode;
   className?: string;
 }
 
@@ -49,11 +52,34 @@ function ManageRow({
   );
 }
 
+/** Disable / uninstall / update rows, folded: needed later, so they never outweigh the install command. */
+function ManageDisclosure({
+  summary,
+  children,
+}: {
+  summary: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <details className="group/manage mt-4 rounded-[14px] border border-border bg-card">
+      <summary className="clay-focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-[14px] px-4 py-3 text-sm font-medium text-foreground transition-colors hover:text-link [&::-webkit-details-marker]:hidden">
+        <span>{summary}</span>
+        <span
+          className="icon-[lucide--chevron-down] size-4 text-muted-foreground transition-transform duration-200 ease-out group-open/manage:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      <div className="grid gap-3 px-4 pb-4">{children}</div>
+    </details>
+  );
+}
+
 /** Install area for one or more plugins: a tab per Host plus an "Ask your AI" prompt. */
 export function PluginInstallPanel({
   plugins,
   marketplace,
   showManage = true,
+  manageNote,
   className,
 }: PluginInstallPanelProps) {
   const { t, i18n } = useLingui();
@@ -112,41 +138,50 @@ export function PluginInstallPanel({
           </p>
           {requirementsNote}
           {showManage && (
-            <dl className="mt-4 grid gap-2.5">
-              <ManageRow
-                label={t({
-                  id: "pluginInstall.manage.disable",
-                  message: "Disable",
-                })}
-                command={manage.disable}
-                ariaLabel={t({
-                  id: "pluginInstall.manage.disable.aria",
-                  message: "Copy the disable command",
-                })}
-              />
-              <ManageRow
-                label={t({
-                  id: "pluginInstall.manage.uninstall",
-                  message: "Uninstall",
-                })}
-                command={manage.uninstall}
-                ariaLabel={t({
-                  id: "pluginInstall.manage.uninstall.aria",
-                  message: "Copy the uninstall command",
-                })}
-              />
-              <ManageRow
-                label={t({
-                  id: "pluginInstall.manage.update",
-                  message: "Update",
-                })}
-                command={manage.update}
-                ariaLabel={t({
-                  id: "pluginInstall.manage.update.aria",
-                  message: "Copy the update command",
-                })}
-              />
-            </dl>
+            <ManageDisclosure
+              summary={
+                <Trans id="pluginInstall.manage.summary">
+                  Disable, uninstall or update later
+                </Trans>
+              }
+            >
+              <dl className="grid gap-2.5">
+                <ManageRow
+                  label={t({
+                    id: "pluginInstall.manage.disable",
+                    message: "Disable",
+                  })}
+                  command={manage.disable}
+                  ariaLabel={t({
+                    id: "pluginInstall.manage.disable.aria",
+                    message: "Copy the disable command",
+                  })}
+                />
+                <ManageRow
+                  label={t({
+                    id: "pluginInstall.manage.uninstall",
+                    message: "Uninstall",
+                  })}
+                  command={manage.uninstall}
+                  ariaLabel={t({
+                    id: "pluginInstall.manage.uninstall.aria",
+                    message: "Copy the uninstall command",
+                  })}
+                />
+                <ManageRow
+                  label={t({
+                    id: "pluginInstall.manage.update",
+                    message: "Update",
+                  })}
+                  command={manage.update}
+                  ariaLabel={t({
+                    id: "pluginInstall.manage.update.aria",
+                    message: "Copy the update command",
+                  })}
+                />
+              </dl>
+              {manageNote}
+            </ManageDisclosure>
           )}
         </>
       );
@@ -195,19 +230,27 @@ export function PluginInstallPanel({
             </p>
           )}
           {showManage && (
-            <dl className="mt-4 grid gap-2.5">
-              <ManageRow
-                label={t({
-                  id: "pluginInstall.manage.remove",
-                  message: "Remove",
-                })}
-                command={remove}
-                ariaLabel={t({
-                  id: "pluginInstall.manage.remove.aria",
-                  message: "Copy the Codex remove command",
-                })}
-              />
-            </dl>
+            <ManageDisclosure
+              summary={
+                <Trans id="pluginInstall.manage.codexSummary">
+                  Remove it later
+                </Trans>
+              }
+            >
+              <dl className="grid gap-2.5">
+                <ManageRow
+                  label={t({
+                    id: "pluginInstall.manage.remove",
+                    message: "Remove",
+                  })}
+                  command={remove}
+                  ariaLabel={t({
+                    id: "pluginInstall.manage.remove.aria",
+                    message: "Copy the Codex remove command",
+                  })}
+                />
+              </dl>
+            </ManageDisclosure>
           )}
         </>
       );

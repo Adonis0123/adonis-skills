@@ -14,12 +14,12 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:245
+#: ../src/components/host-install-tabs.tsx:246
 msgid "install.tabs.aria"
 msgstr "Choose target agent"
 
 #. js-lingui-explicit-id
-#: ../src/components/host-install-tabs.tsx:264
+#: ../src/components/host-install-tabs.tsx:265
 msgid "install.copy.aria"
 msgstr "Copy the {hostLabel} install command"
 

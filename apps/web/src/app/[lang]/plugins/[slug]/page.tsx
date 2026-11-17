@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
 import { Trans } from "@lingui/react/macro";
 import { notFound } from "next/navigation";
-import { CommandBlock } from "@/components/command-block";
 import { SectionReveal } from "@/components/motion/section-reveal";
 import { PluginInstallPanel } from "@/components/plugin-install-panel";
-import { TocNav, type TocEntry } from "@/components/toc-nav";
 import { ClaySurface } from "@/components/ui";
 import {
   PLUGIN_CATEGORY_LABELS,
@@ -84,6 +81,11 @@ const readmeBodyClass = [
   "[&_div:has(>table)]:[background:linear-gradient(to_right,var(--card)_30%,transparent)_left/2.5rem_100%_no-repeat_local,linear-gradient(to_left,var(--card)_30%,transparent)_right/2.5rem_100%_no-repeat_local,radial-gradient(farthest-side_at_0_50%,var(--border),transparent)_left/1rem_100%_no-repeat_scroll,radial-gradient(farthest-side_at_100%_50%,var(--border),transparent)_right/1rem_100%_no-repeat_scroll]",
 ].join(" ");
 
+interface SectionGroupItem {
+  key: PluginSectionKey;
+  title: string;
+}
+
 export default async function PluginDetailPage({ params }: PluginPageProps) {
   const locale = await initPageLingui(params);
   const { slug } = await params;
@@ -97,7 +99,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
   const sourceUrl = getPluginSourceUrl(plugin);
   const claudeOnly =
     plugin.hosts.length === 1 && plugin.hosts[0] === "claude-code";
-  // The structured rows below already show these commands; drop README blocks that only repeat them.
+  // The install card already lists these commands; keep only the README's other notes.
   const turningOffNote = sections.turningOff
     ? removeRepeatedCommandBlocks(
         sections.turningOff,
@@ -110,68 +112,58 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
       )
     : "";
 
-  const sectionTitles: Record<PluginSectionKey, string> = {
-    scenario: i18n._({ id: "pluginDetail.scenario", message: "Scenario" }),
-    whyUse: i18n._({ id: "pluginDetail.whyUse", message: "Why use it" }),
-    whyBuilt: i18n._({
-      id: "pluginDetail.whyBuilt",
-      message: "Why we built our own",
-    }),
-    howItWorks: i18n._({
-      id: "pluginDetail.howItWorks",
-      message: "How it works",
-    }),
-    whatItBlocks: i18n._({
-      id: "pluginDetail.whatItBlocks",
-      message: "What it blocks",
-    }),
-    whatAgentSees: i18n._({
-      id: "pluginDetail.whatAgentSees",
-      message: "What the agent sees when blocked",
-    }),
-    turningOff: i18n._({
-      id: "pluginDetail.turningOff",
-      message: "Disable and uninstall",
-    }),
-  };
-  const readmeKeys = (
-    [
-      "scenario",
-      "whyUse",
-      "whyBuilt",
-      "howItWorks",
-      "whatItBlocks",
-      "whatAgentSees",
-    ] as const
-  ).filter((key) => sections[key]);
-
-  // Page order: install sits in the header row, then the README sections.
-  const toc: TocEntry[] = [
+  // What the plugin does to the visitor's agent comes first; why it exists comes after.
+  const behaviour: SectionGroupItem[] = [
     {
-      id: "install",
-      label: i18n._({ id: "pluginDetail.install", message: "Install" }),
-      level: 2,
+      key: "whatItBlocks",
+      title: i18n._({
+        id: "pluginDetail.whatItBlocks",
+        message: "What it blocks",
+      }),
     },
-    ...readmeKeys.map((key) => ({
-      id: key,
-      label: sectionTitles[key],
-      level: 2,
-    })),
-    { id: "turning-off", label: sectionTitles.turningOff, level: 2 },
     {
-      id: "source",
-      label: i18n._({ id: "pluginDetail.source", message: "Source" }),
-      level: 2,
+      key: "whatAgentSees",
+      title: i18n._({
+        id: "pluginDetail.whatAgentSees",
+        message: "What the agent sees when blocked",
+      }),
     },
   ];
+  const background: SectionGroupItem[] = [
+    {
+      key: "scenario",
+      title: i18n._({ id: "pluginDetail.scenario", message: "Scenario" }),
+    },
+    {
+      key: "whyUse",
+      title: i18n._({ id: "pluginDetail.whyUse", message: "Why use it" }),
+    },
+    {
+      key: "whyBuilt",
+      title: i18n._({
+        id: "pluginDetail.whyBuilt",
+        message: "Why we built our own",
+      }),
+    },
+    {
+      key: "howItWorks",
+      title: i18n._({
+        id: "pluginDetail.howItWorks",
+        message: "How it works",
+      }),
+    },
+  ];
+  const present = (items: SectionGroupItem[]) =>
+    items.filter((item) => sections[item.key]);
+  const behaviourItems = present(behaviour);
+  const backgroundItems = present(background);
 
-  const block = (id: string, title: string, body: ReactNode) => (
-    <ClaySurface key={id} tone="base" elevation="raised" className="p-5 md:p-7">
-      <h2 id={id} className={headingClass}>
-        {title}
-      </h2>
-      <div className={readmeBodyClass}>{body}</div>
-    </ClaySurface>
+  const readme = (key: PluginSectionKey) => (
+    <div className={readmeBodyClass}>
+      {renderSectionContent(
+        resolvePluginReadmeLinks(sections[key] ?? "", plugin),
+      )}
+    </div>
   );
 
   return (
@@ -189,32 +181,29 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
         </LocaleLink>
       </SectionReveal>
 
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
-        <SectionReveal delay={60} className="min-w-0">
-          <header className="h-full rounded-[22px] border border-border bg-card p-6 md:p-9">
-            {plugin.category && (
-              <LocaleLink
-                href={`/plugins?group=${plugin.category}`}
-                className="clay-focus-ring inline-flex items-center gap-1.5 rounded-full text-[13px] font-medium text-muted-foreground transition-colors hover:text-link"
-              >
-                {PLUGIN_CATEGORY_LABELS[plugin.category].title[locale]}
-                <span
-                  className="icon-[lucide--arrow-up-right] size-3.5"
-                  aria-hidden
-                />
-              </LocaleLink>
-            )}
-            <h1 className="type-display mt-3 font-mono text-[clamp(1.9rem,1.3rem+2.2vw,3rem)] tracking-[-0.02em] [overflow-wrap:anywhere]">
-              {plugin.name}
-            </h1>
-            {plugin.effect[locale] && (
-              <p className="type-lede mt-5 max-w-3xl text-base text-pretty text-muted-foreground md:text-lg">
-                {plugin.effect[locale]}
-              </p>
-            )}
-            <ul className="mt-5 flex flex-wrap items-center gap-1.5">
+      {/*
+        Desktop: content on the left, install card on the right and sticky.
+        Phone: DOM order puts the install card right after the title.
+      */}
+      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,31rem)]">
+        <SectionReveal
+          delay={60}
+          className="min-w-0 lg:col-start-1 lg:row-start-1"
+        >
+          <header className="rounded-[22px] border border-border bg-card p-6 md:p-9">
+            <ul className="flex flex-wrap items-center gap-1.5">
+              {plugin.category && (
+                <li>
+                  <LocaleLink
+                    href={`/plugins?group=${plugin.category}`}
+                    className="nk-tag clay-focus-ring gap-1 transition-colors hover:text-link"
+                  >
+                    {PLUGIN_CATEGORY_LABELS[plugin.category].title[locale]}
+                  </LocaleLink>
+                </li>
+              )}
               {plugin.triggers.map((trigger) => (
-                <li key={trigger} className="nk-tag gap-1">
+                <li key={trigger} className="nk-tag nk-tag--neutral gap-1">
                   <span className="icon-[lucide--clock-3] size-3" aria-hidden />
                   {PLUGIN_TRIGGER_LABELS[trigger][locale]}
                 </li>
@@ -231,145 +220,118 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
                 ))
               )}
             </ul>
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="clay-focus-ring mt-6 inline-flex items-center gap-1.5 rounded-sm text-sm font-semibold text-link underline-offset-4 hover:underline"
-            >
-              <span className="icon-[lucide--github] size-4" aria-hidden />
-              <Trans id="pluginDetail.sourceLink">View source on GitHub</Trans>
-            </a>
+            <h1 className="type-display mt-4 font-mono text-[clamp(1.9rem,1.3rem+2.2vw,3rem)] tracking-[-0.02em] [overflow-wrap:anywhere]">
+              {plugin.name}
+            </h1>
+            {plugin.effect[locale] && (
+              <p className="type-lede mt-4 max-w-[60ch] text-base text-pretty text-muted-foreground md:text-lg">
+                {plugin.effect[locale]}
+              </p>
+            )}
           </header>
         </SectionReveal>
 
-        <SectionReveal delay={100} className="min-w-0">
-          <section
-            aria-labelledby="install"
-            className="h-full rounded-[22px] border border-tint-border bg-tint p-5 md:p-7 dark:bg-card"
-          >
-            <h2 id="install" className="type-h3 mb-4 scroll-mt-24">
-              <Trans id="pluginDetail.install.heading">
-                Add it to your agent
-              </Trans>
-            </h2>
-            <PluginInstallPanel
-              plugins={[{ name: plugin.name, hosts: plugin.hosts }]}
-              marketplace={pluginMarketplace}
-              showManage={false}
-            />
-          </section>
-        </SectionReveal>
-      </div>
-
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        <div className="grid min-w-0 gap-6">
-          {readmeKeys.map((key) =>
-            block(
-              key,
-              sectionTitles[key],
-              renderSectionContent(
-                resolvePluginReadmeLinks(sections[key] ?? "", plugin),
-              ),
-            ),
-          )}
-
-          {block(
-            "turning-off",
-            sectionTitles.turningOff,
-            <div className="space-y-4">
-              {(() => {
-                const rows: [string, string, string][] = [];
-                if (manage)
-                  rows.push(
-                    [
-                      "Claude Code",
-                      i18n._({
-                        id: "pluginDetail.manage.disable",
-                        message: "Disable",
-                      }),
-                      manage.disable,
-                    ],
-                    [
-                      "Claude Code",
-                      i18n._({
-                        id: "pluginDetail.manage.uninstall",
-                        message: "Uninstall",
-                      }),
-                      manage.uninstall,
-                    ],
-                    [
-                      "Claude Code",
-                      i18n._({
-                        id: "pluginDetail.manage.update",
-                        message: "Update",
-                      }),
-                      manage.update,
-                    ],
-                  );
-                if (codexRemove)
-                  rows.push([
-                    "Codex",
-                    i18n._({
-                      id: "pluginDetail.manage.remove",
-                      message: "Remove",
-                    }),
-                    codexRemove,
-                  ]);
-                if (rows.length === 0) return null;
-                return (
-                  <dl className="grid gap-2.5">
-                    {rows.map(([host, label, command]) => (
+        <aside
+          aria-labelledby="install"
+          className="min-w-0 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-stretch"
+        >
+          {/* Sticky only when the viewport is tall enough to show the whole card. */}
+          <div className="lg:[@media(min-height:880px)]:sticky lg:[@media(min-height:880px)]:top-24">
+            <SectionReveal delay={100}>
+              <section className="grid gap-5 rounded-[22px] border border-tint-border bg-tint p-5 md:p-6 dark:bg-card">
+                <h2 id="install" className="type-h3 scroll-mt-24">
+                  <Trans id="pluginDetail.install.manageHeading">
+                    Install and turn off
+                  </Trans>
+                </h2>
+                <PluginInstallPanel
+                  plugins={[{ name: plugin.name, hosts: plugin.hosts }]}
+                  marketplace={pluginMarketplace}
+                  manageNote={
+                    turningOffNote ? (
                       <div
-                        key={command}
-                        className="grid gap-1.5 sm:grid-cols-[9.5rem_minmax(0,1fr)] sm:items-center sm:gap-3"
+                        className={`border-t border-border pt-3 text-sm ${readmeBodyClass}`}
                       >
-                        <dt className="text-sm text-muted-foreground">
-                          <span className="font-medium text-foreground">
-                            {label}
-                          </span>{" "}
-                          · {host}
-                        </dt>
-                        <dd className="min-w-0">
-                          <CommandBlock commands={[command]} />
-                        </dd>
+                        {renderSectionContent(
+                          resolvePluginReadmeLinks(turningOffNote, plugin),
+                        )}
                       </div>
-                    ))}
-                  </dl>
-                );
-              })()}
-              {turningOffNote &&
-                renderSectionContent(
-                  resolvePluginReadmeLinks(turningOffNote, plugin),
-                )}
-            </div>,
-          )}
-
-          {block(
-            "source",
-            i18n._({ id: "pluginDetail.source", message: "Source" }),
-            <p className="text-[15px] leading-7">
-              <a
-                href={sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-mono text-[14px] text-link underline underline-offset-2"
-              >
-                {plugin.sourcePath}
-                <span
-                  className="icon-[lucide--arrow-up-right] size-3.5"
-                  aria-hidden
+                    ) : null
+                  }
                 />
-              </a>
-            </p>,
-          )}
-        </div>
+                <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-tint-border pt-4 text-[13px] text-muted-foreground">
+                  <code className="font-mono [overflow-wrap:anywhere] text-foreground">
+                    {plugin.sourcePath}
+                  </code>
+                  <a
+                    href={sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-link underline-offset-4 hover:underline"
+                  >
+                    <span
+                      className="icon-[lucide--github] size-3.5"
+                      aria-hidden
+                    />
+                    <Trans id="pluginDetail.sourceLink">
+                      View source on GitHub
+                    </Trans>
+                  </a>
+                </p>
+              </section>
+            </SectionReveal>
+          </div>
+        </aside>
 
-        {toc.length > 2 && (
-          <TocNav
-            title={<Trans id="pluginDetail.toc.title">On this page</Trans>}
-            entries={toc}
-          />
+        {behaviourItems.length > 0 && (
+          <SectionReveal delay={140} className="min-w-0 lg:col-start-1">
+            <ClaySurface
+              tone="base"
+              elevation="raised"
+              className="grid min-w-0 gap-9 p-6 md:p-8"
+            >
+              {behaviourItems.map((item) => (
+                <section
+                  key={item.key}
+                  aria-labelledby={item.key}
+                  className="min-w-0"
+                >
+                  <h2 id={item.key} className={headingClass}>
+                    {item.title}
+                  </h2>
+                  {readme(item.key)}
+                </section>
+              ))}
+            </ClaySurface>
+          </SectionReveal>
+        )}
+
+        {backgroundItems.length > 0 && (
+          <SectionReveal delay={180} className="min-w-0 lg:col-start-1">
+            <section
+              aria-labelledby="why-this-plugin"
+              className="grid min-w-0 gap-8 rounded-[22px] border border-border bg-background p-6 md:p-8"
+            >
+              <h2 id="why-this-plugin" className="type-h3 scroll-mt-24">
+                <Trans id="pluginDetail.whyThisPlugin">Why this plugin</Trans>
+              </h2>
+              {backgroundItems.map((item) => (
+                <section
+                  key={item.key}
+                  aria-labelledby={item.key}
+                  className="min-w-0"
+                >
+                  <h3
+                    id={item.key}
+                    className="mb-3 scroll-mt-24 text-base font-semibold text-foreground md:text-lg"
+                  >
+                    {item.title}
+                  </h3>
+                  {readme(item.key)}
+                </section>
+              ))}
+            </section>
+          </SectionReveal>
         )}
       </div>
     </main>

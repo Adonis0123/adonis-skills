@@ -14,102 +14,116 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:61
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:252
+#~ msgid "pluginDetail.install.heading"
+#~ msgstr "Add it to your agent"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:287
+#~ msgid "pluginDetail.manage.disable"
+#~ msgstr "Disable"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:132
+#~ msgid "pluginDetail.turningOff"
+#~ msgstr "Disable and uninstall"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:152
+#~ msgid "pluginDetail.install"
+#~ msgstr "Install"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:370
+#~ msgid "pluginDetail.toc.title"
+#~ msgstr "On this page"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:313
+#~ msgid "pluginDetail.manage.remove"
+#~ msgstr "Remove"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:295
+#~ msgid "pluginDetail.manage.uninstall"
+#~ msgstr "Uninstall"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:303
+#~ msgid "pluginDetail.manage.update"
+#~ msgstr "Update"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:251
+#~ msgid "pluginDetail.otherWaysOff"
+#~ msgstr "Other ways to turn it off"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:268
+#~ msgid "pluginDetail.source"
+#~ msgstr "Source"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:58
 msgid "pluginDetail.meta.title"
 msgstr "{name} plugin"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:252
-msgid "pluginDetail.install.heading"
-msgstr "Add it to your agent"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:188
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:180
 msgid "pluginDetail.back"
 msgstr "All plugins"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:224
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:210
 msgid "pluginDetail.claudeOnly"
 msgstr "Claude Code only"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:287
-msgid "pluginDetail.manage.disable"
-msgstr "Disable"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:132
-msgid "pluginDetail.turningOff"
-msgstr "Disable and uninstall"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:120
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:150
 msgid "pluginDetail.howItWorks"
 msgstr "How it works"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:152
-msgid "pluginDetail.install"
-msgstr "Install"
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:240
+msgid "pluginDetail.install.manageHeading"
+msgstr "Install and turn off"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:370
-msgid "pluginDetail.toc.title"
-msgstr "On this page"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:56
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:53
 msgid "pluginDetail.meta.notFoundTitle"
 msgstr "Plugin not found"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:313
-msgid "pluginDetail.manage.remove"
-msgstr "Remove"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:114
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:135
 msgid "pluginDetail.scenario"
 msgstr "Scenario"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:163
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:350
-msgid "pluginDetail.source"
-msgstr "Source"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:295
-msgid "pluginDetail.manage.uninstall"
-msgstr "Uninstall"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:303
-msgid "pluginDetail.manage.update"
-msgstr "Update"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:241
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:268
 msgid "pluginDetail.sourceLink"
 msgstr "View source on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:124
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:119
 msgid "pluginDetail.whatItBlocks"
 msgstr "What it blocks"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:128
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:126
 msgid "pluginDetail.whatAgentSees"
 msgstr "What the agent sees when blocked"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:115
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:302
+msgid "pluginDetail.whyThisPlugin"
+msgstr "Why this plugin"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:139
 msgid "pluginDetail.whyUse"
 msgstr "Why use it"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:116
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:143
 msgid "pluginDetail.whyBuilt"
 msgstr "Why we built our own"

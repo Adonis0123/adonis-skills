@@ -14,102 +14,116 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:61
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:252
+#~ msgid "pluginDetail.install.heading"
+#~ msgstr "装进你的 agent"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:287
+#~ msgid "pluginDetail.manage.disable"
+#~ msgstr "停用"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:132
+#~ msgid "pluginDetail.turningOff"
+#~ msgstr "停用与卸载"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:152
+#~ msgid "pluginDetail.install"
+#~ msgstr "安装"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:370
+#~ msgid "pluginDetail.toc.title"
+#~ msgstr "本页目录"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:313
+#~ msgid "pluginDetail.manage.remove"
+#~ msgstr "移除"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:295
+#~ msgid "pluginDetail.manage.uninstall"
+#~ msgstr "卸载"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:303
+#~ msgid "pluginDetail.manage.update"
+#~ msgstr "更新"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:251
+#~ msgid "pluginDetail.otherWaysOff"
+#~ msgstr "其他停用方式"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:268
+#~ msgid "pluginDetail.source"
+#~ msgstr "源码"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:58
 msgid "pluginDetail.meta.title"
 msgstr "{name} 插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:252
-msgid "pluginDetail.install.heading"
-msgstr "装进你的 agent"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:188
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:180
 msgid "pluginDetail.back"
 msgstr "全部插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:224
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:210
 msgid "pluginDetail.claudeOnly"
 msgstr "仅 Claude Code"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:287
-msgid "pluginDetail.manage.disable"
-msgstr "停用"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:132
-msgid "pluginDetail.turningOff"
-msgstr "停用与卸载"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:120
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:150
 msgid "pluginDetail.howItWorks"
 msgstr "怎么做到的"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:152
-msgid "pluginDetail.install"
-msgstr "安装"
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:240
+msgid "pluginDetail.install.manageHeading"
+msgstr "安装与停用"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:370
-msgid "pluginDetail.toc.title"
-msgstr "本页目录"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:56
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:53
 msgid "pluginDetail.meta.notFoundTitle"
 msgstr "没有这个插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:313
-msgid "pluginDetail.manage.remove"
-msgstr "移除"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:114
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:135
 msgid "pluginDetail.scenario"
 msgstr "遇到的场景"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:163
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:350
-msgid "pluginDetail.source"
-msgstr "源码"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:295
-msgid "pluginDetail.manage.uninstall"
-msgstr "卸载"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:303
-msgid "pluginDetail.manage.update"
-msgstr "更新"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:241
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:268
 msgid "pluginDetail.sourceLink"
 msgstr "在 GitHub 查看源码"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:124
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:119
 msgid "pluginDetail.whatItBlocks"
 msgstr "会拦什么"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:128
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:126
 msgid "pluginDetail.whatAgentSees"
 msgstr "被拦下时 agent 会看到"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:115
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:302
+msgid "pluginDetail.whyThisPlugin"
+msgstr "为什么做这个 Plugin"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:139
 msgid "pluginDetail.whyUse"
 msgstr "为什么要用"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:116
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:143
 msgid "pluginDetail.whyBuilt"
 msgstr "为什么自己做"

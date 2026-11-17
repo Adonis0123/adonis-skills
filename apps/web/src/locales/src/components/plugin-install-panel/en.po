@@ -14,106 +14,116 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:67
+#: ../src/components/plugin-install-panel.tsx:93
 msgid "pluginInstall.tab.askAi"
 msgstr "Ask your AI"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:255
+#: ../src/components/plugin-install-panel.tsx:298
 msgid "pluginInstall.tabs.aria"
 msgstr "Choose how to install"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:220
+#: ../src/components/plugin-install-panel.tsx:263
 msgid "pluginInstall.grok.soon"
 msgstr "Coming soon. Grok Build install steps are still being tested."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:101
+#: ../src/components/plugin-install-panel.tsx:127
 msgid "pluginInstall.claude.copy.aria"
 msgstr "Copy the Claude Code install command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:176
+#: ../src/components/plugin-install-panel.tsx:211
 msgid "pluginInstall.codex.copy.aria"
 msgstr "Copy the Codex install command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:205
+#: ../src/components/plugin-install-panel.tsx:247
 msgid "pluginInstall.manage.remove.aria"
 msgstr "Copy the Codex remove command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:122
+#: ../src/components/plugin-install-panel.tsx:155
 msgid "pluginInstall.manage.disable.aria"
 msgstr "Copy the disable command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:234
+#: ../src/components/plugin-install-panel.tsx:277
 msgid "pluginInstall.askAi.copy.aria"
 msgstr "Copy the install prompt"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:133
+#: ../src/components/plugin-install-panel.tsx:166
 msgid "pluginInstall.manage.uninstall.aria"
 msgstr "Copy the uninstall command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:144
+#: ../src/components/plugin-install-panel.tsx:177
 msgid "pluginInstall.manage.update.aria"
 msgstr "Copy the update command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:117
+#: ../src/components/plugin-install-panel.tsx:150
 msgid "pluginInstall.manage.disable"
 msgstr "Disable"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:82
+#: ../src/components/plugin-install-panel.tsx:143
+msgid "pluginInstall.manage.summary"
+msgstr "Disable, uninstall or update later"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-install-panel.tsx:108
 msgid "pluginInstall.requirements"
 msgstr "Needs these programs on PATH: {requirements}"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:192
+#: ../src/components/plugin-install-panel.tsx:227
 msgid "pluginInstall.codex.skipped"
 msgstr "Not included, Claude Code only: {claudeOnly}"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:182
+#: ../src/components/plugin-install-panel.tsx:217
 msgid "pluginInstall.codex.note"
 msgstr "Paste it into a terminal and run it, then start a new session. In Codex, run <0>/hooks</0> and trust the plugin hooks, or they will not run."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:107
+#: ../src/components/plugin-install-panel.tsx:133
 msgid "pluginInstall.claude.note"
 msgstr "Paste it into a terminal and run it; start a new session for it to take effect. Requires Claude Code ≥ {minVersion}. Works on macOS, Linux and WSL."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:200
+#: ../src/components/plugin-install-panel.tsx:242
 msgid "pluginInstall.manage.remove"
 msgstr "Remove"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:240
+#: ../src/components/plugin-install-panel.tsx:235
+msgid "pluginInstall.manage.codexSummary"
+msgstr "Remove it later"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-install-panel.tsx:283
 msgid "pluginInstall.askAi.note"
 msgstr "Send it to Claude Code or Codex. The agent runs the command for its host, then gives you one line to send in a new session, where the hooks take effect."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:166
+#: ../src/components/plugin-install-panel.tsx:201
 msgid "pluginInstall.codex.none"
 msgstr "The selected plugins work in Claude Code only."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:73
+#: ../src/components/plugin-install-panel.tsx:99
 msgid "pluginInstall.empty"
 msgstr "Tick at least one plugin below to get a command."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:128
+#: ../src/components/plugin-install-panel.tsx:161
 msgid "pluginInstall.manage.uninstall"
 msgstr "Uninstall"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:139
+#: ../src/components/plugin-install-panel.tsx:172
 msgid "pluginInstall.manage.update"
 msgstr "Update"

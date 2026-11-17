@@ -34,17 +34,17 @@ msgid "commandBlock.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:271
+#: ../src/components/command-block.tsx:292
 msgid "copyBlock.label.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:277
+#: ../src/components/command-block.tsx:298
 msgid "copyBlock.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:218
+#: ../src/components/command-block.tsx:239
 msgid "copyBlock.label.copy"
 msgstr "复制"
 
@@ -54,7 +54,7 @@ msgid "commandBlock.copy.aria"
 msgstr "复制命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:273
+#: ../src/components/command-block.tsx:294
 msgid "copyBlock.label.failed"
 msgstr "复制失败"
 
@@ -64,11 +64,11 @@ msgid "commandBlock.live.failed"
 msgstr "复制失败。命令已选中，请手动复制。"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:279
+#: ../src/components/command-block.tsx:300
 msgid "copyBlock.live.failed"
 msgstr "复制失败，文字已选中，请手动复制。"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:217
+#: ../src/components/command-block.tsx:238
 msgid "copyBlock.label.copyPrompt"
 msgstr "复制提示词"
