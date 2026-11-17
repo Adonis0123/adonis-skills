@@ -262,7 +262,7 @@ export function CopyTextBlock({
         type="button"
         onClick={() => void onCopy()}
         aria-label={label}
-        className="clay-focus-ring absolute inset-0 size-full cursor-copy rounded-[12px]"
+        className="clay-focus-ring absolute inset-0 size-full cursor-pointer rounded-[12px]"
       />
       <span
         aria-hidden
