@@ -21,6 +21,14 @@ export const catalogManifest: CatalogManifest = {
     en: () => import("../locales/src/app/[lang]/page/en.mjs"),
     zh: () => import("../locales/src/app/[lang]/page/zh.mjs"),
   },
+  "src/app/[lang]/plugins/[slug]/page": {
+    en: () => import("../locales/src/app/[lang]/plugins/[slug]/page/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/plugins/[slug]/page/zh.mjs"),
+  },
+  "src/app/[lang]/plugins/page": {
+    en: () => import("../locales/src/app/[lang]/plugins/page/en.mjs"),
+    zh: () => import("../locales/src/app/[lang]/plugins/page/zh.mjs"),
+  },
   "src/app/[lang]/skills/[slug]/page": {
     en: () => import("../locales/src/app/[lang]/skills/[slug]/page/en.mjs"),
     zh: () => import("../locales/src/app/[lang]/skills/[slug]/page/zh.mjs"),
@@ -78,6 +86,18 @@ export const catalogManifest: CatalogManifest = {
   "src/components/layout/theme-toggle": {
     en: () => import("../locales/src/components/layout/theme-toggle/en.mjs"),
     zh: () => import("../locales/src/components/layout/theme-toggle/zh.mjs"),
+  },
+  "src/components/plugin-card": {
+    en: () => import("../locales/src/components/plugin-card/en.mjs"),
+    zh: () => import("../locales/src/components/plugin-card/zh.mjs"),
+  },
+  "src/components/plugin-install-panel": {
+    en: () => import("../locales/src/components/plugin-install-panel/en.mjs"),
+    zh: () => import("../locales/src/components/plugin-install-panel/zh.mjs"),
+  },
+  "src/components/plugins-catalog": {
+    en: () => import("../locales/src/components/plugins-catalog/en.mjs"),
+    zh: () => import("../locales/src/components/plugins-catalog/zh.mjs"),
   },
   "src/components/skill-card": {
     en: () => import("../locales/src/components/skill-card/en.mjs"),

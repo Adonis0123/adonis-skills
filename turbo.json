@@ -7,7 +7,13 @@
     },
     "build": {
       "dependsOn": ["^build", "skills:validate", "skills:index"],
-      "inputs": ["$TURBO_DEFAULT$", "../../skills/**", "../../scripts/**"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "../../skills/**",
+        "../../scripts/**",
+        "../../plugins/**",
+        "../../.claude-plugin/**"
+      ],
       "outputs": [".next/**", "!.next/cache/**"]
     },
     "lint": {
@@ -21,13 +27,19 @@
       "inputs": [
         "../../skills/**",
         "../../scripts/generate-skills-index.mjs",
+        "../../scripts/generate-plugins-index.mjs",
+        "../../plugins/**",
+        "../../.claude-plugin/**",
         "content/skill-catalog.yaml",
-        "src/lib/skill-schema.ts"
+        "src/lib/skill-schema.ts",
+        "src/lib/plugin-schema.ts",
+        "src/lib/plugin-index.ts"
       ],
       "outputs": [
         "src/generated/skills-index-lite.json",
         "src/generated/skills-detail-index.json",
-        "src/generated/skills-catalog-layout.json"
+        "src/generated/skills-catalog-layout.json",
+        "src/generated/plugins-index.json"
       ]
     },
     "skills:validate": {

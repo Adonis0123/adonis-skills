@@ -174,3 +174,113 @@ export function CommandBlock({
     </div>
   );
 }
+
+interface CopyTextBlockProps {
+  /** The exact text that is shown and copied. */
+  text: string;
+  /** `command`: one shell line in mono. `prompt`: multi-line text for an agent. */
+  kind?: "command" | "prompt";
+  /** Accessible name for the whole-block button, e.g. "Copy the Claude Code install command". */
+  label: string;
+  className?: string;
+}
+
+/**
+ * Shows text as-is (no `$` prompt, wrapped, never scrolled) and copies it when
+ * any part of the block is clicked; a visible label turns into "Copied".
+ */
+export function CopyTextBlock({
+  text,
+  kind = "command",
+  label,
+  className,
+}: CopyTextBlockProps) {
+  const { t } = useLingui();
+  const { status, copied, failed, copy } = useCopyToClipboard();
+  const textRef = useRef<HTMLElement>(null);
+
+  const onCopy = async () => {
+    if (await copy(text)) return;
+    // Both clipboard paths failed: select the text so a manual Ctrl/Cmd+C still works.
+    const node = textRef.current;
+    const selection = window.getSelection();
+    if (node && selection) {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  };
+
+  const idleLabel =
+    kind === "prompt"
+      ? t({ id: "copyBlock.label.copyPrompt", message: "Copy prompt" })
+      : t({ id: "copyBlock.label.copy", message: "Copy" });
+
+  return (
+    <div
+      className={cx(
+        "group relative rounded-[12px] border border-border bg-background text-foreground transition-colors duration-200 hover:border-tint-border",
+        failed && "border-danger-text hover:border-danger-text",
+        className,
+      )}
+    >
+      <pre
+        className={cx(
+          "m-0 py-3 pr-28 pl-3.5 whitespace-pre-wrap [overflow-wrap:anywhere]",
+          kind === "prompt"
+            ? "font-sans text-[13.5px] leading-[1.7]"
+            : "font-mono text-[13px] leading-6",
+        )}
+      >
+        <code ref={textRef} className="font-[inherit]">
+          {text}
+        </code>
+      </pre>
+      {/* One button covers the block, so a click anywhere copies; the pill is its visible label. */}
+      <button
+        type="button"
+        onClick={() => void onCopy()}
+        aria-label={label}
+        className="clay-focus-ring absolute inset-0 size-full cursor-copy rounded-[12px]"
+      />
+      <span
+        aria-hidden
+        className={cx(
+          "pointer-events-none absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 rounded-full border bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
+          copied
+            ? "border-tint-border text-link"
+            : failed
+              ? "border-danger-text text-danger-text"
+              : "border-input text-muted-foreground group-hover:border-tint-border group-hover:text-link",
+        )}
+      >
+        <IconSwap swapKey={status} className="size-3.5">
+          <span
+            className={cx(
+              {
+                idle: "icon-[lucide--copy]",
+                copied: "icon-[lucide--check]",
+                failed: "icon-[lucide--circle-alert]",
+              }[status],
+              "size-3.5",
+            )}
+          />
+        </IconSwap>
+        {copied
+          ? t({ id: "copyBlock.label.copied", message: "Copied" })
+          : failed
+            ? t({ id: "copyBlock.label.failed", message: "Copy failed" })
+            : idleLabel}
+      </span>
+      <span className="sr-only" aria-live="polite">
+        {copied && t({ id: "copyBlock.live.copied", message: "Copied" })}
+        {failed &&
+          t({
+            id: "copyBlock.live.failed",
+            message: "Copy failed. The text is selected; copy it manually.",
+          })}
+      </span>
+    </div>
+  );
+}

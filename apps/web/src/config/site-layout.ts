@@ -1,7 +1,7 @@
 import { skillsRepo } from "@/lib/skills";
 
 export interface SiteNavItem {
-  id: "skills" | "scenarios" | "install" | "github";
+  id: "skills" | "plugins" | "scenarios" | "install" | "github";
   href: string;
   external?: boolean;
 }
@@ -54,6 +54,7 @@ export const siteLayoutConfig: SiteLayoutConfig = {
   repoUrl,
   headerNav: [
     { id: "skills", href: "/skills" },
+    { id: "plugins", href: "/plugins" },
     { id: "scenarios", href: "/#scenarios" },
     { id: "install", href: "/#install" },
     {

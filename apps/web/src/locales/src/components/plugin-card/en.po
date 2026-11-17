@@ -1,0 +1,39 @@
+msgid ""
+msgstr ""
+"POT-Creation-Date: 2026-11-17 10:59+0800\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: @lingui/cli\n"
+"Language: en\n"
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Plural-Forms: \n"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:130
+msgid "pluginCard.claudeOnly"
+msgstr "Claude Code only"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:72
+msgid "pluginCard.select.aria"
+msgstr "Include {name} in the install command"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:100
+msgid "pluginCard.scenario"
+msgstr "Scenario"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:110
+msgid "pluginCard.effect"
+msgstr "What it does"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:121
+msgid "pluginCard.hosts.aria"
+msgstr "Works in"

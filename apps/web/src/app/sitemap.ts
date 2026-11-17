@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { SUPPORTED_LOCALES } from "@/i18n/config";
 import { withLocalePath } from "@/i18n/href";
 import { absoluteUrl } from "@/lib/seo";
+import { getAllPlugins } from "@/lib/plugins";
 import { getAllSkills } from "@/lib/skills";
 
 function entry(path: string, lastModified?: string): MetadataRoute.Sitemap {
@@ -25,5 +26,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...getAllSkills().flatMap((skill) =>
       entry(`/skills/${skill.slug}`, skill.updatedAt),
     ),
+    ...entry("/plugins"),
+    ...getAllPlugins().flatMap((plugin) => entry(`/plugins/${plugin.name}`)),
   ];
 }

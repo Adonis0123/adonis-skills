@@ -19,6 +19,6 @@ msgid "featured.card.number"
 msgstr "{number} / 精选"
 
 #. js-lingui-explicit-id
-#: ../src/components/featured-skill-card.tsx:109
+#: ../src/components/featured-skill-card.tsx:116
 msgid "featured.card.copy.aria"
 msgstr "复制 {displayName} 的安装命令"

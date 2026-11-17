@@ -6,6 +6,8 @@ export function SiteNavLabel({ id }: { id: SiteNavItem["id"] }) {
   switch (id) {
     case "skills":
       return <Trans id="siteHeader.nav.skills.label">Skills</Trans>;
+    case "plugins":
+      return <Trans id="siteHeader.nav.plugins.label">Plugins</Trans>;
     case "scenarios":
       return <Trans id="siteHeader.nav.scenarios.label">Scenarios</Trans>;
     case "install":

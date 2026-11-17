@@ -19,6 +19,6 @@ msgid "featured.card.number"
 msgstr "{number} / Featured"
 
 #. js-lingui-explicit-id
-#: ../src/components/featured-skill-card.tsx:109
+#: ../src/components/featured-skill-card.tsx:116
 msgid "featured.card.copy.aria"
 msgstr "Copy install command for {displayName}"

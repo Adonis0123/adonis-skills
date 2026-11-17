@@ -34,11 +34,41 @@ msgid "commandBlock.live.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:271
+msgid "copyBlock.label.copied"
+msgstr "Copied"
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:277
+msgid "copyBlock.live.copied"
+msgstr "Copied"
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:218
+msgid "copyBlock.label.copy"
+msgstr "Copy"
+
+#. js-lingui-explicit-id
 #: ../src/components/command-block.tsx:143
 msgid "commandBlock.copy.aria"
 msgstr "Copy command"
 
 #. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:273
+msgid "copyBlock.label.failed"
+msgstr "Copy failed"
+
+#. js-lingui-explicit-id
 #: ../src/components/command-block.tsx:169
 msgid "commandBlock.live.failed"
 msgstr "Copy failed. The command is selected; copy it manually."
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:279
+msgid "copyBlock.live.failed"
+msgstr "Copy failed. The text is selected; copy it manually."
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:217
+msgid "copyBlock.label.copyPrompt"
+msgstr "Copy prompt"

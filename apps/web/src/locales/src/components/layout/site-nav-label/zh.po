@@ -14,17 +14,22 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-nav-label.tsx:14
+#: ../../src/components/layout/site-nav-label.tsx:16
 msgid "siteHeader.nav.github.label"
 msgstr "GitHub"
 
 #. js-lingui-explicit-id
-#: ../../src/components/layout/site-nav-label.tsx:12
+#: ../../src/components/layout/site-nav-label.tsx:14
 msgid "siteHeader.nav.install.label"
 msgstr "安装"
 
 #. js-lingui-explicit-id
 #: ../../src/components/layout/site-nav-label.tsx:10
+msgid "siteHeader.nav.plugins.label"
+msgstr "插件"
+
+#. js-lingui-explicit-id
+#: ../../src/components/layout/site-nav-label.tsx:12
 msgid "siteHeader.nav.scenarios.label"
 msgstr "场景"
 

@@ -1,5 +1,6 @@
 import { HOST_INSTALLS } from "@/config/hosts";
 import { absoluteUrl } from "@/lib/seo";
+import { getAllPlugins, pluginMarketplace } from "@/lib/plugins";
 import { getAllSkills } from "@/lib/skills";
 
 export const dynamic = "force-static";
@@ -7,6 +8,7 @@ export const dynamic = "force-static";
 // llmstxt.org format: an index that links each skill's raw SKILL.md.
 export function GET() {
   const skills = getAllSkills();
+  const plugins = getAllPlugins();
   const lines = [
     "# Nika Skills",
     "",
@@ -26,6 +28,19 @@ export function GET() {
         `- [${skill.name}](${absoluteUrl(`/skills/${skill.slug}.md`)}): ${skill.catalog.summary}`,
     ),
     "",
+    ...(plugins.length > 0
+      ? [
+          "## Plugins",
+          "",
+          `Hook plugins; install with \`claude plugin install <name> --marketplace ${pluginMarketplace.source}\`.`,
+          "",
+          ...plugins.map(
+            (plugin) =>
+              `- [${plugin.name}](${absoluteUrl(`/plugins/${plugin.name}`)}): ${plugin.effect.en}`,
+          ),
+          "",
+        ]
+      : []),
     "## Optional",
     "",
     `- [All skills](${absoluteUrl("/skills")}): searchable catalog, filterable by scenario and tag.`,

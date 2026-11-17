@@ -14,7 +14,7 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:256
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:260
 msgid "skillDetail.install.heading"
 msgstr "Add it to your agent"
 
@@ -29,17 +29,17 @@ msgid "skillDetail.install.title"
 msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:253
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:257
 msgid "skillDetail.install.kicker"
 msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:330
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:334
 msgid "skillDetail.toc.title"
 msgstr "On this page"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:304
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:308
 msgid "skillDetail.docs.title"
 msgstr "Skill instructions"
 
@@ -50,23 +50,23 @@ msgstr "Skill not found"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:226
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:230
 msgid "skillDetail.updatedAt"
 msgstr "Updated <0>{0}</0>"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.version
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:215
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:219
 msgid "skillDetail.version"
 msgstr "Version {0}"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:241
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:245
 msgid "skillDetail.source"
 msgstr "View source on GitHub"
 
 #. js-lingui-explicit-id
 #: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:105
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:270
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:274
 msgid "skillDetail.useCases.title"
 msgstr "When to reach for it"
