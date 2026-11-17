@@ -1,0 +1,16 @@
+{
+  "description": "Block the stop once when the agent says the work is done, the git working tree has uncommitted changes and the reply shows no verification evidence.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/scripts/completion-claim-check.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

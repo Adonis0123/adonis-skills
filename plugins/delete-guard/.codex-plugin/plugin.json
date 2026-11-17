@@ -1,0 +1,12 @@
+{
+  "name": "delete-guard",
+  "description": "PreToolUse hook that denies shell commands deleting files an agent cannot get back (recursive rm, find -delete, git reset --hard and similar) outside temp directories, and points the agent to the trash command instead. A guard against accidents, not a sandbox.",
+  "author": {
+    "name": "Adonis0123"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Adonis0123/adonis-skills/tree/main/plugins/delete-guard",
+  "repository": "https://github.com/Adonis0123/adonis-skills",
+  "keywords": ["hooks", "safety", "trash"],
+  "hooks": "./hooks/hooks.json"
+}

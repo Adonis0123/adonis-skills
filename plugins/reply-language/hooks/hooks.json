@@ -1,5 +1,5 @@
 {
-  "description": "Block a final reply that is mostly not in REPLY_LANGUAGE once per turn, and remind after an off-language progress note.",
+  "description": "Block a final reply that is mostly not in the target language once per turn, and remind after an off-language progress note. Target language: REPLY_LANGUAGE, else Claude Code's language setting, else the system language.",
   "hooks": {
     "Stop": [
       {

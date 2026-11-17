@@ -1,6 +1,6 @@
 {
   "name": "reply-language",
-  "description": "Stop and PostToolUse hooks that keep the agent's user-facing replies in the language set by REPLY_LANGUAGE (first release: zh). Does nothing until REPLY_LANGUAGE is set.",
+  "description": "Stop and PostToolUse hooks that keep the agent's user-facing replies in your language (first release: Chinese, zh). The language comes from REPLY_LANGUAGE, else Claude Code's language setting, else the system language; REPLY_LANGUAGE=off turns it off.",
   "author": {
     "name": "Adonis0123"
   },

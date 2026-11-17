@@ -29,20 +29,31 @@ npx skills add adonis0123/adonis-skills --list
 
 ## Hook Plugins
 
-Two Claude Code hook plugins ship in the same marketplace. Each installs on its own, so pick only what you want:
+Four hook plugins ship in the same marketplace. Each installs on its own, so pick only what you want:
 
-| Plugin                                                       | What it does                                                                                                                                                             |
-| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [`reply-language`](./plugins/reply-language/README.md)       | Stop and PostToolUse hooks that keep user-facing replies in the language set by `REPLY_LANGUAGE` (first release: Chinese, `zh`). Does nothing until the variable is set. |
-| [`bash-prompt-guard`](./plugins/bash-prompt-guard/README.md) | PreToolUse hook that denies Bash commands Claude Code's permission check cannot parse, so unattended runs do not stall on a confirmation prompt.                         |
+| Plugin                                                                 | Category                        | Hosts              | What it does                                                                                                                                                                                         |
+| ---------------------------------------------------------------------- | ------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`delete-guard`](./plugins/delete-guard/README.md)                     | Safety (`safety`)               | Claude Code, Codex | PreToolUse hook that denies shell commands deleting files an agent cannot get back (recursive `rm`, `find -delete`, `git reset --hard`) outside temp directories, and points the agent to the trash. |
+| [`bash-prompt-guard`](./plugins/bash-prompt-guard/README.md)           | Unattended runs (`unattended`)  | Claude Code        | PreToolUse hook that denies Bash commands Claude Code's permission check cannot parse, so unattended runs do not stall on a confirmation prompt.                                                     |
+| [`reply-language`](./plugins/reply-language/README.md)                 | Reply quality (`reply-quality`) | Claude Code, Codex | Stop and PostToolUse hooks that keep user-facing replies in your language, from `REPLY_LANGUAGE`, Claude Code's `language` setting or the system language (first release: Chinese, `zh`).            |
+| [`completion-claim-check`](./plugins/completion-claim-check/README.md) | Reply quality (`reply-quality`) | Claude Code, Codex | Stop hook that blocks once when the agent says the work is done, the git working tree is dirty and the reply shows no verification evidence.                                                         |
 
-```text
-/plugin marketplace add Adonis0123/adonis-skills
-/plugin install reply-language@adonis-skills
-/plugin install bash-prompt-guard@adonis-skills
+Claude Code (2.1.292 or later), one command per plugin:
+
+```bash
+claude plugin install delete-guard --marketplace Adonis0123/adonis-skills
 ```
 
-Each plugin's README covers configuration, limits and, for `reply-language`, manual wiring for Codex.
+Codex:
+
+```bash
+codex plugin marketplace add Adonis0123/adonis-skills
+codex plugin add delete-guard@adonis-skills
+```
+
+Then run `/hooks` in Codex and trust the plugin's hooks; Codex skips untrusted plugin hooks. Turn a plugin off in Claude Code with `claude plugin disable <name>@adonis-skills`.
+
+Each plugin's README covers what it blocks, configuration and limits. They support macOS, Linux and WSL; native Windows is not supported.
 
 ## Skills
 

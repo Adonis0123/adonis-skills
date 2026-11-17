@@ -29,20 +29,31 @@ npx skills add adonis0123/adonis-skills --list
 
 ## Hook 插件
 
-同一个 marketplace 里还有两个 Claude Code hook 插件。每个都能单独安装，按需挑选：
+同一个 marketplace 里还有四个 hook 插件。每个都能单独安装，按需挑选：
 
-| 插件                                                               | 做什么                                                                                                                        |
-| ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| [`reply-language`](./plugins/reply-language/README.zh-CN.md)       | Stop 和 PostToolUse hook，让给用户看的回复保持 `REPLY_LANGUAGE` 设定的语言（首版只支持中文 `zh`）。不设这个变量就什么都不做。 |
-| [`bash-prompt-guard`](./plugins/bash-prompt-guard/README.zh-CN.md) | PreToolUse hook，拒绝 Claude Code 权限检查解析不了的 Bash 命令，避免无人值守任务卡在确认框上。                                |
+| 插件                                                                         | 分类                        | 宿主               | 做什么                                                                                                                                              |
+| ---------------------------------------------------------------------------- | --------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [`delete-guard`](./plugins/delete-guard/README.zh-CN.md)                     | 安全防护（`safety`）        | Claude Code、Codex | PreToolUse hook，拦下会让文件找不回的删除命令（递归 `rm`、`find -delete`、`git reset --hard`），临时目录除外，并提示改用废纸篓。                    |
+| [`bash-prompt-guard`](./plugins/bash-prompt-guard/README.zh-CN.md)           | 无人值守（`unattended`）    | Claude Code        | PreToolUse hook，拒绝 Claude Code 权限检查解析不了的 Bash 命令，避免无人值守任务卡在确认框上。                                                      |
+| [`reply-language`](./plugins/reply-language/README.zh-CN.md)                 | 回复质量（`reply-quality`） | Claude Code、Codex | Stop 和 PostToolUse hook，让给用户看的回复保持你的语言。语言依次取 `REPLY_LANGUAGE`、Claude Code `language` 设置、系统语言（首版只支持中文 `zh`）。 |
+| [`completion-claim-check`](./plugins/completion-claim-check/README.zh-CN.md) | 回复质量（`reply-quality`） | Claude Code、Codex | Stop hook，agent 说已完成、工作区有未提交改动、回复里又没有验证证据时，拦一次。                                                                     |
 
-```text
-/plugin marketplace add Adonis0123/adonis-skills
-/plugin install reply-language@adonis-skills
-/plugin install bash-prompt-guard@adonis-skills
+Claude Code（2.1.292 及以上）每个插件一条命令：
+
+```bash
+claude plugin install delete-guard --marketplace Adonis0123/adonis-skills
 ```
 
-配置、限制，以及 `reply-language` 在 Codex 里的手动接线，见各插件的 README。
+Codex：
+
+```bash
+codex plugin marketplace add Adonis0123/adonis-skills
+codex plugin add delete-guard@adonis-skills
+```
+
+装完在 Codex 里运行 `/hooks`，信任插件的 hook。没信任的插件 hook 不会运行。Claude Code 里停用插件用 `claude plugin disable <name>@adonis-skills`。
+
+会拦什么、配置和限制，见各插件的 README。支持 macOS、Linux 和 WSL，不支持原生 Windows。
 
 ## 技能列表
 

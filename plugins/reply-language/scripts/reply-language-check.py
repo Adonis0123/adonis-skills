@@ -6,8 +6,15 @@ PostToolUse (--event post-tool-use): when the latest progress note the user alre
 the latest reply in the transcript) is mostly not in the target language, add a reminder to the
 model's context. It never blocks, and judges each reply once.
 
-The target language comes only from the environment variable REPLY_LANGUAGE (for example `zh`).
-When it is unset or names a language missing from LANGUAGES, the hook does nothing: exit 0, no output.
+The target language is the first of these that has a value; later sources are not read:
+  1. the environment variable REPLY_LANGUAGE (`off` or `none` turns the hook off);
+  2. Claude Code's `language` setting, from <cwd>/.claude/settings.local.json, <cwd>/.claude/settings.json,
+     then ${CLAUDE_CONFIG_DIR:-~/.claude}/settings.json (cwd from the hook payload). It is free text, so
+     `简体中文`, `中文`, `Chinese` and `zh-CN` all mean `zh`; an unreadable file is skipped;
+  3. the system language: on macOS the first of `defaults read -g AppleLanguages`, then (and elsewhere)
+     the first set of LC_ALL, LC_MESSAGES, LANG.
+When none has a value, or the value names a language missing from LANGUAGES (for example `en`), the hook
+does nothing: exit 0, no output.
 
 Measures prose only: code blocks, inline code, URLs and paths are removed first, so a reply full of
 commands and file names in the target language still passes. A reply fails when, in what is left,
@@ -29,7 +36,8 @@ Field names are read in snake_case (Claude Code) and camelCase (other hosts that
 payload), for example last_assistant_message / lastAssistantMessage.
 
 Usage: reply-language-check.py [--event stop|post-tool-use]
-Env:   REPLY_LANGUAGE=zh                 target language; unset disables the hook
+Env:   REPLY_LANGUAGE=zh                 target language (overrides the settings and the system);
+                                         off / none disables the hook
        REPLY_LANGUAGE_CHECK_STATE=DIR    state directory (default $CLAUDE_PLUGIN_DATA,
                                          else $TMPDIR/reply-language)
 """
@@ -37,9 +45,11 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
-from typing import NamedTuple, Optional, Pattern, Tuple
+from typing import Callable, NamedTuple, Optional, Pattern, Tuple
 
 
 class Language(NamedTuple):
@@ -72,10 +82,70 @@ NOTE_REMINDER = ("The last progress note shown to the user was mostly not in {na
                  "{name} (" + KEEP + "), starting with the next sentence.")
 
 
-def target_language() -> Optional[Language]:
-    """The Language for REPLY_LANGUAGE (`zh`, `zh-CN` and `zh_CN` all mean `zh`), or None."""
-    value = os.environ.get("REPLY_LANGUAGE", "").strip().lower().replace("_", "-")
-    return LANGUAGES.get(value.split("-")[0]) if value else None
+OFF = {"off", "none"}
+# Free-text names (Claude Code's `language` setting) that mean Chinese.
+CHINESE_NAMES = ("中文", "汉语", "漢語", "华语", "華語", "chinese", "mandarin")
+APPLE_LANGUAGES_TIMEOUT = 2
+
+
+def language_code(value: str) -> Optional[str]:
+    """A language code for a free-text value: `zh` for 简体中文, 中文, Chinese, zh-CN, zh_CN.UTF-8 and
+    zh-Hans-CN; otherwise the leading letters (`en-US` -> `en`, `C.UTF-8` -> `c`). None when empty."""
+    value = value.strip().lower()
+    if not value:
+        return None
+    if any(name in value for name in CHINESE_NAMES):
+        return "zh"
+    match = re.match(r"[a-z]+", value)
+    return match.group(0) if match else value
+
+
+def settings_language(cwd: Optional[str]) -> Optional[str]:
+    """Claude Code's `language` setting: project local, project, then user settings."""
+    paths = []
+    if isinstance(cwd, str) and cwd:
+        paths += [os.path.join(cwd, ".claude", "settings.local.json"), os.path.join(cwd, ".claude", "settings.json")]
+    config_dir = os.environ.get("CLAUDE_CONFIG_DIR") or os.path.join(os.path.expanduser("~"), ".claude")
+    paths.append(os.path.join(config_dir, "settings.json"))
+    for path in paths:
+        try:
+            with open(path, encoding="utf-8") as f:
+                value = json.load(f).get("language")
+        except (OSError, ValueError, AttributeError):
+            continue
+        if isinstance(value, str) and value.strip():
+            return value
+    return None
+
+
+def system_language(platform: Optional[str] = None) -> Optional[str]:
+    """macOS: the first of AppleLanguages; then the first set of LC_ALL, LC_MESSAGES, LANG."""
+    if (platform or sys.platform) == "darwin" and shutil.which("defaults"):
+        try:
+            out = subprocess.run(["defaults", "read", "-g", "AppleLanguages"], capture_output=True, text=True,
+                                 check=False, timeout=APPLE_LANGUAGES_TIMEOUT).stdout
+        except (OSError, subprocess.SubprocessError):
+            out = ""
+        items = [item.strip().strip('"') for item in re.split(r"[(),\n]", out)]
+        first = next((item for item in items if item), None)
+        if first:
+            return first
+    for name in ("LC_ALL", "LC_MESSAGES", "LANG"):
+        value = os.environ.get(name, "").strip()
+        if value:
+            return value
+    return None
+
+
+def target_language(cwd: Optional[str] = None) -> Optional[Language]:
+    """The Language from REPLY_LANGUAGE, else Claude Code's `language` setting, else the system language.
+    The first source with a value decides; None when it is off, unset everywhere or not in LANGUAGES."""
+    env = os.environ.get("REPLY_LANGUAGE", "").strip()
+    if env.lower() in OFF:
+        return None
+    value = env or settings_language(cwd) or system_language()
+    code = language_code(value) if value else None
+    return LANGUAGES.get(code) if code else None
 
 
 def state_dir() -> str:
@@ -121,7 +191,13 @@ def latest_note(transcript_path: str) -> Tuple[Optional[str], str]:
     return latest, "\n".join(texts)
 
 
-def post_tool_use(data: dict, lang: Language) -> None:
+# The target language can cost a `defaults` call on macOS, so both events first run the exits that
+# hold for every language and resolve it only when the answer can matter. When no language
+# resolves, they still create or remove no state file.
+LanguageResolver = Callable[[], Optional[Language]]
+
+
+def post_tool_use(data: dict, resolve_language: LanguageResolver) -> None:
     path = data.get("transcript_path", data.get("transcriptPath"))
     if not isinstance(path, str):
         return
@@ -137,6 +213,9 @@ def post_tool_use(data: dict, lang: Language) -> None:
                 return
     except OSError:
         pass
+    lang = resolve_language()
+    if lang is None:
+        return
     os.makedirs(directory, exist_ok=True)
     with open(seen, "w", encoding="utf-8") as f:
         f.write(message_id)
@@ -145,7 +224,7 @@ def post_tool_use(data: dict, lang: Language) -> None:
                                                  "additionalContext": NOTE_REMINDER.format(name=lang.name)}}))
 
 
-def stop(data: dict, lang: Language) -> None:
+def stop(data: dict, resolve_language: LanguageResolver) -> None:
     """Block a final reply mostly not in the target language, at most once per turn.
 
     stop_hook_active only says that some Stop hook blocked before, not which one. When another hook
@@ -158,23 +237,31 @@ def stop(data: dict, lang: Language) -> None:
     directory = state_dir()
     marker = (os.path.join(directory, "stop-" + hashlib.sha256(key.encode()).hexdigest()[:32])
               if isinstance(key, str) and key else None)
-    if active and (marker is None or os.path.exists(marker)):
+    message = data.get("last_assistant_message", data.get("lastAssistantMessage"))
+    pending = marker is not None and os.path.exists(marker)
+    # No marker to clear and a reply that passes for every known language: nothing to do whatever
+    # the target language is.
+    if not pending and not (isinstance(message, str)
+                            and any(off_target(message, known) for known in LANGUAGES.values())):
+        return
+    lang = resolve_language()
+    if lang is None:
+        return
+    if active and (marker is None or pending):
         if marker:
             os.remove(marker)
         return
-    message = data.get("last_assistant_message", data.get("lastAssistantMessage"))
     if isinstance(message, str) and off_target(message, lang):
         if marker:
             os.makedirs(directory, exist_ok=True)
             open(marker, "w").close()
         print(json.dumps({"decision": "block", "reason": REASON.format(name=lang.name)}))
-    elif marker and os.path.exists(marker):
+    elif pending:
         os.remove(marker)
 
 
 def main() -> int:
-    lang = target_language()
-    if lang is None:
+    if os.environ.get("REPLY_LANGUAGE", "").strip().lower() in OFF:
         return 0
     try:
         data = json.loads(sys.stdin.read() or "{}")
@@ -182,11 +269,18 @@ def main() -> int:
         return 0
     if not isinstance(data, dict):
         return 0
+    resolved = []
+
+    def resolve_language() -> Optional[Language]:
+        if not resolved:
+            resolved.append(target_language(data.get("cwd")))
+        return resolved[0]
+
     args = sys.argv[1:]
     if "--event=post-tool-use" in args or any(a == "--event" and b == "post-tool-use" for a, b in zip(args, args[1:])):
-        post_tool_use(data, lang)
+        post_tool_use(data, resolve_language)
     else:
-        stop(data, lang)
+        stop(data, resolve_language)
     return 0
 
 

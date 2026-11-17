@@ -1,0 +1,12 @@
+{
+  "name": "completion-claim-check",
+  "description": "Stop hook that blocks once when the agent claims the work is done while the git working tree has uncommitted changes and the reply carries no verification evidence (commands, test results, or items marked UNVERIFIED).",
+  "author": {
+    "name": "Adonis0123"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Adonis0123/adonis-skills/tree/main/plugins/completion-claim-check",
+  "repository": "https://github.com/Adonis0123/adonis-skills",
+  "keywords": ["hooks", "verification"],
+  "hooks": "./hooks/hooks.json"
+}

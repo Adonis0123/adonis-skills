@@ -15,14 +15,32 @@
       "strict": false
     },
     {
-      "name": "reply-language",
-      "source": "./plugins/reply-language",
-      "description": "Hook plugin: keeps user-facing replies in the language set by REPLY_LANGUAGE (first release: Chinese, zh)."
+      "name": "delete-guard",
+      "source": "./plugins/delete-guard",
+      "description": "Hook plugin: denies shell commands that delete files an agent cannot get back (recursive rm, find -delete, git reset --hard) outside temp directories, and points the agent to the trash.",
+      "category": "safety",
+      "tags": ["hooks", "safety", "rm", "trash", "git"]
     },
     {
       "name": "bash-prompt-guard",
       "source": "./plugins/bash-prompt-guard",
-      "description": "Hook plugin: denies Bash commands Claude Code's permission check cannot parse, so unattended runs do not stall on a prompt."
+      "description": "Hook plugin: denies Bash commands Claude Code's permission check cannot parse, so unattended runs do not stall on a prompt.",
+      "category": "unattended",
+      "tags": ["hooks", "bash", "permissions", "unattended"]
+    },
+    {
+      "name": "reply-language",
+      "source": "./plugins/reply-language",
+      "description": "Hook plugin: keeps user-facing replies in your language, taken from REPLY_LANGUAGE, Claude Code's language setting or the system language (first release: Chinese, zh).",
+      "category": "reply-quality",
+      "tags": ["hooks", "language", "i18n", "chinese"]
+    },
+    {
+      "name": "completion-claim-check",
+      "source": "./plugins/completion-claim-check",
+      "description": "Hook plugin: blocks the stop once when the agent says the work is done, the git working tree is dirty and the reply shows no verification evidence.",
+      "category": "reply-quality",
+      "tags": ["hooks", "verification", "git"]
     }
   ]
 }

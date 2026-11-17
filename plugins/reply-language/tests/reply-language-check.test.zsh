@@ -14,6 +14,13 @@ assert_equal() { [[ "$2" == "$1" ]] || fail "$3 (expected=$1 actual=$2)" }
 work=$(mktemp -d "${TMPDIR:-/tmp}/reply-language-test.XXXXXX"); trap 'rm -rf "$work"' EXIT
 unset CLAUDE_PLUGIN_DATA
 export REPLY_LANGUAGE=zh REPLY_LANGUAGE_CHECK_STATE="$work/state"
+# Isolate the fallback layers from this machine: no Claude Code settings, no locale, and a `defaults`
+# (macOS AppleLanguages) that fails. Section 9 sets each layer on purpose.
+export CLAUDE_CONFIG_DIR="$work/claude-config"
+unset LC_ALL LC_MESSAGES LANG
+fake_bin="$work/bin"; mkdir -p "$fake_bin"
+print -r -- $'#!/bin/sh\nexit 1' > "$fake_bin/defaults"; chmod +x "$fake_bin/defaults"
+export PATH="$fake_bin:$PATH"
 
 # run <message> [active] [camel] -> stdout of the hook; exit code must always be 0
 run() {
@@ -145,5 +152,77 @@ assert_equal '' "$out" "retry after own block with CLAUDE_PLUGIN_DATA allows"
 start=$SECONDS
 out=$(python3 -c 'import json; print(json.dumps({"session_id":"s3","last_assistant_message":"a" * 200000}))' | REPLY_LANGUAGE_CHECK_STATE="$work/perf" python3 "$hook"); rc=$?
 [[ $rc == 0 ]] && (( SECONDS - start < 3 )) || fail "200,000-letter word must finish fast"
+
+# ── 9. where the target language comes from: REPLY_LANGUAGE, then settings, then the system ──
+export REPLY_LANGUAGE_CHECK_STATE="$work/layers-state"
+project="$work/project"; mkdir -p "$project/.claude" "$CLAUDE_CONFIG_DIR"
+# judge <cwd> -> "block" or "" for an English reply, with REPLY_LANGUAGE unset unless set by the caller
+judge() {
+  local out rc
+  out=$(jq -nc --arg m "$english" --arg c "$1" '{last_assistant_message:$m,cwd:$c}' | python3 "$hook"); rc=$?
+  assert_equal 0 $rc "layer exit code"
+  print -rn -- "$out" | jq -r '.decision // empty' 2>/dev/null
+}
+unset REPLY_LANGUAGE
+assert_equal '' "$(judge "$project")" "no source at all does nothing"
+
+# off / none turn the hook off, even when the settings ask for Chinese
+print -r -- '{"language":"简体中文"}' > "$CLAUDE_CONFIG_DIR/settings.json"
+for value in off OFF none; do
+  assert_equal '' "$(REPLY_LANGUAGE=$value judge "$project")" "REPLY_LANGUAGE=$value turns the hook off"
+done
+out=$(jq -nc '{hook_event_name:"PostToolUse",transcript_path:"/nonexistent/t.jsonl"}' | REPLY_LANGUAGE=off python3 "$hook" --event post-tool-use)
+assert_equal '' "$out" "REPLY_LANGUAGE=off: PostToolUse does nothing"
+
+# user settings (CLAUDE_CONFIG_DIR): free-text values map to zh
+for value in 简体中文 中文 Chinese zh-CN; do
+  print -r -- "{\"language\":\"$value\"}" > "$CLAUDE_CONFIG_DIR/settings.json"
+  assert_equal block "$(judge "$project")" "user settings language=$value means zh"
+done
+print -r -- '{"language":"English"}' > "$CLAUDE_CONFIG_DIR/settings.json"
+assert_equal '' "$(judge "$project")" "user settings language=English is unsupported: nothing"
+# REPLY_LANGUAGE wins over the settings, in both directions
+assert_equal block "$(REPLY_LANGUAGE=zh judge "$project")" "REPLY_LANGUAGE=zh wins over language=English"
+print -r -- '{"language":"简体中文"}' > "$CLAUDE_CONFIG_DIR/settings.json"
+assert_equal '' "$(REPLY_LANGUAGE=fr judge "$project")" "REPLY_LANGUAGE=fr wins over language=简体中文"
+
+# project settings (relative to the payload cwd) win over user settings; local wins over shared
+print -r -- '{"language":"English"}' > "$project/.claude/settings.json"
+assert_equal '' "$(judge "$project")" "project settings win over user settings"
+print -r -- '{"language":"中文"}' > "$project/.claude/settings.local.json"
+assert_equal block "$(judge "$project")" "project local settings win over project settings"
+print -r -- 'not json' > "$project/.claude/settings.local.json"
+assert_equal '' "$(judge "$project")" "an unreadable settings file is skipped"
+print -r -- '{"language":""}' > "$project/.claude/settings.local.json"
+assert_equal '' "$(judge "$project")" "an empty language setting is skipped"
+rm -f "$project/.claude/settings.json" "$project/.claude/settings.local.json"
+print -r -- '{"model":"x"}' > "$CLAUDE_CONFIG_DIR/settings.json"
+
+# the system language: LC_ALL, LC_MESSAGES, LANG (first set wins); C or English does nothing
+assert_equal block "$(LANG=zh_CN.UTF-8 judge "$project")" "LANG=zh_CN.UTF-8 means zh"
+assert_equal block "$(LC_MESSAGES=zh_TW.UTF-8 LANG=en_US.UTF-8 judge "$project")" "LC_MESSAGES wins over LANG"
+assert_equal '' "$(LC_ALL=en_US.UTF-8 LANG=zh_CN.UTF-8 judge "$project")" "LC_ALL wins over LANG"
+assert_equal '' "$(LANG=C judge "$project")" "LANG=C does nothing"
+print -r -- '{"language":"English"}' > "$CLAUDE_CONFIG_DIR/settings.json"
+assert_equal '' "$(LANG=zh_CN.UTF-8 judge "$project")" "settings win over the system language"
+print -r -- '{"model":"x"}' > "$CLAUDE_CONFIG_DIR/settings.json"
+
+# macOS AppleLanguages (first item), read through a fake `defaults`; falls back to the locale when it fails
+apple_bin="$work/apple-bin"; mkdir -p "$apple_bin"
+print -r -- $'#!/bin/sh\ncat <<\'OUT\'\n(\n    "zh-Hans-CN",\n    "en-CN"\n)\nOUT' > "$apple_bin/defaults"; chmod +x "$apple_bin/defaults"
+system() {
+  python3 - "$hook" "$1" <<'PY'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("reply_language", sys.argv[1])
+mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+print(mod.system_language(sys.argv[2]) or "")
+PY
+}
+assert_equal zh-Hans-CN "$(PATH="$apple_bin:$PATH" LANG=en_US.UTF-8 system darwin)" "macOS reads the first AppleLanguages item"
+assert_equal en_US.UTF-8 "$(LANG=en_US.UTF-8 system darwin)" "macOS falls back to LANG when defaults fails"
+assert_equal en_US.UTF-8 "$(PATH="$apple_bin:$PATH" LANG=en_US.UTF-8 system linux)" "other systems read only the locale"
+if [[ $OSTYPE == darwin* ]]; then
+  assert_equal block "$(PATH="$apple_bin:$PATH" judge "$project")" "macOS: AppleLanguages zh-Hans-CN means zh"
+fi
 
 print "reply-language-check: all tests passed"

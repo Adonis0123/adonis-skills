@@ -1,0 +1,12 @@
+{
+  "name": "reply-language",
+  "description": "Stop and PostToolUse hooks that keep the agent's user-facing replies in your language (first release: Chinese, zh). The language comes from REPLY_LANGUAGE, else Claude Code's language setting, else the system language; REPLY_LANGUAGE=off turns it off.",
+  "author": {
+    "name": "Adonis0123"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/Adonis0123/adonis-skills/tree/main/plugins/reply-language",
+  "repository": "https://github.com/Adonis0123/adonis-skills",
+  "keywords": ["hooks", "language", "i18n"],
+  "hooks": "./hooks/hooks.json"
+}

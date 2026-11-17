@@ -1,0 +1,17 @@
+{
+  "description": "Deny shell commands that delete files an agent cannot get back (recursive rm, find -delete, git commands that discard uncommitted work) outside temp directories, and suggest the system's trash command.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/delete-guard.py\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
