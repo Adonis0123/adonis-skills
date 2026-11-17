@@ -116,7 +116,7 @@ denies 'rm -rf $DIR'
 denies 'rm -rf "${D:?}"/*'
 denies 'rm -rf "$(mktemp -d)"'
 denies 'rm -rf /tm*'
-denies 'rm -rf /tmp/../Users/x'
+denies 'rm -rf /tmp/../Users/you'
 denies 'rm -rf /tmp/*/../../etc'
 denies 'rm -rf /tmp'
 denies 'rm -rf build' ''
@@ -172,13 +172,13 @@ allows 'command -v rm'
 
 # ── 8b. gaps found in review (Codex), each with a neighbouring form that still passes ─
 # 1) find -exec sub-commands are always checked; only `{}` is exempt, and only under safe start points
-denies 'find /tmp -exec rm -rf /Users/x \;'
+denies 'find /tmp -exec rm -rf /Users/you \;'
 denies 'find /tmp -name a -exec sh -c "rm -rf ~/x" \;'
 allows 'find /tmp -exec rm -rf {} \;'
 allows 'find /tmp -name a -exec rm -rf /tmp/other \;'
 # 2) $'...' escapes and brace expansion in a recursive rm target
-denies $'rm -rf $\'/tmp/\\x2e\\x2e/Users/x\''
-denies 'rm -rf /tmp/{a,../Users/x}'
+denies $'rm -rf $\'/tmp/\\x2e\\x2e/Users/you\''
+denies 'rm -rf /tmp/{a,../Users/you}'
 denies 'rm -rf /tmp/{a,b}'
 allows 'rm -rf /tmp/a /tmp/b'
 allows "bash -c \$'rm -rf /tmp/x'"
@@ -224,8 +224,8 @@ allows 'git checkout -b feat/x -- '
 denies 'git reset -q --hard'
 allows 'git reset -- --hard'
 # 8) any unique prefix of --recursive
-denies 'rm --rec /Users/x'
-denies 'rm --r /Users/x'
+denies 'rm --rec /Users/you'
+denies 'rm --r /Users/you'
 denies 'rm --recursive=x ~/x'
 allows 'rm --re /tmp/x'
 allows 'rm --force ~/a.txt'
@@ -237,7 +237,7 @@ allows 'rm --force ~/a.txt'
 (( count++ )); [[ "$(decision grok run_terminal_command 'git reset --hard')" == deny ]] || fail "grok git must deny"
 (( count++ )); [[ -z "$(decision grok run_terminal_command 'rm -rf /tmp/x')" ]] || fail "grok temp delete must allow"
 (( count++ )); [[ -z "$(decision claude Read 'rm -rf ~/x')" ]] || fail "non-shell tools must allow"
-(( count++ )); out=$(jq -nc '{toolName:"run_terminal_command",toolInput:{command:"rm -rf build",cwd:"/tmp/w"},cwd:"/Users/x"}' | python3 "$hook")
+(( count++ )); out=$(jq -nc '{toolName:"run_terminal_command",toolInput:{command:"rm -rf build",cwd:"/tmp/w"},cwd:"/Users/you"}' | python3 "$hook")
 [[ -z $out ]] || fail "grok toolInput.cwd must win over the session cwd"
 
 # ── 10. reasons are Chinese and name the fix for this system ─────────────────

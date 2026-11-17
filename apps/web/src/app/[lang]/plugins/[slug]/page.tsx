@@ -81,7 +81,7 @@ const headingClass = "type-h3 mb-4 scroll-mt-24";
 // off-screen; background-attachment local/scroll hides each shadow once that edge is reached.
 const readmeBodyClass = [
   "[&_:is(p,li)>code.whitespace-nowrap]:inline-block [&_:is(p,li)>code.whitespace-nowrap]:max-w-full [&_:is(p,li)>code.whitespace-nowrap]:leading-[1.45]",
-  "[&_div:has(>table)]:[background:linear-gradient(to_right,var(--card)_30%,transparent)_left/2.5rem_100%_no-repeat_local,linear-gradient(to_left,var(--card)_30%,transparent)_right/2.5rem_100%_no-repeat_local,radial-gradient(farthest-side_at_0_50%,color-mix(in_oklab,var(--foreground)_30%,transparent),transparent)_left/1rem_100%_no-repeat_scroll,radial-gradient(farthest-side_at_100%_50%,color-mix(in_oklab,var(--foreground)_30%,transparent),transparent)_right/1rem_100%_no-repeat_scroll]",
+  "[&_div:has(>table)]:[background:linear-gradient(to_right,var(--card)_30%,transparent)_left/2.5rem_100%_no-repeat_local,linear-gradient(to_left,var(--card)_30%,transparent)_right/2.5rem_100%_no-repeat_local,radial-gradient(farthest-side_at_0_50%,var(--border),transparent)_left/1rem_100%_no-repeat_scroll,radial-gradient(farthest-side_at_100%_50%,var(--border),transparent)_right/1rem_100%_no-repeat_scroll]",
 ].join(" ");
 
 export default async function PluginDetailPage({ params }: PluginPageProps) {

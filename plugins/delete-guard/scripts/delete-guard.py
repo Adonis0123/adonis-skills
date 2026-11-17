@@ -452,7 +452,7 @@ def resolve_target(word, cwd):
     if any(k in ("exp", "ansi") for k, _ in parts):
         return None  # a variable, substitution or $'...' escape: the real path is unknown
     if any(k == "glob" and t in ("{", "{}") for k, t in parts):
-        return None  # brace expansion can name any path, e.g. /tmp/{a,../Users/x}
+        return None  # brace expansion can name any path, e.g. /tmp/{a,../Users/you}
     glob_at = next((idx for idx, (k, _) in enumerate(parts) if k == "glob"), None)
     if glob_at is not None:
         # a glob matches names inside the directory before it: check that directory (it may be a temp root)
