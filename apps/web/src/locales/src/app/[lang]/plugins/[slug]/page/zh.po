@@ -19,42 +19,42 @@ msgid "pluginDetail.meta.title"
 msgstr "{name} 插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:254
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:252
 msgid "pluginDetail.install.heading"
 msgstr "装进你的 agent"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:190
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:188
 msgid "pluginDetail.back"
 msgstr "全部插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:226
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:224
 msgid "pluginDetail.claudeOnly"
 msgstr "仅 Claude Code"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:289
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:287
 msgid "pluginDetail.manage.disable"
 msgstr "停用"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:129
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:132
 msgid "pluginDetail.turningOff"
 msgstr "停用与卸载"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:117
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:120
 msgid "pluginDetail.howItWorks"
 msgstr "怎么做到的"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:149
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:152
 msgid "pluginDetail.install"
 msgstr "安装"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:360
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:370
 msgid "pluginDetail.toc.title"
 msgstr "本页目录"
 
@@ -64,52 +64,52 @@ msgid "pluginDetail.meta.notFoundTitle"
 msgstr "没有这个插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:306
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:313
 msgid "pluginDetail.manage.remove"
 msgstr "移除"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:111
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:114
 msgid "pluginDetail.scenario"
 msgstr "遇到的场景"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:160
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:340
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:163
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:350
 msgid "pluginDetail.source"
 msgstr "源码"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:294
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:295
 msgid "pluginDetail.manage.uninstall"
 msgstr "卸载"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:299
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:303
 msgid "pluginDetail.manage.update"
 msgstr "更新"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:243
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:241
 msgid "pluginDetail.sourceLink"
 msgstr "在 GitHub 查看源码"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:121
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:124
 msgid "pluginDetail.whatItBlocks"
 msgstr "会拦什么"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:125
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:128
 msgid "pluginDetail.whatAgentSees"
 msgstr "被拦下时 agent 会看到"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:112
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:115
 msgid "pluginDetail.whyUse"
 msgstr "为什么要用"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:113
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:116
 msgid "pluginDetail.whyBuilt"
 msgstr "为什么自己做"
