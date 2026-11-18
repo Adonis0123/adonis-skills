@@ -8,6 +8,7 @@ import {
   contrastRatio,
   findBrandIssues,
   pickDesignSystem,
+  PROJECT_CONTRAST_PAIRS,
   renderBrandTokensCss,
   renderDesignMd,
   renderThemeRolesCss,
@@ -223,6 +224,48 @@ test("solidHex mixes over an opaque base like check.py", () => {
 
 test("a valid snapshot has no issues", () => {
   assert.deepEqual(findBrandIssues(ds), []);
+});
+
+test("pickDesignSystem merges a project's role overrides per mode", () => {
+  const picked = pickDesignSystem(tokens, "teal", {
+    light: { background: "{neutral-3}", ink: "{neutral-12}" },
+  });
+  assert.equal(picked.roles.light.background, "{neutral-3}");
+  assert.equal(picked.roles.light.ink, "{neutral-12}");
+  // Roles the project does not override keep the design-system value.
+  assert.equal(picked.roles.light.card, tokens.roles.light.card);
+  // A mode the project leaves out keeps the base roles unchanged.
+  assert.deepEqual(picked.roles.dark, tokens.roles.dark);
+  // The tokens object itself is not mutated.
+  assert.equal(tokens.roles.light.ink, undefined);
+});
+
+test("pickDesignSystem without project roles keeps tokens.roles", () => {
+  assert.equal(pickDesignSystem(tokens, "teal").roles, tokens.roles);
+  assert.equal(pickDesignSystem(tokens, "teal", undefined).roles, tokens.roles);
+});
+
+test("project contrast pairs are checked only when the snapshot has the role", () => {
+  assert.ok(
+    PROJECT_CONTRAST_PAIRS.some(([fg, bg]) => fg === "ink" && bg === "card"),
+  );
+  // No ink or mustard roles: the project pairs are skipped, not reported missing.
+  assert.deepEqual(findBrandIssues(ds), []);
+  assert.doesNotMatch(findBrandIssues(ds).join("\n"), /ink|mustard/);
+
+  const withInk = pickDesignSystem(tokens, "teal", {
+    light: { ink: "{neutral-12}" },
+  });
+  assert.deepEqual(findBrandIssues(withInk), []);
+
+  // An ink line as pale as the card falls below its 3:1 minimum.
+  const faint = pickDesignSystem(tokens, "teal", {
+    light: { ink: "{neutral-2}" },
+  });
+  assert.match(
+    findBrandIssues(faint).join("\n"),
+    /light ink #[0-9a-f]{6} on card #[0-9a-f]{6} is 1\.\d\d:1, below 3:1/,
+  );
 });
 
 test("reports unknown references and low contrast with a fix hint", () => {
