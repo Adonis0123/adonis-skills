@@ -41,7 +41,7 @@ export function FeaturedSkillCard({ view, index }: FeaturedSkillCardProps) {
             message: `${number} / Featured`,
           })}
         </span>
-        <span className="ink-box ink-box--pill hand-label inline-flex h-[26px] items-center gap-1.5 bg-accent pr-2.5 pl-1.5 text-xs font-semibold text-accent-foreground">
+        <span className="ink-box ink-box--pill inline-flex h-[26px] items-center gap-1.5 bg-accent pr-2.5 pl-1.5 text-xs font-semibold text-accent-foreground">
           <Image
             src="/brand/kiki-mark.svg"
             alt=""

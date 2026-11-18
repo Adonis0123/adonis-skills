@@ -32,10 +32,10 @@ interface PluginsCatalogProps {
 
 const chipClass = (selected: boolean) =>
   cx(
-    "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-9 items-center gap-2 px-3.5 text-[13.5px] font-medium transition-colors pointer-coarse:h-10",
+    "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-9 items-center gap-2 px-3.5 text-sm font-medium transition-colors pointer-coarse:h-10",
     selected
       ? "bg-accent text-accent-foreground"
-      : "bg-card text-foreground hover:bg-hover",
+      : "bg-card text-foreground hover:border-primary hover:bg-hover",
   );
 
 /**

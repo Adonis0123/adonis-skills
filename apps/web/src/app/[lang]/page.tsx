@@ -147,7 +147,7 @@ export default async function HomePage({ params }: HomePageProps) {
 
           <SectionReveal delay={80} className="relative order-1 md:order-2">
             {/* Transparent art on the cream plate; the plate (not the image) changes in dark mode. */}
-            <div className="art-plate mx-2.5 my-2.5 aspect-[2/1] md:mx-0 md:aspect-[3/2]">
+            <div className="art-plate aspect-[2/1] md:aspect-[3/2]">
               <Image
                 src={getIllustrationSrc("hero.webp")}
                 alt={i18n._({

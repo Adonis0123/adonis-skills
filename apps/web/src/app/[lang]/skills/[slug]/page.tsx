@@ -315,7 +315,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
                       {section.heading && (
                         <HeadingTag
                           id={section.id}
-                          className="scroll-mt-28 text-lg font-bold md:text-xl"
+                          className="scroll-mt-28 text-xl font-bold md:text-2xl"
                         >
                           {section.heading}
                         </HeadingTag>

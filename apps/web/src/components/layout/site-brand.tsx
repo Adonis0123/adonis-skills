@@ -59,7 +59,7 @@ export function SiteBrand({
 
       {isHeader ? (
         <span className="min-w-0">
-          <BrandWordmark className="block text-xl" />
+          <BrandWordmark className="block text-2xl" />
           {subtitle ? (
             <span className="kicker mt-1 block text-clay-muted">
               {subtitle}
@@ -67,7 +67,7 @@ export function SiteBrand({
           ) : null}
         </span>
       ) : (
-        <BrandWordmark className="text-xl" />
+        <BrandWordmark className="text-2xl" />
       )}
     </LocaleLink>
   );

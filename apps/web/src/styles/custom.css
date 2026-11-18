@@ -18,12 +18,15 @@
 
   /*
    * Paper (light page only): two static CSS noise tiles, fine tooth plus a
-   * slow mottle, tinted brown and nearly transparent. No film grain, dust,
-   * flicker or vignette. The SVG holds no colour literal: its channels are
-   * numbers in feColorMatrix.
+   * slow warm mottle, nearly transparent. No film grain, dust, flicker or
+   * vignette. The SVG holds no colour literal: its channels are numbers in
+   * feColorMatrix. Seamless: each filter region is exactly the tile
+   * (userSpaceOnUse 0 0 W H; the default region overhangs by 10%, which put a
+   * seam every tile), and stitchTiles plus a frequency with whole periods per
+   * tile (0.75 x 200 = 150, 0.0078125 x 640 = 5) makes the edges meet.
    */
-  --paper-tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.22 0 0 0 0 0.16 0 0 0 0 0.08 0 0 0 0.9 -0.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)' opacity='0.22'/%3E%3C/svg%3E");
-  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.34 0 0 0 0 0.18 0 0 0 1.1 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='0.16'/%3E%3C/svg%3E");
+  --paper-tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='t' filterUnits='userSpaceOnUse' x='0' y='0' width='200' height='200'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0 0.06 0 0 0 0.9 -0.42'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23t)' opacity='0.2'/%3E%3C/svg%3E");
+  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='m' filterUnits='userSpaceOnUse' x='0' y='0' width='640' height='640'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0078125' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.44 0 0 0 0 0.14 0 0 0 1.1 -0.5'/%3E%3C/filter%3E%3Crect width='640' height='640' filter='url(%23m)' opacity='0.14'/%3E%3C/svg%3E");
   --paper-texture: var(--paper-tooth), var(--paper-mottle);
 }
 
@@ -91,6 +94,31 @@
     font-family: var(--font-app-heading);
     font-weight: 750;
     font-optical-sizing: auto;
+  }
+
+  /*
+   * Hand lettering sizes up to the body face's x-height (--hand-size-adjust,
+   * shadcn-theme.css); mono text keeps its own metrics.
+   */
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    .font-heading,
+    .font-display,
+    .font-hand,
+    .hand-label,
+    .clay-button,
+    .scenario-chip,
+    .copy-button,
+    .featured-number
+  ) {
+    font-size-adjust: var(--hand-size-adjust);
+  }
+
+  :is(code, pre, kbd, samp, .font-mono, .type-mono, .kicker) {
+    font-size-adjust: none;
   }
 
   p {
@@ -189,6 +217,7 @@
     min-height: 44px;
     border-radius: var(--clay-radius-button);
     border: var(--ink-width) solid var(--ink);
+    border-width: 2px 2px 2.5px;
     font-family: var(--font-app-hand);
     /* Design system button rule: weight 500, never 600 (heavy at 13-15px Chinese). */
     font-weight: 500;
@@ -209,6 +238,12 @@
     color: var(--primary-foreground);
     /* No inner top highlight on buttons: on a pill it reads as a second border. */
     box-shadow: var(--clay-shadow-btn);
+  }
+
+  /* English primary labels: bolder hand lettering (synthesised at 17px, where
+     it does not smear); Chinese keeps the design-system 500. */
+  .clay-button--primary:lang(en) {
+    font-weight: 700;
   }
 
   /* Hover deepens the fill with the --primary-hover-veil (shadcn-theme.css);
@@ -240,10 +275,11 @@
     box-shadow: var(--clay-shadow-btn);
   }
 
+  /* Hover: the outline turns teal on top of the fill change. */
   .clay-button--secondary:hover,
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
-    border-color: var(--ink);
+    border-color: var(--primary);
     background: var(--hover);
     color: var(--foreground);
   }
@@ -255,6 +291,11 @@
   .clay-button--md {
     /* DESIGN.md button height 46px, padding 0 20px */
     @apply h-[46px] px-5 text-[15px];
+  }
+
+  /* Latin labels get more presence; Chinese keeps 15px. */
+  .clay-button--md:lang(en) {
+    font-size: 17px;
   }
 
   .clay-button--lg {
@@ -272,8 +313,7 @@
   .clay-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold;
     border-radius: var(--hand-radius-pill);
-    border: var(--ink-width-thin) solid var(--ink);
-    font-family: var(--font-app-hand);
+    border: 0;
     /* Badges and selected states use accent, never the primary fill. */
     background: var(--accent);
     color: var(--accent-foreground);
@@ -325,7 +365,9 @@
     border-radius: var(--hand-radius-md);
   }
 
+  /* Large panels: visibly uneven corners and a heavier bottom stroke. */
   .ink-box--xl {
+    border-width: var(--ink-width-hand);
     border-radius: var(--hand-radius-xl);
   }
 
@@ -338,7 +380,7 @@
   }
 
   .ink-raised {
-    box-shadow: var(--clay-shadow-card);
+    box-shadow: var(--clay-shadow-feature);
   }
 
   /* Hand-drawn dividers. */
@@ -415,9 +457,9 @@
     line-height: 1.3;
   }
 
-  /* Patrick Hand reads small next to the body face; Latin titles step up. */
+  /* Latin titles step up a little on top of the size adjust. */
   .type-card-title:lang(en) {
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     line-height: 1.2;
   }
 
@@ -470,6 +512,7 @@
   .art-plate {
     position: relative;
     border: var(--ink-width) solid var(--ink);
+    border-width: var(--ink-width-hand);
     border-radius: var(--hand-radius-plate);
     background: var(--plate);
     box-shadow: var(--clay-shadow-plate);
@@ -507,16 +550,11 @@
   /* Search bar (DESIGN.md search-bar). */
   .search-bar {
     border: var(--ink-width) solid var(--ink);
-    border-radius: 20px 16px 21px 15px / 16px 21px 15px 20px;
+    border-width: var(--ink-width-hand);
+    border-radius: var(--hand-radius-search);
     background: var(--card);
     box-shadow: var(--clay-shadow-glow);
-    transition:
-      border-color 200ms ease,
-      outline-color 200ms ease;
-  }
-
-  .search-bar:focus-within {
-    border-color: var(--link);
+    transition: outline-color 200ms ease;
   }
 
   /* Keyboard focus gets the contract ring outside the ink outline. */
@@ -538,7 +576,7 @@
     background: var(--card);
     color: var(--foreground);
     font-family: var(--font-app-hand);
-    font-size: 13.5px;
+    font-size: 14px;
     font-weight: 500;
     white-space: nowrap;
     box-shadow: var(--clay-shadow-btn);
@@ -548,11 +586,8 @@
       background-color 200ms ease;
   }
 
-  .scenario-chip:lang(en) {
-    font-size: 15px;
-  }
-
   a.scenario-chip:hover {
+    border-color: var(--primary);
     background: var(--hover);
     color: var(--foreground);
   }
@@ -595,20 +630,24 @@
 
   .featured-card {
     padding: 26px;
+    border-width: var(--ink-width-hand);
     border-radius: var(--hand-radius-xl);
+    box-shadow: var(--clay-shadow-feature);
   }
 
   .featured-card--lead {
     background: var(--tint);
   }
 
-  /* Hover keeps the ink; the card lifts and its wash spreads. */
+  /* Hover: the outline turns teal, the card lifts and its wash spreads. */
   .skill-card:hover {
+    border-color: var(--primary);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -2px, 0);
   }
 
   .featured-card:hover {
+    border-color: var(--primary);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -3px, 0);
   }
@@ -624,41 +663,30 @@
     background: var(--mustard);
     color: var(--mustard-foreground);
     font-family: var(--font-app-hand);
-    font-size: 13px;
+    font-size: 15px;
     line-height: 1;
     white-space: nowrap;
   }
 
-  .featured-number:lang(en) {
-    font-size: 15px;
-  }
-
-  /* Tags (DESIGN.md tag): first tag accent, the rest neutral. */
+  /* Tags (DESIGN.md tag): flat watercolour fills, no outline, body face
+     (too small for hand lettering). First tag mustard, the rest dusty blue. */
   .nk-tag {
     display: inline-flex;
     align-items: center;
     height: 22px;
-    padding: 0 8px;
-    border: var(--ink-width-thin) solid var(--ink);
+    padding: 0 9px;
     border-radius: var(--hand-radius-pill);
     background: var(--mustard);
     color: var(--mustard-foreground);
-    font-family: var(--font-app-hand);
     font-size: 11.5px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
   }
 
-  /* Hand lettering is not synthesised bold at tag size; Latin steps up. */
-  .nk-tag:lang(en) {
-    font-size: 13px;
-    font-weight: 400;
-  }
-
   .nk-tag--neutral {
-    background: var(--muted);
-    color: var(--muted-foreground);
+    background: var(--dusty);
+    color: var(--dusty-foreground);
   }
 
   /* Command box (DESIGN.md command-box). */
@@ -695,7 +723,7 @@
     border: var(--ink-width) solid var(--ink);
     border-radius: 10px 8px 10px 7px / 8px 10px 7px 10px;
     font-family: var(--font-app-hand);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 500;
     line-height: 1;
     white-space: nowrap;
@@ -731,14 +759,10 @@
     padding: 0 0.625rem;
     background: var(--card);
     color: var(--foreground);
-    font-size: 12px;
-  }
-
-  .copy-button:lang(en) {
-    font-size: 14px;
   }
 
   .copy-button--outline:hover {
+    border-color: var(--primary);
     background: var(--hover);
     color: var(--link);
   }

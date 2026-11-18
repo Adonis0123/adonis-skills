@@ -267,12 +267,12 @@ export function CopyTextBlock({
       <span
         aria-hidden
         className={cx(
-          "ink-box ink-box--pill hand-label pointer-events-none absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
+          "ink-box ink-box--pill pointer-events-none absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
           copied
             ? "text-link"
             : failed
               ? "border-danger-text text-danger-text"
-              : "text-foreground group-hover:text-link",
+              : "text-foreground group-hover:border-primary group-hover:text-link",
         )}
       >
         <IconSwap swapKey={status} className="size-3.5">

@@ -220,7 +220,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
                 ))
               )}
             </ul>
-            <h1 className="type-display mt-4 font-mono text-[clamp(1.9rem,1.3rem+2.2vw,3rem)] tracking-[-0.02em] [overflow-wrap:anywhere]">
+            <h1 className="type-display mt-4 font-mono text-[clamp(1.85rem,1.3rem+2.2vw,3rem)] tracking-[-0.02em] [overflow-wrap:anywhere]">
               {plugin.name}
             </h1>
             {plugin.effect[locale] && (
@@ -259,7 +259,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
                     ) : null
                   }
                 />
-                <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-tint-border pt-4 text-[13px] text-muted-foreground">
+                <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border pt-4 text-[13px] text-muted-foreground">
                   <code className="font-mono [overflow-wrap:anywhere] text-foreground">
                     {plugin.sourcePath}
                   </code>
@@ -323,7 +323,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
                 >
                   <h3
                     id={item.key}
-                    className="mb-3 scroll-mt-24 text-base font-semibold text-foreground md:text-lg"
+                    className="mb-3 scroll-mt-24 text-lg font-semibold text-foreground md:text-xl"
                   >
                     {item.title}
                   </h3>

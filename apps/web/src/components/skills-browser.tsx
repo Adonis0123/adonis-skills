@@ -310,10 +310,10 @@ export function SkillsBrowser({
                         aria-pressed={selected}
                         onClick={() => toggleTag(tag)}
                         className={cx(
-                          "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-8 items-center gap-1 px-3 text-[13px] font-medium transition-colors pointer-coarse:h-10",
+                          "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-8 items-center gap-1 px-3 text-sm font-medium transition-colors pointer-coarse:h-10",
                           selected
                             ? "bg-accent text-accent-foreground"
-                            : "bg-card text-foreground hover:bg-hover",
+                            : "bg-card text-foreground hover:border-primary hover:bg-hover",
                         )}
                       >
                         {selected && (

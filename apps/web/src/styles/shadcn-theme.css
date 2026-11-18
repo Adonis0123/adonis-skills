@@ -38,20 +38,31 @@
    */
   --ink-width: 2px;
   --ink-width-thin: 1.5px;
+  /* Large elements: the line thickens along the bottom like a brush stroke. */
+  --ink-width-hand: 2px 2.5px 3px 2.25px;
 
   /*
-   * Hand-drawn corners: each radius token as a slightly uneven elliptical
-   * radius (horizontal / vertical per corner differ by 2-4px, as PaperCSS
-   * does), quiet enough that 30+ catalog cards still line up. The pill uses
-   * large unequal values; the browser scales them down together, so it stays
-   * a pill with a slight wobble at any height.
+   * Patrick Hand's x-height is 0.467 em, Noto Sans SC's 0.543. Elements set in
+   * hand lettering adjust every face to a 0.55 x-height: Patrick Hand grows
+   * about 1.18x and matches the Chinese and body text beside it, Noto moves
+   * about 1%, so Chinese keeps its size.
+   */
+  --hand-size-adjust: 0.55;
+
+  /*
+   * Hand-drawn corners (PaperCSS-style uneven elliptical radii). Small and
+   * catalog sizes differ by 2-4px, so 30+ cards still line up; xl, plate and
+   * the search bar differ by up to 2x, so large elements read as drawn. The
+   * pill uses large unequal values; the browser scales them down together, so
+   * it stays a pill with a slight wobble at any height.
    */
   --hand-radius-xs: 7px 5px 6px 5px / 5px 7px 5px 6px;
   --hand-radius-sm: 11px 9px 12px 8px / 9px 12px 8px 11px;
   --hand-radius-md: 13px 11px 14px 10px / 11px 14px 10px 13px;
   --hand-radius-lg: 18px 14px 19px 13px / 14px 18px 13px 19px;
-  --hand-radius-xl: 24px 20px 26px 19px / 20px 25px 19px 24px;
-  --hand-radius-plate: 31px 26px 32px 25px / 26px 31px 25px 32px;
+  --hand-radius-xl: 34px 18px 38px 16px / 20px 36px 16px 32px;
+  --hand-radius-plate: 48px 22px 54px 20px / 26px 50px 22px 44px;
+  --hand-radius-search: 30px 14px 32px 12px / 18px 30px 14px 28px;
   --hand-radius-pill: 999px 880px 960px 900px / 900px 980px 880px 999px;
 
   --clay-surface-bg: var(--card);
@@ -61,16 +72,19 @@
 
   /*
    * DESIGN.md "Elevation & Depth": raised things sit on a dusty blue
-   * watercolour wash (--wash), blurred and offset down. Never a zero-blur
+   * watercolour wash (--wash), blurred and offset down so a soft band shows
+   * under the bottom edge. Every value has a blur radius: never a zero-blur
    * `0 Npx 0` line. --wash is transparent in dark mode, which turns them off.
+   * Resting catalog cards get the narrow one so the grid stays calm.
    */
-  --clay-shadow-card: 0 9px 14px -8px var(--wash);
-  --clay-shadow-card-hover: 0 15px 20px -10px var(--wash);
-  --clay-shadow-btn: 0 7px 10px -5px var(--wash);
-  --clay-shadow-btn-hover: 0 9px 12px -5px var(--wash);
-  --clay-shadow-glow: 0 10px 16px -9px var(--wash);
-  --clay-shadow-pop: 0 18px 28px -14px var(--wash);
-  --clay-shadow-plate: 0 18px 26px -14px var(--wash);
+  --clay-shadow-card: 0 5px 4px -2px var(--wash);
+  --clay-shadow-card-hover: 0 11px 8px -2px var(--wash);
+  --clay-shadow-feature: 0 10px 7px -2px var(--wash);
+  --clay-shadow-btn: 0 6px 4px -1px var(--wash);
+  --clay-shadow-btn-hover: 0 8px 5px -1px var(--wash);
+  --clay-shadow-glow: 0 8px 5px -1px var(--wash);
+  --clay-shadow-pop: 0 14px 18px -6px var(--wash);
+  --clay-shadow-plate: 0 14px 10px -3px var(--wash);
   /* Flat watercolour: no inner glow on surfaces. */
   --clay-highlight-top: 0 0 transparent;
 

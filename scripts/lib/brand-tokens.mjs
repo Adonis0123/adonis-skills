@@ -57,6 +57,7 @@ export const PROJECT_CONTRAST_PAIRS = [
   ["ink", "card", 3],
   ["ink", "background", 3],
   ["mustard-foreground", "mustard", 4.5],
+  ["dusty-foreground", "dusty", 4.5],
 ];
 
 // The design system has no roles for these, but the site's overlays, focus

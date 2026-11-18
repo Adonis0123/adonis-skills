@@ -73,7 +73,13 @@ export async function renderOgCard({
       <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain <img> */}
         <img src={kikiDataUri} width={88} height={88} alt="" />
-        <div style={{ display: "flex", fontSize: 48 }}>
+        <div
+          style={{
+            display: "flex",
+            fontSize: 52,
+            WebkitTextStroke: `1.5px ${palette.ink}`,
+          }}
+        >
           <span>nika&nbsp;</span>
           <span style={{ color: palette.accent }}>skills</span>
         </div>
@@ -84,6 +90,10 @@ export async function renderOgCard({
           style={{
             fontSize: title.length > 28 ? 70 : 88,
             lineHeight: 1.08,
+            // Patrick Hand has one weight: an ink stroke gives the title the
+            // page's marker weight, and balance avoids a lone last word.
+            WebkitTextStroke: `2.5px ${palette.ink}`,
+            textWrap: "balance",
           }}
         >
           {title}

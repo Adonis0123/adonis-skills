@@ -209,7 +209,7 @@ export function InstallTabs<Id extends string>({
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <span className="hand-label max-w-full truncate text-[13px] font-bold sm:text-sm">
+              <span className="hand-label max-w-full truncate text-[15px] font-bold sm:text-base">
                 {tab.label}
               </span>
               {tab.subtitle && (
