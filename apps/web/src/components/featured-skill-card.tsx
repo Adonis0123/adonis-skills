@@ -86,7 +86,7 @@ export function FeaturedSkillCard({ view, index }: FeaturedSkillCardProps) {
         {entry.highlights.map((highlight) => (
           <li key={highlight.en} className="flex gap-2.5">
             <span
-              className="mt-[7px] size-1.5 shrink-0 rounded-[2px] bg-primary"
+              className="mt-[7px] size-1.5 shrink-0 rounded-[2px] bg-tomato"
               aria-hidden
             />
             <span>{highlight[locale]}</span>

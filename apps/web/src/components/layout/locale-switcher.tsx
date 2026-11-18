@@ -163,7 +163,7 @@ export function LocaleSwitcher({
             closedByPointerRef.current = false;
           }}
           className={cx(
-            "w-[var(--radix-dropdown-menu-trigger-width)] min-w-0 border-border bg-popover p-1.5",
+            "w-[var(--radix-dropdown-menu-trigger-width)] min-w-0 bg-popover p-1.5",
             contentClassName,
           )}
         >

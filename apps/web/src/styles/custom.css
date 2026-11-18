@@ -519,10 +519,10 @@
     border-color: var(--link);
   }
 
-  /* Keyboard focus still gets the contract ring on top of the tint halo. */
+  /* Keyboard focus gets the contract ring outside the ink outline. */
   .search-bar:has(:focus-visible) {
-    border-color: var(--ring);
-    outline: 3px solid var(--ring-halo);
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   /* Scenario chip (DESIGN.md chip). */
@@ -1007,12 +1007,13 @@
   }
 
   /*
-   * Bordered targets (clay buttons, bordered chips, clay surfaces): the border
-   * itself turns `--ring` and a translucent halo sits flush against it with no
-   * offset gap, so it reads as one ring instead of border-gap-ring.
-   * `.clay-focus-within-ring` does the same for a wrapper whose child (an
-   * input) holds focus; `.clay-focus-link-ring` only reacts to a link inside,
-   * so a card's own buttons keep a single ring.
+   * Bordered targets (clay buttons, chips, cards, ink boxes): the ink outline
+   * stays and a solid 2px `--ring` sits 2px outside it. Turning the ink border
+   * `--ring` would not show (ring on ink is 2.7:1 light, 1.1:1 dark), and a
+   * translucent halo vanishes on paper. `.clay-focus-within-ring` does the
+   * same for a wrapper whose child (an input) holds focus;
+   * `.clay-focus-link-ring` only reacts to a link inside, so a card's own
+   * buttons keep a single ring.
    */
   .clay-focus-ring:is(
       .clay-button,
@@ -1024,9 +1025,8 @@
     ):focus-visible,
   .clay-focus-within-ring:has(:focus-visible),
   .clay-focus-link-ring:has(a:focus-visible) {
-    border-color: var(--ring);
-    outline: 3px solid var(--ring-halo);
-    outline-offset: 0;
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 
   /*
