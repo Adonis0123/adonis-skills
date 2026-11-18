@@ -18,7 +18,7 @@ import {
   getEmptyResultCause,
   useCatalogFilters,
 } from "@/components/use-catalog-filters";
-import { ClayButton } from "@/components/ui";
+import { ClayButton, InkTicks } from "@/components/ui";
 import { SKILL_TAG_LABELS } from "@/config/skill-tags";
 import { PRIMARY_SEARCH_ATTR } from "@/components/layout/header-search";
 import { resolveLocaleValue } from "@/i18n/config";
@@ -186,7 +186,7 @@ export function SkillsLibrarySection({
                   <button
                     type="button"
                     onClick={() => setTag(null)}
-                    className="scenario-chip scenario-chip--selected clay-focus-ring border pl-3.5"
+                    className="scenario-chip scenario-chip--selected clay-focus-ring pl-3.5"
                     aria-label={t({
                       id: "home.filter.clearTag.aria",
                       message: `Remove the ${SKILL_TAG_LABELS[tag][locale]} tag filter`,
@@ -226,7 +226,7 @@ export function SkillsLibrarySection({
                     <PressScale>
                       <a
                         href={`#group-${group.id}`}
-                        className="scenario-chip clay-focus-ring border"
+                        className="scenario-chip clay-focus-ring"
                       >
                         {content}
                       </a>
@@ -257,6 +257,7 @@ export function SkillsLibrarySection({
                 <Trans id="home.featured.title">
                   Three skills worth installing first
                 </Trans>
+                <InkTicks className="ml-1.5 size-[0.8em] -translate-y-[0.35em]" />
               </h2>
             </div>
             <p className="text-muted-foreground">
@@ -307,6 +308,7 @@ export function SkillsLibrarySection({
                   Find a skill by what you&apos;re doing
                 </Trans>
               )}
+              <InkTicks className="ml-1.5 size-[0.8em] -translate-y-[0.35em]" />
             </h2>
           </div>
 
@@ -403,7 +405,7 @@ function ScenarioGroup({
       as="section"
       id={`group-${group.id}`}
       aria-labelledby={titleId}
-      className="grid scroll-mt-20 gap-5 border-t border-border py-9 first:border-t-0 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10 lg:py-11"
+      className="ink-rule-t grid scroll-mt-20 gap-5 py-9 first:border-t-0 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10 lg:py-11"
     >
       <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-x-4 self-start lg:sticky lg:top-24 lg:block">
         <span className="art-avatar art-avatar--ringed row-span-3 size-14 lg:size-16">

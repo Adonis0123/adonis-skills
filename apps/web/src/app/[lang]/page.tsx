@@ -5,7 +5,7 @@ import { HostInstallTabs } from "@/components/host-install-tabs";
 import { PressScale } from "@/components/motion/press-scale";
 import { SectionReveal } from "@/components/motion/section-reveal";
 import { SkillsLibrarySection } from "@/components/skills-library-section";
-import { ClayButton } from "@/components/ui";
+import { ClayButton, InkTicks } from "@/components/ui";
 import { siteLayoutConfig } from "@/config/site-layout";
 import { initLingui, initPageLingui } from "@/i18n/initLingui";
 import {
@@ -59,7 +59,7 @@ export default async function HomePage({ params }: HomePageProps) {
         <div className="site-frame grid items-center gap-5 pt-5 pb-6 md:grid-cols-[1.05fr_0.95fr] md:gap-14 md:pt-16 md:pb-14 lg:pt-[72px] lg:pb-16">
           <SectionReveal delay={20} className="order-2 min-w-0 md:order-1">
             {updatedMonth && (
-              <p className="mb-5 hidden h-[30px] items-center gap-2 rounded-full border border-border bg-card pr-3 pl-2.5 text-[13px] font-medium text-muted-foreground sm:inline-flex">
+              <p className="ink-box ink-box--pill mb-5 hidden h-[30px] items-center gap-2 bg-card pr-3 pl-2.5 text-[13px] font-medium text-muted-foreground sm:inline-flex">
                 <span
                   className="size-[7px] rounded-full bg-primary outline-[3px] outline-tint outline-solid"
                   aria-hidden
@@ -88,7 +88,11 @@ export default async function HomePage({ params }: HomePageProps) {
               </Trans>
             </p>
 
-            <div className="mt-5 flex flex-wrap items-center gap-3 md:mt-7">
+            <div className="relative mt-5 flex flex-wrap items-center gap-3 md:mt-7">
+              <InkTicks
+                flip
+                className="absolute top-0 -left-7 hidden size-6 -translate-y-2 md:block"
+              />
               {/* Same-page hash: SmoothScrollProvider (locale layout) animates the scroll. */}
               <PressScale>
                 <ClayButton asChild size="md">
@@ -178,7 +182,7 @@ export default async function HomePage({ params }: HomePageProps) {
       <section
         id="install"
         aria-labelledby="install-title"
-        className="mt-14 scroll-mt-16 border-t border-border bg-card py-12 md:mt-[72px] md:py-16"
+        className="ink-rule-t mt-14 scroll-mt-16 bg-card py-12 md:mt-[72px] md:py-16"
       >
         <div className="site-frame grid items-center gap-7 md:grid-cols-[0.85fr_1.15fr] md:gap-14">
           <div>
@@ -195,7 +199,7 @@ export default async function HomePage({ params }: HomePageProps) {
               </Trans>
             </p>
           </div>
-          <div className="min-w-0 rounded-[20px] border border-border bg-background p-4 md:p-6">
+          <div className="ink-box ink-box--xl ink-raised min-w-0 bg-background p-4 md:p-6">
             <HostInstallTabs slug="<slug>" />
           </div>
         </div>

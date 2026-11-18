@@ -15,6 +15,21 @@
   /* Same as the header so page content and header share one left edge. */
   --site-max-detail: var(--site-max-wide);
   --site-max-narrow: 1080px;
+
+  /*
+   * Paper (light page only): two static CSS noise tiles, fine tooth plus a
+   * slow mottle, tinted brown and nearly transparent. No film grain, dust,
+   * flicker or vignette. The SVG holds no colour literal: its channels are
+   * numbers in feColorMatrix.
+   */
+  --paper-tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.22 0 0 0 0 0.16 0 0 0 0 0.08 0 0 0 0.9 -0.42'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23t)' opacity='0.22'/%3E%3C/svg%3E");
+  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.008' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.45 0 0 0 0 0.34 0 0 0 0 0.18 0 0 0 1.1 -0.5'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='0.16'/%3E%3C/svg%3E");
+  --paper-texture: var(--paper-tooth), var(--paper-mottle);
+}
+
+.dark,
+:root[data-theme="dark"] {
+  --paper-texture: none;
 }
 
 @media (min-width: 768px) {
@@ -63,9 +78,8 @@
     line-height: 1.7;
     overscroll-behavior-y: none;
     background: var(--background);
-    /* Design system page-tint: a faint accent wash over the top 180px. */
-    background-image: var(--page-tint);
-    background-repeat: no-repeat;
+    /* Paper texture (light only), over the design-system page-tint. */
+    background-image: var(--paper-texture), var(--page-tint);
     color: var(--foreground);
   }
 
@@ -77,11 +91,6 @@
     font-family: var(--font-app-heading);
     font-weight: 750;
     font-optical-sizing: auto;
-  }
-
-  /* Negative tracking is for Latin only; it breaks up Chinese characters. */
-  :lang(en) :is(h1, h2, h3, h4) {
-    letter-spacing: -0.015em;
   }
 
   p {
@@ -127,7 +136,7 @@
     position: relative;
     overflow: hidden;
     border-radius: var(--clay-radius-card);
-    border: 1px solid var(--border);
+    border: var(--ink-width) solid var(--ink);
     background: var(--clay-surface-bg);
     box-shadow: var(--clay-shadow-card);
     isolation: isolate;
@@ -179,32 +188,33 @@
     position: relative;
     min-height: 44px;
     border-radius: var(--clay-radius-button);
-    border: 1px solid transparent;
+    border: var(--ink-width) solid var(--ink);
+    font-family: var(--font-app-hand);
     /* Design system button rule: weight 500, never 600 (heavy at 13-15px Chinese). */
     font-weight: 500;
     line-height: 1;
     transform: translate3d(0, 0, 0);
   }
 
-  /* Hover changes only fill and shadow; press sinks 1px so the two states differ. */
+  /* Press squashes a little about the bottom (rubber-hose); reduced motion skips it. */
   .clay-button:active {
-    transform: translate3d(0, 1px, 0);
+    transform: translate3d(0, 1px, 0) scale(1.03, 0.94);
+    transform-origin: 50% 100%;
   }
 
   .clay-button--primary,
   .clay-button--blue {
     background: var(--primary);
-    border-color: var(--primary);
+    border-color: var(--ink);
     color: var(--primary-foreground);
     /* No inner top highlight on buttons: on a pill it reads as a second border. */
     box-shadow: var(--clay-shadow-btn);
   }
 
-  /* Hover deepens the fill with the --primary-hover-veil (shadcn-theme.css).
-     A transparent border lets the veil cover the edge too. */
+  /* Hover deepens the fill with the --primary-hover-veil (shadcn-theme.css);
+     the ink outline stays. */
   .clay-button--primary:hover,
   .clay-button--blue:hover {
-    border-color: transparent;
     background-image: linear-gradient(
       var(--primary-hover-veil),
       var(--primary-hover-veil)
@@ -225,14 +235,15 @@
   .clay-button--ghost,
   .clay-button--outline {
     background: var(--card);
-    border-color: var(--input);
+    border-color: var(--ink);
     color: var(--foreground);
+    box-shadow: var(--clay-shadow-btn);
   }
 
   .clay-button--secondary:hover,
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
-    border-color: var(--tint-border);
+    border-color: var(--ink);
     background: var(--hover);
     color: var(--foreground);
   }
@@ -254,14 +265,15 @@
 
   .clay-button--icon {
     @apply h-10 min-h-10 w-10;
-    border-radius: var(--nk-radius-sm);
+    border-radius: var(--hand-radius-sm);
   }
 
   /* Badges are flat chips: brand rules keep small UI marks shadow-free. */
   .clay-badge {
     @apply inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-semibold;
-    border-radius: 50px;
-    border: 0;
+    border-radius: var(--hand-radius-pill);
+    border: var(--ink-width-thin) solid var(--ink);
+    font-family: var(--font-app-hand);
     /* Badges and selected states use accent, never the primary fill. */
     background: var(--accent);
     color: var(--accent-foreground);
@@ -292,8 +304,74 @@
     color: var(--foreground);
   }
   /* ---------------------------------------------------------------------
-   * Nika Skills v3 (DESIGN.md Components). Colors are semantic roles only.
+   * Nika Skills (DESIGN.md Components). Colors are semantic roles only.
    * ------------------------------------------------------------------- */
+
+  /*
+   * Ink outline for panels, menus, tabs and inputs built from utilities:
+   * a 2px --ink line with hand-drawn corners. Pick the corner size with a
+   * modifier; .ink-raised adds the wash underneath.
+   */
+  .ink-box {
+    border: var(--ink-width) solid var(--ink);
+    border-radius: var(--hand-radius-lg);
+  }
+
+  .ink-box--sm {
+    border-radius: var(--hand-radius-sm);
+  }
+
+  .ink-box--md {
+    border-radius: var(--hand-radius-md);
+  }
+
+  .ink-box--xl {
+    border-radius: var(--hand-radius-xl);
+  }
+
+  .ink-box--pill {
+    border-radius: var(--hand-radius-pill);
+  }
+
+  .ink-box--dashed {
+    border-style: dashed;
+  }
+
+  .ink-raised {
+    box-shadow: var(--clay-shadow-card);
+  }
+
+  /* Hand-drawn dividers. */
+  .ink-rule-t {
+    border-top: var(--ink-width) solid var(--ink);
+  }
+
+  .ink-rule-b {
+    border-bottom: var(--ink-width) solid var(--ink);
+  }
+
+  /* Hand lettering for short labels (nav, tabs, buttons built from utilities). */
+  .hand-label {
+    font-family: var(--font-app-hand);
+  }
+
+  /* A few ink tick strokes beside the primary button and section titles. */
+  .ink-ticks {
+    display: inline-block;
+    flex: none;
+    width: 1.1em;
+    height: 1.1em;
+    overflow: visible;
+    color: var(--ink);
+    pointer-events: none;
+  }
+
+  .ink-ticks path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.4;
+    stroke-linecap: round;
+  }
 
   /* Typography tokens. Latin gets negative tracking; Chinese never does. */
   .type-display {
@@ -301,10 +379,6 @@
     font-size: clamp(2.125rem, 1.2rem + 3.6vw, 4.375rem);
     font-weight: 800;
     line-height: 1.02;
-  }
-
-  .type-display:lang(en) {
-    letter-spacing: -0.035em;
   }
 
   .type-display:lang(zh) {
@@ -319,10 +393,6 @@
     line-height: 1.1;
   }
 
-  .type-h2:lang(en) {
-    letter-spacing: -0.03em;
-  }
-
   .type-h2:lang(zh) {
     line-height: 1.25;
   }
@@ -332,10 +402,6 @@
     font-size: 1.5rem;
     font-weight: 750;
     line-height: 1.15;
-  }
-
-  .type-h3:lang(en) {
-    letter-spacing: -0.025em;
   }
 
   .type-h3:lang(zh) {
@@ -349,8 +415,10 @@
     line-height: 1.3;
   }
 
+  /* Patrick Hand reads small next to the body face; Latin titles step up. */
   .type-card-title:lang(en) {
-    letter-spacing: -0.01em;
+    font-size: 1.125rem;
+    line-height: 1.2;
   }
 
   .type-mono {
@@ -369,16 +437,12 @@
     line-height: 1.75;
   }
 
-  /* Hero wash: tint at the top-left fading into the page. */
+  /* Hero: flat paper; the page's paper texture shows through. */
   .hero-wash {
-    background: radial-gradient(
-      900px 440px at 8% 0%,
-      var(--tint),
-      var(--background) 64%
-    );
+    background: transparent;
   }
 
-  /* Hand-drawn leaf underline under the hero's emphasis word. */
+  /* Hand-drawn underline under the hero's emphasis word. */
   .hl-underline {
     position: relative;
     display: inline-block;
@@ -405,7 +469,8 @@
   /* Illustration plate (DESIGN.md art-plate). */
   .art-plate {
     position: relative;
-    border-radius: var(--nk-radius-plate);
+    border: var(--ink-width) solid var(--ink);
+    border-radius: var(--hand-radius-plate);
     background: var(--plate);
     box-shadow: var(--clay-shadow-plate);
   }
@@ -415,6 +480,7 @@
     display: block;
     flex: none;
     overflow: hidden;
+    border: var(--ink-width-thin) solid var(--ink);
     border-radius: 9999px;
     background: var(--plate);
   }
@@ -428,22 +494,20 @@
   }
 
   .art-avatar--ringed {
-    box-shadow:
-      0 0 0 4px var(--background),
-      0 0 0 5px var(--border);
+    box-shadow: var(--clay-shadow-btn);
   }
 
   .speech-bubble {
-    border: 1px solid var(--border);
-    border-radius: 16px 16px 16px 4px;
+    border: var(--ink-width) solid var(--ink);
+    border-radius: 18px 15px 17px 4px / 15px 18px 16px 4px;
     background: var(--card);
     box-shadow: var(--clay-shadow-pop);
   }
 
   /* Search bar (DESIGN.md search-bar). */
   .search-bar {
-    border: 1px solid var(--border);
-    border-radius: 18px;
+    border: var(--ink-width) solid var(--ink);
+    border-radius: 20px 16px 21px 15px / 16px 21px 15px 20px;
     background: var(--card);
     box-shadow: var(--clay-shadow-glow);
     transition:
@@ -452,9 +516,7 @@
   }
 
   .search-bar:focus-within {
-    border-color: var(--tint-border);
-    outline: 4px solid var(--tint);
-    outline-offset: 0;
+    border-color: var(--link);
   }
 
   /* Keyboard focus still gets the contract ring on top of the tint halo. */
@@ -471,21 +533,27 @@
     gap: 0.5rem;
     height: 36px;
     padding: 0 0.875rem 0 0.3125rem;
-    border: 1px solid var(--border);
-    border-radius: 9999px;
+    border: var(--ink-width) solid var(--ink);
+    border-radius: var(--hand-radius-pill);
     background: var(--card);
-    color: var(--muted-foreground);
+    color: var(--foreground);
+    font-family: var(--font-app-hand);
     font-size: 13.5px;
     font-weight: 500;
     white-space: nowrap;
+    box-shadow: var(--clay-shadow-btn);
     transition:
       border-color 200ms ease,
       color 200ms ease,
       background-color 200ms ease;
   }
 
+  .scenario-chip:lang(en) {
+    font-size: 15px;
+  }
+
   a.scenario-chip:hover {
-    border-color: var(--tint-border);
+    background: var(--hover);
     color: var(--foreground);
   }
 
@@ -496,7 +564,7 @@
   }
 
   .scenario-chip--selected {
-    border-color: var(--accent);
+    border-color: var(--ink);
     background: var(--accent);
     color: var(--accent-foreground);
   }
@@ -508,7 +576,7 @@
     display: flex;
     min-width: 0;
     flex-direction: column;
-    border: 1px solid var(--border);
+    border: var(--ink-width) solid var(--ink);
     background: var(--card);
     color: var(--card-foreground);
     box-shadow: var(--clay-shadow-card);
@@ -522,29 +590,47 @@
   .skill-card {
     min-height: 176px;
     padding: 18px 18px 14px;
-    border-radius: var(--nk-radius-lg);
+    border-radius: var(--hand-radius-lg);
   }
 
   .featured-card {
     padding: 26px;
-    border-radius: var(--nk-radius-xl);
+    border-radius: var(--hand-radius-xl);
   }
 
   .featured-card--lead {
-    border-color: var(--tint-border);
     background: var(--tint);
   }
 
+  /* Hover keeps the ink; the card lifts and its wash spreads. */
   .skill-card:hover {
-    border-color: var(--tint-border);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -2px, 0);
   }
 
   .featured-card:hover {
-    border-color: var(--tint-border);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -3px, 0);
+  }
+
+  /* Featured card number corner (DESIGN.md featured-number): mustard, hand-lettered. */
+  .featured-number {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 10px;
+    border: var(--ink-width-thin) solid var(--ink);
+    border-radius: var(--hand-radius-pill);
+    background: var(--mustard);
+    color: var(--mustard-foreground);
+    font-family: var(--font-app-hand);
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .featured-number:lang(en) {
+    font-size: 15px;
   }
 
   /* Tags (DESIGN.md tag): first tag accent, the rest neutral. */
@@ -553,13 +639,21 @@
     align-items: center;
     height: 22px;
     padding: 0 8px;
-    border-radius: var(--nk-radius-xs);
-    background: var(--accent);
-    color: var(--accent-foreground);
+    border: var(--ink-width-thin) solid var(--ink);
+    border-radius: var(--hand-radius-pill);
+    background: var(--mustard);
+    color: var(--mustard-foreground);
+    font-family: var(--font-app-hand);
     font-size: 11.5px;
     font-weight: 600;
     line-height: 1;
     white-space: nowrap;
+  }
+
+  /* Hand lettering is not synthesised bold at tag size; Latin steps up. */
+  .nk-tag:lang(en) {
+    font-size: 13px;
+    font-weight: 400;
   }
 
   .nk-tag--neutral {
@@ -575,8 +669,8 @@
     gap: 0.625rem;
     height: 46px;
     padding: 0 6px 0 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--nk-radius-md);
+    border: var(--ink-width) solid var(--ink);
+    border-radius: var(--hand-radius-md);
     background: var(--background);
     color: var(--muted-foreground);
   }
@@ -598,8 +692,9 @@
     gap: 0.375rem;
     height: 34px;
     padding: 0 0.75rem;
-    border: 1px solid transparent;
-    border-radius: 9px;
+    border: var(--ink-width) solid var(--ink);
+    border-radius: 10px 8px 10px 7px / 8px 10px 7px 10px;
+    font-family: var(--font-app-hand);
     font-size: 13px;
     font-weight: 500;
     line-height: 1;
@@ -619,14 +714,12 @@
 
   /* Solid copy is a primary button: pill, and the same hover veil. */
   .copy-button--solid {
-    border-color: var(--primary);
-    border-radius: 9999px;
+    border-radius: var(--hand-radius-pill);
     background: var(--primary);
     color: var(--primary-foreground);
   }
 
   .copy-button--solid:hover {
-    border-color: transparent;
     background-image: linear-gradient(
       var(--primary-hover-veil),
       var(--primary-hover-veil)
@@ -636,14 +729,17 @@
   .copy-button--outline {
     height: 30px;
     padding: 0 0.625rem;
-    border-color: var(--border);
     background: var(--card);
-    color: var(--muted-foreground);
+    color: var(--foreground);
     font-size: 12px;
   }
 
+  .copy-button:lang(en) {
+    font-size: 14px;
+  }
+
   .copy-button--outline:hover {
-    border-color: var(--tint-border);
+    background: var(--hover);
     color: var(--link);
   }
 
@@ -653,29 +749,26 @@
     color: var(--danger-text);
   }
 
-  /* Section kicker in leaf (Latin mono caps; Chinese bold sans, see .kicker). */
+  /* Section kicker in the accent (Latin mono caps; Chinese bold sans, see .kicker). */
   .kicker-leaf {
     color: var(--link);
   }
 
   /* Footer on the warm paper plate. */
   .site-footer-plate {
-    border-top: 1px solid var(--plate-border);
+    border-top: var(--ink-width) solid var(--ink);
     background: var(--plate);
     color: var(--foreground);
   }
 
   /*
    * Dark mode keeps one family of surfaces: the cool neutral steps. Warm
-   * paper (plate) and the dark leaf wash (tint) read as brown and olive next
-   * to it, so plates, the footer and the lead card sit on neutral steps and
-   * keep the accent only in their borders.
+   * paper (plate) and tint read as brown next to it, so plates, the footer
+   * and the lead card sit on neutral steps; the light cream --ink outlines
+   * carry the drawing.
    */
   .dark .art-plate {
     background: var(--card);
-    box-shadow:
-      0 0 0 10px var(--card),
-      0 0 0 11px var(--border);
   }
 
   .dark .art-avatar {
@@ -683,7 +776,6 @@
   }
 
   .dark .site-footer-plate {
-    border-top-color: var(--border);
     background: var(--background);
   }
 
@@ -743,7 +835,9 @@
     padding-bottom: clamp(2rem, 3.6vw, 3rem);
   }
 
+  /* The sticky header carries the page's paper so it does not read as a band. */
   .site-header-surface {
+    background-image: var(--paper-texture);
     box-shadow: none;
     transition:
       box-shadow 200ms ease,
@@ -760,9 +854,9 @@
     width: 2.86rem;
     min-width: 2.86rem;
     justify-content: center;
-    border-radius: 9999px;
+    border-radius: var(--hand-radius-pill);
     padding: 0;
-    border-color: var(--input);
+    border-color: var(--ink);
     background: var(--card);
     box-shadow: var(--clay-shadow-btn);
   }
@@ -802,7 +896,7 @@
     display: flex;
     height: 100%;
     flex-direction: column;
-    border-left: 1px solid var(--border);
+    border-left: var(--ink-width) solid var(--ink);
     background: var(--card);
     box-shadow: var(--shadow-clay-floating);
   }
@@ -812,7 +906,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.75rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--ink-width) solid var(--ink);
     padding: 1rem 1rem 0.9rem;
   }
 
@@ -833,7 +927,7 @@
     min-height: 48px;
     width: 100%;
     justify-content: flex-start;
-    border-radius: 1rem;
+    border-radius: var(--hand-radius-md);
     padding-inline: 1rem;
     font-size: 0.875rem;
   }
@@ -849,7 +943,7 @@
     width: 100%;
     justify-content: flex-start;
     gap: 0.6rem;
-    border-radius: 1rem;
+    border-radius: var(--hand-radius-md);
     padding-inline: 1rem;
     font-size: 0.875rem;
   }
@@ -858,8 +952,8 @@
     height: 2.75rem;
     width: 2.75rem;
     min-width: 2.75rem;
-    border-radius: 9999px;
-    border-color: var(--input);
+    border-radius: var(--hand-radius-pill);
+    border-color: var(--ink);
     box-shadow: var(--clay-shadow-btn);
   }
 
@@ -920,7 +1014,14 @@
    * input) holds focus; `.clay-focus-link-ring` only reacts to a link inside,
    * so a card's own buttons keep a single ring.
    */
-  .clay-focus-ring:is(.clay-button, .clay-surface, .border):focus-visible,
+  .clay-focus-ring:is(
+      .clay-button,
+      .clay-surface,
+      .border,
+      .ink-box,
+      .scenario-chip,
+      .copy-button
+    ):focus-visible,
   .clay-focus-within-ring:has(:focus-visible),
   .clay-focus-link-ring:has(a:focus-visible) {
     border-color: var(--ring);
@@ -992,5 +1093,10 @@
     animation-iteration-count: 1;
     transition-duration: 0.01ms;
     scroll-behavior: auto;
+  }
+
+  /* No squash: pressing only changes the fill. */
+  .clay-button:active {
+    transform: none;
   }
 }

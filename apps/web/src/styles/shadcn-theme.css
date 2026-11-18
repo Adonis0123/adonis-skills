@@ -32,64 +32,76 @@
     transparent
   );
 
-  --clay-surface-bg: var(--card);
-  --clay-radius-card: var(--nk-radius-lg);
-  --clay-radius-card-lg: var(--nk-radius-xl);
-  --clay-radius-button: 9999px;
+  /*
+   * Rubber-hose ink (DESIGN.md Components "ink-outline"): every outline is a
+   * 2px --ink line; tags and inline marks use the thin width.
+   */
+  --ink-width: 2px;
+  --ink-width-thin: 1.5px;
 
   /*
-   * DESIGN.md "Elevation & Depth": resting cards carry a 1px whisper of ink
-   * (none in dark); the primary button and the search bar glow with the
-   * design-system --shadow-accent (none in dark); card hovers and popovers
-   * lift on a neutral --shadow-tint. Never a hard `0 Npx 0` line.
+   * Hand-drawn corners: each radius token as a slightly uneven elliptical
+   * radius (horizontal / vertical per corner differ by 2-4px, as PaperCSS
+   * does), quiet enough that 30+ catalog cards still line up. The pill uses
+   * large unequal values; the browser scales them down together, so it stays
+   * a pill with a slight wobble at any height.
    */
-  --clay-shadow-card: 0 1px 2px
-    color-mix(in oklab, var(--shadow-tint) 5%, transparent);
-  --clay-shadow-card-hover:
-    0 18px 36px -18px color-mix(in oklab, var(--shadow-tint) 18%, transparent),
-    0 2px 6px color-mix(in oklab, var(--shadow-tint) 4%, transparent);
-  --clay-shadow-btn: var(--shadow-accent);
-  --clay-shadow-btn-hover: var(--shadow-accent);
-  --clay-shadow-glow: var(--shadow-accent);
-  --clay-shadow-pop: 0 18px 40px -18px
-    color-mix(in oklab, var(--shadow-tint) 24%, transparent);
-  /* Art plate: two flush rings (plate, then plate-border) plus a soft shadow below. */
-  --clay-shadow-plate:
-    0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border),
-    0 40px 80px -40px color-mix(in oklab, var(--shadow-tint) 18%, transparent);
-  /* Surfaces only (not buttons): a blurred top glow, never a crisp 1px line. */
-  --clay-highlight-top: inset 0 3px 6px -3px
-    color-mix(in oklab, var(--highlight-tint) 70%, transparent);
+  --hand-radius-xs: 7px 5px 6px 5px / 5px 7px 5px 6px;
+  --hand-radius-sm: 11px 9px 12px 8px / 9px 12px 8px 11px;
+  --hand-radius-md: 13px 11px 14px 10px / 11px 14px 10px 13px;
+  --hand-radius-lg: 18px 14px 19px 13px / 14px 18px 13px 19px;
+  --hand-radius-xl: 24px 20px 26px 19px / 20px 25px 19px 24px;
+  --hand-radius-plate: 31px 26px 32px 25px / 26px 31px 25px 32px;
+  --hand-radius-pill: 999px 880px 960px 900px / 900px 980px 880px 999px;
+
+  --clay-surface-bg: var(--card);
+  --clay-radius-card: var(--hand-radius-lg);
+  --clay-radius-card-lg: var(--hand-radius-xl);
+  --clay-radius-button: var(--hand-radius-pill);
+
+  /*
+   * DESIGN.md "Elevation & Depth": raised things sit on a dusty blue
+   * watercolour wash (--wash), blurred and offset down. Never a zero-blur
+   * `0 Npx 0` line. --wash is transparent in dark mode, which turns them off.
+   */
+  --clay-shadow-card: 0 9px 14px -8px var(--wash);
+  --clay-shadow-card-hover: 0 15px 20px -10px var(--wash);
+  --clay-shadow-btn: 0 7px 10px -5px var(--wash);
+  --clay-shadow-btn-hover: 0 9px 12px -5px var(--wash);
+  --clay-shadow-glow: 0 10px 16px -9px var(--wash);
+  --clay-shadow-pop: 0 18px 28px -14px var(--wash);
+  --clay-shadow-plate: 0 18px 26px -14px var(--wash);
+  /* Flat watercolour: no inner glow on surfaces. */
+  --clay-highlight-top: 0 0 transparent;
 
   --shadow-clay-raised: var(--clay-shadow-card);
-  --shadow-clay-inset:
-    var(--clay-highlight-top),
-    inset 0 2px 6px color-mix(in oklab, var(--shadow-tint) 10%, transparent);
+  --shadow-clay-inset: var(--clay-highlight-top);
   --shadow-clay-floating: var(--clay-shadow-pop);
 
   --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
-  /* Bricolage has no CJK glyphs: Chinese falls through to Noto Sans SC. */
-  --font-app-heading:
-    "Bricolage Grotesque Variable", "Noto Sans SC Variable", "PingFang SC",
-    sans-serif;
-  /* Wordmark only. */
-  --font-app-display: "Shantell Sans", var(--font-app-sans);
+  /*
+   * Hand lettering (Patrick Hand, one weight) for Latin headings, nav,
+   * buttons, chips, card titles and the wordmark. It has no CJK glyphs:
+   * Chinese falls through to Noto Sans SC at the element's own weight.
+   */
+  --font-app-hand:
+    "Patrick Hand", "Noto Sans SC Variable", "PingFang SC", sans-serif;
+  --font-app-heading: var(--font-app-hand);
+  --font-app-display: var(--font-app-hand);
   /* CJK fallback keeps Chinese labels in mono slots from rendering as tofu. */
   --font-app-mono:
     "IBM Plex Mono", "SFMono-Regular", "Noto Sans SC Variable", monospace;
 }
 
-/* Dark: depth comes from switching steps; shadows almost disappear. */
+/*
+ * Dark: --wash is transparent, so the wash shadows are already off; depth
+ * comes from switching steps and the light cream --ink outlines. Popovers
+ * keep a soft neutral shadow so menus separate from the page.
+ */
 .dark,
 :root[data-theme="dark"] {
-  --clay-shadow-card: none;
-  --clay-shadow-card-hover: 0 18px 40px -20px
-    color-mix(in oklab, var(--shadow-tint) 60%, transparent);
   --clay-shadow-pop: 0 18px 40px -16px
     color-mix(in oklab, var(--shadow-tint) 60%, transparent);
-  --clay-shadow-plate: 0 0 0 10px var(--plate), 0 0 0 11px var(--plate-border);
-  --clay-highlight-top: inset 0 3px 6px -3px
-    color-mix(in oklab, var(--highlight-tint) 7%, transparent);
 }
 
 @theme inline {
@@ -133,6 +145,11 @@
   --color-tint-border: var(--tint-border);
   --color-plate: var(--plate);
   --color-plate-border: var(--plate-border);
+  --color-ink: var(--ink);
+  --color-wash: var(--wash);
+  --color-mustard: var(--mustard);
+  --color-mustard-foreground: var(--mustard-foreground);
+  --color-tomato: var(--tomato);
   /* Site helpers generated next to the roles (see theme-roles.css). */
   --color-ring-halo: var(--ring-halo);
   --color-overlay: var(--overlay);
@@ -164,6 +181,7 @@
   --font-sans: var(--font-app-sans);
   --font-heading: var(--font-app-heading);
   --font-display: var(--font-app-display);
+  --font-hand: var(--font-app-hand);
   --font-mono: var(--font-app-mono);
 }
 

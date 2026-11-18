@@ -9,11 +9,7 @@ interface SkillShowcaseProps {
 export function SkillShowcase({ showcase }: SkillShowcaseProps) {
   return (
     <section aria-labelledby="skill-showcase-title" className="grid gap-4">
-      <ClaySurface
-        tone="blue"
-        elevation="inset"
-        className="rounded-[1.1rem] p-5 md:p-6"
-      >
+      <ClaySurface tone="blue" elevation="inset" className="p-5 md:p-6">
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)] lg:items-start">
           <div>
             <ClayBadge
@@ -40,7 +36,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
             {showcase.hero.keyMoments.map((moment, index) => (
               <li
                 key={`${moment}-${index}`}
-                className="flex gap-3 rounded-xl border border-border bg-background p-3"
+                className="ink-box ink-box--md flex gap-3 bg-background p-3"
               >
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-accent font-mono text-xs font-semibold text-link">
                   {index + 1}
@@ -60,7 +56,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
             key={section.id}
             tone="base"
             elevation="raised"
-            className="rounded-[1.1rem] p-5 md:p-6"
+            className="p-5 md:p-6"
           >
             <div className="mb-4 flex items-start gap-3">
               <ClayBadge
@@ -88,7 +84,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
                   <ClaySurface
                     tone={message.role === "user" ? "cream" : "muted"}
                     elevation="inset"
-                    className="rounded-xl p-4"
+                    className="[border-radius:var(--hand-radius-md)] p-4"
                   >
                     <p className="mb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-clay-muted">
                       {message.role === "user" ? "User request" : "Audit agent"}
@@ -101,7 +97,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
                   {message.toolCalls?.map((toolCall) => (
                     <div
                       key={`${section.id}-${toolCall.name}`}
-                      className="rounded-xl border border-input bg-accent p-3.5"
+                      className="ink-box ink-box--md bg-accent p-3.5"
                     >
                       <div className="flex flex-wrap items-center gap-2">
                         <ClayBadge

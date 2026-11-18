@@ -48,7 +48,7 @@ export const SheetContent = React.forwardRef<
   <SheetPrimitive.Content
     ref={ref}
     className={cx(
-      "fixed z-50 flex flex-col gap-4 border border-border bg-card text-card-foreground shadow-clay-floating outline-none",
+      "fixed z-50 flex flex-col gap-4 border-ink border-(length:--ink-width) bg-card text-card-foreground shadow-clay-floating outline-none",
       sideClassMap[side],
       className,
     )}

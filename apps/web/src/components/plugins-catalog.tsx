@@ -32,10 +32,10 @@ interface PluginsCatalogProps {
 
 const chipClass = (selected: boolean) =>
   cx(
-    "clay-focus-ring inline-flex h-9 items-center gap-2 rounded-full border px-3.5 text-[13.5px] font-medium transition-colors pointer-coarse:h-10",
+    "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-9 items-center gap-2 px-3.5 text-[13.5px] font-medium transition-colors pointer-coarse:h-10",
     selected
-      ? "border-accent bg-accent text-accent-foreground"
-      : "border-border bg-card text-muted-foreground hover:border-tint-border hover:text-foreground",
+      ? "bg-accent text-accent-foreground"
+      : "bg-card text-foreground hover:bg-hover",
   );
 
 /**
@@ -75,7 +75,7 @@ export function PluginsCatalog({ plugins, marketplace }: PluginsCatalogProps) {
     <>
       <section
         aria-labelledby="install"
-        className="rounded-[22px] border border-tint-border bg-tint p-5 md:p-7 dark:bg-card"
+        className="ink-box ink-box--xl ink-raised bg-tint p-5 md:p-7 dark:bg-card"
       >
         <div className="mb-4 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
           <div>

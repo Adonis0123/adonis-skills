@@ -83,7 +83,7 @@ export function CommandBlock({
     // The copy button sits in its own column outside the scroll area, so text never runs under it.
     <div
       className={cx(
-        "flex w-0 min-w-full items-start rounded-[12px] border border-border bg-background text-foreground",
+        "ink-box ink-box--md flex w-0 min-w-full items-start bg-background text-foreground",
         className,
       )}
     >
@@ -240,7 +240,7 @@ export function CopyTextBlock({
   return (
     <div
       className={cx(
-        "group relative rounded-[12px] border border-border bg-background text-foreground transition-colors duration-200 hover:border-tint-border",
+        "group ink-box ink-box--md relative bg-background text-foreground transition-colors duration-200",
         failed && "border-danger-text hover:border-danger-text",
         className,
       )}
@@ -267,12 +267,12 @@ export function CopyTextBlock({
       <span
         aria-hidden
         className={cx(
-          "pointer-events-none absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 rounded-full border bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
+          "ink-box ink-box--pill hand-label pointer-events-none absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
           copied
-            ? "border-tint-border text-link"
+            ? "text-link"
             : failed
               ? "border-danger-text text-danger-text"
-              : "border-input text-muted-foreground group-hover:border-tint-border group-hover:text-link",
+              : "text-foreground group-hover:text-link",
         )}
       >
         <IconSwap swapKey={status} className="size-3.5">

@@ -163,7 +163,7 @@ export function InstallTabs<Id extends string>({
         // Four or more tabs wrap to two rows when the container (not the viewport) is narrow,
         // so a sidebar install card never truncates product names.
         className={cx(
-          "relative grid gap-1 rounded-[12px] border border-border bg-muted p-1",
+          "ink-box ink-box--md relative grid gap-1 bg-muted p-1",
           tabs.length > 3 ? "grid-cols-2 @lg:grid-cols-4" : "grid-cols-3",
         )}
         onKeyDown={onKeyDown}
@@ -173,7 +173,7 @@ export function InstallTabs<Id extends string>({
             aria-hidden
             className={cx(
               // Neutral pill: the page keeps its one accent for the primary button and tags.
-              "absolute top-0 left-0 rounded-[10px] border border-input bg-card shadow-clay-raised motion-reduce:transition-none",
+              "ink-box ink-box--sm absolute top-0 left-0 bg-card shadow-clay-raised motion-reduce:transition-none",
               animate &&
                 "transition-[transform,width,height] duration-200 ease-out",
             )}
@@ -204,12 +204,12 @@ export function InstallTabs<Id extends string>({
                 selected
                   ? cx(
                       "text-foreground",
-                      !indicator && "border border-input bg-card",
+                      !indicator && "ink-box ink-box--sm bg-card",
                     )
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <span className="max-w-full truncate text-[13px] font-bold sm:text-sm">
+              <span className="hand-label max-w-full truncate text-[13px] font-bold sm:text-sm">
                 {tab.label}
               </span>
               {tab.subtitle && (

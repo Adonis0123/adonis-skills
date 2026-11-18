@@ -171,7 +171,7 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
           <h2 id="plugin-carries" className="type-h3">
             <Trans id="plugins.carry.heading">What a plugin can carry</Trans>
           </h2>
-          <ul className="mt-5 grid gap-px overflow-hidden rounded-[16px] border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
+          <ul className="ink-box ink-raised mt-5 grid gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-3">
             {capabilities.map((item) => (
               <li key={item.id} className="flex flex-col bg-card p-4 md:p-5">
                 <h3 className="type-card-title">{item.name}</h3>
@@ -234,7 +234,7 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
               A skill on its own, or a plugin
             </Trans>
           </h2>
-          <div className="mt-5 overflow-x-auto rounded-[16px] border border-border bg-card">
+          <div className="ink-box ink-raised mt-5 overflow-x-auto bg-card">
             <table className="w-full border-collapse text-[13.5px] leading-[1.6] md:text-[14px] [&_code]:[overflow-wrap:anywhere] [&_tr:last-child>*]:border-b-0">
               <thead className="bg-muted text-foreground">
                 <tr>
@@ -335,13 +335,13 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
             marketplace={marketplace}
           />
         ) : (
-          <p className="rounded-[22px] border border-dashed border-border px-4 py-12 text-center text-muted-foreground">
+          <p className="ink-box ink-box--xl ink-box--dashed px-4 py-12 text-center text-muted-foreground">
             <Trans id="plugins.empty">No plugins are published yet.</Trans>
           </p>
         )}
       </div>
 
-      <aside className="mt-12 flex flex-col gap-2 rounded-[16px] border border-border bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <aside className="ink-box ink-raised mt-12 flex flex-col gap-2 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <p className="text-[14px] leading-[1.6] text-muted-foreground">
           <Trans id="plugins.alsoSee">
             Also worth a look:{" "}

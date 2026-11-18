@@ -44,10 +44,10 @@ const EMPTY_ILLUSTRATION = "group-review.webp";
 
 const sidebarItemClass = (selected: boolean) =>
   cx(
-    "scenario-chip clay-focus-ring border lg:h-auto lg:min-h-10 lg:w-full lg:gap-2.5 lg:rounded-[10px] lg:py-1.5 lg:pr-2.5 lg:pl-1.5 lg:whitespace-normal",
+    "scenario-chip clay-focus-ring lg:h-auto lg:min-h-10 lg:w-full lg:gap-2.5 lg:[border-radius:var(--hand-radius-sm)] lg:py-1.5 lg:pr-2.5 lg:pl-1.5 lg:whitespace-normal",
     selected
-      ? "scenario-chip--selected lg:border-transparent"
-      : "lg:border-transparent lg:bg-transparent lg:hover:bg-muted",
+      ? "scenario-chip--selected"
+      : "lg:border-transparent lg:bg-transparent lg:shadow-none lg:hover:bg-muted",
   );
 
 function GroupAvatar({ group, size }: { group: CatalogGroup; size: number }) {
@@ -310,10 +310,10 @@ export function SkillsBrowser({
                         aria-pressed={selected}
                         onClick={() => toggleTag(tag)}
                         className={cx(
-                          "clay-focus-ring inline-flex h-8 items-center gap-1 rounded-full border px-3 text-[13px] font-medium transition-colors pointer-coarse:h-10",
+                          "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-8 items-center gap-1 px-3 text-[13px] font-medium transition-colors pointer-coarse:h-10",
                           selected
-                            ? "border-accent bg-accent text-accent-foreground"
-                            : "border-border bg-card text-muted-foreground hover:border-border-strong hover:text-foreground",
+                            ? "bg-accent text-accent-foreground"
+                            : "bg-card text-foreground hover:bg-hover",
                         )}
                       >
                         {selected && (
@@ -336,7 +336,7 @@ export function SkillsBrowser({
                     onChange={(event) =>
                       setSort(event.target.value as CatalogSort)
                     }
-                    className="clay-focus-ring h-9 appearance-none rounded-[10px] border border-input bg-card pr-8 pl-3 text-sm font-medium text-foreground"
+                    className="clay-focus-ring ink-box ink-box--sm h-9 appearance-none bg-card pr-8 pl-3 text-sm font-medium text-foreground"
                   >
                     {CATALOG_SORTS.map((sort) => (
                       <option key={sort} value={sort}>
@@ -353,7 +353,7 @@ export function SkillsBrowser({
             </div>
 
             {activeGroup && resultCount > 0 && (
-              <div className="mb-5 flex items-start gap-4 rounded-[16px] border border-border bg-card p-4 md:p-5">
+              <div className="ink-box ink-raised mb-5 flex items-start gap-4 bg-card p-4 md:p-5">
                 <span className="art-avatar art-avatar--ringed size-14 shrink-0">
                   <Image
                     src={getIllustrationSrc(activeGroup.illustration)}
@@ -373,7 +373,7 @@ export function SkillsBrowser({
             )}
 
             {resultCount === 0 ? (
-              <div className="flex flex-col items-center rounded-[22px] border border-dashed border-border px-4 pt-12 pb-10 text-center">
+              <div className="ink-box ink-box--xl ink-box--dashed flex flex-col items-center px-4 pt-12 pb-10 text-center">
                 <span className="art-avatar mb-5 size-[120px]">
                   <Image
                     src={getIllustrationSrc(EMPTY_ILLUSTRATION)}

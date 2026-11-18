@@ -61,7 +61,7 @@ function ManageDisclosure({
   children: ReactNode;
 }) {
   return (
-    <details className="group/manage mt-4 rounded-[14px] border border-border bg-card">
+    <details className="group/manage ink-box ink-box--md mt-4 bg-card">
       <summary className="clay-focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-[14px] px-4 py-3 text-sm font-medium text-foreground transition-colors hover:text-link [&::-webkit-details-marker]:hidden">
         <span>{summary}</span>
         <span
@@ -95,7 +95,7 @@ export function PluginInstallPanel({
   ];
 
   const nothingSelected = (
-    <p className="rounded-[12px] border border-dashed border-border px-4 py-5 text-center text-sm text-muted-foreground">
+    <p className="ink-box ink-box--md ink-box--dashed px-4 py-5 text-center text-sm text-muted-foreground">
       <Trans id="pluginInstall.empty">
         Tick at least one plugin below to get a command.
       </Trans>
@@ -197,7 +197,7 @@ export function PluginInstallPanel({
         .join(", ");
       if (!command || !remove)
         return (
-          <p className="rounded-[12px] border border-dashed border-border px-4 py-5 text-center text-sm text-muted-foreground">
+          <p className="ink-box ink-box--md ink-box--dashed px-4 py-5 text-center text-sm text-muted-foreground">
             <Trans id="pluginInstall.codex.none">
               The selected plugins work in Claude Code only.
             </Trans>
@@ -259,7 +259,7 @@ export function PluginInstallPanel({
     if (tab === "grok") {
       // TODO(plugin-cmds): add the Grok Build install command once it has been tested.
       return (
-        <p className="rounded-[12px] border border-dashed border-border px-4 py-5 text-center text-sm text-muted-foreground">
+        <p className="ink-box ink-box--md ink-box--dashed px-4 py-5 text-center text-sm text-muted-foreground">
           <Trans id="pluginInstall.grok.soon">
             Coming soon. Grok Build install steps are still being tested.
           </Trans>

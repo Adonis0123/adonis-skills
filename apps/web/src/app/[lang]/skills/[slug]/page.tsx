@@ -143,7 +143,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
 
       <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
         <SectionReveal delay={60} className="min-w-0">
-          <header className="h-full rounded-[22px] border border-border bg-card p-6 md:p-9">
+          <header className="ink-box ink-box--xl ink-raised h-full bg-card p-6 md:p-9">
             <div className="flex items-start justify-between gap-5">
               <div className="min-w-0">
                 {group && (
@@ -251,7 +251,7 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
         <SectionReveal delay={100} className="min-w-0">
           <section
             aria-labelledby="install"
-            className="h-full rounded-[22px] border border-tint-border bg-tint p-5 md:p-7 dark:bg-card"
+            className="ink-box ink-box--xl ink-raised h-full bg-tint p-5 md:p-7 dark:bg-card"
           >
             <p className="kicker kicker-leaf">
               <Trans id="skillDetail.install.kicker">Install</Trans>

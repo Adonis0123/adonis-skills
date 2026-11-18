@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LocaleLink } from "@/i18n/locale-link";
 
 const navLinkClass =
-  "clay-focus-ring inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+  "clay-focus-ring hand-label inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 
 export function SiteHeader() {
   const { brand, headerNav } = siteLayoutConfig;
@@ -29,7 +29,7 @@ export function SiteHeader() {
         <Trans id="siteHeader.skipToContent">Skip to content</Trans>
       </a>
       <HeaderScrollShadowObserver />
-      <div className="site-header-surface border-b border-border bg-background">
+      <div className="site-header-surface ink-rule-b bg-background">
         <div className="site-header-inner flex h-16 items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-7">
             <SiteBrand variant="header" brand={brand} priority />

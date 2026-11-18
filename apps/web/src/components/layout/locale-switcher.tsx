@@ -126,7 +126,7 @@ export function LocaleSwitcher({
               closedByPointerRef.current = false;
             }}
             className={cx(
-              "clay-focus-ring clay-button clay-button--secondary clay-button--sm group min-w-[132px] justify-between gap-2 rounded-full px-3 text-left text-xs md:text-sm",
+              "clay-focus-ring clay-button clay-button--secondary clay-button--sm group min-w-[132px] justify-between gap-2 px-3 text-left text-xs md:text-sm",
               "data-[state=open]:border-ring data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
               "disabled:cursor-not-allowed disabled:opacity-70",
               triggerClassName,

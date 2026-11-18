@@ -13,7 +13,7 @@ export default function NotFoundPage() {
         <ClaySurface
           tone="base"
           elevation="floating"
-          className="w-full rounded-[1.6rem] p-8 text-center md:p-12"
+          className="w-full [border-radius:var(--hand-radius-xl)] p-8 text-center md:p-12"
         >
           <p
             className="mb-3 font-heading text-5xl font-black text-link"

@@ -4,15 +4,10 @@ import type { SiteBrand as SiteBrandConfig } from "@/config/site-layout";
 import { cx } from "@/components/ui/utils";
 import { LocaleLink } from "@/i18n/locale-link";
 
-// Lowercase wordmark set in Shantell Sans 800, matching the brand's project wordmarks.
+// Lowercase wordmark hand-lettered in Patrick Hand (--font-app-display).
 function BrandWordmark({ className }: { className?: string }) {
   return (
-    <span
-      className={cx(
-        "font-display leading-none font-extrabold tracking-[-0.01em]",
-        className,
-      )}
-    >
+    <span className={cx("font-display leading-none font-extrabold", className)}>
       nika <span className="text-link">skills</span>
     </span>
   );

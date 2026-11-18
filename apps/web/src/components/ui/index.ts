@@ -1,8 +1,12 @@
-export { ClayBadge } from './clay-badge'
-export type { ClayBadgeProps, ClayBadgeTone } from './clay-badge'
+export { ClayBadge } from "./clay-badge";
+export type { ClayBadgeProps, ClayBadgeTone } from "./clay-badge";
 
-export { ClayButton } from './clay-button'
-export type { ClayButtonProps, ClayButtonSize, ClayButtonVariant } from './clay-button'
+export { ClayButton } from "./clay-button";
+export type {
+  ClayButtonProps,
+  ClayButtonSize,
+  ClayButtonVariant,
+} from "./clay-button";
 
 export {
   DropdownMenu,
@@ -13,7 +17,7 @@ export {
   DropdownMenuRadioItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from './dropdown-menu'
+} from "./dropdown-menu";
 
 export {
   Sheet,
@@ -24,7 +28,7 @@ export {
   SheetPortal,
   SheetTitle,
   SheetTrigger,
-} from './sheet'
+} from "./sheet";
 
 export {
   ClayCard,
@@ -33,8 +37,14 @@ export {
   ClayCardFooter,
   ClayCardHeader,
   ClayCardTitle,
-} from './clay-card'
-export type { ClayCardProps } from './clay-card'
+} from "./clay-card";
+export type { ClayCardProps } from "./clay-card";
 
-export { ClaySurface } from './clay-surface'
-export type { ClaySurfaceElevation, ClaySurfaceProps, ClaySurfaceTone } from './clay-surface'
+export { ClaySurface } from "./clay-surface";
+export type {
+  ClaySurfaceElevation,
+  ClaySurfaceProps,
+  ClaySurfaceTone,
+} from "./clay-surface";
+
+export { InkTicks } from "./ink-ticks";

@@ -190,7 +190,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
           delay={60}
           className="min-w-0 lg:col-start-1 lg:row-start-1"
         >
-          <header className="rounded-[22px] border border-border bg-card p-6 md:p-9">
+          <header className="ink-box ink-box--xl ink-raised bg-card p-6 md:p-9">
             <ul className="flex flex-wrap items-center gap-1.5">
               {plugin.category && (
                 <li>
@@ -238,7 +238,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
           {/* Sticky only when the viewport is tall enough to show the whole card. */}
           <div className="lg:[@media(min-height:880px)]:sticky lg:[@media(min-height:880px)]:top-24">
             <SectionReveal delay={100}>
-              <section className="grid gap-5 rounded-[22px] border border-tint-border bg-tint p-5 md:p-6 dark:bg-card">
+              <section className="ink-box ink-box--xl ink-raised grid gap-5 bg-tint p-5 md:p-6 dark:bg-card">
                 <h2 id="install" className="type-h3 scroll-mt-24">
                   <Trans id="pluginDetail.install.manageHeading">
                     Install and turn off
@@ -310,7 +310,7 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
           <SectionReveal delay={180} className="min-w-0 lg:col-start-1">
             <section
               aria-labelledby="why-this-plugin"
-              className="grid min-w-0 gap-8 rounded-[22px] border border-border bg-background p-6 md:p-8"
+              className="ink-box ink-box--xl grid min-w-0 gap-8 bg-background p-6 md:p-8"
             >
               <h2 id="why-this-plugin" className="type-h3 scroll-mt-24">
                 <Trans id="pluginDetail.whyThisPlugin">Why this plugin</Trans>
