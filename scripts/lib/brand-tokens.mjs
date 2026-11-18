@@ -49,6 +49,16 @@ export const CONTRAST_PAIRS = [
   ["subtle-foreground", "card", 3],
 ];
 
+// Pairs for roles a project adds in its theme.json (`designSystem.roles`),
+// checked only when the snapshot has the role. Kept apart from CONTRAST_PAIRS,
+// which must mirror check.py; check.py does not read project roles.
+export const PROJECT_CONTRAST_PAIRS = [
+  // Hand-inked outlines (Nika Skills rubber-hose look) are non-text: 3:1.
+  ["ink", "card", 3],
+  ["ink", "background", 3],
+  ["mustard-foreground", "mustard", 4.5],
+];
+
 // The design system has no roles for these, but the site's overlays, focus
 // halo and clay shadows need them. They are derived from design-system values
 // only, so switching the accent or the mode still moves them.
@@ -89,8 +99,10 @@ export function contrastRatio(a, b) {
 /**
  * Public subset of design-system/tokens.json for one accent theme: values
  * only. Notes and `source` fields stay in adonis-brand; they name private paths.
+ * `projectRoles` ({ light, dark }) is a project's registered exception from
+ * its theme.json `designSystem.roles`: it overrides or adds roles per mode.
  */
-export function pickDesignSystem(tokens, accent) {
+export function pickDesignSystem(tokens, accent, projectRoles) {
   const missing = ["scales", "functional", "themes", "roles"].filter(
     (key) => typeof tokens?.[key] !== "object" || tokens[key] === null,
   );
@@ -123,7 +135,14 @@ export function pickDesignSystem(tokens, accent) {
         ]),
       ),
     },
-    roles: tokens.roles,
+    roles: projectRoles
+      ? Object.fromEntries(
+          Object.entries(tokens.roles).map(([mode, roles]) => [
+            mode,
+            { ...roles, ...projectRoles[mode] },
+          ]),
+        )
+      : tokens.roles,
   };
 }
 
@@ -261,7 +280,10 @@ export function findBrandIssues(ds) {
     issues.push(...errors);
     if (missing.length > 0 || errors.length > 0) continue;
     const card = solidHex(roles.card);
-    for (const [fg, bg, need] of CONTRAST_PAIRS) {
+    const projectPairs = PROJECT_CONTRAST_PAIRS.filter(([fg, bg]) =>
+      [fg, ...[bg].flat()].every((role) => role in roles),
+    );
+    for (const [fg, bg, need] of [...CONTRAST_PAIRS, ...projectPairs]) {
       const [bgRole, baseRole] = Array.isArray(bg) ? bg : [bg, "card"];
       const base = baseRole === "card" ? card : solidHex(roles[baseRole]);
       const a = solidHex(roles[fg] ?? "");

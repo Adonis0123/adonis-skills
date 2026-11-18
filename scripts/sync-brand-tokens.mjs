@@ -89,7 +89,13 @@ async function copySnapshot(brandDir) {
     );
   // adonis-brand is private: publish only values (scales, the chosen theme,
   // role formulas). Notes and sources stay there; `source.commit` points back.
-  const designSystem = pickDesignSystem(await readJson(tokensPath), accent);
+  // A project may register an exception (e.g. warm neutrals) as role
+  // overrides in theme.json `designSystem.roles`; see design-system/README.md.
+  const designSystem = pickDesignSystem(
+    await readJson(tokensPath),
+    accent,
+    theme.designSystem.roles,
+  );
   await fs.mkdir(snapshotDir, { recursive: true });
   await fs.writeFile(
     files.designSystem,
