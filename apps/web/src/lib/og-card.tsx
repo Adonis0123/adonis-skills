@@ -3,63 +3,38 @@ import path from "node:path";
 import { ImageResponse } from "next/og";
 import { siteUrl } from "@/config/site-layout";
 import designSystem from "@/styles/brand/design-system.json";
+import { resolveLightRoleHex } from "@/lib/og-palette";
 
 export const OG_SIZE = { width: 1200, height: 630 };
 
-// ImageResponse cannot read CSS variables, so resolve light-mode roles from
-// the design-system snapshot (synced from adonis-brand) instead of copying hex
-// values here. Only plain scale references ("{neutral-2}") are supported.
-function roleHex(role: keyof typeof designSystem.roles.light): string {
-  const ref = /^\{(neutral|accent)-(\d+)\}$/.exec(
-    designSystem.roles.light[role],
-  );
-  const scale =
-    ref?.[1] === "accent"
-      ? designSystem.theme.scale.light
-      : designSystem.scales.neutral.light;
-  const hex = ref ? scale[Number(ref[2]) - 1] : undefined;
-  if (!hex)
-    throw new Error(
-      `Design-system role "${role}" is not a plain scale step in apps/web/src/styles/brand/design-system.json`,
-    );
-  return hex;
-}
-
-// Same roles as the page in light mode.
+// Same roles as the page in light mode (rubber-hose look): warm paper, brown
+// ink, the teal accent, and a 2px ink rule like the page's dividers.
 const palette = {
-  cream: roleHex("background"),
-  ink: roleHex("foreground"),
-  inkSoft: roleHex("muted-foreground"),
-  accent: roleHex("link"),
-  line: roleHex("border"),
+  paper: resolveLightRoleHex(designSystem, "background"),
+  ink: resolveLightRoleHex(designSystem, "foreground"),
+  inkSoft: resolveLightRoleHex(designSystem, "muted-foreground"),
+  accent: resolveLightRoleHex(designSystem, "link"),
+  line: resolveLightRoleHex(designSystem, "ink"),
 };
 
 // Paths are relative to apps/web, the working directory for `next build`.
 async function loadAssets() {
-  const fontFile = (weight: number) =>
+  // Patrick Hand, the site's hand lettering; it has one weight (400).
+  const [kiki, handFont] = await Promise.all([
+    readFile(path.join(process.cwd(), "public/brand/kiki-plate.svg"), "utf8"),
     readFile(
       path.join(
         process.cwd(),
-        `node_modules/@fontsource/shantell-sans/files/shantell-sans-latin-${weight}-normal.woff`,
+        "node_modules/@fontsource/patrick-hand/files/patrick-hand-latin-400-normal.woff",
       ),
-    );
-  const [kiki, boldFont, regularFont] = await Promise.all([
-    readFile(path.join(process.cwd(), "public/brand/kiki-plate.svg"), "utf8"),
-    fontFile(800),
-    fontFile(400),
+    ),
   ]);
   return {
     kikiDataUri: `data:image/svg+xml;base64,${Buffer.from(kiki).toString("base64")}`,
     fonts: [
       {
-        name: "Shantell Sans",
-        data: boldFont,
-        weight: 800 as const,
-        style: "normal" as const,
-      },
-      {
-        name: "Shantell Sans",
-        data: regularFont,
+        name: "Patrick Hand",
+        data: handFont,
         weight: 400 as const,
         style: "normal" as const,
       },
@@ -89,16 +64,16 @@ export async function renderOgCard({
         flexDirection: "column",
         justifyContent: "space-between",
         padding: "64px 72px",
-        background: palette.cream,
+        background: palette.paper,
         color: palette.ink,
-        fontFamily: "Shantell Sans",
+        fontFamily: "Patrick Hand",
         fontWeight: 400,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse renders plain <img> */}
         <img src={kikiDataUri} width={88} height={88} alt="" />
-        <div style={{ display: "flex", fontSize: 44, fontWeight: 800 }}>
+        <div style={{ display: "flex", fontSize: 48 }}>
           <span>nika&nbsp;</span>
           <span style={{ color: palette.accent }}>skills</span>
         </div>
@@ -107,10 +82,8 @@ export async function renderOgCard({
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <div
           style={{
-            fontSize: title.length > 28 ? 64 : 80,
-            fontWeight: 800,
+            fontSize: title.length > 28 ? 70 : 88,
             lineHeight: 1.08,
-            letterSpacing: -1.5,
           }}
         >
           {title}
