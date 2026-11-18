@@ -74,7 +74,7 @@ msgid "pluginDetail.back"
 msgstr "All plugins"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:210
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:213
 msgid "pluginDetail.claudeOnly"
 msgstr "Claude Code only"
 
@@ -84,7 +84,7 @@ msgid "pluginDetail.howItWorks"
 msgstr "How it works"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:240
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:243
 msgid "pluginDetail.install.manageHeading"
 msgstr "Install and turn off"
 
@@ -99,7 +99,7 @@ msgid "pluginDetail.scenario"
 msgstr "Scenario"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:268
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:276
 msgid "pluginDetail.sourceLink"
 msgstr "View source on GitHub"
 
@@ -114,7 +114,7 @@ msgid "pluginDetail.whatAgentSees"
 msgstr "What the agent sees when blocked"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:302
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:316
 msgid "pluginDetail.whyThisPlugin"
 msgstr "Why this plugin"
 

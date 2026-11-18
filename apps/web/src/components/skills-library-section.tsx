@@ -257,7 +257,7 @@ export function SkillsLibrarySection({
                 <Trans id="home.featured.title">
                   Three skills worth installing first
                 </Trans>
-                <InkTicks className="ml-1.5 size-[0.8em] -translate-y-[0.35em]" />
+                <InkTicks className="ml-1.5 hidden size-[0.8em] -translate-y-[0.35em] md:inline-block" />
               </h2>
             </div>
             <p className="text-muted-foreground">
@@ -308,7 +308,7 @@ export function SkillsLibrarySection({
                   Find a skill by what you&apos;re doing
                 </Trans>
               )}
-              <InkTicks className="ml-1.5 size-[0.8em] -translate-y-[0.35em]" />
+              <InkTicks className="ml-1.5 hidden size-[0.8em] -translate-y-[0.35em] md:inline-block" />
             </h2>
           </div>
 

@@ -74,7 +74,7 @@ msgid "pluginDetail.back"
 msgstr "全部插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:210
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:213
 msgid "pluginDetail.claudeOnly"
 msgstr "仅 Claude Code"
 
@@ -84,7 +84,7 @@ msgid "pluginDetail.howItWorks"
 msgstr "怎么做到的"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:240
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:243
 msgid "pluginDetail.install.manageHeading"
 msgstr "安装与停用"
 
@@ -99,7 +99,7 @@ msgid "pluginDetail.scenario"
 msgstr "遇到的场景"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:268
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:276
 msgid "pluginDetail.sourceLink"
 msgstr "在 GitHub 查看源码"
 
@@ -114,7 +114,7 @@ msgid "pluginDetail.whatAgentSees"
 msgstr "被拦下时 agent 会看到"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:302
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:316
 msgid "pluginDetail.whyThisPlugin"
 msgstr "为什么做这个 Plugin"
 

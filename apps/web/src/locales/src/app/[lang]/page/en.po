@@ -49,7 +49,7 @@ msgid "home.hero.eyebrow"
 msgstr "{skillsCount} skills · updated {updatedMonth}"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:162
+#: ../../src/app/%5Blang%5D/page.tsx:166
 msgid "home.hero.bubble"
 msgstr "<0>Hi, I'm Nika.</0> Kiki and I use these skills in our own repos every day before they land here."
 
@@ -59,32 +59,32 @@ msgid "home.hero.lede"
 msgstr "Battle-tested skills for delegating tasks, running independent code reviews, shipping clean Git history, and wiring up MCP tools. Pick a task, copy one line, and it runs in your agent."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:96
+#: ../../src/app/%5Blang%5D/page.tsx:100
 msgid "home.cta.browse"
 msgstr "Browse skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:192
+#: ../../src/app/%5Blang%5D/page.tsx:196
 msgid "home.install.lede"
 msgstr "Every skill works in Claude Code, Codex, Cursor and Hermes Agent. Install one, or the whole shelf."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:186
+#: ../../src/app/%5Blang%5D/page.tsx:190
 msgid "home.install.kicker"
 msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:149
+#: ../../src/app/%5Blang%5D/page.tsx:153
 msgid "home.hero.art.alt"
 msgstr "Nika in a teal hoodie waving while walking, alongside blue little Kiki in a purple wizard hat jumping with a star wand"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:189
+#: ../../src/app/%5Blang%5D/page.tsx:193
 msgid "home.install.headline"
 msgstr "One line, any agent."
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:115
+#: ../../src/app/%5Blang%5D/page.tsx:119
 msgid "home.cta.github"
 msgstr "Star on GitHub"
 
@@ -94,6 +94,6 @@ msgid "home.hero.headline"
 msgstr "Teach your coding agent how to <0>finish the job.</0>"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/page.tsx:126
+#: ../../src/app/%5Blang%5D/page.tsx:130
 msgid "home.hero.hostsLabel"
 msgstr "Works with"

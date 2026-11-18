@@ -10,7 +10,7 @@ typography:
     fontFamily: Patrick Hand, Noto Sans SC, sans-serif
     fontSize: 70px
     fontWeight: 800
-    lineHeight: 1.02
+    lineHeight: 1.24
   h2:
     fontFamily: Patrick Hand, Noto Sans SC, sans-serif
     fontSize: 34px
@@ -107,13 +107,13 @@ components:
     textColor: "{colors.mustard-foreground}"
     rounded: "{rounded.full}"
     height: 22px
-    padding: 0 8px
+    padding: 0 5px
   tag-neutral:
     backgroundColor: "{colors.dusty}"
     textColor: "{colors.dusty-foreground}"
     rounded: "{rounded.full}"
     height: 22px
-    padding: 0 8px
+    padding: 0 5px
   chip:
     backgroundColor: "{colors.card}"
     textColor: "{colors.foreground}"
@@ -208,6 +208,7 @@ components:
 - `font-family` 写成 “Patrick Hand, Noto Sans SC, sans-serif”：Patrick Hand 没有中文字形，中文自动落到 Noto Sans SC。
 - 手写字不加负字距；中文标题不加字距，中文正文行高不低于 1.7。
 - Patrick Hand 的 x-height 只有 0.467，Noto Sans SC 是 0.543。凡是用手写字的元素都设 `font-size-adjust: 0.55`：手写字放大约 1.18 倍，和旁边的中文、正文一样高；Noto 只变约 1%，中文字号不变。等宽字（slug、命令、计数）不调整。
+- 展示标题行高拉丁 1.24、中文 1.3：手写字按 `font-size-adjust` 放大后下伸部更长，1.02 会让 g、y 压到下一行。
 - 14px 以下不用手写字：合成加粗在 11–13px 会糊。标签、小徽标、命令框里的复制胶囊用正文字体。
 - 正文和说明不用手写字：目录要扫读，手写字只给短标签和标题。标题必须比下面的文字大一级（文档小标题 20–24px）。
 - slug 一律等宽小字，作为人话名称（Display Name）的副标题，不当标题。

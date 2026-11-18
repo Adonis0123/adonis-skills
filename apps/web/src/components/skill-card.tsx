@@ -46,7 +46,7 @@ export function SkillCard({ skill, featured = false }: SkillCardProps) {
 
       <div className="z-[3] mt-auto flex items-end justify-between gap-2">
         <ul
-          className="flex min-w-0 flex-wrap gap-1.5"
+          className="flex min-w-0 flex-wrap gap-1"
           aria-label={t({ id: "skillCard.tags.aria", message: "Tags" })}
         >
           {/* Two tags keep the footer on one line; the detail page lists all of them. */}
