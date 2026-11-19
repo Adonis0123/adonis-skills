@@ -47,7 +47,7 @@ const sidebarItemClass = (selected: boolean) =>
     "scenario-chip clay-focus-ring lg:h-auto lg:min-h-10 lg:w-full lg:gap-2.5 lg:[border-radius:var(--hand-radius-sm)] lg:py-1.5 lg:pr-2.5 lg:pl-1.5 lg:whitespace-normal",
     selected
       ? "scenario-chip--selected"
-      : "lg:border-transparent lg:bg-transparent lg:shadow-none lg:hover:bg-muted",
+      : "lg:[--ink-line:transparent] lg:bg-transparent lg:shadow-none lg:hover:bg-muted",
   );
 
 function GroupAvatar({ group, size }: { group: CatalogGroup; size: number }) {
@@ -310,7 +310,7 @@ export function SkillsBrowser({
                         aria-pressed={selected}
                         onClick={() => toggleTag(tag)}
                         className={cx(
-                          "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-8 items-center gap-1 px-3 text-sm font-medium transition-colors pointer-coarse:h-10",
+                          "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-8 items-center gap-1 px-3 text-[15px] transition-colors pointer-coarse:h-10",
                           selected
                             ? "bg-accent text-accent-foreground"
                             : "bg-card text-foreground hover:bg-hover hover:[--ink-line:var(--primary)]",

@@ -348,7 +348,6 @@
 
   /* Large panels: visibly uneven corners and a heavier bottom stroke. */
   .ink-box--xl {
-    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-xl);
   }
 
@@ -481,6 +480,10 @@
     line-height: 1.6;
   }
 
+  .type-lede:lang(zh) {
+    line-height: 1.75;
+  }
+
   /* Hero: flat paper; the page's paper texture shows through. */
   .hero-wash {
     background: transparent;
@@ -514,7 +517,6 @@
   .art-plate {
     position: relative;
     border: var(--ink-width) solid var(--ink);
-    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-plate);
     background: var(--plate);
     box-shadow: var(--clay-shadow-plate);
@@ -552,7 +554,6 @@
   /* Search bar (DESIGN.md search-bar). */
   .search-bar {
     border: var(--ink-width) solid var(--ink);
-    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-search);
     background: var(--card);
     box-shadow: var(--clay-shadow-glow);
@@ -635,7 +636,6 @@
 
   .featured-card {
     padding: 26px;
-    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-xl);
     box-shadow: var(--clay-shadow-feature);
   }
@@ -780,7 +780,7 @@
     color: var(--link);
   }
 
-  .copy-button--failed {
+  .copy-button.copy-button--failed {
     --ink-line: var(--danger-text);
     background: var(--card);
     color: var(--danger-text);
@@ -843,9 +843,20 @@
   ),
   .ink-box:not([class*="overflow-"], input, select, textarea, table, img) {
     --ink-line: var(--ink);
+    /* Reset here so a small control inside a large panel keeps the even pen. */
+    --ink-pen: var(--ink-width);
     isolation: isolate;
     border-color: transparent;
     background-clip: padding-box;
+  }
+
+  /* Large elements: the line thickens along the bottom like a brush stroke.
+     Declared after the reset above so it wins at equal specificity. */
+  .art-plate,
+  .search-bar,
+  .featured-card,
+  .ink-box.ink-box--xl {
+    --ink-pen: var(--ink-width-hand);
   }
 
   :where(
@@ -882,7 +893,7 @@
     z-index: -1;
     content: "";
     border: var(--ink-width) solid var(--ink-line);
-    border-width: var(--ink-pen, var(--ink-width));
+    border-width: var(--ink-pen);
     border-style: inherit;
     border-radius: inherit;
     background: inherit;

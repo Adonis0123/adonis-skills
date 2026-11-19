@@ -1,6 +1,5 @@
 import "@fontsource-variable/noto-sans-sc/wght.css";
 // Kalam: brush hand lettering for Latin headings, buttons and the wordmark.
-import "@fontsource/kalam/latin-400.css";
 import "@fontsource/kalam/latin-700.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";

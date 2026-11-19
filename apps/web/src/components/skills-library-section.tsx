@@ -405,7 +405,7 @@ function ScenarioGroup({
       as="section"
       id={`group-${group.id}`}
       aria-labelledby={titleId}
-      className="ink-rule-t grid scroll-mt-20 gap-5 py-9 first:border-t-0 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10 lg:py-11"
+      className="ink-rule-t grid scroll-mt-20 gap-5 py-9 first:border-t-0 first:before:hidden lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-10 lg:py-11"
     >
       <div className="grid grid-cols-[56px_minmax(0,1fr)] gap-x-4 self-start lg:sticky lg:top-24 lg:block">
         <span className="art-avatar art-avatar--ringed row-span-3 size-14 lg:size-16">

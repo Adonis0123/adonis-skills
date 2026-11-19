@@ -87,8 +87,8 @@
 
   --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
   /*
-   * Hand lettering (Kalam: Bold for headings, nav, buttons, chips, card
-   * titles and the wordmark; Regular for ledes). It has no CJK glyphs:
+   * Hand lettering (Kalam Bold) for Latin headings, nav, buttons, chips,
+   * card titles and the wordmark. It has no CJK glyphs:
    * Chinese falls through to Noto Sans SC at the element's own weight.
    */
   --font-app-hand: "Kalam", "Noto Sans SC Variable", "PingFang SC", sans-serif;
