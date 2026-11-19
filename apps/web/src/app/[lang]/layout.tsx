@@ -1,12 +1,14 @@
 import "@fontsource-variable/noto-sans-sc/wght.css";
-// Patrick Hand: hand lettering for Latin headings, buttons and the wordmark.
-import "@fontsource/patrick-hand/400.css";
+// Kalam: brush hand lettering for Latin headings, buttons and the wordmark.
+import "@fontsource/kalam/latin-400.css";
+import "@fontsource/kalam/latin-700.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import "@/styles/globals.css";
 import "@/styles/custom.css";
 import type { Metadata } from "next";
+import { InkFilters } from "@/components/ui/ink-filters";
 import { SiteShell } from "@/components/layout/site-shell";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { getAllMessages } from "@/i18n/appRouterI18n";
@@ -80,6 +82,7 @@ export default async function LangLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="antialiased">
+        <InkFilters />
         <ThemeProvider>
           <LinguiClientProvider
             initialLocale={locale}

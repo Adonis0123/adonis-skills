@@ -35,7 +35,7 @@ const chipClass = (selected: boolean) =>
     "clay-focus-ring ink-box ink-box--pill hand-label inline-flex h-9 items-center gap-2 px-3.5 text-sm font-medium transition-colors pointer-coarse:h-10",
     selected
       ? "bg-accent text-accent-foreground"
-      : "bg-card text-foreground hover:border-primary hover:bg-hover",
+      : "bg-card text-foreground hover:bg-hover hover:[--ink-line:var(--primary)]",
   );
 
 /**

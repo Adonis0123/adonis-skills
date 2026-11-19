@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { LocaleLink } from "@/i18n/locale-link";
 
 const navLinkClass =
-  "clay-focus-ring hand-label inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
+  "clay-focus-ring hand-label inline-flex h-9 items-center gap-1.5 rounded-[8px] px-3 text-base text-muted-foreground transition-colors hover:bg-muted hover:text-foreground";
 
 export function SiteHeader() {
   const { brand, headerNav } = siteLayoutConfig;

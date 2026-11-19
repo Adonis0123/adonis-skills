@@ -19,13 +19,13 @@ const palette = {
 
 // Paths are relative to apps/web, the working directory for `next build`.
 async function loadAssets() {
-  // Patrick Hand, the site's hand lettering; it has one weight (400).
+  // Kalam Bold, the site's hand lettering for titles.
   const [kiki, handFont] = await Promise.all([
     readFile(path.join(process.cwd(), "public/brand/kiki-plate.svg"), "utf8"),
     readFile(
       path.join(
         process.cwd(),
-        "node_modules/@fontsource/patrick-hand/files/patrick-hand-latin-400-normal.woff",
+        "node_modules/@fontsource/kalam/files/kalam-latin-700-normal.woff",
       ),
     ),
   ]);
@@ -33,9 +33,9 @@ async function loadAssets() {
     kikiDataUri: `data:image/svg+xml;base64,${Buffer.from(kiki).toString("base64")}`,
     fonts: [
       {
-        name: "Patrick Hand",
+        name: "Kalam",
         data: handFont,
-        weight: 400 as const,
+        weight: 700 as const,
         style: "normal" as const,
       },
     ],
@@ -66,8 +66,8 @@ export async function renderOgCard({
         padding: "64px 72px",
         background: palette.paper,
         color: palette.ink,
-        fontFamily: "Patrick Hand",
-        fontWeight: 400,
+        fontFamily: "Kalam",
+        fontWeight: 700,
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -77,7 +77,6 @@ export async function renderOgCard({
           style={{
             display: "flex",
             fontSize: 52,
-            WebkitTextStroke: `1.5px ${palette.ink}`,
           }}
         >
           <span>nika&nbsp;</span>
@@ -90,9 +89,7 @@ export async function renderOgCard({
           style={{
             fontSize: title.length > 28 ? 70 : 88,
             lineHeight: 1.08,
-            // Patrick Hand has one weight: an ink stroke gives the title the
-            // page's marker weight, and balance avoids a lone last word.
-            WebkitTextStroke: `2.5px ${palette.ink}`,
+            // Balance avoids a lone last word.
             textWrap: "balance",
           }}
         >

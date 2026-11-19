@@ -47,4 +47,5 @@ export type {
   ClaySurfaceTone,
 } from "./clay-surface";
 
+export { InkStars } from "./ink-stars";
 export { InkTicks } from "./ink-ticks";

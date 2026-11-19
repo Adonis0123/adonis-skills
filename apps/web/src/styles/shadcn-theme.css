@@ -34,20 +34,13 @@
 
   /*
    * Rubber-hose ink (DESIGN.md Components "ink-outline"): every outline is a
-   * 2px --ink line; tags and inline marks use the thin width.
+   * 2.5px --ink line that wavers (custom.css "Wavering ink"); tags and inline
+   * marks use the thin width.
    */
-  --ink-width: 2px;
+  --ink-width: 2.5px;
   --ink-width-thin: 1.5px;
   /* Large elements: the line thickens along the bottom like a brush stroke. */
-  --ink-width-hand: 2px 2.5px 3px 2.25px;
-
-  /*
-   * Patrick Hand's x-height is 0.467 em, Noto Sans SC's 0.543. Elements set in
-   * hand lettering adjust every face to a 0.55 x-height: Patrick Hand grows
-   * about 1.18x and matches the Chinese and body text beside it, Noto moves
-   * about 1%, so Chinese keeps its size.
-   */
-  --hand-size-adjust: 0.55;
+  --ink-width-hand: 2.5px 3px 3.75px 2.75px;
 
   /*
    * Hand-drawn corners (PaperCSS-style uneven elliptical radii). Small and
@@ -77,14 +70,14 @@
    * `0 Npx 0` line. --wash is transparent in dark mode, which turns them off.
    * Resting catalog cards get the narrow one so the grid stays calm.
    */
-  --clay-shadow-card: 0 5px 4px -2px var(--wash);
-  --clay-shadow-card-hover: 0 11px 8px -2px var(--wash);
-  --clay-shadow-feature: 0 10px 7px -2px var(--wash);
-  --clay-shadow-btn: 0 6px 4px -1px var(--wash);
-  --clay-shadow-btn-hover: 0 8px 5px -1px var(--wash);
-  --clay-shadow-glow: 0 8px 5px -1px var(--wash);
+  --clay-shadow-card: 1px 7px 3px -2px var(--wash);
+  --clay-shadow-card-hover: 1px 12px 6px -2px var(--wash);
+  --clay-shadow-feature: 2px 10px 4px -2px var(--wash);
+  --clay-shadow-btn: 1px 7px 3px -1px var(--wash);
+  --clay-shadow-btn-hover: 1px 9px 4px -1px var(--wash);
+  --clay-shadow-glow: 1px 9px 4px -1px var(--wash);
   --clay-shadow-pop: 0 14px 18px -6px var(--wash);
-  --clay-shadow-plate: 0 14px 10px -3px var(--wash);
+  --clay-shadow-plate: 3px 14px 6px -3px var(--wash);
   /* Flat watercolour: no inner glow on surfaces. */
   --clay-highlight-top: 0 0 transparent;
 
@@ -94,12 +87,11 @@
 
   --font-app-sans: "Noto Sans SC Variable", "PingFang SC", sans-serif;
   /*
-   * Hand lettering (Patrick Hand, one weight) for Latin headings, nav,
-   * buttons, chips, card titles and the wordmark. It has no CJK glyphs:
+   * Hand lettering (Kalam: Bold for headings, nav, buttons, chips, card
+   * titles and the wordmark; Regular for ledes). It has no CJK glyphs:
    * Chinese falls through to Noto Sans SC at the element's own weight.
    */
-  --font-app-hand:
-    "Patrick Hand", "Noto Sans SC Variable", "PingFang SC", sans-serif;
+  --font-app-hand: "Kalam", "Noto Sans SC Variable", "PingFang SC", sans-serif;
   --font-app-heading: var(--font-app-hand);
   --font-app-display: var(--font-app-hand);
   /* CJK fallback keeps Chinese labels in mono slots from rendering as tofu. */

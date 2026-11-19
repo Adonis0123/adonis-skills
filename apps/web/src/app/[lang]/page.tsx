@@ -5,7 +5,7 @@ import { HostInstallTabs } from "@/components/host-install-tabs";
 import { PressScale } from "@/components/motion/press-scale";
 import { SectionReveal } from "@/components/motion/section-reveal";
 import { SkillsLibrarySection } from "@/components/skills-library-section";
-import { ClayButton, InkTicks } from "@/components/ui";
+import { ClayButton, InkStars, InkTicks } from "@/components/ui";
 import { siteLayoutConfig } from "@/config/site-layout";
 import { initLingui, initPageLingui } from "@/i18n/initLingui";
 import {
@@ -72,8 +72,9 @@ export default async function HomePage({ params }: HomePageProps) {
 
             <h1
               id="hero-title"
-              className="type-display text-balance [word-break:keep-all]"
+              className="type-display relative text-balance [word-break:keep-all]"
             >
+              <InkStars className="absolute -top-9 -left-11 hidden size-14 xl:block" />
               <Trans id="home.hero.headline">
                 Teach your coding agent how to{" "}
                 <HandUnderline>finish the job.</HandUnderline>

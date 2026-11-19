@@ -28,6 +28,9 @@
   --paper-tooth: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='t' filterUnits='userSpaceOnUse' x='0' y='0' width='200' height='200'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0 0.06 0 0 0 0.9 -0.42'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23t)' opacity='0.2'/%3E%3C/svg%3E");
   --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='640'%3E%3Cfilter id='m' filterUnits='userSpaceOnUse' x='0' y='0' width='640' height='640'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0078125' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.62 0 0 0 0 0.44 0 0 0 0 0.14 0 0 0 1.1 -0.5'/%3E%3C/filter%3E%3Crect width='640' height='640' filter='url(%23m)' opacity='0.14'/%3E%3C/svg%3E");
   --paper-texture: var(--paper-tooth), var(--paper-mottle);
+
+  /* One wavy brush stroke for dividers; alpha only, coloured by --ink. */
+  --ink-rule-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 8' preserveAspectRatio='none'%3E%3Cpath d='M2 4.6 C 60 2.6 120 5.4 190 3.6 S 330 2.4 400 4.4 S 540 5 598 3.4' fill='none' stroke='black' stroke-width='2.6' stroke-linecap='round' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
 }
 
 .dark,
@@ -94,31 +97,6 @@
     font-family: var(--font-app-heading);
     font-weight: 750;
     font-optical-sizing: auto;
-  }
-
-  /*
-   * Hand lettering sizes up to the body face's x-height (--hand-size-adjust,
-   * shadcn-theme.css); mono text keeps its own metrics.
-   */
-  :is(
-    h1,
-    h2,
-    h3,
-    h4,
-    .font-heading,
-    .font-display,
-    .font-hand,
-    .hand-label,
-    .clay-button,
-    .scenario-chip,
-    .copy-button,
-    .featured-number
-  ) {
-    font-size-adjust: var(--hand-size-adjust);
-  }
-
-  :is(code, pre, kbd, samp, .font-mono, .type-mono, .kicker) {
-    font-size-adjust: none;
   }
 
   p {
@@ -217,9 +195,9 @@
     min-height: 44px;
     border-radius: var(--clay-radius-button);
     border: var(--ink-width) solid var(--ink);
-    border-width: 2px 2px 2.5px;
     font-family: var(--font-app-hand);
-    /* Design system button rule: weight 500, never 600 (heavy at 13-15px Chinese). */
+    /* Chinese labels: design system weight 500 (600 is heavy at 13-15px).
+       Latin labels are brush-lettered in Kalam Bold, see :lang(en) below. */
     font-weight: 500;
     line-height: 1;
     transform: translate3d(0, 0, 0);
@@ -234,16 +212,20 @@
   .clay-button--primary,
   .clay-button--blue {
     background: var(--primary);
-    border-color: var(--ink);
     color: var(--primary-foreground);
     /* No inner top highlight on buttons: on a pill it reads as a second border. */
     box-shadow: var(--clay-shadow-btn);
   }
 
-  /* English primary labels: bolder hand lettering (synthesised at 17px, where
-     it does not smear); Chinese keeps the design-system 500. */
-  .clay-button--primary:lang(en) {
+  /* Latin hand lettering is Kalam Bold; Chinese keeps the design-system 500.
+     Kalam sets wide word gaps, which slow scanning in short labels: tighten. */
+  :is(.clay-button, .scenario-chip, .copy-button, .hand-label):lang(en) {
     font-weight: 700;
+    word-spacing: -0.14em;
+  }
+
+  :is(h1, h2, h3, h4, .type-card-title):lang(en) {
+    word-spacing: -0.1em;
   }
 
   /* Hover deepens the fill with the --primary-hover-veil (shadcn-theme.css);
@@ -270,7 +252,6 @@
   .clay-button--ghost,
   .clay-button--outline {
     background: var(--card);
-    border-color: var(--ink);
     color: var(--foreground);
     box-shadow: var(--clay-shadow-btn);
   }
@@ -279,7 +260,7 @@
   .clay-button--secondary:hover,
   .clay-button--ghost:hover,
   .clay-button--outline:hover {
-    border-color: var(--primary);
+    --ink-line: var(--primary);
     background: var(--hover);
     color: var(--foreground);
   }
@@ -295,7 +276,7 @@
 
   /* Latin labels get more presence; Chinese keeps 15px. */
   .clay-button--md:lang(en) {
-    font-size: 17px;
+    font-size: 19px;
   }
 
   .clay-button--lg {
@@ -367,7 +348,7 @@
 
   /* Large panels: visibly uneven corners and a heavier bottom stroke. */
   .ink-box--xl {
-    border-width: var(--ink-width-hand);
+    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-xl);
   }
 
@@ -395,6 +376,7 @@
   /* Hand lettering for short labels (nav, tabs, buttons built from utilities). */
   .hand-label {
     font-family: var(--font-app-hand);
+    font-weight: 500;
   }
 
   /* A few ink tick strokes beside the primary button and section titles. */
@@ -415,14 +397,36 @@
     stroke-linecap: round;
   }
 
+  /* Mustard sparkle beside the hero headline. */
+  .ink-stars {
+    display: block;
+    flex: none;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .ink-stars path {
+    stroke: var(--ink);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .ink-stars__star {
+    fill: var(--mustard);
+  }
+
+  .ink-stars__tick {
+    fill: none;
+  }
+
   /* Typography tokens. Latin gets negative tracking; Chinese never does. */
   .type-display {
     font-family: var(--font-app-heading);
     font-size: clamp(2.125rem, 1.2rem + 3.6vw, 4.375rem);
-    font-weight: 800;
-    /* Hand lettering is drawn ~1.18x larger (font-size-adjust), so descenders
-       need more room than the old 1.02 gave them. */
-    line-height: 1.24;
+    font-weight: 700;
+    /* Kalam's brush descenders (g, y, j) need the room. */
+    line-height: 1.16;
   }
 
   .type-display:lang(zh) {
@@ -477,10 +481,6 @@
     line-height: 1.6;
   }
 
-  .type-lede:lang(zh) {
-    line-height: 1.75;
-  }
-
   /* Hero: flat paper; the page's paper texture shows through. */
   .hero-wash {
     background: transparent;
@@ -514,7 +514,7 @@
   .art-plate {
     position: relative;
     border: var(--ink-width) solid var(--ink);
-    border-width: var(--ink-width-hand);
+    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-plate);
     background: var(--plate);
     box-shadow: var(--clay-shadow-plate);
@@ -552,7 +552,7 @@
   /* Search bar (DESIGN.md search-bar). */
   .search-bar {
     border: var(--ink-width) solid var(--ink);
-    border-width: var(--ink-width-hand);
+    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-search);
     background: var(--card);
     box-shadow: var(--clay-shadow-glow);
@@ -588,8 +588,12 @@
       background-color 200ms ease;
   }
 
+  .scenario-chip:lang(en) {
+    font-size: 16px;
+  }
+
   a.scenario-chip:hover {
-    border-color: var(--primary);
+    --ink-line: var(--primary);
     background: var(--hover);
     color: var(--foreground);
   }
@@ -601,7 +605,6 @@
   }
 
   .scenario-chip--selected {
-    border-color: var(--ink);
     background: var(--accent);
     color: var(--accent-foreground);
   }
@@ -632,7 +635,7 @@
 
   .featured-card {
     padding: 26px;
-    border-width: var(--ink-width-hand);
+    --ink-pen: var(--ink-width-hand);
     border-radius: var(--hand-radius-xl);
     box-shadow: var(--clay-shadow-feature);
   }
@@ -643,13 +646,13 @@
 
   /* Hover: the outline turns teal, the card lifts and its wash spreads. */
   .skill-card:hover {
-    border-color: var(--primary);
+    --ink-line: var(--primary);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -2px, 0);
   }
 
   .featured-card:hover {
-    border-color: var(--primary);
+    --ink-line: var(--primary);
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -3px, 0);
   }
@@ -762,16 +765,23 @@
     font-size: 12.5px;
     background: var(--card);
     color: var(--foreground);
+    /* Under 14px is too small for hand lettering: body face. */
+    font-family: var(--font-app-sans);
+  }
+
+  .copy-button--outline:lang(en) {
+    font-weight: 500;
+    word-spacing: normal;
   }
 
   .copy-button--outline:hover {
-    border-color: var(--primary);
+    --ink-line: var(--primary);
     background: var(--hover);
     color: var(--link);
   }
 
   .copy-button--failed {
-    border-color: var(--danger-text);
+    --ink-line: var(--danger-text);
     background: var(--card);
     color: var(--danger-text);
   }
@@ -808,6 +818,121 @@
 
   .dark .featured-card--lead {
     background: var(--card);
+  }
+
+  /*
+   * Wavering ink (DESIGN.md ink-outline). The outline, and a copy of the fill
+   * under it, are drawn by ::before and pushed through an SVG displacement
+   * filter (components/ui/ink-filters.tsx), so the line wobbles like a brush
+   * stroke while text and children stay crisp. The element's own border turns
+   * transparent and keeps its width, so layout does not change.
+   * --ink-line is the line colour: hover and error states set it instead of
+   * border-color. --ink-pen gives large elements uneven side widths.
+   * Replaced elements and boxes that clip their overflow keep a plain border.
+   */
+  :is(
+    .art-plate,
+    .search-bar,
+    .skill-card,
+    .featured-card,
+    .speech-bubble,
+    .scenario-chip,
+    .clay-button,
+    .command-box,
+    .copy-button
+  ),
+  .ink-box:not([class*="overflow-"], input, select, textarea, table, img) {
+    --ink-line: var(--ink);
+    isolation: isolate;
+    border-color: transparent;
+    background-clip: padding-box;
+  }
+
+  :where(
+    .search-bar,
+    .speech-bubble,
+    .scenario-chip,
+    .command-box,
+    .ink-box:not([class*="overflow-"], input, select, textarea, table, img)
+  ) {
+    position: relative;
+  }
+
+  :is(
+    .art-plate,
+    .search-bar,
+    .skill-card,
+    .featured-card,
+    .speech-bubble,
+    .scenario-chip,
+    .clay-button,
+    .command-box,
+    .copy-button
+  )::before,
+  .ink-box:not(
+      [class*="overflow-"],
+      input,
+      select,
+      textarea,
+      table,
+      img
+    )::before {
+    position: absolute;
+    inset: calc(-1 * var(--ink-width));
+    z-index: -1;
+    content: "";
+    border: var(--ink-width) solid var(--ink-line);
+    border-width: var(--ink-pen, var(--ink-width));
+    border-style: inherit;
+    border-radius: inherit;
+    background: inherit;
+    background-clip: border-box;
+    filter: url("#ink-wobble");
+    pointer-events: none;
+    transition: border-color 200ms ease;
+  }
+
+  :is(
+    .scenario-chip,
+    .clay-button,
+    .command-box,
+    .copy-button,
+    .ink-box--sm,
+    .ink-box--md,
+    .ink-box--pill
+  )::before {
+    filter: url("#ink-wobble-sm");
+  }
+
+  /*
+   * Dividers are one brush stroke: the --ink colour shows through a mask
+   * holding a slightly wavy line, stretched to the divider's width. The
+   * element's own border turns transparent and keeps its width.
+   */
+  .ink-rule-t,
+  .ink-rule-b {
+    position: relative;
+    border-color: transparent;
+  }
+
+  .ink-rule-t::before,
+  .ink-rule-b::after {
+    position: absolute;
+    right: 0;
+    left: 0;
+    height: 8px;
+    content: "";
+    background: var(--ink);
+    mask: var(--ink-rule-mask) center / 100% 100% no-repeat;
+    pointer-events: none;
+  }
+
+  .ink-rule-t::before {
+    top: calc(-1 * var(--ink-width) - 3px);
+  }
+
+  .ink-rule-b::after {
+    bottom: calc(-1 * var(--ink-width) - 3px);
   }
 }
 
@@ -883,7 +1008,6 @@
     justify-content: center;
     border-radius: var(--hand-radius-pill);
     padding: 0;
-    border-color: var(--ink);
     background: var(--card);
     box-shadow: var(--clay-shadow-btn);
   }
@@ -980,7 +1104,6 @@
     width: 2.75rem;
     min-width: 2.75rem;
     border-radius: var(--hand-radius-pill);
-    border-color: var(--ink);
     box-shadow: var(--clay-shadow-btn);
   }
 

@@ -241,7 +241,7 @@ export function CopyTextBlock({
     <div
       className={cx(
         "group ink-box ink-box--md relative bg-background text-foreground transition-colors duration-200",
-        failed && "border-danger-text hover:border-danger-text",
+        failed && "[--ink-line:var(--danger-text)]",
         className,
       )}
     >
@@ -271,8 +271,8 @@ export function CopyTextBlock({
           copied
             ? "text-link"
             : failed
-              ? "border-danger-text text-danger-text"
-              : "text-foreground group-hover:border-primary group-hover:text-link",
+              ? "text-danger-text [--ink-line:var(--danger-text)]"
+              : "text-foreground group-hover:text-link group-hover:[--ink-line:var(--primary)]",
         )}
       >
         <IconSwap swapKey={status} className="size-3.5">

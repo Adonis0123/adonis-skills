@@ -56,7 +56,7 @@ export function PluginCard({ plugin, selected, onToggle }: PluginCardProps) {
     <article
       className={cx(
         "skill-card h-full clay-focus-link-ring",
-        selected && "border-link",
+        selected && "[--ink-line:var(--link)]",
       )}
     >
       <div className="flex items-start gap-3">
