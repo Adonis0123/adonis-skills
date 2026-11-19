@@ -200,19 +200,20 @@ components:
 | 用途 | 字体 | 规格 |
 |---|---|---|
 | 展示标题、h2、h3、卡片标题（拉丁） | Kalam Bold | 700，带倾斜的毛笔手写体，不用合成加粗 |
-| 标题（中文） | Noto Sans SC | 字重、行高和改版前一样（800 / 750 / 650） |
+| 展示标题、h2、h3（中文） | Ma Shan Zheng（马善政毛笔楷书） | 只有 400 一个字重，不合成加粗；比拉丁大一号（展示标题最大 80px，h2 最大 40px，h3 28px） |
+| 卡片标题、按钮、导航、chip（中文） | Noto Sans SC | 650 / 500；毛笔字在小字号难认，不用 |
 | 导航、按钮、chip、标签页、字标（拉丁） | Kalam Bold | 700，导航和 chip 16px；词间距收紧 0.14em（标题 0.1em），Kalam 默认词距太宽；中文标签仍是 Noto Sans SC 500 |
 | 正文、说明 | Noto Sans SC | 400，15/1.7；导语 18/1.6；小字 13.5/1.55 |
 | 代码、slug、命令 | IBM Plex Mono | 500，12.5/1.6 |
 
-- `font-family` 写成 “Kalam, Noto Sans SC, sans-serif”：Kalam 没有中文字形，中文自动落到 Noto Sans SC。中文手写体待主人决定。
+- `font-family` 写成 “Kalam, Noto Sans SC, sans-serif”：Kalam 没有中文字形，中文自动落到 Noto Sans SC。只有展示标题、h2、h3 在两者之间插入 Ma Shan Zheng（`--font-app-title`）。
 - 手写字不加负字距；中文标题不加字距，中文正文行高不低于 1.7。
 - Kalam 的 x-height 约 0.52，和 Noto Sans SC 的 0.55 接近，不需要 `font-size-adjust`。
 - 展示标题行高拉丁 1.16、中文 1.3：Kalam 的 g、y、j 下伸部长，1.02 会压到下一行。
 - 14px 以下不用手写字：太小看不清。标签、小徽标、命令框里的复制胶囊用正文字体。
 - 导语、卡片说明和文档正文不用手写字：倾斜的手写体在长句里扫读慢，手写字只给短标签和标题。标题必须比下面的文字大一级（文档小标题 20–24px）。
 - slug 一律等宽小字，作为人话名称（Display Name）的副标题，不当标题。
-- 所有字体经 fontsource 自托管（`@fontsource/kalam` 锁精确版本，SIL OFL），构建不访问 Google Fonts。
+- 所有字体经 fontsource 自托管（`@fontsource/kalam`、`@fontsource/ma-shan-zheng` 锁精确版本，SIL OFL）。Ma Shan Zheng 按 unicode-range 切片，页面只下载标题用到的切片（中文首页实测 9 片约 650 KB），构建不访问 Google Fonts。
 
 ## Layout
 

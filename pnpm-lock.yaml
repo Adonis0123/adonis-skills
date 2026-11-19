@@ -47,6 +47,9 @@ importers:
       '@fontsource/kalam':
         specifier: 5.3.0
         version: 5.3.0
+      '@fontsource/ma-shan-zheng':
+        specifier: 5.2.8
+        version: 5.2.8
       '@lingui/macro':
         specifier: ^5.9.0
         version: 5.9.1(@lingui/babel-plugin-lingui-macro@5.9.1(typescript@5.9.3))(react@19.2.3)
@@ -646,6 +649,9 @@ packages:
 
   '@fontsource/kalam@5.3.0':
     resolution: {integrity: sha512-FDkVoDfPDCSN/eO81FOYtUI67eMgpVBJmjBtAqSL0PmEhJyeFY2biC+CR+yEttksgXR9+swpFdYmQTyjwBq80Q==}
+
+  '@fontsource/ma-shan-zheng@5.2.8':
+    resolution: {integrity: sha512-/2sTIqp6RAwzx8kXP5uJo8f6Efmt4F4Cydzoqhoj+5HqglNhSiy0vkkjLzovUA3m8i0dbuWe7ZXY564d24+Lhw==}
 
   '@google/design.md@0.4.0':
     resolution: {integrity: sha512-7aNIv6hslxIZ9igXq1abbVu+ue/ft/oFMUrAuhzpVFijGr9v+l0CkkCBQsHozucNiZHIBS43XC6l8gYDZRys9Q==}
@@ -4795,6 +4801,8 @@ snapshots:
   '@fontsource/ibm-plex-mono@5.3.0': {}
 
   '@fontsource/kalam@5.3.0': {}
+
+  '@fontsource/ma-shan-zheng@5.2.8': {}
 
   '@google/design.md@0.4.0':
     dependencies:

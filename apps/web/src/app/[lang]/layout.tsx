@@ -1,6 +1,9 @@
 import "@fontsource-variable/noto-sans-sc/wght.css";
 // Kalam: brush hand lettering for Latin headings, buttons and the wordmark.
 import "@fontsource/kalam/latin-700.css";
+// Ma Shan Zheng: brush lettering for Chinese display titles. Sliced by
+// unicode-range, so a page fetches only the slices its titles use.
+import "@fontsource/ma-shan-zheng/400.css";
 import "@fontsource/ibm-plex-mono/latin-400.css";
 import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";

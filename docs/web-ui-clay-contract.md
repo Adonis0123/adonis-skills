@@ -32,6 +32,7 @@ Decisions: `docs/decision-2026-10-18-brand-palette-from-adonis-brand.md` (colors
 - Fonts in `DESIGN.md` are self-hosted through fontsource (exact versions); the build must not fetch Google Fonts.
 - Kalam (`--font-app-hand`, also `--font-app-heading` and `--font-app-display`) letters Latin headings, nav, buttons, chips, card titles and the wordmark in Bold 700, with word spacing tightened (Kalam's default gaps slow scanning). It has no Chinese glyphs: every `font-family` that starts with it falls back to Noto Sans SC, so Chinese keeps its weights and line-heights. Ledes, card descriptions, document body and anything under 14px (the outline copy button) stay in the body face; slugs and commands stay IBM Plex Mono. Self-hosted through `@fontsource/kalam` (exact version, Latin subset).
 - Body copy and descriptions stay in Noto Sans SC; slugs and commands stay IBM Plex Mono. Hand lettering takes no negative tracking.
+- Chinese display titles (`.type-display`, `.type-h2`, `.type-h3`) use `--font-app-title`, which puts Ma Shan Zheng (brush, one weight 400, `@fontsource/ma-shan-zheng`, sliced by unicode-range) between Kalam and Noto Sans SC; their `:lang(zh)` rules set weight 400 and a larger size. Chinese card titles, buttons, nav and chips stay Noto Sans SC.
 - Kalam's x-height (about 0.52 em) is close to Noto Sans SC's 0.55, so hand lettering needs no `font-size-adjust`.
 - The OG card (`lib/og-card.tsx`) uses Kalam Bold and `textWrap: balance`; its colours come from light-mode roles through `lib/og-palette.ts`.
 

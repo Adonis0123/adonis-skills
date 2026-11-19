@@ -14,16 +14,16 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:53
+#: ../../src/app/%5Blang%5D/layout.tsx:56
 msgid "layout.meta.title.template"
 msgstr "%s | Nika Skills"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:40
+#: ../../src/app/%5Blang%5D/layout.tsx:43
 msgid "layout.meta.description"
 msgstr "涵盖拆活并行、独立代码复审、整洁 Git 提交与 MCP 工具连接的实战编码 agent 技能库，适用于 Claude Code、Codex、Cursor 和 Hermes Agent。"
 
 #. js-lingui-explicit-id
-#: ../../src/app/%5Blang%5D/layout.tsx:49
+#: ../../src/app/%5Blang%5D/layout.tsx:52
 msgid "layout.meta.title.default"
 msgstr "Nika Skills"

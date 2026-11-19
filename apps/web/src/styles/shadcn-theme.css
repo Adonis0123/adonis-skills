@@ -94,6 +94,13 @@
   --font-app-hand: "Kalam", "Noto Sans SC Variable", "PingFang SC", sans-serif;
   --font-app-heading: var(--font-app-hand);
   --font-app-display: var(--font-app-hand);
+  /*
+   * Display titles (.type-display, .type-h2, .type-h3): Chinese is brush
+   * lettered in Ma Shan Zheng (one weight, 400). Card titles, buttons and
+   * labels keep Noto Sans SC for Chinese: the brush face is hard to read small.
+   */
+  --font-app-title:
+    "Kalam", "Ma Shan Zheng", "Noto Sans SC Variable", "PingFang SC", sans-serif;
   /* CJK fallback keeps Chinese labels in mono slots from rendering as tofu. */
   --font-app-mono:
     "IBM Plex Mono", "SFMono-Regular", "Noto Sans SC Variable", monospace;
