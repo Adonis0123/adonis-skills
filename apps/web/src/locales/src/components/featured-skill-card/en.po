@@ -14,11 +14,11 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/featured-skill-card.tsx:39
+#: ../src/components/featured-skill-card.tsx:45
 msgid "featured.card.number"
 msgstr "{number} / Featured"
 
 #. js-lingui-explicit-id
-#: ../src/components/featured-skill-card.tsx:116
+#: ../src/components/featured-skill-card.tsx:124
 msgid "featured.card.copy.aria"
 msgstr "Copy install command for {displayName}"

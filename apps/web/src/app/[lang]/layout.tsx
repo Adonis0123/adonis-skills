@@ -9,8 +9,15 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import "@/styles/globals.css";
 import "@/styles/custom.css";
+import "@/styles/effects-hover.css";
+import "@/styles/effects-rows.css";
+import "@/styles/effects-copy.css";
+import "@/styles/effects-plugins.css";
+import "@/styles/effects-layout.css";
+import "@/styles/effects-detail.css";
 import type { Metadata } from "next";
 import { InkFilters } from "@/components/ui/ink-filters";
+import { PointerEffects } from "@/components/motion/pointer-effects";
 import { SiteShell } from "@/components/layout/site-shell";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { getAllMessages } from "@/i18n/appRouterI18n";
@@ -85,6 +92,7 @@ export default async function LangLayout({
     <html lang={locale} suppressHydrationWarning>
       <body className="antialiased">
         <InkFilters />
+        <PointerEffects />
         <ThemeProvider>
           <LinguiClientProvider
             initialLocale={locale}

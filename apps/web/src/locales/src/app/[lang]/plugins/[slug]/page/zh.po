@@ -64,66 +64,66 @@ msgstr ""
 #~ msgstr "源码"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:58
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:57
 msgid "pluginDetail.meta.title"
 msgstr "{name} 插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:180
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:178
 msgid "pluginDetail.back"
 msgstr "全部插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:213
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:214
 msgid "pluginDetail.claudeOnly"
 msgstr "仅 Claude Code"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:150
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:149
 msgid "pluginDetail.howItWorks"
 msgstr "怎么做到的"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:243
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:239
 msgid "pluginDetail.install.manageHeading"
 msgstr "安装与停用"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:53
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:52
 msgid "pluginDetail.meta.notFoundTitle"
 msgstr "没有这个插件"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:135
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:134
 msgid "pluginDetail.scenario"
 msgstr "遇到的场景"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:276
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:272
 msgid "pluginDetail.sourceLink"
 msgstr "在 GitHub 查看源码"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:119
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:118
 msgid "pluginDetail.whatItBlocks"
 msgstr "会拦什么"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:126
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:125
 msgid "pluginDetail.whatAgentSees"
 msgstr "被拦下时 agent 会看到"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:316
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:308
 msgid "pluginDetail.whyThisPlugin"
 msgstr "为什么做这个 Plugin"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:139
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:138
 msgid "pluginDetail.whyUse"
 msgstr "为什么要用"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:143
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:142
 msgid "pluginDetail.whyBuilt"
 msgstr "为什么自己做"

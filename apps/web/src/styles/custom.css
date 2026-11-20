@@ -651,9 +651,16 @@
     background: var(--tint);
   }
 
-  /* Hover: the outline turns teal, the card lifts and its wash spreads. */
-  .skill-card:hover {
+  /* Hover: the outline turns teal, the card lifts and its wash spreads.
+     The hover host is SkillCard's wrapper (`.fx-host`), which never moves,
+     so the 2px lift cannot make the pointer leave and re-enter at the edge.
+     Keyboard focus inside (`data-kbd-focus`, PointerEffects) shows the line. */
+  .fx-host:hover > .skill-card,
+  .skill-card[data-kbd-focus] {
     --ink-line: var(--primary);
+  }
+
+  .fx-host:hover > .skill-card {
     box-shadow: var(--clay-shadow-card-hover);
     transform: translate3d(0, -2px, 0);
   }
@@ -852,6 +859,9 @@
     --ink-line: var(--ink);
     /* Reset here so a small control inside a large panel keeps the even pen. */
     --ink-pen: var(--ink-width);
+    /* The displacement filter of the outline; hover layers on the line
+       (effects-hover.css .fx-beam) read it to waver the same way. */
+    --ink-filter: url("#ink-wobble");
     isolation: isolate;
     border-color: transparent;
     background-clip: padding-box;
@@ -905,7 +915,7 @@
     border-radius: inherit;
     background: inherit;
     background-clip: border-box;
-    filter: url("#ink-wobble");
+    filter: var(--ink-filter);
     pointer-events: none;
     transition: border-color 200ms ease;
   }
@@ -918,8 +928,8 @@
     .ink-box--sm,
     .ink-box--md,
     .ink-box--pill
-  )::before {
-    filter: url("#ink-wobble-sm");
+  ) {
+    --ink-filter: url("#ink-wobble-sm");
   }
 
   /*

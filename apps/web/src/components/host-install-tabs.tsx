@@ -200,7 +200,7 @@ export function InstallTabs<Id extends string>({
               tabIndex={selected ? 0 : -1}
               onClick={() => setStoredId(tab.id)}
               className={cx(
-                "clay-focus-ring relative flex min-h-11 min-w-0 flex-col items-center justify-center rounded-[10px] px-1 py-1.5 text-center transition-colors duration-200 sm:px-3",
+                "clay-focus-ring relative flex min-h-11 min-w-0 flex-col items-center justify-center rounded-[10px] px-1 py-1 text-center transition-colors duration-200 sm:px-3",
                 selected
                   ? cx(
                       "text-foreground",
@@ -213,7 +213,7 @@ export function InstallTabs<Id extends string>({
                 {tab.label}
               </span>
               {tab.subtitle && (
-                <span className="hidden max-w-full truncate text-xs text-muted-foreground sm:block">
+                <span className="hidden max-w-full truncate text-[11px] leading-4 text-muted-foreground sm:block">
                   {tab.subtitle}
                 </span>
               )}
@@ -226,7 +226,7 @@ export function InstallTabs<Id extends string>({
         id={`${baseId}-panel`}
         role="tabpanel"
         aria-labelledby={`${baseId}-tab-${active.id}`}
-        className="mt-4"
+        className="mt-3"
       >
         {children(active.id)}
       </div>
@@ -256,7 +256,7 @@ export function HostInstallTabs({ slug, className }: HostInstallTabsProps) {
         const hostLabel = active.label;
         return (
           <>
-            <p className="mb-3 text-sm text-pretty text-muted-foreground">
+            <p className="mb-2 text-[13px] leading-5 text-pretty text-muted-foreground">
               <HostHint id={active.id} />
             </p>
             <CommandBlock

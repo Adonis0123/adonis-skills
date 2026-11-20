@@ -44,31 +44,31 @@ msgstr ""
 #~ msgstr "Copy failed"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:177
+#: ../src/components/copy-install-command.tsx:189
 msgid "copyCommand.label.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:185
+#: ../src/components/copy-install-command.tsx:197
 msgid "copyCommand.live.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:174
+#: ../src/components/copy-install-command.tsx:186
 msgid "copyCommand.label.copy"
 msgstr "Copy"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:153
+#: ../src/components/copy-install-command.tsx:165
 msgid "copyCommand.aria.copy"
 msgstr "Copy command"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:187
+#: ../src/components/copy-install-command.tsx:199
 msgid "copyCommand.live.failed"
 msgstr "Copy failed. Select the command and copy it manually."
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:180
+#: ../src/components/copy-install-command.tsx:192
 msgid "copyCommand.label.failed"
 msgstr "Failed"

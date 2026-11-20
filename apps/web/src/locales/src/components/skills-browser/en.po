@@ -14,106 +14,121 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:210
+#: ../src/components/skills-browser.tsx:246
 msgid "skills.search.countFiltered"
 msgstr "{resultCount} / {totalCount}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:224
+#: ../src/components/skills-browser.tsx:260
 msgid "skills.search.resultCount"
 msgstr "{resultCount} of {totalCount} skills shown"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:214
+#: ../src/components/skills-browser.tsx:250
 msgid "skills.search.count"
 msgstr "{totalCount, plural, one {# skill} other {# skills}}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:163
+#: ../src/components/skills-browser.tsx:199
 msgid "skills.intro"
 msgstr "{totalCount} skills for Claude Code, Codex, Cursor and Hermes Agent. Pick a scenario, narrow by tag, or just search."
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:145
+#: ../src/components/skills-browser.tsx:181
 msgid "skills.sort.name"
 msgstr "A–Z"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:258
+#: ../src/components/skills-browser.tsx:294
 msgid "skills.sidebar.all"
 msgstr "All"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:160
+#: ../src/components/skills-browser.tsx:196
 msgid "skills.title"
 msgstr "All skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:143
+#: ../src/components/skills-browser.tsx:179
 msgid "skills.sort.group"
 msgstr "By scenario"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:402
+#: ../src/components/skills-browser.tsx:174
+msgid "skills.view.grid"
+msgstr "Cards"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-browser.tsx:469
 msgid "skills.empty.clear"
 msgstr "Clear filters"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:200
+#: ../src/components/skills-browser.tsx:236
 msgid "skills.search.clear"
 msgstr "Clear search"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:235
+#: ../src/components/skills-browser.tsx:271
 msgid "skills.sidebar.aria"
 msgstr "Filter by scenario"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:298
+#: ../src/components/skills-browser.tsx:334
 msgid "skills.tags.aria"
 msgstr "Filter by tag"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:390
+#: ../src/components/skills-browser.tsx:457
 msgid "skills.empty.hint"
 msgstr "Kiki looked everywhere. Try another word or fewer filters, or ask for the skill you need."
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:157
+#: ../src/components/skills-browser.tsx:370
+msgid "skills.view.aria"
+msgstr "Layout"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-browser.tsx:193
 msgid "skills.kicker"
 msgstr "Library"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:387
+#: ../src/components/skills-browser.tsx:169
+msgid "skills.view.list"
+msgstr "List"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-browser.tsx:454
 msgid "skills.empty.title"
 msgstr "Nothing found"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:144
+#: ../src/components/skills-browser.tsx:180
 msgid "skills.sort.updated"
 msgstr "Recently updated"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:415
+#: ../src/components/skills-browser.tsx:482
 msgid "skills.empty.request"
 msgstr "Request a skill on GitHub"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:232
+#: ../src/components/skills-browser.tsx:268
 msgid "skills.sidebar.title"
 msgstr "Scenarios"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:186
+#: ../src/components/skills-browser.tsx:222
 msgid "skills.search.placeholder"
 msgstr "Search by task, name or tag, in English or 中文"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:185
+#: ../src/components/skills-browser.tsx:221
 msgid "skills.search.aria"
 msgstr "Search skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-browser.tsx:332
+#: ../src/components/skills-browser.tsx:399
 msgid "skills.sort.label"
 msgstr "Sort"

@@ -2,13 +2,17 @@
 
 import {
   type MouseEvent,
+  type ReactNode,
   useCallback,
   useEffect,
   useRef,
   useState,
 } from "react";
 import { useLingui } from "@lingui/react/macro";
+import { playBeamLapAround } from "@/components/motion/beam-lap";
+import { HoverFx } from "@/components/motion/hover-fx";
 import { IconSwap } from "@/components/motion/press-scale";
+import { useCopyTarget } from "@/components/motion/use-copy-target";
 import { cx } from "@/components/ui/utils";
 
 const COPIED_RESET_MS = 2000;
@@ -108,6 +112,8 @@ interface CopyInstallCommandButtonProps {
   preventLinkNavigation?: boolean;
   /** Accessible name, e.g. "Copy install command for Commit Writer". */
   label?: string;
+  /** The keyboard button of a whole-box copy target (CopyCommandBox), which clicks it. */
+  copyTarget?: boolean;
   className?: string;
 }
 
@@ -118,6 +124,7 @@ export function CopyInstallCommandButton({
   iconOnlyOnMobile = false,
   preventLinkNavigation = false,
   label,
+  copyTarget = false,
   className,
 }: CopyInstallCommandButtonProps) {
   const { t } = useLingui();
@@ -128,7 +135,11 @@ export function CopyInstallCommandButton({
       event.preventDefault();
       event.stopPropagation();
     }
-    void copy(command);
+    const button = event.currentTarget;
+    // Success runs one lap of the beam round the card or box around the button, if it has one.
+    void copy(command).then((ok) => {
+      if (ok) playBeamLapAround(button);
+    });
   };
 
   const iconClass = {
@@ -148,6 +159,7 @@ export function CopyInstallCommandButton({
     <>
       <button
         type="button"
+        data-copy-target={copyTarget || undefined}
         onClick={onCopy}
         aria-label={
           label ?? t({ id: "copyCommand.aria.copy", message: "Copy command" })
@@ -190,5 +202,42 @@ export function CopyInstallCommandButton({
           })}
       </span>
     </>
+  );
+}
+
+/** Clicks the box's own copy button (`[data-copy-target]`), which owns the copy, its label, live region and lap. */
+export function clickCopyTarget(
+  box: Pick<ParentNode, "querySelector"> | null | undefined,
+) {
+  box?.querySelector<HTMLButtonElement>("[data-copy-target]")?.click();
+}
+
+/**
+ * Makes a box with a `CopyInstallCommandButton copyTarget` inside a whole-box
+ * copy target (useCopyTarget): a click anywhere on it presses that button,
+ * unless text in it is selected; the button stays for the keyboard. Hover
+ * shows the beam and dots (effects-hover.css); the button's success plays the
+ * lap round this box (`playBeamLapAround`).
+ */
+export function CopyCommandBox({
+  className,
+  children,
+}: {
+  className?: string;
+  children: ReactNode;
+}) {
+  const boxRef = useRef<HTMLDivElement>(null);
+  const onCopy = useCallback(() => clickCopyTarget(boxRef.current), []);
+  const copyTarget = useCopyTarget(onCopy);
+
+  return (
+    <div
+      ref={boxRef}
+      {...copyTarget}
+      className={cx("fx-surface fx-copy", className)}
+    >
+      <HoverFx />
+      {children}
+    </div>
   );
 }

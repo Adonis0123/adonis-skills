@@ -24,51 +24,61 @@ msgstr ""
 #~ msgstr "复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:98
+#: ../src/components/command-block.tsx:168
+msgid "commandBlock.hint.copy"
+msgstr "点击复制"
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:119
 msgid "commandBlock.scroll.aria"
 msgstr "命令，可横向滚动查看完整内容"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:167
+#: ../src/components/command-block.tsx:171
+msgid "commandBlock.hint.copied"
+msgstr "已复制"
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:203
 msgid "commandBlock.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:291
+#: ../src/components/command-block.tsx:338
 msgid "copyBlock.label.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:297
+#: ../src/components/command-block.tsx:345
 msgid "copyBlock.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:238
+#: ../src/components/command-block.tsx:280
 msgid "copyBlock.label.copy"
 msgstr "复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:143
+#: ../src/components/command-block.tsx:179
 msgid "commandBlock.copy.aria"
 msgstr "复制命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:293
+#: ../src/components/command-block.tsx:340
 msgid "copyBlock.label.failed"
 msgstr "复制失败"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:169
+#: ../src/components/command-block.tsx:205
 msgid "commandBlock.live.failed"
 msgstr "复制失败。命令已选中，请手动复制。"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:299
+#: ../src/components/command-block.tsx:347
 msgid "copyBlock.live.failed"
 msgstr "复制失败，文字已选中，请手动复制。"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:237
+#: ../src/components/command-block.tsx:279
 msgid "copyBlock.label.copyPrompt"
 msgstr "复制提示词"

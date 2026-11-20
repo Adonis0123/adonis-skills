@@ -1,0 +1,240 @@
+/*
+ * Shared hover effects for ink-outlined elements (after coco-skills'
+ * effects-cards.css / effects-interactions.css, redrawn for the wavering ink).
+ *
+ * Usage (components/motion/hover-fx.tsx, use-copy-target.ts, pointer-effects.tsx):
+ *  - `fx-surface` on an element that draws its outline with the wavering-ink
+ *    `::before` (custom.css), plus `<HoverFx />` as its first children;
+ *  - `fx-host` on a wrapper that never moves, when the surface itself lifts
+ *    on hover (the host takes the hover, so the pointer never leaves and
+ *    re-enters at the edge);
+ *  - `fx-copy` plus `useCopyTarget()` props for a whole-box copy target, and
+ *    `data-copy-target` on its keyboard copy button.
+ *
+ * 1. Beam (`.fx-beam`): a comet, transparent → `--primary` with a `--mustard`
+ *    tip, running round the drawn ink line, one turn per `--fx-beam-turn`,
+ *    only while hovered / keyboard-focused. Two layers, because filter runs
+ *    before mask: the span carries the same box (`inset: -ink-width`) and the
+ *    same displacement filter (`--ink-filter`) as the outline `::before`, and
+ *    its own `::before` is the conic gradient cut to a ring of `--ink-pen`.
+ *    So the ring is displaced exactly like the drawn line and sits on it.
+ * 2. Dots (`.fx-dots`): a 14px dot grid in its own clipped layer, revealed by
+ *    a radial mask around the pointer (`--mx` / `--my`). Painted after the
+ *    outline `::before` at the same z-index, so above the fill, under text.
+ * 3. Copy box (`.fx-copy`): pointer cursor, press dip to 0.985
+ *    (`data-pressed`), and on success one `--mustard` lap (`data-lap`,
+ *    beam-lap.ts) that differs from the `--primary` hover line.
+ * Touch: no beam or dots on hover; the lap still runs. Reduced motion: no
+ * beam on hover (the outline still turns `--primary`), the dots stay at the
+ * centre, no press dip, and the lap becomes one fade of a still ring.
+ */
+
+@property --fx-beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes fx-beam-spin {
+  to {
+    --fx-beam-angle: 360deg;
+  }
+}
+
+/* Same turn under its own name, so a copy lap restarts even over the hover loop. */
+@keyframes fx-lap-turn {
+  to {
+    --fx-beam-angle: 360deg;
+  }
+}
+
+@keyframes fx-lap-fade {
+  40% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+:root {
+  --fx-in: 180ms;
+  --fx-out: 120ms;
+  --fx-intent: 60ms;
+  --fx-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --fx-beam-turn: 2.2s;
+  --fx-lap: 450ms;
+  --fx-press-scale: 0.985;
+  --fx-press: 90ms;
+  --fx-release: 220ms;
+}
+
+@layer components {
+  .fx-beam,
+  .fx-dots {
+    position: absolute;
+    z-index: -1;
+    margin: 0;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  /* 1. Beam: the box and filter of the outline ::before (custom.css). */
+  .fx-beam {
+    inset: calc(-1 * var(--ink-width));
+    filter: var(--ink-filter, url("#ink-wobble"));
+    opacity: 0;
+    transition: opacity var(--fx-out) var(--fx-ease-out);
+  }
+
+  .fx-beam::before {
+    --fx-beam-mustard: var(--mustard);
+    --fx-beam-tail: var(--primary);
+    --fx-beam-head: var(--fx-beam-mustard);
+    position: absolute;
+    inset: 0;
+    content: "";
+    padding: var(--ink-pen, var(--ink-width));
+    border-radius: inherit;
+    background: conic-gradient(
+      from var(--fx-beam-angle),
+      transparent 0 58%,
+      var(--fx-beam-tail) 84%,
+      var(--fx-beam-head) 93% 98%,
+      transparent 100%
+    );
+    mask:
+      linear-gradient(black 0 0) content-box exclude,
+      linear-gradient(black 0 0);
+  }
+
+  /* Dark: the `--mustard` fill is a deep ochre that vanishes on the dark
+     card; its foreground is the bright mustard. */
+  .dark .fx-beam::before {
+    --fx-beam-mustard: var(--mustard-foreground);
+  }
+
+  .fx-surface[data-kbd-focus] > .fx-beam {
+    opacity: 1;
+    transition-duration: var(--fx-in);
+  }
+
+  .fx-surface[data-kbd-focus] > .fx-beam::before {
+    animation: fx-beam-spin var(--fx-beam-turn) linear infinite;
+  }
+
+  /* 2. Dots. Already under the text (z-index -1 in the surface's isolated
+     stack); kept faint so the dots that show between glyphs never read as
+     lying on the text. The span carries the opacity, so the rows' own
+     `::after { opacity: 1 }` (effects-rows.css) stays faint too. */
+  .fx-dots {
+    inset: 0;
+    overflow: hidden;
+    opacity: 0.5;
+  }
+
+  .fx-dots::after {
+    position: absolute;
+    inset: 0;
+    content: "";
+    background-image: radial-gradient(
+      var(--border-strong) 1px,
+      transparent 1.4px
+    );
+    background-size: 14px 14px;
+    mask: radial-gradient(
+      160px circle at var(--mx, 50%) var(--my, 50%),
+      black 0,
+      black 30%,
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity var(--fx-out) var(--fx-ease-out);
+  }
+
+  @media (hover: hover) {
+    :is(.fx-surface:hover, .fx-host:hover > .fx-surface) > .fx-beam {
+      opacity: 1;
+      transition-duration: var(--fx-in);
+      transition-delay: var(--fx-intent);
+    }
+
+    :is(.fx-surface:hover, .fx-host:hover > .fx-surface) > .fx-beam::before {
+      animation: fx-beam-spin var(--fx-beam-turn) linear infinite;
+    }
+
+    :is(.fx-surface:hover, .fx-host:hover > .fx-surface) > .fx-dots::after {
+      opacity: 1;
+      transition-duration: var(--fx-in);
+      transition-delay: var(--fx-intent);
+    }
+  }
+
+  /* 3. Copy box. Text keeps the text cursor: it is still selectable. */
+  .fx-copy {
+    cursor: pointer;
+    transition: scale var(--fx-release) var(--fx-ease-out);
+  }
+
+  .fx-copy :is(code, pre) {
+    cursor: text;
+  }
+
+  .fx-copy[data-pressed] {
+    scale: var(--fx-press-scale);
+    transition-duration: var(--fx-press);
+  }
+
+  /* Success lap: declared after the hover / focus loop at equal or higher specificity, so it wins. */
+  .fx-surface.fx-surface[data-lap] > .fx-beam {
+    opacity: 1;
+    transition: none;
+  }
+
+  .fx-surface.fx-surface[data-lap] > .fx-beam::before {
+    --fx-beam-tail: var(--fx-beam-mustard);
+    --fx-beam-head: var(--fx-beam-mustard);
+    animation: fx-lap-turn var(--fx-lap) linear 1;
+  }
+}
+
+/*
+ * Reduced motion. Unlayered on purpose: custom.css's unlayered
+ * `*, *::before, *::after` rule cuts every animation to 0.01ms and beats any
+ * layered rule, so the one-fade lap has to live out here, more specific.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .fx-surface > .fx-beam {
+    opacity: 0;
+  }
+
+  /* Without the beam, the outline itself turns --primary on hover / focus. */
+  .fx-surface[data-kbd-focus] {
+    --ink-line: var(--primary);
+  }
+
+  .fx-surface > .fx-beam::before {
+    animation: none;
+  }
+
+  .fx-copy[data-pressed] {
+    scale: none;
+  }
+
+  .fx-surface.fx-surface[data-lap] > .fx-beam {
+    opacity: 1;
+  }
+
+  .fx-surface.fx-surface[data-lap] > .fx-beam::before {
+    background: var(--fx-beam-mustard);
+    opacity: 0;
+    animation: fx-lap-fade var(--fx-lap) ease-in-out 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) and (hover: hover) {
+  :is(.fx-surface:hover, .fx-host:hover > .fx-surface) {
+    --ink-line: var(--primary);
+  }
+}

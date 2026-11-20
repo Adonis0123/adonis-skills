@@ -15,7 +15,7 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #. placeholder {0}: code(pluginDisable)
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:303
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:276
 msgid "plugins.compare.off.plugin"
 msgstr "{0} 一次停用整个包，随时能再启用。"
 
@@ -31,17 +31,17 @@ msgid "plugins.carry.agent.text"
 msgstr "主 agent 派出去做一件专门任务的助手。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:196
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:143
 msgid "plugins.carry.source"
 msgstr "只在官方文档写明支持时才标宿主：<0>Claude Code 插件参考</0>、<1>Codex 插件</1>、<2>Codex hooks</2>。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:265
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:238
 msgid "plugins.compare.what.plugin"
 msgstr "一个包，里面可以有 Skill、Hook 等多种能力。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:148
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:307
 msgid "plugins.intro"
 msgstr "Plugin 是宿主可以按需安装、启用、停用的包。一个 Plugin 可以同时带 Skill、斜杠命令、子 agent、Hook、MCP 服务和 LSP；装一次全部生效，停用一次全部关掉。"
 
@@ -51,24 +51,24 @@ msgid "plugins.carry.hook.text"
 msgstr "宿主在固定时机自动运行的脚本，比如执行 Bash 前、回复结束时。它可以放行、拦下或提醒。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:247
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:220
 msgid "plugins.compare.skill"
 msgstr "单装 Skill"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:233
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:206
 msgid "plugins.compare.heading"
 msgstr "单装 Skill 还是装 Plugin"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: code(".env")
 #. placeholder {1}: code("curl")
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:346
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:360
 msgid "plugins.alsoSee"
 msgstr "也可以看看：<0>cc-safety-net</0>，第三方的防护工具，支持 Claude Code、Codex 等 agent CLI。它还会拦读取 {0} 文件、把 {1} 输出直接交给 shell 执行。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:243
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:216
 msgid "plugins.compare.aspect"
 msgstr "对比项"
 
@@ -78,12 +78,12 @@ msgid "plugins.carry.mcp.text"
 msgstr "让 agent 连上外部工具或数据，比如浏览器、设计稿。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:298
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:271
 msgid "plugins.compare.off.skill"
 msgstr "删掉 skill 目录。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:313
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:286
 msgid "plugins.hooksOnly"
 msgstr "本站的插件目前都带 Hook：在固定时机自动运行，拦下删了找不回的命令、会卡住无人值守任务的命令，以及不合格的回复。"
 
@@ -103,12 +103,12 @@ msgid "plugins.meta.description"
 msgstr "给 Claude Code 和 Codex 用的 Hook 插件：拦下删了找不回的命令，让无人值守任务不卡住，回合结束前检查回复。勾选想要的，复制一条命令。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:280
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:253
 msgid "plugins.compare.runs.plugin"
 msgstr "Hook 在固定时机运行，不靠 agent 想起来。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:288
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:261
 msgid "plugins.compare.install"
 msgstr "怎么装"
 
@@ -118,7 +118,7 @@ msgid "plugins.carry.skill.text"
 msgstr "agent 遇到匹配的任务时读取并照着做的说明。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:260
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:233
 msgid "plugins.compare.what.skill"
 msgstr "一份说明，agent 读了照着做。"
 
@@ -133,12 +133,12 @@ msgid "plugins.carry.mcp.name"
 msgstr "MCP 服务"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:339
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:348
 msgid "plugins.empty"
 msgstr "还没有发布插件。"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:250
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:223
 msgid "plugins.compare.plugin"
 msgstr "Plugin"
 
@@ -148,7 +148,7 @@ msgid "plugins.meta.title"
 msgstr "插件"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:145
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:304
 msgid "plugins.title"
 msgstr "插件"
 
@@ -168,26 +168,26 @@ msgid "plugins.carry.agent.name"
 msgstr "子 agent"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:295
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:268
 msgid "plugins.compare.off"
 msgstr "开关"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:172
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:140
 msgid "plugins.carry.heading"
 msgstr "Plugin 能带什么"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:257
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:230
 msgid "plugins.compare.what"
 msgstr "是什么"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:272
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:245
 msgid "plugins.compare.runs"
 msgstr "什么时候起作用"
 
 #. js-lingui-explicit-id
-#: ../../../src/app/%5Blang%5D/plugins/page.tsx:275
+#: ../../../src/app/%5Blang%5D/plugins/page.tsx:248
 msgid "plugins.compare.runs.skill"
 msgstr "agent 判断任务匹配时。"

@@ -14,26 +14,36 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:130
+#: ../src/components/plugin-card.tsx:100
+#~ msgid "pluginCard.scenario"
+#~ msgstr "场景"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:110
+#~ msgid "pluginCard.effect"
+#~ msgstr "效果"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:138
+msgid "pluginCard.details.aria"
+msgstr "查看 {name} 详情"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:125
 msgid "pluginCard.claudeOnly"
 msgstr "仅 Claude Code"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:72
+#: ../src/components/plugin-card.tsx:143
+msgid "pluginCard.details"
+msgstr "详情"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:82
 msgid "pluginCard.select.aria"
 msgstr "把 {name} 加进安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:100
-msgid "pluginCard.scenario"
-msgstr "场景"
-
-#. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:110
-msgid "pluginCard.effect"
-msgstr "效果"
-
-#. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:121
+#: ../src/components/plugin-card.tsx:116
 msgid "pluginCard.hosts.aria"
 msgstr "支持的宿主"

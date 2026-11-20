@@ -112,3 +112,15 @@ metadata: # optional
 - Colors come from the design system in the private `adonis-brand` repo (`design-system/tokens.json`; `projects/skills/theme.json` picks the accent theme, currently `teal`, with warm-paper role overrides in `designSystem.roles`). Components use design-system roles only. `apps/web/src/styles/brand-tokens.css` and `theme-roles.css` are generated: change the brand repo, then run `pnpm brand:sync`; CI runs `pnpm brand:check`.
 - Do not apply its visual rules to scripts, skills, or non-web packages.
 - In particular, never add bottom outer highlight lines such as `0 1px 0 ...` to raised or floating shadows.
+
+### Density (no wasted space, owner rule)
+
+The owner rejects layouts that waste space. Pages read as a dense catalog, not a marketing page; this overrides the larger section spacing in `DESIGN.md` until adonis-brand is updated.
+
+- A section is as tall as its content: no min-heights, no text floating in a taller box, no decorative empty bands.
+- Space between page sections is at most 40px on desktop and 32px on mobile; set it through the `--page-space-y*` variables, with any divider inside that gap.
+- A section header is one row: title, count and one line of description on the left, the action on the right.
+- Counts (Skills, Plugins) go inline in an existing header or meta line, never in their own big-number strip.
+- No placeholder cells to fill a grid row and no "show more" fades when every item is already shown; pick a column count that fits the real item count. Four items or fewer sit in one row on desktop.
+- The Skills list is the main content: at 1440×900 the home page shows its toolbar and first rows in the first viewport, and detail pages show the title and the start of the body.
+- Hover and selection effects never change an element's size or row height.

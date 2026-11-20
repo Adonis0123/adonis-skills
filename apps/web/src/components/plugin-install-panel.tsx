@@ -1,7 +1,7 @@
 "use client";
 
 import { Trans, useLingui } from "@lingui/react/macro";
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { CommandBlock, CopyTextBlock } from "@/components/command-block";
 import { InstallTabs, type InstallTab } from "@/components/host-install-tabs";
 import { resolveLocaleValue } from "@/i18n/config";
@@ -28,6 +28,11 @@ interface PluginInstallPanelProps {
   showManage?: boolean;
   /** Extra README notes shown inside the folded disable / uninstall area. */
   manageNote?: ReactNode;
+  /**
+   * /plugins catalog sidebar: nothing selected shows one short muted line
+   * (the box stays low) instead of the dashed placeholder box.
+   */
+  catalog?: boolean;
   className?: string;
 }
 
@@ -80,6 +85,7 @@ export function PluginInstallPanel({
   marketplace,
   showManage = true,
   manageNote,
+  catalog = false,
   className,
 }: PluginInstallPanelProps) {
   const { t, i18n } = useLingui();
@@ -94,7 +100,13 @@ export function PluginInstallPanel({
     },
   ];
 
-  const nothingSelected = (
+  const nothingSelected = catalog ? (
+    <p className="py-1 text-sm text-pretty text-muted-foreground">
+      <Trans id="pluginInstall.emptyCatalog">
+        Tick plugins in the list and the command appears here.
+      </Trans>
+    </p>
+  ) : (
     <p className="ink-box ink-box--md ink-box--dashed px-4 py-5 text-center text-sm text-muted-foreground">
       <Trans id="pluginInstall.empty">
         Tick at least one plugin below to get a command.
@@ -180,7 +192,8 @@ export function PluginInstallPanel({
                   })}
                 />
               </dl>
-              {manageNote}
+              {/* A server-rendered element in a client children array; the keyed slot keeps React's key check quiet. */}
+              <Fragment key="note">{manageNote}</Fragment>
             </ManageDisclosure>
           )}
         </>

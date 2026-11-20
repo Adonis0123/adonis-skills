@@ -13,6 +13,8 @@ export interface TocEntry {
 interface TocNavProps {
   title: React.ReactNode;
   entries: TocEntry[];
+  /** The parent owns stickiness and height; the list scrolls inside the space left. */
+  className?: string;
 }
 
 /** Headings count as passed once their top crosses this line: the sticky header plus scroll-mt-28 (112px) and a little slack. */
@@ -45,8 +47,8 @@ export function resolveActiveTocId(
   return activeId;
 }
 
-/** Sticky table of contents that marks the section currently in view (aria-current). */
-export function TocNav({ title, entries }: TocNavProps) {
+/** Table of contents that marks the section currently in view (aria-current). */
+export function TocNav({ title, entries, className }: TocNavProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -85,12 +87,12 @@ export function TocNav({ title, entries }: TocNavProps) {
   return (
     <nav
       aria-labelledby="toc-title"
-      className="hidden lg:sticky lg:top-24 lg:block"
+      className={cx("hidden min-h-0 flex-col lg:flex", className)}
     >
       <h2 id="toc-title" className="kicker mb-3 text-muted-foreground">
         {title}
       </h2>
-      <ol className="max-h-[70vh] space-y-0.5 overflow-y-auto border-l border-border pr-2 text-sm [scrollbar-width:thin]">
+      <ol className="min-h-0 flex-1 space-y-0.5 overflow-y-auto border-l border-border pr-2 text-sm [scrollbar-width:thin]">
         {entries.map((entry) => {
           const active = entry.id === activeId;
           return (

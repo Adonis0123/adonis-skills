@@ -1,7 +1,5 @@
-"use client";
-
-import { motion } from "motion/react";
-import { usePrefersReducedMotion } from "./use-prefers-reduced-motion";
+import type { CSSProperties } from "react";
+import { cx } from "@/components/ui/utils";
 
 interface SectionRevealProps {
   children: React.ReactNode;
@@ -10,33 +8,25 @@ interface SectionRevealProps {
   offsetY?: number;
 }
 
+/**
+ * CSS-only entrance (styles/effects-layout.css `.section-reveal`). It starts
+ * on first paint instead of after hydration, so server-rendered content is
+ * never held at `opacity: 0`, and reduced motion shows it at once.
+ */
 export function SectionReveal({
   children,
   className,
   delay = 0,
-  offsetY = 18,
+  offsetY = 8,
 }: SectionRevealProps) {
-  const prefersReducedMotion = usePrefersReducedMotion();
-
-  if (prefersReducedMotion) {
-    return <div className={className}>{children}</div>;
-  }
-
-  const normalizedDelay = Math.max(0, delay) / 1000;
+  const style = {
+    "--reveal-delay": `${Math.max(0, delay)}ms`,
+    "--reveal-offset": `${offsetY}px`,
+  } as CSSProperties;
 
   return (
-    <motion.div
-      className={className}
-      initial={{ opacity: 0, y: offsetY, filter: "blur(1.8px)" }}
-      animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-      transition={{
-        type: "spring",
-        stiffness: 112,
-        damping: 18,
-        delay: normalizedDelay,
-      }}
-    >
+    <div className={cx("section-reveal", className)} style={style}>
       {children}
-    </motion.div>
+    </div>
   );
 }

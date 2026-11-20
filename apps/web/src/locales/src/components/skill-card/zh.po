@@ -19,16 +19,16 @@ msgstr ""
 #~ msgstr "复制 {skillName} 的安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:65
+#: ../src/components/skill-card.tsx:70
 msgid "skillCard.copy.ariaLabel"
 msgstr "复制 {displayName} 的安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:28
+#: ../src/components/skill-card.tsx:33
 msgid "skillCard.featured"
 msgstr "精选"
 
 #. js-lingui-explicit-id
-#: ../src/components/skill-card.tsx:50
+#: ../src/components/skill-card.tsx:55
 msgid "skillCard.tags.aria"
 msgstr "标签"

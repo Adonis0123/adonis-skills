@@ -130,8 +130,167 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
   const docLinkClass =
     "clay-focus-ring rounded-sm text-link underline underline-offset-2";
   const thClass =
-    "border-b border-border px-2.5 py-2.5 text-left align-top font-semibold md:px-3";
-  const tdClass = "border-b border-border px-2.5 py-2.5 align-top md:px-3";
+    "border-b border-border px-2.5 py-2 text-left align-top font-semibold md:px-3";
+  const tdClass = "border-b border-border px-2.5 py-2 align-top md:px-3";
+
+  const capabilitiesSection = (
+    <section aria-labelledby="plugin-carries">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <h2 id="plugin-carries" className="type-h3">
+          <Trans id="plugins.carry.heading">What a plugin can carry</Trans>
+        </h2>
+        <p className="text-[13px] text-muted-foreground">
+          <Trans id="plugins.carry.source">
+            A host is marked only where its official docs say so:{" "}
+            <a
+              href={PLUGIN_DOCS.claudeCode}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={docLinkClass}
+            >
+              Claude Code plugins reference
+            </a>
+            ,{" "}
+            <a
+              href={PLUGIN_DOCS.codexPlugins}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={docLinkClass}
+            >
+              Codex plugins
+            </a>
+            ,{" "}
+            <a
+              href={PLUGIN_DOCS.codexHooks}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={docLinkClass}
+            >
+              Codex hooks
+            </a>
+            .
+          </Trans>
+        </p>
+      </div>
+      <ul className="ink-box mt-3 grid bg-card sm:grid-cols-2">
+        {capabilities.map((item) => (
+          <li
+            key={item.id}
+            className="min-w-0 border-t border-border px-4 py-2.5 first:border-t-0 sm:odd:border-r sm:nth-2:border-t-0"
+          >
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <h3 className="text-[14px] font-semibold text-foreground">
+                {item.name}
+              </h3>
+              <p className="flex gap-1">
+                {item.hosts.map((host) => (
+                  <span key={host} className="nk-tag nk-tag--neutral gap-1">
+                    <span className="icon-[lucide--check] size-3" aria-hidden />
+                    {PLUGIN_HOST_LABELS[host]}
+                  </span>
+                ))}
+              </p>
+            </div>
+            <p className="mt-1 text-[13px] leading-[1.55] text-muted-foreground">
+              {item.text}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+
+  const compareSection = (
+    <section aria-labelledby="skill-vs-plugin">
+      <h2 id="skill-vs-plugin" className="type-h3">
+        <Trans id="plugins.compare.heading">
+          A skill on its own, or a plugin
+        </Trans>
+      </h2>
+      <div className="ink-box mt-3 overflow-x-auto bg-card">
+        <table className="w-full border-collapse text-[13.5px] leading-[1.55] [&_code]:[overflow-wrap:anywhere] [&_tr:last-child>*]:border-b-0">
+          <thead className="bg-muted text-foreground">
+            <tr>
+              <th className={`${thClass} w-20 md:w-32`}>
+                <span className="sr-only">
+                  <Trans id="plugins.compare.aspect">Aspect</Trans>
+                </span>
+              </th>
+              <th className={thClass}>
+                <Trans id="plugins.compare.skill">A skill on its own</Trans>
+              </th>
+              <th className={thClass}>
+                <Trans id="plugins.compare.plugin">Plugin</Trans>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="text-muted-foreground">
+            <tr>
+              <th scope="row" className={`${thClass} text-foreground`}>
+                <Trans id="plugins.compare.what">What it is</Trans>
+              </th>
+              <td className={tdClass}>
+                <Trans id="plugins.compare.what.skill">
+                  Instructions the agent reads and follows.
+                </Trans>
+              </td>
+              <td className={tdClass}>
+                <Trans id="plugins.compare.what.plugin">
+                  A package that can hold skills, hooks and more.
+                </Trans>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" className={`${thClass} text-foreground`}>
+                <Trans id="plugins.compare.runs">When it acts</Trans>
+              </th>
+              <td className={tdClass}>
+                <Trans id="plugins.compare.runs.skill">
+                  When the agent decides a task matches.
+                </Trans>
+              </td>
+              <td className={tdClass}>
+                <Trans id="plugins.compare.runs.plugin">
+                  Hooks run at fixed points, whether or not the agent thinks of
+                  them.
+                </Trans>
+              </td>
+            </tr>
+            <tr>
+              <th scope="row" className={`${thClass} text-foreground`}>
+                <Trans id="plugins.compare.install">Install</Trans>
+              </th>
+              <td className={tdClass}>{code(skillInstall)}</td>
+              <td className={tdClass}>{code(pluginInstall)}</td>
+            </tr>
+            <tr>
+              <th scope="row" className={`${thClass} text-foreground`}>
+                <Trans id="plugins.compare.off">Turn it off</Trans>
+              </th>
+              <td className={tdClass}>
+                <Trans id="plugins.compare.off.skill">
+                  Delete the skill folder.
+                </Trans>
+              </td>
+              <td className={tdClass}>
+                <Trans id="plugins.compare.off.plugin">
+                  {code(pluginDisable)} turns off the whole package; enable it
+                  again any time.
+                </Trans>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 max-w-3xl text-pretty text-[14px] leading-[1.65]">
+        <Trans id="plugins.hooksOnly">
+          Every plugin on this site carries hooks: they run at fixed points and
+          stop deletes you cannot undo, commands that would stall an unattended
+          run, and replies that miss the mark.
+        </Trans>
+      </p>
+    </section>
+  );
 
   return (
     <main
@@ -139,12 +298,12 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
       className="site-page-shell site-frame site-frame--main w-full"
     >
       <SectionReveal delay={20}>
-        <header className="flex items-center justify-between gap-8">
+        <header className="flex items-center justify-between gap-6">
           <div className="min-w-0 max-w-3xl">
-            <h1 className="type-display text-[clamp(2.4rem,1.6rem+3vw,4rem)]">
+            <h1 className="type-display text-[clamp(2.25rem,1.8rem+1.5vw,3rem)]">
               <Trans id="plugins.title">Plugins</Trans>
             </h1>
-            <p className="type-lede mt-4 text-pretty text-muted-foreground">
+            <p className="mt-2 text-pretty text-[15px] leading-[1.65] text-muted-foreground">
               <Trans id="plugins.intro">
                 A plugin is a package your agent host can install, enable and
                 disable on demand. One plugin can carry skills, slash commands,
@@ -153,173 +312,19 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
               </Trans>
             </p>
           </div>
-          <span className="art-avatar art-avatar--ringed hidden size-36 shrink-0 md:block">
-            <Image
-              src={getIllustrationSrc("group-tools.webp")}
-              alt=""
-              width={1024}
-              height={1024}
-              sizes="144px"
-              priority
-            />
-          </span>
+          <Image
+            src={getIllustrationSrc("group-tools.webp")}
+            alt=""
+            width={1024}
+            height={1024}
+            sizes="112px"
+            priority
+            className="-my-3 hidden size-28 shrink-0 object-contain md:block"
+          />
         </header>
       </SectionReveal>
 
-      <SectionReveal delay={60}>
-        <section aria-labelledby="plugin-carries" className="mt-12">
-          <h2 id="plugin-carries" className="type-h3">
-            <Trans id="plugins.carry.heading">What a plugin can carry</Trans>
-          </h2>
-          <ul className="ink-box ink-raised mt-5 grid gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-3">
-            {capabilities.map((item) => (
-              <li key={item.id} className="flex flex-col bg-card p-4 md:p-5">
-                <h3 className="type-card-title">{item.name}</h3>
-                <p className="mt-1.5 flex-1 text-[13.5px] leading-[1.6] text-muted-foreground">
-                  {item.text}
-                </p>
-                <p className="mt-3 flex flex-wrap gap-1.5">
-                  {item.hosts.map((host) => (
-                    <span key={host} className="nk-tag nk-tag--neutral gap-1">
-                      <span
-                        className="icon-[lucide--check] size-3"
-                        aria-hidden
-                      />
-                      {PLUGIN_HOST_LABELS[host]}
-                    </span>
-                  ))}
-                </p>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 text-[13px] text-muted-foreground">
-            <Trans id="plugins.carry.source">
-              A host is marked only where its official docs say so:{" "}
-              <a
-                href={PLUGIN_DOCS.claudeCode}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={docLinkClass}
-              >
-                Claude Code plugins reference
-              </a>
-              ,{" "}
-              <a
-                href={PLUGIN_DOCS.codexPlugins}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={docLinkClass}
-              >
-                Codex plugins
-              </a>
-              ,{" "}
-              <a
-                href={PLUGIN_DOCS.codexHooks}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={docLinkClass}
-              >
-                Codex hooks
-              </a>
-              .
-            </Trans>
-          </p>
-        </section>
-      </SectionReveal>
-
-      <SectionReveal delay={80}>
-        <section aria-labelledby="skill-vs-plugin" className="mt-12">
-          <h2 id="skill-vs-plugin" className="type-h3">
-            <Trans id="plugins.compare.heading">
-              A skill on its own, or a plugin
-            </Trans>
-          </h2>
-          <div className="ink-box ink-raised mt-5 overflow-x-auto bg-card">
-            <table className="w-full border-collapse text-[13.5px] leading-[1.6] md:text-[14px] [&_code]:[overflow-wrap:anywhere] [&_tr:last-child>*]:border-b-0">
-              <thead className="bg-muted text-foreground">
-                <tr>
-                  <th className={`${thClass} w-20 md:w-36`}>
-                    <span className="sr-only">
-                      <Trans id="plugins.compare.aspect">Aspect</Trans>
-                    </span>
-                  </th>
-                  <th className={thClass}>
-                    <Trans id="plugins.compare.skill">A skill on its own</Trans>
-                  </th>
-                  <th className={thClass}>
-                    <Trans id="plugins.compare.plugin">Plugin</Trans>
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="text-muted-foreground">
-                <tr>
-                  <th scope="row" className={`${thClass} text-foreground`}>
-                    <Trans id="plugins.compare.what">What it is</Trans>
-                  </th>
-                  <td className={tdClass}>
-                    <Trans id="plugins.compare.what.skill">
-                      Instructions the agent reads and follows.
-                    </Trans>
-                  </td>
-                  <td className={tdClass}>
-                    <Trans id="plugins.compare.what.plugin">
-                      A package that can hold skills, hooks and more.
-                    </Trans>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" className={`${thClass} text-foreground`}>
-                    <Trans id="plugins.compare.runs">When it acts</Trans>
-                  </th>
-                  <td className={tdClass}>
-                    <Trans id="plugins.compare.runs.skill">
-                      When the agent decides a task matches.
-                    </Trans>
-                  </td>
-                  <td className={tdClass}>
-                    <Trans id="plugins.compare.runs.plugin">
-                      Hooks run at fixed points, whether or not the agent thinks
-                      of them.
-                    </Trans>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row" className={`${thClass} text-foreground`}>
-                    <Trans id="plugins.compare.install">Install</Trans>
-                  </th>
-                  <td className={tdClass}>{code(skillInstall)}</td>
-                  <td className={tdClass}>{code(pluginInstall)}</td>
-                </tr>
-                <tr>
-                  <th scope="row" className={`${thClass} text-foreground`}>
-                    <Trans id="plugins.compare.off">Turn it off</Trans>
-                  </th>
-                  <td className={tdClass}>
-                    <Trans id="plugins.compare.off.skill">
-                      Delete the skill folder.
-                    </Trans>
-                  </td>
-                  <td className={tdClass}>
-                    <Trans id="plugins.compare.off.plugin">
-                      {code(pluginDisable)} turns off the whole package; enable
-                      it again any time.
-                    </Trans>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p className="mt-4 max-w-3xl text-pretty text-[15px] leading-[1.7]">
-            <Trans id="plugins.hooksOnly">
-              Every plugin on this site carries hooks: they run at fixed points
-              and stop deletes you cannot undo, commands that would stall an
-              unattended run, and replies that miss the mark.
-            </Trans>
-          </p>
-        </section>
-      </SectionReveal>
-
-      <div className="mt-12">
+      <div className="mt-6 md:mt-8">
         {plugins.length > 0 ? (
           <PluginsCatalog
             plugins={plugins.map(
@@ -333,15 +338,24 @@ export default async function PluginsPage({ params }: PluginsPageProps) {
               }),
             )}
             marketplace={marketplace}
-          />
+          >
+            {capabilitiesSection}
+            {compareSection}
+          </PluginsCatalog>
         ) : (
-          <p className="ink-box ink-box--xl ink-box--dashed px-4 py-12 text-center text-muted-foreground">
-            <Trans id="plugins.empty">No plugins are published yet.</Trans>
-          </p>
+          <>
+            <p className="ink-box ink-box--xl ink-box--dashed px-4 py-12 text-center text-muted-foreground">
+              <Trans id="plugins.empty">No plugins are published yet.</Trans>
+            </p>
+            <div className="mt-(--page-space-y) grid gap-(--page-space-y)">
+              {capabilitiesSection}
+              {compareSection}
+            </div>
+          </>
         )}
       </div>
 
-      <aside className="ink-box ink-raised mt-12 flex flex-col gap-2 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+      <aside className="ink-box ink-raised mt-(--page-space-y) flex flex-col gap-2 bg-card p-5 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
         <p className="text-[14px] leading-[1.6] text-muted-foreground">
           <Trans id="plugins.alsoSee">
             Also worth a look:{" "}

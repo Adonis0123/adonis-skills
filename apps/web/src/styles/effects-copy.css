@@ -1,0 +1,53 @@
+/* Owned by one worker; see docs/web-ui-clay-contract.md. */
+
+/*
+ * Copy boxes (components/command-block.tsx, copy-install-command.tsx
+ * CopyCommandBox), on top of the shared hover layer in effects-hover.css.
+ *
+ * 1. Hint (`.copy-hint`): 「点击复制」 beside the copy icon while the box is
+ *    hovered or its button keyboard-focused, 「已复制」 after a copy
+ *    (`data-copied`). Both labels share one grid cell, so the slot keeps the
+ *    wider one's width and nothing shifts. Touch: only 「已复制」.
+ * 2. Featured card: the 3px lift is driven by its `.fx-host` wrapper, which
+ *    never moves, so the pointer cannot drop off the bottom edge mid-lift.
+ * Reduced motion: custom.css cuts every transition to 0.01ms, so the hint
+ * switches instantly; the lift stays (no motion beyond a position change).
+ */
+
+@layer components {
+  .copy-hint {
+    display: grid;
+  }
+
+  .copy-hint > * {
+    grid-area: 1 / 1;
+    align-self: center;
+    text-align: right;
+    opacity: 0;
+    transition: opacity var(--fx-out) var(--fx-ease-out);
+  }
+
+  .copy-hint[data-copied] > .copy-hint-done {
+    opacity: 1;
+    transition-duration: var(--fx-in);
+  }
+
+  .fx-copy[data-kbd-focus] .copy-hint:not([data-copied]) > .copy-hint-idle {
+    opacity: 1;
+    transition-duration: var(--fx-in);
+  }
+
+  @media (hover: hover) {
+    .fx-copy:hover .copy-hint:not([data-copied]) > .copy-hint-idle {
+      opacity: 1;
+      transition-duration: var(--fx-in);
+      transition-delay: var(--fx-intent);
+    }
+  }
+
+  .fx-host:hover > .featured-card {
+    --ink-line: var(--primary);
+    box-shadow: var(--clay-shadow-card-hover);
+    transform: translate3d(0, -3px, 0);
+  }
+}

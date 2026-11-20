@@ -15,30 +15,65 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../src/components/plugins-catalog.tsx:88
-msgid "plugins.install.selected"
-msgstr "{selectedCount} of {totalCount} selected. The command and the prompt follow the cards below."
+#~ msgid "plugins.install.selected"
+#~ msgstr "{selectedCount} of {totalCount} selected. The command and the prompt follow the cards below."
 
 #. js-lingui-explicit-id
-#: ../src/components/plugins-catalog.tsx:128
+#: ../src/components/plugins-catalog.tsx:106
+#~ msgid "plugins.install.clearAll"
+#~ msgstr "Clear all"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:107
+#~ msgid "plugins.install.selectAll"
+#~ msgstr "Select all"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:83
+#~ msgid "plugins.install.heading"
+#~ msgstr "Tick plugins, copy one command"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:325
+msgid "plugins.install.count"
+msgstr "{count} of {total} selected"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:235
 msgid "plugins.filter.all"
 msgstr "All"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugins-catalog.tsx:106
-msgid "plugins.install.clearAll"
-msgstr "Clear all"
+#: ../src/components/plugins-catalog.tsx:337
+msgid "plugins.install.clear"
+msgstr "Clear"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugins-catalog.tsx:115
+#: ../src/components/plugins-catalog.tsx:223
 msgid "plugins.filter.aria"
 msgstr "Filter by category"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugins-catalog.tsx:107
-msgid "plugins.install.selectAll"
+#: ../src/components/plugins-catalog.tsx:315
+msgid "plugins.install.title"
+msgstr "Install command"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:323
+msgid "plugins.install.none"
+msgstr "None selected"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:214
+msgid "plugins.list.heading"
+msgstr "Pick plugins"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugins-catalog.tsx:109
+msgid "plugins.selectAll"
 msgstr "Select all"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugins-catalog.tsx:83
-msgid "plugins.install.heading"
-msgstr "Tick plugins, copy one command"
+#: ../src/components/plugins-catalog.tsx:91
+msgid "plugins.selectAll.aria"
+msgstr "Select all {count} shown"

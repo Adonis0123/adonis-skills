@@ -1,0 +1,282 @@
+/* Owned by one worker; see docs/web-ui-clay-contract.md. */
+
+/*
+ * Home page layout (app/[lang]/page.tsx, components/skills-library-section.tsx),
+ * after coco-skills' compact home: a short hero, then the Skills list as the
+ * main content, then one-row-header sections 40px apart (24px on phones)
+ * with the wavy divider in the middle of that gap (CLAUDE.md "Density").
+ *
+ * Hero motion, all transform / stroke only so nothing shifts layout and the
+ * LCP image is never hidden: the underline under the title draws itself in
+ * once; the two ink stars twinkle; the art plate settles in, then Nika and
+ * Kiki bob gently. Reduced motion: everything static and fully drawn.
+ */
+
+:root {
+  --home-gap: calc(var(--page-space-y) / 2);
+}
+
+@keyframes home-ink-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes home-star-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+
+  50% {
+    transform: scale(1.18) rotate(8deg);
+  }
+}
+
+@keyframes home-art-settle {
+  from {
+    transform: translate3d(0, 10px, 0) rotate(-1deg);
+  }
+
+  to {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+@keyframes home-art-bob {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  50% {
+    transform: translate3d(0, -5px, 0) rotate(0.6deg);
+  }
+}
+
+@layer components {
+  /* Hero: as tall as its text; the art follows that height. */
+  .home-hero {
+    padding-top: calc(var(--page-space-y) * 0.75);
+    padding-bottom: var(--home-gap);
+  }
+
+  .home-hero-grid {
+    display: grid;
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+
+  @media (min-width: 768px) {
+    .home-hero-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 300px);
+      gap: 2.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .home-hero-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+    }
+  }
+
+  .home-hero-title {
+    font-size: clamp(1.875rem, 1.25rem + 1.6vw, 2.75rem);
+    line-height: 1.16;
+  }
+
+  .home-hero-title:lang(zh) {
+    font-size: clamp(2rem, 1.3rem + 1.9vw, 3rem);
+    line-height: 1.22;
+  }
+
+  /* The art fills the column, so the text column sets the height. */
+  .home-hero-art {
+    position: relative;
+    min-height: 0;
+  }
+
+  /* The banner's left ~40% is a faint wash, so it reaches back under the
+     text column; the mask fades every edge into the page (any paper tone). */
+  .home-hero {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .home-hero-art > .home-hero-figure {
+    position: absolute;
+    z-index: -1;
+    top: -1.25rem;
+    right: -1rem;
+    bottom: -3.25rem;
+    left: -55%;
+    mask-image:
+      linear-gradient(to right, transparent, var(--background) 22%),
+      linear-gradient(
+        to bottom,
+        transparent,
+        var(--background) 10%,
+        var(--background) 86%,
+        transparent
+      );
+    mask-composite: intersect;
+  }
+
+  @media (max-width: 1279px) {
+    .home-hero-art > .home-hero-figure {
+      left: -20%;
+    }
+  }
+
+  .home-hero-banner {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: right center;
+  }
+
+  /* Sections under the hero. */
+  .home-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--home-gap);
+    padding-top: var(--home-gap);
+    padding-bottom: var(--page-space-y);
+  }
+
+  .home-section {
+    padding-top: var(--home-gap);
+  }
+
+  .home-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.25rem 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .home-section-head > div {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+  }
+
+  /* Toolbar: compact search and a chip row that fades at its right edge. */
+  .home-search {
+    box-shadow: var(--clay-shadow-btn);
+  }
+
+  /* Each edge fades only while there is more to scroll that way
+     (`data-fade-start` / `data-fade-end`, set by the section's scroll
+     watcher), so a chip cut by the edge reads as "more", not as clipped. */
+  .home-chip-scroller {
+    --chip-fade-start: 0px;
+    --chip-fade-end: 0px;
+    scrollbar-width: none;
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black var(--chip-fade-start),
+      black calc(100% - var(--chip-fade-end)),
+      transparent
+    );
+  }
+
+  .home-chip-scroller[data-fade-start] {
+    --chip-fade-start: 3rem;
+  }
+
+  .home-chip-scroller[data-fade-end] {
+    --chip-fade-end: 4.5rem;
+  }
+
+  .home-chip-scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  .home-chip {
+    height: 32px;
+    gap: 0.375rem;
+    padding: 0 0.625rem 0 0.25rem;
+    font-size: 13px;
+  }
+
+  .home-chip:lang(en) {
+    font-size: 15px;
+  }
+
+  /* Plugins strip: a small ink card that lifts off a still host. */
+  .home-plugin-card {
+    transition: transform var(--fx-in, 180ms) var(--fx-ease-out, ease-out);
+  }
+
+  .home-plugin-icon {
+    transition: color var(--fx-in, 180ms) ease;
+  }
+
+  .fx-host:hover > .home-plugin-card,
+  .home-plugin-card:has(a:focus-visible) {
+    transform: translate3d(0, -2px, 0);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .home-hero .hl-underline path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: home-ink-draw 900ms cubic-bezier(0.65, 0, 0.35, 1) 350ms forwards;
+  }
+
+  .home-hero .ink-stars__star {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: home-star-twinkle 2.8s ease-in-out infinite;
+  }
+
+  .home-hero .ink-stars__star + .ink-stars__star {
+    animation-delay: 1.4s;
+  }
+
+  .home-hero-art > .home-hero-figure {
+    animation: home-art-settle 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-plugin-card {
+    transition: none;
+  }
+
+  .fx-host:hover > .home-plugin-card,
+  .home-plugin-card:has(a:focus-visible) {
+    transform: none;
+  }
+}
+
+/*
+ * SectionReveal: CSS entrance that starts on first paint (no hydration wait).
+ * `backwards` fill leaves no transform behind, so sticky children still work.
+ */
+@layer components {
+  .section-reveal {
+    animation: section-reveal 280ms cubic-bezier(0.22, 1, 0.36, 1)
+      var(--reveal-delay, 0ms) backwards;
+  }
+
+  @keyframes section-reveal {
+    from {
+      opacity: 0;
+      transform: translate3d(0, var(--reveal-offset, 8px), 0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-reveal {
+    animation: none;
+  }
+}

@@ -103,6 +103,10 @@ export const catalogManifest: CatalogManifest = {
     en: () => import("../locales/src/components/skill-card/en.mjs"),
     zh: () => import("../locales/src/components/skill-card/zh.mjs"),
   },
+  "src/components/skill-row": {
+    en: () => import("../locales/src/components/skill-row/en.mjs"),
+    zh: () => import("../locales/src/components/skill-row/zh.mjs"),
+  },
   "src/components/skills-browser": {
     en: () => import("../locales/src/components/skills-browser/en.mjs"),
     zh: () => import("../locales/src/components/skills-browser/zh.mjs"),

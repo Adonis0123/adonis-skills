@@ -24,51 +24,61 @@ msgstr ""
 #~ msgstr "Copy"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:98
+#: ../src/components/command-block.tsx:168
+msgid "commandBlock.hint.copy"
+msgstr "Click to copy"
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:119
 msgid "commandBlock.scroll.aria"
 msgstr "Command, scroll horizontally to see all"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:167
+#: ../src/components/command-block.tsx:171
+msgid "commandBlock.hint.copied"
+msgstr "Copied"
+
+#. js-lingui-explicit-id
+#: ../src/components/command-block.tsx:203
 msgid "commandBlock.live.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:291
+#: ../src/components/command-block.tsx:338
 msgid "copyBlock.label.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:297
+#: ../src/components/command-block.tsx:345
 msgid "copyBlock.live.copied"
 msgstr "Copied"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:238
+#: ../src/components/command-block.tsx:280
 msgid "copyBlock.label.copy"
 msgstr "Copy"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:143
+#: ../src/components/command-block.tsx:179
 msgid "commandBlock.copy.aria"
 msgstr "Copy command"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:293
+#: ../src/components/command-block.tsx:340
 msgid "copyBlock.label.failed"
 msgstr "Copy failed"
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:169
+#: ../src/components/command-block.tsx:205
 msgid "commandBlock.live.failed"
 msgstr "Copy failed. The command is selected; copy it manually."
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:299
+#: ../src/components/command-block.tsx:347
 msgid "copyBlock.live.failed"
 msgstr "Copy failed. The text is selected; copy it manually."
 
 #. js-lingui-explicit-id
-#: ../src/components/command-block.tsx:237
+#: ../src/components/command-block.tsx:279
 msgid "copyBlock.label.copyPrompt"
 msgstr "Copy prompt"

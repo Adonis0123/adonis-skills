@@ -1,0 +1,269 @@
+/* Owned by one worker; see docs/web-ui-clay-contract.md. */
+
+/*
+ * /plugins catalog: selectable list rows, the tri-state "select all", and
+ * the pill that flies from a ticked row to the install box (after
+ * coco-skills' plugin rows and signature moment D).
+ *
+ * Usage (components/plugin-card.tsx, plugins-catalog.tsx, motion/fly-to.ts):
+ *  - `.plugin-row` is a `.list-row` (effects-rows.css: left bar on hover,
+ *    the list's one sliding highlight behind it). A hidden native checkbox
+ *    (`.plugin-select`) comes first; the label `.plugin-row-hit` covers the
+ *    row, so a click anywhere ticks it; "Details" (`.plugin-row-details`)
+ *    sits above the label. 56px tall at every width, hovered, ticked or not.
+ *  - `.plugin-check` draws a check box (an ink box) for the row and for
+ *    `.plugin-select-all`; ticked fills it `--primary`, `data-state="some"`
+ *    shows the dash.
+ *  - `.plugin-flight` / `.plugin-trail` / `.plugin-line-flash` are added to
+ *    `document.body` by fly-to.ts and flight-trail.ts and remove themselves.
+ * Reduced motion: no flight, trail or flash; state changes are instant.
+ */
+
+@layer components {
+  /* --- Rows ----------------------------------------------------------- */
+
+  .plugin-row {
+    display: grid;
+    grid-template-columns: 1.125rem minmax(0, 1fr) auto;
+    column-gap: 0.75rem;
+    align-items: center;
+    height: 3.5rem;
+    padding: 0 0.625rem 0 1.125rem;
+  }
+
+  .plugin-row-hit {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    cursor: pointer;
+    border-radius: var(--hand-radius-sm);
+  }
+
+  .plugin-row-main {
+    min-width: 0;
+  }
+
+  .plugin-row-head {
+    display: flex;
+    align-items: baseline;
+    gap: 0.625rem;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .plugin-row-name {
+    flex-shrink: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--foreground);
+    transition: color var(--row-hover) var(--fx-ease-out);
+  }
+
+  .plugin-row-trigger,
+  .plugin-row-effect {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted-foreground);
+  }
+
+  .plugin-row-trigger {
+    font-size: 12px;
+  }
+
+  .plugin-row-effect {
+    margin-top: 1px;
+    font-size: 13px;
+    line-height: 1.25rem;
+  }
+
+  .plugin-row-tags {
+    display: none;
+  }
+
+  /* Above the row-sized label: following it never ticks the row. */
+  .plugin-row-details {
+    position: relative;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 2rem;
+    padding: 0 0.375rem;
+    border-radius: var(--hand-radius-xs);
+    font-size: 12.5px;
+    color: var(--muted-foreground);
+    white-space: nowrap;
+    transition: color var(--row-hover) var(--fx-ease-out);
+  }
+
+  .plugin-row-details:hover {
+    color: var(--foreground);
+  }
+
+  .plugin-row-details > .row-arrow {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  .plugin-row[data-selected] > .row-indicator {
+    transform: scaleY(1);
+  }
+
+  .plugin-row[data-selected] .plugin-row-name {
+    color: var(--link);
+  }
+
+  @media (min-width: 48rem) {
+    .plugin-row {
+      grid-template-columns: 1.125rem minmax(0, 1fr) auto auto;
+      column-gap: 1rem;
+    }
+
+    .plugin-row-tags {
+      display: flex;
+      gap: 0.25rem;
+    }
+  }
+
+  /* --- Check boxes ---------------------------------------------------- */
+
+  /* Doubled with .ink-box to win over its pen reset (custom.css). */
+  .ink-box.plugin-check {
+    --ink-pen: 2px;
+    display: grid;
+    place-items: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-width: 2px;
+    border-radius: var(--hand-radius-xs);
+    background: var(--card);
+    color: var(--primary-foreground);
+    pointer-events: none;
+    transition: background-color var(--row-hover) var(--fx-ease-out);
+  }
+
+  .plugin-check > span {
+    opacity: 0;
+    scale: 0.6;
+    transition:
+      opacity var(--row-hover) var(--fx-ease-out),
+      scale var(--row-hover) var(--fx-ease-out);
+  }
+
+  .plugin-row[data-selected] .plugin-check,
+  .plugin-select-all:is([data-state="all"], [data-state="some"]) .plugin-check {
+    background: var(--primary);
+  }
+
+  .plugin-row[data-selected] .plugin-check > span,
+  .plugin-select-all:is([data-state="all"], [data-state="some"])
+    .plugin-check
+    > span {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @media (hover: hover) {
+    .plugin-row:hover .plugin-check,
+    .plugin-select-all:hover .plugin-check {
+      --ink-line: var(--primary);
+    }
+  }
+
+  .plugin-select-all:has(.plugin-select:disabled) {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  /* --- Flight (fly-to.ts, flight-trail.ts) ---------------------------- */
+
+  .plugin-flight {
+    position: fixed;
+    z-index: 60;
+    pointer-events: none;
+  }
+
+  .plugin-flight-pill {
+    display: block;
+    translate: -50% -50%;
+    padding: 1px 10px;
+    border: 2px solid var(--ink);
+    border-radius: var(--hand-radius-pill);
+    background: var(--primary);
+    color: var(--primary-foreground);
+    font: 600 12px/18px var(--font-app-mono);
+    white-space: nowrap;
+    box-shadow: var(--clay-shadow-btn);
+  }
+
+  /* One dash: its right end (the head) sits on the path and it turns about it. */
+  .plugin-trail {
+    position: fixed;
+    z-index: 59;
+    display: block;
+    width: var(--trail-dash, 20px);
+    height: 2px;
+    margin: -1px 0 0 calc(var(--trail-dash, 20px) * -1);
+    border-radius: 1px;
+    background: linear-gradient(90deg, transparent, var(--trail-color));
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: 100% 50%;
+  }
+
+  /* Arrival: a --primary frame round the new line and an underline sweeping left → right. */
+  .plugin-line-flash {
+    position: fixed;
+    z-index: 58;
+    border: 2px solid var(--primary);
+    border-radius: var(--hand-radius-xs);
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .plugin-line-underline {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 1px;
+    left: 0.5rem;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--primary);
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+}
+
+/*
+ * Unlayered, like custom.css's focus rings: keyboard focus on a row's
+ * hidden checkbox rings the row just inside its edges (outline, never a
+ * shadow); "select all" rings its own label.
+ */
+.plugin-select:focus-visible ~ .plugin-row-hit {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+
+.plugin-select-all:has(.plugin-select:focus-visible),
+.plugin-row-details:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plugin-row-name,
+  .plugin-row-details,
+  .plugin-check,
+  .plugin-check > span {
+    transition-duration: 0s !important;
+  }
+
+  .plugin-flight,
+  .plugin-trail,
+  .plugin-line-flash {
+    display: none;
+  }
+}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Trans } from "@lingui/react/macro";
 import { notFound } from "next/navigation";
-import { SectionReveal } from "@/components/motion/section-reveal";
 import { PluginInstallPanel } from "@/components/plugin-install-panel";
 import { ClaySurface } from "@/components/ui";
 import {
@@ -171,167 +170,159 @@ export default async function PluginDetailPage({ params }: PluginPageProps) {
       id="main-content"
       className="site-page-shell site-frame site-frame--detail w-full"
     >
-      <SectionReveal delay={20}>
-        <LocaleLink
-          href="/plugins"
-          className="clay-focus-ring mb-4 inline-flex items-center gap-1.5 rounded-full px-1.5 py-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
-        >
-          <span className="icon-[lucide--arrow-left] size-3.5" aria-hidden />
-          <Trans id="pluginDetail.back">All plugins</Trans>
-        </LocaleLink>
-      </SectionReveal>
+      <LocaleLink
+        href="/plugins"
+        className="clay-focus-ring mb-4 -ml-1.5 inline-flex items-center gap-1.5 rounded-full px-1.5 py-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <span className="icon-[lucide--arrow-left] size-3.5" aria-hidden />
+        <Trans id="pluginDetail.back">All plugins</Trans>
+      </LocaleLink>
 
       {/*
         Desktop: content on the left, install card on the right and sticky.
         Phone: DOM order puts the install card right after the title.
       */}
-      <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,27rem)] lg:items-start lg:gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,31rem)]">
-        <SectionReveal
-          delay={60}
-          className="min-w-0 lg:col-start-1 lg:row-start-1"
-        >
-          <header className="ink-box ink-box--xl ink-raised bg-card p-6 md:p-9">
-            <ul className="flex flex-wrap items-center gap-1.5">
-              {plugin.category && (
-                <li>
-                  <LocaleLink
-                    href={`/plugins?group=${plugin.category}`}
-                    className="nk-tag clay-focus-ring gap-1 transition-colors hover:text-link"
-                  >
-                    {PLUGIN_CATEGORY_LABELS[plugin.category].title[locale]}
-                  </LocaleLink>
-                </li>
-              )}
-              {plugin.triggers.map((trigger) => (
-                <li key={trigger} className="nk-tag nk-tag--neutral gap-1">
-                  <span className="icon-[lucide--clock-3] size-3" aria-hidden />
-                  {PLUGIN_TRIGGER_LABELS[trigger][locale]}
-                </li>
-              ))}
-              {claudeOnly ? (
-                <li className="nk-tag nk-tag--neutral">
-                  <Trans id="pluginDetail.claudeOnly">Claude Code only</Trans>
-                </li>
-              ) : (
-                plugin.hosts.map((host) => (
-                  <li key={host} className="nk-tag nk-tag--neutral">
-                    {PLUGIN_HOST_LABELS[host]}
-                  </li>
-                ))
-              )}
-            </ul>
-            <h1 className="type-display mt-4 font-mono text-[clamp(1.85rem,1.3rem+2.2vw,3rem)] tracking-[-0.02em] [overflow-wrap:anywhere]">
-              {plugin.name}
-            </h1>
-            {plugin.effect[locale] && (
-              <p className="type-lede mt-4 max-w-[60ch] text-base text-pretty text-muted-foreground md:text-lg">
-                {plugin.effect[locale]}
-              </p>
+      <div className="grid min-w-0 gap-y-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_minmax(0,29rem)] xl:gap-x-12">
+        <header className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <h1 className="type-display font-mono text-[clamp(1.85rem,1.4rem+1.4vw,2.6rem)] tracking-[-0.02em] [overflow-wrap:anywhere]">
+            {plugin.name}
+          </h1>
+          {plugin.effect[locale] && (
+            <p className="type-lede mt-3 max-w-[60ch] text-base text-pretty text-muted-foreground md:text-[17px]">
+              {plugin.effect[locale]}
+            </p>
+          )}
+          <ul className="mt-4 flex flex-wrap items-center gap-1.5">
+            {plugin.category && (
+              <li>
+                <LocaleLink
+                  href={`/plugins?group=${plugin.category}`}
+                  className="nk-tag clay-focus-ring gap-1 transition-colors hover:text-link"
+                >
+                  {PLUGIN_CATEGORY_LABELS[plugin.category].title[locale]}
+                </LocaleLink>
+              </li>
             )}
-          </header>
-        </SectionReveal>
+            {plugin.triggers.map((trigger) => (
+              <li key={trigger} className="nk-tag nk-tag--neutral gap-1">
+                <span className="icon-[lucide--clock-3] size-3" aria-hidden />
+                {PLUGIN_TRIGGER_LABELS[trigger][locale]}
+              </li>
+            ))}
+            {claudeOnly ? (
+              <li className="nk-tag nk-tag--neutral">
+                <Trans id="pluginDetail.claudeOnly">Claude Code only</Trans>
+              </li>
+            ) : (
+              plugin.hosts.map((host) => (
+                <li key={host} className="nk-tag nk-tag--neutral">
+                  {PLUGIN_HOST_LABELS[host]}
+                </li>
+              ))
+            )}
+          </ul>
+        </header>
 
         <aside
           aria-labelledby="install"
-          className="min-w-0 lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-stretch"
+          className="detail-enter min-w-0 [--detail-enter-delay:40ms] lg:col-start-2 lg:row-span-3 lg:row-start-1 lg:self-stretch"
         >
-          {/* Sticky only when the viewport is tall enough to show the whole card. */}
-          <div className="lg:[@media(min-height:880px)]:sticky lg:[@media(min-height:880px)]:top-24">
-            <SectionReveal delay={100}>
-              <section className="ink-box ink-box--xl ink-raised grid gap-5 bg-tint p-5 md:p-6 dark:bg-card">
-                <h2 id="install" className="type-h3 scroll-mt-24">
-                  <Trans id="pluginDetail.install.manageHeading">
-                    Install and turn off
+          {/*
+            Sticky at any height. Collapsed the card is ~520px; with 「turn off」 open it is
+            ~850px, so the wrapper (never the .ink-box, which would lose its drawn line)
+            scrolls when the viewport is shorter. The padding keeps the wavering line and
+            the wash shadow inside the scroll box.
+          */}
+          <div className="lg:sticky lg:top-24 lg:-m-2 lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:p-2 lg:pb-5 lg:[scrollbar-width:thin]">
+            <section className="ink-box ink-box--xl ink-raised grid gap-4 bg-tint p-4 md:p-5 dark:bg-card">
+              <h2 id="install" className="type-h3 scroll-mt-24">
+                <Trans id="pluginDetail.install.manageHeading">
+                  Install and turn off
+                </Trans>
+              </h2>
+              <PluginInstallPanel
+                plugins={[{ name: plugin.name, hosts: plugin.hosts }]}
+                marketplace={pluginMarketplace}
+                manageNote={
+                  turningOffNote ? (
+                    <div
+                      className={`border-t border-border pt-3 text-sm ${readmeBodyClass}`}
+                    >
+                      {renderSectionContent(
+                        resolvePluginReadmeLinks(turningOffNote, plugin),
+                      )}
+                    </div>
+                  ) : null
+                }
+              />
+              <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border pt-4 text-[13px] text-muted-foreground">
+                <code className="font-mono [overflow-wrap:anywhere] text-foreground">
+                  {plugin.sourcePath}
+                </code>
+                <a
+                  href={sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-link underline-offset-4 hover:underline"
+                >
+                  <span
+                    className="icon-[lucide--github] size-3.5"
+                    aria-hidden
+                  />
+                  <Trans id="pluginDetail.sourceLink">
+                    View source on GitHub
                   </Trans>
-                </h2>
-                <PluginInstallPanel
-                  plugins={[{ name: plugin.name, hosts: plugin.hosts }]}
-                  marketplace={pluginMarketplace}
-                  manageNote={
-                    turningOffNote ? (
-                      <div
-                        className={`border-t border-border pt-3 text-sm ${readmeBodyClass}`}
-                      >
-                        {renderSectionContent(
-                          resolvePluginReadmeLinks(turningOffNote, plugin),
-                        )}
-                      </div>
-                    ) : null
-                  }
-                />
-                <p className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-t border-border pt-4 text-[13px] text-muted-foreground">
-                  <code className="font-mono [overflow-wrap:anywhere] text-foreground">
-                    {plugin.sourcePath}
-                  </code>
-                  <a
-                    href={sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-link underline-offset-4 hover:underline"
-                  >
-                    <span
-                      className="icon-[lucide--github] size-3.5"
-                      aria-hidden
-                    />
-                    <Trans id="pluginDetail.sourceLink">
-                      View source on GitHub
-                    </Trans>
-                  </a>
-                </p>
-              </section>
-            </SectionReveal>
+                </a>
+              </p>
+            </section>
           </div>
         </aside>
 
         {behaviourItems.length > 0 && (
-          <SectionReveal delay={140} className="min-w-0 lg:col-start-1">
-            <ClaySurface
-              tone="base"
-              elevation="raised"
-              className="grid min-w-0 gap-9 p-6 md:p-8"
-            >
-              {behaviourItems.map((item) => (
-                <section
-                  key={item.key}
-                  aria-labelledby={item.key}
-                  className="min-w-0"
-                >
-                  <h2 id={item.key} className={headingClass}>
-                    {item.title}
-                  </h2>
-                  {readme(item.key)}
-                </section>
-              ))}
-            </ClaySurface>
-          </SectionReveal>
+          <ClaySurface
+            tone="base"
+            elevation="raised"
+            className="detail-enter grid min-w-0 gap-8 p-5 [--detail-enter-delay:80ms] md:p-7 lg:col-start-1"
+          >
+            {behaviourItems.map((item) => (
+              <section
+                key={item.key}
+                aria-labelledby={item.key}
+                className="min-w-0"
+              >
+                <h2 id={item.key} className={headingClass}>
+                  {item.title}
+                </h2>
+                {readme(item.key)}
+              </section>
+            ))}
+          </ClaySurface>
         )}
 
         {backgroundItems.length > 0 && (
-          <SectionReveal delay={180} className="min-w-0 lg:col-start-1">
-            <section
-              aria-labelledby="why-this-plugin"
-              className="ink-box ink-box--xl grid min-w-0 gap-8 bg-background p-6 md:p-8"
-            >
-              <h2 id="why-this-plugin" className="type-h3 scroll-mt-24">
-                <Trans id="pluginDetail.whyThisPlugin">Why this plugin</Trans>
-              </h2>
-              {backgroundItems.map((item) => (
-                <section
-                  key={item.key}
-                  aria-labelledby={item.key}
-                  className="min-w-0"
+          <section
+            aria-labelledby="why-this-plugin"
+            className="detail-enter ink-box ink-box--xl grid min-w-0 gap-8 bg-background p-5 [--detail-enter-delay:120ms] md:p-7 lg:col-start-1"
+          >
+            <h2 id="why-this-plugin" className="type-h3 scroll-mt-24">
+              <Trans id="pluginDetail.whyThisPlugin">Why this plugin</Trans>
+            </h2>
+            {backgroundItems.map((item) => (
+              <section
+                key={item.key}
+                aria-labelledby={item.key}
+                className="min-w-0"
+              >
+                <h3
+                  id={item.key}
+                  className="mb-3 scroll-mt-24 text-lg font-semibold text-foreground md:text-xl"
                 >
-                  <h3
-                    id={item.key}
-                    className="mb-3 scroll-mt-24 text-lg font-semibold text-foreground md:text-xl"
-                  >
-                    {item.title}
-                  </h3>
-                  {readme(item.key)}
-                </section>
-              ))}
-            </section>
-          </SectionReveal>
+                  {item.title}
+                </h3>
+                {readme(item.key)}
+              </section>
+            ))}
+          </section>
         )}
       </div>
     </main>

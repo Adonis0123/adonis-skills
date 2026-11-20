@@ -44,31 +44,31 @@ msgstr ""
 #~ msgstr "复制失败"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:177
+#: ../src/components/copy-install-command.tsx:189
 msgid "copyCommand.label.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:185
+#: ../src/components/copy-install-command.tsx:197
 msgid "copyCommand.live.copied"
 msgstr "已复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:174
+#: ../src/components/copy-install-command.tsx:186
 msgid "copyCommand.label.copy"
 msgstr "复制"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:153
+#: ../src/components/copy-install-command.tsx:165
 msgid "copyCommand.aria.copy"
 msgstr "复制命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:187
+#: ../src/components/copy-install-command.tsx:199
 msgid "copyCommand.live.failed"
 msgstr "复制失败，请手动选中命令并复制。"
 
 #. js-lingui-explicit-id
-#: ../src/components/copy-install-command.tsx:180
+#: ../src/components/copy-install-command.tsx:192
 msgid "copyCommand.label.failed"
 msgstr "失败"

@@ -3,7 +3,6 @@ import Image from "next/image";
 import { Trans } from "@lingui/react/macro";
 import { notFound } from "next/navigation";
 import { HostInstallTabs } from "@/components/host-install-tabs";
-import { SectionReveal } from "@/components/motion/section-reveal";
 import { SkillShowcase } from "@/components/skill-showcase";
 import { TocNav, type TocEntry } from "@/components/toc-nav";
 import { ClaySurface } from "@/components/ui";
@@ -94,12 +93,9 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
     "install",
   ]);
   const i18n = initLingui(locale);
+  // No "Install" entry: on desktop the install card sits right above the list,
+  // and phones hide the list.
   const toc: TocEntry[] = [
-    {
-      id: "install",
-      label: i18n._({ id: "skillDetail.install.title", message: "Install" }),
-      level: 2,
-    },
     {
       id: "use-cases",
       label: i18n._({
@@ -131,178 +127,176 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
       id="main-content"
       className="site-page-shell site-frame site-frame--detail w-full"
     >
-      <SectionReveal delay={20}>
+      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-1 text-sm">
         <LocaleLink
           href="/"
-          className="clay-focus-ring mb-4 inline-flex items-center gap-1.5 rounded-full px-1.5 py-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          className="clay-focus-ring -ml-1.5 inline-flex items-center gap-1.5 rounded-full px-1.5 py-1 font-semibold text-muted-foreground transition-colors hover:text-foreground"
         >
           <span className="icon-[lucide--arrow-left] size-3.5" aria-hidden />
           <Trans id="skillDetail.cta.back">All skills</Trans>
         </LocaleLink>
-      </SectionReveal>
-
-      <div className="grid gap-5 lg:grid-cols-2 lg:items-stretch">
-        <SectionReveal delay={60} className="min-w-0">
-          <header className="ink-box ink-box--xl ink-raised h-full bg-card p-6 md:p-9">
-            <div className="flex items-start justify-between gap-5">
-              <div className="min-w-0">
-                {group && (
-                  <LocaleLink
-                    href={`/skills?group=${group.id}`}
-                    className="clay-focus-ring type-mono inline-flex max-w-full items-center gap-2 rounded-full text-[12px] text-muted-foreground transition-colors hover:text-link"
-                  >
-                    <span className="truncate">
-                      {String(groupNumber).padStart(2, "0")} ·{" "}
-                      {group.title[locale]}
-                    </span>
-                    <span
-                      className="icon-[lucide--arrow-up-right] size-3.5 shrink-0"
-                      aria-hidden
-                    />
-                  </LocaleLink>
-                )}
-                <h1 className="type-display mt-3 [word-break:keep-all] text-[clamp(2rem,1.4rem+2.4vw,3.25rem)] text-balance">
-                  {displayName}
-                </h1>
-                <p className="type-mono mt-2 text-muted-foreground">
-                  {skill.slug}
-                </p>
-              </div>
-              {group && (
-                <span className="art-avatar art-avatar--ringed hidden size-24 sm:block">
-                  <Image
-                    src={getIllustrationSrc(group.illustration)}
-                    alt=""
-                    width={1024}
-                    height={1024}
-                    sizes="96px"
-                    priority
-                  />
-                </span>
-              )}
-            </div>
-
-            <p className="type-lede mt-5 max-w-3xl text-base text-muted-foreground md:text-lg">
-              {summary}
-            </p>
-
-            <ul className="mt-5 flex flex-wrap gap-1.5">
-              {featured && (
-                <li className="nk-tag gap-1">
-                  <Image
-                    src="/brand/kiki-mark.svg"
-                    alt=""
-                    width={16}
-                    height={16}
-                    unoptimized
-                    className="size-4 object-contain"
-                  />
-                  {featured.badge[locale]}
-                </li>
-              )}
-              {catalog.tags.map((tag) => (
-                <li key={tag}>
-                  <LocaleLink
-                    href={`/skills?tag=${tag}`}
-                    className="clay-focus-ring nk-tag nk-tag--neutral transition-colors hover:bg-accent hover:text-accent-foreground"
-                  >
-                    {SKILL_TAG_LABELS[tag][locale]}
-                  </LocaleLink>
-                </li>
-              ))}
-            </ul>
-
-            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-              {skill.metadata?.version && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span className="icon-[lucide--tag] size-4" aria-hidden />
-                  <Trans id="skillDetail.version">
-                    Version {skill.metadata.version}
-                  </Trans>
-                </span>
-              )}
-              {skill.updatedAt && (
-                <span className="inline-flex items-center gap-1.5">
-                  <span
-                    className="icon-[lucide--calendar] size-4"
-                    aria-hidden
-                  />
-                  <Trans id="skillDetail.updatedAt">
-                    Updated{" "}
-                    <time dateTime={skill.updatedAt}>
-                      {formatUpdatedAt(skill.updatedAt, lang)}
-                    </time>
-                  </Trans>
-                </span>
-              )}
-              <a
-                href={sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-link underline-offset-4 hover:underline"
-              >
-                <span className="icon-[lucide--github] size-4" aria-hidden />
-                <Trans id="skillDetail.source">View source on GitHub</Trans>
-              </a>
-            </div>
-          </header>
-        </SectionReveal>
-
-        <SectionReveal delay={100} className="min-w-0">
-          <section
-            aria-labelledby="install"
-            className="ink-box ink-box--xl ink-raised h-full bg-tint p-5 md:p-7 dark:bg-card"
-          >
-            <p className="kicker kicker-leaf">
-              <Trans id="skillDetail.install.kicker">Install</Trans>
-            </p>
-            <h2 id="install" className="type-h3 mt-2 mb-4 scroll-mt-24">
-              <Trans id="skillDetail.install.heading">
-                Add it to your agent
-              </Trans>
-            </h2>
-            <HostInstallTabs slug={skill.slug} />
-          </section>
-        </SectionReveal>
+        {group && (
+          <>
+            <span className="text-subtle-foreground" aria-hidden>
+              /
+            </span>
+            <LocaleLink
+              href={`/skills?group=${group.id}`}
+              className="clay-focus-ring type-mono inline-flex min-w-0 items-center gap-1.5 rounded-full px-1.5 py-1 text-[12px] text-muted-foreground transition-colors hover:text-link"
+            >
+              <span className="truncate">
+                {String(groupNumber).padStart(2, "0")} · {group.title[locale]}
+              </span>
+              <span
+                className="icon-[lucide--arrow-up-right] size-3.5 shrink-0"
+                aria-hidden
+              />
+            </LocaleLink>
+          </>
+        )}
       </div>
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start">
-        <div className="grid min-w-0 gap-6">
-          <SectionReveal delay={140}>
-            <ClaySurface tone="base" elevation="raised" className="p-5 md:p-7">
-              <h2 id="use-cases" className={`${kickerClass} scroll-mt-24`}>
-                <Trans id="skillDetail.useCases.title">
-                  When to reach for it
-                </Trans>
-              </h2>
-              <ul className="space-y-2">
-                {useCases.map((useCase) => (
-                  <li
-                    key={useCase}
-                    className="flex gap-2.5 text-[15px] leading-7 md:text-base"
-                  >
-                    <span
-                      className="icon-[lucide--check] mt-1.5 size-4 shrink-0 text-link"
-                      aria-hidden
+      {/*
+        Desktop: content on the left; the right column holds the install card and the
+        table of contents, sticky together. Phone: DOM order puts the install card
+        right after the title, before the body.
+      */}
+      <div className="grid min-w-0 gap-y-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-x-10 xl:grid-cols-[minmax(0,1fr)_26rem] xl:gap-x-12">
+        <header className="min-w-0 lg:col-start-1 lg:row-start-1">
+          <div className="flex items-center gap-4">
+            {group && (
+              <Image
+                src={getIllustrationSrc(group.illustration)}
+                alt=""
+                width={1024}
+                height={1024}
+                sizes="96px"
+                priority
+                className="-my-3 -ml-2 hidden size-24 shrink-0 object-contain sm:block"
+              />
+            )}
+            <div className="min-w-0">
+              <h1 className="type-display [word-break:keep-all] text-[clamp(2rem,1.5rem+1.4vw,2.75rem)] text-balance">
+                {displayName}
+              </h1>
+              <p className="type-mono text-muted-foreground">{skill.slug}</p>
+            </div>
+          </div>
+
+          <p className="type-lede mt-3 max-w-3xl text-base text-muted-foreground md:text-[17px]">
+            {summary}
+          </p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2.5 text-sm text-muted-foreground">
+            {(featured || catalog.tags.length > 0) && (
+              <ul className="flex flex-wrap gap-1.5">
+                {featured && (
+                  <li className="nk-tag gap-1">
+                    <Image
+                      src="/brand/kiki-mark.svg"
+                      alt=""
+                      width={16}
+                      height={16}
+                      unoptimized
+                      className="size-4 object-contain"
                     />
-                    {useCase}
+                    {featured.badge[locale]}
+                  </li>
+                )}
+                {catalog.tags.map((tag) => (
+                  <li key={tag}>
+                    <LocaleLink
+                      href={`/skills?tag=${tag}`}
+                      className="clay-focus-ring nk-tag nk-tag--neutral transition-colors hover:bg-accent hover:text-accent-foreground"
+                    >
+                      {SKILL_TAG_LABELS[tag][locale]}
+                    </LocaleLink>
                   </li>
                 ))}
               </ul>
-            </ClaySurface>
-          </SectionReveal>
+            )}
+            {skill.metadata?.version && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="icon-[lucide--tag] size-4" aria-hidden />
+                <Trans id="skillDetail.version">
+                  Version {skill.metadata.version}
+                </Trans>
+              </span>
+            )}
+            {skill.updatedAt && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="icon-[lucide--calendar] size-4" aria-hidden />
+                <Trans id="skillDetail.updatedAt">
+                  Updated{" "}
+                  <time dateTime={skill.updatedAt}>
+                    {formatUpdatedAt(skill.updatedAt, lang)}
+                  </time>
+                </Trans>
+              </span>
+            )}
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="clay-focus-ring inline-flex items-center gap-1.5 rounded-sm font-semibold text-link underline-offset-4 hover:underline"
+            >
+              <span className="icon-[lucide--github] size-4" aria-hidden />
+              <Trans id="skillDetail.source">View source on GitHub</Trans>
+            </a>
+          </div>
+        </header>
 
-          {showcase && (
-            <SectionReveal delay={160}>
-              <SkillShowcase showcase={showcase} />
-            </SectionReveal>
-          )}
+        {/* Spans both rows so the sticky column can travel the whole page. */}
+        <aside
+          aria-labelledby="install"
+          className="detail-enter min-w-0 [--detail-enter-delay:40ms] lg:col-start-2 lg:row-span-2 lg:row-start-1"
+        >
+          <div className="grid gap-6 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100dvh-7rem)] lg:flex-col">
+            <section className="detail-install ink-box ink-box--xl ink-raised shrink-0 bg-tint p-4 md:p-5 dark:bg-card">
+              <h2 id="install" className="type-h3 mb-3 scroll-mt-24">
+                <Trans id="skillDetail.install.title">Install</Trans>
+              </h2>
+              <HostInstallTabs slug={skill.slug} />
+            </section>
+            {toc.length > 1 && (
+              <TocNav
+                title={<Trans id="skillDetail.toc.title">On this page</Trans>}
+                entries={toc}
+              />
+            )}
+          </div>
+        </aside>
+
+        <div className="detail-enter grid min-w-0 content-start gap-6 [--detail-enter-delay:80ms] lg:col-start-1 lg:row-start-2">
+          <ClaySurface tone="base" elevation="raised" className="p-5 md:p-6">
+            <h2 id="use-cases" className={`${kickerClass} scroll-mt-24`}>
+              <Trans id="skillDetail.useCases.title">
+                When to reach for it
+              </Trans>
+            </h2>
+            <ul className="space-y-2">
+              {useCases.map((useCase) => (
+                <li
+                  key={useCase}
+                  className="flex gap-2.5 text-[15px] leading-7 md:text-base"
+                >
+                  <span
+                    className="icon-[lucide--check] mt-1.5 size-4 shrink-0 text-link"
+                    aria-hidden
+                  />
+                  {useCase}
+                </li>
+              ))}
+            </ul>
+          </ClaySurface>
+
+          {showcase && <SkillShowcase showcase={showcase} />}
 
           {sections.length > 0 && (
             <ClaySurface
               tone="base"
               elevation="raised"
-              className="scroll-mt-28 p-5 md:p-8"
+              className="scroll-mt-28 p-5 md:p-7"
             >
               <h2 className={kickerClass}>
                 <Trans id="skillDetail.docs.title">Skill instructions</Trans>
@@ -328,13 +322,6 @@ export default async function SkillDetailPage({ params }: SkillPageProps) {
             </ClaySurface>
           )}
         </div>
-
-        {toc.length > 2 && (
-          <TocNav
-            title={<Trans id="skillDetail.toc.title">On this page</Trans>}
-            entries={toc}
-          />
-        )}
       </div>
     </main>
   );

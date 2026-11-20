@@ -8,9 +8,14 @@ interface SkillShowcaseProps {
 
 export function SkillShowcase({ showcase }: SkillShowcaseProps) {
   return (
-    <section aria-labelledby="skill-showcase-title" className="grid gap-4">
+    // Sized by its own width (container queries), not the viewport: on detail pages it
+    // shares the row with the sticky install column.
+    <section
+      aria-labelledby="skill-showcase-title"
+      className="@container grid gap-4"
+    >
       <ClaySurface tone="blue" elevation="inset" className="p-5 md:p-6">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1.2fr)_minmax(20rem,0.8fr)] lg:items-start">
+        <div className="grid gap-5 @3xl:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] @3xl:items-start">
           <div>
             <ClayBadge
               tone="blue"
@@ -30,7 +35,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
           </div>
 
           <ol
-            className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1"
+            className="grid gap-2 @lg:grid-cols-2 @3xl:grid-cols-1"
             aria-label="Showcase highlights"
           >
             {showcase.hero.keyMoments.map((moment, index) => (
@@ -50,7 +55,7 @@ export function SkillShowcase({ showcase }: SkillShowcaseProps) {
         </div>
       </ClaySurface>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 @5xl:grid-cols-2">
         {showcase.sections.map((section, sectionIndex) => (
           <ClaySurface
             key={section.id}

@@ -1,0 +1,62 @@
+/* Owned by one worker; see docs/web-ui-clay-contract.md. */
+
+/*
+ * Skill and plugin detail pages: entrance.
+ *
+ * `SectionReveal` server-renders `opacity: 0` and only fades in after
+ * hydration, so in dev the first screen showed nothing but the header and the
+ * table of contents for ~1.5 s. The detail pages use this CSS entrance
+ * instead: it starts on first paint, never waits for JavaScript, and is short
+ * enough that the title and install card are readable at once. The title
+ * block itself does not animate. `backwards` fill leaves no transform behind
+ * once it ends, so sticky children are unaffected.
+ *
+ * `--detail-enter-delay` staggers the install column and the body.
+ */
+@layer components {
+  .detail-enter {
+    animation: detail-enter 280ms cubic-bezier(0.22, 1, 0.36, 1)
+      var(--detail-enter-delay, 0ms) backwards;
+  }
+
+  @keyframes detail-enter {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 8px, 0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-enter {
+    animation: none;
+  }
+}
+
+/*
+ * Install card in the detail sidebar (22–26rem): three host tabs would
+ * truncate their product names and subtitles there. The hint under the tabs
+ * already says which agents each covers, so the sidebar drops the subtitle
+ * line and the tabs' side padding, as the tabs already do on phones.
+ * Unlayered on purpose: it has to beat the tabs' own `sm:px-3` / `sm:block`
+ * utilities.
+ */
+@media (min-width: 64rem) {
+  .detail-install [role="tab"] {
+    padding-inline: 0.25rem;
+  }
+
+  .detail-install [role="tab"] > span + span {
+    display: none;
+  }
+}
+
+/*
+ * Copy boxes in the detail sidebar: the command already truncates there, so
+ * 「点击复制」/「已复制」 beside the icon crowded into its edge fade. The
+ * icon (copy → check) carries the state alone; the live region still
+ * announces it. Unlayered so it beats `.copy-hint { display: grid }`.
+ */
+.detail-install .copy-hint {
+  display: none;
+}

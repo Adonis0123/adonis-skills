@@ -14,116 +14,121 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:93
+#: ../src/components/plugin-install-panel.tsx:99
 msgid "pluginInstall.tab.askAi"
 msgstr "让 AI 帮我装"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:298
+#: ../src/components/plugin-install-panel.tsx:311
 msgid "pluginInstall.tabs.aria"
 msgstr "选择安装方式"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:263
+#: ../src/components/plugin-install-panel.tsx:276
 msgid "pluginInstall.grok.soon"
 msgstr "即将支持。Grok Build 的安装步骤还在实测。"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:127
+#: ../src/components/plugin-install-panel.tsx:139
 msgid "pluginInstall.claude.copy.aria"
 msgstr "复制 Claude Code 安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:211
+#: ../src/components/plugin-install-panel.tsx:224
 msgid "pluginInstall.codex.copy.aria"
 msgstr "复制 Codex 安装命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:247
+#: ../src/components/plugin-install-panel.tsx:260
 msgid "pluginInstall.manage.remove.aria"
 msgstr "复制 Codex 移除命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:155
+#: ../src/components/plugin-install-panel.tsx:167
 msgid "pluginInstall.manage.disable.aria"
 msgstr "复制停用命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:277
+#: ../src/components/plugin-install-panel.tsx:290
 msgid "pluginInstall.askAi.copy.aria"
 msgstr "复制安装提示词"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:166
+#: ../src/components/plugin-install-panel.tsx:178
 msgid "pluginInstall.manage.uninstall.aria"
 msgstr "复制卸载命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:177
+#: ../src/components/plugin-install-panel.tsx:189
 msgid "pluginInstall.manage.update.aria"
 msgstr "复制更新命令"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:150
+#: ../src/components/plugin-install-panel.tsx:162
 msgid "pluginInstall.manage.disable"
 msgstr "停用"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:143
+#: ../src/components/plugin-install-panel.tsx:155
 msgid "pluginInstall.manage.summary"
 msgstr "以后要停用、卸载或更新"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:108
+#: ../src/components/plugin-install-panel.tsx:120
 msgid "pluginInstall.requirements"
 msgstr "需要 PATH 里有这些程序：{requirements}"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:227
+#: ../src/components/plugin-install-panel.tsx:240
 msgid "pluginInstall.codex.skipped"
 msgstr "只支持 Claude Code，未包含：{claudeOnly}"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:217
+#: ../src/components/plugin-install-panel.tsx:230
 msgid "pluginInstall.codex.note"
 msgstr "在终端粘贴运行，装完新开会话。装完必须在 Codex 里运行 <0>/hooks</0> 信任该插件的 hook，否则不会运行。"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:133
+#: ../src/components/plugin-install-panel.tsx:145
 msgid "pluginInstall.claude.note"
 msgstr "在终端粘贴运行，装完新开会话生效。需 Claude Code ≥ {minVersion}。支持 macOS、Linux、WSL。"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:242
+#: ../src/components/plugin-install-panel.tsx:255
 msgid "pluginInstall.manage.remove"
 msgstr "移除"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:235
+#: ../src/components/plugin-install-panel.tsx:248
 msgid "pluginInstall.manage.codexSummary"
 msgstr "以后要移除"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:283
+#: ../src/components/plugin-install-panel.tsx:296
 msgid "pluginInstall.askAi.note"
 msgstr "发给 Claude Code 或 Codex。agent 执行对应宿主的命令，再给你一行验证消息；hook 在新会话才生效，请到新会话发出。"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:201
+#: ../src/components/plugin-install-panel.tsx:214
 msgid "pluginInstall.codex.none"
 msgstr "所选插件只支持 Claude Code。"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:99
+#: ../src/components/plugin-install-panel.tsx:111
 msgid "pluginInstall.empty"
 msgstr "在下方至少勾选一个插件，这里才会给出命令。"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:161
+#: ../src/components/plugin-install-panel.tsx:105
+msgid "pluginInstall.emptyCatalog"
+msgstr "勾选列表里的插件，命令会出现在这里。"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-install-panel.tsx:173
 msgid "pluginInstall.manage.uninstall"
 msgstr "卸载"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-install-panel.tsx:172
+#: ../src/components/plugin-install-panel.tsx:184
 msgid "pluginInstall.manage.update"
 msgstr "更新"

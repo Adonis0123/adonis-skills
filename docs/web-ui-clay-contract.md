@@ -62,3 +62,15 @@ Decisions: `docs/decision-2026-10-18-brand-palette-from-adonis-brand.md` (colors
 - Keep motion restrained, use smooth cubic-bezier curves, and provide a reduced-motion fallback.
 - Prefer `translate3d` over `translateY` when avoiding subpixel edge artifacts.
 - Do not add decorative motion that changes layout flow or harms readability.
+
+## Hover and copy effects
+
+Adapted from coco-skills (2026-11-19) and drawn in ink. Shared layer: `styles/effects-hover.css`, `components/motion/{hover-fx.tsx,pointer-effects.tsx,use-copy-target.ts,beam-lap.ts}`; one `<PointerEffects />` in the root layout tracks the pointer and keyboard focus for the whole site.
+
+- Beam: on hover or keyboard focus, an ink-outlined element with `fx-surface` and a `<HoverFx />` first child runs a `--primary` → `--mustard` beam around its outline (2.2s a lap). The beam goes through the same `--ink-filter` as the outline, so it follows the wavering line. A dot grid shows near the pointer (`dots={false}` turns it off).
+- An element that lifts on hover sits inside a still `fx-host` that owns the hover, so the pointer never leaves and re-enters at the edge.
+- Lists (`components/motion/row-highlight.tsx`): one `--selected` highlight slides between fixed-height rows; hover swaps a row's meta for its install command in the same grid cell, so row height never changes.
+- Command boxes copy on a click anywhere (`fx-copy` + `useCopyTarget`), except when text is selected, on a double or triple click, or on tabs and other controls. Success runs one `--mustard` lap (`playBeamLap`).
+- Plugin ticks fly to the install box along an arc (`components/motion/fly-to.ts`).
+- Page entrances are CSS (`SectionReveal`, `.detail-enter`) so server-rendered content never waits for hydration.
+- Reduced motion: the beam stops, dots do not follow, the highlight jumps, the copy lap fades once, nothing flies and entrances are off.

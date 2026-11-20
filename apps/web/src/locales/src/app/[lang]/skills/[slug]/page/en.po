@@ -15,58 +15,58 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:260
-msgid "skillDetail.install.heading"
-msgstr "Add it to your agent"
+#~ msgid "skillDetail.install.heading"
+#~ msgstr "Add it to your agent"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:140
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:257
+#~ msgid "skillDetail.install.kicker"
+#~ msgstr "Install"
+
+#. js-lingui-explicit-id
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:136
 msgid "skillDetail.cta.back"
 msgstr "All skills"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:100
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:257
 msgid "skillDetail.install.title"
 msgstr "Install"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:257
-msgid "skillDetail.install.kicker"
-msgstr "Install"
-
-#. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:334
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:263
 msgid "skillDetail.toc.title"
 msgstr "On this page"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:308
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:302
 msgid "skillDetail.docs.title"
 msgstr "Skill instructions"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:48
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:47
 msgid "skillDetail.meta.notFoundTitle"
 msgstr "Skill not found"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: formatUpdatedAt(skill.updatedAt, lang)
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:230
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:229
 msgid "skillDetail.updatedAt"
 msgstr "Updated <0>{0}</0>"
 
 #. js-lingui-explicit-id
 #. placeholder {0}: skill.metadata.version
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:219
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:221
 msgid "skillDetail.version"
 msgstr "Version {0}"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:245
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:244
 msgid "skillDetail.source"
 msgstr "View source on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:105
-#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:274
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:101
+#: ../../../../src/app/%5Blang%5D/skills/%5Bslug%5D/page.tsx:273
 msgid "skillDetail.useCases.title"
 msgstr "When to reach for it"

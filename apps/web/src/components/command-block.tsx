@@ -3,7 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLingui } from "@lingui/react/macro";
 import { useCopyToClipboard } from "@/components/copy-install-command";
+import { playBeamLap } from "@/components/motion/beam-lap";
+import { HoverFx } from "@/components/motion/hover-fx";
 import { IconSwap } from "@/components/motion/press-scale";
+import { useCopyTarget } from "@/components/motion/use-copy-target";
 import { cx } from "@/components/ui/utils";
 
 interface CommandBlockProps {
@@ -14,25 +17,39 @@ interface CommandBlockProps {
   className?: string;
 }
 
+/** How long 「已复制」 stays on a copy box before 「点击复制」 returns (coco-skills uses ~1.2s). */
+const COPIED_HINT_MS = 1200;
+
 interface ScrollState {
   overflowing: boolean;
   atStart: boolean;
   atEnd: boolean;
 }
 
-/** Terminal-style command box: `$` prompts, hidden-scrollbar horizontal scroll with an edge fade, and a copy button. */
+/**
+ * Terminal-style command box: `$` prompts, hidden-scrollbar horizontal scroll
+ * with an edge fade, and a copy button. The whole box is the copy target
+ * (useCopyTarget): a click anywhere copies unless text in it is selected;
+ * the button stays for the keyboard. Hover shows the beam, the dots and
+ * 「点击复制」 beside the icon; success runs one mustard lap (effects-hover.css)
+ * and the hint turns 「已复制」 (effects-copy.css).
+ */
 export function CommandBlock({
   commands,
   label,
   className,
 }: CommandBlockProps) {
   const { t } = useLingui();
-  const { status, copied, failed, copy } = useCopyToClipboard();
+  const { status, copied, failed, copy } = useCopyToClipboard(COPIED_HINT_MS);
+  const boxRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const codeRef = useRef<HTMLElement>(null);
 
   const onCopy = async () => {
-    if (await copy(commands.join("\n"))) return;
+    if (await copy(commands.join("\n"))) {
+      playBeamLap(boxRef.current);
+      return;
+    }
     // Both clipboard paths failed: select the text so a manual Ctrl/Cmd+C still works.
     const code = codeRef.current;
     const selection =
@@ -64,6 +81,7 @@ export function CommandBlock({
         : { overflowing, atStart, atEnd },
     );
   }, []);
+  const copyTarget = useCopyTarget(() => void onCopy());
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -82,11 +100,14 @@ export function CommandBlock({
     // `w-0 min-w-full` keeps long commands from widening ancestors via min-content; the inner box scrolls instead.
     // The copy button sits in its own column outside the scroll area, so text never runs under it.
     <div
+      ref={boxRef}
+      {...copyTarget}
       className={cx(
-        "ink-box ink-box--md flex w-0 min-w-full items-start bg-background text-foreground",
+        "ink-box ink-box--md fx-surface fx-copy flex w-0 min-w-full items-start bg-background text-foreground",
         className,
       )}
     >
+      <HoverFx />
       <div className="relative min-w-0 flex-1">
         <div
           ref={scrollRef}
@@ -136,14 +157,29 @@ export function CommandBlock({
         />
       </div>
 
+      {/* 「点击复制」 on hover / keyboard focus, 「已复制」 after a copy (effects-copy.css). Its own slot beside
+          the icon, so it never covers the command; touch has no hover, so phones skip the slot. */}
+      <span
+        aria-hidden
+        data-copied={copied || undefined}
+        className="copy-hint my-1.5 h-8 shrink-0 items-center text-xs whitespace-nowrap max-sm:hidden"
+      >
+        <span className="copy-hint-idle text-muted-foreground">
+          {t({ id: "commandBlock.hint.copy", message: "Click to copy" })}
+        </span>
+        <span className="copy-hint-done font-medium text-link">
+          {t({ id: "commandBlock.hint.copied", message: "Copied" })}
+        </span>
+      </span>
       <button
         type="button"
+        data-copy-target
         onClick={() => void onCopy()}
         aria-label={
           label ?? t({ id: "commandBlock.copy.aria", message: "Copy command" })
         }
         className={cx(
-          "clay-focus-ring relative m-1.5 ml-0 grid size-8 shrink-0 place-items-center rounded-[8px] text-muted-foreground transition-[background-color,color] duration-200 ease-out hover:bg-accent hover:text-foreground",
+          "clay-focus-ring relative m-1.5 ml-1 grid size-8 shrink-0 place-items-center rounded-[8px] text-muted-foreground transition-[background-color,color] duration-200 ease-out hover:bg-accent hover:text-foreground",
           // Expand the touch target to 44px without growing the visual button.
           'before:absolute before:-inset-1.5 before:content-[""]',
           copied && "text-foreground",
@@ -187,7 +223,8 @@ interface CopyTextBlockProps {
 
 /**
  * Shows text as-is (no `$` prompt, wrapped, never scrolled) and copies it when
- * any part of the block is clicked; a visible label turns into "Copied".
+ * any part of the block is clicked (useCopyTarget: not while text in it is
+ * selected); the pill button turns into "Copied" and the beam runs one lap.
  */
 // Longest token kept on one row; longer ones (a URL on a phone) may still break.
 const MAX_UNBROKEN = 40;
@@ -216,11 +253,15 @@ export function CopyTextBlock({
   className,
 }: CopyTextBlockProps) {
   const { t } = useLingui();
-  const { status, copied, failed, copy } = useCopyToClipboard();
+  const { status, copied, failed, copy } = useCopyToClipboard(COPIED_HINT_MS);
+  const boxRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLElement>(null);
 
   const onCopy = async () => {
-    if (await copy(text)) return;
+    if (await copy(text)) {
+      playBeamLap(boxRef.current);
+      return;
+    }
     // Both clipboard paths failed: select the text so a manual Ctrl/Cmd+C still works.
     const node = textRef.current;
     const selection = window.getSelection();
@@ -231,6 +272,7 @@ export function CopyTextBlock({
       selection.addRange(range);
     }
   };
+  const copyTarget = useCopyTarget(() => void onCopy());
 
   const idleLabel =
     kind === "prompt"
@@ -238,13 +280,18 @@ export function CopyTextBlock({
       : t({ id: "copyBlock.label.copy", message: "Copy" });
 
   return (
+    // The whole box is the copy target (useCopyTarget), so text stays selectable; the pill is
+    // its keyboard button (`data-copy-target`) and shows the state.
     <div
+      ref={boxRef}
+      {...copyTarget}
       className={cx(
-        "group ink-box ink-box--md relative bg-background text-foreground transition-colors duration-200",
+        "group ink-box ink-box--md fx-surface fx-copy relative bg-background text-foreground transition-colors duration-200",
         failed && "[--ink-line:var(--danger-text)]",
         className,
       )}
     >
+      <HoverFx />
       <pre
         className={cx(
           "m-0 py-3 pr-28 pl-3.5 whitespace-pre-wrap [overflow-wrap:anywhere]",
@@ -257,17 +304,15 @@ export function CopyTextBlock({
           {kind === "command" ? <UnbrokenWords text={text} /> : text}
         </code>
       </pre>
-      {/* One button covers the block, so a click anywhere copies; the pill is its visible label. */}
       <button
         type="button"
+        data-copy-target
         onClick={() => void onCopy()}
         aria-label={label}
-        className="clay-focus-ring absolute inset-0 size-full cursor-pointer rounded-[12px]"
-      />
-      <span
-        aria-hidden
         className={cx(
-          "ink-box ink-box--pill pointer-events-none absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
+          "clay-focus-ring ink-box ink-box--pill absolute top-2 right-2 inline-flex h-7 items-center gap-1.5 bg-card px-2.5 text-[12.5px] font-medium transition-colors duration-200",
+          // Expand the touch target without growing the pill (its ::before draws the ink line).
+          'after:absolute after:-inset-2 after:content-[""]',
           copied
             ? "text-link"
             : failed
@@ -277,6 +322,7 @@ export function CopyTextBlock({
       >
         <IconSwap swapKey={status} className="size-3.5">
           <span
+            aria-hidden
             className={cx(
               {
                 idle: "icon-[lucide--copy]",
@@ -287,12 +333,14 @@ export function CopyTextBlock({
             )}
           />
         </IconSwap>
-        {copied
-          ? t({ id: "copyBlock.label.copied", message: "Copied" })
-          : failed
-            ? t({ id: "copyBlock.label.failed", message: "Copy failed" })
-            : idleLabel}
-      </span>
+        <span aria-hidden>
+          {copied
+            ? t({ id: "copyBlock.label.copied", message: "Copied" })
+            : failed
+              ? t({ id: "copyBlock.label.failed", message: "Copy failed" })
+              : idleLabel}
+        </span>
+      </button>
       <span className="sr-only" aria-live="polite">
         {copied && t({ id: "copyBlock.live.copied", message: "Copied" })}
         {failed &&

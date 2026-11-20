@@ -14,26 +14,36 @@ msgstr ""
 "Plural-Forms: \n"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:130
+#: ../src/components/plugin-card.tsx:100
+#~ msgid "pluginCard.scenario"
+#~ msgstr "Scenario"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:110
+#~ msgid "pluginCard.effect"
+#~ msgstr "What it does"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:138
+msgid "pluginCard.details.aria"
+msgstr "{name} details"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:125
 msgid "pluginCard.claudeOnly"
 msgstr "Claude Code only"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:72
+#: ../src/components/plugin-card.tsx:143
+msgid "pluginCard.details"
+msgstr "Details"
+
+#. js-lingui-explicit-id
+#: ../src/components/plugin-card.tsx:82
 msgid "pluginCard.select.aria"
 msgstr "Include {name} in the install command"
 
 #. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:100
-msgid "pluginCard.scenario"
-msgstr "Scenario"
-
-#. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:110
-msgid "pluginCard.effect"
-msgstr "What it does"
-
-#. js-lingui-explicit-id
-#: ../src/components/plugin-card.tsx:121
+#: ../src/components/plugin-card.tsx:116
 msgid "pluginCard.hosts.aria"
 msgstr "Works in"

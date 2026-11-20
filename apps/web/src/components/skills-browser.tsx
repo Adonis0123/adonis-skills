@@ -12,7 +12,12 @@ import {
 } from "@/components/motion/filter-transition";
 import { PressScale } from "@/components/motion/press-scale";
 import { SkillCard } from "@/components/skill-card";
-import { useCatalogQuery } from "@/components/use-catalog-filters";
+import { SkillList } from "@/components/skill-row";
+import {
+  type CatalogView,
+  useCatalogQuery,
+  useCatalogView,
+} from "@/components/use-catalog-filters";
 import { ClayButton } from "@/components/ui";
 import { cx } from "@/components/ui/utils";
 import { SKILL_TAG_LABELS, SKILL_TAG_SEARCH_LABELS } from "@/config/skill-tags";
@@ -93,6 +98,23 @@ function ResultsGrid({
   );
 }
 
+/** List or cards, whichever the visitor picked (the list is the default). */
+function ResultsView({
+  view,
+  skills,
+  featuredSlugs,
+}: {
+  view: CatalogView;
+  skills: SkillListItem[];
+  featuredSlugs: ReadonlySet<string>;
+}) {
+  return view === "list" ? (
+    <SkillList skills={skills} />
+  ) : (
+    <ResultsGrid skills={skills} featuredSlugs={featuredSlugs} />
+  );
+}
+
 /** The full catalog at /skills: search, scenario sidebar, tag filters, and sorting, all in the URL. */
 export function SkillsBrowser({
   skills,
@@ -108,6 +130,7 @@ export function SkillsBrowser({
   );
   const { query, deferredQuery, setQ, setGroup, toggleTag, setSort, clear } =
     useCatalogQuery(groupIds);
+  const [view, setView] = useCatalogView();
 
   const featuredSlugs = useMemo(
     () => new Set(layout.featured.map((entry) => entry.slug)),
@@ -138,6 +161,19 @@ export function SkillsBrowser({
   const filtering = isCatalogQueryActive(query);
   const resultCount = results.length;
   const totalCount = skills.length;
+
+  const viewOptions: { id: CatalogView; icon: string; label: string }[] = [
+    {
+      id: "list",
+      icon: "icon-[lucide--list]",
+      label: t({ id: "skills.view.list", message: "List" }),
+    },
+    {
+      id: "grid",
+      icon: "icon-[lucide--layout-grid]",
+      label: t({ id: "skills.view.grid", message: "Cards" }),
+    },
+  ];
 
   const sortLabels: Record<CatalogSort, string> = {
     group: t({ id: "skills.sort.group", message: "By scenario" }),
@@ -328,41 +364,72 @@ export function SkillsBrowser({
                   );
                 })}
               </div>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Trans id="skills.sort.label">Sort</Trans>
-                <span className="relative">
-                  <select
-                    value={query.sort}
-                    onChange={(event) =>
-                      setSort(event.target.value as CatalogSort)
-                    }
-                    className="clay-focus-ring ink-box ink-box--sm h-9 appearance-none bg-card pr-8 pl-3 text-sm font-medium text-foreground"
-                  >
-                    {CATALOG_SORTS.map((sort) => (
-                      <option key={sort} value={sort}>
-                        {sortLabels[sort]}
-                      </option>
-                    ))}
-                  </select>
-                  <span
-                    className="icon-[lucide--chevron-down] pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2"
-                    aria-hidden
-                  />
-                </span>
-              </label>
+              <div className="flex items-center gap-3">
+                <div
+                  role="group"
+                  aria-label={t({ id: "skills.view.aria", message: "Layout" })}
+                  className="ink-box ink-box--sm flex h-9 items-center gap-0.5 bg-card p-0.5"
+                >
+                  {viewOptions.map((option) => {
+                    const selected = view === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={selected}
+                        aria-label={option.label}
+                        title={option.label}
+                        onClick={() => setView(option.id)}
+                        className={cx(
+                          "clay-focus-ring grid size-7 place-items-center rounded-[7px] transition-colors pointer-coarse:size-9",
+                          selected
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:bg-hover hover:text-foreground",
+                        )}
+                      >
+                        <span
+                          className={cx(option.icon, "size-4")}
+                          aria-hidden
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+                <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Trans id="skills.sort.label">Sort</Trans>
+                  <span className="relative">
+                    <select
+                      value={query.sort}
+                      onChange={(event) =>
+                        setSort(event.target.value as CatalogSort)
+                      }
+                      className="clay-focus-ring ink-box ink-box--sm h-9 appearance-none bg-card pr-8 pl-3 text-sm font-medium text-foreground"
+                    >
+                      {CATALOG_SORTS.map((sort) => (
+                        <option key={sort} value={sort}>
+                          {sortLabels[sort]}
+                        </option>
+                      ))}
+                    </select>
+                    <span
+                      className="icon-[lucide--chevron-down] pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2"
+                      aria-hidden
+                    />
+                  </span>
+                </label>
+              </div>
             </div>
 
             {activeGroup && resultCount > 0 && (
               <div className="ink-box ink-raised mb-5 flex items-start gap-4 bg-card p-4 md:p-5">
-                <span className="art-avatar art-avatar--ringed size-14 shrink-0">
-                  <Image
-                    src={getIllustrationSrc(activeGroup.illustration)}
-                    alt=""
-                    width={1024}
-                    height={1024}
-                    sizes="56px"
-                  />
-                </span>
+                <Image
+                  src={getIllustrationSrc(activeGroup.illustration)}
+                  alt=""
+                  width={1024}
+                  height={1024}
+                  sizes="72px"
+                  className="-my-2 size-18 shrink-0 object-contain"
+                />
                 <div className="min-w-0">
                   <h2 className="type-h3">{activeGroup.title[locale]}</h2>
                   <p className="mt-1 text-[14.5px] leading-[1.6] text-muted-foreground">
@@ -439,7 +506,8 @@ export function SkillsBrowser({
                         {section.skills.length}
                       </span>
                     </div>
-                    <ResultsGrid
+                    <ResultsView
+                      view={view}
                       skills={section.skills}
                       featuredSlugs={featuredSlugs}
                     />
@@ -447,7 +515,11 @@ export function SkillsBrowser({
                 ))}
               </div>
             ) : (
-              <ResultsGrid skills={results} featuredSlugs={featuredSlugs} />
+              <ResultsView
+                view={view}
+                skills={results}
+                featuredSlugs={featuredSlugs}
+              />
             )}
           </div>
         </FilterTransitionGroup>

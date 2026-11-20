@@ -55,122 +55,126 @@ msgstr ""
 
 #. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:422
-msgid "home.group.count"
-msgstr "{count, plural, one {# skill} other {# skills}}"
+#~ msgid "home.group.count"
+#~ msgstr "{count, plural, one {# skill} other {# skills}}"
 
 #. js-lingui-explicit-id
 #: ../src/components/skills-library-section.tsx:300
-msgid "home.scenarios.titleFiltered"
-msgstr "{resultCount, plural, one {# skill matches} other {# skills match}}"
+#~ msgid "home.scenarios.titleFiltered"
+#~ msgstr "{resultCount, plural, one {# skill matches} other {# skills match}}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:154
+#: ../src/components/skills-library-section.tsx:296
+#~ msgid "home.scenarios.kicker"
+#~ msgstr "By scenario"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:307
+#~ msgid "home.scenarios.title"
+#~ msgstr "Find a skill by what you're doing"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:175
+#~ msgid "home.scenarios.jump.aria"
+#~ msgstr "Jump to a scenario"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:360
+#~ msgid "home.search.emptyHint.both"
+#~ msgstr "Kiki looked everywhere. Try another word, or remove the tag filter."
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:355
+#~ msgid "home.search.emptyHintTagOnly"
+#~ msgstr "No skills carry this tag yet. Pick another tag."
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:190
+#~ msgid "home.filter.clearTag.aria"
+#~ msgstr "Remove the {0} tag filter"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:254
+#~ msgid "home.featured.kicker"
+#~ msgstr "Start here"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:195
+#~ msgid "home.filter.activeTag"
+#~ msgstr "Tag: {0}"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:461
+#~ msgid "home.group.viewAll"
+#~ msgstr "View all {count} in this group"
+
+#. js-lingui-explicit-id
+#: ../src/components/skills-library-section.tsx:141
 msgid "home.search.countFiltered"
 msgstr "{resultCount} / {totalCount}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:169
+#: ../src/components/skills-library-section.tsx:200
 msgid "home.search.resultCount"
 msgstr "{resultCount} of {totalCount} skills shown"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:158
+#: ../src/components/skills-library-section.tsx:132
 msgid "home.search.count"
 msgstr "{totalCount, plural, one {# skill} other {# skills}}"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:296
-msgid "home.scenarios.kicker"
-msgstr "By scenario"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:375
+#: ../src/components/skills-library-section.tsx:304
 msgid "home.search.clearFilters"
 msgstr "Clear filters"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:144
+#: ../src/components/skills-library-section.tsx:183
 msgid "home.search.clear"
 msgstr "Clear search"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:377
+#: ../src/components/skills-library-section.tsx:306
 msgid "home.search.clearSearch"
 msgstr "Clear search"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:307
-msgid "home.scenarios.title"
-msgstr "Find a skill by what you're doing"
+#: ../src/components/skills-library-section.tsx:207
+msgid "home.scenarios.filter.aria"
+msgstr "Filter by scenario"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:175
-msgid "home.scenarios.jump.aria"
-msgstr "Jump to a scenario"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:349
+#: ../src/components/skills-library-section.tsx:291
 msgid "home.search.emptyHint.query"
 msgstr "Kiki looked everywhere. Try another word, in English or Chinese."
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:360
-msgid "home.search.emptyHint.both"
-msgstr "Kiki looked everywhere. Try another word, or remove the tag filter."
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:342
+#: ../src/components/skills-library-section.tsx:285
 msgid "home.search.emptyTitle"
 msgstr "No matching skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:355
-msgid "home.search.emptyHintTagOnly"
-msgstr "No skills carry this tag yet. Pick another tag."
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:338
+#. placeholder {0}: query.q
+#: ../src/components/skills-library-section.tsx:281
 msgid "home.search.emptyTitle.query"
 msgstr "No skills match \"{query}\""
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:264
+#: ../src/components/skills-library-section.tsx:341
 msgid "home.featured.intro"
 msgstr "One line to install, works the same in every agent."
 
 #. js-lingui-explicit-id
-#. placeholder {0}: SKILL_TAG_LABELS[tag][locale]
-#: ../src/components/skills-library-section.tsx:190
-msgid "home.filter.clearTag.aria"
-msgstr "Remove the {0} tag filter"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:124
+#: ../src/components/skills-library-section.tsx:163
 msgid "home.search.input.aria"
 msgstr "Search skills"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:254
-msgid "home.featured.kicker"
-msgstr "Start here"
-
-#. js-lingui-explicit-id
-#. placeholder {0}: SKILL_TAG_LABELS[tag][locale]
-#: ../src/components/skills-library-section.tsx:195
-msgid "home.filter.activeTag"
-msgstr "Tag: {0}"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:257
+#: ../src/components/skills-library-section.tsx:336
 msgid "home.featured.title"
 msgstr "Three skills worth installing first"
 
 #. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:461
-msgid "home.group.viewAll"
-msgstr "View all {count} in this group"
-
-#. js-lingui-explicit-id
-#: ../src/components/skills-library-section.tsx:128
+#: ../src/components/skills-library-section.tsx:167
 msgid "home.search.placeholder.try"
 msgstr "What are you trying to do? Try \"review\", \"commit\", \"figma\"…"

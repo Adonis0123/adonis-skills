@@ -64,66 +64,66 @@ msgstr ""
 #~ msgstr "Source"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:58
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:57
 msgid "pluginDetail.meta.title"
 msgstr "{name} plugin"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:180
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:178
 msgid "pluginDetail.back"
 msgstr "All plugins"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:213
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:214
 msgid "pluginDetail.claudeOnly"
 msgstr "Claude Code only"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:150
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:149
 msgid "pluginDetail.howItWorks"
 msgstr "How it works"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:243
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:239
 msgid "pluginDetail.install.manageHeading"
 msgstr "Install and turn off"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:53
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:52
 msgid "pluginDetail.meta.notFoundTitle"
 msgstr "Plugin not found"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:135
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:134
 msgid "pluginDetail.scenario"
 msgstr "Scenario"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:276
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:272
 msgid "pluginDetail.sourceLink"
 msgstr "View source on GitHub"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:119
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:118
 msgid "pluginDetail.whatItBlocks"
 msgstr "What it blocks"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:126
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:125
 msgid "pluginDetail.whatAgentSees"
 msgstr "What the agent sees when blocked"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:316
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:308
 msgid "pluginDetail.whyThisPlugin"
 msgstr "Why this plugin"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:139
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:138
 msgid "pluginDetail.whyUse"
 msgstr "Why use it"
 
 #. js-lingui-explicit-id
-#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:143
+#: ../../../../src/app/%5Blang%5D/plugins/%5Bslug%5D/page.tsx:142
 msgid "pluginDetail.whyBuilt"
 msgstr "Why we built our own"
