@@ -497,6 +497,42 @@
     }
   },
   {
+    "slug": "delete-comment",
+    "name": "delete-comment",
+    "description": "Audit the code comments in a repository or a named path, sort each one into tautology, stale, excuse, decision record or directive, then delete the noise, turn excuses into tracked issues, move decisions into ADRs, and add a comment ratchet (a per-file baseline that may only shrink) so new noise cannot come back. Starts with a read-only report and a measured count of how many lines deleting would shed. Use when the user wants to clean up, prune or ban code comments, says comments mislead the coding agent, asks how many lines removing comments would save, or wants a lint or CI rule that stops comment growth, in any language, Chinese included. Not for writing docstrings or API docs, translating comments, or reviewing a diff for bugs.",
+    "metadata": {
+      "author": "adonis",
+      "version": "1.0.0"
+    },
+    "files": {
+      "hasReferences": false,
+      "hasSrc": false,
+      "hasScripts": true
+    },
+    "updatedAt": "2026-11-22T00:00:00.000Z",
+    "catalog": {
+      "displayName": {
+        "en": "Comment Cleanup",
+        "zh": "注释清理"
+      },
+      "group": "review",
+      "tags": [
+        "code-review",
+        "agent-workflow"
+      ],
+      "summary": "Sort code comments into noise, excuses and real decisions, delete the noise, and add a ratchet so comment count only goes down.",
+      "summary_zh": "把代码注释分成废话、借口和真正的决策记录，删掉废话，再加一道只降不升的注释门禁。",
+      "use_cases": [
+        "Measure how many comment lines a repo would shed before touching any code.",
+        "Stop stale or excuse comments from steering a coding agent, with a CI check that fails when comments grow."
+      ],
+      "use_cases_zh": [
+        "改代码前先量清楚：全仓有多少注释、删掉能省多少行。",
+        "防止过时或找借口的注释误导 agent，注释变多时 CI 直接报错。"
+      ]
+    }
+  },
+  {
     "slug": "design-system",
     "name": "design-system",
     "description": "Run a shared multi-site design system where every product swaps only its interface accent color: analyze any website's theme colors and roles, wire a new site or plugin to the semantic tokens, and lint plugins for hard-coded colors, fallback values and unknown roles. Use when the user gives a URL and asks what its theme or palette is, asks to connect a site to the design system, add an accent theme, or check whether a plugin follows the theme contract. Skip one-off styling tweaks, logo or illustration work, and plugin-architecture refactors (code-plugin-architecture).",

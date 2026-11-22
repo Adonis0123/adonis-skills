@@ -151,6 +151,19 @@ skills:
       - "在明确划定的模块内做架构加固，避免无边界的全仓重构。"
       - "用五项准入条件过滤扫描器报告，筛掉过度抽象和伪问题。"
 
+  delete-comment:
+    displayName: { en: "Comment Cleanup", zh: "注释清理" }
+    group: review
+    tags: [code-review, agent-workflow]
+    summary: "Sort code comments into noise, excuses and real decisions, delete the noise, and add a ratchet so comment count only goes down."
+    summary_zh: "把代码注释分成废话、借口和真正的决策记录，删掉废话，再加一道只降不升的注释门禁。"
+    use_cases:
+      - "Measure how many comment lines a repo would shed before touching any code."
+      - "Stop stale or excuse comments from steering a coding agent, with a CI check that fails when comments grow."
+    use_cases_zh:
+      - "改代码前先量清楚：全仓有多少注释、删掉能省多少行。"
+      - "防止过时或找借口的注释误导 agent，注释变多时 CI 直接报错。"
+
   ardot-mcp:
     displayName: { en: "Ardot Connector", zh: "Ardot 连接器" }
     group: tools

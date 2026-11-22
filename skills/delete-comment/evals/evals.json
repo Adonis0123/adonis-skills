@@ -1,0 +1,163 @@
+{
+  "skill_name": "delete-comment",
+  "evals": [
+    {
+      "id": 1,
+      "name": "ts-wellkept-readonly-zh",
+      "fixture": "ts-service-wellkept",
+      "prompt": "这个仓库的注释太多了，有些已经过时，会误导 agent。先帮我看看都有哪些注释、删掉能省多少行，先别改代码。",
+      "expected_output": "Read-only report on a well-kept TypeScript repo: cloc-based counts excluding vendor/ and .gen., classified five-class table catching the contradictory stale retry comment while keeping JSDoc codegen tags, empty-catch comment, section header and decision records, realistic sample-based delete estimate (~4 lines, not raw countedLines), proposed ADR and issue, and zero file edits.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "measured-count",
+          "text": "The report gives comment line counts produced by comment_ratchet.py report or cloc, not a guessed number."
+        },
+        {
+          "name": "five-classes",
+          "text": "Comments are classified into tautology, stale, excuse, decision record and directive, with quoted file:line examples."
+        },
+        {
+          "name": "no-edits",
+          "text": "No file in the target repository is modified or created (git status is clean)."
+        },
+        {
+          "name": "excludes-generated-and-vendor",
+          "text": "Excludes vendor/ and .gen. generated files from the measured counts and lists excluded/not-covered paths."
+        },
+        {
+          "name": "catches-stale-contradiction",
+          "text": "Classifies the contradictory retry comment in src/retry.ts (claims 5 linear 1000ms retries while code uses 3 exponential 250ms retries) as Stale."
+        },
+        {
+          "name": "protects-keep-it-traps",
+          "text": "Preserves (does not mark for deletion) the exported JSDoc @description blocks in src/types.ts, the empty-catch comment in src/retry.ts, and the section header with spec pointer in src/retry.ts."
+        },
+        {
+          "name": "realistic-delete-estimate",
+          "text": "Gives a sample-based deletable line estimate in the realistic range (2-7 lines, not raw countedLines=21) with sample size, and notes that trailing comments are not counted by cloc."
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "ts-wellkept-apply-ratchet-en",
+      "fixture": "ts-service-wellkept",
+      "prompt": "Clean up the comments under src/ and add a lint so comment count can only go down. Don't post anything to GitHub.",
+      "expected_output": "Scoped src/ cleanup on well-kept TypeScript repo: deletes tautology and contradictory stale comments, preserves JSDoc codegen tags, empty-catch comment, section header, directives, and decision records (marked WHY: or moved to ADR-0002 following docs/adr/), records excuses in docs/comment-debt.md, copies comment_ratchet.py, creates src/-scoped baseline excluding .gen., wires check into existing package.json/CI gate, runs npm test, reports before/after counts, and demonstrates check failing on a throwaway comment and passing cleanly after revert.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "local-issues",
+          "text": "Excuse comments are recorded in docs/comment-debt.md (with file, line, issue, and removal condition), not posted to an external tracker."
+        },
+        {
+          "name": "ratchet-wired",
+          "text": "Ratchet script is copied into the repo, a src/-scoped baseline excluding generated files exists, and check is wired into an existing gate (package.json or CI, ensuring cloc is available in CI) without adding a new hook framework."
+        },
+        {
+          "name": "ratchet-proven",
+          "text": "The check is demonstrated failing on a throwaway added comment and passing with exit code 0 after reverting the throwaway, leaving no leftover throwaway comment."
+        },
+        {
+          "name": "directives-kept",
+          "text": "Tool directives (eslint-disable and @ts-expect-error) are untouched."
+        },
+        {
+          "name": "removes-noise-and-stale",
+          "text": "Deletes tautology comments (src/types.ts, src/cache.ts) and the contradictory stale comment (src/retry.ts), while leaving vendor/ and src/api.gen.ts untouched."
+        },
+        {
+          "name": "no-over-deletion-and-tests-pass",
+          "text": "Preserves JSDoc @description blocks in src/types.ts, empty-catch comment and section header in src/retry.ts, and decision records; npm test passes after edits."
+        },
+        {
+          "name": "before-after-and-adr",
+          "text": "Reports before/after counted comment lines and handles the long cross-file cache/retry decision record via existing docs/adr/ convention (ADR-0002) or explicit WHY:/ADR marker without inventing a conflicting ADR layout."
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "py-noisy-apply-precommit-zh",
+      "fixture": "py-pipeline-noisy",
+      "prompt": "把 src/ 下面的废话注释和过时注释清掉，顺便加上防止注释继续变多的检查。不要发到外部 issue 平台，也别影响现有测试。",
+      "expected_output": "Scoped src/ cleanup on Python repo: deletes tautologies and both stale comments, keeps runtime-used module docstring, empty-except comment, section header, directives (SPDX, noqa, type: ignore), and decision records, records excuses in docs/comment-debt.md, excludes generated_pb2.py, wires ratchet check into existing .pre-commit-config.yaml, proves fail-then-pass ratchet check, reports before/after counts, and keeps python3 -m unittest passing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "removes-python-noise-and-stale",
+          "text": "Deletes the tautology comments and both stale comments (contradictory dedupe_latest comment and obsolete XML/DATA-104 comment) in src/ingest.py and src/transform.py, leaving src/generated_pb2.py untouched."
+        },
+        {
+          "name": "preserves-docstring-and-traps",
+          "text": "Preserves the runtime-used module docstring in src/ingest.py, the section header and empty-except comment in src/transform.py, decision records, and all directives (SPDX, noqa, type: ignore); python3 -m unittest discover -s tests passes."
+        },
+        {
+          "name": "local-debt-recorded",
+          "text": "Records the two excuse comments (FIXME and TODO) in docs/comment-debt.md with file, line, problem, and removal condition, without external posting."
+        },
+        {
+          "name": "wires-existing-precommit",
+          "text": "Copies the ratchet script into the repo, generates a src/-scoped baseline excluding generated_pb2.py, wires check into existing .pre-commit-config.yaml without adding a new hook framework, and proves fail-then-pass with exit code 0 on final tree."
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "mixed-monorepo-implicit-audit-en",
+      "fixture": "mixed-monorepo",
+      "prompt": "Audit the comments across this repo. We have both TypeScript and Python code and I want to know what's noise, what's stale, what should become an ADR, and where a comment ratchet would fit.",
+      "expected_output": "Read-only audit report across TypeScript and Python without editing any files: measured counts with allowedLines > 0 and vendor/ excluded, five-class table catching both contradictory stale comments while protecting JSDoc/section-header/catch traps, cross-file ADR proposal for monotonic clientSeq, realistic sample-based estimate (~10 lines), existing CI/package.json gate recommendation, and Not covered list.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "stops-read-only",
+          "text": "Stops after delivering the audit report without modifying or creating any files in the repository (git status is clean)."
+        },
+        {
+          "name": "measured-multilang-counts",
+          "text": "Reports script/cloc-measured commentLines, allowedLines (> 0 from existing WHY: markers), and countedLines across both TypeScript and Python with vendor/ excluded."
+        },
+        {
+          "name": "catches-both-stale-and-traps",
+          "text": "Classifies both contradictory stale comments (moment.js in packages/web/src/format.ts and 10-attempt backoff in services/worker/sync.py) as Stale, while keeping JSDoc @schemaFormat, section header, and catch comment out of the deletion list."
+        },
+        {
+          "name": "proposes-cross-file-adr-and-estimate",
+          "text": "Proposes an ADR for the cross-file monotonic clientSeq invariant, gives a realistic sample-based delete estimate (7-13 lines, not raw countedLines=23) with sample size, names the existing gate (package.json or .github/workflows/ci.yml), and notes Not covered items (vendor/, trailing comments)."
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "mixed-monorepo-whole-repo-ratchet-en",
+      "fixture": "mixed-monorepo",
+      "prompt": "Clean up all noisy, stale, and excuse comments across this whole repo and wire a comment ratchet into CI so comments cannot grow back. Don't post issues to GitHub.",
+      "expected_output": "Whole-repo TS+Python cleanup and CI ratchet: deletes all tautologies, both stale comments, and records both excuses in docs/comment-debt.md; preserves JSDoc @schemaFormat, section header, catch comment, directives, and vendor/thirdparty.py; moves cross-file clientSeq decision into docs/adr/0002-*.md; copies comment_ratchet.py and creates whole-repo baseline excluding vendor/ and the ratchet script itself so check STILL PASSES after git add -A; wires check into package.json and .github/workflows/ci.yml (with cloc installed in CI); proves fail-then-pass and passes npm test.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "removes-multilang-noise-and-stale",
+          "text": "Deletes all 6 tautologies and both contradictory stale comments (moment.js and 10-attempt backoff) across TypeScript and Python, leaving vendor/thirdparty.py untouched."
+        },
+        {
+          "name": "preserves-traps-directives-and-tests",
+          "text": "Preserves JSDoc @schemaFormat, section header, catch comment, existing WHY: markers, and directives (prettier-ignore, pragma: no cover); npm test (both Node and Python unittest) passes."
+        },
+        {
+          "name": "cross-file-adr-and-local-debt",
+          "text": "Moves the cross-file monotonic clientSeq decision into docs/adr/0002-*.md (leaving ADR-0002 pointers in both TS and Python) and records both excuses in docs/comment-debt.md without posting externally."
+        },
+        {
+          "name": "ratchet-survives-git-add",
+          "text": "Ratchet check passes (exit 0) both before AND after staging all newly created files with git add -A, without bloating the baseline with the ratchet script's own comments or staging files into git index."
+        },
+        {
+          "name": "ci-wired-with-cloc-and-proven",
+          "text": "Wires check into existing package.json and/or .github/workflows/ci.yml (ensuring cloc is installed in the CI job), adds no new hook framework, reports before/after counts, and proves check fails on a throwaway comment and passes after revert."
+        }
+      ]
+    }
+  ]
+}
