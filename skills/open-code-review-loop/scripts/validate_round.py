@@ -28,7 +28,7 @@ except ImportError:  # no account database on this platform
     pwd = None
 
 
-PRODUCTS = {"codex", "claude-code", "grok-build", "cursor-cli"}
+PRODUCTS = {"codex", "claude-code", "grok-build", "cursor-cli", "agy"}
 CATEGORIES = {
     "bug",
     "security",

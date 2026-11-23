@@ -34,7 +34,8 @@ Do these in order. Later references stay closed until a step needs them.
 
 Use this Skill only for an OCR-delegation loop (`ocr delegate` /
 open-code-review) on a Git workspace with a supported reviewer (`codex`,
-`claude-code`, `grok-build`, `cursor-cli`) when the request includes both
+`claude-code`, `grok-build`, `cursor-cli`; `agy` only when the user names it)
+when the request includes both
 fixing verified findings and independent re-review until validated
 `NO_FINDINGS` or `CLEAN`. Merely asking for one `ocr delegate` /
 `open-code-review-delegate` pass is insufficient; route that request to
@@ -55,8 +56,9 @@ Resolve before the first model call:
 - Target: workspace changes; also OCR `--from/--to` and `--commit`
 - Reviewer: user-selected product; when none is named, ask once and
   recommend a product other than the visible host; always use a real
-  independent read-only product session. `agy` (Antigravity) is not a
-  Reviewer yet: its adapter is not verified end to end
+  independent read-only product session. `agy` (Antigravity) is an optional
+  Reviewer only when the user names it: never auto-select, default to or
+  recommend it, and never use it as Fixer
 - Fixer: current visible host. An external Fixer needs a user-authorized
   isolated checkout that becomes `$REPO` before round 1
 - Paths/excludes: OCR preview; preserve user exclusions every round.
