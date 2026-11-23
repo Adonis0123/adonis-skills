@@ -5,7 +5,8 @@ truth because flags and output envelopes can change between versions.
 
 ## Shared rules
 
-- Canonical IDs are `codex`, `claude-code`, `grok-build`, and `cursor-cli`.
+- Canonical IDs are `codex`, `claude-code`, `grok-build`, `cursor-cli`, and
+  `agy` (Reviewer only, when the user names it).
 - Reviewer and Fixer are separate sessions, even when they use the same
   product.
 - Reviewer mode uses the strongest available read-only controls and a
@@ -222,6 +223,22 @@ isolated writable target, deny shell, MCP, web, Git metadata writes, and paths
 outside the frozen boundary. Only then may an explicitly authorized Cursor
 Fixer use `--force --sandbox enabled`; never add `--trust`, `--approve-mcps`,
 or disable the sandbox.
+
+## agy (Antigravity)
+
+Run it as `command agy -p … --output-format json`; flags and quota signals
+live in agent-dispatch `references/accounts.md` § Antigravity (agy).
+
+- Reviewer only. A Fixer role returns `HUMAN_GATE`.
+- Use `--mode plan`, `--sandbox` and `--json-schema` with
+  `references/review-schema.json`. The envelope stores the object in
+  `structured_output`, the session in `conversation_id`, and `status` must be
+  `SUCCESS`; never parse `response`, which also carries plan prose.
+- agy 1.5.14 reads the prompt only from the `-p` argument, not stdin. Do not
+  put the whole bundle in argv: when bounded instructions plus an `--add-dir`
+  read of the bundle cannot be confirmed for the installed version, return
+  `HUMAN_GATE`.
+- Not covered by the dogfood record below; this shape is UNVERIFIED end to end.
 
 ## Version-gated dogfood record
 

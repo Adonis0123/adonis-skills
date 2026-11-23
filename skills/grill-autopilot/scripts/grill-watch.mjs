@@ -22,7 +22,7 @@ import { MAX_ROUNDS, parseAnswers } from "./grill-ledger.mjs";
 
 const SELF = fileURLToPath(import.meta.url);
 const PAGE = path.join(path.dirname(SELF), "..", "assets", "watch.html");
-const PRODUCTS = ["claude", "codex", "grok", "pi"];
+const PRODUCTS = ["claude", "codex", "grok", "pi", "agy"];
 const WATCHED =
   /^(watch\.json|ledger\.json|events\.jsonl|round-\d+\.md|answers-\d+(?:-retry)?\.md|gate-\d+(?:-retry)?\.json|reask-\d+\.md|proxy-\d+\.log|redteam(?:-question)?\.md)$/;
 const MAX_FILE_BYTES = 2_000_000;
@@ -38,6 +38,7 @@ export function productOf(name) {
   if (n.startsWith("codex")) return "codex";
   if (n.startsWith("grok")) return "grok";
   if (/^pi(?:$|[-_\d])/.test(n)) return "pi";
+  if (/^(agy|antigravity)/.test(n)) return "agy";
   return "unknown";
 }
 

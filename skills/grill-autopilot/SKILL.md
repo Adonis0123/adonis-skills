@@ -43,6 +43,7 @@ Vocabulary is in `GLOSSARY.md` next to this file: **Interviewer**, **Proxy**, **
   - Otherwise, when the Interviewer is pi, read `review-loop prefs`, choose the first product in its saved `order` (`claude`, `codex` or `grok`), and pass it explicitly as `--peer=<product>`. Do not pass `--host=pi`: preference routing accepts only the three reviewer products. Pass the remaining saved products in order as `--fallback=<product,product>`; omit this flag when none remain. Read preferences with `node "$RL" prefs`, without changing them.
   - For other Interviewer products, `--host=<Interviewer product> --skip-host` lets the saved Reviewer preference pick it (`review-loop prefs`).
   - pi has no web search; it can be the Interviewer but not the Proxy.
+  - agy (Antigravity) is optional and only used when the user names it: never pick it automatically, by default or as a recommendation. It is not a `review-loop consult` peer, so call it as the Proxy the way agent-dispatch `references/accounts.md` § Antigravity (agy) says, save its `response` as the round's answers, and resume the same conversation every round.
 - **Red-team** (step 4): a third product used by neither role, or skipped when none is installed.
 
 State the pairing in one line when starting, then start the Watch Page in the same tool round and keep going:
