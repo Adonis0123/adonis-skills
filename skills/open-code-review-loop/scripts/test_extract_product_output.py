@@ -123,28 +123,6 @@ class ExtractProductOutputTest(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("exactly one JSON object", result.stderr)
 
-    def test_extracts_agy_structured_output_and_rejects_error_status(self) -> None:
-        expected = {
-            "schema_version": "1",
-            "reviewer": {"product": "wrong-product", "session_id": "wrong-session"},
-            "verdict": "NO_FINDINGS",
-        }
-        result = self.run_extract(
-            "agy",
-            {
-                "status": "SUCCESS",
-                "conversation_id": "agy-conversation",
-                "response": "plan prose",
-                "structured_output": expected,
-            },
-        )
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(result.extracted["reviewer"]["product"], "agy")
-        self.assertEqual(result.extracted["reviewer"]["session_id"], "agy-conversation")
-        failed = self.run_extract("agy", {"status": "ERROR", "structured_output": expected})
-        self.assertEqual(failed.returncode, 2)
-        self.assertIn("SUCCESS", failed.stderr)
-
     def test_rejects_missing_product_field(self) -> None:
         result = self.run_extract("grok-build", {"text": "{}"})
         self.assertEqual(result.returncode, 2)

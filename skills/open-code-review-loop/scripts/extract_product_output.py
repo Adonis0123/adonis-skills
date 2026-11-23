@@ -11,7 +11,7 @@ import sys
 from typing import Any
 
 
-PRODUCTS = ("codex", "claude-code", "grok-build", "cursor-cli", "agy")
+PRODUCTS = ("codex", "claude-code", "grok-build", "cursor-cli")
 
 
 def load_object(path: str) -> dict[str, Any]:
@@ -45,10 +45,6 @@ def extract(product: str, envelope: dict[str, Any]) -> dict[str, Any]:
                 "result must be a JSON string containing exactly one JSON object"
             ) from error
         return require_object(parsed, "result")
-    if product == "agy":
-        if envelope.get("status") != "SUCCESS":
-            raise ValueError(f"agy status is {envelope.get('status')!r}, not 'SUCCESS'")
-        return require_object(envelope.get("structured_output"), "structured_output")
     raise ValueError(f"unsupported product: {product}")
 
 
@@ -68,7 +64,6 @@ def normalize_reviewer_identity(
         "claude-code": "session_id",
         "grok-build": "sessionId",
         "cursor-cli": "session_id",
-        "agy": "conversation_id",
     }.get(product)
     envelope_session_id = envelope.get(envelope_field) if envelope_field else None
     trusted_session_id = explicit_session_id or (
