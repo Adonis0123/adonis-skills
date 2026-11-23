@@ -1,6 +1,7 @@
 """Fix rounds, Codex sessions and usage, unregistered streams, the watch command and the Board's finished-only results."""
 
 import os
+import time
 from unittest import mock
 
 import board_render
@@ -104,6 +105,39 @@ class RoundsAndWatch(BoardTestCase):
             _, out, _ = self.run_cli("--run", rd, "watch", "--timeout", "60", "--interval", "1")
         self.assertIn("内没有任务结束", out)
         self.assertNotIn("没有动静，去看日志", out)
+
+    def test_a_busy_session_with_a_quiet_stream_wakes_watch(self):
+        _, text, _ = self.run_cli("init", "--objective", "测试", "--run-id", "r1", "--session-stale-seconds", "900")
+        rd = text.strip()
+        self.assertEqual(board.load_run(rd)["session_stale_seconds"], 900)
+        stream = os.path.join(rd, "A.jsonl")
+        write_jsonl(stream, [{"type": "system", "subtype": "init", "session_id": "s1"},
+                             {"type": "assistant", "message": {"content": [{"type": "text", "text": "跑 vite preview 验证页面"}]}}])
+        self.run_cli("--run", rd, "lane", "add", "--id", "A", "--title", "卡片", "--account", "claude:003",
+                     "--pool", "claude:003", "--output", stream, "--state", "working")
+        busy = {"sessions": [{"sessionId": "s1", "status": "busy"}]}
+        quiet_since = 1_000_000.0
+        os.utime(stream, (quiet_since, quiet_since))
+        self.assertEqual(board.derive(board.load_run(rd), now=quiet_since + 899, sessions=busy)["lanes"][0]["state"], "working")
+        lane = board.derive(board.load_run(rd), now=quiet_since + 900, sessions=busy)["lanes"][0]
+        self.assertEqual(lane["state"], "stale")
+        self.assertIn("不会自己退出", lane["stale_flag"])
+        self.assertEqual(board.watch_events({"lanes": [lane]})["A"][0], "stale")
+        idle = {"sessions": [{"sessionId": "s1", "status": "idle"}]}
+        lane = board.derive(board.load_run(rd), now=quiet_since + 900, sessions=idle)["lanes"][0]
+        self.assertEqual(lane["state"], "stale")
+        self.assertIn("没交结果", lane["stale_flag"])
+        self.assertNotIn("不会自己退出", lane["stale_flag"])
+
+        os.utime(stream, None)  # fresh when the watch starts, quiet by the next check
+        def go_quiet(_seconds):
+            os.utime(stream, (time.time() - 2000, time.time() - 2000))
+        with mock.patch.object(board.SESSION_READER, "read", return_value=busy), \
+                mock.patch.object(board.time, "sleep", side_effect=go_quiet):
+            code, out, _ = self.run_cli("--run", rd, "watch", "--timeout", "60", "--interval", "1")
+        self.assertEqual(code, 0)
+        self.assertIn("卡片：", out)
+        self.assertIn("没有动静，去看日志", out)
 
     def test_technical_details_skip_duplicates_and_short_times_read_plainly(self):
         rd, _ = self.start()

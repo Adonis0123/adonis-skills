@@ -57,6 +57,9 @@ except ImportError:  # Windows
     import msvcrt
 
 STALE_SECONDS = 300
+# A session sideby still reports (busy, idle) whose output stream is this quiet is likely stuck on a foreground
+# command that never exits, such as a dev or preview server (references/run-board.md § Lane states, row 6)
+SESSION_STALE_SECONDS = 1200
 LANE_STATES = ("queued", "working", "needs-you", "done", "failed", "stopped")
 WAIT_STATES = ("running", "done", "failed", "stopped")
 ACTIVE_LANE_STATES = ("queued", "working", "needs-you")
@@ -1205,6 +1208,8 @@ def lane_state(facts: dict) -> tuple[str, str | None]:
 
     Follows the table in references/run-board.md § Lane states: read top-down, the first matching row wins.
     A `busy` session means the Worker runs now, so a report, a stream end or an exited Orca window is from an older turn.
+    Silence counts after STALE_SECONDS without a usable session status, and after the Run's session_stale_seconds
+    of a quiet output stream while sideby still reports the session (busy or idle).
     """
     busy = facts["session"] == "busy"
     outcome = None if busy else facts["outcome"]
@@ -1226,6 +1231,9 @@ def lane_state(facts: dict) -> tuple[str, str | None]:
     if facts["state"] == "queued" or facts["waiting_on"]:
         return "queued", None
     if facts["session"] in (None, "unknown") and facts["silent_for"] is not None and facts["silent_for"] >= STALE_SECONDS:
+        return "stale", None
+    quiet = facts.get("stream_silent_for")  # only the stream: a session-only Lane's ledger time does not move while it works
+    if facts["session"] not in (None, "unknown") and quiet is not None and quiet >= facts.get("session_stale_after", SESSION_STALE_SECONDS):
         return "stale", None
     return "working", None
 
@@ -1287,6 +1295,8 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
             "stream_ended": info["ended"], "stream_failed": info["failed"],
             "orca_exited": bool(live) and live.get("liveness") == "exited",
             "waiting_on": view["waiting_on"], "silent_for": view["silent_for"],
+            "stream_silent_for": (now - os.path.getmtime(out)) if out and os.path.exists(out) else None,
+            "session_stale_after": run.get("session_stale_seconds", SESSION_STALE_SECONDS),
         }
         view["state"], view["reason"] = lane_state(facts)
         end = (parse_iso(lane.get("ended_at")) or parse_iso(lane.get("updated_at"))) if finished else (last_seen if view["state"] in ("finished", "attention") else now)
@@ -1307,6 +1317,11 @@ def derive(run: dict, now: float | None = None, orca: dict | None = None, sessio
             view["orca"] = live
         if view["stale"]:
             view["stale_flag"] = f"{plain_age(view['silent_for'])}没新进展，主控 AI 会去催问"
+            if facts["session"] == "busy":
+                view["stale_flag"] = (f"{plain_age(view['silent_for'])}没新输出，会话却还在进行中："
+                                      "可能卡在一个不会自己退出的命令上（如预览服务），主控 AI 会去查")
+            elif facts["session"] not in (None, "unknown"):
+                view["stale_flag"] = f"{plain_age(view['silent_for'])}没新输出，会话已空闲却没交结果，主控 AI 会去查"
             view["silent_since"] = last_seen
             flags.append(view["stale_flag"])
         view["flags"] = flags
@@ -1609,6 +1624,8 @@ def build_parser() -> argparse.ArgumentParser:
     init.add_argument("--budget-usd", type=float, help="only a figure the user gave: no new API Lane or round once real API spend reaches it")
     init.add_argument("--quota-stop-percent", type=float, help=f"a subscription account past this share of a quota window takes no new Lane (default {QUOTA_STOP_PERCENT})")
     init.add_argument("--context-handoff-tokens", type=int, help=f"flag a running Lane for handoff once its context passes this (default {CONTEXT_HANDOFF_TOKENS})")
+    init.add_argument("--session-stale-seconds", type=int,
+                      help=f"flag a Lane silent while sideby still reports its session (busy, idle) once its output stream is quiet this long (default {SESSION_STALE_SECONDS})")
     config = sub.add_parser("run")
     config.add_argument("action", choices=("set",))
     config.add_argument("--coordinator-session")
@@ -1856,7 +1873,7 @@ def _main(argv: list[str] | None = None) -> int:
             with ledger_lock(run_dir):
                 run = load_run(run_dir)
                 run["coordinator_session"] = args.coordinator_session or detect_coordinator()
-                for key in ("budget_usd", "quota_stop_percent", "context_handoff_tokens"):
+                for key in ("budget_usd", "quota_stop_percent", "context_handoff_tokens", "session_stale_seconds"):
                     if getattr(args, key) is not None:
                         run[key] = getattr(args, key)
                 save_run(run_dir, run, report=True)

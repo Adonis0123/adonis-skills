@@ -66,6 +66,16 @@ class TableRows(BoardTestCase):
         self.assertEqual(state(silent_for=board.STALE_SECONDS - 1), "working")
         self.assertEqual(state(session="idle", silent_for=3600), "working")  # a usable status says what the session does
 
+    def test_row6_a_live_session_with_a_quiet_stream_is_stale_after_the_longer_limit(self):
+        # a Worker blocked on a foreground preview server still reads busy; only its output stream goes quiet
+        for session in ("busy", "idle"):
+            with self.subTest(session):
+                self.assertEqual(state(session=session, silent_for=3600, stream_silent_for=board.SESSION_STALE_SECONDS), "stale")
+                self.assertEqual(state(session=session, silent_for=3600, stream_silent_for=board.SESSION_STALE_SECONDS - 1), "working")
+        self.assertEqual(state(session="busy", silent_for=3600, stream_silent_for=None), "working")  # no stream: ledger time is no signal
+        self.assertEqual(state(session="busy", stream_silent_for=600, session_stale_after=600), "stale")
+        self.assertEqual(state(session="busy", stream_silent_for=599, session_stale_after=600), "working")
+
     def test_row7_working(self):
         self.assertEqual(state(), "working")
         self.assertEqual(state(silent_for=None), "working")
@@ -86,6 +96,14 @@ class Precedence(BoardTestCase):
             with self.subTest(old):
                 self.assertEqual(state(session="busy", **old), "working")
         self.assertEqual(state(session="busy", open_asks=["A1"]), "needs-you")  # an open Ask still waits on the user
+
+    def test_a_quiet_busy_session_keeps_the_rows_above_it(self):
+        quiet = dict(session="busy", silent_for=99_999, stream_silent_for=99_999)
+        self.assertEqual(state(open_asks=["A1"], **quiet), "needs-you")
+        self.assertEqual(state(state="needs-you", **quiet), "needs-you")
+        self.assertEqual(state(state="queued", **quiet), "queued")
+        self.assertEqual(state(waiting_on=["部署 test"], **quiet), "queued")
+        self.assertEqual(state(state="done", **quiet), "done")
 
     def test_every_combination_lands_on_exactly_one_known_state(self):
         for ledger in board.LANE_STATES:

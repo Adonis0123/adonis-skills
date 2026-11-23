@@ -4,11 +4,11 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/dotagents@06ea7b0a3701e8a59ab6da36d9dca769888647c7",
+      "source": "Adonis0123/dotagents@bdbde2620b8e31b0df8c9b3962c1227ded8f0a45",
       "dirty": false
     },
     {
-      "source": "Adonis0123/dothermes@c12bbaa0ce0c19c8dbaa9f8af847bb9bdb24a70b",
+      "source": "Adonis0123/dothermes@9d3ec970333abda6b1cd6d5fe78cdf5fccbef1dd",
       "dirty": false
     }
   ],
@@ -21,19 +21,19 @@
   "files": [
     {
       "path": "skills/agent-dispatch/GLOSSARY.md",
-      "sha256": "ce7744ff712279f7172c7abecd9bd3ae57afc248a2a2ed2644ee6f86ab21656b"
+      "sha256": "fdf58736af2e0db8d0fc0c761f13feeca15c4dcad72d3448bf6241aea3172b82"
     },
     {
       "path": "skills/agent-dispatch/SKILL.md",
-      "sha256": "b631704f372436b01e6cb58ce6710c190c6c7a4eea16172ddba449fea6182858"
+      "sha256": "6a40b3e2dca776b0962cdd8ec50461357a8a24fdd2f61797eff682af9a589093"
     },
     {
       "path": "skills/agent-dispatch/evals/README.md",
-      "sha256": "bda279e03704387dfacf110a8b7959f056f9a5db5021eaa889eaaaca41a73baa"
+      "sha256": "cab7b7a75bf6d7160f92a6dd271a11320a793cdeaa96c7d0e7d25277856d621d"
     },
     {
       "path": "skills/agent-dispatch/evals/README.zh-CN.md",
-      "sha256": "76e843069e25af2b15b69cbe80c03098c45ad765f82936b62ec0542432c66cd0"
+      "sha256": "a057d38be707276047de7bc426f648811875de13e3e6c89f396f1bfc8a4db7e3"
     },
     {
       "path": "skills/agent-dispatch/evals/bench/compare.py",
@@ -57,7 +57,7 @@
     },
     {
       "path": "skills/agent-dispatch/evals/evals.json",
-      "sha256": "734c386d511a78b0079ae8f98f68c763c3c7e2eba9d9b6ae30b41f466cb0c7ef"
+      "sha256": "1a3804008c49f872a312871cf39e3e80747b2183e1876a0693029e98de043df2"
     },
     {
       "path": "skills/agent-dispatch/evals/results.md",
@@ -125,7 +125,7 @@
     },
     {
       "path": "skills/agent-dispatch/references/accounts.md",
-      "sha256": "508b8020740b96a29efaf30a2cea587ccad4eb3c38831b596104e28d0a6d7034"
+      "sha256": "2b8cd368ebdcfd541f7468fe74ca73bd59bf1e2bbcd72a66c01c4dad98237329"
     },
     {
       "path": "skills/agent-dispatch/references/context-budget.md",
@@ -137,7 +137,7 @@
     },
     {
       "path": "skills/agent-dispatch/references/launch.md",
-      "sha256": "84994ab5cb721a98da66bf8a102867a04db3c399ce71c64fcae1cc80006a3d09"
+      "sha256": "52448294ad35e8633ec8cc4b465f0e86f0fd0a55b2feee0e145757b1ddd358f3"
     },
     {
       "path": "skills/agent-dispatch/references/measure.md",
@@ -149,11 +149,11 @@
     },
     {
       "path": "skills/agent-dispatch/references/run-board.md",
-      "sha256": "f3afd0bb0cdaf84bd0d870082821a8ed6ac6505d660bc6511b7159b9d174884b"
+      "sha256": "254638bf061cc3271f6adf54f43c80e31a951ca08c9430df59b26be736a78828"
     },
     {
       "path": "skills/agent-dispatch/references/task-spec.md",
-      "sha256": "7f3f50d5efe33e7d869e317e08cdb89b72efc391862a34d2da2d99ddbaa6d384"
+      "sha256": "1deab63523c92e5f46176f681545b91634caf9744e65bdf13feed0c35da436dc"
     },
     {
       "path": "skills/agent-dispatch/scripts/board.css",
@@ -173,7 +173,7 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/dispatch_board.py",
-      "sha256": "1aa024de88d4a75df149d3564f212f5074179a696273d0967787bd11b8bd691e"
+      "sha256": "c87de56172d60e07f4e253151c71826f97277a68348c57a0a631a4eeafa393e6"
     },
     {
       "path": "skills/agent-dispatch/scripts/isolated_case.py",
@@ -193,7 +193,7 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/test_billing_and_quota.py",
-      "sha256": "2bda8f348e64d9d03db03cb1b6ceff36c472cdb7c7c66dc7819224db85f16edc"
+      "sha256": "38d8097401ac1ffb4c8c566350444ac2140667ff2a6b32716236a1fdd81d6ef9"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_board_interaction.js",
@@ -221,7 +221,7 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/test_lane_states.py",
-      "sha256": "c2d98a0ca64af71849bd27ac819c546b7513ab07b6d179734f58c01b3ed11c26"
+      "sha256": "119c477ee448dd2f8c13837c86e92e4349c50c87439a3c45ecc7306636485a9f"
     },
     {
       "path": "skills/agent-dispatch/scripts/test_probe_agents.py",
@@ -233,7 +233,7 @@
     },
     {
       "path": "skills/agent-dispatch/scripts/test_rounds_and_watch.py",
-      "sha256": "d767f6061dbffef18126545c7d27ae24cc8502aebeba96ddbe9ad4303eab9aec"
+      "sha256": "9f704aa751a6378308327b7044b070ef41fdc81534d34cb15fb190b127e903ef"
     },
     {
       "path": "skills/agent-dispatch/scripts/vendor/README.md",
@@ -269,7 +269,7 @@
     },
     {
       "path": "skills/agent-skill-evaluation/references/mattpocock-skills-screening.md",
-      "sha256": "00fafa4f3b72b958d155864933ea0a8f3b9e909d95bbff061d438b7eb0ca2f03"
+      "sha256": "d58bdb4699f6565b18f8537d001ac9eeac9a737e81bb61963881a6347ff0f691"
     },
     {
       "path": "skills/agent-skill-evaluation/references/mattpocock-tdd-trial-20260807.md",
