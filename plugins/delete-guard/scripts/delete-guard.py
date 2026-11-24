@@ -43,7 +43,7 @@ import sys
 
 MAX_COMMAND_CHARS = 512_000
 MAX_DEPTH = 8
-SHELL_TOOLS = {"Bash", "run_terminal_command", "Shell", "shell", "local_shell", "exec_command"}
+SHELL_TOOLS = {"Bash", "run_terminal_command", "run_command", "Shell", "shell", "local_shell", "exec_command"}
 SHELLS = {"sh", "bash", "zsh", "dash", "ksh", "fish"}
 KEYWORDS = {"if", "then", "else", "elif", "do", "while", "until", "!", "{", "}", "time", "fi", "done"}
 TMPDIR_VAR = re.compile(r"^\$\{?TMPDIR(?::?-[^}]*)?\}?$")
@@ -786,13 +786,19 @@ def main() -> int:
         payload = json.load(sys.stdin)
         if not isinstance(payload, dict):
             return 0
-        tool = payload.get("tool_name") or payload.get("toolName")
+        tool_call = payload.get("toolCall")
+        is_agy = isinstance(tool_call, dict)
+        if is_agy:
+            tool = tool_call.get("name")
+            tool_input = tool_call.get("args") or {}
+        else:
+            tool = payload.get("tool_name") or payload.get("toolName")
+            tool_input = payload.get("tool_input") or payload.get("toolInput") or {}
         if tool not in SHELL_TOOLS:
             return 0
-        tool_input = payload.get("tool_input") or payload.get("toolInput") or {}
         if not isinstance(tool_input, dict):
             return 0
-        command = tool_input.get("command") or tool_input.get("cmd")
+        command = tool_input.get("CommandLine") or tool_input.get("command") or tool_input.get("cmd")
         if isinstance(command, list) and all(isinstance(c, str) for c in command):
             command = " ".join("'" + c.replace("'", "'\\''") + "'" for c in command)
         if not isinstance(command, str) or len(command) > MAX_COMMAND_CHARS:
@@ -805,11 +811,17 @@ def main() -> int:
         reason = deny_reason(command, cwd)
         if not reason:
             return 0
-        sys.stdout.write(json.dumps({"hookSpecificOutput": {
-            "hookEventName": "PreToolUse",
-            "permissionDecision": "deny",
-            "permissionDecisionReason": REASON_TAG + reason,
-        }}, ensure_ascii=False) + "\n")
+        if is_agy:
+            sys.stdout.write(json.dumps({
+                "decision": "deny",
+                "reason": REASON_TAG + reason,
+            }, ensure_ascii=False) + "\n")
+        else:
+            sys.stdout.write(json.dumps({"hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": REASON_TAG + reason,
+            }}, ensure_ascii=False) + "\n")
         sys.stdout.flush()
     except Exception:
         return 0

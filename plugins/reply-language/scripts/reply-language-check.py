@@ -224,6 +224,32 @@ def post_tool_use(data: dict, resolve_language: LanguageResolver) -> None:
                                                  "additionalContext": NOTE_REMINDER.format(name=lang.name)}}))
 
 
+def _last_agy_reply(transcript_path: str) -> Optional[str]:
+    """Read the last PLANNER_RESPONSE content from an Antigravity JSONL transcript."""
+    try:
+        with open(transcript_path, "rb") as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(max(0, size - 2 * 1024 * 1024))
+            chunk = f.read().decode("utf-8", errors="replace")
+    except OSError:
+        return None
+    last_text = None
+    for line in chunk.splitlines():
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            obj = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(obj, dict) and obj.get("type") == "PLANNER_RESPONSE":
+            content = obj.get("content")
+            if isinstance(content, str) and content.strip():
+                last_text = content
+    return last_text
+
+
 def stop(data: dict, resolve_language: LanguageResolver) -> None:
     """Block a final reply mostly not in the target language, at most once per turn.
 
@@ -232,32 +258,51 @@ def stop(data: dict, resolve_language: LanguageResolver) -> None:
     through. That needs a session key (transcript_path or session_id) to remember the block; without
     one, any retry is let through.
     """
-    active = data.get("stop_hook_active", data.get("stopHookActive")) in (True, "true")
-    key = data.get("transcript_path") or data.get("transcriptPath") or data.get("session_id") or data.get("sessionId")
+    is_agy = bool("terminationReason" in data or "conversationId" in data)
+    term_reason = data.get("terminationReason")
+    if is_agy and isinstance(term_reason, str) and term_reason and term_reason != "NO_TOOL_CALL":
+        print(json.dumps({"decision": ""}))
+        return
+    active = data.get("stop_hook_active", data.get("stopHookActive", data.get("continuationActive"))) in (True, "true")
+    key = data.get("transcript_path") or data.get("transcriptPath") or data.get("session_id") or data.get("sessionId") or data.get("conversationId")
     directory = state_dir()
     marker = (os.path.join(directory, "stop-" + hashlib.sha256(key.encode()).hexdigest()[:32])
               if isinstance(key, str) and key else None)
     message = data.get("last_assistant_message", data.get("lastAssistantMessage"))
+    if not isinstance(message, str) and is_agy:
+        tp = data.get("transcriptPath")
+        if isinstance(tp, str) and tp:
+            message = _last_agy_reply(tp)
     pending = marker is not None and os.path.exists(marker)
     # No marker to clear and a reply that passes for every known language: nothing to do whatever
     # the target language is.
     if not pending and not (isinstance(message, str)
                             and any(off_target(message, known) for known in LANGUAGES.values())):
+        if is_agy:
+            print(json.dumps({"decision": ""}))
         return
     lang = resolve_language()
     if lang is None:
+        if is_agy:
+            print(json.dumps({"decision": ""}))
         return
     if active and (marker is None or pending):
         if marker:
             os.remove(marker)
+        if is_agy:
+            print(json.dumps({"decision": ""}))
         return
     if isinstance(message, str) and off_target(message, lang):
         if marker:
             os.makedirs(directory, exist_ok=True)
             open(marker, "w").close()
-        print(json.dumps({"decision": "block", "reason": REASON.format(name=lang.name)}))
-    elif pending:
-        os.remove(marker)
+        decision = "continue" if is_agy else "block"
+        print(json.dumps({"decision": decision, "reason": REASON.format(name=lang.name)}, ensure_ascii=False))
+    else:
+        if pending:
+            os.remove(marker)
+        if is_agy:
+            print(json.dumps({"decision": ""}))
 
 
 def main() -> int:
