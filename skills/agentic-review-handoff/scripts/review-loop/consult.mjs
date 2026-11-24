@@ -15,6 +15,7 @@ import {
 import { resolveFromPrefs } from "./prefs.mjs";
 import {
   assessReviewRound,
+  rereviewEffortFor,
   declaredRound,
   detectReviewIntent,
   GRANT_ENV,
@@ -144,6 +145,11 @@ export async function cmdConsult(opts) {
           framing,
         ].join("\n");
 
+  // A re-review only checks earlier blockers and the fix diff, so it runs one effort level lower
+  // (measured once: H4 round 5 took 216 s at high vs 389 s at xhigh, same verdict and findings).
+  // REVIEW_REREVIEW_EFFORT=default keeps the host's configured effort; another level picks that one.
+  const rereviewEffort = rereviewEffortFor(reviewRound, env);
+
   const makeAdapter = (product, command) =>
     (opts.adapterFactory || createAdapter)(product, {
       repoRoot,
@@ -151,6 +157,7 @@ export async function cmdConsult(opts) {
       sessionStorePath: null,
       command,
       ...(opts.web ? { web: true } : {}),
+      ...(rereviewEffort ? { reasoningEffort: rereviewEffort } : {}),
       ...(opts.adapterOpts || {}),
     });
 

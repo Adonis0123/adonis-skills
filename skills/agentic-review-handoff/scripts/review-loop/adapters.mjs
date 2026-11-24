@@ -82,6 +82,12 @@ export function createAdapter(product, opts) {
   }
   if (!opts?.repoRoot) throw new Error("createAdapter: repoRoot required");
   const web = opts.web === true;
+  const reasoningEffort = opts.reasoningEffort ?? null;
+  if (reasoningEffort != null && !REASONING_EFFORTS.includes(reasoningEffort)) {
+    throw new Error(
+      `reasoningEffort must be one of ${REASONING_EFFORTS.join("|")}, got ${JSON.stringify(reasoningEffort)}`,
+    );
+  }
   if (web && p === "pi") {
     throw new Error(
       "pi has no web search tool; drop web or pick codex|grok|claude",
@@ -159,6 +165,7 @@ export function createAdapter(product, opts) {
         command,
         env: opts.env,
         web,
+        reasoningEffort,
         timeoutMs,
         progressIntervalMs,
         onProgress,
@@ -212,6 +219,7 @@ export function createAdapter(product, opts) {
         command,
         env: opts.env,
         web,
+        reasoningEffort,
         timeoutMs,
         progressIntervalMs,
         onProgress,
@@ -343,6 +351,7 @@ export function resolveSpawn({ bin, command, argv, shell }) {
 }
 
 export const PRODUCTS = ["codex", "grok", "claude", "pi"];
+export const REASONING_EFFORTS = ["minimal", "low", "medium", "high", "xhigh"];
 
 function defaultBin(product) {
   if (product === "codex") return "codex";
@@ -354,7 +363,8 @@ function defaultBin(product) {
 /**
  * Build argv for a product. Read-only controls are hardcoded (never caller-controlled).
  * `web` adds search/fetch only (Proxy research); write and shell stay denied.
- * @param {{ product: Product, mode: 'new'|'resume', prompt: string, sessionId: string|null, outFile?: string, web?: boolean }} args
+ * `reasoningEffort` overrides the reasoning effort for this call only (codex; other products ignore it).
+ * @param {{ product: Product, mode: 'new'|'resume', prompt: string, sessionId: string|null, outFile?: string, web?: boolean, reasoningEffort?: string|null }} args
  */
 export function buildArgv({
   product,
@@ -363,10 +373,14 @@ export function buildArgv({
   sessionId,
   outFile,
   web = false,
+  reasoningEffort = null,
 }) {
   if (product === "codex") {
     // codex -a never [--search] exec -s read-only --skip-git-repo-check -o <file> [resume <uuid>] "<prompt>"
     const argv = [
+      ...(reasoningEffort
+        ? ["-c", `model_reasoning_effort=${reasoningEffort}`]
+        : []),
       "-a",
       "never",
       ...(web ? ["--search"] : []),
@@ -523,6 +537,7 @@ export function invokeProduct(cfg) {
       sessionId: requestedSessionId,
       outFile: cfg.product === "codex" ? outFile : undefined,
       web: cfg.web === true,
+      reasoningEffort: cfg.reasoningEffort ?? null,
     });
 
     let stdout = "";

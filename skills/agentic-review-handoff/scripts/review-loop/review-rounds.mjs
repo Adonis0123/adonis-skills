@@ -273,3 +273,21 @@ export function reviewFraming(round, limit) {
   lines.push("", "--- 原问题 ---");
   return lines.join("\n");
 }
+
+export const REREVIEW_EFFORT_ENV = "REVIEW_REREVIEW_EFFORT";
+export const DEFAULT_REREVIEW_EFFORT = "high";
+const EFFORTS = ["minimal", "low", "medium", "high", "xhigh"];
+
+/**
+ * Reasoning effort for a code re-review (round 2 and later), or null to keep the configured one.
+ * @param {{ round?: number } | null} reviewRound
+ * @param {NodeJS.ProcessEnv} env
+ */
+export function rereviewEffortFor(reviewRound, env = {}) {
+  if (!reviewRound || !(reviewRound.round >= 2)) return null;
+  const raw = String(env[REREVIEW_EFFORT_ENV] ?? "")
+    .trim()
+    .toLowerCase();
+  if (raw === "default") return null;
+  return EFFORTS.includes(raw) ? raw : DEFAULT_REREVIEW_EFFORT;
+}

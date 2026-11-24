@@ -381,6 +381,52 @@ describe("consult as code review: round budget and review framing", () => {
     assert.equal(fs.readFileSync(s.stateFile, "utf8"), before);
   });
 
+  it("lowers codex effort to high from round 2 unless REVIEW_REREVIEW_EFFORT overrides it", async () => {
+    const efforts = async (env) => {
+      const s = setup();
+      Object.assign(s.env, env);
+      const q = reviewQuestion(s.dir);
+      const seen = [];
+      for (let n = 0; n < 2; n += 1) {
+        const peer = fakePeer();
+        const factory = peer.factory;
+        peer.factory = (product, cfg) => {
+          seen.push(cfg.reasoningEffort ?? null);
+          return factory(product, cfg);
+        };
+        await consultReview(s, { question: q, peer });
+      }
+      return seen;
+    };
+    assert.deepEqual(await efforts({}), [null, "high"]);
+    assert.deepEqual(await efforts({ REVIEW_REREVIEW_EFFORT: "medium" }), [
+      null,
+      "medium",
+    ]);
+    assert.deepEqual(await efforts({ REVIEW_REREVIEW_EFFORT: "default" }), [
+      null,
+      null,
+    ]);
+  });
+
+  it("keeps the configured effort for a non-review consult", async () => {
+    const s = setup();
+    const seen = [];
+    await cmdConsult({
+      repoRoot: s.dir,
+      peer: "codex",
+      env: s.env,
+      now: T0,
+      stderr: () => {},
+      question: "第 2 轮：缓存该用 A 还是 B？",
+      adapterFactory: (product, cfg) => {
+        seen.push(cfg.reasoningEffort ?? null);
+        return fakePeer().factory(product, cfg);
+      },
+    });
+    assert.deepEqual(seen, [null]);
+  });
+
   it("separates lanes on one branch by the question-file prefix", async () => {
     const s = setup();
     for (const lane of ["H4", "H4", "F23"]) {

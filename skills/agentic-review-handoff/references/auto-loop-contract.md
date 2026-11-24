@@ -168,6 +168,7 @@ Opt-in review-only terminal path when lifecycle is `awaiting_user_decision` afte
 Code review through `consult` (question names a diff range, `git diff`, 新增提交 or a worktree path, plus 审查/复审/评审/review/PASS/FAIL): prefer `run`. When used anyway:
 
 - Rounds are counted per target: `--repo` realpath + first Git work tree in the question + its branch + question-file prefix before `-review`. State: `${XDG_STATE_HOME:-~/.local/state}/agentic-review-handoff/consult-rounds.json`; a target idle 8 hours restarts at 1. Round = max(count + 1, declared round from 第 N 轮 / `round N` / file name `-rN-`). A round is saved only after the peer answers.
+- From round 2 a Codex peer gets `-c model_reasoning_effort=high` for that call: a re-review only checks earlier blockers and the fix diff (one measured case: 216 s at high vs 389 s at xhigh, same verdict and findings). `REVIEW_REREVIEW_EFFORT=<minimal|low|medium|high|xhigh>` picks another level; `default` keeps the configured effort.
 - Round > 3 is refused before the peer runs (`status: review_round_limit`, exit 2, next steps on stderr). Only the user grants more: `REVIEW_EXTRA_ROUNDS_GRANTED_BY_USER=<n>` raises the limit to 3 + n; a round past 3 that runs on it is echoed to stderr, the JSON result, the record and `consult-rounds.log`.
 - Counting is best effort, not enforcement: any state or Git error lets the consult through with one warning line.
 - Without `--raw`, the decision framing is replaced by a review rubric (rule 3–5 above, verdicts `BLOCKED` / `PASS_WITH_CONCERNS` / `PASS`); `--raw` only counts.

@@ -65,6 +65,36 @@ function makeRepo() {
 }
 
 describe("buildArgv sandbox hardcoding", () => {
+  it("puts a codex reasoning-effort override before the subcommand", () => {
+    const argv = buildArgv({
+      product: "codex",
+      mode: "new",
+      prompt: "p",
+      sessionId: null,
+      reasoningEffort: "high",
+    });
+    assert.deepEqual(argv.slice(0, 2), ["-c", "model_reasoning_effort=high"]);
+    assert.ok(argv.indexOf("exec") > 1);
+    const plain = buildArgv({
+      product: "codex",
+      mode: "new",
+      prompt: "p",
+      sessionId: null,
+    });
+    assert.ok(!plain.includes("-c"));
+  });
+
+  it("rejects an unknown reasoning effort", () => {
+    assert.throws(
+      () =>
+        createAdapter("codex", {
+          repoRoot: os.tmpdir(),
+          reasoningEffort: "max",
+        }),
+      /reasoningEffort must be one of/,
+    );
+  });
+
   it("codex always includes -s read-only", () => {
     const argv = buildArgv({
       product: "codex",
