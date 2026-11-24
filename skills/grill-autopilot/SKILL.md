@@ -3,7 +3,7 @@ name: grill-autopilot
 description: "Run a grill-with-docs design interview where one AI asks and another AI answers on the user's behalf, researching reuse on GitHub and the web, so the user is only asked about side effects, facts only they know, or hard-to-reverse choices with weak evidence. Any pairing of Claude Code, Codex, Grok or pi accounts. Ends with a decision log, glossary updates and proposed decision records; optionally hands off to planning, a goal or an implementation loop. Use when the user wants a plan or design grilled without answering every question, says 'grill it for me', 'auto grill', 'answer the grill yourself', or asks two agents to interview and answer each other. Chinese triggers: 自动 grill、替我回答、两个 agent 一问一答、别问我、自己拷问方案。Not for grilling the user directly (use grill-with-docs) or reviewing code (use agentic-review-handoff)."
 metadata:
   author: adonis
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Grill Autopilot
@@ -23,10 +23,11 @@ Vocabulary is in `GLOSSARY.md` next to this file: **Interviewer**, **Proxy**, **
 ## Contract
 
 - **Delegation.** Invoking this skill delegates every grill answer to the Proxy. This overrides grilling's "decisions are the user's" and its closing confirmation. Never ask the user mid-session; the only user contact is one batch of Escalations at the end.
-- **Escalation, and nothing else, reaches the user**: side effects (safety, external send, payment, deletion); facts only the user knows that block later branches; hard-to-reverse choices whose evidence is weak; an answer that changed twice. Changing product behaviour is not an Escalation here: every decision is `proposed` and nothing is implemented.
+- **Escalation, and nothing else, reaches the user**: side effects (safety, external send, payment, deletion); facts only the user knows that block later branches; hard-to-reverse choices whose evidence is weak; an answer that changed twice; a hard-to-reverse choice the Proxy and the red-team still disagree on. Changing product behaviour is not an Escalation here: every decision is `proposed` and nothing is implemented.
 - **Writes.** The Interviewer and Proxy are read-only. Only this host session writes, and only: `GLOSSARY.md`, decision records (status `proposed`), `docs/grill/YYYY-MM-DD-<topic>.md`, and run state under `.review-handoff/runtime/grill/<topic>/`. No commit, push, install or message. The Watch Page server is local and read-only (127.0.0.1, it only reads the run directory).
+- **The ledger holds every decision.** A decision enters or changes only through a Proxy answer that passed the Gate, or the user's answer to an Escalation. Never edit a decision yourself, in the ledger or in the log; the decision log only restates the ledger.
 - **Watching is free.** The Watch Page derives everything from the run files below. Never read, fetch, screenshot or poll it; that would spend the tokens it exists to save.
-- **Speed budget.** One Proxy call per round; 10-minute round timeout; at most 8 rounds; target under 15 minutes for the whole session.
+- **Speed budget.** One Proxy call per round; 10-minute round timeout; at most 8 rounds, the red-team re-answer included; target under 15 minutes for the whole session.
 
 ## 0. Preflight (one tool round)
 
@@ -44,7 +45,7 @@ Vocabulary is in `GLOSSARY.md` next to this file: **Interviewer**, **Proxy**, **
   - For other Interviewer products, `--host=<Interviewer product> --skip-host` lets the saved Reviewer preference pick it (`review-loop prefs`).
   - pi has no web search; it can be the Interviewer but not the Proxy.
   - agy (Antigravity) is optional and only used when the user names it: never pick it automatically, by default or as a recommendation. It is not a `review-loop consult` peer, so call it as the Proxy the way agent-dispatch `references/accounts.md` § Antigravity (agy) says, save its `response` as the round's answers, and resume the same conversation every round.
-- **Red-team** (step 4): a third product used by neither role, or skipped when none is installed.
+- **Red-team** (step 3): a third product used by neither role, or skipped when none is installed.
 
 State the pairing in one line when starting, then start the Watch Page in the same tool round and keep going:
 
@@ -62,7 +63,7 @@ It opens the page in the browser and prints one line with the URL; pass the URL 
 | `proxy-<n>.log`                                       | the consult's stderr (progress heartbeats), via `2>"$RUN/proxy-<n>.log"`                      |
 | `answers-<n>.md`, `answers-<n>-retry.md`              | the Proxy's reply text, first try and re-ask                                                  |
 | `reask-<n>.md`                                        | the re-ask prompt                                                                             |
-| `gate-<n>.json`, `gate-<n>-retry.json`, `ledger.json` | `grill-ledger.mjs check --out=…`                                                              |
+| `gate-<n>.json`, `gate-<n>-retry.json`, `ledger.json` | `grill-ledger.mjs check --out=…` (`redteam` also updates `ledger.json`)                       |
 | `redteam-question.md`, `redteam.md`                   | the red-team prompt and reply                                                                 |
 | `events.jsonl`                                        | `node "$WATCH" event` (prints nothing)                                                        |
 
@@ -94,11 +95,19 @@ On either stop, chain `node "$WATCH" event --run="$RUN" --kind=failed --text="<o
 
 ## 3. Red-team (only when needed)
 
-If `totals.hardToReverseDecided` is non-empty, run one advisory `consult` (not `--raw`, with `--web`) on the red-team product with `--question-file "$RUN/redteam-question.md"`. Give it only those decisions with their reason and evidence, and ask for one `Q<n>: hold` or `Q<n>: overturn: <why>` line per id. Save its `text` to `$RUN/redteam.md`. Each `overturn` becomes an Escalation. No hard-to-reverse decisions → skip; say so in the log.
+If `totals.hardToReverseDecided` is non-empty, run one advisory `consult` (not `--raw`, with `--web`) on the red-team product with `--question-file "$RUN/redteam-question.md"`. Give it only those decisions with their reason and evidence, and ask for one `Q<n>: hold` or `Q<n>: overturn: <why>` line per id. Save its `text` to `$RUN/redteam.md`, then record the verdicts: `node "$LEDGER" redteam --verdicts="$RUN/redteam.md" --ledger="$RUN/ledger.json"`. No hard-to-reverse decisions → skip; say so in the log.
+
+An `overturn` is not a reason to ask the user: the Proxy answers it once more and the ledger rules. When the result's `reopen` is non-empty:
+
+1. Write `$RUN/round-<n>.md` (`n` = the result's `nextRound`) with only the `reopen` questions in the round format, keeping each id and title. The body is the red-team's reason and the instruction to answer again in the answer format: change the decision, or keep it and say why the red-team is wrong.
+2. Resume the Proxy once with that file and run the Gate on the reply as a normal round, re-ask included.
+3. The Gate settles it. A changed decision is classified by the usual rules and marked `amended` in the ledger. An unchanged one becomes an Escalation: two models disagree on a hard-to-reverse choice.
+
+With no round left under the cap, `redteam` turns the overturned ids into Escalations itself and `reopen` is empty. There is no second red-team pass.
 
 ## 4. Escalations and close
 
-1. Write the decision log from `references/decision-log-template.md`, then `node "$WATCH" event --run="$RUN" --kind=done --text="<decision log path>"`.
+1. Write the decision log from `references/decision-log-template.md`, every decision and red-team line taken from `ledger.json`, then `node "$WATCH" event --run="$RUN" --kind=done --text="<decision log path>"`.
 2. No Escalations → done, no question to the user.
 3. Escalations → one batch through the host's question tool, at most 4 per call, ranked costly first, then low confidence. Each shows the Proxy's recommendation as the first option. No question tool → a `需要你拍板` heading followed by the numbered questions.
 4. Answers that unblock the frontier → up to 2 more rounds, then update the log. These answers are the user's, so record them as `Decided`.

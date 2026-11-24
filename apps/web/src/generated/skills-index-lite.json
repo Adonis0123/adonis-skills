@@ -785,14 +785,14 @@
     "description": "Run a grill-with-docs design interview where one AI asks and another AI answers on the user's behalf, researching reuse on GitHub and the web, so the user is only asked about side effects, facts only they know, or hard-to-reverse choices with weak evidence. Any pairing of Claude Code, Codex, Grok or pi accounts. Ends with a decision log, glossary updates and proposed decision records; optionally hands off to planning, a goal or an implementation loop. Use when the user wants a plan or design grilled without answering every question, says 'grill it for me', 'auto grill', 'answer the grill yourself', or asks two agents to interview and answer each other. Chinese triggers: 自动 grill、替我回答、两个 agent 一问一答、别问我、自己拷问方案。Not for grilling the user directly (use grill-with-docs) or reviewing code (use agentic-review-handoff).",
     "metadata": {
       "author": "adonis",
-      "version": "1.0.0"
+      "version": "1.1.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false,
       "hasScripts": true
     },
-    "updatedAt": "2026-11-23T00:00:00.000Z",
+    "updatedAt": "2026-11-24T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Grill Autopilot",

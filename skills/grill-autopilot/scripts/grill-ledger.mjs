@@ -3,12 +3,22 @@
  * grill-ledger — deterministic gate for grill-autopilot.
  *
  *   node grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2] [--out=<gate.json>]
+ *   node grill-ledger.mjs redteam --verdicts=<redteam.md> --ledger=<ledger.json> [--out=<json>]
  *
- * Parses the Proxy's answer blocks, rejects incomplete ones, classifies each
- * answer as Decided / Assumption / Escalation, merges it into the ledger and
- * reports whether a stop rule fired. Prints one JSON object (also written to
- * --out for the watch page); exit 0 when every block passed, 1 when some block
- * must be re-asked, 2 on usage errors.
+ * `check` parses the Proxy's answer blocks, rejects incomplete ones, classifies
+ * each answer as Decided / Assumption / Escalation, merges it into the ledger
+ * and reports whether a stop rule fired.
+ *
+ * `redteam` stores the red-team's `Q<n>: hold` / `Q<n>: overturn: <why>` lines
+ * on the ledger and lists the overturned ids in `reopen`. It settles nothing:
+ * those questions go back to the Proxy for one more round, and the `check` of
+ * that round classifies the re-answer (changed → the usual rules, marked
+ * `amended`; unchanged → Escalation). Only when no round is left does it
+ * escalate them itself.
+ *
+ * Both print one JSON object (also written to --out); exit 0 when it was
+ * recorded, 1 when a block must be re-asked or the input was refused, 2 on
+ * usage errors.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -17,6 +27,10 @@ import { pathToFileURL } from "node:url";
 export const MAX_ROUNDS = 8;
 export const MAX_REVERSALS = 2;
 export const STALL_ROUNDS = 2;
+export const REDTEAM_DISAGREE =
+  "red-team and Proxy disagree on a hard-to-reverse choice";
+export const REDTEAM_NO_ROUND =
+  "red-team overturned; no round left to resolve it";
 
 const FIELDS = {
   decision: /^decision$/i,
@@ -177,9 +191,117 @@ export function classify(f) {
   };
 }
 
+/** Fenced blocks (format examples, quoted prompts) carry no live lines. */
+export function withoutFences(text) {
+  let fenced = false;
+  return String(text ?? "")
+    .split("\n")
+    .filter((line) => {
+      if (/^\s*(```|~~~)/.test(line)) {
+        fenced = !fenced;
+        return false;
+      }
+      return !fenced;
+    });
+}
+
+/**
+ * Red-team replies: one `hold` or `overturn: <why>` per question id.
+ * @returns {{ id: string, verdict: 'hold'|'overturn', why: string }[]}
+ */
+export function parseVerdicts(text) {
+  const out = [];
+  for (const line of withoutFences(text)) {
+    const m = line.match(/\b(Q\d+)\b.*?\b(hold|overturn)\b\s*[:：-]?\s*(.*)$/i);
+    if (m && !out.some((v) => v.id === m[1].toUpperCase()))
+      out.push({
+        id: m[1].toUpperCase(),
+        verdict: m[2].toLowerCase(),
+        why: m[3].trim(),
+      });
+  }
+  return out;
+}
+
 function loadLedger(file) {
   if (!fs.existsSync(file)) return { rounds: [], questions: {} };
   return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+function totalsOf(ledger) {
+  const all = Object.entries(ledger.questions);
+  const pick = (s) => all.filter(([, q]) => q.status === s).map(([id]) => id);
+  return {
+    Decided: pick("Decided"),
+    Assumption: pick("Assumption"),
+    Escalation: pick("Escalation"),
+    hardToReverseDecided: all
+      .filter(([, q]) => q.status === "Decided" && q.hardToReverse)
+      .map(([id]) => id),
+  };
+}
+
+/**
+ * Stores the red-team verdicts on the ledger. An overturn is not settled here:
+ * `reopen` lists what goes back to the Proxy, and checkRound rules on the
+ * re-answer. Re-running with the same reply changes nothing.
+ * @param {{ verdicts: string, ledger: object }} input
+ */
+export function recordRedteam({ verdicts, ledger }) {
+  const parsed = parseVerdicts(verdicts);
+  if (!parsed.length) {
+    return {
+      ok: false,
+      error:
+        "no `Q<n>: hold` or `Q<n>: overturn: <why>` lines found: ask the red-team for one such line per question id",
+    };
+  }
+  const noRoundLeft = ledger.rounds.length >= MAX_ROUNDS;
+  const unknown = [];
+  const overturned = [];
+  for (const { id, verdict, why } of parsed) {
+    const q = ledger.questions[id];
+    if (!q) {
+      unknown.push(id);
+      continue;
+    }
+    // A settled overturn stays as it is: there is no second red-team pass.
+    if (!q.redteam?.resolved) {
+      q.redteam = { verdict, why };
+      if (verdict === "overturn") {
+        if (noRoundLeft && q.status !== "Escalation") {
+          q.status = "Escalation";
+          q.why = REDTEAM_NO_ROUND;
+        }
+        // Already waiting for the user: nothing for the Proxy to re-answer.
+        if (q.status === "Escalation") q.redteam.resolved = true;
+      }
+    }
+    if (q.redteam.verdict === "overturn") overturned.push(id);
+  }
+  const reopen = overturned
+    .filter((id) => !ledger.questions[id].redteam.resolved)
+    .map((id) => ({ id, why: ledger.questions[id].redteam.why }));
+  return {
+    ok: true,
+    verdicts: parsed,
+    reopen,
+    ...(reopen.length
+      ? {
+          nextRound:
+            Math.max(
+              0,
+              ledger.pending?.round ?? 0,
+              ...ledger.rounds.map((r) => r.round),
+            ) + 1,
+        }
+      : {}),
+    escalated: overturned.filter(
+      (id) => ledger.questions[id].status === "Escalation",
+    ),
+    unknown,
+    totals: totalsOf(ledger),
+  };
 }
 
 /**
@@ -213,7 +335,14 @@ export function checkRound({ answers, ledger, round, attempt = 1 }) {
     }
     const prev = ledger.questions[id];
     const changed = prev && prev.decision !== fields.decision;
-    const reversals = (prev?.reversals ?? 0) + (changed ? 1 : 0);
+    // The one re-answer the red-team asked for: a change is the requested
+    // fix, not a flip-flop, and keeping the decision means the two disagree.
+    const requested =
+      prev?.redteam?.verdict === "overturn" && !prev.redteam.resolved;
+    const reversals = (prev?.reversals ?? 0) + (changed && !requested ? 1 : 0);
+    if (requested && !changed && entry.status !== "Escalation") {
+      entry = { ...entry, status: "Escalation", why: REDTEAM_DISAGREE };
+    }
     if (reversals >= MAX_REVERSALS && entry.status !== "Escalation") {
       entry = {
         ...entry,
@@ -222,13 +351,27 @@ export function checkRound({ answers, ledger, round, attempt = 1 }) {
       };
     }
     if (!prev || changed) newDecisions += 1;
+    const redteam = requested
+      ? { ...prev.redteam, resolved: true }
+      : prev?.redteam;
+    const amended =
+      requested && changed
+        ? { from: prev.decision, by: "redteam", round }
+        : prev?.amended;
     ledger.questions[id] = {
       ...fields,
       ...entry,
       round,
       reversals,
+      ...(redteam ? { redteam } : {}),
+      ...(amended ? { amended } : {}),
     };
-    results.push({ id, ...entry, reversals });
+    results.push({
+      id,
+      ...entry,
+      reversals,
+      ...(requested && changed ? { amended } : {}),
+    });
   }
 
   // A re-ask is the same round: carry its count until every block has passed.
@@ -251,8 +394,6 @@ export function checkRound({ answers, ledger, round, attempt = 1 }) {
   if (tail.length === STALL_ROUNDS && tail.every((r) => r.newDecisions === 0)) {
     stop.push(`${STALL_ROUNDS} rounds without a new decision`);
   }
-  const all = Object.entries(ledger.questions);
-  const pick = (s) => all.filter(([, q]) => q.status === s).map(([id]) => id);
   return {
     ok: blocks.length > 0 && reask.length === 0,
     ...(blocks.length === 0
@@ -267,14 +408,7 @@ export function checkRound({ answers, ledger, round, attempt = 1 }) {
     results,
     reask,
     stop,
-    totals: {
-      Decided: pick("Decided"),
-      Assumption: pick("Assumption"),
-      Escalation: pick("Escalation"),
-      hardToReverseDecided: all
-        .filter(([, q]) => q.status === "Decided" && q.hardToReverse)
-        .map(([id]) => id),
-    },
+    totals: totalsOf(ledger),
   };
 }
 
@@ -288,10 +422,43 @@ function parseArgs(argv) {
   return args;
 }
 
+function writeFile(file, text) {
+  fs.mkdirSync(path.dirname(path.resolve(file)), { recursive: true });
+  fs.writeFileSync(file, text, "utf8");
+}
+
+function redteam(args, usage) {
+  if (typeof args.verdicts !== "string" || typeof args.ledger !== "string") {
+    console.log(JSON.stringify({ ok: false, error: usage }));
+    process.exit(2);
+  }
+  let result;
+  let ledger;
+  try {
+    const verdicts = fs.readFileSync(args.verdicts, "utf8");
+    ledger = JSON.parse(fs.readFileSync(args.ledger, "utf8"));
+    if (!ledger?.questions || !Array.isArray(ledger.rounds))
+      throw new Error(`${args.ledger} is not a grill ledger`);
+    result = recordRedteam({ verdicts, ledger });
+  } catch (err) {
+    result = {
+      ok: false,
+      error: `cannot read the verdicts or the ledger (${err.message}): save the red-team reply to --verdicts, and pass the --ledger that \`check\` wrote`,
+    };
+  }
+  // A refused reply must not touch saved state.
+  if (result.ok) writeFile(args.ledger, `${JSON.stringify(ledger, null, 2)}\n`);
+  const output = JSON.stringify(result, null, 2);
+  if (typeof args.out === "string") writeFile(args.out, `${output}\n`);
+  console.log(output);
+  process.exit(result.ok ? 0 : 1);
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const usage =
-    "usage: grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2] [--out=<gate.json>]";
+    "usage: grill-ledger.mjs check --answers=<proxy-reply.md> --ledger=<ledger.json> --round=<n> [--attempt=2] [--out=<gate.json>] | redteam --verdicts=<redteam.md> --ledger=<ledger.json> [--out=<json>]";
+  if (args._[0] === "redteam") redteam(args, usage);
   if (args._[0] !== "check" || !args.answers || !args.ledger || !args.round) {
     console.log(JSON.stringify({ ok: false, error: usage }));
     process.exit(2);
@@ -315,19 +482,10 @@ function main() {
     attempt: Number(args.attempt ?? 1),
   });
   // An unparseable reply is not a completed round and must not touch saved state.
-  if (result.parsed > 0) {
-    fs.mkdirSync(path.dirname(path.resolve(args.ledger)), { recursive: true });
-    fs.writeFileSync(
-      args.ledger,
-      `${JSON.stringify(ledger, null, 2)}\n`,
-      "utf8",
-    );
-  }
+  if (result.parsed > 0)
+    writeFile(args.ledger, `${JSON.stringify(ledger, null, 2)}\n`);
   const output = JSON.stringify(result, null, 2);
-  if (typeof args.out === "string") {
-    fs.mkdirSync(path.dirname(path.resolve(args.out)), { recursive: true });
-    fs.writeFileSync(args.out, `${output}\n`, "utf8");
-  }
+  if (typeof args.out === "string") writeFile(args.out, `${output}\n`);
   console.log(output);
   process.exit(result.ok ? 0 : 1);
 }

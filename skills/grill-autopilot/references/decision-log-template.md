@@ -1,6 +1,8 @@
 # Decision log template
 
-Write to `docs/grill/YYYY-MM-DD-<topic>.md` in the target repository (lowercase kebab-case topic). Every row comes from the ledger; do not restate an answer the ledger does not hold.
+Write to `docs/grill/YYYY-MM-DD-<topic>.md` in the target repository (lowercase kebab-case topic). Every row comes from the ledger; do not restate an answer the ledger does not hold. A decision the red-team overturned is the Proxy's re-answer (`amended` in the ledger), never wording of your own.
+
+The `Red-team` line appears only for hard-to-reverse decisions and copies the ledger's `redteam` and `amended` fields: `hold`, `overturn: <why> → re-answered; was: <old decision>`, or `overturn: <why> → escalated`.
 
 ```markdown
 # Grill: <topic>
@@ -20,6 +22,7 @@ Write to `docs/grill/YYYY-MM-DD-<topic>.md` in the target repository (lowercase 
 | ID  | Question | Decision | Status  | Reversibility | Evidence      |
 | --- | -------- | -------- | ------- | ------------- | ------------- |
 | Q1  | ...      | ...      | Decided | easy          | <URL or path> |
+| Q2  | ...      | ...      | Decided | costly        | <URL or path> |
 
 Status is one of `Decided`, `Assumption` (a default the user may overturn) or `Escalation` (held for the user).
 
@@ -29,7 +32,12 @@ Status is one of `Decided`, `Assumption` (a default the user may overturn) or `E
 
 - Reason: ...
 - Revisit if: ...
-- Red-team: <hold | overturn: why> (only for hard-to-reverse decisions)
+
+### Q2 — <a hard-to-reverse decision the red-team overturned>
+
+- Reason: ... (from the re-answer)
+- Revisit if: ...
+- Red-team: overturn: <why> → re-answered; was: <old decision>
 
 ## Escalations
 

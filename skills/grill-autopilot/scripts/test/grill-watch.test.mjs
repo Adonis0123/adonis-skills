@@ -259,11 +259,117 @@ describe("deriveState", () => {
         title: "Where to render",
         decision: "OPEN",
         why: "a fact only the user knows",
+        kind: "",
+        reversibility: "",
+        redteam: { verdict: "hold", why: "fine" },
+        amended: null,
       },
     ]);
     assert.deepEqual(
       s.messages.map((m) => m.role),
       ["user", "interviewer", "proxy", "judge", "redteam", "system"],
+    );
+  });
+
+  it("carries the red-team verdict and the amendment of each decision into totals", () => {
+    const amended = { from: "Build time", by: "redteam", round: 2 };
+    const s = deriveState(
+      [
+        meta,
+        entry("round-1.md", ROUND_1, 2000),
+        entry(
+          "ledger.json",
+          {
+            questions: {
+              Q1: {
+                status: "Decided",
+                decision: "Build time, per package",
+                why: "hard to reverse, evidence strong enough",
+                kind: "solution",
+                reversibility: "costly",
+                redteam: {
+                  verdict: "overturn",
+                  why: "two apps",
+                  resolved: true,
+                },
+                amended,
+              },
+              Q2: { status: "Decided", decision: "Shiki", why: "reversible" },
+            },
+          },
+          3000,
+        ),
+      ],
+      4000,
+    );
+    assert.deepEqual(s.totals.Decided, [
+      {
+        id: "Q1",
+        title: "Where to render",
+        decision: "Build time, per package",
+        why: "hard to reverse, evidence strong enough",
+        kind: "solution",
+        reversibility: "costly",
+        redteam: { verdict: "overturn", why: "two apps" },
+        amended,
+      },
+      {
+        id: "Q2",
+        title: "Which highlighter",
+        decision: "Shiki",
+        why: "reversible",
+        kind: "",
+        reversibility: "",
+        redteam: null,
+        amended: null,
+      },
+    ]);
+  });
+
+  it("sends an overturn to one more round before the Interviewer closes", () => {
+    const decided = (redteam) =>
+      entry(
+        "ledger.json",
+        { questions: { Q1: { status: "Decided", decision: "A", redteam } } },
+        4000,
+      );
+    const gate = (n, at) =>
+      entry(`gate-${n}.json`, { results: [], reask: [], stop: [] }, at);
+    const base = [
+      meta,
+      entry("round-1.md", ROUND_1, 2000),
+      entry("answers-1.md", ANSWERS_1, 3000),
+      gate(1, 4000),
+      entry("redteam-question.md", "Q1", 5000),
+      entry("redteam.md", "Q1: overturn: two apps", 6000),
+    ];
+    const open = { verdict: "overturn", why: "two apps" };
+    assert.deepEqual(deriveState([...base, decided(open)], 6500).activity, {
+      seat: "interviewer",
+      task: "next",
+      round: 2,
+      since: 6000,
+    });
+
+    // The red-team round is a normal round: Proxy, gate, then closing.
+    const round2 = [
+      ...base,
+      entry("round-2.md", "❓ **Q1** - **Where**: again", 7000),
+    ];
+    const asking = deriveState([...round2, decided(open)], 7500).activity;
+    assert.equal(asking.seat, "proxy");
+    assert.equal(asking.round, 2);
+    const answered = [...round2, entry("answers-2.md", ANSWERS_1, 8000)];
+    assert.equal(
+      deriveState([...answered, decided(open)], 8500).activity.seat,
+      "judge",
+    );
+    assert.deepEqual(
+      deriveState(
+        [...answered, gate(2, 9000), decided({ ...open, resolved: true })],
+        9500,
+      ).activity,
+      { seat: "interviewer", task: "close", since: 9000 },
     );
   });
 

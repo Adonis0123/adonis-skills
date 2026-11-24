@@ -161,6 +161,7 @@ details p{margin:6px 0 0}
 .st[data-s="Invalid"]{background:transparent;color:var(--ink-2);box-shadow:inset 0 0 0 1px var(--line-strong)}
 .st[data-s="hold"]{background:var(--ok-soft);color:var(--ok)}
 .st[data-s="overturn"]{background:var(--bad-soft);color:var(--bad)}
+.st[data-s="amended"]{background:transparent;color:var(--accent-ink);box-shadow:inset 0 0 0 1px var(--accent-line)}
 .note{margin-top:8px;font-size:13px;color:var(--accent-ink)}
 .sys{align-self:center;display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink-3);text-align:center;max-width:90%}
 .sys[data-k="failed"]{color:var(--bad)}
@@ -181,19 +182,33 @@ details p{margin:6px 0 0}
 
 /* closing */
 .close{align-self:stretch;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:22px 24px;box-shadow:var(--shadow)}
-.close h2{margin:0 0 4px;font:750 22px/1.2 var(--font-display);letter-spacing:-.02em}
-.close .lead{margin:0;color:var(--ink-2);font-size:14.5px}
-.counts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}
-.count{padding:12px 14px;border-radius:var(--r-md);background:var(--sunk)}
-.count b{display:block;font:750 26px/1.1 var(--font-display);font-variant-numeric:tabular-nums}
-.count span{font-size:13px;color:var(--ink-2)}
-.count[data-s="Escalation"]{background:var(--accent-soft)}
-.count[data-s="Escalation"] b{color:var(--accent-ink)}
-.close h3{margin:16px 0 6px;font:650 15px/1.4 var(--font-body)}
+.close h2{margin:0 0 6px;font:750 22px/1.2 var(--font-display);letter-spacing:-.02em}
+.close .outcome{margin:0 0 2px;font:500 16px/1.6 var(--font-body)}
+.close .lead{margin:0;color:var(--ink-2);font-size:14px}
+.close h3{margin:18px 0 6px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;font:650 15px/1.4 var(--font-body)}
+.close h3 .n{font:500 12.5px/1 var(--font-mono);color:var(--ink-3)}
+.close h3 .hint{font-weight:400;font-size:13px;color:var(--ink-3)}
 .esc{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
-.esc li{display:grid;grid-template-columns:44px 1fr;gap:10px;font-size:14px;line-height:1.55}
+.esc li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
 .esc .why{color:var(--ink-3);font-size:13px}
-.esc .qid,.row .qid{align-self:start;justify-self:start}
+.esc .qid,.row .qid,.res .qid{align-self:start;justify-self:start}
+.res{margin:0;padding:0;list-style:none}
+.res li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;padding:9px 0;font-size:14px;line-height:1.55;overflow-wrap:anywhere}
+.res li+li{border-top:1px dashed var(--line)}
+.res .rt{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;margin-bottom:2px}
+.res .rt b{font-weight:650}
+/* Two lines per decision keep the list scannable; the full text sits in the row's details. */
+.res .dec{margin:0;color:var(--ink-2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden}
+.res .rb>.dec:first-child{color:var(--ink)}
+.res details{margin-top:4px}
+.res li[data-cut] .dec{cursor:pointer;border-radius:var(--r-xs)}
+.res li[data-cut]:not([data-open]) .dec:hover{color:var(--ink)}
+.res li[data-open] .dec{display:block;-webkit-line-clamp:unset;line-clamp:none}
+.close{scroll-margin-top:84px}
+.close .next code{white-space:nowrap}
+.res .k{display:block;font-size:12.5px;color:var(--ink-3)}
+.close .next{margin:16px 0 0;font-size:13.5px;color:var(--ink-2)}
+.close .next b{margin-right:8px;font-weight:650;color:var(--ink)}
 .path{display:flex;gap:10px;align-items:center;margin-top:18px;padding:6px 6px 6px 14px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md)}
 .path code{flex:1;background:none;padding:0;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .btn{flex:none;height:34px;padding:0 14px;border:0;border-radius:var(--r-full);background:var(--accent-solid);color:#fff;font:500 13.5px/1 var(--font-body);cursor:pointer;transition:background-color .15s var(--ease),transform .15s var(--ease)}
@@ -233,8 +248,8 @@ details p{margin:6px 0 0}
   .msg{max-width:100%}
   .row{grid-template-columns:40px 1fr}
   .row .why{grid-column:1/-1}
-  .counts{gap:6px}
-  .count{padding:10px}
+  .close{padding:16px;border-radius:var(--r-lg)}
+  .esc li,.res li{grid-template-columns:40px minmax(0,1fr);gap:8px}
 }
 </style>
 </head>
@@ -285,6 +300,8 @@ const WHY = [
   [/^the Proxy could not settle it$/i, "Proxy 定不下来"],
   [/^hard to reverse with weak evidence$/i, "难回退且证据弱"],
   [/^answer changed (\d+) times$/i, "答案改了 $1 次"],
+  [/^red-team and Proxy disagree on a hard-to-reverse choice$/i, "红队和 Proxy 意见相反，且难回退"],
+  [/^red-team overturned; no round left to resolve it$/i, "红队推翻，但已没有轮次处理"],
   [/^UNVERIFIED: answer still incomplete after re-ask.*$/i, "UNVERIFIED：退回一次后仍不完整"],
   [/^reached (\d+) rounds$/i, "已到 $1 轮上限"],
   [/^(\d+) rounds without a new decision$/i, "连续 $1 轮没有新决定"],
@@ -414,14 +431,70 @@ function render(m){
   return "";
 }
 
+// The outcome in one line: what is settled, what waits for the user, what the red-team changed.
+function outcome(t){
+  const n = k => (t[k] || []).length;
+  const all = ["Decided","Assumption","Escalation"].flatMap(k => (t[k] || []).map(e => ({...e, status: k})));
+  if (!all.length) return "账本里没有记录到决定。";
+  const parts = [n("Decided") && `${n("Decided")} 条已定`, n("Assumption") && `${n("Assumption")} 条默认假设`].filter(Boolean);
+  parts.push(n("Escalation") ? `${n("Escalation")} 条等你拍板` : "没有要你拍板的问题");
+  const over = all.filter(e => e.redteam?.verdict === "overturn");
+  const held = all.filter(e => e.redteam?.verdict === "hold").length;
+  let red = held ? `红队复核 ${held} 条，全部维持。` : "";
+  if (over.length) {
+    const waiting = over.filter(e => e.status === "Escalation").length;
+    const fixed = over.filter(e => e.status !== "Escalation" && e.amended).length;
+    const how = [fixed && ["Proxy 已改答", fixed], waiting && ["等你拍板", waiting], over.length - fixed - waiting && ["Proxy 没有改答", over.length - fixed - waiting]].filter(Boolean);
+    red = `红队推翻 ${over.length} 条${how.length === 1 ? `，${how[0][0]}` : `：${how.map(([label, c]) => `${c} 条${label}`).join("，")}`}。`;
+  }
+  return `${parts.join("，")}。${red}`;
+}
+
+function resultRow(e){
+  const red = e.redteam, was = e.amended;
+  const tags = [
+    was && `<span class="st" data-s="amended">红队推翻后改答</span>`,
+    !was && red?.verdict === "overturn" && `<span class="st" data-s="overturn">红队推翻，未改答</span>`,
+    red?.verdict === "hold" && `<span class="st" data-s="hold">红队维持</span>`,
+    /^UNVERIFIED/i.test(e.why) && `<span class="st" data-s="Invalid">UNVERIFIED</span>`
+  ].filter(Boolean).join("");
+  const extra = [
+    red?.why && `<p><span class="k">红队理由</span>${inline(red.why)}</p>`,
+    was && `<p><span class="k">原决定</span>${inline(was.from || "（没写决定）")}</p>`
+  ].filter(Boolean).join("");
+  const more = extra ? `<details><summary>${was ? "红队理由和原决定" : "红队理由"}</summary>${extra}</details>` : "";
+  return `<li><span class="qid">${esc(e.id)}</span><div class="rb">${e.title || tags ? `<div class="rt">${e.title ? `<b>${inline(e.title)}</b>` : ""}${tags}</div>` : ""}<p class="dec">${inline(e.decision || "（没写决定）")}</p>${more}</div></li>`;
+}
+// Only a decision the clamp really cut becomes a toggle; an opened one stays open across resizes.
+function markCut(){
+  document.querySelectorAll(".res .dec").forEach(p => {
+    const li = p.closest("li");
+    if (li.hasAttribute("data-open")) return;
+    const cut = p.scrollHeight > p.clientHeight + 1;
+    li.toggleAttribute("data-cut", cut);
+    if (cut) { p.tabIndex = 0; p.setAttribute("role", "button"); p.setAttribute("aria-expanded", "false"); p.title = "展开完整决定"; }
+    else { p.removeAttribute("tabindex"); p.removeAttribute("role"); p.removeAttribute("aria-expanded"); p.removeAttribute("title"); }
+  });
+}
+function toggleDecision(p){
+  const li = p.closest("li"), open = !li.hasAttribute("data-open");
+  li.toggleAttribute("data-open", open);
+  p.setAttribute("aria-expanded", String(open));
+  p.title = open ? "收起" : "展开完整决定";
+}
+
 function closing(m){
   const t = S.totals || {};
   const esc_ = t.Escalation || [];
   const dur = S.endedAt ? mm(S.endedAt - S.startedAt) : "";
   const stop = S.stop?.length ? `，停止原因：${S.stop.map(zhWhy).join("；")}` : "";
-  return `<section class="close"><h2>拷问结束</h2><p class="lead">${S.round} 轮，用时 <span class="num">${dur}</span>${esc(stop)}。决定都还是 proposed，没有改动任何代码。</p>
-  <div class="counts">${["Decided","Assumption","Escalation"].map(k => `<div class="count" data-s="${k}"><b>${(t[k]||[]).length}</b><span>${STATUS[k]}</span></div>`).join("")}</div>
-  ${esc_.length ? `<h3>等你拍板</h3><ul class="esc">${esc_.map(e => `<li><span class="qid">${esc(e.id)}</span><span>${inline(e.title || e.decision)}<br><span class="why">${inline(zhWhy(e.why))}${e.decision && !/^open\b/i.test(e.decision) ? ` · 建议：${inline(e.decision)}` : ""}</span></span></li>`).join("")}</ul>` : `<p class="lead" style="margin-top:4px">没有需要你拍板的问题。</p>`}
+  const byId = (a, b) => parseInt(a.id.slice(1), 10) - parseInt(b.id.slice(1), 10);
+  const list = (k, title, hint = "") => (t[k] || []).length ? `<h3>${title}<span class="n num">${t[k].length}</span>${hint ? `<span class="hint">${hint}</span>` : ""}</h3><ul class="res">${[...t[k]].sort(byId).map(resultRow).join("")}</ul>` : "";
+  return `<section class="close"><h2>拷问结束</h2><p class="outcome">${esc(outcome(t))}</p><p class="lead">${S.round} 轮，用时 <span class="num">${dur}</span>${esc(stop)}。决定都还是 proposed，没有改动任何代码。</p>
+  ${esc_.length ? `<h3>等你拍板<span class="n num">${esc_.length}</span></h3><ul class="esc">${esc_.map(e => `<li><span class="qid">${esc(e.id)}</span><span>${inline(e.title || e.decision)}<br><span class="why">${inline(zhWhy(e.why))}${e.decision && !/^open\b/i.test(e.decision) ? ` · 建议：${inline(e.decision)}` : ""}${e.redteam?.verdict === "overturn" && e.redteam.why ? `<br>红队：${inline(e.redteam.why)}` : ""}</span></span></li>`).join("")}</ul>` : ""}
+  ${list("Decided", "结论", "点决定可展开全文")}
+  ${list("Assumption", "默认假设", "你可以推翻")}
+  <p class="next"><b>下一步</b>${esc_.length ? "先在会话里回答上面的问题。" : ""}要把这些决定做下去，回到会话让 agent 按决策日志写计划（<code>writing-plans</code>）、定目标（<code>goal-gate</code>）或直接实现（<code>task-completion-loop</code>）。</p>
   ${m.text ? `<div class="path"><code title="${esc(m.text)}">${esc(m.text)}</code><button class="btn" type="button" data-copy="${esc(m.text)}">复制路径</button></div>` : ""}</section>`;
 }
 
@@ -474,7 +547,11 @@ function apply(state){
     }
     if (chat.children[i] !== n.el) chat.insertBefore(n.el, chat.children[i] || null);
   });
-  if (stick) requestAnimationFrame(() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: first ? "auto" : "smooth"}));
+  markCut();
+  // The closing card is taller than the viewport: land on its outcome line, not on the end of its list.
+  const close = chat.querySelector(".close");
+  if (close && (first || (stick && added))) requestAnimationFrame(() => close.scrollIntoView({block: "start", behavior: first ? "auto" : "smooth"}));
+  else if (stick) requestAnimationFrame(() => window.scrollTo({top: document.documentElement.scrollHeight, behavior: first ? "auto" : "smooth"}));
   else if (added) $("jump").hidden = false;
 }
 
@@ -494,8 +571,18 @@ function tick(){
 setInterval(tick, 1000);
 
 window.addEventListener("scroll", () => { if (nearBottom()) $("jump").hidden = true; }, {passive: true});
+// Line breaks, and so what the clamp cuts, change with the width and once the web fonts load.
+window.addEventListener("resize", markCut);
+document.fonts?.ready.then(markCut);
 $("jump").addEventListener("click", () => { window.scrollTo({top: document.documentElement.scrollHeight, behavior: "smooth"}); $("jump").hidden = true; });
+document.addEventListener("keydown", e => {
+  const p = e.target.closest?.(".res li[data-cut] .dec");
+  if (p && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); toggleDecision(p); }
+});
 document.addEventListener("click", async e => {
+  // Clicking a link or selecting text inside a decision must not fold it.
+  const d = e.target.closest(".res li[data-cut] .dec");
+  if (d && !e.target.closest("a") && !String(getSelection())) { toggleDecision(d); return; }
   const b = e.target.closest("[data-copy]");
   if (!b) return;
   try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "已复制"; }

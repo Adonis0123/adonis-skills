@@ -17,7 +17,7 @@ The checks that rule on each Proxy answer: the ledger gate that classifies it, a
 _Avoid_: Reviewer, grader, referee
 
 **Escalation**:
-A question the Proxy may not settle and must hold for the user: side effects (safety, external sends, payment, deletion), facts only the user knows that block later branches, hard-to-reverse choices with weak evidence, or an answer that changed twice.
+A question the Proxy may not settle and must hold for the user: side effects (safety, external sends, payment, deletion), facts only the user knows that block later branches, hard-to-reverse choices with weak evidence, an answer that changed twice, or a hard-to-reverse choice the Proxy and the Red-team still disagree on.
 _Avoid_: Confirmation, checkpoint, ask
 
 **Assumption**:

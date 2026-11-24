@@ -18,7 +18,14 @@ import http from "node:http";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { MAX_ROUNDS, parseAnswers } from "./grill-ledger.mjs";
+import {
+  MAX_ROUNDS,
+  parseAnswers,
+  parseVerdicts,
+  withoutFences,
+} from "./grill-ledger.mjs";
+
+export { parseVerdicts };
 
 const SELF = fileURLToPath(import.meta.url);
 const PAGE = path.join(path.dirname(SELF), "..", "assets", "watch.html");
@@ -57,20 +64,6 @@ export function parseSeat(value) {
     product: PRODUCTS.includes(product) ? product : "unknown",
     account: account && account.toLowerCase() !== product ? account : null,
   };
-}
-
-// Fenced blocks (the Proxy brief's answer-format example) are not questions.
-function withoutFences(text) {
-  let fenced = false;
-  return String(text ?? "")
-    .split("\n")
-    .filter((line) => {
-      if (/^\s*(```|~~~)/.test(line)) {
-        fenced = !fenced;
-        return false;
-      }
-      return !fenced;
-    });
 }
 
 const Q_HEAD =
@@ -139,24 +132,6 @@ export function extractPlan(text) {
     /^##\s+The plan\s*\n([\s\S]*?)(?=^##\s|$(?![\s\S]))/m,
   );
   return m ? m[1].trim() : "";
-}
-
-/**
- * Red-team replies: one `hold` or `overturn: <why>` per question id.
- * @returns {{ id: string, verdict: 'hold'|'overturn', why: string }[]}
- */
-export function parseVerdicts(text) {
-  const out = [];
-  for (const line of withoutFences(text)) {
-    const m = line.match(/\b(Q\d+)\b.*?\b(hold|overturn)\b\s*[:：-]?\s*(.*)$/i);
-    if (m && !out.some((v) => v.id === m[1].toUpperCase()))
-      out.push({
-        id: m[1].toUpperCase(),
-        verdict: m[2].toLowerCase(),
-        why: m[3].trim(),
-      });
-  }
-  return out;
 }
 
 /** Last review-loop heartbeat in a consult stderr log. */
@@ -267,12 +242,13 @@ export function deriveState(entries, now = Date.now()) {
 
   const redQuestion = file("redteam-question.md");
   const redAnswer = file("redteam.md");
+  const verdicts = redAnswer ? parseVerdicts(redAnswer.text) : [];
   if (redAnswer)
     messages.push({
       id: "redteam",
       role: "redteam",
       at: redAnswer.mtimeMs,
-      verdicts: parseVerdicts(redAnswer.text),
+      verdicts,
       text: redAnswer.text.trim(),
     });
   events.forEach((e, i) =>
@@ -290,16 +266,25 @@ export function deriveState(entries, now = Date.now()) {
   );
 
   const ledger = json("ledger.json");
-  const questions = Object.entries(ledger?.questions ?? {});
+  const asked = ledger?.questions ?? {};
+  const questions = Object.entries(asked);
   const pick = (status) =>
     questions
       .filter(([, q]) => q.status === status)
-      .map(([id, q]) => ({
-        id,
-        title: titles[id] ?? "",
-        decision: q.decision ?? "",
-        why: q.why ?? "",
-      }));
+      .map(([id, q]) => {
+        // A verdict the ledger never recorded still shows, read from redteam.md.
+        const red = q.redteam ?? verdicts.find((v) => v.id === id);
+        return {
+          id,
+          title: titles[id] ?? "",
+          decision: q.decision ?? "",
+          why: q.why ?? "",
+          kind: q.kind ?? "",
+          reversibility: q.reversibility ?? "",
+          redteam: red ? { verdict: red.verdict, why: red.why ?? "" } : null,
+          amended: q.amended ?? null,
+        };
+      });
   const totals = {
     Decided: pick("Decided"),
     Assumption: pick("Assumption"),
@@ -319,6 +304,22 @@ export function deriveState(entries, now = Date.now()) {
   if (phase === "live") {
     const r = lastRound;
     const heartbeat = parseHeartbeat(file(`proxy-${r}.log`)?.text);
+    const gateFile = file(`gate-${r}-retry.json`)
+      ? `gate-${r}-retry.json`
+      : `gate-${r}.json`;
+    // An overturn goes back to the Proxy in one more round, so the Interviewer
+    // is not closing yet. A round file newer than redteam.md is that round.
+    const reopening =
+      redAnswer &&
+      r < MAX_ROUNDS &&
+      !(file(`round-${r}.md`)?.mtimeMs > redAnswer.mtimeMs) &&
+      verdicts.some(
+        (v) =>
+          v.verdict === "overturn" &&
+          asked[v.id] &&
+          asked[v.id].status !== "Escalation" &&
+          !asked[v.id].redteam?.resolved,
+      );
     if (!r) {
       activity = { seat: "interviewer", task: "map", since: startedAt };
     } else if (!file(`answers-${r}.md`)) {
@@ -360,16 +361,20 @@ export function deriveState(entries, now = Date.now()) {
         task: "redteam",
         since: redQuestion.mtimeMs,
       };
+    } else if (reopening) {
+      activity = {
+        seat: "interviewer",
+        task: "next",
+        round: r + 1,
+        since: redAnswer.mtimeMs,
+      };
     } else if (redAnswer || lastGate?.stop?.length || r >= MAX_ROUNDS) {
       activity = {
         seat: "interviewer",
         task: "close",
-        since: redAnswer?.mtimeMs ?? since(`gate-${r}.json`),
+        since: Math.max(redAnswer?.mtimeMs ?? 0, since(gateFile)),
       };
     } else {
-      const gateFile = file(`gate-${r}-retry.json`)
-        ? `gate-${r}-retry.json`
-        : `gate-${r}.json`;
       activity = {
         seat: "interviewer",
         task: "next",

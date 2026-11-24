@@ -30,7 +30,7 @@
       "id": 1,
       "name": "data-model-hard-to-reverse-red-team",
       "prompt": "/grill-autopilot Grill this plan without asking me: store each skill's install count in a new SQLite table keyed by skill slug, updated by a nightly job.",
-      "expected_output": "The storage and key choice is classified Reversibility: costly. If the Proxy decides it with strong evidence it becomes Decided and hardToReverse, so a red-team consult on a third product runs before close; an overturn turns it into an Escalation. A proposed decision record is offered only for hard-to-reverse, surprising, real trade-offs.",
+      "expected_output": "The storage and key choice is classified Reversibility: costly. If the Proxy decides it with strong evidence it becomes Decided and hardToReverse, so a red-team consult on a third product runs before close; an overturn goes back to the Proxy once through `grill-ledger.mjs redteam`: a changed answer is recorded as amended in the ledger, an unchanged one becomes an Escalation. A proposed decision record is offered only for hard-to-reverse, surprising, real trade-offs.",
       "files": [],
       "expectations": [
         "Classifies the table/key decision as Reversibility: costly",

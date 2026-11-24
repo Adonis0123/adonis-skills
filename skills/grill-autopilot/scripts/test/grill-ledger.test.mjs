@@ -9,6 +9,7 @@ import {
   checkRound,
   classify,
   parseAnswers,
+  recordRedteam,
   validate,
 } from "../grill-ledger.mjs";
 
@@ -324,6 +325,190 @@ describe("review regressions", () => {
       assert.equal(run.status, 0);
       assert.equal(JSON.parse(run.stdout).ok, true);
     }
+  });
+});
+
+describe("red-team", () => {
+  const costly = (id, over = {}) =>
+    block(id, { Reversibility: "costly", ...over });
+  /** Q1 and Q2 decided as hard to reverse; the red-team overturns Q1. */
+  const overturned = () => {
+    const ledger = fresh();
+    checkRound({ answers: costly("Q1") + costly("Q2"), ledger, round: 1 });
+    const result = recordRedteam({
+      verdicts: "Q1: overturn: packages need their own config\nQ2: hold\n",
+      ledger,
+    });
+    return { ledger, result };
+  };
+
+  it("cli records verdicts, changes no status, lists what to reopen and is idempotent", (t) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "grill-ledger-"));
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+    const file = path.join(dir, "ledger.json");
+    const verdicts = path.join(dir, "redteam.md");
+    const ledger = fresh();
+    checkRound({ answers: costly("Q1") + costly("Q2"), ledger, round: 1 });
+    fs.writeFileSync(file, JSON.stringify(ledger));
+    fs.writeFileSync(
+      verdicts,
+      "Q1: overturn: packages need their own config\nQ2: hold\nQ9: hold\n",
+    );
+    const run = () =>
+      spawnSync(
+        process.execPath,
+        [SCRIPT, "redteam", `--verdicts=${verdicts}`, `--ledger=${file}`],
+        { encoding: "utf8" },
+      );
+    const first = run();
+    assert.equal(first.status, 0, first.stdout);
+    const out = JSON.parse(first.stdout);
+    assert.deepEqual(out.reopen, [
+      { id: "Q1", why: "packages need their own config" },
+    ]);
+    assert.equal(out.nextRound, 2);
+    assert.deepEqual(out.unknown, ["Q9"]);
+    assert.deepEqual(out.totals.Decided, ["Q1", "Q2"]);
+    const saved = fs.readFileSync(file, "utf8");
+    const { questions } = JSON.parse(saved);
+    assert.equal(questions.Q1.status, "Decided");
+    assert.deepEqual(questions.Q1.redteam, {
+      verdict: "overturn",
+      why: "packages need their own config",
+    });
+    assert.deepEqual(questions.Q2.redteam, { verdict: "hold", why: "" });
+
+    const second = run();
+    assert.equal(second.stdout, first.stdout);
+    assert.equal(fs.readFileSync(file, "utf8"), saved);
+  });
+
+  it("cli refuses unreadable input and a reply without verdicts as JSON, leaving the ledger alone", (t) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "grill-ledger-"));
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+    const file = path.join(dir, "ledger.json");
+    const verdicts = path.join(dir, "redteam.md");
+    const before = JSON.stringify(overturned().ledger);
+    fs.writeFileSync(file, before);
+    fs.writeFileSync(verdicts, "Both decisions look fine to me.");
+    for (const [args, status] of [
+      [[`--verdicts=${path.join(dir, "missing.md")}`, `--ledger=${file}`], 1],
+      [[`--verdicts=${verdicts}`, `--ledger=${path.join(dir, "no.json")}`], 1],
+      [[`--verdicts=${verdicts}`, `--ledger=${file}`], 1],
+      [[`--ledger=${file}`], 2],
+    ]) {
+      const run = spawnSync(process.execPath, [SCRIPT, "redteam", ...args], {
+        encoding: "utf8",
+      });
+      assert.equal(run.status, status, run.stdout);
+      assert.equal(run.stderr, "");
+      const out = JSON.parse(run.stdout);
+      assert.equal(out.ok, false);
+      assert.ok(out.error);
+    }
+    assert.equal(fs.readFileSync(file, "utf8"), before);
+  });
+
+  it("classifies a changed re-answer as usual, marks it amended and does not count it as a reversal", () => {
+    const { ledger } = overturned();
+    const fixed = costly("Q1", {
+      Decision: "Use X with per-package overrides",
+    });
+    // The re-ask of a broken re-answer is still the red-team's re-answer.
+    const broken = checkRound({
+      answers: costly("Q1", { Decision: "anything", Reason: null }),
+      ledger,
+      round: 2,
+    });
+    assert.equal(broken.ok, false);
+    assert.equal(ledger.questions.Q1.decision, "Use library X");
+
+    const r = checkRound({ answers: fixed, ledger, round: 2, attempt: 2 });
+    const q = ledger.questions.Q1;
+    assert.equal(q.status, "Decided");
+    assert.equal(q.why, "hard to reverse, evidence strong enough");
+    assert.equal(q.decision, "Use X with per-package overrides");
+    assert.deepEqual(q.amended, {
+      from: "Use library X",
+      by: "redteam",
+      round: 2,
+    });
+    assert.equal(q.reversals, 0);
+    assert.deepEqual(q.redteam, {
+      verdict: "overturn",
+      why: "packages need their own config",
+      resolved: true,
+    });
+    assert.deepEqual(r.results[0].amended, q.amended);
+    assert.deepEqual(
+      recordRedteam({ verdicts: "Q1: overturn: x", ledger }).reopen,
+      [],
+    );
+
+    // A later change is an ordinary one: it counts, and twice escalates.
+    checkRound({ answers: costly("Q1", { Decision: "B" }), ledger, round: 3 });
+    assert.equal(ledger.questions.Q1.reversals, 1);
+    assert.equal(ledger.questions.Q1.status, "Decided");
+    checkRound({ answers: costly("Q1", { Decision: "C" }), ledger, round: 4 });
+    assert.equal(ledger.questions.Q1.why, "answer changed 2 times");
+  });
+
+  it("escalates when the Proxy keeps a decision the red-team overturned", () => {
+    const { ledger } = overturned();
+    const r = checkRound({ answers: costly("Q1"), ledger, round: 2 });
+    assert.equal(ledger.questions.Q1.status, "Escalation");
+    assert.equal(
+      ledger.questions.Q1.why,
+      "red-team and Proxy disagree on a hard-to-reverse choice",
+    );
+    assert.equal(ledger.questions.Q1.amended, undefined);
+    assert.deepEqual(r.totals.Escalation, ["Q1"]);
+    // Keeping a decision the red-team held is not a disagreement.
+    checkRound({ answers: costly("Q2"), ledger, round: 3 });
+    assert.equal(ledger.questions.Q2.status, "Decided");
+  });
+
+  it("keeps redteam and amended on untouched and re-answered questions", () => {
+    const { ledger } = overturned();
+    checkRound({
+      answers: costly("Q1", { Decision: "Use X with overrides" }),
+      ledger,
+      round: 2,
+    });
+    const amended = structuredClone(ledger.questions.Q1.amended);
+    const redteam = structuredClone(ledger.questions.Q1.redteam);
+    checkRound({ answers: costly("Q2") + block("Q3"), ledger, round: 3 });
+    assert.deepEqual(ledger.questions.Q1.amended, amended);
+    assert.deepEqual(ledger.questions.Q2.redteam, { verdict: "hold", why: "" });
+
+    // A second re-answer of the overturned question is an ordinary answer.
+    checkRound({
+      answers: costly("Q1", { Decision: "Use X with overrides" }),
+      ledger,
+      round: 4,
+    });
+    assert.equal(ledger.questions.Q1.status, "Decided");
+    assert.deepEqual(ledger.questions.Q1.amended, amended);
+    assert.deepEqual(ledger.questions.Q1.redteam, redteam);
+  });
+
+  it("escalates an overturn itself only when no round is left", () => {
+    const ledger = fresh();
+    for (let i = 1; i <= 8; i += 1)
+      checkRound({ answers: costly(`Q${i}`), ledger, round: i });
+    const verdicts = "Q1: overturn: wrong key\nQ2: hold\n";
+    const first = recordRedteam({ verdicts, ledger });
+    assert.deepEqual(first.reopen, []);
+    assert.deepEqual(first.escalated, ["Q1"]);
+    assert.equal(ledger.questions.Q1.status, "Escalation");
+    assert.equal(
+      ledger.questions.Q1.why,
+      "red-team overturned; no round left to resolve it",
+    );
+    assert.equal(ledger.questions.Q2.status, "Decided");
+    const saved = structuredClone(ledger);
+    assert.deepEqual(recordRedteam({ verdicts, ledger }), first);
+    assert.deepEqual(ledger, saved);
   });
 });
 
