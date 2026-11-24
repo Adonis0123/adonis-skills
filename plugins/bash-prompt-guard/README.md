@@ -18,13 +18,14 @@ Claude Code reads every Bash command as bash. A few command shapes make its perm
 
 A `PreToolUse` hook on the `Bash` tool runs `scripts/bash-prompt-guard.py` before every command and checks it against the shapes below.
 
-| Shape                                                            | Example                             | Fix the reason suggests                                                                      |
-| ---------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------- |
-| zsh-only syntax: parameter flags, modifiers, glob qualifiers     | `${(f)"$(cmd)"}`, `${f:t}`, `*(N)`  | bash-readable syntax (`xargs`, `while IFS= read -r f; do …; done < <(cmd)`) or a script file |
-| `rm` / `rmdir` in the same command as a multi-line inline script | `rm -rf a; bash -c '<newline>…'`    | run the removal as its own call with literal paths                                           |
-| `rm` targets Claude Code treats as critical paths                | `rm -f $D/*.png`, `rm -rf "$(cmd)"` | `"${D:?}"/*.png`; run the substitution first, then remove the literal path                   |
-| A `$(` that never closes                                         | `grep "[a-z$(]"`                    | single quotes, or `\$(` inside double quotes                                                 |
-| A `${` bash does not read as a parameter expansion               | `grep "frame ${size(x)}"`           | `grep -F '…'` with single quotes, or `\${`                                                   |
+| Shape                                                                         | Example                             | Fix the reason suggests                                                                      |
+| ----------------------------------------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------------------------- |
+| zsh-only syntax: parameter flags, modifiers, glob qualifiers                  | `${(f)"$(cmd)"}`, `${f:t}`, `*(N)`  | bash-readable syntax (`xargs`, `while IFS= read -r f; do …; done < <(cmd)`) or a script file |
+| `rm` / `rmdir` in the same command as a multi-line inline script              | `rm -rf a; bash -c '<newline>…'`    | run the removal as its own call with literal paths                                           |
+| `rm` targets Claude Code treats as critical paths                             | `rm -f $D/*.png`, `rm -rf "$(cmd)"` | `"${D:?}"/*.png`; run the substitution first, then remove the literal path                   |
+| A `$(` that never closes                                                      | `grep "[a-z$(]"`                    | single quotes, or `\$(` inside double quotes                                                 |
+| A `${` bash does not read as a parameter expansion                            | `grep "frame ${size(x)}"`           | `grep -F '…'` with single quotes, or `\${`                                                   |
+| A `( … )` subshell after `&&`, `\|\|`, `;`, `\|` or a newline inside `$(...)` | `c=$(a \|\| (b && c))`              | a `{ …; }` group (`$(a \|\| { b && c; })`), or separate commands                             |
 
 Text the shell does not expand is ignored: single-quoted strings, backslash escapes, comments and the bodies of quoted heredocs (`<<'EOF'`).
 

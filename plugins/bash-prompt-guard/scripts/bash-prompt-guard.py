@@ -19,6 +19,10 @@ prompt until someone clicks, or the request is denied after a minute):
    differently than it was parsed ("Dangerous rm operation not ruled out", 2026-10-29).
 5. A `${` the shell does not read as a parameter expansion, usually a JavaScript template literal meant
    for grep inside double quotes (`grep "frame ${size(frame.innerWidth)}"`): same prompt (2026-11-02).
+6. A `( ... )` subshell after `;`, `&&`, `||`, `|` or a newline inside `$(...)`, such as
+   `c=$(git rev-parse x || (git fetch ... && git rev-parse x))`: "Claude Code can't be sure it read this
+   command the way the shell will, so it can't rule out a dangerous removal" (Claude Code 2.1.331,
+   2026-11-24). A subshell that opens the substitution, a top-level `a || (b)` and `{ ...; }` ran.
 
 Denying is cheaper than the prompt: the model gets the reason at once and rewrites the command.
 For rule 1, text the shell does not expand is ignored: single-quoted strings, backslash escapes,
@@ -99,6 +103,13 @@ SUBSTITUTION_REASON = ("The command has a `$(` that is never closed (such as `gr
                        "operation not ruled out\"), even under bypass permissions. "
                        "Fix: put the literal `$` and `(` in single quotes (`grep '[a-z$(]'`), or write `\\$(` inside "
                        "double quotes.")
+
+NESTED_SUBSHELL_REASON = ("The command has a `( ... )` subshell after `||`, `&&`, `;`, `|` or a newline inside `$(...)` "
+                          "(such as `c=$(git rev-parse -q --verify x || (git fetch -q origin x && git rev-parse x))`). "
+                          "Claude Code cannot tell how the shell reads it and asks for confirmation (\"can't rule out a "
+                          "dangerous removal\"), even under bypass permissions, which stalls an unattended run. "
+                          "Fix: use a `{ ...; }` group instead of `( ... )` (`$(a || { b && c; })`), or split the steps "
+                          "into separate commands." + SCRIPT_HINT)
 
 BRACE_REASON = ("The command has a `${...}` the shell does not read as a parameter expansion (such as "
                 "`grep \"frame ${size(frame.innerWidth)}\"` meant to find a JavaScript template literal). Inside double "
@@ -368,11 +379,68 @@ def has_invalid_brace_expansion(command: str) -> bool:
     return any(not BASH_PARAM_EXPANSION.match(text, m.start()) for m in BRACE_EXPANSION_START.finditer(text))
 
 
+def has_subshell_after_operator_in_substitution(command: str) -> bool:
+    """True when, inside `$(...)`, a `( ... )` subshell follows `;`, `&`, `|` or a newline, as in
+    `$(a || (b && c))`. A subshell that opens the substitution (`$( (a) || b )`), `((` arithmetic and a
+    `case` pattern after `;;` are fine. One pass over quotes and `$(` nesting."""
+    text = strip_quoted_heredoc_bodies(command)
+    stack, i, n, word_start, after_op = ["top"], 0, len(text), True, False
+    while i < n:
+        c, ctx = text[i], stack[-1]
+        if c == "\\" and ctx != "sq":
+            i += 2
+            word_start = after_op = False
+            continue
+        if ctx == "sq":
+            if c == "'":
+                stack.pop()
+        elif ctx == "dq":
+            if c == '"':
+                stack.pop()
+            elif text.startswith("$(", i):
+                stack.append("sub")
+                i += 2
+                word_start, after_op = True, False
+                continue
+        elif c == "#" and word_start:
+            end = text.find("\n", i)
+            i = n if end < 0 else end
+            continue
+        elif c == "'":
+            stack.append("sq")
+        elif c == '"':
+            stack.append("dq")
+        elif text.startswith("$(", i):
+            stack.append("sub")
+            i += 2
+            word_start, after_op = True, False
+            continue
+        elif ctx == "sub" and text.startswith(";;", i):
+            i += 2
+            word_start, after_op = True, False
+            continue
+        elif ctx == "sub" and c in ";&|\n":
+            after_op = True
+        elif c == "(" and ctx == "sub":
+            if after_op and not text.startswith("((", i):
+                return True
+            stack.append("sub")
+        elif c == ")" and ctx == "sub":
+            stack.pop()
+        if c not in " \t;&|\n":
+            after_op = False
+        word_start = c in " \t\n;&|()"
+        i += 1
+    return False
+
+
 def deny_reason(command: str):
     if uses_zsh_param_flag(command):
         return ZSH_REASON
     if has_unclosed_substitution(command):
         return SUBSTITUTION_REASON
+    if has_subshell_after_operator_in_substitution(command):
+        return NESTED_SUBSHELL_REASON
     if has_invalid_brace_expansion(command):
         return BRACE_REASON
     if mixes_rm_with_inline_script(command):

@@ -100,6 +100,21 @@ allows 'grep -rn "frame \${size(x)}" src'
 allows $'cat <<\'EOF\'\nconst s = `${user.name}`\nEOF'
 allows 'echo ${HOME} ${1} ${10} ${#} ${#arr[@]} ${!ref} ${!pre*} ${x:-a} ${x#*/} ${x%.*} ${x/a/b} ${x^^} ${x,} ${x@Q} ${@} ${*} ${?} ${$} ${-} "${D:?}"'
 
+# ── 8a. a subshell after an operator inside `$(...)` (probed headless, Claude Code 2.1.331) ─
+denies 'for t in v2.71.40 v2.72.0; do c=$(git rev-parse -q --verify "refs/tags/$t^{commit}" || (git fetch -q origin "refs/tags/$t:refs/tags/$t" && git rev-parse "refs/tags/$t^{commit}")); echo "$t $c"; done'
+denies 'echo "$(echo a || (echo b))"'
+denies 'c=$(echo a && (echo b)); echo "$c"'
+denies 'c=$(echo a; (echo b)); echo "$c"'
+denies 'c=$(echo a | (cat)); echo "$c"'
+denies $'c=$(echo a\n(echo b)); echo "$c"'
+allows 'c=$( (echo a) || echo b ); echo "$c"'
+allows 'echo a || (echo b)'
+allows 'c=$(echo a || { echo b; }); echo "$c"'
+allows 'c=$(case a in (a) echo A;; (b) echo B;; esac); echo "$c"'
+allows 'c=$(echo a; ((x=1)); echo $((1+2))); echo "$c"'
+allows "c=\$(echo 'a || (b)'); echo \"\$c\""
+allows 'c=`echo a || (echo b)`; echo "$c"'
+
 # ── 8b. every reason opens with the hook's label ─
 reason() {
   jq -nc --arg c "$1" '{hook_event_name:"PreToolUse",tool_name:"Bash",tool_input:{command:$c}}' | python3 "$hook" \
@@ -113,6 +128,7 @@ labelled() {
 labelled 'echo "${(j: :)arr}"' 'The command uses zsh-only syntax'
 labelled 'echo "$(date"' 'The command has a `$(` that is never closed'
 labelled 'grep -rn "${obj.key}" src' 'The command has a `${...}` the shell does not read'
+labelled 'c=$(a || (b)); echo $c' 'The command has a `( ... )` subshell after'
 labelled $'sh -c \'cd /tmp\nrm -rf a\'' 'The command combines `rm`/`rmdir` with a multi-line inline script'
 labelled 'rm -rf $OUT/' 'An `rm` target is a variable followed by a glob or a trailing slash'
 
