@@ -149,6 +149,7 @@ flowchart LR
 ## Related
 
 - [Adonis0123/hermes-kit](https://github.com/Adonis0123/hermes-kit): Hermes plugins and Hermes-only skills.
+- [Adonis0123/npm-release-guide](https://github.com/Adonis0123/npm-release-guide): `npm-publish-guide` and `npm-version-guide` skills plus a bilingual guide for publishing npm packages without getting stuck on two-factor prompts and for picking the next version. Install them from that repo; they are not copied here.
 
 ## Develop This Repository
 

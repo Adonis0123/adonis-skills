@@ -17,3 +17,4 @@
 ## Related
 
 - [Adonis0123/hermes-kit](https://github.com/Adonis0123/hermes-kit): Hermes plugins and Hermes-only skills
+- [Adonis0123/npm-release-guide](https://github.com/Adonis0123/npm-release-guide): npm-publish-guide and npm-version-guide skills for publishing npm packages and picking the next version

@@ -149,6 +149,7 @@ flowchart LR
 ## 相关项目
 
 - [Adonis0123/hermes-kit](https://github.com/Adonis0123/hermes-kit)：Hermes 插件和 Hermes 专用技能。
+- [Adonis0123/npm-release-guide](https://github.com/Adonis0123/npm-release-guide)：`npm-publish-guide` 和 `npm-version-guide` 两个技能，加一套中英指南：发 npm 包不再卡在两步验证，并帮你定下一个版本号。请从该仓库安装，这里不收录副本。
 
 ## 开发本仓库
 
