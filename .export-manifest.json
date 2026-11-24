@@ -4,7 +4,7 @@
   "repo": "Adonis0123/adonis-skills",
   "sources": [
     {
-      "source": "Adonis0123/dotagents@bdbde2620b8e31b0df8c9b3962c1227ded8f0a45",
+      "source": "Adonis0123/dotagents@366844537ccbe3b20cb7f581d3e10c4636190afb",
       "dirty": false
     },
     {
@@ -25,7 +25,7 @@
     },
     {
       "path": "skills/agent-dispatch/SKILL.md",
-      "sha256": "6a40b3e2dca776b0962cdd8ec50461357a8a24fdd2f61797eff682af9a589093"
+      "sha256": "445bb37be6870198871baba89d6ef1abb0cfd8d9389e1b1ecfd1ffbe8f9476ba"
     },
     {
       "path": "skills/agent-dispatch/evals/README.md",
@@ -125,7 +125,7 @@
     },
     {
       "path": "skills/agent-dispatch/references/accounts.md",
-      "sha256": "2b8cd368ebdcfd541f7468fe74ca73bd59bf1e2bbcd72a66c01c4dad98237329"
+      "sha256": "fff94d514b920dc481eb1c560d7ebb686c7bf54fec45498d0c6a90b676b1b75f"
     },
     {
       "path": "skills/agent-dispatch/references/context-budget.md",
@@ -137,7 +137,7 @@
     },
     {
       "path": "skills/agent-dispatch/references/launch.md",
-      "sha256": "52448294ad35e8633ec8cc4b465f0e86f0fd0a55b2feee0e145757b1ddd358f3"
+      "sha256": "784ed01730d70553f2538a0841acbf499706584907c61da87d3913d961e03b73"
     },
     {
       "path": "skills/agent-dispatch/references/measure.md",
@@ -149,11 +149,11 @@
     },
     {
       "path": "skills/agent-dispatch/references/run-board.md",
-      "sha256": "254638bf061cc3271f6adf54f43c80e31a951ca08c9430df59b26be736a78828"
+      "sha256": "2e370e7241fbb7825682c3d481c973125659193ebd4ad383006239c9419e77aa"
     },
     {
       "path": "skills/agent-dispatch/references/task-spec.md",
-      "sha256": "1deab63523c92e5f46176f681545b91634caf9744e65bdf13feed0c35da436dc"
+      "sha256": "cf4b1fcae472d5f32f2bf63091a4e013dc93fb0b3251374c1c3133ec9ac07ee3"
     },
     {
       "path": "skills/agent-dispatch/scripts/board.css",

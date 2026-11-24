@@ -19,7 +19,7 @@ The user's own words for this work, quoted, or the path of the requirement file.
 
 ## Ruled out
 
-Approaches already tried or rejected, with the reason, and facts already checked, so the Worker does not redo them. `none` when there are none.
+Approaches already tried or rejected, with the reason, and facts already checked, so the Worker does not redo them: include the entry files, functions and tests the Coordinator already located, with paths. Past first-run Workers made a median 57 tool calls before their first edit, mostly re-finding what the Coordinator knew. `none` when there are none.
 
 ## Constraints
 
@@ -35,7 +35,7 @@ Invariants, compatibility rules, repository instructions to read first (nearest 
 
 ## Acceptance
 
-The tests, commands, or page evidence that prove completion. Run only affected tests; no full suite unless listed here. Examples in the request are a floor, not the spec: also test boundaries the examples skip (empty, zero, negative, NaN, rounding of halves, binary floating point). Never run a dev or preview server or a watch mode in the foreground: start it in the background, note its pid, stop it by pid when done, and give every command a timeout.
+The tests, commands, or page evidence that prove completion. Run only affected tests; no full suite unless listed here. No type check (`typecheck`, `tsc --noEmit`) in a Worker's acceptance: the session that pushes runs it once before the push, and a Worker that does not push reports it as `UNVERIFIED`. Examples in the request are a floor, not the spec: also test boundaries the examples skip (empty, zero, negative, NaN, rounding of halves, binary floating point). Never run a dev or preview server or a watch mode in the foreground: start it in the background, note its pid, stop it by pid when done, and give every command a timeout.
 
 ## Progress
 
