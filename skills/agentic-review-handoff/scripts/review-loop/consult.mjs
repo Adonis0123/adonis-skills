@@ -13,6 +13,16 @@ import {
   PRODUCTS,
 } from "./adapters.mjs";
 import { resolveFromPrefs } from "./prefs.mjs";
+import {
+  assessReviewRound,
+  declaredRound,
+  detectReviewIntent,
+  GRANT_ENV,
+  recordReviewRound,
+  refusalMessage,
+  REVIEW_ROUND_LIMIT,
+  reviewFraming,
+} from "./review-rounds.mjs";
 
 /**
  * @param {{
@@ -28,6 +38,9 @@ import { resolveFromPrefs } from "./prefs.mjs";
  *   web?: boolean,
  *   adapterFactory?: Function,
  *   adapterOpts?: object,
+ *   env?: NodeJS.ProcessEnv,
+ *   now?: number,
+ *   stderr?: (line: string) => void,
  * }} opts
  */
 export async function cmdConsult(opts) {
@@ -72,17 +85,64 @@ export async function cmdConsult(opts) {
   }
 
   const framing = String(question).trim();
+  const env = opts.env ?? process.env;
+  const now = opts.now ?? Date.now();
+  const warn = opts.stderr ?? ((line) => process.stderr.write(`${line}\n`));
+
+  // A code review sent through consult still gets run's round budget (auto-loop-contract § Consult).
+  const isReview = detectReviewIntent(framing);
+  let reviewRound = null;
+  if (isReview) {
+    try {
+      reviewRound = assessReviewRound({
+        repoRoot,
+        text: framing,
+        questionFile: opts.questionFile,
+        env,
+        now,
+      });
+    } catch (err) {
+      warn(
+        `[review-loop consult] warning: review round count unavailable, continuing: ${err?.message ?? err}`,
+      );
+    }
+  }
+  if (reviewRound && !reviewRound.allowed) {
+    const message = refusalMessage(reviewRound);
+    warn(message);
+    return {
+      ok: false,
+      status: "review_round_limit",
+      reviewRound: reviewRoundSummary(reviewRound),
+      message,
+    };
+  }
+  if (reviewRound?.granted) {
+    warn(
+      `[review-loop consult] ${GRANT_ENV}=${reviewRound.granted} granted by the user: review round ${reviewRound.round} of ${reviewRound.limit}`,
+    );
+  }
+
   // --raw: the caller's file is the whole prompt (it brings its own role and answer format).
   const prompt = opts.raw
     ? framing
-    : [
-        "You are a decision consult peer (advisory only).",
-        "The user retains final authority. Do not implement code. Do not claim consensus.",
-        "Respond with: stance, key reasons, open risks, and what evidence would change your mind.",
-        "",
-        "--- question framing ---",
-        framing,
-      ].join("\n");
+    : isReview
+      ? [
+          reviewFraming(
+            reviewRound?.round ??
+              Math.max(1, declaredRound(framing, opts.questionFile)),
+            reviewRound?.limit ?? REVIEW_ROUND_LIMIT,
+          ),
+          framing,
+        ].join("\n")
+      : [
+          "You are a decision consult peer (advisory only).",
+          "The user retains final authority. Do not implement code. Do not claim consensus.",
+          "Respond with: stance, key reasons, open risks, and what evidence would change your mind.",
+          "",
+          "--- question framing ---",
+          framing,
+        ].join("\n");
 
   const makeAdapter = (product, command) =>
     (opts.adapterFactory || createAdapter)(product, {
@@ -118,6 +178,21 @@ export async function cmdConsult(opts) {
     };
   }
 
+  if (reviewRound) {
+    try {
+      recordReviewRound(reviewRound, now);
+    } catch (err) {
+      warn(
+        `[review-loop consult] warning: review round not saved: ${err?.message ?? err}`,
+      );
+    }
+  }
+  const grantLine = reviewRound?.granted
+    ? `\n- review round: ${reviewRound.round}/${reviewRound.limit} (${GRANT_ENV}=${reviewRound.granted}, granted by the user)`
+    : reviewRound
+      ? `\n- review round: ${reviewRound.round}/${reviewRound.limit}`
+      : "";
+
   const contextLost = Boolean(prior && (fallbacks.length || result.degraded));
   let outPath;
   let round = 1;
@@ -129,7 +204,7 @@ export async function cmdConsult(opts) {
       outPath,
       `
 ## Follow-up ${round}${peer !== prior.product ? ` (fallback to ${peer})` : ""}${contextLost ? " (new session, earlier rounds not visible to peer)" : ""}
-
+${grantLine ? `${grantLine.trim()}\n` : ""}
 ${framing}
 
 ## Peer response ${round}
@@ -152,7 +227,7 @@ ${result.text}
 
 - peer: ${peer}${peerCommand ? `\n- command: ${peerCommand}` : ""}
 - advisory: true
-- created: ${new Date().toISOString()}
+- created: ${new Date().toISOString()}${grantLine}
 
 ## Question
 
@@ -194,9 +269,21 @@ ${result.text}
     round,
     ...(prior ? { resumed: true, contextLost } : {}),
     ...(fallbacks.length ? { fallbacks } : {}),
+    ...(reviewRound ? { reviewRound: reviewRoundSummary(reviewRound) } : {}),
     text: result.text,
     message:
       'Consult complete (advisory). Do not auto-adopt unless user explicitly authorized "一致即采纳" for this turn.',
+  };
+}
+
+function reviewRoundSummary(a) {
+  return {
+    round: a.round,
+    limit: a.limit,
+    worktree: a.worktree,
+    branch: a.branch,
+    ...(a.prefix ? { prefix: a.prefix } : {}),
+    ...(a.granted ? { extraRoundsGrantedByUser: a.granted } : {}),
   };
 }
 

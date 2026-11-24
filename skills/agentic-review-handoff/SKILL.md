@@ -136,6 +136,8 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude|pi]
 
 Run review-fix-re-review through `review-loop run`: calling a review CLI repeatedly outside this skill loses the round budget.
 
+`consult` used as a code review (a diff range or worktree path plus a review word) is held to the same 3-round budget per review target: round 4+ is refused before the peer runs, with the same present/unattended next steps as above. Only the user grants more, with `REVIEW_EXTRA_ROUNDS_GRANTED_BY_USER=<n>`. Without `--raw` the peer gets a BLOCKED / PASS_WITH_CONCERNS / PASS rubric; only P0/P1 or a reproduced, diff-introduced P2 on a real user path blocks. Prefer `review-loop run` for reviews.
+
 Default `completion=pass` treats `PASS_WITH_CONCERNS` as more work: the visible Fixer repairs each actionable in-scope concern, appends Fix Completion, and re-reviews within budget. It never asks the user whether to continue. Only explicit `--completion=review` parks concerns in `awaiting_user_decision`; this is the opt-in escape hatch for review-only judgment, not the loop default.
 
 **A quiet Reviewer is not a failed Reviewer.** Product CLIs commonly return
