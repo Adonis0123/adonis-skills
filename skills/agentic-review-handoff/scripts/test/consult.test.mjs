@@ -307,16 +307,16 @@ describe("consult as code review: round budget and review framing", () => {
 
   it("detects review intent only with a diff or worktree plus a review word", () => {
     const r1 =
-      "审查 worktree /Users/x/.worktrees/lane/h4-home 上 git diff feat/mcp-app-shell..HEAD（3 个提交）。只读，不改文件。回复：结论 PASS/FAIL";
+      "审查 worktree /work/repo/.worktrees/lane/h4-home 上 git diff feat/base..HEAD（3 个提交）。只读，不改文件。回复：结论 PASS/FAIL";
     const r5 =
-      "第 5 轮审查：worktree /Users/x/.worktrees/lane/h4-home，新增提交 2cad7c32ad0（git diff 7f508c4ab89..HEAD）。只读，不改文件。";
+      "第 5 轮审查：worktree /work/repo/.worktrees/lane/h4-home，新增提交 2cad7c32ad0（git diff 7f508c4ab89..HEAD）。只读，不改文件。";
     assert.equal(detectReviewIntent(r1), true);
     assert.equal(detectReviewIntent(r5), true);
     assert.equal(detectReviewIntent("Please review a1b2c3d..HEAD"), true);
     assert.equal(detectReviewIntent("该用 A 还是 B？"), false);
     assert.equal(detectReviewIntent("请评审这个方案：A 还是 B？"), false);
     assert.equal(
-      detectReviewIntent("worktree /Users/x/.worktrees/a 上该选 A 还是 B？"),
+      detectReviewIntent("worktree /work/repo/.worktrees/a 上该选 A 还是 B？"),
       false,
     );
     assert.equal(detectReviewIntent("git diff a..b 之后选 A 还是 B？"), false);
@@ -326,7 +326,7 @@ describe("consult as code review: round budget and review framing", () => {
     );
     assert.equal(
       detectReviewIntent(
-        "参考 /Users/x/.worktrees/a/specs/H4-review-r4.md，缓存该用 A 还是 B？",
+        "参考 /work/repo/.worktrees/a/specs/H4-review-r4.md，缓存该用 A 还是 B？",
       ),
       false,
     );
