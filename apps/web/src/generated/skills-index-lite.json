@@ -1035,16 +1035,16 @@
   {
     "slug": "task-completion-loop",
     "name": "task-completion-loop",
-    "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
+    "description": "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh read-only blind audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review.",
     "metadata": {
       "author": "adonis",
-      "version": "1.9.0"
+      "version": "1.10.0"
     },
     "files": {
       "hasReferences": true,
       "hasSrc": false
     },
-    "updatedAt": "2026-10-28T00:00:00.000Z",
+    "updatedAt": "2026-11-26T00:00:00.000Z",
     "catalog": {
       "displayName": {
         "en": "Plan Completion Loop",
@@ -1059,12 +1059,12 @@
       "summary": "Drive an unfinished plan through three-party AI convergence, implementation, review, hardening, and blind audit.",
       "summary_zh": "通过三方 AI 交叉质疑、实现验证、审查、架构加固与盲审，把半成品或方案一直推进到可验证完成。",
       "use_cases": [
-        "Take a named spec from pending items to verified completion across Claude, Codex, and Grok.",
-        "Run automated review, architecture hardening, and a fresh Claude blind audit on the final code snapshot."
+        "Take a named spec from pending items to verified completion across independent coding agents.",
+        "Run automated review, architecture hardening, and a fresh independent read-only blind audit on the final code snapshot."
       ],
       "use_cases_zh": [
         "拿着现成的 plan 或半成品任务，拉起宿主与另外两个 AI 交叉质疑后再动手实现。",
-        "在交活前用同一份最终代码快照连过代码复审、架构加固和全新 Claude 盲审三道门禁。"
+        "在交活前用同一份最终代码快照连过代码复审、架构加固和全新独立只读盲审三道门禁。"
       ]
     }
   },

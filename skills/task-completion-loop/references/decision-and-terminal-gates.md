@@ -81,14 +81,15 @@ The completion report must include `Goal: active-checkpoint` and a recomputable 
 
 If architecture invoked automated review, require final verdict, packet, lifecycle, and evidence identity. A zero-Fix path records review `not-run` plus its terminal consult. Default review concerns are repaired and re-reviewed automatically. A nested `awaiting_user_decision` is a user gate only when review-only mode was explicitly selected. After a valid user continue-to-PASS or accept-concerns Decision Closure, resume the original-scope rescan; do not gate forever on a historical verdict string.
 
-## Fresh Claude audit
+## Fresh blind audit
 
-After verification plus the first two gates cover the current evidence, create a new Claude Code session. Never resume a discussion or earlier review session.
+After verification plus the first two gates cover the current evidence, create a new read-only session on the selected Auditor product (see `SKILL.md`「盲审者选择」: user-named product/account first; otherwise the first available hard-read-only product in `review-loop prefs` that differs from both the host and Gate 1's reviewer; if only two products are available, open a brand-new read-only session on the non-host product). Never resume a discussion or earlier review session, and never substitute a generic subagent.
 
 - Give it the original objective, frozen scope, exclusions, and evidence id, but not previous reviewer conclusions.
 - Review tracked diff, related untracked files, and actual `file:line` evidence.
-- Enforce a verifiable read-only boundary: repository reads and non-mutating checks only; no editing, Git control plane, deployment, or external writes.
+- Enforce a verifiable read-only boundary through the product adapter: repository reads and non-mutating checks only; no editing, Git control plane, deployment, or external writes.
 - Require each finding to include impact, minimum fix, verification, and actual command.
+- Record the Auditor's product, fresh session handle, and evidence id in the final report (`Final blind audit`). If the Auditor times out, follow `--fallback` to the next eligible non-host hard-read-only product before returning `UNVERIFIED`.
 
 The host independently classifies each finding:
 

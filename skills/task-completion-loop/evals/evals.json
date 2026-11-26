@@ -4,8 +4,8 @@
     {
       "id": 1,
       "name": "full-loop-keeps-final-evidence-fresh",
-      "prompt": "这是一次只读 Skill 行为验收，不要修改文件，也不要真的启动 Grok、Claude、Goal 或 review loop。用户明确要求对 `docs/plans/project-persistence.md` 走完整 task-completion-loop。所有始终要求的能力与传递依赖都可用；plan 已有权威产品决策，代码证据一致，没有需要用户决定的分支。任务账本有一个 VERIFIED_DONE 和两个 PENDING。假设三方交叉质疑已收敛、Goal 已 Active、两个 PENDING 都实现并通过定向/全包/浏览器验证、agentic review 为 PASS、architecture hardening 零 Fix 并返回 NO_ACTIONABLE_FINDINGS。最终 fresh Claude 提出一个可复现、范围内的 P3 生命周期问题；修复后两道门禁再次通过，新的 Claude 盲审无 finding。请说明完整顺序、grill-with-docs 是否需要、证据如何失效，以及何时完成 Goal。用户没有授权 stage、commit、push、PR 或外部消息。",
-      "expected_output": "已有权威决策时不应强制调用 grill-with-docs；完整账本必须处理完。P3 按证据归为 Fix 后，旧 evidence 失效，需重跑验证、agentic review、同范围 architecture hardening 和新的只读 Claude 盲审。只有所有门禁覆盖同一最终 evidence id 且账本无未决项时才完成 Goal；不得执行未授权 Git 或外部动作。",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件，也不要真的启动 Grok、Claude、Goal 或 review loop。用户明确要求对 `docs/plans/project-persistence.md` 走完整 task-completion-loop。所有始终要求的能力与传递依赖都可用；plan 已有权威产品决策，代码证据一致，没有需要用户决定的分支。任务账本有一个 VERIFIED_DONE 和两个 PENDING。假设三方交叉质疑已收敛、Goal 已 Active、两个 PENDING 都实现并通过定向/全包/浏览器验证、agentic review 为 PASS、architecture hardening 零 Fix 并返回 NO_ACTIONABLE_FINDINGS。最终全新只读盲审提出一个可复现、范围内的 P3 生命周期问题；修复后两道门禁再次通过，新的盲审无 finding。请说明完整顺序、grill-with-docs 是否需要、证据如何失效，以及何时完成 Goal。用户没有授权 stage、commit、push、PR 或外部消息。",
+      "expected_output": "已有权威决策时不应强制调用 grill-with-docs；完整账本必须处理完。P3 按证据归为 Fix 后，旧 evidence 失效，需重跑验证、agentic review、同范围 architecture hardening 和新的独立硬只读盲审。只有所有门禁覆盖同一最终 evidence id 且账本无未决项时才完成 Goal；不得执行未授权 Git 或外部动作。",
       "files": [],
       "expectations": [
         "明确已有权威决策且无 HUMAN_DECISION 时不调用 grill-with-docs",
@@ -14,7 +14,7 @@
         "Goal 已 Active 后才实现，且最终盲审前不完成 Goal",
         "P3 不因严重度低而忽略，按证据归为 Fix",
         "P3 修复产生新 evidence id，使旧验证和门禁结论失效",
-        "重跑验证、agentic review、同范围 architecture hardening 和全新只读 Claude 盲审",
+        "重跑验证、agentic review、同范围 architecture hardening 和全新硬只读盲审",
         "只有账本无未决项且所有证据覆盖同一最终 evidence id 时才完成 Goal",
         "不执行 stage、commit、push、PR 或外部消息"
       ]
@@ -68,8 +68,8 @@
     {
       "id": 5,
       "name": "architecture-fix-continues-compatible-parent-goal",
-      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或真的运行 review。用户已明确要求完整 task-completion-loop；主任务 Goal 已 Active，其 objective、冻结范围和 Done condition 明确包含同范围 architecture hardening 与后续 fresh Claude audit。计划实现与直接 agentic review 已完成；architecture-hardening-loop 在冻结范围内发现一个真实 Fix。请给出 Goal Gate 结果、能否继续，以及谁拥有 Goal completion。",
-      "expected_output": "应识别这是同一 compatible parent Goal 的显式继续：Decision: set-now，Next: continue active goal。直接在同一 Goal 下处理 Fix，不创建嵌套 Goal、不重复询问。Architecture 完成后只报告 Goal: active-checkpoint；父 Goal 仍等 fresh Claude audit，由 task-completion-loop 最终完成。",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或真的运行 review。用户已明确要求完整 task-completion-loop；主任务 Goal 已 Active，其 objective、冻结范围和 Done condition 明确包含同范围 architecture hardening 与后续 fresh blind audit。计划实现与直接 agentic review 已完成；architecture-hardening-loop 在冻结范围内发现一个真实 Fix。请给出 Goal Gate 结果、能否继续，以及谁拥有 Goal completion。",
+      "expected_output": "应识别这是同一 compatible parent Goal 的显式继续：Decision: set-now，Next: continue active goal。直接在同一 Goal 下处理 Fix，不创建嵌套 Goal、不重复询问。Architecture 完成后只报告 Goal: active-checkpoint；父 Goal 仍等 fresh blind audit，由 task-completion-loop 最终完成。",
       "files": [],
       "expectations": [
         "识别 architecture Fix 属于 parent Goal 的冻结范围和 Done condition",
@@ -78,7 +78,7 @@
         "不创建、替换或嵌套 Goal",
         "允许在同一 Goal 下实施 Fix、验证、review 和复扫",
         "Architecture 完成报告 Goal 是 active-checkpoint，不完成父 Goal",
-        "只有 task-completion-loop 完成 fresh Claude audit 与其余最终门禁后才能完成父 Goal"
+        "只有 task-completion-loop 完成 fresh blind audit 与其余最终门禁后才能完成父 Goal"
       ]
     },
     {
@@ -92,7 +92,7 @@
         "结果包含 HUMAN_GATE",
         "明确只有用户能选择 run --continue 或 close --reason accept-concerns",
         "不自动调用 close，也不把 verdict 改写为 PASS",
-        "不进入 architecture hardening 或最终 Claude 盲审",
+        "不进入 architecture hardening 或最终只读盲审",
         "不把 Goal 标为 complete"
       ]
     },
@@ -100,14 +100,14 @@
       "id": 7,
       "name": "nested-architecture-pass-with-concerns-is-user-only",
       "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。用户为嵌套 review 明确选择了 review-only 模式。完整 task-completion-loop 的直接 agentic review 已 PASS；随后 architecture-hardening-loop 完成 Fix 和验证，但其内部 agentic-review-handoff 返回 PASS_WITH_CONCERNS，packet lifecycle_state 是 awaiting_user_decision。剩余 concern 不是 Fix，用户尚未选择继续或接受。architecture-hardening-loop 还没有有效的用户 Decision Closure。请给出 task-completion-loop 此时结果。",
-      "expected_output": "应在 architecture 阶段返回 HUMAN_GATE。即使 concern 不是 Fix，只有用户能选择 run --continue 或 close --reason accept-concerns；不得由外层或内层编排代关 packet、接受 concern、把 architecture 结果当作 NO_ACTIONABLE_FINDINGS、进入最终 Claude 盲审或完成 Goal。",
+      "expected_output": "应在 architecture 阶段返回 HUMAN_GATE。即使 concern 不是 Fix，只有用户能选择 run --continue 或 close --reason accept-concerns；不得由外层或内层编排代关 packet、接受 concern、把 architecture 结果当作 NO_ACTIONABLE_FINDINGS、进入最终只读盲审或完成 Goal。",
       "files": [],
       "expectations": [
         "识别 architecture-hardening-loop 内部 PASS_WITH_CONCERNS 仍受 user-only 合同约束",
         "结果包含 HUMAN_GATE",
         "明确仅用户可选择 run --continue 或 close --reason accept-concerns",
         "外层 task-completion-loop 与内层 architecture-hardening-loop 都不得代关 packet",
-        "用户决定前不接受 NO_ACTIONABLE_FINDINGS 或进入最终 Claude 盲审",
+        "用户决定前不接受 NO_ACTIONABLE_FINDINGS 或进入最终只读盲审",
         "不把 Goal 标为 complete"
       ]
     },
@@ -115,14 +115,14 @@
       "id": 8,
       "name": "nested-user-decision-closure-allows-resume",
       "prompt": "这是一次只读 Skill 行为验收，不要修改文件或运行 CLI。task-completion-loop 的 architecture 阶段曾因内部 PASS_WITH_CONCERNS 返回 HUMAN_GATE。用户随后亲自执行 close --reason accept-concerns；完成报告证据显示 Decision Closure 已记录，packet 已 archived，没有 open Fix，但原始 verdict 仍是 PASS_WITH_CONCERNS。architecture-hardening-loop 已从原范围复扫恢复并返回 NO_ACTIONABLE_FINDINGS。请说明 task-completion-loop 能否继续以及仍需哪些门禁。",
-      "expected_output": "应承认用户 Decision Closure 已合法收口，不因历史 PASS_WITH_CONCERNS 字符串再次 HUMAN_GATE，也不把 verdict 改写为 PASS。确认 architecture 终态证据后刷新受影响验证，再进入全新只读 Claude 盲审；只有最终 evidence id 的全部门禁通过且账本无未决项时才完成 Goal。",
+      "expected_output": "应承认用户 Decision Closure 已合法收口，不因历史 PASS_WITH_CONCERNS 字符串再次 HUMAN_GATE，也不把 verdict 改写为 PASS。确认 architecture 终态证据后刷新受影响验证，再进入全新硬只读盲审；只有最终 evidence id 的全部门禁通过且账本无未决项时才完成 Goal。",
       "files": [],
       "expectations": [
         "识别用户 Decision Closure、archived lifecycle 和无 open Fix",
         "不因原始 verdict 仍是 PASS_WITH_CONCERNS 再次返回 HUMAN_GATE",
         "不把原始 verdict 改写为 PASS",
         "确认 architecture-hardening-loop 已完成原范围复扫并返回 NO_ACTIONABLE_FINDINGS",
-        "继续前刷新受影响验证并运行全新只读 Claude 盲审",
+        "继续前刷新受影响验证并运行全新硬只读盲审",
         "最终 evidence id 的全部门禁通过后才完成 Goal"
       ]
     },
@@ -137,34 +137,34 @@
         "Goal Gate Decision 是 defer，结果包含 HUMAN_GATE",
         "只提出如何处理 active Goal 或 scope 归属这一个问题",
         "不创建、替换、复用或完成 active Goal",
-        "停止点在实现、agentic review、architecture hardening 和 final Claude audit 之前"
+        "停止点在实现、agentic review、architecture hardening 和 final blind audit 之前"
       ]
     },
     {
       "id": 10,
       "name": "runtime-name-or-cli-is-not-a-real-session",
-      "prompt": "这是一次只读 Skill 行为验收，不要安装依赖或启动外部进程。用户明确要求完整 task-completion-loop。skill 名称都可解析，本机也能找到 grok 和 claude CLI 文件，但当前宿主无法创建、恢复或向真实 Grok Build / Claude Code 会话发送消息，也拿不到可恢复句柄。请给出预检结果。",
-      "expected_output": "名字、catalog 或 CLI 文件存在不证明真实 runtime capability。应在三方讨论、Goal 和源码修改前返回 MISSING_DEPENDENCIES，准确列出 Peer / 盲审 Claude 的 session creation, resume handle, and message exchange proof 缺失；不得用普通 subagent 或假会话替代。",
+      "prompt": "这是一次只读 Skill 行为验收，不要安装依赖或启动外部进程。用户明确要求完整 task-completion-loop。skill 名称都可解析，本机也能找到 grok 和 claude CLI 文件，但当前宿主无法创建、恢复或向真实 Peer / 盲审会话发送消息，也拿不到可恢复句柄。请给出预检结果。",
+      "expected_output": "名字、catalog 或 CLI 文件存在不证明真实 runtime capability。应在三方讨论、Goal 和源码修改前返回 MISSING_DEPENDENCIES，准确列出 Peer / 盲审者（Auditor）的 session creation, resume handle, and message exchange proof 缺失；不得用普通 subagent 或假会话替代。",
       "files": [],
       "expectations": [
         "结果包含 MISSING_DEPENDENCIES",
         "不把 skill 名称或 CLI 文件存在当作真实产品会话可用证据",
-        "准确列出 Peer / 盲审 Claude 会话创建、恢复句柄或消息交换能力缺失",
+        "准确列出 Peer / 盲审会话创建、恢复句柄或消息交换能力缺失",
         "停止点在三方讨论、Goal activation 和源码修改之前",
         "不使用普通 subagent、伪造会话或复制 runtime 逻辑替代"
       ]
     },
     {
       "id": 11,
-      "name": "generic-subagent-and-soft-readonly-claude-are-insufficient",
-      "prompt": "这是一次只读 Skill 行为验收，不要执行任务。当前只有通用 subagent，可以把名字改成 Grok 或 Claude；另有一个 Claude 会话，但无法建立新的 hard read-only 审查上下文，也无法禁止编辑、Git 控制面和外部写。用户要求完整 task-completion-loop。请给出预检结果。",
-      "expected_output": "普通 subagent 不能冒充真实 Grok/Claude，不能强制 fresh hard-read-only 的 Claude 也不满足终局盲审能力。应返回 MISSING_DEPENDENCIES，在讨论、Goal 与源码修改前停止，不把提示词中的‘请只读’当作可验证边界。",
+      "name": "generic-subagent-and-soft-readonly-auditor-are-insufficient",
+      "prompt": "这是一次只读 Skill 行为验收，不要执行任务。当前只有通用 subagent，可以把名字改成 Grok 或 Codex；另有一个非宿主会话，但无法建立新的 hard read-only 审查上下文，也无法禁止编辑、Git 控制面和外部写。用户要求完整 task-completion-loop。请给出预检结果。",
+      "expected_output": "普通 subagent 不能冒充真实独立产品，不能强制 fresh hard-read-only 的会话也不满足终局盲审能力。应返回 MISSING_DEPENDENCIES，在讨论、Goal 与源码修改前停止，不把提示词中的‘请只读’当作可验证边界。",
       "files": [],
       "expectations": [
         "结果包含 MISSING_DEPENDENCIES",
-        "明确普通 subagent 不能冒充真实 Grok Build 或 Claude Code",
-        "明确 soft prompt-only read-only 不等于可验证的 hard read-only Claude session",
-        "列出 fresh Claude audit 的编辑、Git 控制面和外部写禁用能力缺失",
+        "明确普通 subagent 不能冒充真实独立 Peer 或盲审产品",
+        "明确 soft prompt-only read-only 不等于可验证的 hard read-only 盲审会话",
+        "列出 fresh blind audit 的编辑、Git 控制面和外部写禁用能力缺失",
         "停止点在三方讨论、Goal activation 和源码修改之前",
         "不进入实现或任何终态门禁"
       ]
@@ -172,7 +172,7 @@
     {
       "id": 12,
       "name": "top-level-compatible-parent-goal-remains-active",
-      "prompt": "这是只读行为验收。更外层 release Goal 的 objective、冻结范围和 Done condition 明确包含本次完整 task-completion-loop，之后还要求 deploy smoke test；caller contract 指定 release owner 完成 Goal。当前本 Loop 的 ledger、验证、agentic review、architecture 与 fresh Claude audit 已全部通过，但 deploy smoke 尚未执行。",
+      "prompt": "这是只读行为验收。更外层 release Goal 的 objective、冻结范围和 Done condition 明确包含本次完整 task-completion-loop，之后还要求 deploy smoke test；caller contract 指定 release owner 完成 Goal。当前本 Loop 的 ledger、验证、agentic review、architecture 与 fresh blind audit 已全部通过，但 deploy smoke 尚未执行。",
       "expected_output": "应识别 broader-compatible parent，完整完成本 Loop checkpoint 后报告 COMPLETED + Goal: active-checkpoint；不得完成、替换或收窄父 Goal，deploy smoke 由 parent owner 继续。",
       "files": [],
       "expectations": [
@@ -243,14 +243,14 @@
       "id": 17,
       "name": "nested-pwc-user-continue-pass-resumes-without-closure",
       "prompt": "这是只读行为验收。architecture 内部 packet 曾 PASS_WITH_CONCERNS；用户选择 run --continue，随后同一 packet 最终 PASS、archived，无 Decision Closure。architecture 已按原范围复扫到 NO_ACTIONABLE_FINDINGS。请说明 task-completion-loop 下一步。",
-      "expected_output": "应接受 user continue 后最终 PASS 的合法路径，不要求 Decision Closure；核对 evidence identity、刷新受影响验证，然后继续 fresh Claude audit。",
+      "expected_output": "应接受 user continue 后最终 PASS 的合法路径，不要求 Decision Closure；核对 evidence identity、刷新受影响验证，然后继续 fresh blind audit。",
       "files": [],
       "expectations": [
         "识别 run --continue 后 PASS archived 路径",
         "不要求或伪造 Decision Closure",
         "核对最终 evidence identity",
         "刷新必要验证",
-        "继续 fresh Claude audit 而非再次 HUMAN_GATE"
+        "继续 fresh blind audit 而非再次 HUMAN_GATE"
       ]
     },
     {
@@ -364,6 +364,20 @@
         "不写 pgrep -f / ps | grep 轮询",
         "盲审未返回前不声称完成",
         "盲审返回后按同一 evidence id 给出结果"
+      ]
+    },
+    {
+      "id": 26,
+      "name": "claude-unavailable-blind-audit-uses-preferred-readonly-product",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或启动外部会话。当前宿主是 Codex，Claude Code 暂时不可用；`review-loop prefs` 顺序为 `codex,grok,pi`，Grok 与 pi 的硬只读 adapter 均可用且能建立可恢复会话。用户要求对 `docs/plans/cache-layer.md` 走完整 task-completion-loop，门禁一由 Grok 主审并 PASS，architecture hardening 返回 NO_ACTIONABLE_FINDINGS。请说明预检与终态盲审如何选人，以及报告应记录哪些字段。",
+      "expected_output": "不应因 Claude 不可用而返回 MISSING_DEPENDENCIES。Phase 1 选 Grok + pi 作为 Peer A/B；Phase 4 终态盲审按 review-loop prefs 选既非宿主（Codex）也不同于门禁一主审（Grok）的可用硬只读产品 pi，另开全新只读会话审同一最终 evidence id，不传入前序审查结论，不退化为通用 subagent；报告的 Final blind audit 字段记录产品名、新会话句柄和 evidence id。",
+      "files": [],
+      "expectations": [
+        "明确不因 Claude 不可用返回 MISSING_DEPENDENCIES",
+        "Phase 1 跳过宿主 Codex，选用 Grok 与 pi 组成三方独立立场",
+        "终态盲审按 review-loop prefs 优先选用非宿主且不同于门禁一主审的硬只读产品 pi",
+        "明确创建全新硬只读会话且不泄露前序 reviewer 结论，不退化为通用 subagent",
+        "最终报告在 Final blind audit 字段记录产品、新会话句柄与同一最终 evidence id"
       ]
     }
   ]

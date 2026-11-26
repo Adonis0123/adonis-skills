@@ -1,9 +1,9 @@
 ---
 name: task-completion-loop
-description: "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh Claude audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review."
+description: "Finish an existing named plan/spec or clearly bounded unfinished non-trivial coding task through the explicit task-completion-loop: work ledger, Goal, implementation proof, agentic review, architecture hardening, and a fresh read-only blind audit. Use only for the whole requested pipeline, not ordinary implementation, planning, or review."
 metadata:
   author: adonis
-  version: "1.9.0"
+  version: "1.10.0"
 ---
 
 # Task Completion Loop
@@ -40,17 +40,19 @@ metadata:
 | `architecture-hardening-loop` | 有界扫描、修复、复核、复扫 |
 | 真实 Peer A 会话              | 独立立场与交叉质疑         |
 | 真实 Peer B 会话              | 独立立场与交叉质疑         |
-| 真实 Claude Code 会话         | 盲审                       |
+| 真实盲审会话（Auditor）       | 独立硬只读盲审             |
 
 仅在用户显式要求 `grill-with-docs`，或预检发现仍有用户拥有的产品/领域决策时，要求并调用 `grill-with-docs`（其 frontmatter 默认 `disable-model-invocation: true`；文件可读即按父会话路径加载）。
 
 在讨论、Goal、源码修改前：
 
 1. 解析每个 skill 及其传递硬依赖（特别是 `architecture-hardening-loop` 的 scanner、`codebase-design`、只读 delegation、非宿主 Reviewer 的真实 adapter）。invocation policy 与父会话执行路径沿用 `architecture-hardening-loop`「硬依赖与 runtime 能力」的规则：用户点名本 Loop 即授权硬依赖按用途嵌套调用；文件可读即可由父会话执行；未安装/不可读、合同不兼容或 worker/工具无法执行才算缺失。细则见 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的 Preflight policy。
-2. 选定 Peer A、Peer B（见下文「Peer 选择」），对每个 Peer 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer <product> [--fallback <未用的产品>] --question-file <md>` 完成一次真实往返（用户点名账号如 `codex002` / `cc002` / `grok002` 时加 `--peer-command=<名字>`），并用 `review-loop sessions --repo <root> --product=<product>` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。每个 Peer 都须能以 adapter 的只读控制启动；盲审用的 Claude 同样。只有名字、catalog 条目或 CLI 文件存在不算可用。
+2. 选定 Peer A、Peer B（见下文「Peer 选择」）和盲审者（见下文「盲审者选择」），对每个 Peer 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer <product> [--fallback <未用的产品>] --question-file <md>` 完成一次真实往返（用户点名账号如 `codex002` / `cc002` / `grok002` 时加 `--peer-command=<名字>`），并用 `review-loop sessions --repo <root> --product=<product>` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。每个 Peer 都须能以 adapter 的只读控制启动；盲审者同样。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
 
 **Peer 选择**：Peer A、Peer B 是两个和宿主不同的产品，按 `agentic-review-handoff` 保存的 Reviewer 偏好顺序（`review-loop prefs`，默认 `claude,codex,grok`）去掉宿主后取前两个：三方收敛要三个不同产品，所以这里总是跳过宿主，偏好里的 `skipHost` 不影响。例如默认偏好下 Claude 宿主 → Codex + Grok；Codex 宿主 → Claude + Grok；Grok 宿主 → Claude + Codex。用户点名的产品或账号优先。consult 可直接传 `--host=<宿主> --skip-host`，由脚本按偏好选。某个 Peer 超时，脚本按 `--fallback` 换到两个 Peer 和宿主都没用到的已安装产品（结果里的 `fallbacks`）；没有这样的产品就不换人，按下文超时规则处理。不拿另一位 Peer 的产品顶替，否则两份立场就不独立了。
+
+**盲审者选择**：盲审不绑定特定产品，按 `review-loop prefs` 选一个具备可验证硬只读 adapter 的独立产品：① 用户显式点名的产品或账号优先；② 否则取偏好顺序中第一个**非宿主且不同于 Phase 4 门禁一主审**的可用产品；③ 若可用产品仅剩宿主与另一个产品，则由该非宿主产品另开全新只读会话（绝不复用任何历史会话）。盲审超时按 `--fallback` 换到下一个可用非宿主硬只读产品；没有任何可用非宿主硬只读产品时返回 `MISSING_DEPENDENCIES`，不得退化为宿主自审或通用 subagent。
 
 缺少始终要求的能力，或缺少本轮实际需要的条件能力：
 
@@ -63,7 +65,7 @@ Task Completion Result
 - Work started: no
 ```
 
-禁止用通用 subagent 冒充 Peer 或盲审的 Claude、伪造会话或复制缺失 skill 逻辑：三方收敛的价值来自真正独立的模型立场，冒充会让交叉质疑退化为自我评论。代装依赖属于外部写，见「入口与授权」。
+禁止用通用 subagent 冒充 Peer 或盲审者、伪造会话或复制缺失 skill 逻辑：三方收敛与终态盲审的价值来自真正独立的模型立场，冒充会让交叉质疑与盲审退化为自我评论。代装依赖属于外部写，见「入口与授权」。
 
 ## 状态机
 
@@ -75,7 +77,7 @@ Task Completion Result
   -> 实现全部 PENDING + 验证
   -> agentic-review-handoff
   -> architecture-hardening-loop = NO_ACTIONABLE_FINDINGS
-  -> 全新只读 Claude 盲审
+  -> 全新只读盲审（Auditor）
        -> Fix：修、验、重跑下游门禁、再盲审
        -> 仅 Backlog / Reject：完成 Goal
   -> COMPLETED
@@ -181,14 +183,14 @@ Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道
 
 1. `agentic-review-handoff`：默认 `completion=pass`；只在最终 `PASS` / `NO_FINDINGS` 覆盖当前 evidence id 时继续。`BLOCKED`、`concerns_require_fix`、review-only 与异常路径见 reference。
 2. `architecture-hardening-loop`：同范围运行，只接受 `NO_ACTIONABLE_FINDINGS`；其 `HUMAN_GATE` / `MISSING_DEPENDENCIES` / `UNVERIFIED` 原样透传为本 Loop 的同名 Result。它修改文件会使旧 evidence id 失效；其内部 review 覆盖最终 evidence id 时可复用，不必重跑直接 review。Fix 与 ownership 路径见 reference。
-3. 全新 Claude 盲审：使用新的可验证只读会话审最终 evidence id。范围内 `Fix` 触发最小修复和全部下游门禁重跑；最多 2 轮。
+3. 全新只读盲审（Auditor）：按「盲审者选择」创建新的可验证硬只读会话审最终 evidence id（不复用旧会话、不传入前序审查结论）。范围内 `Fix` 触发最小修复和全部下游门禁重跑；最多 2 轮。
 
 ## 无人值守续跑
 
 仅用于无人值守 / 自主运行；有人在场回答的 human-in-the-loop 会话不套用。
 
 - 纯文本结束的回合是进度报告，不是完成证据。任务账本就是 checklist，每回合更新；回合结束时仍有 `PENDING` 且未写明 blocker，就继续，或由宿主 / 父会话发一条点名未完成项的短消息。同一任务自动续跑最多 2–3 次，之后停下交审（按下文预算规则返回 `UNVERIFIED`），让真正卡住的运行结束。
-- 本 Loop 启动的后台命令、subagent 或 Peer / Claude 会话仍在运行时，等它结束并取回输出，不把任务当作完成。
+- 本 Loop 启动的后台命令、subagent 或 Peer / 盲审会话仍在运行时，等它结束并取回输出，不把任务当作完成。
 - 不应出现的提前停止：(1) 长总结只宣布下一步、没有工具调用；(2) 提出“除非你另有安排，否则我继续”并等回复；(3) 列出待用户决策项，但按自己判断没有一项阻塞剩余工作；(4) 因回合太长或某个里程碑完成而停下汇报。状态说明与建议放在下一次工具调用的同一消息里。应当停止：没有用户就无法推进（`HUMAN_GATE`），或阻塞点是被刻意保护的对象。本节不替代高风险 / 破坏性动作的确认，也不扩大「入口与授权」。
 
 ## 终态与报告
@@ -225,7 +227,7 @@ Task Completion Result
 - Verification:
 - Agentic review: <packet/session + evidence id>
 - Architecture hardening: <result + evidence id>
-- Final Claude audit: <fresh session + evidence id>
+- Final blind audit: <product + fresh session + evidence id>
 - Fixed / Backlog / Rejected:
 - Protocol, Git, and external actions:
 - Lessons: <读取的条目 | 新写或更新的条目 + evidence | none（理由）>
