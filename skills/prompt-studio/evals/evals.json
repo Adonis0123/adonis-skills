@@ -216,6 +216,20 @@
         "Does not ask the user to pick again",
         "Does not run generation"
       ]
+    },
+    {
+      "id": 18,
+      "eval_name": "antigravity-gallery-and-image-generator-channel",
+      "prompt": "Use $prompt-studio inside an Antigravity (agy) session where the `image-generator` subagent is available and `studio.mjs session` also reports `codex: true`. 帮我做一张讲 Agent 记忆机制的公众号封面，先看候选；选定后生成到 ./outputs/cover.png。Describe the exact workflow and commands/tool calls without running generation.",
+      "expected_output": "Runs `studio.mjs session` and `recommend --use cover`, launches `studio.mjs gallery --serve` in a background `run_command` and ends the turn with the candidate list and URL to wait for automatic wakeup, then scaffolds provenance with `studio.mjs brief`, invokes the host `image-generator` subagent (`invoke_subagent(TypeName=\"image-generator\", ...)`) with the adapted `content` brief and `./outputs/cover.png` output requirements instead of calling `codex`, saves the chosen image to `./outputs/cover.png`, and verifies with `check-image` / `cover-check`.",
+      "files": [],
+      "expectations": [
+        "Runs `studio.mjs gallery --serve` in the background (`run_command`) and ends the turn with the numbered candidate list and URL instead of polling in the foreground, because Antigravity wakes automatically when the user picks",
+        "Does not plan or run image generation before the user picks a candidate",
+        "After the pick, uses the Antigravity host's `image-generator` subagent (`invoke_subagent(TypeName=\"image-generator\", ...)`) rather than shelling out to the external `codex` CLI",
+        "Writes the provenance record with `studio.mjs brief` and passes the adapted `content` brief and `./outputs/cover.png` output path requirements (not the provenance markdown file) to `image-generator`",
+        "Copies/saves the chosen image to `./outputs/cover.png` and verifies dimensions and cover readability with `studio.mjs check-image` and `studio.mjs cover-check`"
+      ]
     }
   ]
 }

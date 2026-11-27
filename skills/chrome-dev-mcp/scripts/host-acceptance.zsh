@@ -16,7 +16,7 @@ keep_raw=false
 bypass=false
 cursor_auto_review=false
 typeset -a hosts all_hosts
-all_hosts=(claude codex grok cursor)
+all_hosts=(claude codex grok cursor agy)
 
 fail_closed() {
   print -u2 -- "STATUS=ERROR"
@@ -111,6 +111,16 @@ run_host() {
     cursor:true)
       cursor-agent -p --trust --force --output-format stream-json "$prompt"
       ;;
+    agy:false)
+      # Headless non-bypass mode uses plan + sandbox so edits and unapproved shell calls stay denied
+      # while stream-json preserves step_update tool events.
+      command agy -p "/chrome-dev-mcp $prompt" \
+        --output-format stream-json --sandbox --mode plan
+      ;;
+    agy:true)
+      command agy -p "/chrome-dev-mcp $prompt" \
+        --output-format stream-json --dangerously-skip-permissions
+      ;;
   esac >| "$raw" 2>&1
 }
 
@@ -148,9 +158,20 @@ extract_final() {
         | .[($last + 1):] | map(select(.type == "text") | .data // empty) | join("")' \
         "$raw" >| "$final" 2>/dev/null || true
       ;;
+    agy)
+      /usr/bin/jq -R 'fromjson? | select(type == "object")' "$raw" 2>/dev/null |
+        /usr/bin/jq -rs '
+          [ .[] | (.result // .) | select(type == "object" and has("status")) ]
+          | if length == 0 then empty
+            else (last | select(.status == "SUCCESS") | .response | select(type == "string" and length > 0)) // empty
+            end
+        ' >| "$final" 2>/dev/null || true
+      ;;
   esac
-  # Fallback: the last sentinel the host printed.
-  /usr/bin/grep -q "[^[:space:]]" "$final" 2>/dev/null || /usr/bin/grep -oE 'CHROME_DEV_MCP_(READY|FAIL)' "$raw" 2>/dev/null | /usr/bin/tail -1 >| "$final" || true
+  # Fallback: the last sentinel the host printed (disabled for agy, which requires a trailing SUCCESS JSON envelope).
+  if [[ "$host" != "agy" ]]; then
+    /usr/bin/grep -q "[^[:space:]]" "$final" 2>/dev/null || /usr/bin/grep -oE 'CHROME_DEV_MCP_(READY|FAIL)' "$raw" 2>/dev/null | /usr/bin/tail -1 >| "$final" || true
+  fi
 }
 
 # Private page URLs for the leak check; never printed.
@@ -176,12 +197,52 @@ for host in "${hosts[@]}"; do
   final="$out_dir/$host.final"
   rc="$(<"$out_dir/$host.exit")"
   trace=NO
-  /usr/bin/grep -qE 'uxc-readiness\.zsh|chrome-dev-mcp-cli' "$raw" 2>/dev/null && trace=YES
+  if [[ "$host" == "agy" ]]; then
+    if /usr/bin/jq -R 'fromjson? | select(type == "object")' "$raw" 2>/dev/null | /usr/bin/jq -se '
+      any(.[]; .event == "step_update"
+        and .step_update.step_type == "tool"
+        and .step_update.state == "DONE"
+        and ((.step_update.tool_info.error // null) == null)
+        and (
+          ((.step_update.tool_info.parameters.CommandLine // .step_update.tool_info.parameters.command // "") | tostring) as $cmd
+          | ((.step_update.tool_info.output // "") | tostring) as $out
+          | ($out | gsub("[[:space:]]"; "") | length) > 0
+          and ($out | test("\"isError\"\\s*:\\s*true|\"ok\"\\s*:\\s*false|SHARED_TRANSPORT=FAIL|CHROME_DEV_MCP_FAIL|permission denied|command failed"; "i") | not)
+          and (
+            (
+              ($cmd | test("(^|&&|;)\\s*(?:[A-Za-z_][A-Za-z0-9_]*=\\S+\\s+|env\\s+(?:\\S+\\s+)*)?(?:zsh\\s+|bash\\s+)?(?:[^\\s\\u0027\";|&()]+/)?uxc-readiness\\.zsh(?:\\s+--private-result)?\\s*(?:$|&&|;|2>)"))
+              and (
+                (($out | test("(?m)^STATUS=READY$")) and ($out | test("(?m)^SHARED_TRANSPORT=OK$")))
+                or any($out | fromjson?; type == "object" and .ok == true and .protocol == "mcp" and .operation == "list_pages" and (.data.isError != true) and ((.data.content | type) == "array"))
+              )
+            )
+            or (
+              ($cmd | test("(^|&&|;)\\s*(?:[A-Za-z_][A-Za-z0-9_]*=\\S+\\s+|env\\s+(?:\\S+\\s+)*)?(?:[^\\s\\u0027\";|&()]+/)?chrome-dev-mcp-cli(?:\\s+(?:--timeout-ms\\s+\\d+|-t\\s+\\d+))*\\s+list_pages\\s*(?:$|&&|;|2>)"))
+              and any($out | fromjson?; type == "object" and .ok == true and .protocol == "mcp" and .operation == "list_pages" and (.data.isError != true) and ((.data.content | type) == "array"))
+            )
+          )
+        )
+      )
+    ' >/dev/null 2>&1; then
+      trace=YES
+    fi
+  else
+    /usr/bin/grep -qE 'uxc-readiness\.zsh|chrome-dev-mcp-cli' "$raw" 2>/dev/null && trace=YES
+  fi
   sentinel=NONE
-  if /usr/bin/grep -q 'CHROME_DEV_MCP_FAIL' "$final" 2>/dev/null; then
-    sentinel=FAIL
-  elif /usr/bin/grep -q 'CHROME_DEV_MCP_READY' "$final" 2>/dev/null; then
-    sentinel=READY
+  if [[ "$host" == "agy" ]]; then
+    trimmed="$(/usr/bin/tr -d '[:space:]' < "$final" 2>/dev/null || true)"
+    if [[ "$trimmed" == "CHROME_DEV_MCP_FAIL" ]]; then
+      sentinel=FAIL
+    elif [[ "$trimmed" == "CHROME_DEV_MCP_READY" ]]; then
+      sentinel=READY
+    fi
+  else
+    if /usr/bin/grep -q 'CHROME_DEV_MCP_FAIL' "$final" 2>/dev/null; then
+      sentinel=FAIL
+    elif /usr/bin/grep -q 'CHROME_DEV_MCP_READY' "$final" 2>/dev/null; then
+      sentinel=READY
+    fi
   fi
   leak=NO
   if [[ -s "$url_file" ]] && /usr/bin/grep -qFf "$url_file" "$final" 2>/dev/null; then

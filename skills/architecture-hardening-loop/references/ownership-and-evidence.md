@@ -21,9 +21,9 @@ Compatibility must be proven by objective, frozen scope, and Done condition. “
 | `broader-compatible`  | 本 Loop 是 active parent Goal 冻结范围与 Done condition 中的一个 checkpoint；`Next: continue active goal`，不创建、不替换、不收窄 Done condition | 父编排器；本 Loop 只上报 checkpoint     |
 | `conflicting/unclear` | 服从 `goal-gate` 的 `Decision: defer`，返回 `HUMAN_GATE`，只问如何处理冲突或归属                                                                 | none                                    |
 
-## Codex / Grok 完成合同
+## Runtime 完成合同（Codex / Grok / Antigravity / Claude Code）
 
-Do not borrow one runtime's field names for the other.
+Do not borrow one runtime's field names or tools for another.
 
 **Codex (`get_goal` / `create_goal` / status-only `update_goal`):**
 
@@ -39,10 +39,18 @@ Do not borrow one runtime's field names for the other.
 - Do not use Codex `status: complete` / `status: blocked`.
 - When this Loop owns the full objective and Done condition is proven: `update_goal` with `completed: true` (optional `message`).
 
+**Antigravity / Claude Code (`agy-slash` / `claude-code-slash`):**
+
+- Slash/stop-hook Goal runtimes have no `update_goal`, `create_goal`, or `get_goal` tool — never invent them.
+- Never emit a replacement `/goal` command (or ask the user to paste another `/goal`), because in Antigravity (`agy`) emitting `/goal` cancels the active Goal.
+- Do not use Codex (`status: complete` / `status: blocked`) or Grok (`completed: true` / `blocked_reason`) fields.
+- While a Fix remains, or when continuing a `broader-compatible` parent Goal (`Goal: active-checkpoint`), report checkpoint status in the transcript without claiming Goal completion.
+- When this Loop owns the full objective (`exact-same-goal`) and `NO_ACTIONABLE_FINDINGS` + required verification + final review (if any Fix) are proven, surface `NO_ACTIONABLE_FINDINGS`, the verification commands and results, and the final `Evidence id` directly in the transcript for the stop hook.
+
 Zero-Fix after a matching evidence identity does **not** create a new Goal. Close using the relation recorded at preflight:
 
 - `none` → `Goal: not-created`
-- `exact-same-goal` → after terminal consult, required verification, and the full Done condition, use that runtime's terminal schema
+- `exact-same-goal` → after terminal consult, required verification, and the full Done condition, use that runtime's terminal schema (or surface `NO_ACTIONABLE_FINDINGS`, verification commands, and final `Evidence id` in the transcript for `agy-slash` / `claude-code-slash`)
 - `broader-compatible` → `Goal: active-checkpoint`; keep the parent Goal active
 - `conflicting/unclear` already stopped at `HUMAN_GATE` and must not reach this branch
 

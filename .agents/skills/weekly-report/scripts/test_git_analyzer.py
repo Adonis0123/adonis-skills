@@ -1,5 +1,6 @@
 """Exercise report extraction against disposable Git repositories."""
 
+import json
 import os
 import subprocess
 import sys
@@ -190,11 +191,20 @@ class GitAnalyzerTests(unittest.TestCase):
 
     def test_new_plan_projects_and_manual_details_are_preserved(self):
         existing = "# Weekly\n\nProject\n  - First\n\n下周计划\nProject\n  - Validate playback\n    - Include audio\n"
-        new = "# Weekly\n\nOther\n  - Second\n\n下周计划\nProject\n  - Check loading\nOther\n-\n"
+        new = "# Weekly\n\nOther\n  - Second\n\n下周计划\nProject\n  - Check loading\nOther\n\n-\n"
         merged = storage.merge_report_content(existing, new)
         self.assertIn("  - Validate playback\n    - Include audio\n  - Check loading", merged)
-        self.assertTrue(merged.endswith("Other\n-\n"))
+        self.assertTrue(merged.endswith("Other\n\n-\n"))
+        self.assertNotIn("Other\n-\n", merged)
         self.assertEqual(storage.merge_report_content(merged, new), merged)
+
+    def test_zero_indented_markdown_bullets_merge_under_project(self):
+        existing = "# Weekly\n\nProject\n\n- Manual note\n  - Pending confirmation\n\n下周计划\nProject\n- Verify playback\n"
+        new = "# Weekly\n\nProject\n  - Fixed timeline\n\n下周计划\nProject\n-\n"
+        merged = storage.merge_report_content(existing, new)
+        self.assertNotIn("- Manual note\n  - Fixed timeline", merged)
+        self.assertIn("Project\n  - Manual note\n    - Pending confirmation\n  - Fixed timeline", merged)
+        self.assertIn("下周计划\nProject\n  - Verify playback\n", merged)
 
     def test_emoji_conventional_commit_retains_meaning(self):
         message = "✨ feat(editor): preserve asynchronous media playback synchronization"
@@ -203,6 +213,74 @@ class GitAnalyzerTests(unittest.TestCase):
             report_generator.summarize_commit(message),
             "preserve asynchronous media playback synchronization",
         )
+
+    def test_cli_outputs_json_for_explicit_repo_and_range(self):
+        self.commit("feat: cli output")
+        script = Path(__file__).resolve().parents[1] / "src" / "git_analyzer.py"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--repo",
+                str(self.repo),
+                "--start",
+                "2026-08-31",
+                "--end",
+                "2026-09-06",
+                "--config",
+                str(self.root / "missing.json"),
+            ],
+            env=self.env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        payload = json.loads(result.stdout)
+        self.assertEqual([c["message"] for c in payload["repo"]], ["feat: cli output"])
+
+    def test_cli_reads_config_repos_and_auto_author(self):
+        self.commit("feat: own commit", GIT_AUTHOR_NAME="Report Author", GIT_AUTHOR_EMAIL="other@example.invalid")
+        self.commit("feat: bot commit", GIT_AUTHOR_NAME="Report Author Bot", GIT_AUTHOR_EMAIL="bot@example.invalid")
+        config_path = self.root / "config.json"
+        config_path.write_text(
+            json.dumps({
+                "repos": [{"name": "repo", "path": str(self.repo)}],
+                "default_author": "auto",
+            }),
+            encoding="utf-8",
+        )
+        script = Path(__file__).resolve().parents[1] / "src" / "git_analyzer.py"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(script),
+                "--start",
+                "2026-08-31",
+                "--end",
+                "2026-09-06",
+                "--config",
+                str(config_path),
+            ],
+            env=self.env,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        payload = json.loads(result.stdout)
+        self.assertEqual([c["message"] for c in payload["repo"]], ["feat: own commit"])
+
+    def test_cli_fails_loudly_on_invalid_config(self):
+        config_path = self.root / "bad.json"
+        config_path.write_text("{not json", encoding="utf-8")
+        script = Path(__file__).resolve().parents[1] / "src" / "git_analyzer.py"
+        result = subprocess.run(
+            [sys.executable, str(script), "--config", str(config_path)],
+            env=self.env,
+            text=True,
+            capture_output=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Error:", result.stderr)
 
 
 if __name__ == "__main__":

@@ -290,6 +290,74 @@ Goal Gate
 
 Claude Code goal evaluators judge from surfaced conversation evidence, so the agent must print the commands and results it wants evaluated as it works.
 
+## Antigravity (`agy-slash`): active session transcript auto-adopt (no native `/goal`)
+
+User: "I'm in an active Antigravity (agy CLI) session with no active `/goal`. Implement docs/PLAN.md and keep going until `pnpm test` and `pnpm build` pass (no need to set a native `/goal`). Do not commit or push."
+
+Antigravity has no agent-callable `create_goal` / `get_goal` / `update_goal` tool, and the user did not ask to activate a native host `/goal`. Self-adopt the contract in the transcript with `Prompt: none` (reporting clearly that completion relies on surfaced transcript verification rather than a host `/goal` stop hook):
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: agy-slash
+- Goal fit: high
+- Objective: Implement every in-scope task in docs/PLAN.md until `pnpm test` and `pnpm build` pass.
+- Done condition: All PLAN.md acceptance criteria hold, `pnpm test` passes, and `pnpm build` succeeds in the working tree.
+- Verification: Surface the PLAN.md task map, changed files, test/build commands, exit status, and any skipped checks in the transcript.
+- Constraints: Stay within PLAN.md scope; do not commit or push; do not invent goal APIs or claim native host `/goal` state; if AGY Plan Mode blocks edits until `exit_plan_mode`, state that constraint instead of claiming writes ran.
+- Execution strategy: Assess dependencies, shared context, write overlap, and independent verification before delegating; keep final review and integration verification with the main agent.
+- Checkpoints: Report progress and surfaced command results after each PLAN.md milestone.
+- Stop or ask when: PLAN.md conflicts with code reality, AGY Plan Mode blocks required edits until `exit_plan_mode`, credentials or destructive work are needed, or verification cannot run.
+- Prompt: none
+- Next: adopt goal and continue
+```
+
+When a user in Antigravity with **no active `/goal`** explicitly asks to start/install a native Goal (instead of plain execution), emit `Decision: set-now`, `Next: wait for user /goal`, and a copyable `/goal ...` prompt compatible with `scripts/lint-goal-prompt.py`, then stop so the user can submit `/goal`. Conversely, when continuing an **already active** `/goal` covering the same objective or a compatible-contained checkpoint, emit `Decision: set-now`, `Next: continue active goal`, `Prompt: none`, never re-emit `/goal`, and surface verification evidence in the transcript for Antigravity's built-in goal stop hook.
+
+## Antigravity (`agy-slash`): prompt-only Chinese `/goal` draft
+
+User: "帮我写一个 Antigravity（agy）可用的 /goal，我想做一个本地待办 App，先给能直接复制的版本，不要现在开始写代码。"
+
+The user wants a copy-ready Antigravity `/goal` prompt without starting execution yet, so use `Decision: suggest`, `Runtime: agy-slash`, and `Next: provide prompt`:
+
+```text
+Goal Gate
+- Decision: suggest
+- Runtime: agy-slash
+- Goal fit: high
+- Objective: Build a first-version local personal todo app MVP.
+- Done condition: The local app runs and the core add/list/toggle todo workflow is proven with runtime evidence.
+- Verification: Surface discovered project commands, local run output, and browser or screenshot evidence for the core workflow.
+- Constraints: No accounts, paid services, cloud sync, or production deployment; do not start implementation now.
+- Execution strategy: Assess task dependencies, shared state, write overlap, and independent verification before using subagents; keep final integration verification with the main agent, or fall back to one agent.
+- Checkpoints: Report after project inspection, first runnable workflow, and final verification.
+- Stop or ask when: Credentials, paid services, production deploy, or product-scope decisions are required.
+- Prompt: see Recommended /goal below
+- Next: provide prompt
+```
+
+```text
+推荐执行版（中文，可直接复制）
+/goal 创建第一版本地个人待办 App MVP；先读取项目已有命令和约束，若无现有项目则创建最小本地 Web 应用，实现新增、列表、切换完成和删除待办的核心流程。
+验证：运行项目最小相关检查，启动本地应用，在浏览器走通新增、列表、切换完成和删除待办流程，并用命令输出、日志或截图作为证据展示在对话中。
+约束：不接入账号体系、云同步、付费服务或生产部署，不更改无关现有配置。
+边界：只写入新项目目录，或只修改与待办核心流程直接相关的文件。
+执行编排：开始实现前评估任务依赖、共享上下文、写入冲突和独立验证能力后再决定是否使用 subagent；主 agent 保留结果审查与最终集成验证责任，不支持或不适合时退化为单 agent。
+迭代策略：先做可运行核心流程，基于检查与浏览器证据做最多 3 轮聚焦改进；同一错误连续失败 2 次后换日志或文档证据来源。
+完成条件：本地核心待办流程可运行，验证证据已在对话中展示，相关检查通过或缺失项已明确说明。
+暂停条件：需要账号凭证、付费服务、生产部署或产品范围决策时暂停。
+
+默认选择理由：本地 MVP 能最快验证核心待办流程，并避开账号与云端风险。
+```
+
+Note: Paste `/goal ...` into the `agy` CLI TUI or Antigravity App composer. Antigravity verifies completion with its built-in stop hook and deliverable audit from surfaced transcript evidence, and starting a new `/goal` cancels any previous active goal in that conversation.
+
+## Antigravity (`agy-slash`): active goal already present
+
+User: "In this Antigravity session a `/goal` for search indexing is already active. Start a new `/goal` for pagination now."
+
+Never emit a new `/goal` silently when an Active Goal exists, because starting a new `/goal` cancels any previous active goal in that conversation. Emit `Decision: defer`, `Runtime: agy-slash`, `Next: ask approval`, `Prompt: none`, and ask whether to continue the active goal or replace it.
+
 ## Cursor CLI: auto-adopt in the current chat
 
 User: "I'm in Cursor CLI Agent mode. Implement docs/PLAN.md and keep going until `pnpm test` and `pnpm build` pass. Do not commit or push."

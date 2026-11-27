@@ -1,9 +1,9 @@
 ---
 name: goal-gate
-description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
+description: "Gate whether a coding-agent task benefits from a durable, verifiable contract, then draft, validate, start, continue, or close it for Codex, Grok, Claude Code, Antigravity (agy), Cursor CLI, or an unknown host. Use for explicit goal or /goal requests and autonomous multi-checkpoint coding work with one checkable end state. Native Goal creation or mutation requires an explicit user or system request. Do not use for quick one-shot work, unrelated backlogs, OKRs, reminders, or token-budget-only changes."
 metadata:
   author: adonis
-  version: "2.3.0"
+  version: "2.4.0"
 ---
 
 # Goal Gate
@@ -14,7 +14,7 @@ metadata:
 
 Read **this file only** by default; skip re-reading if the host already injected it. Load **at most one** reference, only when needed:
 
-1. Detect runtime with the ordered rules below — explicit Cursor CLI intent wins over the model name.
+1. Detect runtime with the ordered rules below — explicit host intent (Cursor CLI, Antigravity) wins over the model name.
 2. Classify Goal Fit, then run the Safety Gate.
 3. Check Goal authorization, pick one Decision, and emit one `Goal Gate` block per selected runtime.
 4. If `set-now`, execute the runtime row; load `references/runtime-actions.md` only when the row isn't enough.
@@ -27,10 +27,10 @@ Do not invent goal APIs.
 Apply the first matching rule — this order resolves overlapping host/tool names:
 
 1. `cursor-cli`: user names Cursor CLI/`cursor-agent`, or host is Cursor CLI — wins over a Grok/Claude model or ambient goal tools; no verified `/goal`/API, resume restores context only.
-2. Prompt-only slash: user wants only text to copy/review → `grok-slash`/`codex-slash`/`claude-code-slash`; Grok with `update_goal` is still `grok-slash` here (no product action asked).
+2. Prompt-only slash: user wants only text to copy/review → `grok-slash`/`codex-slash`/`claude-code-slash`/`agy-slash` (`Decision: suggest`, `Next: provide prompt`, copyable `/goal` passing `scripts/lint-goal-prompt.py`); Grok with `update_goal` is still `grok-slash` here (no product action asked).
 3. `codex-tooling`: `get_goal`/`create_goal` present, not prompt-only (status-only `update_goal` may coexist).
 4. `grok-tooling`: only Grok-style `update_goal`, not prompt-only — only user-run `/goal` activates it.
-5. Named host, no verified tooling → its slash runtime.
+5. Named host, no agent-callable goal tooling → its slash runtime (`claude-code-slash`, `codex-slash`, or `agy-slash` for Antigravity CLI `agy`/App/IDE; host wins over model name). Active Antigravity sessions expose user-run `/goal` (CLI TUI and App composer) with a built-in goal stop hook and deliverable audit, no `create_goal`/`get_goal`/`update_goal`, and starting a new `/goal` cancels any previous active goal in that conversation.
 6. `unknown`: portable contract, never a command.
 
 Never borrow one runtime's fields for another; multiple requested runtimes each get their own block.
@@ -79,20 +79,23 @@ A contained checkpoint reports progress but leaves completion to the parent owne
 
 ### Runtime action on `set-now`
 
-| Runtime                                      | Next                                                        | Do now                                                                                                   |
-| -------------------------------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `cursor-cli`                                 | `adopt goal and continue`; resume → `continue adopted goal` | Work in this chat; no `/goal`/API; report evidence in transcript.                                        |
-| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                       | Emit block + copy-ready `/goal`, then stop; no `update_goal` until Active.                               |
-| `grok-tooling` (Active, same/contained)      | `continue active goal`                                      | Work the contract; checkpoint via `message`; `completed: true` only once Done is proven.                 |
-| `grok-tooling` (Active, Done proven)         | `report via update_goal`                                    | `completed: true` + evidence `message`; never Codex `status`.                                            |
-| `grok-slash`                                 | usually `provide prompt`                                    | Copy-ready `/goal`; soft-adopt only if execution is authorized too.                                      |
-| `codex-tooling` (no active, explicit Goal)   | `create goal`                                               | `get_goal` then `create_goal`; no token budget unless asked.                                             |
-| `codex-tooling` (same/contained, not done)   | `continue active goal`                                      | Keep working; no `create_goal`, replacement, or terminal `update_goal`.                                  |
-| `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                    | `status: "complete"` after evidence, or `"blocked"` after ≥3-turn persistent blocker; never Grok fields. |
-| `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                   | Self-adopt and start now; `Prompt: none` unless asked; surface verification in transcript.               |
-| `unknown`                                    | `ask approval`                                              | Portable contract only.                                                                                  |
+| Runtime                                      | Next                                                        | Do now                                                                                                                                               |
+| -------------------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cursor-cli`                                 | `adopt goal and continue`; resume → `continue adopted goal` | Work in this chat; no `/goal`/API; report evidence in transcript.                                                                                    |
+| `grok-tooling` (not Active, explicit Goal)   | `wait for user /goal`                                       | Emit block + copy-ready `/goal`, then stop; no `update_goal` until Active.                                                                           |
+| `grok-tooling` (Active, same/contained)      | `continue active goal`                                      | Work the contract; checkpoint via `message`; `completed: true` only once Done is proven.                                                             |
+| `grok-tooling` (Active, Done proven)         | `report via update_goal`                                    | `completed: true` + evidence `message`; never Codex `status`.                                                                                        |
+| `grok-slash`                                 | usually `provide prompt`                                    | Copy-ready `/goal`; soft-adopt only if execution is authorized too.                                                                                  |
+| `codex-tooling` (no active, explicit Goal)   | `create goal`                                               | `get_goal` then `create_goal`; no token budget unless asked.                                                                                         |
+| `codex-tooling` (same/contained, not done)   | `continue active goal`                                      | Keep working; no `create_goal`, replacement, or terminal `update_goal`.                                                                              |
+| `codex-tooling` (Done proven / 3-turn block) | `report via update_goal`                                    | `status: "complete"` after evidence, or `"blocked"` after ≥3-turn persistent blocker; never Grok fields.                                             |
+| `claude-code-slash` / `codex-slash`          | `adopt goal and continue`                                   | Self-adopt and start now; `Prompt: none` unless asked; surface verification in transcript.                                                           |
+| `agy-slash` (not Active, explicit Goal)      | `wait for user /goal`                                       | Emit block + copy-ready `/goal`, then stop; no `create_goal` tool exists, so user must invoke `/goal`.                                               |
+| `agy-slash` (Active, same/contained)         | `continue active goal`                                      | Work the active `/goal`; `Prompt: none`; surface transcript evidence for AGY stop hook; never re-emit `/goal`.                                       |
+| `agy-slash` (not Active, task-only)          | `adopt goal and continue`                                   | Self-adopt transcript contract (`Prompt: none`); do not claim host `/goal` stop hook is installed; state Plan Mode block if `exit_plan_mode` needed. |
+| `unknown`                                    | `ask approval`                                              | Portable contract only.                                                                                                                              |
 
-Exceptions (soft-adopt opt-outs, `Goal is not Active` recovery, Ask/Plan limits, Claude's standalone-condition rule) live in `references/runtime-actions.md`.
+Exceptions (soft-adopt opt-outs, `Goal is not Active` recovery, Ask/Plan limits, Claude's standalone-condition rule, AGY Plan Mode & active-goal cancellation) live in `references/runtime-actions.md`.
 
 ## Goal Drafting
 
@@ -112,7 +115,7 @@ Emit this block once, then act:
 ```text
 Goal Gate
 - Decision: <none | suggest | set-now | defer>
-- Runtime: <grok-tooling | grok-slash | codex-tooling | codex-slash | claude-code-slash | cursor-cli | unknown>
+- Runtime: <grok-tooling | grok-slash | codex-tooling | codex-slash | claude-code-slash | agy-slash | cursor-cli | unknown>
 - Goal fit: <low | medium | high>
 - Objective: <one durable objective or n/a>
 - Done condition: <verifiable stopping condition or n/a>

@@ -4,13 +4,15 @@ Read this reference when reviewing the evidence behind a UXC-backed wrapper skil
 
 ## Evidence layers
 
-| Evidence                         | Proves                              | Does not prove           |
-| -------------------------------- | ----------------------------------- | ------------------------ |
-| UXC discovery and passed gates   | Schema or tool visibility           | Successful execution     |
-| Linked readiness call            | Adapter transport and JSON envelope | Correct service instance |
-| Daemon metadata across two calls | Intended session reuse              | Task acceptance          |
-| Owner skill real operation       | Task-level acceptance               | Native compatibility     |
-| Native real tool call, if kept   | Host compatibility                  | Shared-path acceptance   |
+| Evidence                                                                             | Proves                              | Does not prove           |
+| ------------------------------------------------------------------------------------ | ----------------------------------- | ------------------------ |
+| UXC discovery and passed gates                                                       | Schema or tool visibility           | Successful execution     |
+| Linked readiness call                                                                | Adapter transport and JSON envelope | Correct service instance |
+| Daemon metadata across two calls                                                     | Intended session reuse              | Task acceptance          |
+| Owner skill real operation                                                           | Task-level acceptance               | Native compatibility     |
+| Native real tool call, if kept (e.g., Cursor, Claude Code, Codex, Grok, Antigravity) | Host compatibility                  | Shared-path acceptance   |
+
+When a native compatibility path is retained on hosts such as Cursor, Claude Code, Codex, Grok, or Antigravity (including lazy-loaded `agy mcp` registrations), treat a UXC link call and a native host tool call as separate evidence layers: UXC transport does not prove host registration or lazy-schema exposure, and a native tool call does not prove the shared CLI facade.
 
 Store only bounded booleans, reason codes, counts, and versions. A readiness check should parse the UXC envelope, decide success, discard the payload, and print the minimum status needed for diagnosis.
 

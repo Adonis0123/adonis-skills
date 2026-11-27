@@ -4,15 +4,17 @@ This skill never generates. It hands a Generation Brief to a Channel.
 
 ## Detect what exists
 
-`studio.mjs session` already reports CLI presence (codex, grok, ffmpeg), whether Node can run the helper (`nodeOk`), and the names of key variables. Do not probe those again. The table shows what each signal means. Hyperframes still needs its own version check, below.
+`studio.mjs session` already reports CLI presence (`codex`, `grok`, `agy`, `ffmpeg`), whether Node can run the helper (`nodeOk`), and the names of key variables. Do not probe those again. The table shows what each signal means. Hyperframes still needs its own version check, below.
 
-| Check                                                                                          | Means                                                  |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| The current host exposes `image_gen` / `image_edit` / `reference_to_video` (Codex, Grok Build) | Host tool available                                    |
-| `command -v codex`                                                                             | Codex CLI: images via its `image_gen`                  |
-| `command -v grok`                                                                              | Grok Build CLI: images and video via its Imagine tools |
-| An API key variable named in the Style Pack is set (check with `[ -n "$VAR" ]`, never echo it) | HTTP API available                                     |
-| `node --version` ≥ 22 and `command -v ffmpeg`                                                  | Code Video rendering possible (Hyperframes)            |
+| Check                                                                                                                   | Means                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| The current host exposes `image_gen` / `image_edit` / `reference_to_video` (Codex, Grok Build)                          | Host tool available                                                                    |
+| Antigravity (`agy`) session exposes the `image-generator` subagent (`invoke_subagent(TypeName="image-generator", ...)`) | Host tool available: generate images directly without calling an external CLI          |
+| `command -v codex`                                                                                                      | Codex CLI: images via its `image_gen`                                                  |
+| `command -v grok`                                                                                                       | Grok Build CLI: images and video via its Imagine tools                                 |
+| `command -v agy`                                                                                                        | Antigravity (`agy`) CLI installed (reported as `channels.agy` in `studio.mjs session`) |
+| An API key variable named in the Style Pack is set (check with `[ -n "$VAR" ]`, never echo it)                          | HTTP API available                                                                     |
+| `node --version` ≥ 22 and `command -v ffmpeg`                                                                           | Code Video rendering possible (Hyperframes)                                            |
 
 These are discovery signals, not readiness checks: a CLI version does not prove login, and a set key variable does not prove valid credentials. Inspect the host’s actual tool list; before handoff check the selected channel’s authentication and supported parameters without generating or spending. The helper’s `nodeOk` means Node 18+ for the helper, not Hyperframes’ Node 22+ requirement. Session does not include the version number, so read `node --version` before calling Hyperframes runnable. If the host has no generation tool, hand off to an available channel.
 
@@ -47,6 +49,14 @@ grok -p "$(cat prompt.txt)" --always-approve --output-format json
 ```
 
 This passes the prompt as one shell argument. Keep the double quotes so the shell does not split it. For long prompts use `grok --prompt-file prompt.txt --always-approve --output-format json` instead. Only use `--always-approve` inside a working directory you are willing to let it write to. In the prompt, name the tool (`image_gen`, `image_edit` or `reference_to_video`), the output path and every parameter. Grok has no text-only video: `reference_to_video` needs at least one reference image.
+
+**Antigravity host (images)**
+
+Inside an Antigravity (`agy`) session where the `image-generator` subagent is available, generate directly through it instead of calling an external CLI:
+
+- Call `invoke_subagent` with `TypeName="image-generator"`, a short `Role` (for example `"Image Generator"`), and a `Prompt` containing the adapted `content` brief, the target `outputPath` (or output directory and filename), aspect ratio or pixel size requirements, and any reference image paths. Pass only the adapted `content` brief (never the provenance file written by `studio.mjs brief`), and do not poll in a loop—the host wakes you automatically when the subagent replies with the saved file path(s).
+- Ask for 2–4 variants when supported (or run parallel calls if one call produces one image), inspect every returned image to pick the best, and copy or save the chosen file to the brief's exact `outputPath`.
+- Verify dimensions and quality before reporting done: run `studio.mjs check-image <outputPath> --size WxH` (and `studio.mjs cover-check <files> --title "..." --size WxH` for covers), inspect the image or previews yourself, and fit or regenerate per `image.md` if needed.
 
 **HTTP API**
 

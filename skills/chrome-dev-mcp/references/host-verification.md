@@ -13,6 +13,7 @@ claude mcp get chrome-devtools       # expect absent
 codex mcp list                       # expect disabled
 grok mcp list                        # expect disabled
 cursor-agent mcp list                # expect absent (Cursor CLI)
+agy mcp list                         # expect absent or disabled
 hermes mcp list                      # expect disabled
 ```
 
@@ -36,14 +37,15 @@ Keep cold-start tests isolated. Never close an existing browser to simulate reco
 
 ## Run the real acceptance
 
-Run the bundled script from this skill's directory. It starts one fresh headless session per host in parallel and prints one `HOST=... RESULT=...` line each; page URLs are checked privately and never printed:
+Run the bundled script from `<skill-dir>` (for example `skills/chrome-dev-mcp`), keeping command snippets and acceptance reports free of machine-specific home prefixes, loopback ports, or per-host config dot-dirs because local paths leak environment layout and break portability across machines. It starts one fresh headless session per host in parallel and prints one `HOST=... RESULT=...` line each; page URLs are checked privately and never printed:
 
 ```bash
-zsh scripts/host-acceptance.zsh                       # claude, codex, grok, cursor
+zsh scripts/host-acceptance.zsh                       # claude, codex, grok, cursor, agy
 zsh scripts/host-acceptance.zsh --host codex --keep-raw
+zsh scripts/host-acceptance.zsh --host agy --bypass
 ```
 
-Each host may run only `zsh scripts/uxc-readiness.zsh` and `chrome-dev-mcp-cli`; no host gets an approve-everything flag. Claude Code and Grok get narrow `--allowedTools`/`--allow` rules, Codex keeps the `workspace-write` sandbox with network and `~/.uxc` added, and Cursor CLI runs in its default mode. Cursor CLI's default headless mode rejects every shell call, so that host reports FAIL without reaching the shared CLI. Pass `--cursor-auto-review` only after the user explicitly approves it: Cursor's server-side classifier then approves calls it judges safe, which cannot be narrowed to the two commands above, so it is wider than the other hosts' rules though narrower than `--force`/`--yolo` ([run modes](https://cursor.com/docs/agent/security/run-modes)). Pass `--bypass` only after the user explicitly approves approve-everything sessions; it uses `--permission-mode bypassPermissions` (Claude Code), `--dangerously-bypass-approvals-and-sandbox` (Codex), `--always-approve` (Grok) and `--force` (Cursor CLI), which removes the narrow rules above for that run. When the calling agent's own permission layer blocks launching other agent CLIs, ask the user to run the script (for example with `! zsh <skill-dir>/scripts/host-acceptance.zsh` in Claude Code) or to allow that exact command; do not retry through another host or wrapper.
+Each host may run only `zsh scripts/uxc-readiness.zsh` and `chrome-dev-mcp-cli`; no host gets an approve-everything flag. Claude Code and Grok get narrow `--allowedTools`/`--allow` rules, Codex keeps the `workspace-write` sandbox with network and `~/.uxc` added, Cursor CLI runs in its default mode, and Antigravity (`--host agy`) runs `command agy -p "/chrome-dev-mcp $prompt" --output-format stream-json --sandbox --mode plan` (`--mode plan --sandbox` keeps workspace edits and unapproved shell calls denied, while `stream-json` preserves `step_update` tool events for completed `output` vs `error` verification; `agy` requires structured `result.status == "SUCCESS"` plus a completed `step_update` tool output and rejects plain-text fallback). Cursor CLI's default headless mode and Antigravity's `--mode plan --sandbox` mode both deny unapproved shell calls, so those hosts return `UNVERIFIED` before reaching the shared CLI unless explicitly authorized. Pass `--cursor-auto-review` only after the user explicitly approves it: Cursor's server-side classifier then approves calls it judges safe, which cannot be narrowed to the two commands above, so it is wider than the other hosts' rules though narrower than `--force`/`--yolo` ([run modes](https://cursor.com/docs/agent/security/run-modes)). Pass `--bypass` only after the user explicitly approves approve-everything sessions; it uses `--permission-mode bypassPermissions` (Claude Code), `--dangerously-bypass-approvals-and-sandbox` (Codex), `--always-approve` (Grok), `--force` (Cursor CLI), and `--dangerously-skip-permissions` (Antigravity CLI), which removes the narrow rules above for that run. When the calling agent's own permission layer blocks launching other agent CLIs, ask the user to run the script (for example with `! zsh <skill-dir>/scripts/host-acceptance.zsh` in Claude Code) or to allow that exact command; do not retry through another host or wrapper.
 
 The script runs this prompt in every session:
 

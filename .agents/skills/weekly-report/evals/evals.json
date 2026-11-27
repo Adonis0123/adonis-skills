@@ -14,6 +14,19 @@
         "分析器输出和最终 Markdown 分别验收；模型修正最终报告不抹去原始提取失败。",
         "没有修改仓库或 Git 元数据，没有提交、联网、发布或无证据的上线、验收、收益结论。"
       ]
+    },
+    {
+      "id": 2,
+      "prompt": "在 Antigravity（agy）宿主的 Git 项目工作区中通过 /weekly-report 调用本技能，生成 2026-10-12 至 2026-10-18（UTC+08:00）的 Markdown 周报草稿并保存到本任务目录的 report.md。当前宿主不使用 Claude Code 专属的 Read/Write/Bash 工具名，请利用宿主自身的文件读写与终端执行能力，调用本技能的 Git 分析器（或等价的 git log 合同）读取真实提交，遵循格式规范输出按项目分组的周报与“下周计划”区块，默认仅保留本地草稿，不执行提交、推送或对外发送。",
+      "expected_output": "在 Antigravity（agy）环境中无需依赖 Claude 专属 allowed-tools 声明即可正常解析并执行技能，通过宿主自身文件工具与命令行完成 Git 分析器调用和报告写入。生成的 report.md 包含日期范围标题、按项目分组的工作摘要（过滤琐碎提交）及“下周计划”占位区块，无未授权的 Git 写操作或无证据的交付结论。",
+      "files": [],
+      "assertions": [
+        "技能 frontmatter 不包含 Claude 专属工具名（如 allowed-tools 中的 Read、Write、Bash），保留合法的 name 与 description，且在基本用法中说明 /weekly-report 适用于 Claude Code、Antigravity（agy）、Grok、Cursor（Codex 为 $weekly-report）。",
+        "在 Antigravity（agy）中通过宿主原生的文件读写与终端工具完成技能读取、参考规范读取及 Git 提交分析，未因缺少 Claude 工具声明而中断或报错。",
+        "按 UTC+08:00 准确提取 2026-10-12 至 2026-10-18 的本地 Git 提交并过滤琐碎记录，按项目分组生成完整 Markdown 周报并写入 report.md。",
+        "周报末尾正确包含“下周计划”区块（无 # 前缀，按项目列出占位符 -），且未编造上线、验收或业务收益结论。",
+        "仅生成本地草稿，未执行 git commit、git push 或对外消息发送等未授权副作用。"
+      ]
     }
   ]
 }

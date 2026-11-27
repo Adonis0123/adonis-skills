@@ -38,32 +38,41 @@ import audit_common  # noqa: E402
 
 HOME = os.path.expanduser("~")
 # Deny rules can embed credentials in command arguments, so only coverage categories are reported.
-# Secret categories need a path-like file rule (Read/Edit/Write/...(path)); a Bash rule that merely
-# mentions "secret" does not protect any file.
-FILE_RULE = re.compile(r"^\s*(?:Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep)\((.+)\)\s*$")
+# Antigravity supports ONLY `read_file(...)` and `write_file(...)` for file permissions (`grep` is Claude-only).
+READ_FILE_RULE = re.compile(
+    r"^\s*(?:Read|Glob|Grep|read_file)\((.+)\)\s*$"
+)
+AGY_READ_FILE_RULE = re.compile(r"^\s*read_file\((.+)\)\s*$")
+WRITE_FILE_RULE = re.compile(
+    r"^\s*(?:Edit|Write|MultiEdit|NotebookEdit|write_file|edit_file)\((.+)\)\s*$"
+)
+FILE_RULE = re.compile(
+    r"^\s*(?:Read|Edit|Write|MultiEdit|NotebookEdit|Glob|Grep|read_file|write_file|edit_file)\((.+)\)\s*$"
+)
 PATH_COVERAGE = {
     "ssh": re.compile(r"(^|/)\.ssh(/|$|\*)|id_rsa|id_ed25519|id_ecdsa"),
     "aws": re.compile(r"(^|/)\.aws(/|$|\*)"),
     "cloud_credentials": re.compile(r"\.config/gcloud|(^|/)\.azure(/|$|\*)|(^|/)\.kube(/|$|\*)"
                                    r"|(^|/)credentials(\.json)?$|\.docker/config\.json"),
-    "env_files": re.compile(r"(^|/)\.env"),
+    # Require root/wildcard .env protection (not subpaths like fixtures/.env or .env.example placeholders).
+    "env_files": re.compile(r"^(?:\./|\*\*/)?\.env\*?$"),
     "key_files": re.compile(r"\.(pem|key|p12|pfx|keystore|jks)\b|(^|/)secrets?(/|\.|$|\*)|(^|/)\.netrc$"),
 }
 RULE_COVERAGE = {
     "destructive_bash": re.compile(r"rm -rf|rm -fr|git push[^)]*(--force|-f\b)|git reset --hard|sudo|mkfs|dd if=", re.I),
-    "network_bash": re.compile(r"Bash\((curl|wget|nc|ssh|scp)\b", re.I),
-    "web_fetch": re.compile(r"^WebFetch", re.I),
+    "network_bash": re.compile(r"(?:Bash|command|run_command)\((curl|wget|nc|ssh|scp)\b", re.I),
+    "web_fetch": re.compile(r"^(?:WebFetch|web_fetch|open_web)", re.I),
 }
 # Hook events that can block or gate an action; SessionStart, SessionEnd, Notification, PreCompact cannot.
 ENFORCING_EVENTS = {"PreToolUse", "PermissionRequest", "UserPromptSubmit", "Stop", "SubagentStop", "PostToolUse"}
 # A hook on such an event blocks only when its script can say so: permissionDecision "deny", a
-# PermissionRequest behavior "deny", decision "block", or exit code 2. Status reporters and notifiers
-# (Orca, Feishu reminders) print none of these.
+# PermissionRequest behavior "deny", decision "block", AGY decision "deny", or exit code 2. Status reporters
+# and notifiers (Orca, Feishu reminders) print none of these.
 BLOCK_SIGNALS = (
     (re.compile(r"permissionDecision"), re.compile(r"""['"]deny['"]|\bdeny\b""")),
     (re.compile(r"""\bbehavior['"]?\s*:"""), re.compile(r"""['"]deny['"]""")),
-    (re.compile(r"""\bdecision\\?['"]?\s*:\s*\\?['"]block\\?['"]"""), None),
-    (re.compile(r"""['"]decision['"]"""), re.compile(r"""['"]block['"]""")),
+    (re.compile(r"""\bdecision\\?['"]?\s*:\s*\\?['"](?:block|deny)\\?['"]"""), None),
+    (re.compile(r"""['"]decision['"]"""), re.compile(r"""['"](?:block|deny)['"]""")),
     (re.compile(r"(?m)(?:^|[;&|{(]|\bthen|\belse|\bdo)\s*exit\s+2\b|\b(?:sys|os)\._?exit\(\s*2\s*\)"
                 r"|\bprocess\.exit(?:Code\s*=\s*|\()\s*2\b|\bexit\(\s*2\s*\)"), None),
 )
@@ -75,7 +84,7 @@ ENV_NAME = re.compile(r"\$?\{?\b[A-Z][A-Z0-9]*_[A-Z0-9_]+\b-?\}?")
 INSTRUCTION_NAMES = ("AGENTS.md", "CLAUDE.md", "GEMINI.md", "AGENTS.override.md", ".cursorrules")
 # Subdirectory instruction files (monorepo packages): names, walk depth, a cap on directories visited, and
 # directories never walked (dependencies, builds, caches; hidden directories are skipped too).
-SUB_NAMES = ("AGENTS.md", "CLAUDE.md", "AGENTS.override.md")
+SUB_NAMES = ("AGENTS.md", "CLAUDE.md", "GEMINI.md", "AGENTS.override.md")
 SUB_DEPTH, SUB_DIRS = 3, 3000
 SKIP_DIRS = {"node_modules", "dist", "build", "out", "target", "vendor", "coverage", "venv", "__pycache__",
              "bower_components", "Pods", "DerivedData", "tmp", "temp", "logs"}
@@ -112,6 +121,7 @@ RE_COMPACT_NOTE = re.compile(
     r"|\b(?:after|before|during|across|when)\s+(?:an?\s+|the\s+)?(?:compaction|compacting|/compact|auto-?compact)\b"
     r"|(?:\bcompaction|/compact)\b[^.\n]{0,60}\b(?:preserve|retain|survive|re-?read)", re.I)
 HEADLESS_INVOKE = re.compile(r"\bclaude\b[^\n]*\s(?:-p|--print)\b|\bcodex\s+(?:exec|e)\b|\bgemini\b[^\n]*\s-p\b"
+                             r"|\bagy\b[^\n]*\s(?:-p|--prompt)\b"
                              r"|\bgrok\b[^\n]*\s(?:-p|--print)\b|cursor-agent\b[^\n]*\s-p\b|claude-code-action"
                              r"|codex-action")
 LIMITS = re.compile(r"--max-turns|--max-budget-usd|max_turns|max-turns")
@@ -183,7 +193,7 @@ def git_listed(root: str) -> list[str] | None:
 
 def sub_instruction_dirs(repo: str) -> list[str]:
     """Subdirectories of a repository (up to SUB_DEPTH levels, at most SUB_DIRS visited) that hold an
-    AGENTS.md / CLAUDE.md / AGENTS.override.md. Dependency, build and hidden directories are skipped, and
+    AGENTS.md / CLAUDE.md / GEMINI.md / AGENTS.override.md. Dependency, build and hidden directories are skipped, and
     global config directories (~/.claude...) and home itself are not walked."""
     root = os.path.abspath(repo)
     if root == os.path.abspath(HOME) or os.path.basename(root).startswith(GLOBAL_PREFIXES):
@@ -317,11 +327,21 @@ def deny_topics(rules: list) -> list[str]:
     return sorted(topics)
 
 
-def deny_coverage(rules: list) -> dict:
-    paths = [m.group(1).strip() for m in (FILE_RULE.match(str(r)) for r in rules) if m]
+def read_deny_coverage(rules: list, agy_only: bool = False) -> dict:
+    rx_rule = AGY_READ_FILE_RULE if agy_only else READ_FILE_RULE
+    paths = [m.group(1).strip() for m in (rx_rule.match(str(r)) for r in rules) if m]
     cov = {k: any(rx.search(p) for p in paths) for k, rx in PATH_COVERAGE.items()}
     cov.update({k: any(rx.search(str(r)) for r in rules) for k, rx in RULE_COVERAGE.items()})
     return cov
+
+
+def write_deny_coverage(rules: list) -> dict:
+    paths = [m.group(1).strip() for m in (WRITE_FILE_RULE.match(str(r)) for r in rules) if m]
+    return {k: any(rx.search(p) for p in paths) for k, rx in PATH_COVERAGE.items()}
+
+
+def deny_coverage(rules: list, agy_only: bool = False) -> dict:
+    return read_deny_coverage(rules, agy_only=agy_only)
 
 
 def as_dict(v) -> dict:
@@ -523,6 +543,115 @@ def schedulers(repos: list[str], crontab: bool = True) -> dict:
     return out
 
 
+def agy_settings(root: str | None = None) -> dict:
+    """Scan Antigravity (~/.gemini/antigravity-cli/settings.json, ~/.gemini/config/hooks.json and mcp_config.json)."""
+    base = root or HOME
+    gemini = base if os.path.basename(os.path.normpath(base)).startswith(".gemini") else os.path.join(base, ".gemini")
+    out: dict = {"root": tilde(gemini), "present": os.path.isdir(gemini)}
+
+    settings_path = os.path.join(gemini, "antigravity-cli", "settings.json")
+    if os.path.isfile(settings_path):
+        try:
+            with open(settings_path, encoding="utf-8") as f:
+                s = json.load(f)
+        except (OSError, ValueError):
+            s = None
+        if not isinstance(s, dict):
+            out["settings.json"] = {"unreadable": True}
+        else:
+            perms = as_dict(s.get("permissions"))
+            allow = as_list(perms.get("allow"))
+            deny = as_list(perms.get("deny"))
+            ask = as_list(perms.get("ask"))
+            agent_mode = s.get("agentMode") if isinstance(s.get("agentMode"), str) else None
+            if agent_mode is None:
+                gm = as_dict(s.get("general")).get("agentMode")
+                if isinstance(gm, str):
+                    agent_mode = gm
+            tool_perm = s.get("toolPermission") if isinstance(s.get("toolPermission"), str) else None
+            if tool_perm is None:
+                tp = perms.get("toolPermission") or as_dict(s.get("security")).get("toolPermission")
+                if isinstance(tp, str):
+                    tool_perm = tp
+            read_cov = read_deny_coverage(deny, agy_only=True)
+            write_cov = write_deny_coverage(deny)
+            out["settings.json"] = {
+                "deny_count": len(deny),
+                "secret_deny_count": sum(1 for r in deny if secret_rule(r)),
+                "deny_topics": deny_topics(deny),
+                "deny_coverage": read_cov,
+                "read_deny_coverage": read_cov,
+                "write_deny_coverage": write_cov,
+                "allow_count": len(allow),
+                "ask_count": len(ask),
+                "agentMode": agent_mode,
+                "toolPermission": tool_perm,
+            }
+
+    hooks_path = os.path.join(gemini, "config", "hooks.json")
+    if os.path.isfile(hooks_path):
+        try:
+            with open(hooks_path, encoding="utf-8") as f:
+                hd = json.load(f)
+        except (OSError, ValueError):
+            hd = None
+        if not isinstance(hd, dict):
+            out["hooks.json"] = {"unreadable": True}
+        else:
+            merged: dict[str, list] = {}
+            dict_groups = [v for v in hd.values() if isinstance(v, dict)]
+            direct_events = [(k, v) for k, v in hd.items() if isinstance(v, list)]
+            enabled_groups = 0
+
+            def add_event_items(event: str, items: list) -> None:
+                bucket = merged.setdefault(event, [])
+                for g in items:
+                    if not isinstance(g, dict):
+                        continue
+                    if isinstance(g.get("hooks"), list):
+                        bucket.append(g)
+                    elif "command" in g or "type" in g:
+                        bucket.append({"matcher": g.get("matcher"), "hooks": [g]})
+
+            for group in dict_groups:
+                if group.get("enabled") is False:
+                    continue
+                enabled_groups += 1
+                for event, items in group.items():
+                    if event != "enabled" and isinstance(items, list):
+                        add_event_items(event, items)
+            if direct_events:
+                enabled_groups += 1
+                for event, items in direct_events:
+                    add_event_items(event, items)
+            events, entries, enforcing, hook_topics, unreadable, all_topics = hook_counts(merged)
+            out["hooks.json"] = {
+                "hook_groups": len(dict_groups) + (1 if direct_events else 0),
+                "enabled_hook_groups": enabled_groups,
+                "hook_events": events,
+                "hook_entries": entries,
+                "enforcing_hook_entries": enforcing,
+                "enforcing_hook_topics": hook_topics,
+                "hook_topics": all_topics,
+                "unreadable_hook_commands": unreadable,
+            }
+
+    mcp_path = os.path.join(gemini, "config", "mcp_config.json")
+    if os.path.isfile(mcp_path):
+        try:
+            with open(mcp_path, encoding="utf-8") as f:
+                mc = json.load(f)
+        except (OSError, ValueError):
+            mc = None
+        if not isinstance(mc, dict):
+            out["mcp_config.json"] = {"unreadable": True}
+        else:
+            servers = mc.get("mcpServers") if isinstance(mc.get("mcpServers"), dict) else as_dict(mc.get("mcp_servers"))
+            out["mcp_config.json"] = {"mcp_servers": len(servers)}
+
+    return out
+
+
 def scan(repos: list[str], crontab: bool = True) -> dict:
     claude_roots = sorted(p for p in glob.glob(os.path.join(HOME, ".claude*")) if os.path.isdir(p))
     codex_roots = sorted(p for p in glob.glob(os.path.join(HOME, ".codex*")) if os.path.isdir(p))
@@ -533,22 +662,32 @@ def scan(repos: list[str], crontab: bool = True) -> dict:
                 if any(os.path.isfile(os.path.join(r, ".claude", n)) for n in ("settings.json", "settings.local.json"))]
     claude = [claude_settings(r) for r in claude_roots]
     claude_projects = [claude_settings(p, os.path.dirname(p)) for p in projects]
-    unreadable = sum(int(as_dict(s.get(n)).get("unreadable_hook_commands") or 0)
-                     for s in claude + claude_projects for n in ("settings.json", "settings.local.json"))
+    agy = agy_settings(HOME)
+    unreadable = (
+        sum(int(as_dict(s.get(n)).get("unreadable_hook_commands") or 0)
+            for s in claude + claude_projects for n in ("settings.json", "settings.local.json"))
+        + int(as_dict(agy.get("hooks.json")).get("unreadable_hook_commands") or 0)
+    )
+    other_skills = {
+        "codex": sum(len(glob.glob(os.path.join(r, "skills", "*", "SKILL.md"))) for r in codex_roots),
+        "agents": len(glob.glob(os.path.join(HOME, ".agents", "skills", "*", "SKILL.md"))),
+    }
+    if os.path.isdir(gemini):
+        other_skills["agy"] = len(glob.glob(os.path.join(gemini, "config", "skills", "*", "SKILL.md")))
     notes = ["Values are sizes, counts and allowlisted keys only; secrets are never read into the output.",
              "Paths outside home are reduced to (outside ~)/<name>.",
              ("Blocking hooks: a hook on a blocking event counts only when its inline command or script can return "
-              "permissionDecision deny, decision block or exit 2.")]
+              "permissionDecision deny, decision block, decision deny or exit 2.")]
     if unreadable:
         notes.append(f"{unreadable} hook command(s) name scripts that could not be read; counted as non-blocking.")
     return {
         "global_instructions": instruction_files(global_dirs),
         "repo_instructions": repo_instruction_files(repos),
         "claude": claude,
-        "other_skills": {"codex": sum(len(glob.glob(os.path.join(r, "skills", "*", "SKILL.md"))) for r in codex_roots),
-                         "agents": len(glob.glob(os.path.join(HOME, ".agents", "skills", "*", "SKILL.md")))},
+        "other_skills": other_skills,
         "claude_projects": claude_projects,
         "codex": [codex_config(r, repos) for r in codex_roots],
+        "agy": agy,
         "schedulers": schedulers(repos, crontab),
         "notes": notes,
     }

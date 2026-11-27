@@ -71,12 +71,12 @@ SLUG = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")  # source slugs used as 
 ALLOWED_DOMAINS = (
     "code.claude.com", "docs.anthropic.com", "docs.claude.com", "claude.com", "anthropic.com", "www.anthropic.com",
     "learn.chatgpt.com", "developers.openai.com", "openai.com", "platform.openai.com",
-    "geminicli.com", "github.com", "developers.googleblog.com", "ai.google.dev",
+    "geminicli.com", "github.com", "developers.googleblog.com", "ai.google.dev", "antigravity.google",
     "cursor.com", "docs.cursor.com",
     "docs.x.ai",
     "codebuddy.ai", "www.codebuddy.ai", "cloud.tencent.com",
 )
-GITHUB_ORGS = ("google-gemini",)
+GITHUB_ORGS = ("google-gemini", "google-antigravity")
 
 
 def norm(s: str) -> str:

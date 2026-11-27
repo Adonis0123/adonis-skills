@@ -2,7 +2,7 @@ English | [中文](./README.zh-CN.md)
 
 # adonis-skills
 
-Agent-agnostic skills for coding agents: review loops, workflow gates, MCP setup, Git delivery, and local environment audits. Install them into Claude Code, Codex, Cursor, Hermes, or any agent that reads `SKILL.md`.
+Agent-agnostic skills for coding agents: review loops, workflow gates, MCP setup, Git delivery, and local environment audits. Install them into Claude Code, Codex, Cursor, Antigravity (`agy`), Hermes, or any agent that reads `SKILL.md`.
 
 **Live site**: <https://adonis-skills.vercel.app/>
 
@@ -13,11 +13,11 @@ Agent-agnostic skills for coding agents: review loops, workflow gates, MCP setup
 
 ## Quick Start
 
-| Host                                                                                    | Install                                                                                                                                                            |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Codex, Cursor, and other agents ([`skills` CLI](https://github.com/vercel-labs/skills)) | `npx skills add adonis0123/adonis-skills --skill <name>` (add `-g` for a global install, `--list` to list skills)                                                  |
-| Claude Code                                                                             | `/plugin marketplace add Adonis0123/adonis-skills` then `/plugin install adonis-skills@adonis-skills`                                                              |
-| Hermes Agent                                                                            | `hermes skills install adonis0123/adonis-skills/skills/<name>` (one skill; `hermes skills tap add adonis0123/adonis-skills` adds the whole repo as a skill source) |
+| Host                                                                                                          | Install                                                                                                                                                                                |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex, Cursor, Antigravity (`.agents/skills`), others ([`skills` CLI](https://github.com/vercel-labs/skills)) | `npx skills add adonis0123/adonis-skills --skill <name>` (add `-g` for a global install, `--list` to list skills; Antigravity also reads `~/.gemini/config/skills/` and `skills.json`) |
+| Claude Code                                                                                                   | `/plugin marketplace add Adonis0123/adonis-skills` then `/plugin install adonis-skills@adonis-skills`                                                                                  |
+| Hermes Agent                                                                                                  | `hermes skills install adonis0123/adonis-skills/skills/<name>` (one skill; `hermes skills tap add adonis0123/adonis-skills` adds the whole repo as a skill source)                     |
 
 Examples:
 
@@ -84,7 +84,7 @@ Each plugin's README covers what it blocks, configuration and limits. They suppo
 | [`code-inspector-init`](./skills/code-inspector-init)                           | Set up click-to-source IDE navigation with code-inspector-plugin.                                                                      |
 | [`lingui-workflow`](./skills/lingui-workflow)                                   | Day-to-day Lingui extract, check, compile, and catalog commands.                                                                       |
 | **Repository setup and writing**                                                |                                                                                                                                        |
-| [`agent-symlink-init`](./skills/agent-symlink-init)                             | Link `.claude/skills` to `.agents/skills` and `AGENTS.md` to `CLAUDE.md`.                                                              |
+| [`agent-symlink-init`](./skills/agent-symlink-init)                             | Link `.claude/skills` to `.agents/skills` and `AGENTS.md` to `CLAUDE.md` (covering Codex and Antigravity `agy` natively).              |
 | [`code-plugin-architecture`](./skills/code-plugin-architecture)                 | Design or review plugin registries and extension points.                                                                               |
 | [`decision-first-technical-writing`](./skills/decision-first-technical-writing) | Write or review technical design docs that lead with decisions.                                                                        |
 | [`weekly-report`](./skills/weekly-report)                                       | Weekly reports from Git history across one or more repositories.                                                                       |
@@ -131,7 +131,7 @@ flowchart LR
   exp -->|"one fresh commit"| repo["adonis-skills<br/>skills/&lt;name&gt;/SKILL.md"]
   repo --> ci["CI: skills:validate,<br/>skills:index, gitleaks"]
   repo --> cc["Claude Code<br/>plugin marketplace"]
-  repo --> npx["npx skills<br/>Codex, Cursor, others"]
+  repo --> npx["npx skills<br/>Codex, Cursor, Antigravity, others"]
   repo --> hm["Hermes<br/>skills tap"]
   repo --> web["Web catalog<br/>adonis-skills.vercel.app"]
 ```
@@ -211,7 +211,7 @@ The table below explains each script in `package.json`.
 | `pnpm skills:validate`                           | `turbo run skills:validate --filter=@adonis-skills/web`                        | Repository-wide skills validation. Required before commit/CI.                                                                                                                                                                                                                                                 |
 | `pnpm skills:index`                              | `turbo run skills:index --filter=@adonis-skills/web`                           | Regenerates `apps/web/src/generated/skills-index-lite.json`, `skills-detail-index.json`, and `skills-catalog-layout.json`. Run after adding/updating skills so web data stays fresh.                                                                                                                          |
 | `pnpm skills:install:local`                      | `node --experimental-strip-types ./scripts/install-local-skills.ts`            | Installs skills from `skills/` into local `.agents/skills` (supports interactive selection, `--all`, `--skill`). Use for local agent testing.                                                                                                                                                                 |
-| `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally first, then ensures `.claude/skills` points at `.agents/skills`. Use when testing in local Claude/Codex runtime too.                                                                                                                                                                         |
+| `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | Installs locally into `.agents/skills` (read by Codex, Cursor, and Antigravity `agy`), then ensures `.claude/skills` points at `.agents/skills` for Claude Code too.                                                                                                                                          |
 
 Notes:
 
@@ -305,7 +305,7 @@ pnpm skills:test:local -- --no-interactive --skill weekly-report
 
 Notes:
 
-- Install command uses `npx skills add ./skills -a codex ...` under the hood, target directory is `.agents/skills`
+- Install command uses `npx skills add ./skills -a codex ...` under the hood, target directory is `.agents/skills` (natively discovered by Codex, Cursor, and Antigravity `agy`)
 - `skills:test:local` runs the same install flow with `--sync-llm`, which verifies or creates `.claude/skills -> ../.agents/skills`
 
 ### CI

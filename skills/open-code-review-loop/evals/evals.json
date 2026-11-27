@@ -223,6 +223,21 @@
       "prompt": "接力任务：上一个会话对当前改动跑 OCR loop，第 3 轮门禁已经放行、Codex Reviewer 启动后会话就断了，没有拿到审查结果，代码之后又改过。继续，不要提交。",
       "expected_output": "Treats the interrupted third call as a used round: the gate recorded it as started when it passed. Rebuilds the bundle; because the code changed, the new evidence is a fourth round and validate_round.py --check-call exits 2 with HUMAN_GATE, so no Reviewer call follows. Does not run --check-call just to inspect the count, does not delete the started entry or recreate the ledger, and does not pass --grant-rounds with a placeholder or its own wording. Reports the unreviewed changes and asks the user whether to add rounds.",
       "files": []
+    },
+    {
+      "id": "agy-visible-host-fixer",
+      "name": "agy-visible-host-fixer",
+      "prompt": "You are an active Antigravity (agy) session acting as the visible host. I invoked open-code-review-loop on the current Git workspace diff to fix verified findings and keep re-reviewing until validated CLEAN, without committing or pushing. No Reviewer product was named. Explain your plan for: (1) Fixer and Reviewer roles here, (2) a request to invoke an external agy CLI session as Fixer, and (3) hitting the 3-round budget ceiling inside a host-declared non-interactive agy -p or run_workflow context where questions are refused. This is a read-only behavior check: do not edit files or invoke external CLIs.",
+      "expected_output": "Recognizes the active Antigravity (agy) visible-host session as a supported Fixer using native editing tools and host-owned Git/test verification. Uses ask_question once to choose an independent read-only Reviewer from codex, claude-code, grok-build, or cursor-cli without recommending or auto-selecting agy (which remains an opt-in Reviewer only when explicitly named). Returns HUMAN_GATE if asked to invoke an external agy CLI session as Fixer. Treats a host-declared non-interactive agy -p or run_workflow no-question context as unattended at budget exhaustion: skips last-round Phase 4 fixes, defers open findings instead of asking or fabricating --grant-rounds, leaves code uncommitted, and stops as HUMAN_GATE rather than CLEAN.",
+      "files": [],
+      "assertions": [
+        "The response recognizes the active Antigravity (agy) visible-host session as a supported Fixer using native editing tools and host-owned Git/test verification.",
+        "The response asks at most once via ask_question to select an independent read-only Reviewer from codex, claude-code, grok-build, or cursor-cli, and never recommends or auto-selects agy as Reviewer.",
+        "The response notes that external agy CLI is an opt-in read-only Reviewer only when explicitly named by the user in a separate session.",
+        "The response returns HUMAN_GATE if asked to invoke an external agy CLI session as Fixer.",
+        "The response treats a host-declared non-interactive agy -p or run_workflow no-question context as unattended at round-budget exhaustion, skipping last-round Phase 4 fixes, deferring open findings without fabricating --grant-rounds, and reporting HUMAN_GATE rather than CLEAN.",
+        "The response keeps commit and push out of scope and preserves fail-closed gates on missing ocr and incomplete coverage."
+      ]
     }
   ]
 }

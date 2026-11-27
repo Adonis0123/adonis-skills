@@ -1,6 +1,6 @@
 ---
 name: agent-symlink-init
-description: "Initialize or migrate agent-skill symlinks in any repository. Use when a project needs `.claude/skills` linked to `.agents/skills`, `AGENTS.md` linked to `CLAUDE.md`, migration away from `.ruler`-based AI rules, or removal of legacy `sync-llm-skills` copy/sync setups. Trigger on requests about Claude/Codex skill symlinks, AGENTS/CLAUDE symlinks, `.claude/skills` setup, replacing copied skill folders with symlinks, or cleaning old ruler/sync automation."
+description: "Initialize or migrate agent-skill symlinks in any repository for Claude Code, Codex, Cursor, and Antigravity (agy) / Gemini setups. Use when a project needs `.claude/skills` linked to `.agents/skills`, `AGENTS.md` linked to `CLAUDE.md`, checks for `GEMINI.md` or `.agents/skills.json`, migration away from `.ruler`-based AI rules, or removal of legacy `sync-llm-skills` copy/sync setups. Trigger on requests about Claude, Codex, Cursor, or Antigravity (`agy`) / Gemini skill symlinks, AGENTS/CLAUDE/GEMINI rule links, `.claude/skills` setup, replacing copied skill folders with symlinks, or cleaning old ruler/sync automation."
 metadata:
   author: Adonis
 ---
@@ -11,9 +11,10 @@ Set up or migrate a repository to the symlink-based agent-skill layout.
 
 ## Outcomes
 
-- Make `.agents/skills` the source of truth.
-- Ensure `.claude/skills` points at the repository's `.agents/skills` directory.
-- Ensure `AGENTS.md` is a symlink to `CLAUDE.md` when `CLAUDE.md` exists.
+- Make `.agents/skills` the source of truth across hosts (Codex, Cursor, and Antigravity (`agy`), which natively discovers `.agents/skills/*/SKILL.md` and optional `.agents/skills.json` from the repository root).
+- Ensure `.claude/skills` points at the repository's `.agents/skills` directory, without creating `.gemini/skills` symlinks inside the repository because Antigravity already reads `.agents/skills/*/SKILL.md` natively.
+- Ensure `AGENTS.md` is a symlink to `CLAUDE.md` when `CLAUDE.md` exists, which also covers Antigravity (`agy`) since it natively discovers `AGENTS.md` (and optional `GEMINI.md`) at the repository root.
+- Preserve any existing non-symlink `GEMINI.md` or `.agents/skills.json` unless the user explicitly requested consolidating `GEMINI.md` into `CLAUDE.md`/`AGENTS.md`.
 - Remove obsolete ruler or sync automation only when it is actually present and the user explicitly requested that migration.
 - Keep the migration idempotent and non-destructive.
 
@@ -26,13 +27,20 @@ For a non-Git project, use the root explicitly identified by the user; if it is 
 Inspect these paths first:
 
 - `.agents/skills`
+- `.agents/skills.json`
 - `.claude/skills`
 - `CLAUDE.md`
 - `AGENTS.md`
+- `GEMINI.md`
 - the .ruler directory
 - the sync-llm-skills.ts script under the scripts directory
 - `package.json`
 - `.gitignore`
+
+Account for Antigravity (`agy`) discovery and file safety before changing anything:
+
+- Antigravity natively discovers `.agents/skills/*/SKILL.md` and `AGENTS.md` from the repository root (as well as optional `.agents/skills.json` and `GEMINI.md`). Keeping `.agents/skills` as the source of truth and `AGENTS.md -> CLAUDE.md` already covers Antigravity alongside Claude Code, Codex, and Cursor, so do not create `.gemini/skills` symlinks inside repositories (redundant links add maintenance noise without changing discovery).
+- Inspect `GEMINI.md` and `.agents/skills.json` alongside `CLAUDE.md` and `AGENTS.md`. Never overwrite or delete an existing non-symlink `GEMINI.md` or `.agents/skills.json` because they can hold Antigravity-specific project instructions or skill settings—unless the user explicitly requested consolidating `GEMINI.md` into `CLAUDE.md`/`AGENTS.md`.
 
 Classify the work into these modules:
 
@@ -64,7 +72,7 @@ mkdir -p .claude
 3. If `.claude/skills` is a regular directory or file instead of a symlink, preserve it before replacing it:
    - Prefer a backup named **.claude/skills.bak**
    - If that backup path already exists, choose a timestamped backup name
-4. Create or refresh the symlink:
+4. Create or refresh the symlink (do not create `.gemini/skills` inside the repository, since Antigravity reads `.agents/skills/*/SKILL.md` directly):
 
 ```bash
 ln -sfn ../.agents/skills .claude/skills
@@ -72,6 +80,7 @@ ln -sfn ../.agents/skills .claude/skills
 
 5. Unless the user narrowed the request to `.claude/skills` only, if `CLAUDE.md` exists, ensure `AGENTS.md` points to it:
    - If `AGENTS.md` is a regular file, back it up before replacing it
+   - Leave any existing non-symlink `GEMINI.md` or `.agents/skills.json` untouched unless the user explicitly asked to consolidate `GEMINI.md` into `CLAUDE.md`/`AGENTS.md` (if explicitly requested, preserve unique content in `CLAUDE.md` or a backup before replacing or removing `GEMINI.md`)
 
 ```bash
 ln -sfn CLAUDE.md AGENTS.md
@@ -130,6 +139,8 @@ test -f CLAUDE.md && test -L AGENTS.md && readlink AGENTS.md
 
 Also inspect:
 
+- `.gemini/skills` is absent (no redundant repo-local symlink created for Antigravity)
+- Any pre-existing non-symlink `GEMINI.md` or `.agents/skills.json` remains intact unless `GEMINI.md` consolidation was explicitly requested
 - `package.json` for stale ruler or sync commands
 - `.gitignore` for duplicate or contradictory entries
 - `git diff --stat` or equivalent to summarize the migration

@@ -2,7 +2,7 @@
 
 # adonis-skills
 
-面向 coding agent 的通用技能集：评审循环、工作流分流、MCP 配置、Git 交付和本机环境审计。可安装到 Claude Code、Codex、Cursor、Hermes，或任何读取 `SKILL.md` 的 agent。
+面向 coding agent 的通用技能集：评审循环、工作流分流、MCP 配置、Git 交付和本机环境审计。可安装到 Claude Code、Codex、Cursor、Antigravity（`agy`）、Hermes，或任何读取 `SKILL.md` 的 agent。
 
 **在线地址**：<https://adonis-skills.vercel.app/>
 
@@ -13,11 +13,11 @@
 
 ## 快速开始
 
-| 宿主                                                                            | 安装方式                                                                                                                                            |
-| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Codex、Cursor 等 agent（[`skills` CLI](https://github.com/vercel-labs/skills)） | `npx skills add adonis0123/adonis-skills --skill <name>`（加 `-g` 全局安装，`--list` 列出技能）                                                     |
-| Claude Code                                                                     | 先 `/plugin marketplace add Adonis0123/adonis-skills`，再 `/plugin install adonis-skills@adonis-skills`                                             |
-| Hermes Agent                                                                    | `hermes skills install adonis0123/adonis-skills/skills/<name>`（装一个技能；`hermes skills tap add adonis0123/adonis-skills` 把整个仓库加为技能源） |
+| 宿主                                                                                                            | 安装方式                                                                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Codex、Cursor、Antigravity（`.agents/skills`）等 agent（[`skills` CLI](https://github.com/vercel-labs/skills)） | `npx skills add adonis0123/adonis-skills --skill <name>`（加 `-g` 全局安装，`--list` 列出技能；Antigravity 也支持读取全局 `~/.gemini/config/skills/` 与 `skills.json`） |
+| Claude Code                                                                                                     | 先 `/plugin marketplace add Adonis0123/adonis-skills`，再 `/plugin install adonis-skills@adonis-skills`                                                                 |
+| Hermes Agent                                                                                                    | `hermes skills install adonis0123/adonis-skills/skills/<name>`（装一个技能；`hermes skills tap add adonis0123/adonis-skills` 把整个仓库加为技能源）                     |
 
 示例：
 
@@ -57,45 +57,45 @@ codex plugin add delete-guard@adonis-skills
 
 ## 技能列表
 
-| 技能                                                                            | 用途                                                                                                   |
-| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| **评审与完成循环**                                                              |                                                                                                        |
-| [`agentic-review-handoff`](./skills/agentic-review-handoff)                     | 核实粘贴来的评审意见；在同一会话里用 headless reviewer 跑“评审-修复-复审”循环；恢复评审会话或 packet。 |
-| [`open-code-review-loop`](./skills/open-code-review-loop)                       | 有轮次上限的 open-code-review 委托循环，直到当前证据显示没有问题。                                     |
-| [`review-prompt-composer`](./skills/review-prompt-composer)                     | 生成一份可直接复制的提示词，让另一个 agent 评审同一工作树的改动。                                      |
-| [`architecture-hardening-loop`](./skills/architecture-hardening-loop)           | 对指定代码范围循环扫描、分诊、修复、评审、复扫，直到没有有证据的架构修复项。                           |
-| [`task-completion-loop`](./skills/task-completion-loop)                         | 按工作台账、Goal、实现证明、评审和最终审计，完成一个已命名的计划或有边界的编码任务。                   |
-| **工作流分流**                                                                  |                                                                                                        |
-| [`workflow-gate`](./skills/workflow-gate)                                       | 路线选择有影响时，判断该走哪个工作流或技能。                                                           |
-| [`goal-gate`](./skills/goal-gate)                                               | 判断任务是否需要可验证的 Goal 契约，并起草、启动或关闭它。                                             |
-| **Git 交付**                                                                    |                                                                                                        |
-| [`commit`](./skills/commit)                                                     | 生成 emoji Conventional Commit 信息，或创建聚焦的本地提交。                                            |
-| [`commit-push`](./skills/commit-push)                                           | 提交并推送一组已检查的改动，并核实远端已收到。                                                         |
-| [`branch-creator`](./skills/branch-creator)                                     | 用简洁名称安全地创建 feature 或 hotfix 分支。                                                          |
-| **MCP 与工具配置**                                                              |                                                                                                        |
-| [`chrome-dev-mcp`](./skills/chrome-dev-mcp)                                     | 在各 agent 宿主上配置、恢复并验证 Chrome DevTools MCP 连接。                                           |
-| [`figma-mcp`](./skills/figma-mcp)                                               | 按宿主安装、认证并验证官方 Figma MCP server。                                                          |
-| [`kimi-computer-use`](./skills/kimi-computer-use)                               | 安装、注册或诊断 Kimi Computer Use MCP。                                                               |
-| [`ardot-mcp`](./skills/ardot-mcp)                                               | 通过 UXC 封装 Ardot MCP 并完成 OAuth 配置。                                                            |
-| [`uxc-facade`](./skills/uxc-facade)                                             | 把 MCP、OpenAPI、GraphQL、gRPC 或 JSON-RPC 接口封装成稳定的 UXC CLI。                                  |
-| **Web 与前端**                                                                  |                                                                                                        |
-| [`web-performance-audit`](./skills/web-performance-audit)                       | 对真实 Web 应用做只读、以证据为准的运行时性能审计。                                                    |
-| [`local-web-surface`](./skills/local-web-surface)                               | 在稳定的 `*.localhost` 地址上搭建常驻的 macOS 本地 Web 页面。                                          |
-| [`code-inspector-init`](./skills/code-inspector-init)                           | 用 code-inspector-plugin 配置点击跳转源码。                                                            |
-| [`lingui-workflow`](./skills/lingui-workflow)                                   | Lingui 日常的提取、检查、编译和 catalog 命令。                                                         |
-| **仓库配置与写作**                                                              |                                                                                                        |
-| [`agent-symlink-init`](./skills/agent-symlink-init)                             | 把 `.claude/skills` 链到 `.agents/skills`，把 `AGENTS.md` 链到 `CLAUDE.md`。                           |
-| [`code-plugin-architecture`](./skills/code-plugin-architecture)                 | 设计或评审插件注册表和扩展点。                                                                         |
-| [`decision-first-technical-writing`](./skills/decision-first-technical-writing) | 编写或评审以决策开头的技术设计文档。                                                                   |
-| [`weekly-report`](./skills/weekly-report)                                       | 基于一个或多个仓库的 Git 历史生成周报。                                                                |
-| **本机环境**                                                                    |                                                                                                        |
-| [`agent-practice-audit`](./skills/agent-practice-audit)                         | 用本机会话日志对照官方最佳实践给 Agent 用法打分，生成带趋势的本地报告。                                |
-| [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | 用真实日志审计 MCP server、技能和指令文件，按投入产出决定保留、收窄或移除。                            |
-| [`agent-skill-evaluation`](./skills/agent-skill-evaluation)                     | 装技能前先试用：同一个真实任务交给各候选技能，在临时目录跑完打分，再决定不装、单个试用或整包安装。     |
-| [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | 根据进程和文件证据，判断桌面端 coding agent 是在干活、闲置还是已停。                                   |
-| [`disk-tidy`](./skills/disk-tidy)                                               | 找出开发机硬盘被什么占满，把缓存和应用数据按风险分级，只清理你确认的部分。                             |
-| [`file-tidy`](./skills/file-tidy)                                               | 把桌面、下载和家目录的文件整理进带编号的 `~/Files`，移动可校验、可回滚。                               |
-| [`worktree-tidy`](./skills/worktree-tidy)                                       | 跨仓库找出闲置的 git worktree，确认后删除干净的那些；分支保留，MR 合并或关闭后才删。                   |
+| 技能                                                                            | 用途                                                                                                                |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **评审与完成循环**                                                              |                                                                                                                     |
+| [`agentic-review-handoff`](./skills/agentic-review-handoff)                     | 核实粘贴来的评审意见；在同一会话里用 headless reviewer 跑“评审-修复-复审”循环；恢复评审会话或 packet。              |
+| [`open-code-review-loop`](./skills/open-code-review-loop)                       | 有轮次上限的 open-code-review 委托循环，直到当前证据显示没有问题。                                                  |
+| [`review-prompt-composer`](./skills/review-prompt-composer)                     | 生成一份可直接复制的提示词，让另一个 agent 评审同一工作树的改动。                                                   |
+| [`architecture-hardening-loop`](./skills/architecture-hardening-loop)           | 对指定代码范围循环扫描、分诊、修复、评审、复扫，直到没有有证据的架构修复项。                                        |
+| [`task-completion-loop`](./skills/task-completion-loop)                         | 按工作台账、Goal、实现证明、评审和最终审计，完成一个已命名的计划或有边界的编码任务。                                |
+| **工作流分流**                                                                  |                                                                                                                     |
+| [`workflow-gate`](./skills/workflow-gate)                                       | 路线选择有影响时，判断该走哪个工作流或技能。                                                                        |
+| [`goal-gate`](./skills/goal-gate)                                               | 判断任务是否需要可验证的 Goal 契约，并起草、启动或关闭它。                                                          |
+| **Git 交付**                                                                    |                                                                                                                     |
+| [`commit`](./skills/commit)                                                     | 生成 emoji Conventional Commit 信息，或创建聚焦的本地提交。                                                         |
+| [`commit-push`](./skills/commit-push)                                           | 提交并推送一组已检查的改动，并核实远端已收到。                                                                      |
+| [`branch-creator`](./skills/branch-creator)                                     | 用简洁名称安全地创建 feature 或 hotfix 分支。                                                                       |
+| **MCP 与工具配置**                                                              |                                                                                                                     |
+| [`chrome-dev-mcp`](./skills/chrome-dev-mcp)                                     | 在各 agent 宿主上配置、恢复并验证 Chrome DevTools MCP 连接。                                                        |
+| [`figma-mcp`](./skills/figma-mcp)                                               | 按宿主安装、认证并验证官方 Figma MCP server。                                                                       |
+| [`kimi-computer-use`](./skills/kimi-computer-use)                               | 安装、注册或诊断 Kimi Computer Use MCP。                                                                            |
+| [`ardot-mcp`](./skills/ardot-mcp)                                               | 通过 UXC 封装 Ardot MCP 并完成 OAuth 配置。                                                                         |
+| [`uxc-facade`](./skills/uxc-facade)                                             | 把 MCP、OpenAPI、GraphQL、gRPC 或 JSON-RPC 接口封装成稳定的 UXC CLI。                                               |
+| **Web 与前端**                                                                  |                                                                                                                     |
+| [`web-performance-audit`](./skills/web-performance-audit)                       | 对真实 Web 应用做只读、以证据为准的运行时性能审计。                                                                 |
+| [`local-web-surface`](./skills/local-web-surface)                               | 在稳定的 `*.localhost` 地址上搭建常驻的 macOS 本地 Web 页面。                                                       |
+| [`code-inspector-init`](./skills/code-inspector-init)                           | 用 code-inspector-plugin 配置点击跳转源码。                                                                         |
+| [`lingui-workflow`](./skills/lingui-workflow)                                   | Lingui 日常的提取、检查、编译和 catalog 命令。                                                                      |
+| **仓库配置与写作**                                                              |                                                                                                                     |
+| [`agent-symlink-init`](./skills/agent-symlink-init)                             | 把 `.claude/skills` 链到 `.agents/skills`、把 `AGENTS.md` 链到 `CLAUDE.md`（原生兼容 Codex 与 Antigravity `agy`）。 |
+| [`code-plugin-architecture`](./skills/code-plugin-architecture)                 | 设计或评审插件注册表和扩展点。                                                                                      |
+| [`decision-first-technical-writing`](./skills/decision-first-technical-writing) | 编写或评审以决策开头的技术设计文档。                                                                                |
+| [`weekly-report`](./skills/weekly-report)                                       | 基于一个或多个仓库的 Git 历史生成周报。                                                                             |
+| **本机环境**                                                                    |                                                                                                                     |
+| [`agent-practice-audit`](./skills/agent-practice-audit)                         | 用本机会话日志对照官方最佳实践给 Agent 用法打分，生成带趋势的本地报告。                                             |
+| [`dev-environment-roi-audit`](./skills/dev-environment-roi-audit)               | 用真实日志审计 MCP server、技能和指令文件，按投入产出决定保留、收窄或移除。                                         |
+| [`agent-skill-evaluation`](./skills/agent-skill-evaluation)                     | 装技能前先试用：同一个真实任务交给各候选技能，在临时目录跑完打分，再决定不装、单个试用或整包安装。                  |
+| [`desktop-agent-activity`](./skills/desktop-agent-activity)                     | 根据进程和文件证据，判断桌面端 coding agent 是在干活、闲置还是已停。                                                |
+| [`disk-tidy`](./skills/disk-tidy)                                               | 找出开发机硬盘被什么占满，把缓存和应用数据按风险分级，只清理你确认的部分。                                          |
+| [`file-tidy`](./skills/file-tidy)                                               | 把桌面、下载和家目录的文件整理进带编号的 `~/Files`，移动可校验、可回滚。                                            |
+| [`worktree-tidy`](./skills/worktree-tidy)                                       | 跨仓库找出闲置的 git worktree，确认后删除干净的那些；分支保留，MR 合并或关闭后才删。                                |
 
 ## 推荐的第三方技能
 
@@ -131,7 +131,7 @@ flowchart LR
   exp -->|"一次全新提交"| repo["adonis-skills<br/>skills/&lt;name&gt;/SKILL.md"]
   repo --> ci["CI：skills:validate、<br/>skills:index、gitleaks"]
   repo --> cc["Claude Code<br/>plugin marketplace"]
-  repo --> npx["npx skills<br/>Codex、Cursor 等"]
+  repo --> npx["npx skills<br/>Codex、Cursor、Antigravity 等"]
   repo --> hm["Hermes<br/>skills tap"]
   repo --> web["Web 目录<br/>adonis-skills.vercel.app"]
 ```
@@ -211,7 +211,7 @@ pnpm dev
 | `pnpm skills:validate`                           | `turbo run skills:validate --filter=@adonis-skills/web`                        | 仓库级 skills 校验。提交前/CI 前必跑。                                                                                                                                                                                                       |
 | `pnpm skills:index`                              | `turbo run skills:index --filter=@adonis-skills/web`                           | 重新生成 `apps/web/src/generated/skills-index-lite.json`、`skills-detail-index.json` 与 `skills-catalog-layout.json`。新增或修改 skill 后用于刷新 Web 数据。                                                                                 |
 | `pnpm skills:install:local`                      | `node --experimental-strip-types ./scripts/install-local-skills.ts`            | 将 `skills/` 安装到本地 `.agents/skills`（支持交互选择、`--all`、`--skill`）。用于本地 agent 联调。                                                                                                                                          |
-| `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先本地安装，再确保 `.claude/skills` 指向 `.agents/skills`。用于同时验证本机 Claude/Codex 运行场景。                                                                                                                                          |
+| `pnpm skills:test:local`                         | `node --experimental-strip-types ./scripts/install-local-skills.ts --sync-llm` | 先将技能安装到 `.agents/skills`（Codex、Cursor 与 Antigravity `agy` 原生读取），再确保 `.claude/skills` 指向 `.agents/skills` 以兼容本机 Claude Code 运行场景。                                                                              |
 
 补充：
 
@@ -305,7 +305,7 @@ pnpm skills:test:local -- --no-interactive --skill weekly-report
 
 说明：
 
-- 安装命令底层使用 `npx skills add ./skills -a codex ...`，目标目录为 `.agents/skills`
+- 安装命令底层使用 `npx skills add ./skills -a codex ...`，目标目录为 `.agents/skills`（Codex、Cursor 与 Antigravity `agy` 原生识别）
 - `skills:test:local` 使用同一套安装流程并带上 `--sync-llm`，会检查或创建 `.claude/skills -> ../.agents/skills`
 
 ### CI

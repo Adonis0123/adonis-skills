@@ -6,14 +6,14 @@ Refresh mode searches only these official domains. A page outside the list is ne
 
 ## Allowlist
 
-| Vendor    | Domains                                                                                                  | Notes                                                                                                                         |
-| --------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Anthropic | `code.claude.com`, `docs.anthropic.com`, `docs.claude.com`, `claude.com`, `anthropic.com` (incl. `www.`) | Claude Code docs and `anthropic.com/engineering` posts.                                                                       |
-| OpenAI    | `learn.chatgpt.com`, `developers.openai.com`, `openai.com`, `platform.openai.com`                        | Codex guides, docs and announcements.                                                                                         |
-| Google    | `geminicli.com`, `github.com/google-gemini/*`, `developers.googleblog.com`, `ai.google.dev`              | Gemini CLI docs live on the site and in the `google-gemini/gemini-cli` repository `docs/`. Other GitHub orgs are not allowed. |
-| Cursor    | `cursor.com`, `docs.cursor.com`                                                                          | Docs and the official blog.                                                                                                   |
-| xAI       | `docs.x.ai`                                                                                              | Grok docs.                                                                                                                    |
-| Tencent   | `codebuddy.ai` (incl. `www.`), `cloud.tencent.com`                                                       | CodeBuddy product docs only; other `cloud.tencent.com` products are out of scope.                                             |
+| Vendor    | Domains                                                                                                                                              | Notes                                                                                                                                                                                                                   |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Anthropic | `code.claude.com`, `docs.anthropic.com`, `docs.claude.com`, `claude.com`, `anthropic.com` (incl. `www.`)                                             | Claude Code docs and `anthropic.com/engineering` posts.                                                                                                                                                                 |
+| OpenAI    | `learn.chatgpt.com`, `developers.openai.com`, `openai.com`, `platform.openai.com`                                                                    | Codex guides, docs and announcements.                                                                                                                                                                                   |
+| Google    | `antigravity.google`, `github.com/google-antigravity/*`, `geminicli.com`, `github.com/google-gemini/*`, `developers.googleblog.com`, `ai.google.dev` | Antigravity (`agy`) docs live on `antigravity.google/docs/` (and `google-antigravity` on GitHub); Gemini CLI docs live on `geminicli.com` and in `google-gemini/gemini-cli` `docs/`. Other GitHub orgs are not allowed. |
+| Cursor    | `cursor.com`, `docs.cursor.com`                                                                                                                      | Docs and the official blog.                                                                                                                                                                                             |
+| xAI       | `docs.x.ai`                                                                                                                                          | Grok docs.                                                                                                                                                                                                              |
+| Tencent   | `codebuddy.ai` (incl. `www.`), `cloud.tencent.com`                                                                                                   | CodeBuddy product docs only; other `cloud.tencent.com` products are out of scope.                                                                                                                                       |
 
 ## Seed URLs
 
@@ -34,6 +34,11 @@ Start here, then follow in-site links and the vendor's own search. Seeds marked 
 | OpenAI    | https://learn.chatgpt.com/docs/non-interactive-mode            | verified                          |
 | OpenAI    | https://learn.chatgpt.com/docs/agent-configuration/agents-md   | verified                          |
 | OpenAI    | https://developers.openai.com/codex                            | seed                              |
+| Google    | https://antigravity.google/docs/cli/best-practices.md          | seed                              |
+| Google    | https://antigravity.google/docs/cli/skills.md                  | seed                              |
+| Google    | https://antigravity.google/docs/cli/rules.md                   | seed                              |
+| Google    | https://antigravity.google/docs/cli/hooks.md                   | seed                              |
+| Google    | https://antigravity.google/docs/cli/permissions.md             | seed                              |
 | Google    | https://geminicli.com/docs/                                    | seed                              |
 | Google    | https://github.com/google-gemini/gemini-cli/tree/main/docs     | seed                              |
 | Google    | https://developers.googleblog.com/ (search "Gemini CLI")       | seed                              |

@@ -3,11 +3,14 @@
 提供 Git 仓库提交记录分析功能。
 """
 
+import argparse
+import json
 import re
 import subprocess
+import sys
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # Match the calendar used by date_utils, independently of the shell timezone.
@@ -382,3 +385,87 @@ def get_all_commits_from_repos(
             commits_by_repo[repo_name] = commits
 
     return commits_by_repo
+
+
+def _default_week_range() -> Tuple[date, date]:
+    today = datetime.now(REPORT_TIMEZONE).date()
+    return today - timedelta(days=today.weekday()), today
+
+
+def _resolve_date_range(
+    start_raw: Optional[str],
+    end_raw: Optional[str],
+) -> Tuple[date, date]:
+    if not start_raw and not end_raw:
+        return _default_week_range()
+    if not start_raw:
+        raise ValueError("--start is required when --end is provided")
+    start_date = date.fromisoformat(start_raw)
+    end_date = (
+        date.fromisoformat(end_raw)
+        if end_raw
+        else datetime.now(REPORT_TIMEZONE).date()
+    )
+    return start_date, end_date
+
+
+def _load_cli_config(config_path: Path) -> Dict[str, Any]:
+    if not config_path.exists():
+        return {}
+    data = json.loads(config_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError(f"Config must be a JSON object: {config_path}")
+    return data
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Read Git commits across local and remote-tracking refs in UTC+08:00."
+    )
+    parser.add_argument(
+        "--repo",
+        action="append",
+        dest="repos",
+        help="Repository path (repeatable; defaults to config repos or current directory)",
+    )
+    parser.add_argument("--start", help="Start date (YYYY-MM-DD, defaults to this Monday in UTC+08:00)")
+    parser.add_argument("--end", help="End date (YYYY-MM-DD, defaults to today in UTC+08:00)")
+    parser.add_argument("--author", help="Git extended author regex (defaults to config or auto-detect)")
+    parser.add_argument("--config", help="Optional config.json path (defaults to ~/.weekly-reports/config.json)")
+    args = parser.parse_args(argv)
+
+    try:
+        start_date, end_date = _resolve_date_range(args.start, args.end)
+        config_path = (
+            Path(args.config).expanduser()
+            if args.config
+            else Path.home() / ".weekly-reports" / "config.json"
+        )
+        cfg = _load_cli_config(config_path)
+
+        if args.repos:
+            repo_paths = [Path(p).expanduser() for p in args.repos]
+        else:
+            configured = cfg.get("repos") or []
+            repo_paths = [
+                Path(entry["path"]).expanduser()
+                for entry in configured
+                if isinstance(entry, dict) and entry.get("path")
+            ] or [Path.cwd()]
+
+        author = args.author
+        if author is None:
+            default_author = cfg.get("default_author")
+            if isinstance(default_author, str) and default_author.strip().lower() not in ("", "auto"):
+                author = default_author.strip()
+
+        commits = get_all_commits_from_repos(repo_paths, start_date, end_date, author=author)
+        print(json.dumps(commits, ensure_ascii=False, indent=2))
+        return 0
+    except (ValueError, RuntimeError, OSError, json.JSONDecodeError) as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

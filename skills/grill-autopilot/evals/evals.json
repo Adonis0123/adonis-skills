@@ -54,6 +54,21 @@
         "Each escalated question shows the Proxy's recommendation as the first option",
         "Sends no message and performs no deployment or DNS change"
       ]
+    },
+    {
+      "id": 3,
+      "name": "agy-interviewer-host-pairing",
+      "prompt": "/grill-autopilot I am running inside Antigravity (agy). Grill my plan to add a --format=markdown summary flag to scripts/grill-ledger.mjs; answer the questions yourself without asking me mid-session.",
+      "expected_output": "Starts with a one-line pairing showing Interviewer = agy and Proxy = the first non-agy reviewer from saved preferences (never auto-selecting agy as Proxy). Starts the Watch Page with --interviewer=agy, passes --host=agy --skip-host to review-loop consult so saved preference picks the Proxy, never asks the user mid-session, runs grill-ledger.mjs check after every Proxy reply, and writes docs/grill/<date>-<topic>.md. If any Escalations arise, batches them through Antigravity's ask_question tool (at most 4 per call, recommended option first); otherwise asks nothing at close.",
+      "files": [],
+      "expectations": [
+        "States the one-line pairing with Interviewer = agy and a saved reviewer preference (claude, codex, or grok) as Proxy, without asking the user to confirm",
+        "Does not auto-select agy as Proxy when the user did not name agy for the Proxy role",
+        "Passes --host=agy --skip-host to review-loop consult rather than bypassing --host routing like pi or invoking command agy for the Proxy",
+        "Starts the Watch Page with --interviewer=agy in the pairing round and never reads or screenshots it afterwards",
+        "Never asks the user mid-session; uses ask_question in batches of at most 4 with the recommended option first only if Escalations exist at close, and asks nothing if Escalations are empty",
+        "Writes the run files, runs grill-ledger.mjs check, writes docs/grill/<date>-<topic>.md, and does not edit source code or commit"
+      ]
     }
   ]
 }

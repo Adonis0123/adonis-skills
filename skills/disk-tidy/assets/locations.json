@@ -133,6 +133,12 @@
     "paths": ["~/.grok*/downloads"]
   },
   {
+    "what": "Antigravity updater cache and logs",
+    "tier": "A",
+    "clean": "remove updater downloads and old logs; keep the active log symlink target and any version a running agy/Antigravity process uses",
+    "paths": ["~/.gemini/antigravity*/updater", "~/.gemini/antigravity*/log"]
+  },
+  {
     "what": "AI agent session transcripts",
     "tier": "B",
     "clean": "remove sessions older than the owner wants to resume",
@@ -141,6 +147,8 @@
       "~/.claude*/projects",
       "~/.grok*/sessions",
       "~/.cursor/chats",
+      "~/.gemini/antigravity*/conversations",
+      "~/.gemini/antigravity*/brain",
       "~/Library/Application Support/orca/codex-runtime-home/home/sessions"
     ]
   },

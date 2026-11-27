@@ -19,7 +19,7 @@ Each rule protects something that is hard to get back.
 - Survey read-only. Nothing is deleted, moved or emptied before the user picks it from the cleanup list. A cleanup the user approved stays within what they picked.
 - Never empty the Trash, and say so. Apps and user files go to the Trash so the owner can put them back; the space returns only when the owner empties it.
 - Never open credential, token, cookie or chat content. Judge app data, profiles and session folders by name, size and date. If a config points at a key file (for example `GOOGLE_APPLICATION_CREDENTIALS`), report the path, never the contents, and leave the file where it is.
-- Check what is in use right before deleting: process working directories (`lsof -d cwd`), the binary each running session executes, and dev servers. Keep any version a running process uses, the version a launcher links to, and the one before it.
+- Check what is in use right before deleting: process working directories (`lsof -d cwd`), the binary each running session executes (including running `agy` / Antigravity processes), and dev servers. Keep any version a running process uses, the version a launcher links to, and the one before it.
 - Delete build output only when git ignores it (`git check-ignore`). A folder that merely looks like a cache but is tracked or outside git is real work until shown otherwise.
 - Prefer each tool's own cleaner (`uv cache prune`, `pnpm store prune`, `npm cache clean --force`, `brew cleanup`, in-app storage managers) over `rm`, because it knows what is still referenced.
 - `du` overstates what deletion frees: APFS clones (pnpm, uv and Next.js copy files that way) and hard links are counted once per path. Quote `du` sizes as estimates and report only the `free` difference as the result.
@@ -42,14 +42,14 @@ Find the code roots instead of assuming them: the user's words first, then folde
 
 ### 2. Survey in slices
 
-Split the survey by owner so slices don't overlap. With subagents available, run the slices in parallel, each read-only and each told to return a table of path, size, what it is, tier, how to clean, and risk, listing only items above about 500 MB. Without subagents, do the slices in turn.
+Split the survey by owner so slices don't overlap. With subagents available, run the slices in parallel (on Antigravity, use `invoke_subagent(TypeName="research", ...)` or `run_workflow`), each read-only and each told to return a table of path, size, what it is, tier, how to clean, and risk, listing only items above about 500 MB. Without subagents, do the slices in turn.
 
-| Slice                          | Covers                                                                                                                                                                                                             | Start with                                                                                       |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Build output and dev caches    | `.next`, `.turbo`, `node_modules/.cache` (webpack, babel, Remotion), Cargo `target` and similar under the code folders; package-manager caches; toolchains; Docker                                                 | `python3 "$TIDY" artifacts <code roots> --out <scratch>/artifacts.json`, `python3 "$TIDY" known` |
-| Apps and system                | `~/Library/Application Support`, `Containers`, `Group Containers`, `Caches`, `/Applications` with last-used dates (`mdls -name kMDItemLastUsedDate`), iOS backups, local snapshots (`tmutil listlocalsnapshots /`) | `known` rows of tier B                                                                           |
-| AI agent data and repositories | each agent home (`~/.claude*`, `~/.codex*`, `~/.grok*`, `~/.cursor`, ...): sessions by month, upgrade leftovers, old CLI versions; repository and worktree sizes, last commit, unpushed work                       | `ls -la` first: shared folders are often symlinks and must not be counted twice                  |
-| The owner's files              | Downloads, Desktop, Documents, Movies, large files, duplicates, installers                                                                                                                                         | the file-tidy skill, if installed: its `scan` and `dupes` are read-only                          |
+| Slice                          | Covers                                                                                                                                                                                                                     | Start with                                                                                       |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| Build output and dev caches    | `.next`, `.turbo`, `node_modules/.cache` (webpack, babel, Remotion), Cargo `target` and similar under the code folders; package-manager caches; toolchains; Docker                                                         | `python3 "$TIDY" artifacts <code roots> --out <scratch>/artifacts.json`, `python3 "$TIDY" known` |
+| Apps and system                | `~/Library/Application Support`, `Containers`, `Group Containers`, `Caches`, `/Applications` with last-used dates (`mdls -name kMDItemLastUsedDate`), iOS backups, local snapshots (`tmutil listlocalsnapshots /`)         | `known` rows of tier B                                                                           |
+| AI agent data and repositories | each agent home (`~/.claude*`, `~/.codex*`, `~/.grok*`, `~/.cursor`, `~/.gemini` (`antigravity*`), ...): sessions by month, upgrade leftovers, old CLI versions; repository and worktree sizes, last commit, unpushed work | `ls -la` first: shared folders are often symlinks and must not be counted twice                  |
+| The owner's files              | Downloads, Desktop, Documents, Movies, large files, duplicates, installers                                                                                                                                                 | the file-tidy skill, if installed: its `scan` and `dupes` are read-only                          |
 
 [references/hotspots.md](references/hotspots.md) lists where space usually hides on a developer machine and how each place is cleaned; read it before writing the slice prompts.
 
@@ -65,7 +65,7 @@ Merge the slices, drop paths two slices both counted, and sort by size into tier
 - **B, owner decides**: data with value or side effects: chat media, sessions, Docker images, rendered videos, app profiles, unused apps, worktrees, repositories not touched for months.
 - **C, keep**: in use, irreplaceable, or owned by the system.
 
-Show A and B as tables with size, what is lost, and the risk, with an A total that is honest about clones. Ask which groups to clean; the host's question tool with multi-select works well here.
+Show A and B as tables with size, what is lost, and the risk, with an A total that is honest about clones. Ask which groups to clean; the host's question tool with multi-select (such as `ask_question` on Antigravity) works well here.
 
 ### 5. Clean what was picked
 

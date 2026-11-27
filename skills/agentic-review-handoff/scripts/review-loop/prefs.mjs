@@ -10,10 +10,30 @@ import os from "node:os";
 import path from "node:path";
 
 export const PRODUCTS = ["codex", "grok", "claude"];
+export const HOST_ONLY_PRODUCTS = [
+  "agy",
+  "antigravity",
+  "pi",
+  "cursor",
+  "cursor-cli",
+];
+const CANONICAL_HOST_ONLY = ["agy", "cursor", "pi"];
+const HOST_ALIASES = Object.freeze({
+  antigravity: "agy",
+  "cursor-cli": "cursor",
+});
+const VALID_HOSTS = new Set([...PRODUCTS, ...HOST_ONLY_PRODUCTS]);
 export const DEFAULT_PREFS = Object.freeze({
   order: ["claude", "codex", "grok"],
   skipHost: false,
 });
+
+/** Normalize a caller-provided --host name; aliases map to canonical host IDs. */
+export function normalizeHost(host) {
+  if (host == null || host === false || host === "") return null;
+  const raw = String(host).trim().toLowerCase();
+  return HOST_ALIASES[raw] ?? raw;
+}
 
 /** @param {NodeJS.ProcessEnv} env */
 export function prefsPath(env = process.env) {
@@ -112,9 +132,11 @@ export function resolveFromPrefs({
   forceSkipHost = false,
 } = {}) {
   const prefs = readPrefs(env);
-  const h = host ? String(host).toLowerCase() : null;
-  if (h && !PRODUCTS.includes(h))
-    throw new Error(`--host takes ${PRODUCTS.join("|")}, got ${host}`);
+  const h = normalizeHost(host);
+  if (h !== null && !VALID_HOSTS.has(h))
+    throw new Error(
+      `--host takes ${[...PRODUCTS, ...CANONICAL_HOST_ONLY].join("|")} (aliases: ${Object.keys(HOST_ALIASES).join(", ")}), got ${host}`,
+    );
   const skip = (prefs.skipHost || forceSkipHost) && h;
   const order = prefs.order.filter((p) => !(skip && p === h));
   if (!order.length)

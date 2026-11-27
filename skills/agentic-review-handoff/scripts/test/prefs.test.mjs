@@ -9,6 +9,8 @@ import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import {
+  HOST_ONLY_PRODUCTS,
+  PRODUCTS,
   prefsPath,
   readPrefs,
   resolveFromPrefs,
@@ -135,6 +137,94 @@ describe("Reviewer preference", () => {
       question: "A?",
       adapterFactory: answering(calls),
     });
+    assert.equal(c.peer, "codex");
+  });
+
+  it("supports host-only products (agy, antigravity, cursor, cursor-cli, pi) without adding them to Reviewer prefs", async () => {
+    const env = envAt();
+    const p = readPrefs(env);
+    assert.deepEqual(PRODUCTS, ["codex", "grok", "claude"]);
+    assert.deepEqual(HOST_ONLY_PRODUCTS, [
+      "agy",
+      "antigravity",
+      "pi",
+      "cursor",
+      "cursor-cli",
+    ]);
+    assert.throws(
+      () => writePrefs(env, { order: "claude,agy" }),
+      /codex\|grok\|claude/,
+    );
+    assert.throws(
+      () => resolveFromPrefs({ host: "gemini", env }),
+      /codex\|grok\|claude\|agy\|cursor\|pi/,
+    );
+
+    assert.deepEqual(resolveFromPrefs({ host: "agy", env }), {
+      reviewer: "claude",
+      fallback: ["codex", "grok"],
+      prefs: p,
+    });
+    assert.deepEqual(
+      resolveFromPrefs({ host: "antigravity", forceSkipHost: true, env }),
+      {
+        reviewer: "claude",
+        fallback: ["codex", "grok"],
+        prefs: p,
+      },
+    );
+    assert.deepEqual(
+      resolveFromPrefs({ host: "cursor-cli", forceSkipHost: true, env }),
+      {
+        reviewer: "claude",
+        fallback: ["codex", "grok"],
+        prefs: p,
+      },
+    );
+    assert.deepEqual(
+      resolveFromPrefs({ host: "pi", forceSkipHost: true, env }),
+      {
+        reviewer: "claude",
+        fallback: ["codex", "grok"],
+        prefs: p,
+      },
+    );
+
+    writePrefs(env, { order: "codex,claude,grok", skipHost: true });
+    const calls = [];
+    const r = await cmdRun({
+      repoRoot: initTempRepo(),
+      host: "agy",
+      env,
+      rounds: 1,
+      adapterFactory: answering(calls),
+    });
+    assert.equal(r.ok, true, r.message);
+    assert.deepEqual(calls, ["codex"]);
+    assert.deepEqual(r.reviewerFrom, {
+      source: "file",
+      order: ["codex", "claude", "grok"],
+      host: "agy",
+    });
+
+    const rAlias = await cmdRun({
+      repoRoot: initTempRepo(),
+      host: "antigravity",
+      env,
+      rounds: 1,
+      adapterFactory: answering(calls),
+    });
+    assert.equal(rAlias.ok, true, rAlias.message);
+    assert.equal(rAlias.reviewerFrom.host, "agy");
+
+    const c = await cmdConsult({
+      repoRoot: initTempRepo(),
+      host: "agy",
+      env,
+      question: "A?",
+      adapterFactory: answering(calls),
+    });
+    assert.equal(c.ok, true);
     assert.equal(c.peer, "codex");
   });
 

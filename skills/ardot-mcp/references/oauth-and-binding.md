@@ -10,7 +10,7 @@
 | Scope         | `mcp:use`                        |
 | Redirect URI  | `http://127.0.0.1:8788/callback` |
 
-Host-native Grok/Claude OAuth tokens are **not** automatically shared with UXC. Complete UXC OAuth even when the native host is already authorized.
+Host-native Antigravity/Grok/Claude OAuth tokens are **not** automatically shared with UXC. Complete UXC OAuth even when the native host is already authorized.
 
 ## Agent-friendly login
 

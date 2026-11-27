@@ -20,11 +20,11 @@
 
 ## Install Targets
 
-| Host                                    | Command                                                                                                                                                            |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Codex, Cursor, other `skills` CLI hosts | `npx skills add adonis0123/adonis-skills --skill <name>` (`-g` global, `--list` to list)                                                                           |
-| Claude Code                             | `/plugin marketplace add Adonis0123/adonis-skills`, then `/plugin install adonis-skills@adonis-skills` (manifest: `.claude-plugin/marketplace.json`)               |
-| Hermes Agent                            | `hermes skills install adonis0123/adonis-skills/skills/<name>` (one skill; `hermes skills tap add adonis0123/adonis-skills` adds the whole repo as a skill source) |
+| Host                                                  | Command                                                                                                                                                            |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Codex, Cursor, Antigravity (`.agents/skills`), others | `npx skills add adonis0123/adonis-skills --skill <name>` (`-g` global, `--list` to list; Antigravity also reads global `~/.gemini/config/skills/` / `skills.json`) |
+| Claude Code                                           | `/plugin marketplace add Adonis0123/adonis-skills`, then `/plugin install adonis-skills@adonis-skills` (manifest: `.claude-plugin/marketplace.json`)               |
+| Hermes Agent                                          | `hermes skills install adonis0123/adonis-skills/skills/<name>` (one skill; `hermes skills tap add adonis0123/adonis-skills` adds the whole repo as a skill source) |
 
 ## Commands
 

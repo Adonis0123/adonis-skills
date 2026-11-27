@@ -6,7 +6,8 @@ truth because flags and output envelopes can change between versions.
 ## Shared rules
 
 - Canonical IDs are `codex`, `claude-code`, `grok-build`, `cursor-cli`, and
-  `agy` (Reviewer only, when the user names it).
+  `agy` (external CLI is Reviewer-only when the user names it; an interactive
+  `agy` visible host may act as Fixer).
 - Reviewer and Fixer are separate sessions, even when they use the same
   product.
 - Reviewer mode uses the strongest available read-only controls and a
@@ -226,14 +227,29 @@ or disable the sandbox.
 
 ## agy (Antigravity)
 
-Run it as `command agy -p … --output-format json`; flags and quota signals
-live in agent-dispatch `references/accounts.md` § Antigravity (agy).
+Distinguish the external CLI adapter from an active visible-host session:
 
-- Reviewer only. A Fixer role returns `HUMAN_GATE`.
+- **External `agy` CLI (`command agy -p … --output-format json`) is Reviewer
+  only** (flags and quota signals live in agent-dispatch
+  `references/accounts.md` § Antigravity (agy)). It is opt-in only when the
+  user explicitly names `agy` — never auto-select, default to, or recommend
+  it. Assigning an external `agy` CLI call as Fixer returns `HUMAN_GATE` because
+  no verified scoped external-Fixer contract exists for `agy -p`.
+- **Interactive `agy` visible host may act as Fixer**: when an active
+  Antigravity (`agy`) session is itself the visible host running the loop, it
+  applies verified fixes directly with native editing tools and runs host-owned
+  Git/test verification. When no Reviewer is named, it asks once via
+  `ask_question` to choose an independent Reviewer from `codex`, `claude-code`,
+  `grok-build`, or `cursor-cli`. In a host-declared non-interactive `agy -p`
+  or `run_workflow` context where questions are refused, it picks the
+  recommended non-`agy` Reviewer at start and treats round-budget exhaustion as
+  unattended (deferring open findings instead of asking or fabricating a round
+  grant).
 - Use `--mode plan`, `--sandbox` and `--json-schema` with
-  `references/review-schema.json`. The envelope stores the object in
-  `structured_output`, the session in `conversation_id`, and `status` must be
-  `SUCCESS`; never parse `response`, which also carries plan prose.
+  `references/review-schema.json` for an external `agy` Reviewer. The envelope
+  stores the object in `structured_output`, the session in `conversation_id`,
+  and `status` must be `SUCCESS`; never parse `response`, which also carries
+  plan prose.
 - agy 1.5.14 reads the prompt only from the `-p` argument, not stdin. Do not
   put the whole bundle in argv: when bounded instructions plus an `--add-dir`
   read of the bundle cannot be confirmed for the installed version, return

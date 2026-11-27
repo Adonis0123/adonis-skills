@@ -1,6 +1,6 @@
 ---
 name: grill-autopilot
-description: "Run a grill-with-docs design interview where one AI asks and another AI answers on the user's behalf, researching reuse on GitHub and the web, so the user is only asked about side effects, facts only they know, or hard-to-reverse choices with weak evidence. Any pairing of Claude Code, Codex, Grok or pi accounts. Ends with a decision log, glossary updates and proposed decision records; optionally hands off to planning, a goal or an implementation loop. Use when the user wants a plan or design grilled without answering every question, says 'grill it for me', 'auto grill', 'answer the grill yourself', or asks two agents to interview and answer each other. Chinese triggers: 自动 grill、替我回答、两个 agent 一问一答、别问我、自己拷问方案。Not for grilling the user directly (use grill-with-docs) or reviewing code (use agentic-review-handoff)."
+description: "Run a grill-with-docs design interview where one AI asks and another AI answers on the user's behalf, researching reuse on GitHub and the web, so the user is only asked about side effects, facts only they know, or hard-to-reverse choices with weak evidence. Any pairing of Claude Code, Codex, Grok, Antigravity (agy) or pi accounts. Ends with a decision log, glossary updates and proposed decision records; optionally hands off to planning, a goal or an implementation loop. Use when the user wants a plan or design grilled without answering every question, says 'grill it for me', 'auto grill', 'answer the grill yourself', asks two agents to interview and answer each other, or asks in Chinese for auto-grill, two-agent Q&A, or answering the grill on their behalf. Not for grilling the user directly (use grill-with-docs) or reviewing code (use agentic-review-handoff)."
 metadata:
   author: adonis
   version: "1.1.0"
@@ -34,17 +34,18 @@ Vocabulary is in `GLOSSARY.md` next to this file: **Interviewer**, **Proxy**, **
 1. Confirm the skills are installed: `grilling`, `domain-modeling` (or `grill-with-docs`) and `agentic-review-handoff`. Missing → stop and give the one install line: `npx skills add mattpocock/skills --skill grill-with-docs --skill grilling --skill domain-modeling` / `npx skills add adonis0123/adonis-skills --skill agentic-review-handoff`.
 2. `RL=<agentic-review-handoff dir>/scripts/review-loop.mjs`, `LEDGER=<this skill dir>/scripts/grill-ledger.mjs`, `WATCH=<this skill dir>/scripts/grill-watch.mjs`, `REPO=<repo root>`, `TOPIC=<kebab-case topic>`, `RUN=$REPO/.review-handoff/runtime/grill/$TOPIC`. Export `REVIEW_LOOP_TIMEOUT_MS=600000`.
 3. Read `GLOSSARY.md`, `docs/` decision records and `AGENTS.md`/`CLAUDE.md` for binding rules (decision-record location and naming follow the repo; default `docs/adr/`).
-4. Parse options: `--interviewer <account>`, `--proxy <account>`, `--then plan|goal|loop`. Accounts are launcher names (`cc002`, `codex003`, `grok002`, `pi-…`); the product is the name's family.
+4. Parse options: `--interviewer <account>`, `--proxy <account>`, `--then plan|goal|loop`. External `--interviewer` and `--proxy` launchers come from `claude`, `codex`, `grok` (or `pi` for Interviewer only), such as `cc002`, `codex003`, `grok002`, `pi-…`. Antigravity (`agy`) is supported as the **current Interviewer host session** or as an opt-in `--proxy agy`, not as an external `--interviewer agy` launcher; if `--interviewer agy` is requested from another host, fail cleanly up front with that role limit instead of passing `agy` into `consult --raw`.
 
 ## 1. Pairing
 
-- **Interviewer**: this host session, running `grill-with-docs` itself. With `--interviewer`, an external session driven by `references/interviewer-brief.md` through `consult --raw` with its own `--resume` chain.
+- **Interviewer**: this host session, running `grill-with-docs` itself (including when running natively inside Antigravity `agy`). With `--interviewer <account>` (from `claude`, `codex`, `grok`, or `pi` — never `agy`), an external session driven by `references/interviewer-brief.md` through `consult --raw` with its own `--resume` chain.
 - **Proxy**: a product different from the Interviewer's, so one model does not grade its own questions.
-  - `--proxy <account>` → `--peer=<family> --peer-command=<account>`.
-  - Otherwise, when the Interviewer is pi, read `review-loop prefs`, choose the first product in its saved `order` (`claude`, `codex` or `grok`), and pass it explicitly as `--peer=<product>`. Do not pass `--host=pi`: preference routing accepts only the three reviewer products. Pass the remaining saved products in order as `--fallback=<product,product>`; omit this flag when none remain. Read preferences with `node "$RL" prefs`, without changing them.
+  - `--proxy <account>` → `--peer=<family> --peer-command=<account>` (for `claude`, `codex` or `grok`; if the user names `agy`, use the `agy` Proxy flow below).
+  - Otherwise, when the Interviewer host is Antigravity (`agy`), pass `--host=agy --skip-host` to `review-loop consult` so the saved Reviewer preference (`review-loop prefs`) chooses the Proxy.
+  - Otherwise, when the Interviewer is pi, read `review-loop prefs`, choose the first product in its saved `order` (`claude`, `codex` or `grok`), and pass it explicitly as `--peer=<product>`. Do not pass `--host=pi`: preference routing picks only from the three reviewer products and does not accept `pi` as `--host`. Pass the remaining saved products in order as `--fallback=<product,product>`; omit this flag when none remain. Read preferences with `node "$RL" prefs`, without changing them.
   - For other Interviewer products, `--host=<Interviewer product> --skip-host` lets the saved Reviewer preference pick it (`review-loop prefs`).
   - pi has no web search; it can be the Interviewer but not the Proxy.
-  - agy (Antigravity) is optional and only used when the user names it: never pick it automatically, by default or as a recommendation. It is not a `review-loop consult` peer, so call it as the Proxy the way agent-dispatch `references/accounts.md` § Antigravity (agy) says, save its `response` as the round's answers, and resume the same conversation every round.
+  - `agy` (Antigravity) as Proxy is strictly opt-in and only used when the user explicitly names it: never pick it automatically, by default or as a recommendation. It is not a `review-loop consult` peer, so invoke it via `command agy -p ... --conversation <id>` (following `agent-dispatch` `references/accounts.md` § Antigravity (`agy`)), save its `response` as the round's answers, and resume the same conversation ID every round.
 - **Red-team** (step 3): a third product used by neither role, or skipped when none is installed.
 
 State the pairing in one line when starting, then start the Watch Page in the same tool round and keep going:
@@ -109,7 +110,7 @@ With no round left under the cap, `redteam` turns the overturned ids into Escala
 
 1. Write the decision log from `references/decision-log-template.md`, every decision and red-team line taken from `ledger.json`, then `node "$WATCH" event --run="$RUN" --kind=done --text="<decision log path>"`.
 2. No Escalations → done, no question to the user.
-3. Escalations → one batch through the host's question tool, at most 4 per call, ranked costly first, then low confidence. Each shows the Proxy's recommendation as the first option. No question tool → a `需要你拍板` heading followed by the numbered questions.
+3. Escalations → one batch through the host's question tool, at most 4 per call, ranked costly first, then low confidence. Each shows the Proxy's recommendation as the first option; Antigravity's `ask_question` tool supports multi-question batches cleanly (up to 4 per call, recommended option first). No question tool → a `需要你拍板` heading followed by the numbered questions.
 4. Answers that unblock the frontier → up to 2 more rounds, then update the log. These answers are the user's, so record them as `Decided`.
 5. `--then`: `plan` → `writing-plans` with the log as the spec; `goal` → `goal-gate`; `loop` → `task-completion-loop`. Those skills apply their own gates; the delegation here does not carry over to implementation side effects.
 

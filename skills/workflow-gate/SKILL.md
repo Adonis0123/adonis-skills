@@ -27,7 +27,7 @@ Apply #1/#2 before Fast skip, named skills, or handoffs; stop routing if either 
 After #1/#2, skip the block and load:
 
 - `goal-gate` for explicit primary native Goal creation/management/continuation/completion/blocking. Goal-only intent implies neither Plan nor completion pipeline. Preserve reviewer/scanner/execution exclusions.
-- `task-completion-loop` when named or when the user unmistakably requests its whole pipeline: existing named plan/spec or bounded unfinished task, one ledger, real host + Grok + Claude convergence, Goal-managed implementation, agentic review, scoped architecture hardening, and fresh final Claude audit. Not a Route enum. Finish/test, Goal-only, review-fix-re-review alone, or hardening alone route normally. Downstream checks recursive callability; it may return `MISSING_DEPENDENCIES`.
+- `task-completion-loop` when named or when the user unmistakably requests its whole pipeline: existing named plan/spec or bounded unfinished task, one ledger, real host + two distinct non-host peers convergence, Goal-managed implementation, agentic review, scoped architecture hardening, and a fresh read-only blind audit. Not a Route enum. Finish/test, Goal-only, review-fix-re-review alone, or hardening alone route normally. Downstream checks recursive callability; it may return `MISSING_DEPENDENCIES`.
 
 ## Scope
 

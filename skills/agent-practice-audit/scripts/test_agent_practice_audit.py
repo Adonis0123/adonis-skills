@@ -32,6 +32,7 @@ DG = load("digests")
 CO = load("consensus")
 CS = load("config_scan")
 EM = load("export_metrics")
+PJ = load("prejudge")
 try:
     SO = load("safe_output")
 except FileNotFoundError:  # created by the review fix; keeps the suite importable before it exists
@@ -869,6 +870,7 @@ class LaneBRegressions(TmpCase):
                       {"type": "event_msg", "payload": {"type": "user_message", "message": "你好"}}],
             "grok": [{"type": "user", "content": "<user_query>你好</user_query>"}],
             "workbuddy": [{"type": "message", "role": "user", "content": "<user_query>你好</user_query>"}],
+            "agy": [{"type": "USER_INPUT", "content": "<USER_REQUEST>你好</USER_REQUEST>"}],
         }
         for host, rows in cases.items():
             with self.subTest(host=host):
@@ -1503,6 +1505,469 @@ class DimensionMinimum(unittest.TestCase):
         # Tie-break: verify (no shown score) does not count as weakest; ctx (50) is fixed first.
         first = data["ladder"][0]["fixes"][0]["id"]
         self.assertTrue(first.startswith("ctx-"), data["ladder"])
+
+
+# ---------------------------------------------------------------- Antigravity (agy) integration
+
+def agy_sys(cwd="/w/app", workspace="/w/ws", plan_protocol=False, ts="2026-11-01T09:59:00Z"):
+    parts = [f"Active Workspaces:\n- {workspace}\n"]
+    if cwd:
+        parts.append(f"Command Working Directory: {cwd}\n")
+    if plan_protocol:
+        parts.append("<plan_execute_protocol>\nPlan first.\n</plan_execute_protocol>\n")
+    return {"type": "SYSTEM_MESSAGE", "created_at": ts, "content": "".join(parts)}
+
+
+def agy_user(text, ts="2026-11-01T10:00:00Z", wrapped=True):
+    content = f"<USER_REQUEST>\n{text}\n</USER_REQUEST>\n<ADDITIONAL_METADATA>\nlocal time\n</ADDITIONAL_METADATA>" \
+        if wrapped else text
+    return {"type": "USER_INPUT", "created_at": ts, "content": content}
+
+
+def agy_planner(tool_calls=(), model="gemini-3-pro", ts="2026-11-01T10:15:00Z"):
+    return {"type": "PLANNER_RESPONSE", "created_at": ts, "model": model,
+            "tool_calls": [{"name": n, "args": a} for n, a in tool_calls]}
+
+
+class AgyAdapter(TmpCase):
+    def test_human_session_tools_plan_and_slash_commands(self):
+        p = self.tmp / ".gemini" / "antigravity-cli" / "brain" / "sess-abc-123" / ".system_generated" / "logs" / "transcript.jsonl"
+        rows = [
+            None,
+            ["bad-row"],
+            agy_sys(cwd="/w/app", workspace="/w/ws", plan_protocol=True, ts="2026-11-01T09:59:00Z"),
+            agy_user("/plan", ts="2026-11-01T10:00:00Z"),
+            agy_user("/goal Build auth module and run tests SECRET_PROMPT_TEXT", ts="2026-11-01T10:01:00Z"),
+            agy_user("/compact keep auth notes", ts="2026-11-01T10:02:00Z"),
+            agy_planner([
+                ("enter_plan_mode", {}),
+                ("ask_question", {"questions": [{"question": "Scope?"}]}),
+                ("read_file", {"Path": "/w/app/auth.py"}),
+                ("invoke_subagent", {"TypeName": "research", "Prompt": "check callers"}),
+                ("run_workflow", {"Description": "fan out"}),
+                ("write_file", {"Path": "/w/app/auth_test.py", "Content": "pass"}),
+                ("run_command", {"CommandLine": "pytest -q && git diff"}),
+                ("exit_plan_mode", {}),
+                ("finish", {"result": {"summary": "done"}}),
+            ], ts="2026-11-01T10:25:00Z"),
+            agy_user("不对，你没跑测试", ts="2026-11-01T10:30:00Z"),
+        ]
+        write_jsonl(p, rows)
+        with open(p, "a", encoding="utf-8") as f:
+            f.write('{"type":"USER_INPUT","content":\n')  # truncated JSON line
+        r = EX.agy(str(p))
+        self.assertEqual(r["host"], "agy")
+        self.assertEqual(r["kind"], "human")
+        self.assertEqual(r["account"], ".gemini/antigravity-cli")
+        self.assertEqual(r["entry"], "antigravity-cli")
+        self.assertEqual(r["sid"], "sess-abc-123")
+        self.assertEqual(r["cwd"], "(outside ~)/app")
+        self.assertEqual(r["start"], "2026-11-01T10:00:00Z")
+        self.assertEqual(r["end"], "2026-11-01T10:30:00Z")
+        self.assertEqual(r["prompts"], 2)  # /plan and /compact are not counted as prompts; /goal rest + correction are
+        self.assertEqual(r["corrections"], 1)
+        self.assertEqual(r["corr_cats"]["not_verified"], 1)
+        self.assertEqual(dict(r["cmds"]), {"plan": 1, "goal": 1, "compact": 1})
+        self.assertEqual(r["compact_focus"], 1)
+        self.assertEqual(r["started_by"], "plan")
+        self.assertGreaterEqual(r["modes"]["plan"], 1)
+        self.assertIn("ask", r["pre_edit"])
+        self.assertIn("cmd:plan", r["pre_edit"])
+        self.assertIn("cmd:goal", r["pre_edit"])
+        self.assertEqual(r["tools"]["Agent:research"], 1)
+        self.assertEqual(r["tools"]["invoke_subagent"], 1)
+        self.assertEqual(r["tools"]["run_workflow"], 1)
+        self.assertEqual(r["tools"]["ask_question"], 1)
+        self.assertEqual(r["tools"]["bash:test"], 1)
+        self.assertEqual(r["tools"]["bash:git_diff"], 1)
+        self.assertEqual(r["edited_files"], 1)
+        self.assertEqual(r["explore"], 1)
+        self.assertEqual(r["models"]["gemini-3-pro"], 1)
+        self.assertNotIn("SECRET_PROMPT_TEXT", json.dumps(r, default=dict))
+
+    def test_subagent_headless_surfaces_and_discovery(self):
+        # Subagent: no USER_INPUT, SYSTEM_MESSAGE fallback timestamp, Active Workspaces fallback cwd.
+        sub = write_jsonl(
+            self.tmp / ".gemini" / "antigravity" / "brain" / "sub-1" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_sys(cwd=None, workspace="/w/ws-only", ts="2026-11-02T08:00:00Z"),
+             {"type": "PLANNER_RESPONSE", "model": "gemini-3-flash", "tool_calls": [
+                 {"name": "read_file", "args": {"Path": "/w/ws-only/a.py"}},
+                 {"name": "send_message", "args": {"Recipient": "parent", "Message": "ok"}},
+                 {"name": "finish", "args": {"result": {}}}]}],
+        )
+        rs = EX.agy(sub)
+        self.assertEqual((rs["kind"], rs["entry"], rs["account"], rs["sid"]),
+                         ("subagent", "antigravity", ".gemini/antigravity", "sub-1"))
+        self.assertEqual(rs["cwd"], "(outside ~)/ws-only")
+        self.assertEqual(rs["start"], "2026-11-02T08:00:00Z")
+        self.assertEqual(rs["explore"], 1)
+
+        # Headless: USER_INPUT without <USER_REQUEST>, metadata/system blocks stripped.
+        head = write_jsonl(
+            self.tmp / ".gemini" / "antigravity-ide" / "brain" / "head-1" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("<ADDITIONAL_METADATA>\nt=1\n</ADDITIONAL_METADATA>\n"
+                      "The following is a <SYSTEM_MESSAGE> not actually sent by the user.\n\n"
+                      "<SYSTEM_MESSAGE>\nsys\n</SYSTEM_MESSAGE>\n",
+                      ts="2026-11-02T09:00:00Z", wrapped=False),
+             agy_user("/tmp/script.py check this output\n<SYSTEM_MESSAGE>ignored</SYSTEM_MESSAGE>",
+                      ts="2026-11-02T09:01:00Z", wrapped=False),
+             agy_planner([("run_command", {"CommandLine": "agy -p 'sub-task'"})], ts="2026-11-02T09:02:00Z")],
+        )
+        rh = EX.agy(head)
+        self.assertEqual((rh["kind"], rh["entry"], rh["account"], rh["sid"]),
+                         ("headless", "antigravity-ide", ".gemini/antigravity-ide", "head-1"))
+        self.assertEqual(rh["prompts"], 1)  # metadata-only USER_INPUT ignored; /tmp/script.py not treated as slash cmd
+        self.assertEqual(dict(rh["cmds"]), {})
+        self.assertEqual(rh["tools"]["bash:headless"], 1)
+
+        # Custom account root outside .gemini
+        cust = write_jsonl(self.tmp / "custom-root" / "brain" / "c1" / ".system_generated" / "logs" / "transcript.jsonl",
+                           [agy_user("plain headless prompt", wrapped=False)])
+        self.assertEqual(EX.agy(cust)["account"], "custom")
+
+        # Discovery via AGENT_PRACTICE_AUDIT_AGY_GLOBS
+        pat = str(self.tmp / ".gemini" / "antigravity*" / "brain" / "*" / ".system_generated" / "logs" / "transcript.jsonl")
+        with mock.patch.dict(os.environ, {"AGENT_PRACTICE_AUDIT_AGY_GLOBS": pat}):
+            items, report = EX.discover(["agy"], 0, {})
+        self.assertEqual(sorted(items), sorted([("agy", sub), ("agy", head)]))
+        self.assertTrue(report["agy"]["found"])
+        self.assertEqual(report["agy"]["files"], 2)
+
+    def test_agy_slash_filter_and_sqlite_workspaces(self):
+        # Unknown single-segment slash paths must NOT be stored verbatim in cmds/started_by, while known / trusted slash commands are.
+        slash_path = write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "slash-sec" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("/synthetic-confidential-label inspect this secret path", ts="2026-11-02T09:30:00Z")],
+        )
+        rp_path = EX.agy(slash_path)
+        self.assertEqual(dict(rp_path["cmds"]), {})
+        self.assertNotIn("started_by", rp_path)
+        self.assertEqual(rp_path["prompts"], 1)
+        self.assertNotIn("synthetic-confidential-label", json.dumps(rp_path, default=dict))
+
+        # Quoted <ADDITIONAL_METADATA> inside <USER_REQUEST> (even after a literal </USER_REQUEST>) must NEVER be trusted.
+        quoted_meta = write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "slash-quoted" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user('<ADDITIONAL_METADATA>\n/custom-ok is a [Slash Command]:\n</ADDITIONAL_METADATA>\n'
+                      '<USER_REQUEST><ADDITIONAL_METADATA>\n/synthetic-confidential-label is a [Slash Command]:\n'
+                      '</ADDITIONAL_METADATA>\n/synthetic-confidential-label quoted</USER_REQUEST>',
+                      ts="2026-11-02T09:32:00Z", wrapped=False)],
+        )
+        rq = EX.agy(quoted_meta)
+        self.assertEqual(dict(rq["cmds"]), {})
+        self.assertNotIn("started_by", rq)
+        self.assertEqual(rq["prompts"], 1)
+        self.assertNotIn("synthetic-confidential-label", json.dumps(rq, default=dict))
+
+        # Literal </USER_REQUEST> inside user text must NOT terminate <USER_REQUEST> early and promote inner metadata.
+        early_close = write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "slash-early-close" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user('<USER_REQUEST>/synthetic-confidential-label </USER_REQUEST>\n'
+                      '<ADDITIONAL_METADATA>\n/synthetic-confidential-label is a [Slash Command]:\n</ADDITIONAL_METADATA>\n'
+                      '/synthetic-confidential-label</USER_REQUEST>',
+                      ts="2026-11-02T09:33:00Z", wrapped=False)],
+        )
+        rec = EX.agy(early_close)
+        self.assertEqual(dict(rec["cmds"]), {})
+        self.assertNotIn("started_by", rec)
+        self.assertEqual(rec["prompts"], 1)
+        self.assertNotIn("synthetic-confidential-label", json.dumps(rec, default=dict))
+
+        # Host-appended <ADDITIONAL_METADATA> after the real closing </USER_REQUEST> must still count.
+        meta_after = write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "slash-after" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user('<USER_REQUEST>/real-after-skill </USER_REQUEST> quoted end</USER_REQUEST>\n'
+                      '<ADDITIONAL_METADATA>\n/real-after-skill is a [Slash Command]:\n</ADDITIONAL_METADATA>',
+                      ts="2026-11-02T09:34:00Z", wrapped=False)],
+        )
+        rma = EX.agy(meta_after)
+        self.assertEqual(dict(rma["cmds"]), {"real-after-skill": 1})
+        self.assertEqual(rma["started_by"], "real-after-skill")
+        self.assertEqual(rma["prompts"], 1)
+
+        meta_cmd = write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "slash-ok" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user('<ADDITIONAL_METADATA>\n/custom-skill is a [Slash Command]:\n</ADDITIONAL_METADATA>\n'
+                      '<USER_REQUEST>/custom-skill run now</USER_REQUEST>',
+                      ts="2026-11-02T09:35:00Z", wrapped=False)],
+        )
+        rm_ok = EX.agy(meta_cmd)
+        self.assertEqual(dict(rm_ok["cmds"]), {"custom-skill": 1})
+        self.assertEqual(rm_ok["started_by"], "custom-skill")
+        self.assertEqual(rm_ok["prompts"], 1)
+
+        # AGY workspace_uris + parent_conversation_id SQLite sidecar & parallel/worktree + missing_repo coverage gap
+        import sqlite3
+        surface = self.tmp / ".gemini" / "antigravity-cli"
+        app = self.tmp / "repo-a"
+        (app / ".git" / "worktrees" / "wt1").mkdir(parents=True)
+        wt1 = app / ".worktrees" / "wt1"
+        wt1.mkdir(parents=True)
+        (wt1 / ".git").write_text(f"gitdir: {app}/.git/worktrees/wt1\n", encoding="utf-8")
+        db_con = sqlite3.connect(str(surface / "conversation_summaries.db"))
+        db_con.execute(
+            "CREATE TABLE IF NOT EXISTS conversation_summaries "
+            "(conversation_id TEXT, workspace_uris TEXT, parent_conversation_id TEXT)"
+        )
+        db_con.execute(
+            "INSERT INTO conversation_summaries VALUES (?, ?, ?)",
+            ("agy-p1", json.dumps([f"file://{app}"]), ""),
+        )
+        db_con.execute(
+            "INSERT INTO conversation_summaries VALUES (?, ?, ?)",
+            ("agy-p2", json.dumps([f"file://{wt1}", "file:///private/tmp/scratchpad"]), "parent-0"),
+        )
+        db_con.execute(
+            "INSERT INTO conversation_summaries VALUES (?, ?, ?)",
+            ("agy-scratch-only", json.dumps(["file:///private/tmp/claude-501/x/scratchpad"]), ""),
+        )
+        tmp_repo = Path("/tmp") / f"apa-real-proj-{self.tmp.name}"
+        # Synthetic edit path matching a /tmp git workspace entry alongside another workspace URI
+        db_con.execute(
+            "INSERT INTO conversation_summaries VALUES (?, ?, ?)",
+            ("agy-tmp-edit", json.dumps([f"file://{app}", f"file://{tmp_repo}"]), ""),
+        )
+        db_con.commit()
+        db_con.close()
+
+        rp1 = EX.agy(write_jsonl(
+            surface / "brain" / "agy-p1" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("edit main checkout", ts="2026-11-02T10:00:00Z"),
+             agy_planner([("write_file", {"Path": str(app / "a.py")})], ts="2026-11-02T10:30:00Z")],
+        ))
+        rp2 = EX.agy(write_jsonl(
+            surface / "brain" / "agy-p2" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("edit isolated worktree", ts="2026-11-02T10:15:00Z"),
+             agy_planner([("edit_file", {"Path": str(wt1 / "b.py")})], ts="2026-11-02T10:45:00Z")],
+        ))
+        rp_no_ws = EX.agy(write_jsonl(
+            surface / "brain" / "agy-missing" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("edit without workspace", ts="2026-11-02T10:15:00Z"),
+             agy_planner([("write_file", {"Path": "mystery.py"})], ts="2026-11-02T10:45:00Z")],
+        ))
+        rp_scratch = EX.agy(write_jsonl(
+            surface / "brain" / "agy-scratch-only" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("edit scratchpad only", ts="2026-11-02T10:15:00Z"),
+             agy_planner([("write_file", {"Path": "notes.md"})], ts="2026-11-02T10:45:00Z")],
+        ))
+        rp_tmp = EX.agy(write_jsonl(
+            surface / "brain" / "agy-tmp-edit" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("edit tmp repo", ts="2026-11-02T10:15:00Z"),
+             agy_planner([("write_file", {"Path": str(tmp_repo / "main.py")})], ts="2026-11-02T10:45:00Z")],
+        ))
+        self.assertEqual(rp1["repo"], rp2["repo"])
+        self.assertNotEqual(rp1["checkout_id"], rp2["checkout_id"])
+        self.assertEqual(rp2["parent"], "parent-0")
+        self.assertIsNone(rp_no_ws["cwd"])
+        self.assertIsNone(rp_scratch["cwd"])
+        self.assertEqual(rp_tmp["cwd"], f"(outside ~)/{tmp_repo.name}")
+
+        agg_p = AG.aggregate([json.loads(json.dumps(x, default=dict)) for x in (rp1, rp2, rp_no_ws, rp_scratch)])
+        par = agg_p["parallel"]
+        self.assertEqual((par["sessions"], par["isolated"], par["isolated_worktree"], par["missing_repo"]),
+                         (2, 2, 1, 2))
+        self.assertEqual(par["missing_repo_by_host"], {"agy": 2})
+        doc_w = PJ.prejudge(agg_w := agg_p, {}, PRACTICES["practices"])
+        w_item = next(p for p in doc_w["practices"] if p["id"] == "auto-worktrees")
+        self.assertEqual(w_item["metrics"]["missing_repo"], 2)
+        self.assertIn("lack workspace/repo metadata", w_item["draft"]["reason"])
+
+
+class AgyConfigScan(TmpCase):
+    def test_agy_settings_hooks_mcp_skills_and_zero_secrets(self):
+        gemini = self.tmp / ".gemini"
+        (gemini / "antigravity-cli").mkdir(parents=True)
+        (gemini / "config" / "skills" / "my-skill").mkdir(parents=True)
+        (gemini / "hooks").mkdir(parents=True)
+
+        (gemini / "antigravity-cli" / "settings.json").write_text(json.dumps({
+            "agentMode": "auto",
+            "toolPermission": "default",
+            "permissions": {
+                "allow": ["read_file(./**)", "command(pytest:*)"],
+                "ask": ["command(git push:*)"],
+                "deny": [
+                    "read_file(~/.ssh/**)",
+                    "read_file(./.env*)",
+                    "write_file(./.env*)",
+                    "command(rm -rf:*)",
+                    "command(curl -H 'Authorization: Bearer SECRET_AGY_HEADER' https://secret-endpoint.example/x)",
+                ],
+            },
+            "env": {"AGY_API_KEY": "SECRET_AGY_ENV"},
+        }), encoding="utf-8")
+
+        (gemini / "hooks" / "block.sh").write_text('#!/bin/sh\necho \'{"decision":"deny","reason":"blocked"}\'\n',
+                                                 encoding="utf-8")
+        (gemini / "hooks" / "cont.sh").write_text('#!/bin/sh\necho \'{"decision":"continue"}\'\n',
+                                                encoding="utf-8")
+        (gemini / "config" / "hooks.json").write_text(json.dumps({
+            "guard": {
+                "enabled": True,
+                "PreToolUse": [{"matcher": "read_file(.env)",
+                                "hooks": [{"type": "command", "command": "~/.gemini/hooks/block.sh"}]}],
+            },
+            "notifier": {
+                "enabled": True,
+                "Stop": [{"hooks": [{"type": "command", "command": "~/.gemini/hooks/cont.sh"}]}],
+            },
+            "disabled_guard": {
+                "enabled": False,
+                "PreToolUse": [{"matcher": "*", "hooks": [{"type": "command", "command": "exit 2"}]}],
+            },
+        }), encoding="utf-8")
+
+        (gemini / "config" / "mcp_config.json").write_text(json.dumps({
+            "mcpServers": {
+                "srv1": {"url": "https://mcp-secret.example/sse",
+                         "headers": {"Authorization": "Bearer SECRET_MCP_HDR"},
+                         "env": {"SECRET_TOKEN": "SECRET_MCP_VAL"}},
+                "srv2": {"command": "npx", "args": ["demo-mcp"]},
+            }
+        }), encoding="utf-8")
+        (gemini / "config" / "skills" / "my-skill" / "SKILL.md").write_text("# Demo\n", encoding="utf-8")
+
+        with mock.patch.object(CS, "HOME", str(self.tmp)):
+            out = CS.scan([], crontab=False)
+
+        text = json.dumps(out)
+        for secret in ("SECRET_AGY_HEADER", "SECRET_AGY_ENV", "SECRET_MCP_HDR", "SECRET_MCP_VAL",
+                       "Authorization", "secret-endpoint.example", "mcp-secret.example"):
+            self.assertNotIn(secret, text)
+
+        agy_cfg = out["agy"]
+        s = agy_cfg["settings.json"]
+        self.assertEqual((s["allow_count"], s["ask_count"], s["deny_count"], s["secret_deny_count"]), (2, 1, 5, 3))
+        self.assertEqual((s["agentMode"], s["toolPermission"]), ("auto", "default"))
+        self.assertTrue(s["read_deny_coverage"]["ssh"])
+        self.assertTrue(s["read_deny_coverage"]["env_files"])
+        self.assertTrue(s["write_deny_coverage"]["env_files"])
+        self.assertFalse(s["write_deny_coverage"]["ssh"])
+        self.assertTrue(s["deny_coverage"]["ssh"])
+        self.assertTrue(s["deny_coverage"]["env_files"])
+        self.assertTrue(s["deny_coverage"]["destructive_bash"])
+        self.assertTrue(s["deny_coverage"]["network_bash"])
+        self.assertFalse(s["deny_coverage"]["aws"])
+
+        h = agy_cfg["hooks.json"]
+        self.assertEqual((h["hook_groups"], h["enabled_hook_groups"], h["hook_entries"], h["enforcing_hook_entries"]),
+                         (3, 2, 2, 1))
+        self.assertEqual(h["enforcing_hook_topics"], ["secrets"])
+        self.assertEqual(agy_cfg["mcp_config.json"], {"mcp_servers": 2})
+        self.assertEqual(out["other_skills"]["agy"], 1)
+
+    def test_agy_write_only_env_deny_with_read_allow_does_not_pass_secret_protection(self):
+        bad_cases = (
+            ["write_file(.env)"],
+            ["grep(.env)"],
+            ["read_file(.env.example)"],
+            ["write_file(.env)", "read_file(fixtures/.env)"],
+            ["read_file(*/.env*)"],
+            ["read_file(/.env)"],
+        )
+        for bad_rules in bad_cases:
+            gemini = self.tmp / ".gemini"
+            (gemini / "antigravity-cli").mkdir(parents=True, exist_ok=True)
+            (gemini / "antigravity-cli" / "settings.json").write_text(json.dumps({
+                "permissions": {
+                    "allow": ["read_file(.env)"],
+                    "deny": bad_rules,
+                }
+            }), encoding="utf-8")
+            with mock.patch.object(CS, "HOME", str(self.tmp)):
+                out = CS.scan([], crontab=False)
+            s = out["agy"]["settings.json"]
+            self.assertFalse(s["read_deny_coverage"]["env_files"], bad_rules)
+            self.assertFalse(s["deny_coverage"]["env_files"], bad_rules)
+            if "write_file(.env)" in bad_rules:
+                self.assertTrue(s["write_deny_coverage"]["env_files"])
+            doc = PJ.prejudge({"hosts": {"agy": {"sessions": 20}}, "kinds": {"agy/human": 20}}, out, PRACTICES["practices"])
+            item = next(p for p in doc["practices"] if p["id"] == "safe-deny-secrets")
+            self.assertEqual(item["draft"]["status"], "no", bad_rules)
+
+    def test_headless_invoke_and_agy_deny_rules(self):
+        self.assertTrue(CS.HEADLESS_INVOKE.search("agy -p 'run audit'"))
+        self.assertTrue(CS.HEADLESS_INVOKE.search("agy --prompt 'run audit'"))
+        cov = CS.deny_coverage([
+            "read_file(~/.aws/**)",
+            "read_file(secrets/token.json)",
+            "write_file(.env.local)",
+            "grep(.env)",
+            "read_file(.env.example)",
+            "command(wget https://x)",
+            "command(git reset --hard)",
+        ], agy_only=True)
+        self.assertTrue(cov["aws"])
+        self.assertTrue(cov["key_files"])
+        self.assertFalse(cov["env_files"])
+        self.assertTrue(cov["network_bash"])
+        self.assertTrue(cov["destructive_bash"])
+
+    def test_agy_direct_event_hooks_and_subdir_gemini_md(self):
+        gemini = self.tmp / ".gemini"
+        (gemini / "config").mkdir(parents=True)
+        (gemini / "config" / "hooks.json").write_text(json.dumps({
+            "PreToolUse": [{"matcher": "read_file(.env)",
+                            "hooks": [{"type": "command", "command": "exit 2"}]}],
+        }), encoding="utf-8")
+        repo = self.tmp / "mono"
+        (repo / "packages" / "web").mkdir(parents=True)
+        (repo / "packages" / "web" / "GEMINI.md").write_text("Run `pnpm test` before commit.\n", encoding="utf-8")
+        with mock.patch.object(CS, "HOME", str(self.tmp)):
+            out = CS.scan([str(repo)], crontab=False)
+        h = out["agy"]["hooks.json"]
+        self.assertEqual((h["hook_groups"], h["enabled_hook_groups"], h["hook_entries"], h["enforcing_hook_entries"]),
+                         (1, 1, 1, 1))
+        self.assertEqual(h["enforcing_hook_topics"], ["secrets"])
+        self.assertIn("~/mono/packages/web/GEMINI.md", [f["path"] for f in out["repo_instructions"]])
+
+
+class AgyAggregate(TmpCase):
+    def test_agy_wide_subagent_and_complex_cohorts(self):
+        reads = [("read_file", {"Path": f"/w/app/f{i}.py"}) for i in range(30)]
+        r1 = EX.agy(write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "s1" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_sys(), agy_user("explore codebase", ts="2026-11-01T10:00:00Z"),
+             agy_planner(reads + [("invoke_subagent", {"TypeName": "research"})], ts="2026-11-01T10:10:00Z")]))
+        r2 = EX.agy(write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "s2" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_sys(), agy_user("fan out workflow", ts="2026-11-01T11:00:00Z"),
+             agy_planner(reads + [("run_workflow", {"Description": "fan out"})], ts="2026-11-01T11:10:00Z")]))
+        edits = [("write_file", {"Path": f"/w/app/e{i}.py"}) for i in range(5)]
+        r3 = EX.agy(write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "s3" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_sys(), agy_user("build feature", ts="2026-11-01T12:00:00Z"),
+             agy_planner([("enter_plan_mode", {}), ("ask_question", {})] + edits +
+                         [("run_command", {"CommandLine": "pytest -q"})], ts="2026-11-01T12:20:00Z")]))
+        r_sub = EX.agy(write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "s4" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_sys(), agy_planner([("finish", {})])]))
+        r_head = EX.agy(write_jsonl(
+            self.tmp / ".gemini" / "antigravity-cli" / "brain" / "s5" / ".system_generated" / "logs" / "transcript.jsonl",
+            [agy_user("headless job", wrapped=False)]))
+
+        rows = [json.loads(json.dumps(r, default=dict)) for r in (r1, r2, r3, r_sub, r_head)]
+        s = AG.aggregate(rows)
+        self.assertEqual(s["kinds"], {"agy/human": 3, "agy/subagent": 1, "agy/headless": 1})
+        h = s["hosts"]["agy"]
+        self.assertEqual(h["sessions"], 3)
+        self.assertEqual(h["cohorts"]["wide"], {"n": 2, "subagent": 2})
+        self.assertEqual(h["cohorts"]["complex"]["n"], 1)
+        self.assertEqual(h["cohorts"]["complex"]["interview"], 1)
+        self.assertEqual(h["cohorts"]["complex"]["plan"], 1)
+        self.assertEqual(h["concepts_pct"]["subagent"], 66.7)
+        self.assertEqual(h["concepts_pct"]["plan_mode"], 33.3)
+        self.assertEqual(h["concepts_pct"]["ask_user"], 33.3)
+        self.assertEqual(h["pct_session_bash_tags"]["test"], 33.3)
+        self.assertEqual(h["agent_types_calls"], [["research", 1]])
+
+
+class AgyPracticesAllowlist(unittest.TestCase):
+    def test_antigravity_urls_on_allowlist(self):
+        self.assertTrue(CP.allowed("https://antigravity.google/docs/cli/best-practices.md"))
+        self.assertTrue(CP.allowed("https://antigravity.google/docs/cli/hooks.md"))
+        self.assertTrue(CP.allowed("https://github.com/google-antigravity/docs/blob/main/README.md"))
+        self.assertFalse(CP.allowed("https://example.com/antigravity"))
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 ---
 name: ardot-mcp
-description: "This skill should be used when the user invokes /ardot-mcp or asks to package Ardot MCP through UXC, set up ardot-mcp-cli, complete Ardot OAuth for UXC, run sanitized Ardot readiness, open or inspect Ardot design files via a fixed CLI facade, or keep Grok/Claude native Ardot MCP as a compatibility path. Own Ardot endpoint identity, OAuth boundary, safe output, and task acceptance. Use uxc-facade for the generic packaging method. Do not use for one-off Ardot calls already solved by the native host MCP tools."
+description: "This skill should be used when the user invokes /ardot-mcp or asks to package Ardot MCP through UXC across Antigravity (agy), Claude, Grok, Codex, and Cursor, set up ardot-mcp-cli, complete Ardot OAuth for UXC, run sanitized Ardot readiness, open or inspect Ardot design files via a fixed CLI facade, or keep Antigravity/Grok/Claude native Ardot MCP as an explicit compatibility path. Own Ardot endpoint identity, OAuth boundary, safe output, and task acceptance. Use uxc-facade for the generic packaging method. Do not use for one-off Ardot calls already solved by the native host MCP tools."
 metadata:
   author: adonis
   version: "1.0.0"
@@ -8,7 +8,7 @@ metadata:
 
 # Ardot MCP
 
-Use the managed `ardot-mcp-cli` facade for Ardot design-file work from a deterministic JSON CLI. This skill owns the Ardot endpoint, OAuth credential/binding, sanitized readiness, and task acceptance. Keep host-native Ardot MCP (for example Grok `ardot-remote`) as an explicit compatibility path, not the default shared CLI path.
+Use the managed `ardot-mcp-cli` facade as the shared default across hosts—including Antigravity (`agy`), Claude Code, Grok, Codex, and Cursor (plus Hermes, WorkBuddy, and pi)—for Ardot design-file work from a deterministic JSON CLI. This skill owns the Ardot endpoint, OAuth credential/binding, sanitized readiness, and task acceptance so every agent shares one reproducible contract. Keep Antigravity, Grok, or Claude native Ardot MCP (for example Grok `ardot-remote` or a native Ardot server shown by `agy mcp list`) as an explicit compatibility path, not the default shared CLI path.
 
 This skill is the **binary owner** for pinned UXC `0.22.0`. The UXC daemon under `$HOME/.uxc` is shared per user; do not let another skill silently install a different UXC version on the same machine. Use `uxc-facade` for the generic packaging method.
 
@@ -26,7 +26,7 @@ Invoke every helper with `zsh` (for example `zsh scripts/uxc-readiness.zsh`). Un
 2. For readiness-plus-task, run `zsh scripts/uxc-readiness.zsh --private-result` once, keep the JSON private, and reuse that current-turn proof before design operations.
 3. If readiness reports missing OAuth or auth failure, run the OAuth handoff in [references/oauth-and-binding.md](references/oauth-and-binding.md), then retry readiness once.
 4. If the managed CLI is absent, install and link only through this skill's scripts. Do not fall back to an unowned `uxc` on `PATH`.
-5. Use host-native Ardot MCP only when the user explicitly requests `native` compatibility or approves it after a blocker. Mark that mode `NATIVE_COMPAT`.
+5. Use host-native Ardot MCP only when the user explicitly requests `native` compatibility or approves it after a blocker, and mark that mode `NATIVE_COMPAT`. On Antigravity (`agy`), run `agy mcp list` when diagnosing native compatibility to confirm whether a native Ardot server is configured, while keeping `ardot-mcp-cli` as the shared default across hosts.
 6. Claim a design task `VERIFIED` only after the requested Ardot operation completes. Readiness alone is transport proof.
 
 ## Preserve the runtime invariant
@@ -70,7 +70,7 @@ Use this skill for:
 - Shared CLI discovery and sanitized readiness across agents.
 - Design tasks that should go through `ardot-mcp-cli` instead of ad-hoc native tools.
 
-For one-off inspection already connected in the current host's native Ardot MCP, stay on the native tools unless the user asked for the shared CLI facade.
+For one-off inspection already connected in the current host's native Ardot MCP (such as Antigravity verified with `agy mcp list`, Grok `ardot-remote`, or Claude native MCP), stay on the native tools unless the user asked for the shared CLI facade.
 
 Typical task operations after readiness:
 

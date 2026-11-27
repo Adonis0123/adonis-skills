@@ -18,12 +18,14 @@
 ## Tool versions and upgrade leftovers (tier A)
 
 - Codex: `~/.codex*/.tmp/marketplaces/.staging/marketplace-upgrade-*` (250 folders, 24 GB) accumulates on every plugin upgrade; keep the newest per account and only clean while no upgrade runs (nothing modified in the last 30 minutes). `~/.codex/packages/standalone/releases` keeps every version; keep what `current` links to and the previous one.
-- Claude Code (`~/.local/share/claude/versions`), Cursor agent, Grok (`~/.grok*/downloads`): a running session may still execute an older version. Read `lsof -p <pid>` for each running `claude`, `grok`, `codex`, `cursor-agent` process and keep those versions.
+- Claude Code (`~/.local/share/claude/versions`), Cursor agent, Grok (`~/.grok*/downloads`): a running session may still execute an older version. Read `lsof -p <pid>` for each running `claude`, `grok`, `codex`, `cursor-agent`, `agy` process and keep those versions.
+- Antigravity CLI/App: `~/.gemini/antigravity*/updater` and `~/.gemini/antigravity*/log` hold updater downloads and old logs; keep the active log symlink target and any version a running `agy` / Antigravity process uses.
 - Before deleting, search shell profiles, `~/.local/bin`, agent homes and launcher symlinks for the exact version paths.
 
 ## AI agent data (tier B)
 
-- Session transcripts (`~/.codex*/sessions` by year/month, `~/.claude*/projects`, `~/.grok*/sessions`, `~/.cursor/chats`, Orca's Codex runtime sessions): deleting loses resume and history search. Offer "older than N days" with the size that frees.
+- Session transcripts (`~/.codex*/sessions` by year/month, `~/.claude*/projects`, `~/.grok*/sessions`, `~/.cursor/chats`, `~/.gemini/antigravity*/conversations`, Orca's Codex runtime sessions): deleting loses resume and history search. Offer "older than N days" with the size that frees.
+- Antigravity artifacts and state: `~/.gemini/antigravity*/brain` holds per-conversation artifacts and scratch files, and `~/.gemini/antigravity*/conversation_summaries.db*` indexes conversation summaries (deleting loses search/summaries; skip active sessions). Never inspect or delete OAuth/account credential files (`~/.gemini/oauth_creds.json`, `~/.gemini/mcp-oauth-tokens.json`, `~/.gemini/antigravity-cli/mcp_oauth_tokens.json`, `~/.gemini/google_accounts.json`)—opening them exposes tokens and deleting them breaks authentication.
 - Agent homes often symlink `skills`, `plugins` and `hooks` to one shared folder; count each real folder once.
 - Backups made by account switchers (for example `~/.cc-switch/backups`) are tier B: ask whether the migration they protect is settled.
 - Generated images, visualizations and evaluation workspaces are the owner's output, tier B.

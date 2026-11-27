@@ -730,6 +730,18 @@
         "Reading only SKILL.md is sufficient to fail closed; references_loaded_count == 0",
         "Missing is exactly Git repository; does not rely on route-adjustments.md to discover the prerequisite"
       ]
+    },
+    {
+      "id": 55,
+      "name": "agy-slash-goal-with-plan-mode-routes-to-goal-gate",
+      "prompt": "在 Antigravity (agy) 会话中，用户触发 /goal（agy-slash）管理一个 durable Goal：把已定稿的 apps/web/src/auth/session.ts 修复做到 pnpm test 通过，不要启用完整多端 task-completion-loop；同时当前 Antigravity 处于 host-enforced Plan Mode，写入前必须通过 exit_plan_mode。workflow-gate 应如何路由？",
+      "expected_route": "skip-to-goal-gate",
+      "expectations": [
+        "Routes Antigravity /goal (agy-slash) directly to goal-gate after Rules #1 and #2 clear",
+        "Does not emit a normal Plan route (writing-plans) or hand off to task-completion-loop",
+        "Honors Antigravity host-enforced Plan Mode (exit_plan_mode) under Advisory only: obey system/user authority before any file mutation",
+        "Preserves the exclusion against running the full multi-peer completion pipeline"
+      ]
     }
   ]
 }

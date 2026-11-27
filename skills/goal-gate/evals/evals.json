@@ -568,6 +568,39 @@
         "Adopts and works in the current chat without emitting /goal or inventing get_goal/create_goal/update_goal",
         "Execution strategy assesses whether the three fixes are independent enough to delegate rather than assuming parallel work because there are several items"
       ]
+    },
+    {
+      "id": 37,
+      "name": "agy-slash-active-session-adopt-and-continue",
+      "prompt": "I'm in an active Antigravity (agy CLI) session with no active goal yet and no get_goal/create_goal/update_goal tools. Use goal-gate to implement every task in docs/PLAN.md until `pnpm test` and `pnpm build` pass. I'm stepping away — finish it and show me the evidence when it's done. Do not commit or push.",
+      "expected_output": "A Goal Gate block with Decision: set-now, Runtime: agy-slash, Goal fit: high, Prompt: none, and Next: adopt goal and continue. Antigravity exposes user-facing /goal with a built-in goal stop hook and deliverable audit, but has no agent-callable create_goal/get_goal/update_goal tool, so the agent self-adopts the contract and starts work immediately while surfacing verification evidence in the transcript. Changes stay in the working tree (no unrequested commit or push), execution strategy assesses decomposability with main-agent accountability, and if AGY Plan Mode blocks edits until exit_plan_mode that constraint is stated rather than claiming writes ran.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block with Decision: set-now, Runtime: agy-slash, and Goal fit: high",
+        "Next is 'adopt goal and continue' and Prompt is none (does not emit a new /goal or require the user to paste one back)",
+        "Does not call or invent get_goal, create_goal, or update_goal",
+        "Done condition references docs/PLAN.md completion with pnpm test and pnpm build passing",
+        "Verification requires surfacing command outputs and changed files in the transcript for Antigravity's deliverable verification",
+        "Preserves no-commit and no-push constraints so changes remain in the working tree",
+        "Execution strategy assesses dependencies, shared state, write overlap, or independent verification before using subagents, keeping final integration with the main agent"
+      ]
+    },
+    {
+      "id": 38,
+      "name": "agy-slash-chinese-prompt-only",
+      "prompt": "帮我写一个 Antigravity（agy）可用的 /goal，我想做一个本地待办 App，先给能直接复制的版本，不要现在开始写代码。",
+      "expected_output": "A Goal Gate block with Decision: suggest, Runtime: agy-slash, Goal fit: high, Prompt: see Recommended /goal below, and Next: provide prompt, followed by a Chinese copy-ready /goal draft under '推荐执行版（中文，可直接复制）'. The prompt keeps the /goal command prefix, chooses safe local-MVP defaults, includes verification evidence, constraints, boundaries, execution strategy assessing delegation with main-agent accountability, iteration policy, completion condition, pause conditions, and a default choice reason, with no placeholders, and notes that starting a new /goal in Antigravity cancels any previous active goal in that conversation.",
+      "files": [],
+      "expectations": [
+        "Emits a structured Goal Gate block with Decision: suggest, Runtime: agy-slash, and Next: provide prompt",
+        "Prompt points to the copy-ready section below (e.g. 'see Recommended /goal below') and does not start code implementation",
+        "Provides a Chinese copy-ready prompt headed '推荐执行版（中文，可直接复制）' using executable prefix /goal (not /目标)",
+        "Chooses safe local-MVP defaults rather than asking an open-ended questionnaire and leaves no placeholders (such as TODO, TBD, [path], 待定, or 待补充)",
+        "Includes verification evidence, constraints, boundaries, execution strategy, iteration policy, completion/stop condition, pause conditions, and a default choice reason compatible with scripts/lint-goal-prompt.py",
+        "Execution strategy assesses decomposability before subagents and keeps the main agent accountable for review and final verification with a single-agent fallback",
+        "Does not invent get_goal, create_goal, or update_goal",
+        "Notes that Antigravity /goal works in CLI TUI or App composer and that starting a new /goal cancels any previous active goal in that conversation"
+      ]
     }
   ]
 }

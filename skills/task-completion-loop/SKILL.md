@@ -50,9 +50,9 @@ metadata:
 2. 选定 Peer A、Peer B（见下文「Peer 选择」）和盲审者（见下文「盲审者选择」），对每个 Peer 用 `agentic-review-handoff` 的 `review-loop consult --repo <root> --peer <product> [--fallback <未用的产品>] --question-file <md>` 完成一次真实往返（用户点名账号如 `codex002` / `cc002` / `grok002` 时加 `--peer-command=<名字>`），并用 `review-loop sessions --repo <root> --product=<product>` 取回可恢复句柄；Phase 1 A 的首条成功往返即可充当此证据，不单独占一轮。每个 Peer 都须能以 adapter 的只读控制启动；盲审者同样。只有名字、catalog 条目或 CLI 文件存在不算可用。
 3. 确认 review 协议产物可写，且不与用户的 `.git/**` 限制冲突。
 
-**Peer 选择**：Peer A、Peer B 是两个和宿主不同的产品，按 `agentic-review-handoff` 保存的 Reviewer 偏好顺序（`review-loop prefs`，默认 `claude,codex,grok`）去掉宿主后取前两个：三方收敛要三个不同产品，所以这里总是跳过宿主，偏好里的 `skipHost` 不影响。例如默认偏好下 Claude 宿主 → Codex + Grok；Codex 宿主 → Claude + Grok；Grok 宿主 → Claude + Codex。用户点名的产品或账号优先。consult 可直接传 `--host=<宿主> --skip-host`，由脚本按偏好选。某个 Peer 超时，脚本按 `--fallback` 换到两个 Peer 和宿主都没用到的已安装产品（结果里的 `fallbacks`）；没有这样的产品就不换人，按下文超时规则处理。不拿另一位 Peer 的产品顶替，否则两份立场就不独立了。
+**Peer 选择**：Peer A、Peer B 是两个和宿主不同的产品，按 `agentic-review-handoff` 保存的 Reviewer 偏好顺序（`review-loop prefs`，默认 `claude,codex,grok`）去掉宿主后取前两个：三方收敛要三个不同产品，所以这里总是跳过宿主，偏好里的 `skipHost` 不影响。例如默认偏好下 Claude 宿主 → Codex + Grok；Codex 宿主 → Claude + Grok；Grok 宿主 → Claude + Codex；当可见宿主为 `agy`（或 `cursor` / `pi`）时，先读取 `node "$RL" prefs`，从 `order` 去掉宿主后**显式传两个不同的 `--peer`**（例如默认偏好 `claude,codex,grok` 下：Peer A 用 `review-loop consult --peer=claude`，Peer B 用 `review-loop consult --peer=codex`，形成 `agy` 宿主 + `claude` + `codex` 三方独立视角；**切勿**对 Peer A 和 Peer B 连续两次传 `--host=agy --skip-host`，因为单次 `--host=agy --skip-host` 只会选出同一个 `order[0]`）。用户点名的产品或账号优先；除非用户显式点名，否则 `agy` 本身绝不会被自动选为 Peer 或盲审者（Auditor）。并行启动 Peer A 与 Peer B 时，**绝不能把同一个备用产品通过 `--fallback` 同时配给两位 Peer**（否则两路同时超时会双双回退到同一产品，导致三方收敛失效）：只把剩余未使用的第 3 方产品分给至多一位 Peer（或并行时不传重叠 `--fallback`，先让主选产品各自跑，再由唯一未占用的第 3 方产品按需单路补位）。进入 Phase 1 B 交叉质疑前，必须检查两个 consult 结果实际返回的 `peer`（与 `fallbacks`）与当前宿主两两不同；若实际落到同一产品且已无其他独立可用产品，立即按 `UNVERIFIED` 停下，不得拿同产品两份回复互相对抗。某个 Peer 超时按上述互不重叠规则换人，没有可换的已安装独立产品就不换人，按下文超时规则处理。不拿另一位 Peer 正在使用的产品顶替，否则两份立场就不独立了。
 
-**盲审者选择**：盲审不绑定特定产品，按 `review-loop prefs` 选一个具备可验证硬只读 adapter 的独立产品：① 用户显式点名的产品或账号优先；② 否则取偏好顺序中第一个**非宿主且不同于 Phase 4 门禁一主审**的可用产品；③ 若可用产品仅剩宿主与另一个产品，则由该非宿主产品另开全新只读会话（绝不复用任何历史会话）。盲审超时按 `--fallback` 换到下一个可用非宿主硬只读产品；没有任何可用非宿主硬只读产品时返回 `MISSING_DEPENDENCIES`，不得退化为宿主自审或通用 subagent。
+**盲审者选择**：盲审不绑定特定产品，按 `review-loop prefs` 选一个具备可验证硬只读 adapter 的独立产品：① 用户显式点名的产品或账号优先（`agy` 未经用户显式点名同样不会自动入选）；② 否则取偏好顺序中第一个**非宿主且不同于 Phase 4 门禁一主审**的可用产品；③ 若可用产品仅剩宿主与另一个产品，则由该非宿主产品另开全新只读会话（绝不复用任何历史会话）。盲审超时按 `--fallback` 换到下一个可用非宿主硬只读产品；没有任何可用非宿主硬只读产品时返回 `MISSING_DEPENDENCIES`，不得退化为宿主自审或通用 subagent。
 
 缺少始终要求的能力，或缺少本轮实际需要的条件能力：
 
@@ -121,7 +121,7 @@ Task Completion Result
 - A 的三方立场互不依赖：宿主写自己的立场时，并行发起 Peer A 与 Peer B。
 - B 的两次交叉质疑互不依赖，并行发起。B 至多两轮；第二轮后仍存分歧，属技术默认值由宿主依证据裁定，属用户决策转入 C。
 - 每次外部调用设 deadline（默认与 `agentic-review-handoff` 的 Reviewer timeout 一致，20 分钟；宿主可缩短并记录）。以后台进程发起并按下一条等待，避免宿主前台工具超时截断真实会话。进程存活时不杀、不重发；超时先由 `--fallback` 换人（见「Peer 选择」），没有可换的才按 `DELIVERY_UNKNOWN` 处理：仅当本地证据证明未提交才同参数重试一次，否则本阶段记 `UNVERIFIED`，保留句柄与已得立场，下一轮从缺失的一方继续。
-- 等后台外部调用结束：优先等发起时记下的 PID（如 `review-loop consult ... > out 2>&1 & echo $! > pid`，再 `while kill -0 "$(cat pid)" 2>/dev/null; do sleep 15; done`），或用宿主自带的后台任务完成通知。不用 `pgrep -f` / `ps | grep` 按等待命令自身也含的字符串轮询：它会匹配到等待脚本自己，循环永不结束；非用模式不可时写成 `[r]eview-loop` 这类方括号形式，让它匹配不到自身。
+- 等后台外部调用结束：在 Antigravity（`agy`）中，通过 `run_command`（配合 `WaitMsBeforeAsync`）发起的后台 shell 命令会在结束时通过完成通知自动唤醒会话，无需手写 `sleep` 轮询循环；其他自带后台完成通知的宿主同样直接等待完成通知。若宿主不提供自动唤醒或需等待脱钩后台进程，优先等发起时记下的 PID（如 `review-loop consult ... > out 2>&1 & echo $! > pid`，再 `while kill -0 "$(cat pid)" 2>/dev/null; do sleep 15; done`）。不用 `pgrep -f` / `ps | grep` 按等待命令自身也含的字符串轮询：它会匹配到等待脚本自己，循环永不结束；非用模式不可时写成 `[r]eview-loop` 这类方括号形式，让它匹配不到自身。
 - 快路径：账本无 `HUMAN_DECISION`、范围由 plan/代码唯一确定、A 三方在范围/归属/验证上无实质分歧时，B 只跑一轮，无新分歧即收敛。快路径不减少参与方，不省略 B。
 
 ### B. 交叉质疑
@@ -158,12 +158,12 @@ Three-party Convergence
 
 收敛后调用 `goal-gate`，严格服从其 `Decision` / `Next`：
 
-- `wait for user /goal`、`ask approval` 或 `defer`：返回 `HUMAN_GATE` 并停止。生成 prompt 不代表 Goal 已激活。
-- `suggest` + `adopt goal and continue`：按 transcript contract 继续本 Loop，报告 `Goal: not-created`；`suggest` + `provide prompt` / `route elsewhere`：返回 `HUMAN_GATE`。
-- 已有 Goal：从 native 工具、产品状态或调用方传入的可核对 parent contract 比较 objective、冻结范围、Done condition 与 completion owner；native getter 不是唯一证据源。ownership 关系与完成权见 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的 Goal ownership；冲突或证据不足才 `defer`。
+- `wait for user /goal`、`ask approval` 或 `defer`：返回 `HUMAN_GATE` 并停止。在 `agy-slash` 上当用户明确要求原生 Goal 且当前尚未激活 `/goal` 时，因无 `create_goal` 工具，返回 `wait for user /goal` 与可复制 `/goal` 后暂停；生成 prompt 不代表 Goal 已激活。
+- `adopt goal and continue`（`suggest` 或无原生 Goal 的普通会话采用）：按 transcript contract 继续本 Loop，报告 `Goal: not-created`（包括 `agy-slash` 未激活原生 `/goal` 的场景：不宣称宿主 `/goal` stop hook 已生效，不虚构 `update_goal` 或重复输出 `/goal`）；`suggest` + `provide prompt` / `route elsewhere`：返回 `HUMAN_GATE`。
+- 已有 Goal：从 native 工具、产品状态、transcript 合同（如 `agy-slash` 会话中用户已触发的 `/goal`）或调用方传入的可核对 parent contract 比较 objective、冻结范围、Done condition 与 completion owner；native getter 不是唯一证据源。ownership 关系与完成权见 [decision-and-terminal-gates.md](references/decision-and-terminal-gates.md) 的 Goal ownership；冲突或证据不足才 `defer`。
 - 可激活或采用时，Goal 覆盖任务账本、冻结范围、验证、三道门禁、协议写和外部写边界。
 
-Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道门禁覆盖同一最终 evidence id。只有 `created-by-loop` / `exact-same-goal` 由本 Skill 完成；`broader-compatible` 即使本 Loop 已完成，也保持父 Goal active，并报告 `Goal: active-checkpoint`。
+Done condition 要求：账本无 `PENDING` / `HUMAN_DECISION`；验证和三道门禁覆盖同一最终 evidence id。只有 `created-by-loop` / `exact-same-goal` 由本 Skill 完成；在 `agy-slash` 等无原生 Goal 变更工具的宿主上，仅当当前会话已激活同范围 `/goal`（`exact-same-goal`）时，直接通过 transcript 证据完成（以覆盖账本与同一最终 evidence id 的最终 `Task Completion Result` 收口，供宿主 `/goal` stop hook 核验），不虚构 `update_goal` 或重复输出 `/goal`。`broader-compatible` 即使本 Loop 已完成，也保持父 Goal active，并报告 `Goal: active-checkpoint`。
 
 ## Phase 3：实现与验证
 

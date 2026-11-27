@@ -12,6 +12,12 @@
       "prompt": "最佳实践清单里引用的官方链接是不是有失效的？帮我检查一遍，先别调用其他模型做共识",
       "expected_output": "Runs check_practices.py --fetch only, which writes nothing; reports linkStatus per source and the gate summary line; calls no verifier models, adds no practices and edits no files.",
       "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Check my Antigravity (agy) and Claude Code usage over the last 30 days against official practices and tell me what to fix first",
+      "expected_output": "Runs audit mode over 30 days including agy transcripts (~/.gemini/antigravity*/brain/*/.system_generated/logs/transcript.jsonl) and ~/.gemini config scan, writes judgments.json and report.html under $AGENT_PRACTICE_AUDIT_DIR, reports per-host human/headless/subagent counts, grade, score, upgrade ladder, top 3 suggestions, and report path without exposing prompt text or secrets.",
+      "files": []
     }
   ]
 }

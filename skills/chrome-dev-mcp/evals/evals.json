@@ -207,6 +207,20 @@
       ],
       "files": [],
       "expected_output": "Keeps UI acceptance UNVERIFIED because the expected /api/save request is missing, without repeating submission."
+    },
+    {
+      "id": 16,
+      "name": "antigravity-agy-devtools-no-subagent-fallback",
+      "prompt": "我在 Antigravity (agy) 里用 /chrome-dev-mcp：帮我检查当前已登录 Chrome 里 localhost:3000 标签页的 Console 报错和 /api/profile 请求状态，再截一张图；不要用 Antigravity 内置 browser_subagent 替代，也不要输出其他标签页信息。",
+      "expected_output": "Treats /chrome-dev-mcp in Antigravity (agy) as an executable shared-Chrome DevTools task, runs zsh scripts/uxc-readiness.zsh --private-result once, passes the resolved fresh pageId to chrome-dev-mcp-cli (saving the screenshot under getconf DARWIN_USER_TEMP_DIR) instead of substituting Antigravity's built-in browser_subagent, and reports VERIFIED only after each requested operation returns without data.isError.",
+      "files": [],
+      "expectations": [
+        "Runs zsh scripts/uxc-readiness.zsh --private-result once to prove the shared connection and obtain a fresh numeric pageId",
+        "Uses chrome-dev-mcp-cli against the user's shared authenticated Chrome instead of substituting Antigravity's built-in browser_subagent",
+        "Saves take_screenshot with filePath under getconf DARWIN_USER_TEMP_DIR (never /tmp or the repository) and reads Console and Network on the fresh pageId",
+        "Does not print the page list or unrelated tabs' URLs, titles, or tokens",
+        "Marks the result VERIFIED only after take_screenshot, list_console_messages, and the relevant Network read return without data.isError"
+      ]
     }
   ]
 }

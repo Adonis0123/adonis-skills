@@ -24,6 +24,7 @@ def _parse_report_markdown(content: str) -> tuple[list[str], dict[str, list[Repo
 
     current_section: Optional[str] = None
     current_entry: Optional[ReportEntry] = None
+    section_item_indent: Optional[int] = None
     started_sections = False
 
     for raw_line in content.splitlines():
@@ -33,34 +34,40 @@ def _parse_report_markdown(content: str) -> tuple[list[str], dict[str, list[Repo
                 preamble.append(line)
             continue
 
-        if line.startswith("#"):
-            if not started_sections:
-                preamble.append(line)
-                continue
+        if line.startswith("#") and not started_sections:
+            preamble.append(line)
+            continue
 
-        if not line.startswith(" "):
+        stripped = line.lstrip(" ")
+        indent = len(line) - len(stripped)
+
+        # Support both canonical two-space bullets ("  - ") and Prettier/user-edited ("- ").
+        if stripped.startswith("- "):
+            started_sections = True
+            if current_section is None:
+                current_section = "其他"
+                sections.setdefault(current_section, [])
+
+            if section_item_indent is None:
+                section_item_indent = indent
+
+            if indent <= section_item_indent:
+                current_entry = ReportEntry(summary=stripped[2:].strip(), details=[])
+                sections[current_section].append(current_entry)
+            elif current_entry is not None:
+                current_entry.details.append(stripped[2:].strip())
+            continue
+
+        if indent == 0:
             started_sections = True
             current_section = line.strip()
             sections.setdefault(current_section, [])
             current_entry = None
-            continue
-
-        if line.startswith("  - "):
-            if current_section is None:
-                started_sections = True
-                current_section = "其他"
-                sections.setdefault(current_section, [])
-
-            current_entry = ReportEntry(summary=line[4:].strip(), details=[])
-            sections[current_section].append(current_entry)
-            continue
-
-        if line.startswith("    - ") and current_entry is not None:
-            current_entry.details.append(line[6:].strip())
+            section_item_indent = None
             continue
 
         # 兼容意外格式：把未知缩进行作为当前 entry 的 detail
-        if current_entry is not None and line.startswith(" "):
+        if current_entry is not None:
             current_entry.details.append(line.strip())
 
     return preamble, sections
@@ -151,6 +158,7 @@ def _merge_next_week_plans(existing: str, new: str) -> str:
     for project, entries in sections.items():
         lines.append(project)
         if not entries:
+            lines.append("")
             lines.append("-")
         for entry in entries:
             lines.append(f"  - {entry.summary}")

@@ -58,5 +58,9 @@
   {
     "query": "How do I grant Screen Recording permission to OBS on macOS Sequoia?",
     "should_trigger": false
+  },
+  {
+    "query": "把 kimi-cu 注册到 Antigravity (agy) 的 MCP 里并做个只读验证，别覆盖我 ~/.gemini/config/mcp_config.json 里的其他 server。",
+    "should_trigger": true
   }
 ]

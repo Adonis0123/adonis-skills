@@ -25,6 +25,8 @@ print -r -- 'exec chrome-dev-mcp-cli list_pages'`,
 print -r -- 'CHROME_DEV_MCP_READY'`,
   "cursor-agent": `print -r -- '{"type":"tool_call","command":"zsh scripts/uxc-readiness.zsh"}'
 print -r -- '{"type":"result","result":"CHROME_DEV_MCP_READY ${secretUrl}"}'`,
+  agy: `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"name":"run_command","parameters":{"CommandLine":"chrome-dev-mcp-cli list_pages"},"output":"{\\"ok\\":true,\\"protocol\\":\\"mcp\\",\\"operation\\":\\"list_pages\\",\\"data\\":{\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"1: Example [selected]\\"}]}}"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`,
 };
 
 function run(args) {
@@ -141,4 +143,125 @@ test("an unknown host fails closed", () => {
   const { status, stderr } = run(["--host", "hermes"]);
   assert.equal(status, 69);
   assert.match(stderr, /ERROR_CLASS=unknown_host/);
+});
+
+test("agy uses --sandbox --mode plan by default and --dangerously-skip-permissions only with --bypass", () => {
+  const saved = fakes.agy;
+  try {
+    fakes.agy = `[[ " $* " == *" --sandbox "* && " $* " == *" --mode plan "* && " $* " != *" --mode accept-edits "* ]] || exit 3
+[[ " $* " != *" --dangerously-skip-permissions "* ]] || exit 4
+print -r -- 'jetski: no output produced — a tool required the "command" permission.'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":""}}'`;
+    const normal = run(["--host", "agy"]);
+    assert.equal(normal.hosts.agy.EXIT, "0");
+    assert.equal(normal.hosts.agy.SENTINEL, "NONE");
+    assert.equal(normal.hosts.agy.RESULT, "UNVERIFIED");
+
+    fakes.agy = `[[ " $* " == *" --dangerously-skip-permissions "* ]] || exit 3
+${saved}`;
+    const bypass = run(["--host", "agy", "--bypass"]);
+    assert.equal(bypass.hosts.agy.EXIT, "0");
+    assert.equal(bypass.hosts.agy.SENTINEL, "READY");
+    assert.equal(bypass.hosts.agy.TOOL_TRACE, "YES");
+    assert.equal(bypass.hosts.agy.RESULT, "VERIFIED");
+  } finally {
+    fakes.agy = saved;
+  }
+});
+
+test("agy rejects request-only, tool errors, plain-text, and ERROR results; catches URL leaks", () => {
+  const saved = fakes.agy;
+  try {
+    // Request-only ACTIVE event with no output must not verify
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"ACTIVE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"chrome-dev-mcp-cli list_pages"}}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const reqOnly = run(["--host", "agy", "--bypass"]);
+    assert.equal(reqOnly.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(reqOnly.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Errored tool result must not count as completed trace
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"chrome-dev-mcp-cli list_pages"},"error":{"type":"PermissionDenied","message":"denied"}}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const toolErr = run(["--host", "agy", "--bypass"]);
+    assert.equal(toolErr.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(toolErr.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Plain-text READY without structured SUCCESS envelope must not fall back
+    fakes.agy = `print -r -- 'exec chrome-dev-mcp-cli list_pages'
+print -r -- 'CHROME_DEV_MCP_READY'`;
+    const plainText = run(["--host", "agy", "--bypass"]);
+    assert.equal(plainText.hosts.agy.SENTINEL, "NONE");
+    assert.equal(plainText.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Terminal ERROR result after an earlier SUCCESS must fail/remain unverified
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"chrome-dev-mcp-cli list_pages"},"output":"{\\"ok\\":true,\\"protocol\\":\\"mcp\\",\\"operation\\":\\"list_pages\\",\\"data\\":{\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"1: Example [selected]\\"}]}}"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'
+print -r -- '{"event":"result","result":{"status":"ERROR","response":"CHROME_DEV_MCP_READY"}}'`;
+    const errResult = run(["--host", "agy", "--bypass"]);
+    assert.equal(errResult.hosts.agy.SENTINEL, "NONE");
+    assert.equal(errResult.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Helper script printing only help or SHARED_TRANSPORT=FAIL must not count as TOOL_TRACE=YES
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"zsh scripts/uxc-readiness.zsh --help"},"output":"usage: uxc-readiness.zsh"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const helpOnly = run(["--host", "agy", "--bypass"]);
+    assert.equal(helpOnly.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(helpOnly.hosts.agy.RESULT, "UNVERIFIED");
+
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"zsh scripts/uxc-readiness.zsh"},"output":"SHARED_TRANSPORT=FAIL"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const transportFail = run(["--host", "agy", "--bypass"]);
+    assert.equal(transportFail.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(transportFail.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Shell-printed echo list_pages text or wrong JSON operation (take_snapshot) must not count as TOOL_TRACE=YES
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"echo chrome-dev-mcp-cli list_pages"},"output":"list_pages\\n1: Example [selected]"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const echoListPages = run(["--host", "agy", "--bypass"]);
+    assert.equal(echoListPages.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(echoListPages.hosts.agy.RESULT, "UNVERIFIED");
+
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"chrome-dev-mcp-cli list_pages"},"output":"{\\"ok\\":true,\\"protocol\\":\\"mcp\\",\\"operation\\":\\"take_snapshot\\",\\"data\\":{\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"snap\\"}]}}"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const wrongOp = run(["--host", "agy", "--bypass"]);
+    assert.equal(wrongOp.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(wrongOp.hosts.agy.RESULT, "UNVERIFIED");
+
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"echo uxc-readiness.zsh"},"output":"STATUS=READY\\nSHARED_TRANSPORT=OK"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const echoReadiness = run(["--host", "agy", "--bypass"]);
+    assert.equal(echoReadiness.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(echoReadiness.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Valid zsh scripts/uxc-readiness.zsh invocation with both STATUS=READY and SHARED_TRANSPORT=OK verifies cleanly
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"zsh scripts/uxc-readiness.zsh"},"output":"STATUS=READY\\nSHARED_TRANSPORT=OK"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const readinessOk = run(["--host", "agy", "--bypass"]);
+    assert.equal(readinessOk.hosts.agy.TOOL_TRACE, "YES");
+    assert.equal(readinessOk.hosts.agy.RESULT, "VERIFIED");
+
+    // list_pages returning data.isError=true must not count as TOOL_TRACE=YES
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"chrome-dev-mcp-cli list_pages"},"output":"{\\"ok\\":true,\\"protocol\\":\\"mcp\\",\\"operation\\":\\"list_pages\\",\\"data\\":{\\"isError\\":true}}"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY"}}'`;
+    const isErr = run(["--host", "agy", "--bypass"]);
+    assert.equal(isErr.hosts.agy.TOOL_TRACE, "NO");
+    assert.equal(isErr.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Non-exact narrative sentinel like "READY maybe" must not verify (and leak check still runs before sentinel pass)
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"zsh scripts/uxc-readiness.zsh"},"output":"STATUS=READY\\nSHARED_TRANSPORT=OK"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"Result: CHROME_DEV_MCP_READY_EXTRA"}}'`;
+    const badSentinel = run(["--host", "agy", "--bypass"]);
+    assert.equal(badSentinel.hosts.agy.SENTINEL, "NONE");
+    assert.equal(badSentinel.hosts.agy.RESULT, "UNVERIFIED");
+
+    // Leak check in valid SUCCESS response
+    fakes.agy = `print -r -- '{"event":"step_update","step_update":{"step_type":"tool","state":"DONE","tool_name":"run_command","tool_info":{"parameters":{"CommandLine":"zsh scripts/uxc-readiness.zsh"},"output":"STATUS=READY\\nSHARED_TRANSPORT=OK"}}}'
+print -r -- '{"event":"result","result":{"status":"SUCCESS","response":"CHROME_DEV_MCP_READY ${secretUrl}"}}'`;
+    const leaked = run(["--host", "agy", "--bypass"]);
+    assert.equal(leaked.hosts.agy.LEAK, "YES");
+    assert.equal(leaked.hosts.agy.RESULT, "FAIL");
+    assert.ok(!leaked.stdout.includes(secretUrl));
+  } finally {
+    fakes.agy = saved;
+  }
 });

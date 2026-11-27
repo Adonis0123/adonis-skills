@@ -379,6 +379,22 @@
         "明确创建全新硬只读会话且不泄露前序 reviewer 结论，不退化为通用 subagent",
         "最终报告在 Final blind audit 字段记录产品、新会话句柄与同一最终 evidence id"
       ]
+    },
+    {
+      "id": 27,
+      "name": "agy-host-peer-async-wait-and-slash-goal",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件或启动外部进程。当前可见宿主是 Antigravity（`agy`），运行在 `agy-slash` 界面下（没有 `update_goal`、`create_goal` 或 `get_goal` 工具）；`review-loop prefs` 为默认 `claude,codex,grok`，三者硬只读 adapter 均可用；用户未点名指定 Peer 或盲审产品。用户已在当前会话通过 `/goal` 对 `docs/plans/sync-engine.md` 启动完整 `task-completion-loop`（objective、冻结范围与 Done condition 与本 Loop 一致，即 `exact-same-goal`；plan 无 `HUMAN_DECISION`），后台外部调用通过 `run_command`（`WaitMsBeforeAsync`）发起。请说明 Peer 与盲审如何选人、如何等待后台外部调用、Phase 2 及收尾如何处理 Goal，以及若无已有 `/goal` 且 `goal-gate` 返回 `suggest` + `adopt goal and continue` 时应如何处理。",
+      "expected_output": "预检用 `--host=agy --skip-host` 从 `review-loop prefs` 选出 `claude` + `codex` 作为 Peer A/B，形成 `agy` 宿主 + `claude` + `codex` 三方独立视角；未经用户显式点名，`agy` 本身不被自动选为 Peer 或盲审者（终态盲审按偏好选非宿主且不同于门禁一主审的可用硬只读产品，如门禁一用 `claude` 或 `codex` 时盲审选 `grok`）。后台调用通过 `run_command`（`WaitMsBeforeAsync`）依赖完成通知自动唤醒，不手写 `sleep` 轮询或 `pgrep -f` 轮询（仅在脱钩进程无自动通知时才用 `kill -0` PID 等待，必要时用 `[r]eview-loop`）。Phase 2 通过 transcript 证据识别 `agy-slash` 的 `exact-same-goal` 并继续，完成后以覆盖 clean ledger 与同一最终 evidence id 的 `Task Completion Result` 完成收口（`Goal: completed`），不虚构 `update_goal`、不重复输出 `/goal`；若无 `/goal` 且 `goal-gate` 返回 `suggest` + `adopt goal and continue`，则采用 transcript 合同继续并报告 `Goal: not-created`，同样不虚构 `update_goal` 或重复输出 `/goal`。",
+      "files": [],
+      "expectations": [
+        "Peer 选择传 --host=agy --skip-host，从默认 review-loop prefs 取 claude + codex，形成 agy 宿主 + claude + codex 三方独立视角",
+        "明确除非用户显式点名，否则 agy 本身不会被自动选为 Peer 或盲审者（Auditor）",
+        "终态盲审按 review-loop prefs 选非宿主且不同于门禁一主审的可用硬只读产品（不退化为通用 subagent）",
+        "后台外部调用通过 run_command（WaitMsBeforeAsync）依赖完成通知自动唤醒，不手写 sleep 或 pgrep -f 轮询循环",
+        "保留脱钩后台进程优先 kill -0 PID、避免匹配到等待脚本自己及 [r]eview-loop 的规则",
+        "在 agy-slash 无 update_goal/get_goal 时识别 exact-same-goal 并通过 transcript 证据完成收口，不虚构 update_goal，也不重复输出 /goal",
+        "说明若 goal-gate 返回 suggest + adopt goal and continue 时按 transcript contract 继续并报告 Goal: not-created，同样不虚构 update_goal 或重复输出 /goal"
+      ]
     }
   ]
 }

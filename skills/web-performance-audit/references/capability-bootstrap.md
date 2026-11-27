@@ -4,7 +4,7 @@ Use this reference only when an audit capability is missing, failed, or present 
 
 ## Gap protocol
 
-1. **Discover first.** Use the current client's native tool/plugin/MCP listing and installed service-specific Skills. Record the capability, discovered adapter/owner name, status, and version when exposed. If a service-specific Skill already owns browser connection and identity, follow its readiness and recovery contract; do not register a competing runtime.
+1. **Discover first.** Use the current client's native tool/plugin/MCP listing and installed service-specific Skills. Record the capability, discovered adapter/owner name, status, and version when exposed. In Antigravity (`agy`), inspect installed browser skills (such as `ego-browser`), shared CLI adapters (such as `chrome-dev-mcp-cli`), and lazy-loaded MCP schemas (such as `kimi-cu` invoked via `call_mcp_tool`) before concluding a capability is absent. If a service-specific Skill already owns browser connection and identity, follow its readiness and recovery contract; do not register a competing runtime.
 2. **Prove readiness.** Require discovery, handshake, and one harmless real call. A config entry, installed package, enabled extension, or natural-language success message is not enough.
 3. **Decide whether the gap blocks the audit.** If a fallback can answer the question, continue and mark the missing layer. If the user explicitly requires the tool or the evidence cannot be obtained otherwise, offer an installation card.
 4. **Ask before mutation.** Installing a package/extension, editing user or project client configuration, enabling remote debugging, connecting to a signed-in browser, or restarting shared tooling requires explicit authorization.
@@ -29,7 +29,7 @@ If the user declines installation, continue with the fallback and mark the block
 
 Use Chrome DevTools MCP when the audit needs traces, Network/DOM details, Coverage, Memory, emulation, or browser metrics and the current client has no equivalent capability.
 
-First route through an installed service-specific owner such as `chrome-dev-mcp`. Its runtime/profile/page identity contract takes precedence over the generic bootstrap. Require its real readiness check (including a harmless `list_pages` or discovered equivalent) and confirm that the returned profile/page is the authorized target. Never bypass a failed managed connection by silently launching another profile, switching a signed-in target, inventing a new `pageId`, or substituting Playwright.
+First route through an installed service-specific owner such as `chrome-dev-mcp` or a shared adapter such as `chrome-dev-mcp-cli`. Its runtime/profile/page identity contract takes precedence over the generic bootstrap. Require its real readiness check (including a harmless `list_pages` or discovered equivalent) and confirm that the returned profile/page is the authorized target. Never bypass a failed managed connection by silently launching another profile, launching Antigravity's isolated anonymous browser profile, switching a signed-in target, inventing a new `pageId`, or substituting Playwright.
 
 Only when no managed owner exists, and the user explicitly authorizes direct upstream MCP installation/configuration, use the portable setup below. Reopen official upstream documentation before acting; the examples are guidance, not permission to mutate configuration.
 
@@ -55,6 +55,8 @@ Claude Code: claude mcp add chrome-devtools --scope user npx chrome-devtools-mcp
 Codex CLI:   codex mcp add chrome-devtools -- npx chrome-devtools-mcp@latest
 Grok CLI:    grok mcp add chrome-devtools npx chrome-devtools-mcp@latest
 ```
+
+In Antigravity (`agy`), prefer an existing installed browser skill (`ego-browser`) or shared adapter (`chrome-dev-mcp-cli`) when available; only add a new MCP server via `agy mcp add` after explicit user authorization and after checking the current Antigravity CLI reference for exact syntax.
 
 Cursor CLI uses the same `mcp.json` configuration as the editor. After authorization, put the portable configuration above in project-scoped `.cursor/mcp.json` or the documented user-scoped location; the current CLI does not need a skill-specific wrapper. Verify the configured server rather than assuming the file was loaded:
 
@@ -82,10 +84,12 @@ Official sources:
 - https://github.com/ChromeDevTools/chrome-devtools-mcp/blob/main/docs/troubleshooting.md
 - https://cursor.com/docs/cli/mcp
 - https://cursor.com/docs/context/model-context-protocol
+- https://antigravity.google/docs/skills.md
+- https://antigravity.google/docs/cli/reference.md
 
 ## Structured browser interaction
 
-If no authenticated browser driver exists, prefer a client-native browser capability. Playwright MCP is a portable alternative for accessibility snapshots and structured interactions, but its default isolated browser does not inherit a user's signed-in state. It is not a fallback for DevTools-only Network/Performance internals and must not be used to claim profile parity.
+If no authenticated browser driver exists, prefer a client-native browser capability. In Antigravity (`agy`), check for an installed authenticated browser skill such as `ego-browser` before falling back, and never launch Antigravity's isolated anonymous browser profile when the target requires the user's authenticated Chrome session—an anonymous profile lacks user cookies and session state and cannot prove profile parity. Playwright MCP is a portable alternative for accessibility snapshots and structured interactions, but its default isolated browser does not inherit a user's signed-in state. It is not a fallback for DevTools-only Network/Performance internals and must not be used to claim profile parity.
 
 Portable configuration from the current official Playwright MCP installation guide:
 
@@ -108,7 +112,7 @@ Official source: https://playwright.dev/mcp/
 
 ## Computer Use
 
-Computer Use is usually a host-native capability, not one universal package that this skill can install. Discover the current client's visual-control capability first. If none exists:
+Computer Use is usually a host-native capability, not one universal package that this skill can install. Discover the current client's visual-control capability first; in Antigravity (`agy`), check lazy-loaded MCP servers (such as `kimi-cu`) invoked via `call_mcp_tool` by inspecting the schema and running one harmless read-only call (such as listing apps or windows). If none exists:
 
 - use structured browser tools for DOM-accessible controls;
 - ask the user to perform a narrowly specified DevTools/Recorder step when visual UI access is essential;

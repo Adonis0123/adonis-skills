@@ -34,6 +34,19 @@
         "Does not create AGENTS.md or change CLAUDE.md",
         "Does not commit, push, or modify external Git metadata"
       ]
+    },
+    {
+      "id": 4,
+      "name": "antigravity-repo-layout",
+      "prompt": "Initialize agent symlinks in this repository so Claude Code, Codex, Cursor, and Antigravity (agy) all discover skills and repo instructions. The repository already has .agents/skills/demo/SKILL.md, .agents/skills.json, CLAUDE.md, and a regular non-symlink GEMINI.md. Do not consolidate GEMINI.md.",
+      "expected_output": "Runs symlink-init to create .claude/skills -> ../.agents/skills and AGENTS.md -> CLAUDE.md while leaving .agents/skills.json and the non-symlink GEMINI.md intact, without creating .gemini/skills inside the repo.",
+      "files": [],
+      "expectations": [
+        "Creates .claude/skills pointing to ../.agents/skills and AGENTS.md pointing to CLAUDE.md.",
+        "Does not create a .gemini/skills directory or symlink inside the repository.",
+        "Inspects and preserves the existing non-symlink GEMINI.md and .agents/skills.json without overwriting or deleting them.",
+        "Explains that Antigravity (agy) natively discovers .agents/skills/*/SKILL.md and AGENTS.md from the repo root."
+      ]
     }
   ]
 }

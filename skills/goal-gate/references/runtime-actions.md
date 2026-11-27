@@ -74,6 +74,16 @@ Ensure the verification evidence will appear in the conversation, because the ev
 
 The evaluator gets the condition text and the conversation, not the turn that ran `/goal`, so the condition must stand alone as one end state checkable from the transcript, with its check and an optional bound ("skm Portal steps 1–3 done, tests and page checks shown in the conversation, or stop after 20 turns"). A bare go-ahead ("去做吧", "continue", "do it") reads as "the user said so", which the transcript never shows: it keeps blocking stops until the evaluator rules it impossible (https://code.claude.com/docs/en/goal.md).
 
+## Antigravity slash `/goal` (`agy-slash`)
+
+Verified behavior (https://antigravity.google/docs/commands/goal.md): Antigravity CLI (`agy`) TUI, Antigravity App composer, and Antigravity IDE expose user-facing `/goal <objective>` with a built-in goal stop hook and an evidence-based deliverable audit, and provide **no** agent-callable `create_goal`, `get_goal`, or `update_goal` tool. Starting a new `/goal` cancels any previous active goal in that conversation.
+
+- **No Active Goal, explicit request to start native `/goal`**: Because no `create_goal` tool exists and the host installs its built-in `/goal` stop hook only when the **user** submits `/goal`, emit the Goal Gate block with `Decision: set-now` (or `suggest`), `Next: wait for user /goal`, and a copyable `/goal <objective>` compatible with `scripts/lint-goal-prompt.py`, then stop without claiming a native Goal is active.
+- **No Active Goal, authorized execution without requesting a native `/goal`** (high-fit non-explicit task or `$goal-gate` / `/goal-gate` contract adoption): Use `Next: adopt goal and continue` and `Prompt: none` (see the table row in `SKILL.md`: `Decision: set-now` on explicit `/goal-gate` contract adoption, or `suggest` when merely adopting a self-enforced contract without explicit Goal activation). Surface verification evidence in the transcript, and state clearly that host `/goal` stop-hook state is **not** active (transcript self-adoption only).
+- **Active Goal present**: Never emit a new `/goal` silently when an Active Goal exists, because starting a new `/goal` cancels the previous active goal in that conversation. If continuing the exact same objective or a compatible-contained checkpoint, use `Decision: set-now`, `Next: continue active goal`, `Prompt: none`, keep working, and surface every command, exit status, changed file, or visual check in the transcript for Antigravity's built-in goal stop hook and deliverable audit; if the new objective conflicts or hasn't been chosen, use `Decision: defer`, `Next: ask approval`, `Prompt: none`, and ask whether to continue the current goal or replace it.
+- **AGY Plan Mode**: If AGY Plan Mode blocks edits until `exit_plan_mode`, state that constraint explicitly and do not claim file edits or execution ran while blocked.
+- **Prompt-only request**: When the user asks only for text to copy or review (or names Antigravity/`agy` for a fresh handoff), use `Decision: suggest`, `Next: provide prompt`, and emit a copyable `/goal <objective>` compatible with `scripts/lint-goal-prompt.py` with a standalone, evidence-checkable objective.
+
 ## Cursor CLI
 
 There is no verified product goal API or `/goal` command. Cursor skills may be invoked from `/`, but that invokes the skill, not a product Goal.

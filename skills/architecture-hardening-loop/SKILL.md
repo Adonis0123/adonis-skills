@@ -61,13 +61,13 @@ metadata:
 
 `goal-gate` 是**条件依赖**：仅当用户明确要求创建/管理 Goal，或已有可核对的 active Goal / parent contract 时使用。用户只点名本 Loop 仅授权 Hardening Contract 和本页循环，不授权创建产品 Goal。没有 Goal 需求或已有关系时，缺少 `goal-gate` 不构成 `MISSING_DEPENDENCIES`。
 
-扫描只调用 `improve-codebase-architecture` 的 **Explore + HTML 报告**，报告后停止（不进候选选择 / grilling / 领域文档）。`codebase-design` 是 scanner Explore 的传递硬依赖；`grilling` / `domain-modeling` 属报告后交互，本 Loop 不调用。scanner 还要求独立只读 exploration worker。本编排不代装、不复制这些能力。
+扫描只调用 `improve-codebase-architecture` 的 **Explore + HTML 报告**，报告后停止（不进候选选择 / grilling / 领域文档）。`codebase-design` 是 scanner Explore 的传递硬依赖；`grilling` / `domain-modeling` 属报告后交互，本 Loop 不调用。scanner 还要求独立只读 exploration worker；当宿主为 Antigravity（`agy`）时，该 worker 通过 `invoke_subagent(TypeName="research", ...)`（只读沙箱）或 `run_workflow` 启动，以便在不修改源码的隔离上下文中完成探索。本编排不代装、不复制这些能力。
 
 ## 前置检查
 
 1. 确认当前目录属于 Git 仓库；记录仓库根与工作区状态。若用户给的是附件/引用/Git 定位信息，先按“必需输入”解析并回显 commit identity 与最终 path set；解析成功不再索要 hash/路径。
 2. **解析执行能力，不把 frontmatter 当门禁**（规则见“硬依赖与 runtime 能力”）。仍不可用的情形只有：未安装/不可读、所需 worker/工具无法执行、合同不兼容或用户明确禁止。不要因为 catalog 未注入或用户没点名嵌套 skill 而停。
-3. host 须能启动 scanner 要求的独立只读 exploration worker；`agentic-review-handoff` 须能对偏好里至少一个产品创建或恢复真实 consult/review 并返回可核对结果。只有 CLI 文件或 skill 名存在不算可用。
+3. host 须能启动 scanner 要求的独立只读 exploration worker（Antigravity / `agy` 下通过 `invoke_subagent(TypeName="research", ...)` 只读沙箱或 `run_workflow` 执行）；`agentic-review-handoff` 须能对偏好里至少一个产品创建或恢复真实 consult/review 并返回可核对结果。只有 CLI 文件或 skill 名存在不算可用。
 4. 任一硬依赖未安装/不可读、实际 worker/工具无法执行、delegation 或偏好里的 Reviewer 都不可用 → `MISSING_DEPENDENCIES` + 准确依赖链，然后停止。不静默降级、不复制逻辑、不代装。未触发 Goal 集成时，不检查或要求 `goal-gate`。
 5. 检查 `.review-handoff/**` 与 `$GIT_COMMON_DIR/info/exclude` 协议写；用户禁止且当前需要写 → `HUMAN_GATE`。
 6. 冻结调用时的代码范围。协议产物不混入 scanner scope。每次 scanner pass 前选定本轮 `scanEvidence`（初扫 E1；Fix 后用已确认的 review identity 作复扫 E2）。细节 → `references/ownership-and-evidence.md`。
@@ -81,8 +81,8 @@ metadata:
 
 consult 和复审用同一套 Reviewer 选择，按 `agentic-review-handoff` 的用户偏好，不问用户：
 
-- 用户点名产品或账号（`codex`、`cc002`、`grok`、`grok002`）→ 用它，账号加 `--reviewer-command` / `--peer-command`；没要求就不加后备。
-- 否则只传 `--host=<当前宿主产品>`（consult 同样），由脚本读用户保存的偏好：第一个产品当 Reviewer，其余自动成为 `--fallback`。默认 `claude,codex,grok`，不跳过宿主。用户说出长期偏好时用 `review-loop prefs --order=...` 保存。
+- 用户点名产品或账号（`codex`、`cc002`、`grok`、`grok002`）→ 用它，账号加 `--reviewer-command` / `--peer-command`；没要求就不加后备。`agy` 作为 consult peer 仅在用户明确点名时启用（opt-in），不隐式进入默认偏好。
+- 否则调用 `review-loop consult` / `review-loop run` 时只传 `--host=<当前宿主产品>`（支持 `claude`/`codex`/`grok`/`agy`/`cursor`/`pi`），由脚本读用户保存的偏好：第一个产品当 Reviewer，其余自动成为 `--fallback`。默认 `claude,codex,grok`，不跳过宿主。用户说出长期偏好时用 `review-loop prefs --order=...` 保存。
 - 超时由脚本自动换下一个产品重跑同一轮（结果里的 `fallbacks`），不算 `DELIVERY_UNKNOWN`；后备也用完才进 `HUMAN_GATE`。完成报告写明实际 Reviewer（`reviewerFrom`）和每次换人。
 
 ## 主流程
@@ -106,6 +106,7 @@ consult 和复审用同一套 Reviewer 选择，按 `agentic-review-handoff` 的
 调用已解析的 `improve-codebase-architecture`，或按上述父会话执行路径完整读取后执行，**只做探索 + 候选 HTML 报告**：
 
 - 把用户范围直接传给扫描器；禁止走“按 Git 热点推断范围”的默认分支。
+- 宿主为 Antigravity（`agy`）时，`improve-codebase-architecture` 所需的独立只读 exploration worker 通过 `invoke_subagent(TypeName="research", ...)`（只读沙箱）或 `run_workflow` 运行，以免在只读探索阶段改动工作区或主会话上下文。
 - 首轮允许写临时 HTML 报告；复扫只需要结构化候选清单（标题、证据、拟议 Seam），不要求重新渲染 HTML 或 Mermaid。嵌套调用无法跳过渲染时接受其输出，但不为此增加轮次或等待。
 - **停在报告之后**：report-only 阶段；抑制 standalone 的候选选择问题，不进入 `grilling` 或领域文档。后续判断由本 Skill 负责。
 - `Strong` / `Worth exploring` / `Speculative` 只是候选强度，不是修改命令。
@@ -169,7 +170,7 @@ Goal ownership + evidence freshness → `references/ownership-and-evidence.md`�
 
 ### 5. 条件 Goal 集成
 
-扫描前只读检查关系，不创建、不替换、不 terminally update。只有用户明确要求本次创建 Goal、确认至少一个 `Fix`、关系为 `none` 且安全门通过时，才创建新 Goal。仅点名本 Loop 不满足这项授权；继续在 `Hardening Contract` 下实施，并报告 `Goal: not-created`。`exact-same-goal` / `broader-compatible` 继续已有 Goal（`Next: continue active goal`）；`conflicting/unclear` 已在扫描前停门。永不创建嵌套 Goal。完成所有权与 Codex/Grok 终态字段 → `references/ownership-and-evidence.md`。
+扫描前只读检查关系，不创建、不替换、不 terminally update。只有用户明确要求本次创建 Goal、确认至少一个 `Fix`、关系为 `none` 且安全门通过时，才创建新 Goal。仅点名本 Loop 不满足这项授权；继续在 `Hardening Contract` 下实施，并报告 `Goal: not-created`。`exact-same-goal` / `broader-compatible` 继续已有 Goal（`Next: continue active goal`）；`conflicting/unclear` 已在扫描前停门。永不创建嵌套 Goal。完成所有权与各 runtime（Codex / Grok / Antigravity / Claude Code）终态字段 → `references/ownership-and-evidence.md`。
 
 ### 6. 最小修改与验证
 
@@ -254,4 +255,4 @@ Architecture Hardening Result
 - Goal: <completed | active-checkpoint | not-created | deferred-conflict>
 ```
 
-只有本 Loop 拥有完成权，且 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、没有未处理的 `Fix` 时，才能把 Goal 标为 completed。若实施过 Fix，默认模式的最终 review 必须覆盖报告中的同一 Evidence id，并为 `PASS` / `NO_FINDINGS`；仅当用户显式选择 review-only 模式时，才接受已归档的 Decision Closure。不得存在 `awaiting_user_decision` packet。`broader-compatible` 的父 Goal 始终报告 `active-checkpoint`。零 Fix 分支不虚构 review。Codex/Grok 终态字段见 `references/ownership-and-evidence.md`。
+只有本 Loop 拥有完成权，且 `Result: NO_ACTIONABLE_FINDINGS`、必要验证通过、没有未处理的 `Fix` 时，才能把 Goal 标为 completed。若实施过 Fix，默认模式的最终 review 必须覆盖报告中的同一 Evidence id，并为 `PASS` / `NO_FINDINGS`；仅当用户显式选择 review-only 模式时，才接受已归档的 Decision Closure。不得存在 `awaiting_user_decision` packet。`broader-compatible` 的父 Goal 始终报告 `active-checkpoint`。零 Fix 分支不虚构 review。各 runtime（Codex / Grok / Antigravity / Claude Code）终态字段见 `references/ownership-and-evidence.md`。

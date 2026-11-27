@@ -1,6 +1,6 @@
 # Tool routing and measurement isolation
 
-Use this reference to choose capabilities, not brands. Tool names change across Claude Code, Codex, Grok, browser plugins, and Chrome DevTools MCP releases.
+Use this reference to choose capabilities, not brands. Tool names change across Antigravity (`agy`), Claude Code, Codex, Cursor, Grok, browser plugins, and Chrome DevTools MCP releases.
 
 ## Capability preflight
 
@@ -17,6 +17,8 @@ Record every layer as `available`, `unavailable`, `failed`, `polluting`, or `unt
 | Source access           | locate the module that owns the measured control or lifecycle                     | source fact or causal hypothesis                  |
 
 Do not claim a tool is integrated because a config file mentions it. Prove discovery, handshake, and one real harmless call. Retry a stale MCP connection once after recovery; repeated failure becomes `UNVERIFIED` coverage, not an invented result.
+
+In Antigravity (`agy`), discover browser and UI capabilities across installed skills (such as `ego-browser`), shared CLI adapters (such as `chrome-dev-mcp-cli`), and lazy-loaded MCP servers (such as `kimi-cu` invoked through `call_mcp_tool`). Only add or change an MCP server with `agy mcp add` after explicit user authorization (see `{{skill_path}}/references/capability-bootstrap.md`).
 
 When a missing capability blocks requested evidence, read `{{skill_path}}/references/capability-bootstrap.md`. Present its installation card and wait for authorization before changing client configuration, installing packages/extensions, enabling browser debugging, or restarting shared tooling. If a fallback is sufficient, continue without installation and record the reduced coverage.
 
@@ -39,6 +41,8 @@ These are runtime configuration choices, not changes to product code. If the cur
 
 Use the user's authenticated Chrome page only when authentication is required and the trust/privacy preflight allows it. Confirm the exact target after every navigation because similar localhost, PFB, test, and production tabs can coexist.
 
+In Antigravity (`agy`), prefer an authorized browser owner such as the `ego-browser` skill or a shared `chrome-dev-mcp-cli` session attached to the user's browser when authentication is needed. Never launch Antigravity's isolated anonymous browser profile when the target requires the user's authenticated Chrome session: an anonymous profile starts without cookies or login state, breaks profile parity, and cannot verify authenticated flows. If the authenticated route is unavailable or fails, keep affected coverage `UNVERIFIED` rather than substituting an anonymous profile.
+
 Use snapshots for control discovery and stable identifiers. Re-snapshot after navigation, remount, dialog changes, or tab changes. Browser automation timestamps prove automation duration, not necessarily browser Event Timing.
 
 ## Chrome DevTools MCP or CLI
@@ -52,7 +56,7 @@ Use the capabilities exposed by the current server. Typical categories include:
 - heap or memory tools when explicitly enabled;
 - Coverage, Lighthouse, and console inspection where available.
 
-Read current server help or tool discovery rather than baking in one release's parameter names. An automated performance trace is the primary quantitative route. The Chrome DevTools MCP project's official skill also recommends listing/selecting the page and refreshing snapshots after DOM changes.
+Read current server help or tool discovery rather than baking in one release's parameter names. An automated performance trace is the primary quantitative route. The Chrome DevTools MCP project's official skill also recommends listing/selecting the page and refreshing snapshots after DOM changes. Where the host already provides a shared adapter such as `chrome-dev-mcp-cli`, route through that shared adapter rather than spawning a competing process.
 
 ## Computer Use
 
@@ -63,6 +67,8 @@ Use Computer Use when the target is outside the page accessibility tree:
 - browser extension popups;
 - canvas/video controls without stable DOM targets;
 - visual jitter, flashing, overlay, or focus behavior.
+
+In Antigravity (`agy`), Computer Use may be exposed as a lazy-loaded MCP server (such as `kimi-cu`) via `call_mcp_tool`. Inspect its tool schema first and run one harmless read-only call (such as listing apps or windows) before treating it as `available`.
 
 Pixels can verify that something appeared, moved, flashed, or remained blocked. They cannot by themselves prove 73ms input delay, a memory leak, a network cause, or React render ownership. Pair visual evidence with trace/observer/network/source evidence.
 

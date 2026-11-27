@@ -72,7 +72,7 @@ A fresh `run` has no default Reviewer; omitting `--reviewer` fails with `REVIEWE
 
 1. The user named a product or account (`grok`, `grok002`, `codex003`, `cc002`, ...) → use it. An account name maps to its product (`grok00x`→grok, `codex00x`→codex, `cc00x`→claude) plus `--reviewer-command=<name>`.
 2. `run --continue` → inherits the stored Reviewer, launcher and `--fallback` list; pass nothing.
-3. Otherwise do not ask and do not pick a product yourself: pass `--host=<visible host product>` (`claude` / `codex` / `grok`) instead of `--reviewer` (consult: instead of `--peer`). The script reads the user's saved **Reviewer preference** and uses its first product as Reviewer and the rest as `--fallback`. Default: `claude,codex,grok`, host kept (`skipHost: false`), so a Claude host is reviewed by a fresh read-only Claude session. The result's `reviewerFrom` says what was picked and why; state it in the start line and the terminal report. Parent workflows (`architecture-hardening-loop`, `task-completion-loop`) use this same preference.
+3. Otherwise do not ask and do not pick a product yourself: pass `--host=<visible host product>` (`claude` / `codex` / `grok` / `agy` / `cursor` / `pi`; `antigravity` normalizes to `agy`, `cursor-cli` to `cursor`) instead of `--reviewer` (consult: instead of `--peer`). The script reads the user's saved **Reviewer preference** and uses its first product as Reviewer and the rest as `--fallback`. Default: `claude,codex,grok`, host kept (`skipHost: false`), so a Claude host is reviewed by a fresh read-only Claude session. Host-only values (`agy`, `cursor`, `pi`) do not appear in the preference order, so they always pick `order[0]` and `order.slice(1)` even when `skipHost` is true, and `agy` stays strictly opt-in-only as a consult peer (never picked automatically or added to default preference). The result's `reviewerFrom` says what was picked and why; state it in the start line and the terminal report. Parent workflows (`architecture-hardening-loop`, `task-completion-loop`) use this same preference.
 
 **Reviewer preference.** Saved per user in `${XDG_CONFIG_HOME:-~/.config}/agentic-review-handoff/config.json` as `{ "order": [...], "skipHost": bool }`. When the user states a lasting preference ("prefer codex", "以后先用 claude", "不要让宿主审自己"), save it: `node "$RL" prefs --order=codex,claude,grok`, `--skip-host=true`, or `--reset` for the default; `node "$RL" prefs` shows it. `REVIEW_LOOP_REVIEWERS=codex,claude` overrides the order for one shell. A one-off request ("review this one with grok") is step 1, not a preference change.
 
@@ -85,7 +85,7 @@ RL="<skill-dir>/scripts/review-loop.mjs"
 REPO="$(git rev-parse --show-toplevel)"
 
 # Start after this session implemented the change (default Review Handoff origin)
-node "$RL" run --repo "$REPO" --host=claude|codex|grok [--base <sha>] [--rounds 3]      # Reviewer + fallbacks from the preference
+node "$RL" run --repo "$REPO" --host=claude|codex|grok|agy|cursor|pi [--base <sha>] [--rounds 3] # Reviewer + fallbacks from the preference
 node "$RL" run --repo "$REPO" --reviewer=codex|grok|claude [--reviewer-command=grok002] [--fallback=grok] [--base <sha>] [--rounds 3]
 
 # Start an explicit auto loop without verified implementer context (Review Intake origin)
@@ -103,7 +103,7 @@ node "$RL" close --repo "$REPO" --packet "$PACKET" --reason accept-concerns
 node "$RL" evidence --repo "$REPO" --base "$BASE_SHA" [--paths=a,b]
 
 # Advisory decision consult (not part of Verdict machine)
-node "$RL" consult --repo "$REPO" --host=claude [--skip-host] --question-file /tmp/q.md   # peer from the preference
+node "$RL" consult --repo "$REPO" --host=claude|codex|grok|agy|cursor|pi [--skip-host] --question-file /tmp/q.md # peer from the preference
 node "$RL" consult --repo "$REPO" --peer=codex [--peer-command=codex002] [--fallback=grok] --question-file /tmp/q.md
 # Multi-round: continue the same peer session; the follow-up is appended to the same record.
 # --web adds search/fetch only (pi has none); --raw sends the file without the advisory framing.
@@ -129,7 +129,7 @@ node "$RL" sessions --repo "$REPO" [--product=codex|grok|claude|pi]
 | STOP     | Global `.review-handoff/STOP` or per-packet `runtime/<id>/STOP`                                              |
 | Sandbox  | Codex OS sandbox; Grok read-only tool allowlist + MCP deny; Claude tool restrictions; no permission prompt   |
 
-**Budget exhausted (`budget_exhausted`).** Only the user adds rounds: the report's `recommendation` is addressed to them, so never pass `--rounds` on `--continue` yourself. Probe for an unattended run at that point: `sideby` is on `PATH` and `sideby unattended status --json` reports `"on": true`, or the host has stated that nobody is present and questions are refused. A missing or failing `sideby` settles nothing; without that host statement the user is present.
+**Budget exhausted (`budget_exhausted`).** Only the user adds rounds: the report's `recommendation` is addressed to them, so never pass `--rounds` on `--continue` yourself. Probe for an unattended run at that point: `sideby` is on `PATH` and `sideby unattended status --json` reports `"on": true`, or the host has stated that nobody is present and questions are refused (including non-interactive `agy -p` / `run_workflow` runs where the host states questions are refused). A missing or failing `sideby` settles nothing; without that host statement the user is present.
 
 - **User present**: give the terminal report and ask whether to authorize more rounds.
 - **Unattended**: do not ask and do not fix the remaining findings (no budgeted round is left to re-review an edit). Record one item for the user with `sideby unattended defer "<N> review findings open on <branch> after <rounds> rounds, packet <packet_id>"` (N = the report's `unresolved` count; the short SHA on a detached HEAD; no finding text); without `sideby` the terminal report carries it alone. Do not commit or merge code with open findings, continue only with task parts that do not depend on it, and list the item in the terminal report.

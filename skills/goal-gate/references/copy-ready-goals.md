@@ -1,6 +1,6 @@
 # Copy-Ready Goal Drafting
 
-Use this reference when `goal-gate` needs to produce a prompt the user may paste directly into Cursor CLI, Grok Build, Codex, Claude Code, or a compatible agent. Grok, Codex slash, and Claude Code use the `/goal` body shape. Cursor CLI uses the same contract fields as a plain prompt because it has no verified product `/goal` or goal API; its continuity comes from resuming the same chat.
+Use this reference when `goal-gate` needs to produce a prompt the user may paste directly into Antigravity (`agy` CLI / App / IDE), Cursor CLI, Grok Build, Codex, Claude Code, or a compatible agent. Grok, Codex slash, Claude Code, and Antigravity (`agy-slash`) use the `/goal` body shape. Cursor CLI uses the same contract fields as a plain prompt because it has no verified product `/goal` or goal API; its continuity comes from resuming the same chat.
 
 ## Default-First Strategy
 
@@ -75,6 +75,14 @@ Iteration policy: <bounded retries based on evidence>.
 Stop when: <evidence proves the result or skipped checks are explicit>.
 Pause if: <credentials, payment, production data, destructive actions, regulated judgment, copyright, ownership, or repeated blockers are required>.
 ```
+
+## Antigravity (`agy-slash`) Notes
+
+Antigravity uses the Chinese or English `/goal` shape above (`agy` CLI TUI and Antigravity App composer accept `/goal <objective>`). Keep these host rules in mind when handing back a copyable prompt:
+
+- Put a standalone, evidence-checkable objective on the `/goal` line so Antigravity's built-in goal stop hook and deliverable audit can verify done from surfaced transcript evidence.
+- Remind the user that starting a new `/goal` cancels any previous active goal in that conversation; never suggest emitting a replacement `/goal` silently while an active goal is still open.
+- Verify the drafted prompt passes `scripts/lint-goal-prompt.py`.
 
 ## Cursor CLI Shape
 

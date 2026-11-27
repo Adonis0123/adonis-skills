@@ -1,6 +1,6 @@
 ---
 name: kimi-computer-use
-description: "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, WorkBuddy, Claude Code, Codex, or Hermes; fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'; or look at and verify a running macOS app UI through kimi-cu, such as checking whether a window matches a design. Not for general desktop automation, messaging, or purchasing, and not a replacement for a host's native Computer Use."
+description: "Install, register, diagnose, or upgrade Kimi Computer Use (kimi-cu) MCP for Cursor CLI, Grok, Antigravity (agy), WorkBuddy, Claude Code, Codex, or Hermes; fix kimi-cu tool-call errors such as 'no target app' or 'mode must be full, image, or ax'; or look at and verify a running macOS app UI through kimi-cu, such as checking whether a window matches a design. Not for general desktop automation, messaging, or purchasing, and not a replacement for a host's native Computer Use."
 metadata:
   author: adonis
   version: "0.4.0"
@@ -70,6 +70,8 @@ Read-only smoke for every host: `list_apps`, then `get_app_state` with `app=com.
 
 Compare a host's discovered tool set with the live schema instead of a fixed count; a different count after an upgrade is not by itself a failure.
 
+In Antigravity (`agy`), MCP tools are lazy-loaded instead of injected directly into the initial tool list: read `<appDataDir>/mcp/kimi-cu/<tool>.json` for the target schema first, then invoke `call_mcp_tool(ServerName="kimi-cu", ToolName="<tool>", Arguments=...)` so the model emits a real call rather than describing one.
+
 Do not mass-kill `kimi-cu` processes: one `kimi-cu service` helper runs at PPID 1 and each host owns its own `kimi-cu mcp` children, so a sweep breaks other hosts' sessions. Reconnect the affected host instead.
 
 ### Choose when to use Kimi CU
@@ -78,6 +80,7 @@ Registration does not make `kimi-cu` the default:
 
 - Codex desktop and cross-app work prefer Codex native Computer Use; use `kimi-cu` only as fallback or on explicit request.
 - WorkBuddy browser, desktop, and cross-app work prefer WorkBuddy native capabilities; use `kimi-cu` only when native Computer Use is unavailable or insufficient.
+- Antigravity (`agy`) browser DOM, Console, Network, and web UI tasks belong to `chrome-dev-mcp`, `ego-browser`, or the AGY browser subagent rather than `kimi-cu`; use `kimi-cu` in Antigravity for native macOS app windows or explicit `kimi-cu` checks.
 - Browser internals such as DOM, Console, Network, and Performance belong to Chrome DevTools MCP, not `kimi-cu`.
 
 ## Diagnose failures

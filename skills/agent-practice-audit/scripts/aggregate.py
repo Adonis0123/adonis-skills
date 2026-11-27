@@ -32,9 +32,9 @@ from audit_common import (ASK_USER_TOOLS, CHECK_TAGS, EDIT_TOOLS, LOW_SAMPLE, PR
 # Tool names (any host) that count as evidence for a concept. get_command_or_subagent_output (Grok) reads
 # the output of a shell command or a subagent, so it is not a subagent launch.
 CONCEPTS = {
-    "plan_mode": {"ExitPlanMode", "EnterPlanMode", "exit_plan_mode"},
+    "plan_mode": {"ExitPlanMode", "EnterPlanMode", "exit_plan_mode", "enter_plan_mode"},
     "ask_user": ASK_USER_TOOLS,
-    "subagent": {"Agent", "Task", "spawn_agent", "spawn_subagent"},
+    "subagent": {"Agent", "Task", "spawn_agent", "spawn_subagent", "invoke_subagent", "run_workflow"},
     "todo": {"TodoWrite", "update_plan", "todo_write", "TaskCreate", "TaskUpdate"},
     "skill": {"Skill"},
     "web": {"WebFetch", "WebSearch", "web_fetch", "web_search"},
@@ -360,13 +360,17 @@ def parallel(hs: list[dict], max_span_hours: float, min_overlap_minutes: float) 
     nothing are left out.
     """
     by_project = collections.defaultdict(list)
+    missing_repo = collections.Counter()
     for r in hs:
         # Grouped by project (remote, else full repository identity with worktrees folded), so /one/app and
         # /two/app stay apart unless they are clones of one remote. Only counts leave this function.
         repo, a, b = repo_key(r), epoch(r.get("start")), epoch(r.get("end"))
-        if not repo or repo_label(r) == "~" or a is None or b is None or b - a > max_span_hours * 3600:
+        if a is None or b is None or b - a > max_span_hours * 3600:
             continue
         if not edits_files(r):
+            continue
+        if not repo or repo_label(r) == "~":
+            missing_repo[r["host"]] += 1
             continue
         by_project[project_key(r)].append((a, b, r))
     partners: dict[int, list[dict]] = collections.defaultdict(list)
@@ -397,6 +401,8 @@ def parallel(hs: list[dict], max_span_hours: float, min_overlap_minutes: float) 
             "separate_clone": sum(1 for r in iso if not r["tools"].get("bash:worktree")),
             "isolated_worktree": sum(1 for r in iso if r["tools"].get("bash:worktree")),
             "repos": len({project_key(r) for r in rs}),
+            "missing_repo": sum(missing_repo.values()),
+            "missing_repo_by_host": dict(sorted(missing_repo.items())),
             "by_host": {h: [by_host[h], iso_host[h]] for h in sorted(by_host)}}
 
 

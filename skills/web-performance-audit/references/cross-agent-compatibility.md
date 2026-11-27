@@ -23,9 +23,11 @@ Otherwise, copy the complete `web-performance-audit` directory into a skill loca
 
 Cursor's official Agent Skills documentation lists project-level `.agents/skills/` and `.cursor/skills/` among its discovery roots, so the same project-scoped installation works without a Cursor-only copy.
 
-Invoke `/web-performance-audit` in Claude Code, Cursor CLI, and Grok CLI, and `$web-performance-audit` in Codex CLI. These are discovery hints, not compatibility proof.
+Antigravity (`agy`) likewise discovers skills via workspace `.agents/skills/` discovery or global `skills.json`, without requiring an Antigravity-only copy.
 
-Claude Code, Codex CLI, Cursor CLI, and Grok CLI behavior can drift by version; verify discovery with a real invocation rather than treating an installed directory as proof.
+Invoke `/web-performance-audit` in Antigravity (`agy`), Claude Code, Cursor CLI, and Grok CLI, and `$web-performance-audit` in Codex CLI. These are discovery hints, not compatibility proof.
+
+Antigravity (`agy`), Claude Code, Codex CLI, Cursor CLI, and Grok CLI behavior can drift by version; verify discovery with a real invocation rather than treating an installed directory as proof.
 
 Installing this skill and installing browser capabilities are separate operations. When Chrome DevTools MCP, a structured browser, Computer Use, Recorder access, or React localization is missing, follow `{{skill_path}}/references/capability-bootstrap.md`. Never bundle a machine-specific Chrome executable, browser profile, debugging port, credential store, or user-level path into the public package.
 
@@ -63,6 +65,21 @@ Official Cursor references:
 - https://cursor.com/docs/skills
 - https://cursor.com/docs/cli/using
 - https://cursor.com/docs/cli/reference/parameters
+
+### Antigravity CLI (agy) headless route
+
+Antigravity (`agy`) supports headless read-only acceptance in `plan` mode with `--sandbox` enabled and JSON output:
+
+```text
+command agy -p '/web-performance-audit <sanitized request>' --mode plan --sandbox --output-format json
+```
+
+Inspect the parsed JSON output for `.status == "SUCCESS"`, verify the audit contract, fallbacks, and evidence discipline in `.response`, and confirm a clean Git status afterward—exit status alone is not acceptance proof.
+
+Official Antigravity references:
+
+- https://antigravity.google/docs/skills.md
+- https://antigravity.google/docs/cli/reference.md
 
 ## Tool adapter rules
 

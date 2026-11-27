@@ -12,7 +12,7 @@ Use UXC as a protocol adapter and stable JSON CLI facade. Do not turn it into a 
 
 Three parties share every facade. Use these names only:
 
-- **Native host**: the client or host that registers the server natively (Cursor, Claude Code, Codex, a browser).
+- **Native host**: the client or host that registers the server natively (Cursor, Claude Code, Codex, Grok, Antigravity (agy), a browser).
 - **Owner skill**: the service-specific skill that owns endpoint identity, auth boundary, recovery, safe output, and final acceptance.
 - **Binary owner**: the one skill that installs and updates the pinned `uxc` binary. It may be the owner skill or a named shared owner.
 
@@ -113,7 +113,7 @@ uxc link <link-name> "<host-or-stdio-command>" --skill <owner-skill> \
 
 `--daemon-idle-ttl 0` disables idle reaping; use it only when retention is explicitly required and verified. Use `--force` only to replace a link whose exact contract changed; never use it for idempotency. Add `--schema-url`, `--credential`, or `--inject-env NAME={{secret}}` only when the protocol requires them, and keep secret values outside committed content. Native Windows is unsupported by UXC; record it as `UNVERIFIED`.
 
-For an existing MCP configuration, preview the import before changing state with `uxc config import mcp --dry-run`.
+For an existing MCP configuration, preview the import before changing state with `uxc config import mcp --dry-run`. Keep the host's native registration—such as Antigravity's lazy MCP registration (`agy mcp list`, `~/.gemini/config/mcp_config.json`)—in the Native host layer alongside that dry-run preview rather than overwriting or absorbing it, so host-managed tool schemas, permissions, and lazy lifecycle stay isolated unless the user explicitly asks to migrate.
 
 ### Pass both ownership gates
 

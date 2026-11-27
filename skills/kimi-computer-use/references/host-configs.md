@@ -110,3 +110,30 @@ WorkBuddy may expose MCP tools through deferred dispatch; the `ToolSearch` and `
 Use the host's configured model. If it prints tool markup, cannot discover deferred tools, or hangs, separate that observation from server health; do not assume an adapter defect without a second supported-model check. A model switch is a diagnostic option, not a permanent configuration change.
 
 Official WorkBuddy reference: <https://www.workbuddy.ai/docs/zh/workbuddy/From-Beginner-to-Expert-Guide/Function-Description/MCP-Guide>
+
+## Antigravity (agy)
+
+Register `kimi-cu` with the Antigravity CLI, which writes to `~/.gemini/config/mcp_config.json` under `mcpServers` while preserving existing entries:
+
+```bash
+agy mcp add kimi-cu -- /Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user
+```
+
+If you inspect or update `~/.gemini/config/mcp_config.json` manually, merge only the `kimi-cu` entry under `mcpServers` and never replace the file wholesale, because overwriting drops other configured MCP servers. Do not symlink this file to another host's config.
+
+Check server status and enable only `kimi-cu` if it is configured but disabled:
+
+```bash
+agy mcp list
+agy mcp enable kimi-cu
+```
+
+Antigravity lazy-loads MCP tools instead of binding every tool schema up front: read `<appDataDir>/mcp/kimi-cu/<tool>.json` (such as `list_apps.json` and `get_app_state.json`) before invoking `call_mcp_tool(ServerName="kimi-cu", ...)`.
+
+Run a read-only headless smoke using `command agy` (bypassing shell wrappers) in plan mode with streaming JSON output so every `call_mcp_tool` step transition and output is auditable:
+
+```bash
+command agy -p 'Use only kimi-cu. Call list_apps, then call get_app_state with app=com.apple.finder and mode=ax. Do not modify the UI. Report only whether both tool calls completed and the target bundle id; do not repeat window contents.' --mode plan --output-format stream-json
+```
+
+Treat `agy mcp list` as registration/connection evidence, schema files under `<appDataDir>/mcp/kimi-cu/` as discovery evidence, and completed `step_update` (`step_type: "tool"`, `state: "DONE"`, `tool_info.error == null`, non-empty `tool_info.output`) events for both `list_apps` and `get_app_state` alongside `result.status == "SUCCESS"` as runtime/model evidence. Report `UNVERIFIED` if only text summary output appears without completed `step_update` tool events.

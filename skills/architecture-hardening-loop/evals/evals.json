@@ -479,6 +479,21 @@
         "长期偏好用 review-loop prefs 保存",
         "报告列出 reviewerFrom 和 fallbacks"
       ]
+    },
+    {
+      "id": 34,
+      "name": "agy-host-subagent-reviewer-and-slash-goal-completion",
+      "prompt": "这是一次只读 Skill 行为验收，不要修改文件、调用外部 Reviewer 或触发命令。当前宿主是 Antigravity（agy），用户通过 `/goal` 启动了一个 active Goal，完整 objective 就是用 architecture-hardening-loop 加固 `packages/core/**` 直到 NO_ACTIONABLE_FINDINGS；用户没有点名 Reviewer。可用工具包括 `invoke_subagent`（含只读沙箱 `TypeName=\"research\"`）和 `run_workflow`，没有 `create_goal` / `get_goal` / `update_goal` 工具。当前完成 Fix、验证、复审 PASS 与同范围复扫后，已无 Fix 且复扫 `Evidence id` 一致。请说明只读 exploration worker 如何启动、Reviewer 如何传参选择、以及如何完成该 active Goal。",
+      "expected_output": "在 Antigravity（agy）宿主下，scanner 所需的独立只读 exploration worker 通过 `invoke_subagent(TypeName=\"research\", ...)`（只读沙箱）或 `run_workflow` 启动；`review-loop consult` 与 `review-loop run` 只传 `--host=agy`，不把 `agy` 隐式加入默认 consult peer（仅用户明确点名 `agy` 时才 opt-in）；因 `agy-slash` 无 `create_goal` / `update_goal` 等工具，不得虚构这些工具，也不得输出替换用的 `/goal`（在 AGY 中会取消当前 active Goal），而是在回复转录中直接给出 `NO_ACTIONABLE_FINDINGS`、实际验证命令与结果及最终 `Evidence id` 供 stop hook 核验。",
+      "files": [],
+      "expectations": [
+        "scanner 所需的独立只读 exploration worker 通过 invoke_subagent(TypeName=\"research\", ...) 或 run_workflow 运行",
+        "review-loop consult 与 review-loop run 传递 --host=agy",
+        "用户未点名 agy 时不把 agy 作为默认 consult peer（仅 opt-in 启用）",
+        "识别 agy-slash 无 update_goal / create_goal 工具且不虚构这些工具",
+        "不输出或要求替换用的 /goal（避免在 AGY 中取消 active Goal）",
+        "在输出转录中直接列出 NO_ACTIONABLE_FINDINGS、验证命令与最终 Evidence id 供 stop hook 核验"
+      ]
     }
   ]
 }

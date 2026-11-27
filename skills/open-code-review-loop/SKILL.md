@@ -1,6 +1,6 @@
 ---
 name: open-code-review-loop
-description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli. Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
+description: "Run a bounded OCR-delegation review-fix-re-review loop on a Git workspace until current evidence validates NO_FINDINGS. Use only when the user wants verified findings fixed and independently re-reviewed until clean with codex, claude-code, grok-build, or cursor-cli (plus opt-in agy as Reviewer when explicitly named by the user). Do not use for one-shot open-code-review-delegate or read-only review. A full loop request asks at most once for an unnamed Reviewer (recommending a product other than the host), then runs host mutation checks without further confirmation. Fail closed on missing ocr, reviewer mutation, skipped files, malformed output, stale evidence, or exhausted rounds."
 metadata:
   author: adonis
   version: "1.8.1"
@@ -55,12 +55,20 @@ Resolve before the first model call:
 - Repository: current Git root; never infer a broader repo
 - Target: workspace changes; also OCR `--from/--to` and `--commit`
 - Reviewer: user-selected product; when none is named, ask once and
-  recommend a product other than the visible host; always use a real
-  independent read-only product session. `agy` (Antigravity) is an optional
-  Reviewer only when the user names it: never auto-select, default to or
-  recommend it, and never use it as Fixer
-- Fixer: current visible host. An external Fixer needs a user-authorized
-  isolated checkout that becomes `$REPO` before round 1
+  recommend an installed capability-safe product other than the visible host
+  (`codex`, `claude-code`, `grok-build`, or `cursor-cli`); always use a real
+  independent read-only product session. External `agy` (`agy -p`) is an
+  opt-in Reviewer only when explicitly named by the user — never auto-select,
+  default to, or recommend `agy` (preserving cross-product independence and
+  the four primary Reviewer adapters), and never invoke external `agy` as Fixer
+  (which returns `HUMAN_GATE`)
+- Fixer: current visible host — including an active Antigravity (`agy`)
+  session acting as the visible host, which edits directly with native tools
+  and runs host-owned Git/test verification. An external Fixer (`codex`,
+  `claude-code`, `grok-build`, or `cursor-cli`) needs a user-authorized
+  isolated checkout that becomes `$REPO` before round 1 because CLI sandboxes
+  alone do not isolate paths; invoking an external `agy` CLI call as Fixer is
+  unsupported and returns `HUMAN_GATE`
 - Paths/excludes: OCR preview; preserve user exclusions every round.
   `default_path` is OCR's built-in non-review scope and `user_exclude` records
   a supplied selector, so neither needs a second confirmation. OCR-excluded
@@ -76,11 +84,17 @@ Once the user has requested the full fix-and-re-review loop, explicit skill
 invocation authorizes the reversible local workspace loop. Do
 not ask whether to start, reconfirm OCR scope, or accept supplemental Markdown
 review. One named product without roles → that product is Reviewer, current
-host is Fixer. No named product → ask once with the host question tool,
+host is Fixer. No named product → ask once with the host question tool (in an
+interactive `agy` visible host, use `ask_question` to choose an independent
+Reviewer from `codex`, `claude-code`, `grok-build`, or `cursor-cli`),
 recommending an installed capability-safe product other than the visible host
 (a model reviewing its own host's work is the weakest independence); the host
-product stays a valid answer in a separate session. Without a question tool, or
-when the user asked for defaults, pick that recommendation and record it. If an
+product stays a valid answer in a separate session (never recommend or
+auto-select `agy`). Without a question tool, when the user asked for defaults,
+or in a host-declared non-interactive `agy -p` / `run_workflow` context where
+questions are refused, pick that non-`agy` recommendation and record it (and
+treat round-budget exhaustion in that no-question context as unattended so open
+findings are deferred instead of asking or fabricating a grant). If an
 auto-selected Reviewer cannot satisfy the read-only adapter, try the next
 installed capability-safe product and record the fallback; never replace a
 product the user explicitly named. Missing `ocr`, historical-target fixes,

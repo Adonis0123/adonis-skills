@@ -80,6 +80,34 @@
           "text": "No cache was cleaned and nothing was deleted or moved."
         }
       ]
+    },
+    {
+      "id": 4,
+      "prompt": "我一直在用 Antigravity (agy)，感觉 ~/.gemini 占了不少空间，帮我看看哪些可以清理（比如更新包、日志、旧对话、brain 产物），先只列清单别删，也别碰我的登录凭证。",
+      "expected_output": "Read-only survey of ~/.gemini and Antigravity data: measures updater downloads and logs (tier A) while keeping the active log symlink target and any version used by running agy/Antigravity processes, measures conversations, brain artifacts, and conversation_summaries.db* (tier B) with age/resume loss noted, never inspects or deletes OAuth/account credential files (~/.gemini/oauth_creds.json, ~/.gemini/mcp-oauth-tokens.json, ~/.gemini/antigravity-cli/mcp_oauth_tokens.json, ~/.gemini/google_accounts.json), and deletes nothing.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "agy-updater-and-logs-tier-a",
+          "text": "The report covers ~/.gemini/antigravity*/updater and ~/.gemini/antigravity*/log under Tier A and preserves the active log symlink target."
+        },
+        {
+          "name": "agy-running-process-checked",
+          "text": "Running agy or Antigravity processes are checked (e.g., via lsof) so any active binary or version in use is kept."
+        },
+        {
+          "name": "agy-session-and-brain-tier-b",
+          "text": "Antigravity conversations, brain artifacts, and conversation_summaries.db* are listed under Tier B with resume and history trade-offs explained."
+        },
+        {
+          "name": "credential-files-untouched",
+          "text": "OAuth and account credential files (~/.gemini/oauth_creds.json, ~/.gemini/mcp-oauth-tokens.json, ~/.gemini/antigravity-cli/mcp_oauth_tokens.json, ~/.gemini/google_accounts.json) are neither opened/inspected nor proposed for deletion."
+        },
+        {
+          "name": "nothing-deleted",
+          "text": "The run is read-only and deletes, moves, or modifies nothing."
+        }
+      ]
     }
   ]
 }

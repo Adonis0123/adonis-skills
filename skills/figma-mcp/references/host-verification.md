@@ -2,7 +2,7 @@
 
 Read this reference only for installation, authentication recovery, host discovery, or multi-host acceptance. The supported endpoint is `https://mcp.figma.com/mcp`.
 
-Before running commands, confirm the host remains listed in Figma's current MCP Catalog (<https://www.figma.com/mcp-catalog/>). These examples cover Codex, Claude Code, Cursor, and Grok Build. Do not adapt them to an unlisted client.
+Before running commands, confirm the host remains listed in Figma's current MCP Catalog (<https://www.figma.com/mcp-catalog/>). These examples cover Codex, Claude Code, Cursor, Grok Build, and Antigravity. Do not adapt them to an unlisted client.
 
 The registration is account-neutral. Keep the exact server identifier and endpoint when the user changes accounts; only the current host surface's OAuth grant changes. Do not create per-account MCP entries.
 
@@ -68,6 +68,21 @@ grok plugin install https://github.com/figma/mcp-server-guide.git   # only when 
 ```
 
 The plugin registers the official endpoint with OAuth enabled and ships the operation skills (`figma-design-to-code`, `figma-use`, and others). Grok exposes the tools as `Figma__<tool>` through `use_tool`. Grok has no `mcp login` subcommand; let the Grok session's own OAuth prompt drive login, and use `grok mcp doctor` for connectivity diagnosis. Do not add a second manual `grok mcp add` entry when the plugin is installed.
+
+## Antigravity
+
+Antigravity (`agy`) is listed in Figma's MCP Catalog and natively supports `https://mcp.figma.com/mcp` via Streamable HTTP. Inspect `agy mcp list` first because Antigravity also reads legacy `serverUrl` entries in `~/.gemini/config/mcp_config.json`; preserve any existing entry and custom arguments rather than overwriting them with `add`:
+
+```bash
+agy mcp list
+# 1. Enabled: keep as-is and proceed directly to verification
+# 2. Disabled: enable the saved entry without overwriting existing arguments
+agy mcp enable figma
+# 3. Absent: add the official Streamable HTTP endpoint
+agy mcp add figma https://mcp.figma.com/mcp
+```
+
+Let Antigravity's native OAuth flow authenticate the server; never copy OAuth tokens or credential caches from other hosts. When Figma tools appear as `Lazy` in Antigravity, read `<appDataDir>/mcp/figma/<tool>.json` first and invoke via `call_mcp_tool(ServerName="figma", ToolName=..., Arguments=...)`.
 
 ## Run the real acceptance
 

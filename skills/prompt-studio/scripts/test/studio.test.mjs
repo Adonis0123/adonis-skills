@@ -730,6 +730,7 @@ describe("session, cover check and brief", () => {
     assert.equal(s.access.tier, "gh");
     assert.equal(s.stylePack.found, true);
     assert.equal(s.channels.codex, true);
+    assert.equal(s.channels.agy, true);
     assert.equal(s.channels.ffmpeg, false);
     assert.equal(s.channels.nodeOk, true);
     assert.deepEqual(s.channels.apiKeyVars, [
@@ -741,9 +742,17 @@ describe("session, cover check and brief", () => {
   });
 
   it("omits style pack text when none exists", () => {
-    const s = detectSession({ project: tmp(), env: {}, run: () => "" });
+    const s = detectSession({
+      project: tmp(),
+      env: {},
+      run: (cmd) => {
+        if (cmd === "agy") throw new Error("missing");
+        return "";
+      },
+    });
     assert.equal(s.stylePack.found, false);
     assert.equal("stylePackText" in s, false);
+    assert.equal(s.channels.agy, false);
     assert.deepEqual(s.channels.apiKeyVars, []);
   });
 

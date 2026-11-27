@@ -273,6 +273,22 @@
         "SKILL.md explicitly states that a get_metadata call, a get_design_context dump, or a screenshot is evidence for the design-to-code workflow, not a finished implementation on its own",
         "SKILL.md contains no language claiming the implement/match task is complete after a single read or screenshot without following figma-design-to-code"
       ]
+    },
+    {
+      "id": 21,
+      "name": "antigravity-lazy-mcp-fast-path",
+      "prompt": "/figma-mcp https://www.figma.com/design/LHKhLfKODwW7bl2CucbgzU/Iteration?node-id=132610-462886&m=dev 看看这个弹窗设计稿的结构（当前在 Antigravity，当前账号，只读）。",
+      "expected_output": "Treats Antigravity (agy) as a catalog-listed host using https://mcp.figma.com/mcp via Streamable HTTP, does not refuse or duplicate an enabled figma entry (including legacy serverUrl in ~/.gemini/config/mcp_config.json), skips whoami on the current-account single-host read-only fast path, reads <appDataDir>/mcp/figma/<tool>.json before invoking the Lazy tool via call_mcp_tool(ServerName=\"figma\", ToolName=..., Arguments=...), and does not copy OAuth tokens or emit FIGMA_MCP_READY or account identity mid-task.",
+      "files": [],
+      "setup": "Antigravity (agy) session with figma MCP already registered and enabled (via agy mcp add or legacy serverUrl in ~/.gemini/config/mcp_config.json) and native OAuth completed; Figma tools appear as Lazy.",
+      "expectations": [
+        "Does not refuse Antigravity as an unsupported client",
+        "Does not run agy mcp add or duplicate an existing enabled figma entry",
+        "Does not call whoami on the current-account single-host read-only fast path",
+        "Reads <appDataDir>/mcp/figma/<tool>.json before invoking the Lazy Figma tool via call_mcp_tool",
+        "Invokes call_mcp_tool with ServerName=\"figma\" for the first read on fileKey LHKhLfKODwW7bl2CucbgzU with nodeId 132610:462886",
+        "Does not copy OAuth tokens between hosts or emit FIGMA_MCP_READY or account identity mid-task"
+      ]
     }
   ]
 }

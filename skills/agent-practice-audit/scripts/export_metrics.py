@@ -22,7 +22,7 @@ SCHEMA_VERSION = 1
 SOURCE = "agent-practice-audit"
 # Method version of the session metrics; bump when their formula changes so trends break instead of lying.
 SUMMARY_METHOD = "summary-v1"
-HOST_ORDER = ("claude", "codex", "grok", "workbuddy")
+HOST_ORDER = ("claude", "codex", "grok", "workbuddy", "agy")
 
 DIM_LABEL_EN = {"ctx": "Context management", "safe": "Permissions and safety", "doc": "Instruction files",
                 "plan": "Think before doing", "verify": "Verification", "auto": "Parallelism and automation"}

@@ -95,6 +95,20 @@
         "Does not claim INP or a verified cause from an unmeasured observation"
       ],
       "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "在 Antigravity (agy) 中只读审计一个需要用户已登录 Chrome 会话的工作台。宿主可能提供 ego-browser、共享 chrome-dev-mcp-cli 或通过 call_mcp_tool 懒加载的 kimi-cu，且本身带有一个隔离的匿名浏览器配置。不要改代码、不要静默执行 agy mcp add、不要启动隔离匿名浏览器来冒充已登录会话；请给出能力发现与校验路径、匿名配置禁区，以及缺失或失败时的降级与安装引导。",
+      "expected_output": "输出应在 Antigravity (agy) 只读边界下优先发现并校验 ego-browser、共享 chrome-dev-mcp-cli 或通过 call_mcp_tool 懒加载的 kimi-cu；明确禁止启动隔离匿名浏览器配置来替代用户已登录 Chrome 会话；未经明确授权不运行 agy mcp add 或改动配置，并在能力缺失或失败时标为 UNVERIFIED 且给出诚实降级与安装引导卡。",
+      "files": [],
+      "assertions": [
+        "输出先发现并核实宿主实际提供的 ego-browser、共享 chrome-dev-mcp-cli 或通过 call_mcp_tool 懒加载的 kimi-cu，不凭配置或名字猜测工具已就绪",
+        "输出要求通过 discovery、handshake 和一次真实无害调用证明能力 available，否则不能据此声称机器实测结果",
+        "输出明确禁止在需要用户已登录 Chrome 会话时启动 Antigravity 的隔离匿名浏览器配置或以 Playwright 匿名窗口冒充 profile parity",
+        "输出不在未经用户明确授权前执行 agy mcp add、安装扩展或修改宿主配置；需要补齐能力时提供官方参考、影响范围、隐私边界与验收调用",
+        "输出在 DevTools 或 Computer Use 缺失/失败时继续安全降级（如 PerformanceObserver、结构化快照、源码归属核实），并将未取得指标标为 UNVERIFIED",
+        "输出保持只读边界，且不包含任何用户 home 路径、固定调试端口或私人账号/项目标识"
+      ]
     }
   ]
 }

@@ -8,7 +8,7 @@ correction categories and the working directory (home shown as `~`).
 Read-only: transcripts are opened for reading and nothing else on disk is
 touched except the output file.
 
-Usage: extract.py OUT.jsonl [--days 60] [--hosts claude,codex,grok,workbuddy]
+Usage: extract.py OUT.jsonl [--days 60] [--hosts claude,codex,grok,workbuddy,agy]
 """
 
 from __future__ import annotations
@@ -20,10 +20,12 @@ import hashlib
 import json
 import os
 import re
+import sqlite3
 import sys
 import time
 from datetime import datetime, timezone
 from multiprocessing import Pool
+from urllib.parse import unquote, urlparse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from safe_output import UnsafeOutput, safe_file_target  # noqa: E402
@@ -42,6 +44,7 @@ DEFAULT_GLOBS = {
     # events.jsonl / summary.json / signals.json / prompt_context.json are read as sidecars.
     "grok": ["~/.grok*/sessions/**/chat_history.jsonl"],
     "workbuddy": ["~/.workbuddy/projects/*/*.jsonl"],
+    "agy": ["~/.gemini/antigravity*/brain/*/.system_generated/logs/transcript.jsonl"],
 }
 HOSTS = tuple(DEFAULT_GLOBS)
 
@@ -109,7 +112,8 @@ SELF_MARKER = self_marker()
 # screenshot and worktree also come from tools: screenshot-named tools, computer-use screenshot actions,
 # a Read of an image the session itself produced, Claude EnterWorktree, or a cwd inside a worktree dir.
 SHELL_TOOLS = {"Bash", "bash", "shell", "shell_command", "exec_command", "local_shell_call", "local_shell",
-               "run_terminal_cmd", "run_terminal_command", "run_shell_command", "execute_command", "container.exec"}
+               "run_terminal_cmd", "run_terminal_command", "run_shell_command", "execute_command", "container.exec",
+               "run_command"}
 EXPLORE_TOOLS = {"Read", "Grep", "Glob", "LS", "read_file", "grep", "list_dir", "codebase_search", "file_search",
                  "search_files", "glob", "list_files", "list_files_by_prefix", "view_file"}
 HEAD_TAGS = {
@@ -126,7 +130,7 @@ HEAD_TAGS = {
     "git_diff": re.compile(r"^git (?:diff|show)\b"),
     "commit": re.compile(r"^git commit\b"),
     "headless": re.compile(r"^(?:claude\b.*\s(?:-p|--print)\b|codex (?:exec|e)\b|gemini\b.*\s(?:-p|--prompt)\b"
-                           r"|grok\b.*\s(?:-p|--print)\b|cursor-agent\b.*\s(?:-p|--print)\b)"),
+                           r"|agy\b.*\s(?:-p|--prompt)\b|grok\b.*\s(?:-p|--print)\b|cursor-agent\b.*\s(?:-p|--print)\b)"),
     "screenshot": re.compile(r"^(?:screencapture\b|(?!(?:echo|printf|cat|grep|rg|git|sed|awk|ls|find|head|tail|open)\b)"
                              r"\S+\s(?:\S+\s)*?(?:screenshot|--screenshot)\b)"),
 }
@@ -256,22 +260,29 @@ def tool_call(r: dict, name: str, args) -> None:
     args = parse_args(args)
     if name in EDIT_TOOLS:
         r["_edit_seen"] = True
-    elif not r.get("_edit_seen"):  # what came before the first file edit: asking, skills (plan-mode-first)
+    elif not r.get("_edit_seen"):  # what came before the first file edit: asking, skills, plan mode
         if name in ASK_USER_TOOLS:
             r["_pre_edit"].add("ask")
         elif name == "Skill":
             r["_pre_edit"].add("Skill:" + str(args.get("skill", ""))[:40])
+        elif name in ("enter_plan_mode", "exit_plan_mode"):
+            r["_pre_edit"].add("cmd:plan")
+    if name in ("enter_plan_mode", "exit_plan_mode"):
+        r["modes"]["plan"] += 1
     if name in ("Skill",):
         r["tools"]["Skill:" + str(args.get("skill", ""))[:40]] += 1
     if name in ("Agent", "Task"):
         r["tools"]["Agent:" + str(args.get("subagent_type", "general"))[:30]] += 1
+    elif name == "invoke_subagent":
+        r["tools"]["Agent:" + str(args.get("TypeName") or "general")[:30]] += 1
     if name in SHELL_TOOLS:
-        shell_command(r, args.get("command") or args.get("cmd") or args.get("_raw"))
+        shell_command(r, args.get("command") or args.get("cmd") or args.get("CommandLine") or args.get("_raw"))
     elif name == "apply_patch":
         r["_edited"].update(patch_files(str(args.get("_raw") or args.get("input") or args.get("patch") or "")))
     if name == "EnterWorktree":
         r["tools"]["bash:worktree"] += 1
-    target = str(args.get("file_path") or args.get("path") or args.get("target_file") or args.get("notebook_path") or "")
+    target = str(args.get("file_path") or args.get("path") or args.get("Path") or args.get("target_file")
+                 or args.get("notebook_path") or "")
     if name in EDIT_TOOLS and target:
         r["_edited"].add(target)
     if name in EXPLORE_TOOLS:
@@ -279,7 +290,7 @@ def tool_call(r: dict, name: str, args) -> None:
     if is_screenshot_call(name, args):
         r["tools"]["bash:screenshot"] += 1
         r["_images"].update(os.path.basename(str(v)) for k, v in args.items()
-                            if k in ("path", "filePath", "file_path", "filename", "savePath", "output")
+                            if k in ("path", "Path", "filePath", "file_path", "filename", "savePath", "output")
                             and str(v).lower().endswith(IMAGE_EXT))
     elif target.lower().endswith(IMAGE_EXT) and os.path.basename(target) in r["_images"]:
         r["tools"]["bash:screenshot"] += 1  # reading back an image this session produced
@@ -402,9 +413,18 @@ def short_hash(s: str) -> str:
 
 
 def account_of(path: str, host: str) -> str:
-    """The per-account root directory name (e.g. `.claude`, `.codex-2`), or `custom` for overridden roots."""
+    """The per-account root directory name (e.g. `.claude`, `.codex-2`, `.gemini/antigravity-cli`), or `custom`."""
+    parts = path.split(os.sep)
+    if host == "agy":
+        for i, part in enumerate(parts[:-1]):
+            if part.startswith(".gemini") and parts[i + 1] in ("antigravity-cli", "antigravity", "antigravity-ide"):
+                return f"{part}/{parts[i + 1]}"
+        for i, part in enumerate(parts[:-1]):
+            if part.startswith(".gemini") and parts[i + 1].startswith("antigravity"):
+                return f"{part}/{parts[i + 1]}"
+        return "custom"
     prefix = "." + host
-    for part in path.split(os.sep):
+    for part in parts:
         if part.startswith(prefix):
             return part
     return "custom"
@@ -815,7 +835,288 @@ def workbuddy(path: str) -> dict:
     return finish(r)
 
 
-ADAPTERS = {"claude": claude, "codex": codex, "grok": grok, "workbuddy": workbuddy}
+# ---------------------------------------------------------------- Antigravity (agy)
+
+AGY_CWD = re.compile(r"Command Working Directory:[ \t]*([^\n]+)")
+AGY_WORKSPACE = re.compile(r"Active Workspaces:[ \t]*\n[ \t]*-[ \t]*([^\n]+)")
+AGY_USER_REQ = re.compile(r"<USER_REQUEST>\s*(.*)\s*</USER_REQUEST>", re.S)
+AGY_STRIP_META = re.compile(r"<ADDITIONAL_METADATA>.*?</ADDITIONAL_METADATA>", re.S)
+AGY_META_BLOCK = re.compile(r"<ADDITIONAL_METADATA>(.*?)</ADDITIONAL_METADATA>", re.S)
+AGY_META_SLASH = re.compile(r"^/([A-Za-z][\w:.-]*)\s+is a \[Slash Command\]:", re.M)
+AGY_META_SKILL = re.compile(r'<SKILL>The user requested you read and use the "([A-Za-z0-9_.:-]+)" skill', re.I)
+AGY_STRIP_SYS = re.compile(
+    r"(?:The following is a <SYSTEM_MESSAGE> not actually sent by the user[^\n]*\n+)?<SYSTEM_MESSAGE>.*?</SYSTEM_MESSAGE>",
+    re.S,
+)
+AGY_SLASH_CMD = re.compile(r"^/([A-Za-z][\w:.-]*)(?:\s+(.*))?$", re.S)
+AGY_KNOWN_CMDS = {
+    "goal", "plan", "compact", "clear", "new", "reset", "help", "status", "model", "models",
+    "mcp", "plugin", "plugins", "resume", "review", "init", "exit", "quit",
+    "boost", "teamwork", "learn", "schedule", "browser", "grill-me", "gp",
+}
+_AGY_DB_CACHE: dict[tuple[str, float], dict[str, tuple[list[str], str | None]]] = {}
+_AGY_SKILLS_CACHE: tuple[str, set[str]] | None = None
+
+
+def _agy_installed_skills() -> set[str]:
+    global _AGY_SKILLS_CACHE
+    home = os.path.expanduser("~")
+    if _AGY_SKILLS_CACHE and _AGY_SKILLS_CACHE[0] == home:
+        return _AGY_SKILLS_CACHE[1]
+    slugs: set[str] = set()
+    for base in (
+        os.path.join(home, ".gemini", "config", "skills"),
+        os.path.join(home, ".agents", "skills"),
+        os.path.join(home, ".claude", "skills"),
+    ):
+        for p in glob.glob(os.path.join(base, "*", "SKILL.md")):
+            slugs.add(os.path.basename(os.path.dirname(p)))
+    _AGY_SKILLS_CACHE = (home, slugs)
+    return slugs
+
+
+def _decode_file_uri(uri: str) -> str:
+    s = str(uri or "").strip()
+    if s.startswith("file://"):
+        parsed = urlparse(s)
+        return os.path.normpath(unquote(parsed.path)) if parsed.path else ""
+    return os.path.normpath(s) if s else ""
+
+
+def _parse_workspace_uris(raw) -> list[str]:
+    if not raw:
+        return []
+    items = []
+    if isinstance(raw, str):
+        txt = raw.strip()
+        if txt.startswith("["):
+            try:
+                loaded = json.loads(txt)
+                if isinstance(loaded, list):
+                    items = loaded
+            except ValueError:
+                items = [txt]
+        else:
+            items = [x.strip() for x in txt.split(",") if x.strip()]
+    elif isinstance(raw, list):
+        items = raw
+    out = []
+    for item in items:
+        p = _decode_file_uri(item)
+        if p and p not in out:
+            out.append(p)
+    return out
+
+
+def _agy_db_index(surface_dir: str) -> dict[str, tuple[list[str], str | None]]:
+    if not surface_dir:
+        return {}
+    db_path = os.path.join(surface_dir, "conversation_summaries.db")
+    try:
+        mtime = os.path.getmtime(db_path)
+    except OSError:
+        return {}
+    key = (db_path, mtime)
+    if key in _AGY_DB_CACHE:
+        return _AGY_DB_CACHE[key]
+    mapping: dict[str, tuple[list[str], str | None]] = {}
+    con = None
+    try:
+        con = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=0.5)
+        for cid, ws_raw, parent in con.execute(
+            "SELECT conversation_id, workspace_uris, parent_conversation_id FROM conversation_summaries"
+        ):
+            if cid:
+                mapping[str(cid)] = (_parse_workspace_uris(ws_raw), str(parent) if parent else None)
+    except sqlite3.Error:
+        mapping = {}
+    finally:
+        if con is not None:
+            try:
+                con.close()
+            except sqlite3.Error:
+                pass
+    _AGY_DB_CACHE[key] = mapping
+    return mapping
+
+
+def _is_scratchpad_path(p: str) -> bool:
+    norm = os.path.normpath(p).replace("\\", "/")
+    return norm.endswith("/scratchpad") or "/scratchpad/" in norm
+
+
+def _is_temp_dir(p: str) -> bool:
+    norm = os.path.normpath(p).replace("\\", "/")
+    return norm.startswith(("/tmp/", "/private/tmp/", "/var/folders/"))
+
+
+def _pick_agy_workspace(candidates: list[str], edited: set[str]) -> str | None:
+    # Never promote an Antigravity/Claude scratchpad folder into a workspace/repository identity.
+    pool = [os.path.expanduser(c) for c in candidates if c and not _is_scratchpad_path(c)]
+    if not pool:
+        return None
+    if edited:
+        norm_edits = [os.path.normpath(os.path.expanduser(e)) for e in edited if isinstance(e, str) and e]
+        matched = [
+            w for w in pool
+            if any(e == w or e.startswith(w.rstrip(os.sep) + os.sep) for e in norm_edits)
+        ]
+        if matched:
+            return max(
+                matched,
+                key=lambda w: (
+                    sum(1 for e in norm_edits if e == w or e.startswith(w.rstrip(os.sep) + os.sep)),
+                    not _is_temp_dir(w),
+                    os.path.exists(os.path.join(w, ".git")),
+                ),
+            )
+    non_tmp = [c for c in pool if not _is_temp_dir(c)]
+    ordered = non_tmp or pool
+    for c in ordered:
+        if os.path.exists(os.path.join(c, ".git")):
+            return c
+    return ordered[0]
+
+
+def _agy_text(content) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for b in content:
+            if isinstance(b, str):
+                parts.append(b)
+            elif isinstance(b, dict):
+                parts.append(str(b.get("text") or b.get("content") or ""))
+        return "\n".join(parts)
+    return ""
+
+
+def agy(path: str) -> dict:
+    r = new_row("agy", path)
+    dirs = path.split(os.sep)[:-1]
+    surface_dir = ""
+    if "brain" in dirs:
+        b = len(dirs) - 1 - dirs[::-1].index("brain")
+        if b + 1 < len(dirs) and dirs[b + 1]:
+            r["sid"] = dirs[b + 1]
+        if b - 1 >= 0 and dirs[b - 1].startswith("antigravity"):
+            r["entry"] = dirs[b - 1]
+            surface_dir = os.sep.join(dirs[:b])
+    else:
+        r["sid"] = os.path.splitext(os.path.basename(path))[0]
+    if not r["entry"]:
+        for part in reversed(dirs):
+            if part in ("antigravity-cli", "antigravity", "antigravity-ide") or part.startswith("antigravity"):
+                r["entry"] = part
+                break
+    db_ws: list[str] = []
+    if r.get("sid") and surface_dir:
+        meta = _agy_db_index(surface_dir).get(str(r["sid"]))
+        if meta:
+            db_ws, parent_id = meta
+            if parent_id:
+                r["parent"] = parent_id
+    sys_ws: list[str] = []
+    sys_ts = []
+    saw_user_input = False
+    saw_user_request = False
+    saw_finish = False
+    known_skills = _agy_installed_skills()
+    with open(path, "rb") as f:
+        for raw in f:
+            try:
+                d = json.loads(raw)
+            except ValueError:
+                continue
+            if not isinstance(d, dict):
+                continue
+            t = d.get("type")
+            ts = d.get("created_at") or d.get("timestamp")
+            if t == "SYSTEM_MESSAGE":
+                sys_ts.append(ts)
+                text = _agy_text(d.get("content"))
+                m = AGY_CWD.search(text) or AGY_WORKSPACE.search(text)
+                if m and m.group(1).strip():
+                    w = m.group(1).strip()
+                    if w not in sys_ws:
+                        sys_ws.append(w)
+                if "<plan_execute_protocol>" in text and not r.get("_edit_seen"):
+                    r["modes"]["plan"] += 1
+                    r["_pre_edit"].add("cmd:plan")
+            elif t == "USER_INPUT":
+                stamp(r, ts)
+                saw_user_input = True
+                text = _agy_text(d.get("content"))
+                m_req = AGY_USER_REQ.search(text)
+                trusted_meta_cmds: set[str] = set()
+                if m_req:
+                    # Only parse host-injected <ADDITIONAL_METADATA> outside <USER_REQUEST>, never pasted user text.
+                    host_envelope = AGY_USER_REQ.sub("", text)
+                    for mb in AGY_META_BLOCK.findall(host_envelope):
+                        trusted_meta_cmds.update(AGY_META_SLASH.findall(mb))
+                        trusted_meta_cmds.update(AGY_META_SKILL.findall(mb))
+                    saw_user_request = True
+                    s = m_req.group(1).strip()
+                else:
+                    cleaned = AGY_STRIP_SYS.sub("", AGY_STRIP_META.sub("", text)).strip()
+                    if cleaned.lstrip().startswith(COMPACT_MARKERS):
+                        r["compactions"] += 1
+                        continue
+                    s = cleaned
+                if not s:
+                    continue
+                m_cmd = AGY_SLASH_CMD.match(s)
+                token0 = s.split(None, 1)[0] if s else ""
+                is_known_cmd = bool(
+                    m_cmd
+                    and "/" not in token0[1:]
+                    and (
+                        m_cmd.group(1) in trusted_meta_cmds
+                        or m_cmd.group(1).lower() in AGY_KNOWN_CMDS
+                        or m_cmd.group(1) in known_skills
+                    )
+                )
+                if is_known_cmd and m_cmd:
+                    cmd = m_cmd.group(1)
+                    rest = (m_cmd.group(2) or "").strip()
+                    r["cmds"][cmd] += 1
+                    if not r.get("_edit_seen"):
+                        r["_pre_edit"].add("cmd:" + cmd[:40])
+                    if r["prompts"] == 0 and "started_by" not in r:
+                        r["started_by"] = cmd
+                    if cmd == "compact":
+                        if rest:
+                            r["compact_focus"] = r.get("compact_focus", 0) + 1
+                    elif rest:
+                        add_prompt(r, rest)
+                else:
+                    add_prompt(r, s)
+            elif t == "PLANNER_RESPONSE":
+                stamp(r, ts)
+                if d.get("model"):
+                    r["models"][d["model"]] += 1
+                for tc in d.get("tool_calls") or []:
+                    if isinstance(tc, dict):
+                        tname = tc.get("name") or ""
+                        if tname == "finish":
+                            saw_finish = True
+                        tool_call(r, tname, tc.get("args") or {})
+    r["cwd"] = _pick_agy_workspace(db_ws + sys_ws, r.get("_edited") or set())
+    if r["end"] is None:
+        for ts in sys_ts:
+            stamp(r, ts)
+    if not saw_user_input:
+        r["kind"] = "subagent"
+    elif saw_user_request:
+        r["kind"] = "human"
+    else:
+        r["kind"] = "headless"
+    _ = saw_finish
+    return finish(r)
+
+
+ADAPTERS = {"claude": claude, "codex": codex, "grok": grok, "workbuddy": workbuddy, "agy": agy}
 
 
 def work(item: tuple[str, str]) -> dict:

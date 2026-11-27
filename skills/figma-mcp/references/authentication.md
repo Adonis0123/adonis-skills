@@ -41,6 +41,7 @@ Use the installed host's native capability:
 | Claude Code  | `claude mcp logout <exact-figma-identifier>`, then `claude mcp login <exact-figma-identifier>`                                          |
 | Cursor       | Figma MCP/plugin Disconnect/Connect UI; use a CLI logout only if the installed CLI advertises one                                       |
 | Grok Build   | The session's native Figma OAuth prompt; Grok has no `mcp logout`, so report `UNVERIFIED` rather than deleting credential files by hand |
+| Antigravity  | Native OAuth disconnect/reconnect or scoped Figma grant clear without deleting unrelated MCP entries                                    |
 
 App plugins and CLIs can keep separate grants. Do not assume switching one surface switches another.
 

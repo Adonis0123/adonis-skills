@@ -418,6 +418,101 @@ class RunAudit(unittest.TestCase):
         self.assertTrue(doc["counts"]["claude"]["low_sample"])
         self.assertEqual(doc["window_days"], 60)
 
+    def test_agy_end_to_end_merges_config_and_redacts_secrets(self):
+        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        gemini = self.home / ".gemini"
+        (gemini / "antigravity-cli" / "brain" / "s1" / ".system_generated" / "logs").mkdir(parents=True)
+        (gemini / "config" / "skills" / "demo-skill").mkdir(parents=True)
+        (gemini / "hooks").mkdir(parents=True)
+        (gemini / "GEMINI.md").write_text("Never leak .env secrets.\n", encoding="utf-8")
+        (gemini / "antigravity-cli" / "settings.json").write_text(json.dumps({
+            "agentMode": "auto",
+            "toolPermission": "default",
+            "permissions": {"deny": ["read_file(./.env*)", "command(curl -H 'Bearer SECRET_AGY' https://x)"]},
+            "env": {"TOKEN": "SECRET_ENV_VAL"},
+        }), encoding="utf-8")
+        (gemini / "hooks" / "guard.sh").write_text('#!/bin/sh\necho \'{"decision":"deny"}\'\n', encoding="utf-8")
+        (gemini / "config" / "hooks.json").write_text(json.dumps({
+            "guard": {"enabled": True, "PreToolUse": [{"matcher": "read_file(.env)",
+                                                       "hooks": [{"type": "command", "command": "~/.gemini/hooks/guard.sh"}]}]}
+        }), encoding="utf-8")
+        (gemini / "config" / "mcp_config.json").write_text(json.dumps({
+            "mcpServers": {"s": {"headers": {"Authorization": "Bearer SECRET_MCP"}}}
+        }), encoding="utf-8")
+        (gemini / "config" / "skills" / "demo-skill" / "SKILL.md").write_text("# Demo\n", encoding="utf-8")
+        rows = [
+            {"type": "SYSTEM_MESSAGE", "created_at": now, "content": f"Command Working Directory: {self.home / 'app'}\n"},
+            {"type": "USER_INPUT", "created_at": now, "content": "<USER_REQUEST>\nfix auth\n</USER_REQUEST>"},
+            {"type": "PLANNER_RESPONSE", "created_at": now, "model": "gemini-3-pro",
+             "tool_calls": [{"name": "write_file", "args": {"Path": str(self.home / "app" / "a.py")}},
+                            {"name": "run_command", "args": {"CommandLine": "pytest -q"}}]},
+        ]
+        (gemini / "antigravity-cli" / "brain" / "s1" / ".system_generated" / "logs" / "transcript.jsonl").write_text(
+            "\n".join(json.dumps(r) for r in rows) + "\n", encoding="utf-8"
+        )
+        p = self.audit("--days", "60")
+        self.assertEqual(p.returncode, 0, p.stderr)
+        self.assertRegex(p.stdout, r"agy\s+files=1")
+        out = self.home / "run" / "work" / "judge-input.json"
+        raw = out.read_text(encoding="utf-8")
+        for secret in ("SECRET_AGY", "SECRET_ENV_VAL", "SECRET_MCP", "fix auth"):
+            self.assertNotIn(secret, raw)
+        self.assertLess(len(raw.encode("utf-8")), 16 * 1024)
+        doc = json.loads(raw)
+        self.assertEqual(doc["counts"]["agy"]["human"], 1)
+        by_id = {it["id"]: it for it in doc["practices"]}
+        self.assertEqual(by_id["safe-deny-secrets"]["draft"]["status"], "ok")
+        self.assertEqual(by_id["safe-small-enforced-set"]["draft"]["status"], "ok")
+        self.assertEqual(by_id["safe-hooks-for-musts"]["metrics"]["agy_setup"], {"hooks": 1, "enforcing": 1, "deny": 2})
+        self.assertEqual(by_id["safe-low-risk-preset"]["metrics"]["agy_config"],
+                         {"agentMode": "auto", "toolPermission": "default"})
+        self.assertEqual(by_id["doc-skills-on-demand"]["metrics"]["skills"]["agy"], 1)
+        self.assertEqual(by_id["doc-skills-on-demand"]["draft"]["status"], "ok")
+        # Full pipeline: build_report.py scores judgments written from judge-input.json and exports agy metrics.
+        jpath = self.home / "run" / "judgments.json"
+        items = {}
+        for it in doc["practices"]:
+            d = it.get("draft")
+            st = d["status"] if d else "na"
+            items[it["id"]] = {
+                "status": st,
+                "summary": f"{st} 1",
+                "evidence": f"measured {st} for {it['id']}",
+                "suggestion": f"adjust {it['id']}" if st in ("part", "no") else "",
+                "caveat": "low sample agy (1)" if st == "na" else "",
+            }
+        jpath.write_text(json.dumps({
+            "lang": "zh", "window_days": 60, "headline": "AGY 1 会话基线",
+            "lead": "agy 人工 1；按样本扩充后再下结论。", "notes": [], "items": items,
+        }), encoding="utf-8")
+        bp = subprocess.run([
+            sys.executable, str(HERE / "build_report.py"),
+            "--judgments", str(jpath),
+            "--summary", str(self.home / "run" / "work" / "summary.json"),
+            "--out-dir", str(self.home / "run"),
+        ], capture_output=True, text=True, env=self.env, timeout=60)
+        self.assertEqual(bp.returncode, 0, bp.stderr)
+        self.assertTrue((self.home / "run" / "report.html").is_file())
+        metrics = json.loads((self.home / "run" / "metrics.json").read_text(encoding="utf-8"))
+        self.assertTrue(any(m.get("scope") == "agy" and m.get("id") == "sessions.human" and m.get("value") == 1
+                            for m in metrics["metrics"]))
+
+    def test_agy_inactive_when_only_claude_has_sessions(self):
+        cfg = {
+            "claude": [{"root": "~/.claude", "settings.json": settings(hooks=2, deny=1, cov=("env_files",))}],
+            "agy": {
+                "root": "~/.gemini",
+                "present": True,
+                "settings.json": {"deny_count": 50, "deny_coverage": {}, "deny_topics": [], "agentMode": "auto"},
+                "hooks.json": {"hook_entries": 5, "enforcing_hook_entries": 5, "hook_topics": []},
+            },
+            "other_skills": {"codex": 0, "agents": 0, "agy": 2},
+        }
+        doc = run(summary({"claude": host(20, accounts=[[".claude", 20]])}), cfg)
+        self.assertEqual(status(doc, "safe-deny-secrets"), "ok")
+        self.assertEqual(status(doc, "safe-small-enforced-set"), "ok")
+        self.assertEqual(item(doc, "doc-skills-on-demand")["metrics"]["skills"]["agy"], 2)
+
     def test_refuses_run_inside_git_work_tree(self):
         repo = self.home / "repo"
         (repo / ".git").mkdir(parents=True)

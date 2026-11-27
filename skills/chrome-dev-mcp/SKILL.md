@@ -1,6 +1,6 @@
 ---
 name: chrome-dev-mcp
-description: "Use this skill when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Hermes, or WorkBuddy. Use it when the evidence is Chrome-specific (Lighthouse, a full trace, heap data) or the caller has no page session yet; a page already open in ego-browser keeps its own Console and request diagnosis. Also use it as the verification step right after the user or this session changes a web UI or asks to accept or check a page: collect a screenshot, Console, and Network evidence before calling it done. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals or UI-change acceptance are required. A passing readiness or list_pages check proves the connection only, never the change."
+description: "Use this skill when the user invokes /chrome-dev-mcp or asks for Chrome DevTools MCP, CDP, list_pages/select_page, UXC packaging for Chrome DevTools, DOM snapshots, Console, Network, Performance, Lighthouse, heap analysis, browser-internal debugging, connection recovery, or correct-Chrome validation across Claude Code, Codex, Grok Build/Grok002, Cursor CLI, Antigravity (agy), Hermes, or WorkBuddy. Use it for Chrome-specific evidence (Lighthouse, trace, heap) or when the caller has no page session; a page already open in ego-browser keeps its own Console and request diagnosis. Also use it as the verification step right after the user or this session changes a web UI or asks to accept or check a page: collect a screenshot, Console, and Network evidence before calling it done. Do not use it for ordinary navigation, form filling, scraping, or desktop UI unless browser-internal signals or UI-change acceptance are required. A passing readiness or list_pages check proves the connection only, never the change."
 metadata:
   author: adonis
   version: "1.7.0"
@@ -14,7 +14,7 @@ Everything a page task needs is in this file. Read a reference only when its tri
 
 ## Get a proven connection
 
-Run helpers with `zsh` from this skill's directory (under `bash` they abort with `A: unbound variable`).
+Run helpers with `zsh` from this skill's directory (`<skill-dir>` or repo-relative `skills/chrome-dev-mcp`; under `bash` they abort with `A: unbound variable`).
 
 | Invocation                     | Command                                          | On success                                                                 |
 | ------------------------------ | ------------------------------------------------ | -------------------------------------------------------------------------- |
@@ -85,7 +85,9 @@ When the user or this session just changed a web UI, this skill is the verificat
 
 If one is missing, report the change `UNVERIFIED` and name the gap. A question only about Console or Network on an already open page needs just that evidence, not a screenshot.
 
-Invoke as `/chrome-dev-mcp` in Claude Code, Grok, and Cursor CLI (`cursor-agent`), `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection.
+Keep command examples and reports portable: write `<skill-dir>` or repo-relative paths (`skills/chrome-dev-mcp`) and omit machine-specific home prefixes, loopback ports, or per-host config dot-dirs, because local paths leak environment layout and fail public hygiene checks.
+
+Invoke as `/chrome-dev-mcp` in Claude Code, Grok, Antigravity (agy), and Cursor CLI (`cursor-agent`), `$chrome-dev-mcp` in Codex; preload `chrome-dev-mcp` in Hermes for deterministic selection. In Antigravity, do not substitute Antigravity's built-in browser subagent (`browser_subagent`) when Chrome-specific DevTools signals or the user's shared authenticated Chrome (`chrome-dev-mcp-cli`) are required, because it uses a separate browser session.
 
 ## Read only when needed
 

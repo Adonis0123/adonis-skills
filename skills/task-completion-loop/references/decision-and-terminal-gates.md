@@ -26,7 +26,12 @@ Invocation policy follows `architecture-hardening-loop` § 硬依赖与 runtime 
 | `broader-compatible`  | The parent objective, scope, and Done condition explicitly contain this Loop checkpoint; continue it                    | parent orchestrator; checkpoint only                                                           |
 | `conflicting/unclear` | `Decision: defer`; return `HUMAN_GATE`                                                                                  | none                                                                                           |
 
-Evidence for the relationship may come from a native getter, product state, or a caller-supplied checkable parent contract. Only `created-by-loop` / `exact-same-goal` are completed by this Skill; `broader-compatible` always reports `Goal: active-checkpoint` and leaves completion to the parent owner.
+Evidence for the relationship may come from a native getter, product state, transcript state (such as an active `agy-slash` `/goal`), or a caller-supplied checkable parent contract. Only `created-by-loop` / `exact-same-goal` are completed by this Skill; `broader-compatible` always reports `Goal: active-checkpoint` and leaves completion to the parent owner.
+
+On `agy-slash` (Antigravity's slash-command Goal surface, which exposes no native `update_goal`, `create_goal`, or `get_goal` tool):
+
+- When `none` returns `suggest` + `adopt goal and continue`, adopt the transcript contract and continue (`Goal: not-created`) without inventing `update_goal` or emitting a duplicate `/goal`.
+- When an `agy-slash` `/goal` is already active in the session (`exact-same-goal`), finish via transcript-evidence completion—a final verified `Task Completion Result` covering the clean ledger and same final evidence id (`Goal: completed`)—without inventing `update_goal` or emitting a duplicate `/goal`.
 
 ## Human decision convergence
 

@@ -60,6 +60,18 @@
         "Does not allow two owners to overwrite one shared daemon version silently",
         "Points to uxc-facade for the generic ownership method"
       ]
+    },
+    {
+      "id": 6,
+      "name": "agy-native-compat-diagnosis",
+      "prompt": "我在 Antigravity (agy) 里不确定当前能不能用原生 Ardot MCP，还是应该继续走共享的 ardot-mcp-cli。帮我排查一下。",
+      "expected_output": "Checks Antigravity native MCP registration with agy mcp list to diagnose native compatibility while keeping ardot-mcp-cli as the shared default across hosts, validates the shared UXC facade with zsh scripts/uxc-readiness.zsh when using ardot-mcp-cli, and activates NATIVE_COMPAT only if native mode is explicitly requested or approved.",
+      "files": [],
+      "expectations": [
+        "Runs or directs agy mcp list to diagnose native Ardot MCP compatibility on Antigravity",
+        "Keeps ardot-mcp-cli as the shared default across hosts rather than switching silently to native mode",
+        "Uses NATIVE_COMPAT only on explicit opt-in or approved blocker fallback and avoids copying host-native OAuth tokens into UXC"
+      ]
     }
   ]
 }

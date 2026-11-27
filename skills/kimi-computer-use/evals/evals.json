@@ -100,6 +100,21 @@
         "A retry that cannot run leaves runtime verification UNVERIFIED",
         "Keeps the exercise offline and does not execute desktop actions"
       ]
+    },
+    {
+      "id": 8,
+      "name": "register-and-smoke-antigravity-agy",
+      "prompt": "把 kimi-cu 注册到 Antigravity (agy) 上，~/.gemini/config/mcp_config.json 里已经有 figma 和 deepwiki 了，别弄丢，然后做只读验证。顺便问下在 agy 里查网页 DOM 和 Console 报错也能用 kimi-cu 吗？",
+      "expected_output": "Uses `agy mcp add kimi-cu -- /Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user` (preserving existing `mcpServers` entries in `~/.gemini/config/mcp_config.json` without replacing the file wholesale), checks `agy mcp list` and `agy mcp enable kimi-cu`, accounts for Antigravity lazy-loaded tools (`<appDataDir>/mcp/kimi-cu/<tool>.json` and `call_mcp_tool`), runs the read-only headless smoke via `command agy -p ... --mode plan --output-format json` separating connection, discovery, and completed tool calls (`UNVERIFIED` if zero calls emit), opens only the Antigravity (agy) section of references/host-configs.md, and routes web DOM/Console tasks to `chrome-dev-mcp`, `ego-browser`, or the AGY browser subagent instead of `kimi-cu`.",
+      "files": [],
+      "expectations": [
+        "Uses `agy mcp add kimi-cu -- /Applications/KimiCU.app/Contents/MacOS/kimi-cu mcp -s user` and preserves existing `mcpServers` entries in `~/.gemini/config/mcp_config.json` without replacing the file wholesale",
+        "Checks status with `agy mcp list` and enables only `kimi-cu` with `agy mcp enable kimi-cu` when disabled",
+        "Accounts for Antigravity lazy-loaded MCP tools (reading `<appDataDir>/mcp/kimi-cu/<tool>.json` and invoking `call_mcp_tool(ServerName=\"kimi-cu\", ...)`)",
+        "Uses the read-only headless smoke `command agy -p ... --mode plan --output-format json` calling `list_apps` and `get_app_state(app=com.apple.finder, mode=ax)` and marks runtime `UNVERIFIED` if zero calls complete",
+        "Opens only the Antigravity (agy) section of references/host-configs.md rather than unrelated host sections",
+        "Routes browser DOM and Console inspection to `chrome-dev-mcp`, `ego-browser`, or the AGY browser subagent rather than `kimi-cu`"
+      ]
     }
   ]
 }

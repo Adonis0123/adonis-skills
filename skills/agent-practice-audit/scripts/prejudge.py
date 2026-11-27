@@ -153,6 +153,42 @@ def root_account(r: dict) -> str:
     return os.path.basename(str(r.get("root") or "").rstrip("/"))
 
 
+def agy_setup(config: dict, active: bool = True) -> tuple[dict | None, int]:
+    """Antigravity (~/.gemini) settings/hooks view shaped like a Claude setup, plus missing-settings count."""
+    agy = config.get("agy")
+    if not active or not isinstance(agy, dict):
+        return None, 0
+    s = agy.get("settings.json") if isinstance(agy.get("settings.json"), dict) and not agy["settings.json"].get("unreadable") else None
+    h = agy.get("hooks.json") if isinstance(agy.get("hooks.json"), dict) and not agy["hooks.json"].get("unreadable") else None
+    if s is None and h is None:
+        return None, 1 if agy.get("present") else 0
+    hooks = int((h or {}).get("hook_entries") or 0)
+    enforcing = int((h or {}).get("enforcing_hook_entries") or 0)
+    deny = int((s or {}).get("deny_count") or 0)
+    cov = (s or {}).get("read_deny_coverage") or (s or {}).get("deny_coverage") or {}
+    hook_topics = sorted(set(((h or {}).get("hook_topics") if h and "hook_topics" in h else (h or {}).get("enforcing_hook_topics")) or []))
+    deny_topics = sorted(set((s or {}).get("deny_topics") or []))
+    other = config.get("other_skills") if isinstance(config.get("other_skills"), dict) else {}
+    return {
+        "roots": 1,
+        "accounts": [".gemini"],
+        "example": "~/.gemini/antigravity-cli" if s is not None else "~/.gemini",
+        "hooks": hooks,
+        "enforcing": enforcing,
+        "deny": deny,
+        "deny_coverage": {str(k): bool(cov.get(k)) for k in sorted(cov)},
+        "default_mode": (s or {}).get("toolPermission") or (s or {}).get("agentMode"),
+        "has_settings": s is not None,
+        "custom_subagents": 0,
+        "skills": num(other.get("agy")),
+        "skills_over_500_lines": 0,
+        "hook_topics": hook_topics,
+        "deny_topics": deny_topics,
+        "sandbox": False,
+        "enforced": hooks + deny,
+    }, 0
+
+
 def inactive_roots(config: dict, active: set | None) -> int:
     """Claude roots with no human session in the window: listed, not judged."""
     if active is None:
@@ -382,9 +418,13 @@ def p_safe_low_risk(ctx: Ctx):
             codex[key] = codex.get(key, 0) + 1
     if codex:
         m["codex_config_roots"] = codex
+    agy_cfg = ctx.config.get("agy") if isinstance(ctx.config.get("agy"), dict) else {}
+    agy_s_file = agy_cfg.get("settings.json")
+    if isinstance(agy_s_file, dict) and not agy_s_file.get("unreadable"):
+        m["agy_config"] = {"agentMode": agy_s_file.get("agentMode"), "toolPermission": agy_s_file.get("toolPermission")}
     m["claude_sandbox_now"] = sandbox_now
     if not den:
-        return m, None, "no host has a joint full-access count (modes not logged, or rerun aggregate.py)"
+        return m, None, "no host has a joint full-access count (modes not logged for Antigravity/WorkBuddy, or rerun aggregate.py)"
     share = pct(num_, den)
     m["full_access_pct"] = share
     reason = (f"{num_}/{den} ({share}%) human sessions ran full access; Claude sandbox is "
@@ -397,20 +437,23 @@ def p_safe_low_risk(ctx: Ctx):
 def p_safe_hooks_for_musts(ctx: Ctx):
     setups, no_settings = claude_setups(ctx.config, active=ctx.active)
     projects, _ = claude_setups(ctx.config, "claude_projects")
+    agy_s, _ = agy_setup(ctx.config, active=("agy" in ctx.hosts or not ctx.hosts))
     files = instruction_files(ctx.config)
     must = sum(f["must"] for f in files)
     must_topics = sorted({t for f in files for t in f["topics"]})
-    every = setups + projects
+    every = setups + projects + ([agy_s] if agy_s else [])
     enforced_topics = sorted({t for s in every for t in s["hook_topics"] + s["deny_topics"]})
     m = {"must_rule_lines": must, "must_topics": must_topics, "enforced_topics": enforced_topics,
          "setups": [[s["roots"], s["enforcing"], s["deny"]] for s in setups]}
+    if agy_s:
+        m["agy_setup"] = {"hooks": agy_s["hooks"], "enforcing": agy_s["enforcing"], "deny": agy_s["deny"]}
     if projects:
         m["project_setups"] = {"count": sum(s["roots"] for s in projects),
                                "with_enforcing_or_deny": sum(s["roots"] for s in projects if s["enforcing"] or s["deny"])}
     if not must:
         return m, draft("na", "no must-rule lines in instruction files", ctx), None
     if not every:
-        return m, None, "no Claude settings found; check other hosts' hook support"
+        return m, None, "no Claude or Antigravity settings/hooks found; check other hosts' hook support"
     covered = sorted(set(must_topics) & set(enforced_topics))
     missing = sorted(set(must_topics) - set(enforced_topics))
     reason = f"{must} must-rule lines on {must_topics or 'no known topic'}; enforced: {covered or 'none'}"
@@ -424,13 +467,15 @@ def p_safe_hooks_for_musts(ctx: Ctx):
 def p_safe_small_set(ctx: Ctx):
     r = ctx.p("safe-small-enforced-set")
     setups, _ = claude_setups(ctx.config, active=ctx.active)
+    agy_s, _ = agy_setup(ctx.config, active=("agy" in ctx.hosts or not ctx.hosts))
+    all_setups = setups + ([dict(agy_s, example="~/.gemini")] if agy_s else [])
     m = {"setups": [{"roots": s["roots"], "hooks": s["hooks"], "deny": s["deny"], "enforced": s["enforced"]}
-                    for s in setups]}
+                    for s in all_setups]}
     if inactive_roots(ctx.config, ctx.active):
         m["inactive_roots"] = inactive_roots(ctx.config, ctx.active)
-    if not setups:
-        return m, draft("na", "no Claude settings files in active roots", ctx), None
-    worst = max(setups, key=lambda s: s["enforced"])
+    if not all_setups:
+        return m, draft("na", "no Claude or Antigravity settings/hooks files in active roots", ctx), None
+    worst = max(all_setups, key=lambda s: s["enforced"])
     n = worst["enforced"]
     reason = f"{n} enforced rules ({worst['hooks']} hooks + {worst['deny']} deny) in {worst['example']}"
     status = "ok" if n < r["ok_below"] else ("part" if n < r["no_from"] else "no")
@@ -439,6 +484,11 @@ def p_safe_small_set(ctx: Ctx):
 
 def p_safe_deny_secrets(ctx: Ctx):
     setups, no_settings = claude_setups(ctx.config, active=ctx.active)
+    agy_s, agy_missing = agy_setup(ctx.config, active=("agy" in ctx.hosts or not ctx.hosts))
+    if agy_s and agy_s["has_settings"]:
+        setups = setups + [agy_s]
+    elif agy_s or agy_missing:
+        no_settings += 1
     m = {"setups": [], "roots_without_settings": no_settings}
     if inactive_roots(ctx.config, ctx.active):
         m["inactive_roots"] = inactive_roots(ctx.config, ctx.active)
@@ -452,7 +502,7 @@ def p_safe_deny_secrets(ctx: Ctx):
                             "bypass_sessions": sum(num(ctx.bypass.get(a)) for a in s["accounts"])})
         grades.append((2 if env else (1 if other else 0), s))
     if not setups:
-        return m, None, "no Claude settings files in active roots; check other hosts or mark na"
+        return m, None, "no Claude or Antigravity settings files in active roots; check other hosts or mark na"
     score, worst = min(grades, key=lambda g: g[0])
     status = ("no", "part", "ok")[score]
     what = {0: "neither .env files nor other secret paths", 1: "other secret paths but not .env files",
@@ -539,10 +589,13 @@ def p_doc_skills(ctx: Ctx):
     setups, _ = claude_setups(ctx.config, active=ctx.active)
     other = ctx.config.get("other_skills") if isinstance(ctx.config.get("other_skills"), dict) else {}
     claude_skills = max((s["skills"] for s in setups), default=0)
-    skills = claude_skills + num(other.get("codex")) + num(other.get("agents"))
+    agy_skills = num(other.get("agy"))
+    skills = claude_skills + num(other.get("codex")) + num(other.get("agents")) + agy_skills
     long_skills = max((s["skills_over_500_lines"] for s in setups), default=0)
-    m = {"skills": {"claude": claude_skills, "codex": num(other.get("codex")), "agents": num(other.get("agents"))},
-         "skills_over_500_lines": long_skills}
+    skills_map = {"claude": claude_skills, "codex": num(other.get("codex")), "agents": num(other.get("agents"))}
+    if "agy" in other:
+        skills_map["agy"] = agy_skills
+    m = {"skills": skills_map, "skills_over_500_lines": long_skills}
     m["used_pct"] = {h: concept(v, "skill") for h, v in ctx.hosts.items() if concept(v, "skill")}  # context only
     long_docs = [f for f in instruction_files(ctx.config) if f["claude_md"] and f["lines"] > r["line_target"]]
     if long_docs:
@@ -642,16 +695,24 @@ def p_auto_worktrees(ctx: Ctx):
         return {}, None, "summary has no parallel-session count; rerun aggregate.py"
     # `isolated` (worktree or a separate clone of the same remote); older summaries only have with_worktree.
     n, k = num(par.get("sessions")), num(par.get("isolated", par.get("with_worktree")))
+    missing_repo = num(par.get("missing_repo"))
+    missing_by_host = par.get("missing_repo_by_host") or {}
     m = {"parallel": n, "isolated": k, "with_worktree": num(par.get("with_worktree")),
          "separate_clone": num(par.get("separate_clone")), "isolated_worktree": num(par.get("isolated_worktree")),
          "repos": num(par.get("repos")),
+         "missing_repo": missing_repo,
+         "missing_repo_by_host": missing_by_host,
          "by_host": par.get("by_host") or {}}
+    gap = ""
+    if missing_repo:
+        hosts_str = ", ".join(f"{h}:{cnt}" for h, cnt in sorted(missing_by_host.items()))
+        gap = f"; {missing_repo} editing session(s) lack workspace/repo metadata ({hosts_str})" if hosts_str else f"; {missing_repo} editing session(s) lack workspace/repo metadata"
     if n < r["min_cohort"]:
         return m, draft("na", f"{n} parallel editing sessions in one repository (< {r['min_cohort']}): "
-                              "no parallel work seen", ctx), None
+                              f"no parallel work seen{gap}", ctx), None
     reason = (f"worktree or separate clone in {k}/{n} ({pct(k, n)}%) parallel editing sessions across "
               f"{m['repos']} repos ({m['isolated_worktree']} in a worktree, {m['separate_clone']} in another checkout; "
-              f"{m['with_worktree']} carry a worktree tag)")
+              f"{m['with_worktree']} carry a worktree tag){gap}")
     status = "ok" if pct(k, n) >= r["ok_pct"] else ("part" if k else "no")
     return m, draft(status, reason, ctx), None
 

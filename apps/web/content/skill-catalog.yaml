@@ -106,23 +106,23 @@ skills:
     use_cases:
       - "See a grade across six areas such as context, permissions and verification, with each practice linked to the exact official sentence."
       - "Rerun it weekly to see which practices got better or worse since last time; it only suggests and never edits your config."
-      - "Refresh the practice list from Anthropic, OpenAI, Google, Cursor, xAI and CodeBuddy docs, keeping only quotes found on the live page."
+      - "Refresh the practice list from Anthropic, OpenAI, Google Antigravity, Cursor, xAI and CodeBuddy docs, keeping only quotes found on the live page."
     use_cases_zh:
       - "按上下文、权限、验证等六个方面看等级，每条做法都链接到官方原文里的那句话。"
       - "每周跑一次，看哪几条比上次变好或变差；只给建议，不改你的配置。"
-      - "从 Anthropic、OpenAI、Google、Cursor、xAI 和 CodeBuddy 官方文档更新做法清单，只保留在原文里找得到的引用。"
+      - "从 Anthropic、OpenAI、Antigravity、Cursor、xAI 与 CodeBuddy 文档更新做法清单，只保留原文找得到的引用。"
 
   agent-symlink-init:
     displayName: { en: "Agent Config Linker", zh: "Agent 配置软链" }
     group: tools
     tags: [tool-setup, docs-and-ops]
-    summary: "Link .claude/skills to .agents/skills and AGENTS.md to CLAUDE.md while cleaning up old ruler or sync scripts."
-    summary_zh: "把 .claude/skills 软链到 .agents/skills，并清理旧的规则同步脚本。"
+    summary: "Link .claude/skills to .agents/skills and AGENTS.md to CLAUDE.md for Claude Code, Codex, and Antigravity while cleaning old sync scripts."
+    summary_zh: "把 .claude/skills 和 AGENTS.md 建好软链，原生兼容 Antigravity 并清理旧脚本。"
     use_cases:
-      - "Set up .agents/skills as the single source of truth in a repository."
+      - "Set up .agents/skills as the single source of truth shared by Claude Code, Codex, and Antigravity (agy)."
       - "Migrate a project away from .ruler directories or copy-based sync-llm-skills scripts."
     use_cases_zh:
-      - "在新仓库里把 .agents/skills 设为唯一技能来源并建好软链。"
+      - "在新仓库里把 .agents/skills 设为 Claude Code、Codex 和 Antigravity 共用的唯一技能来源并建好软链。"
       - "清理旧项目的 .ruler 目录或复制式技能同步脚本。"
 
   agentic-review-handoff:
@@ -132,10 +132,10 @@ skills:
     summary: "Run an automated Git review-fix-re-review loop with a headless reviewer or consult another AI on a decision."
     summary_zh: "启动带无头 Reviewer 的 Git 自动审查修复循环，或找另一个 AI 咨询决策。"
     use_cases:
-      - "Hand your current Git diff to a headless Claude, Codex, or Grok reviewer until it passes."
+      - "Hand your current Git diff from Claude, Codex, Grok, Cursor, Antigravity (agy), or pi to an independent headless reviewer until it passes."
       - "Validate pasted review feedback against the codebase before applying fixes."
     use_cases_zh:
-      - "改完代码后直接调无头 Claude、Codex 或 Grok 反复审改直到通过。"
+      - "从 Claude、Codex、Grok、Cursor、Antigravity（agy）或 pi 改完代码后直接调独立无头 Reviewer 反复审改直到通过。"
       - "收到别人的评审意见后，先核对代码真伪再决定怎么修。"
 
   architecture-hardening-loop:
@@ -172,10 +172,10 @@ skills:
     summary_zh: "配置并调用基于 UXC 的 ardot-mcp-cli，通过固定 JSON CLI 读取 Ardot 设计稿。"
     use_cases:
       - "Complete Ardot OAuth and verify readiness with a single /ardot-mcp command."
-      - "Read Ardot design state across agents using a pinned UXC 0.22.0 binary."
+      - "Read Ardot design state across Claude Code, Codex, Cursor, Grok, and Antigravity using a pinned UXC 0.22.0 binary."
     use_cases_zh:
       - "用 /ardot-mcp 完成 OAuth 授权并做脱敏连通性检查。"
-      - "通过固定版本的 ardot-mcp-cli 读取设计稿节点与编辑器状态。"
+      - "在 Claude、Codex、Cursor、Grok 与 Antigravity 中用固定版本 CLI 读取设计稿状态。"
 
   branch-creator:
     displayName: { en: "Branch Creator", zh: "建分支" }
@@ -341,8 +341,8 @@ skills:
     displayName: { en: "Figma Connector", zh: "Figma 连接器" }
     group: tools
     tags: [tool-setup, frontend]
-    summary: "Connect, authenticate, or recover the official Figma MCP server and fall back to REST for file comments."
-    summary_zh: "配置、认证或恢复官方 Figma MCP 服务，并在读取设计评审评论时按规则回退到 REST API。"
+    summary: "Connect, auth, or recover official Figma MCP across Codex, Claude, Cursor, Grok, and Antigravity, with REST fallback for comments."
+    summary_zh: "在 Codex、Claude、Grok 与 Antigravity 中配置认证官方 Figma MCP，按需用 REST 读评论。"
     use_cases:
       - "Read Figma design context on the fast path without redundant whoami calls."
       - "Implement a screen from a Figma URL by following the design-to-code workflow."
@@ -372,10 +372,10 @@ skills:
     summary: "Decide if a task needs a verifiable Goal contract, then draft, activate, or close it with proof across hosts."
     summary_zh: "判断任务是否适合立 Goal 契约，并按宿主生成、激活或凭证据关闭长任务。"
     use_cases:
-      - "Turn a multi-step spec into a checkable Goal contract with explicit stop conditions."
+      - "Turn a multi-step spec into a checkable Goal contract (`/goal` in Claude Code or Antigravity, native tools in Codex/Grok) with explicit stop conditions."
       - "Verify every Done item against real command or browser evidence before marking a Goal complete."
     use_cases_zh:
-      - "把多步骤开发任务写成验收条件明确、带暂停边界的 /goal 提示词或契约。"
+      - "把多步骤任务写成验收明确、带暂停边界的契约（Claude / Antigravity 用 /goal）。"
       - "在结束长任务前逐条核对命令输出或页面证据，防止没做完就提前报完成。"
 
   grill-autopilot:
@@ -385,11 +385,11 @@ skills:
     summary: "Have one AI grill your plan and another AI answer for you, researching reuse first, so you only see the few questions that truly need you."
     summary_zh: "让一个 AI 拷问方案、另一个 AI 先查现成方案再替你回答，你只需要回答少数真正要你拍板的问题。"
     use_cases:
-      - "Pair any two of Claude Code, Codex, Grok or pi accounts to stress-test a design and get a decision log with evidence for every choice."
+      - "Use Antigravity (agy) as host Interviewer, or pair Claude Code, Codex, Grok, or pi accounts for an evidence-backed decision log."
       - "Settle library and pattern choices by checking your repo, GitHub and the web before writing anything new."
       - "Watch the questions, answers and verdicts arrive in a live chat page in your browser, without adding to the agent's context."
     use_cases_zh:
-      - "任选 Claude Code、Codex、Grok、pi 中的两个账号一问一答地拷问设计，最后拿到每条都附证据的决策日志。"
+      - "在 Antigravity 宿主运行或任选 Claude Code、Codex、Grok、pi 账号一问一答拷问设计，拿到附证据的决策日志。"
       - "选库、选模式前先查仓库、GitHub 和网上的成熟做法，能复用就不重写。"
       - "在浏览器里像看群聊一样实时看提问、回答和判定，不占用 agent 的上下文。"
 
@@ -400,11 +400,11 @@ skills:
     summary: "Install, register, diagnose, or upgrade the local Kimi Computer Use (kimi-cu) MCP service on macOS."
     summary_zh: "在 macOS 上安装、注册、排查或升级本地 Kimi Computer Use (kimi-cu) MCP 服务。"
     use_cases:
-      - "Register kimi-cu across Claude Code, Codex, Cursor CLI, Grok, or Hermes without breaking existing configs."
+      - "Register kimi-cu across Claude Code, Codex, Cursor CLI, Grok, Antigravity (agy), or Hermes without breaking existing configs."
       - "Check a running Mac screen through kimi-cu; a UI check with no tool call is not done."
       - "Fix 'no target app' or 'mode must be full, image, or ax' errors and verify macOS permissions."
     use_cases_zh:
-      - "把 kimi-cu 注册到多个 Agent 宿主配置里，并用只读命令验证连通性。"
+      - "把 kimi-cu 注册到多个 Agent 宿主（含 Antigravity `mcp_config.json`）里，并用只读命令验证连通性。"
       - "用 kimi-cu 查看正在运行的 Mac 界面；没真正调用工具就不算看过。"
       - "快速修复参数写错导致的调用报错，或核对辅助功能与录屏权限状态。"
 
@@ -441,10 +441,10 @@ skills:
     summary: "Run a bounded ocr delegate review-fix-re-review loop on Git changes until an independent reviewer confirms clean."
     summary_zh: "基于 ocr delegate 运行有界的代码审查、修复与复审循环，直到独立 Reviewer 确认无问题。"
     use_cases:
-      - "Select changed files and rules with ocr, send them to another AI product for review, and fix verified defects."
+      - "Select changed files with ocr, review with another AI (or opt-in agy), and fix verified defects from Claude, Codex, Grok, Cursor, or Antigravity."
       - "Enforce full file coverage and mutation checks so reviewers never silently edit your workspace."
     use_cases_zh:
-      - "用 ocr 选定改动文件和规则，交给另一个 AI 宿主审查并自动修完经核实的问题。"
+      - "用 ocr 选定改动文件和规则，从 Claude、Codex、Grok、Cursor 或 Antigravity 宿主发起独立复审，自动修完经核实的问题。"
       - "强制核对文件覆盖率与只读边界，防止复审过程漏看文件或偷改工作区代码。"
 
   prompt-studio:
@@ -456,11 +456,11 @@ skills:
     use_cases:
       - "Ask for a cover in one line; pick from 5 prompts on a page showing samples, the model that made them, author and license."
       - "Name a video model such as Seedance, Kling or Veo and get prompts whose sample clips came from that model, playable right on the page."
-      - "Make a character from your image walk on screen with Grok or a video API, with the cost stated before anything runs."
+      - "Generate still images with Antigravity image-generator, or animate a character from your image with Grok or a video API after stating cost."
     use_cases_zh:
       - "一句话要一张封面，在候选页上从 5 条提示词里挑，每条带样图、出图模型、作者和 License。"
       - "说出想用的视频模型，比如即梦、可灵或 Veo，拿到用这个模型拍出样片的提示词，样片在页面上直接播放。"
-      - "用 Grok 或视频 API 让图里的角色动起来，开跑前先报费用。"
+      - "用 Antigravity image-generator 出静态图，或先报费用再用 Grok / 视频 API 让图里角色动起来。"
 
   review-prompt-composer:
     displayName: { en: "Review Prompt Composer", zh: "审查提示词生成" }
@@ -482,10 +482,10 @@ skills:
     summary: "Drive an unfinished plan through three-party AI convergence, implementation, review, hardening, and blind audit."
     summary_zh: "通过三方 AI 交叉质疑、实现验证、审查、架构加固与盲审，把半成品或方案一直推进到可验证完成。"
     use_cases:
-      - "Take a named spec from pending items to verified completion across independent coding agents."
+      - "Take a named spec from pending items to verified completion across independent coding agents including Antigravity (agy)."
       - "Run automated review, architecture hardening, and a fresh independent read-only blind audit on the final code snapshot."
     use_cases_zh:
-      - "拿着现成的 plan 或半成品任务，拉起宿主与另外两个 AI 交叉质疑后再动手实现。"
+      - "拿着现成的 plan 或半成品任务，拉起当前宿主（含 Antigravity `agy`）与另外两个 AI 交叉质疑后再动手实现。"
       - "在交活前用同一份最终代码快照连过代码复审、架构加固和全新独立只读盲审三道门禁。"
 
   uxc-facade:

@@ -281,6 +281,19 @@
       "prompt": "现在没人在电脑前，会话里不能提问。auto loop 第 3 轮终态 budget_exhausted，unresolved 还有 2 条。任务里还有一段不依赖这次改动的文档要更新。${MOCK_REPO}。",
       "expected_output": "先判断无人值守（装了 sideby 就看 sideby unattended status --json 的 on，否则以宿主说明为准）。不提问、不自行加 --rounds、不再修剩余发现；记一条待用户决定（2 条发现、所在分支、packet；有 sideby 用 sideby unattended defer，没有就只写进终态报告）；不提交、不合并带未决发现的代码；继续做不依赖它的文档更新；终态报告列出这一项。",
       "files": []
+    },
+    {
+      "id": 25,
+      "name": "agy-host-auto-loop",
+      "prompt": "我在 Antigravity (agy) 里刚在当前会话改完 apps/api/cart-handler.ts，帮我用 review-loop 跑 auto loop（review-fix-re-review 到 PASS），没指定 reviewer；如果是在非交互 agy -p / run_workflow 且宿主说明拒绝提问的模式下，第 3 轮仍 budget_exhausted 怎么收尾？仓库 ${MOCK_REPO}。",
+      "expected_output": "不询问 Reviewer、不传 --reviewer=agy，也不把 agy 自动选为 consult peer；直接传 --host=agy 调 review-loop run（按保存的 Reviewer 偏好选 order[0] 为 Reviewer、order.slice(1) 为 fallback，并汇报 reviewerFrom）。非交互 agy -p / run_workflow 且宿主说明拒绝提问时，budget_exhausted 按 unattended 处理：不提问、不再修剩余发现、不自行加 --rounds，用 sideby unattended defer（或无 sideby 时只在终态报告）挂起未决项。",
+      "files": [],
+      "expectations": [
+        "Passes --host=agy on review-loop run instead of asking or picking a Reviewer manually, and never selects agy automatically as Reviewer or consult peer",
+        "Resolves Reviewer to saved preference order[0] and fallback to order.slice(1) with reviewerFrom.host='agy'",
+        "Treats non-interactive agy -p or run_workflow runs where the host states questions are refused as unattended on budget_exhausted",
+        "Does not add --rounds on --continue or ask the user in unattended mode; records deferred findings via sideby unattended defer or terminal report"
+      ]
     }
   ]
 }

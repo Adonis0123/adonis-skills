@@ -1727,6 +1727,7 @@ export function detectSession({
     channels: {
       codex: commandOk("codex", ["--version"], run),
       grok: commandOk("grok", ["--version"], run),
+      agy: commandOk("agy", ["--version"], run),
       ffmpeg: capabilities.ffmpeg.available,
       nodeOk: major >= 18,
       apiKeyVars,
@@ -2632,7 +2633,7 @@ export async function addSource(
 const USAGE = `Usage: node studio.mjs <command> [options]
 
   access                              Show the GitHub access tier (gh / token / anonymous)
-  session [--project DIR]             One-shot probe: access tier, style pack, channels (codex/grok/ffmpeg/node, key var names)
+  session [--project DIR]             One-shot probe: access tier, style pack, channels (codex/grok/agy/ffmpeg/node, key var names)
   sources [--kind image|video|code-video]  List registered sources and cached entries
   sources add <owner/repo> --kind <kind> [--adapter <adapter>] [--file <repo-path>] [--items-path <path>] [--map '{"title":"title","content":"prompt"}'] [--video-template 'https://host/{slug}/clip.mp4']
   sync [--source a,b | --kind video | --category a,b | --all] [--force] [--allow-large]

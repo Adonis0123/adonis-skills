@@ -19,7 +19,7 @@ import {
   lastPhysicalH1,
   listPhysicalH1s,
 } from "./repositories.mjs";
-import { resolveFromPrefs } from "./prefs.mjs";
+import { normalizeHost, resolveFromPrefs } from "./prefs.mjs";
 import {
   assertLauncherMatchesProduct,
   assertLauncherName,
@@ -157,7 +157,7 @@ export async function cmdRun(opts) {
     reviewerFrom = {
       source: picked.prefs.source,
       order: picked.prefs.order,
-      host: String(opts.host).toLowerCase(),
+      host: normalizeHost(opts.host),
     };
   }
   const isIntake = opts.intake === true;
